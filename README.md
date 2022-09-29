@@ -16,7 +16,7 @@ Main features:
 ```bash
 yarn install
 
-npm run build
+yarn workspace @kanaries/graphic-walker build
 ```
 
 ### Method 2: use as an embedding component module

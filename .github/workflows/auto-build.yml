@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: yarn install
-      - run: npm run build
+      - run: yarn workspace @kanaries/graphic-walker build
