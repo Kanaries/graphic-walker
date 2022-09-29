@@ -21,5 +21,9 @@
   "bugs": {
     "url": "https://github.com/Kanaries/graphic-walker/issues"
   },
+  "resolutions": {
+    "@types/react": "^17.x",
+    "@types/react-dom": "^17.x"
+  },
   "homepage": "https://github.com/Kanaries/graphic-walker#readme"
 }
