@@ -18,6 +18,10 @@
     ".": {
       "import": "./dist/graphic-walker.es.js",
       "require": "./dist/graphic-walker.umd.js"
+    },
+    "./dist/style.css": {
+      "import": "./dist/style.css",
+      "require": "./dist/style.css"
     }
   },
   "prettier": {
