@@ -3,3 +3,8 @@ node_modules
 dist
 dist-ssr
 *.local
+
+build
+icons
+
+react.svg
