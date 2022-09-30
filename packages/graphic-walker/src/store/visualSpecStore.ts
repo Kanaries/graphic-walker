@@ -307,7 +307,13 @@ export class VizSpecStore {
             }),
         );
     }
+    private __dangerous_is_inside_useMutable__ = false;
     /**
+     * @important NEVER recursively call `useMutable()`
+     * because the state will be overwritten by the root `useMutable()` call,
+     * update caused by recursive `useMutable()` call will be reverted or lead to unexpected behaviors.
+     * Inline your invoking or just use block with IF statement to avoid this in your cases.
+     * 
      * Allow to change any deep member of `encodings` or `config`
      * in the active tab `this.visList[this.visIndex]`.
      * 
@@ -325,6 +331,15 @@ export class VizSpecStore {
             config: IVisualConfig;
         }) => void,
     ) {
+        if (this.__dangerous_is_inside_useMutable__) {
+            throw new Error(
+                'A recursive call of useMutable() is detected, '
+                + 'this is prevented because update will be overwritten by parent execution context.'
+            );
+        }
+
+        this.__dangerous_is_inside_useMutable__ = true;
+
         const { encodings, config } = produce({
             encodings: this.visList[this.visIndex].encodings,
             config: this.visList[this.visIndex].config,
@@ -340,6 +355,8 @@ export class VizSpecStore {
         this.visualConfig = config;
         // @ts-ignore Allow assignment here to trigger watch
         this.draggableFieldState = encodings;
+
+        this.__dangerous_is_inside_useMutable__ = false;
     }
     public undo() {
         if (this.visList[this.visIndex]?.undo()) {
@@ -665,40 +682,43 @@ export class VizSpecStore {
         
         
         this.useMutable(({ encodings }) => {
-            const cloneField = toJS(field);
+            const cloneField = { ...toJS(field) };
             cloneField.dragId = uuidv4();
             encodings[destinationKey].push(cloneField);
         });
     }
     public renderSpec (spec: Specification) {
-        this.useMutable(tab => {
+        const tab = this.visList[this.visIndex];
+
+        if (tab) {
             const fields = tab.encodings.fields;
             // thi
             // const [xField, yField, ] = spec.position;
             this.clearState();
-            if (spec.geomType && spec.geomType.length > 0) {
-                this.setVisualConfig('geoms', spec.geomType.map(g => geomAdapter(g)));
+            if ((spec.geomType?.length ?? 0) > 0) {
+                this.setVisualConfig('geoms', spec.geomType!.map(g => geomAdapter(g)));
             }
-            if (spec.facets && spec.facets.length > 0) {
+            if ((spec.facets?.length ?? 0) > 0) {
                 const facets = (spec.facets || []).concat(spec.highFacets || []);
                 for (let facet of facets) {
                     this.appendField('rows', fields.find(f => f.fid === facet));
                 }
             }
             if (spec.position) {
-                if (spec.position.length > 0) this.appendField('columns', fields.find(f => f.fid === spec.position![0]));
-                if (spec.position.length > 1) this.appendField('rows', fields.find(f => f.fid === spec.position![1]));
+                const [cols, rows] = spec.position;
+                if (cols) this.appendField('columns', fields.find(f => f.fid === cols));
+                if (rows) this.appendField('rows', fields.find(f => f.fid === rows));
             }
-            if (spec.color && spec.color.length > 0) {
+            if ((spec.color?.length ?? 0) > 0) {
                 this.appendField('color', fields.find(f => f.fid === spec.color![0]));
             }
-            if (spec.size && spec.size.length > 0) {
+            if ((spec.size?.length ?? 0) > 0) {
                 this.appendField('size', fields.find(f => f.fid === spec.size![0]));
             }
-            if (spec.opacity && spec.opacity.length > 0) {
+            if ((spec.opacity?.length ?? 0) > 0) {
                 this.appendField('opacity', fields.find(f => f.fid === spec.opacity![0]));
             }
-        });
+        }
     }
     public destroy () {
         this.reactions.forEach(rec => {
