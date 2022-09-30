@@ -66,12 +66,6 @@ const App: React.FC<EditorProps> = props => {
 		}
 	}, [dataSource, rawFields])
 
-	useEffect(() => {
-		if (spec) {
-			vizStore.renderSpec(spec);
-		}
-	}, [spec])
-
 	// do preparation analysis work when using a new dataset
 	useEffect(() => {
 		const ds = currentDataset;
@@ -82,12 +76,16 @@ const App: React.FC<EditorProps> = props => {
 				fields: toJS(ds.rawFields)
 			}).then(() => {
 				setInsightReady(true);
+
+				if (spec) {
+					vizStore.renderSpec(spec);
+				}
 			})
 		}
 		return () => {
 			destroyWorker();
 		}
-	}, [currentDataset]);
+	}, [currentDataset, spec]);
 
 	return (
 		<div className="App">

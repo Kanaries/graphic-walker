@@ -307,7 +307,13 @@ export class VizSpecStore {
             }),
         );
     }
+    private __dangerous_is_inside_useMutable__ = false;
     /**
+     * @important NEVER recursively call `useMutable()`
+     * because the state will be overwritten by the root `useMutable()` call,
+     * update caused by recursive `useMutable()` call will be reverted or lead to unexpected behaviors.
+     * Inline your invoking or just use block with IF statement to avoid this in your cases.
+     * 
      * Allow to change any deep member of `encodings` or `config`
      * in the active tab `this.visList[this.visIndex]`.
      * 
@@ -325,6 +331,15 @@ export class VizSpecStore {
             config: IVisualConfig;
         }) => void,
     ) {
+        if (this.__dangerous_is_inside_useMutable__) {
+            throw new Error(
+                'A recursive call of useMutable() is detected, '
+                + 'this is prevented because update will be overwritten by parent execution context.'
+            );
+        }
+
+        this.__dangerous_is_inside_useMutable__ = true;
+
         const { encodings, config } = produce({
             encodings: this.visList[this.visIndex].encodings,
             config: this.visList[this.visIndex].config,
@@ -340,6 +355,8 @@ export class VizSpecStore {
         this.visualConfig = config;
         // @ts-ignore Allow assignment here to trigger watch
         this.draggableFieldState = encodings;
+
+        this.__dangerous_is_inside_useMutable__ = false;
     }
     public undo() {
         if (this.visList[this.visIndex]?.undo()) {
@@ -665,7 +682,7 @@ export class VizSpecStore {
         
         
         this.useMutable(({ encodings }) => {
-            const cloneField = toJS(field);
+            const cloneField = { ...toJS(field) };
             cloneField.dragId = uuidv4();
             encodings[destinationKey].push(cloneField);
         });
