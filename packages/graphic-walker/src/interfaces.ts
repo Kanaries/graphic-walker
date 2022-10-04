@@ -2,12 +2,9 @@ import { StatFuncName } from "visual-insights/build/esm/statistics";
 import { AggFC } from 'cube-core/built/types';
 import { IAnalyticType, IMutField as VIMutField, ISemanticType } from 'visual-insights';
 
-/**
- * @deprecated
- */
-export interface Record {
-    [key: string]: any;
-}
+export type DeepReadonly<T extends Record<keyof any, any>> = {
+    readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
+};
 
 export interface IRow {
     [key: string]: any;
@@ -134,3 +131,24 @@ export type IFilterRule = {
 
 
 export type IStackMode = 'none' | 'stack' | 'normalize';
+
+export interface IVisualConfig {
+    defaultAggregated: boolean;
+    geoms:  string[];        
+    stack: 'none' | 'stack' | 'normalize';
+    showActions: boolean;
+    interactiveScale: boolean;
+    sorted: 'none' | 'ascending' | 'descending';
+    size: {
+        mode: 'auto' | 'fixed';
+        width: number;
+        height: number;
+    }
+}
+
+export interface IVisSpec {
+    readonly visId: string;
+    readonly name?: [string, Record<string, any>?];
+    readonly encodings: DeepReadonly<DraggableFieldState>;
+    readonly config: DeepReadonly<IVisualConfig>;
+}

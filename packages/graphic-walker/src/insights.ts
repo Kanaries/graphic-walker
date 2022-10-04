@@ -1,5 +1,5 @@
 import { IMutField, Insight } from 'visual-insights';
-import { Record, IMeasure } from './interfaces';
+import { IRow, IMeasure } from './interfaces';
 import { checkMajorFactor, filterByPredicates, checkChildOutlier, IPredicate } from './utils';
 import { normalizeWithParent, compareDistribution, normalizeByMeasures, getDistributionDifference } from './utils/normalization';
 import { StatFuncName } from 'visual-insights/build/esm/statistics';
@@ -18,10 +18,10 @@ export interface IMeasureWithStat extends IMeasure {
     score: number;
 }
 export class DataExplainer {
-    public dataSource: Record[];
+    public dataSource: IRow[];
     private engine: Insight.VIEngine;
     private defaultAggs: StatFuncName[] = ['min', 'max', 'sum', 'count', 'mean'];
-    constructor (dataSource: Record[] = []) {
+    constructor (dataSource: IRow[] = []) {
         this.engine = new Insight.VIEngine();
         this.dataSource = dataSource;
         let keys: string[] = [];
@@ -41,7 +41,6 @@ export class DataExplainer {
             // @ts-ignore
             key: f.key || f.fid
         })));
-        // console.log('set fields', fields, fields.map(f => f.fid))
         this.engine.univarSelection();
     }
     public preAnalysis() {
@@ -177,12 +176,10 @@ export class DataExplainer {
         // here we do not nomorlize all the dim member's distribution, we use the relative distribution instead.
         // 3. the dim member we found can be used to explain current one as major factor.
         // const predicates: IPredicate[] = selection === 'all' ? [] : getPredicates(selection, dimensions, []);
-        // console.log(predicates)
         const parentCuboid = this.engine.cube.getCuboid(dimensions);
         const measureNames = measures.map(m => m.key);
         const ops = measures.map(m => m.op);
         const parentData = filterByPredicates(parentCuboid.getAggregatedRows(measureNames, ops), predicates);
-        // console.log(parentData)
         const knn = this.getGeneralizeKNN('dimension', dimensions, K_Neighbor, 0);
 
         const majorList: Array<{key: string; score: number; dimensions: string[]; measures: IMeasure[]}> = [];
@@ -190,7 +187,7 @@ export class DataExplainer {
         for (let extendDim of knn) {
             const cuboid = this.engine.cube.getCuboid([...dimensions, extendDim]);
             const data = filterByPredicates(cuboid.getAggregatedRows(measureNames, ops), predicates);
-            let groups: Map<any, Record[]> = new Map();
+            let groups: Map<any, IRow[]> = new Map();
             for (let record of data) {
                 if (!groups.has(record[extendDim])) {
                     groups.set(record[extendDim], [])

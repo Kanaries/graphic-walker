@@ -1,16 +1,16 @@
-import { IRow, Record } from '../interfaces';
+import { IRow } from '../interfaces';
 
 export function normalizeWithParent(
-    data: Record[],
-    parentData: Record[],
+    data: IRow[],
+    parentData: IRow[],
     measures: string[],
     syncScale: boolean
 ): {
-    normalizedData: Record[];
-    normalizedParentData: Record[];
+    normalizedData: IRow[];
+    normalizedParentData: IRow[];
 } {
-    const totalMeasuresOfParent: Record = {};
-    const totalMeasures: Record = {};
+    const totalMeasuresOfParent: IRow = {};
+    const totalMeasures: IRow = {};
     measures.forEach(mea => {
         totalMeasuresOfParent[mea] = 0;
         totalMeasures[mea] = 0;
@@ -25,7 +25,7 @@ export function normalizeWithParent(
             totalMeasures[mea] += Math.abs(record[mea]);
         })
     })
-    const normalizedParentData: Record[] = [];
+    const normalizedParentData: IRow[] = [];
     parentData.forEach(record => {
         const newRecord = { ...record };
         measures.forEach(mea => {
@@ -33,7 +33,7 @@ export function normalizeWithParent(
         })
         normalizedParentData.push(newRecord);
     })
-    const normalizedData: Record[] = [];
+    const normalizedData: IRow[] = [];
     data.forEach(record => {
         const newRecord = { ...record };
         measures.forEach(mea => {
@@ -51,7 +51,7 @@ export function normalizeWithParent(
     };
 }
 
-export function compareDistribution (distribution1: Record[], distribution2: Record[], dimensions: string[], measures: string[]): number {
+export function compareDistribution (distribution1: IRow[], distribution2: IRow[], dimensions: string[], measures: string[]): number {
     let score = 0;
     let count = 0;
     const tagsForD2: boolean[] = distribution2.map(() => false);
@@ -95,7 +95,7 @@ export function compareDistribution (distribution1: Record[], distribution2: Rec
     return score;
 }
 
-export function normalizeByMeasures (dataSource: Record[], measures: string[]) {
+export function normalizeByMeasures (dataSource: IRow[], measures: string[]) {
     let sums: Map<string, number> = new Map();
 
     measures.forEach(mea => {
@@ -108,9 +108,9 @@ export function normalizeByMeasures (dataSource: Record[], measures: string[]) {
         })
     })
 
-    const ans: Record[] = [];
+    const ans: IRow[] = [];
     dataSource.forEach(record => {
-        const norRecord: Record = { ...record };
+        const norRecord: IRow = { ...record };
         measures.forEach(mea => {
             norRecord[mea] /= sums.get(mea)!;
         })
@@ -119,7 +119,7 @@ export function normalizeByMeasures (dataSource: Record[], measures: string[]) {
     return ans;
 }
 
-export function getDistributionDifference(dataSource: Record[], dimensions: string[], measure1: string, measure2: string): number {
+export function getDistributionDifference(dataSource: IRow[], dimensions: string[], measure1: string, measure2: string): number {
     let score = 0;
     for (let record of dataSource) {
         // score += Math.abs(record[measure1] - record[measure2])

@@ -36,3 +36,5 @@ export const COLORS = {
     black: '#141414',
     white: '#fafafa'
 }
+
+export const MAX_HISTORY_SIZE = 20;

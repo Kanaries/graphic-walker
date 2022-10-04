@@ -1,5 +1,5 @@
 import { Specification } from 'visual-insights';
-import { Record, SemanticType } from '../interfaces';
+import { IRow, SemanticType } from '../interfaces';
 export const geomTypeMap: { [key: string]: any } = {
     interval: 'bar',
     line: 'line',
@@ -9,7 +9,7 @@ export const geomTypeMap: { [key: string]: any } = {
 };
 export function selectionVis(
     query: Specification,
-    dataSource: Record[],
+    dataSource: IRow[],
     dimensions: string[],
     measures: string[],
     aggregatedMeasures: Array<{ op: string; field: string; as: string }>,

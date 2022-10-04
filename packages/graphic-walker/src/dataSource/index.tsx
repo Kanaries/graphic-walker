@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useRef } from 'react';
 import { Container } from '../components/container';
 import Modal from '../components/modal';
 // import DataSourcePanel from './pannel';
@@ -7,6 +7,8 @@ import DataSelection from './dataSelection';
 import { useGlobalStore } from '../store';
 import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
+import { download } from '../utils/save';
+import GwFile from './dataSelection/gwFile';
 
 interface DSSegmentProps {
     preWorkDone: boolean;
@@ -14,12 +16,14 @@ interface DSSegmentProps {
 
 const DataSourceSegment: React.FC<DSSegmentProps> = props => {
     const { preWorkDone } = props;
-    const { commonStore } = useGlobalStore();
+    const { commonStore, vizStore } = useGlobalStore();
+    const gwFileRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
 
     const { currentDataset, datasets, showDSPanel } = commonStore;
 
     return <Container className="flex flex-row items-stretch">
+        <GwFile fileRef={gwFileRef} />
         {!preWorkDone && <div className="animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>}
         <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
             {t('DataSource.labels.cur_dataset')}
@@ -40,6 +44,23 @@ const DataSourceSegment: React.FC<DSSegmentProps> = props => {
             onClick={() => { commonStore.startDSBuildingTask() }}
         >
             {t('DataSource.buttons.create_dataset')}
+        </button>
+        <button className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm hover:bg-gray-200"
+            onClick={() => {
+                const res = vizStore.exportAsRaw();
+                download(res, 'graphic-walker-notebook.json', 'text/plain')
+            }}
+        >
+            {t('DataSource.buttons.export_as_file')}
+        </button>
+        <button className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm hover:bg-gray-200"
+            onClick={() => {
+                if (gwFileRef.current) {
+                    gwFileRef.current.click();
+                }
+            }}
+        >
+            {t('DataSource.buttons.import_file')}
         </button>
         {showDSPanel && (
             <Modal

@@ -1,15 +1,15 @@
 import { COUNT_FIELD_ID } from '../constants';
-import { Record, Filters, IMutField, IRow } from '../interfaces';
+import { IRow, Filters, IMutField } from '../interfaces';
 interface NRReturns {
-    normalizedData: Record[];
-    maxMeasures: Record;
-    minMeasures: Record;
-    totalMeasures: Record
+    normalizedData: IRow[];
+    maxMeasures:IRow;
+    minMeasures:IRow;
+    totalMeasures:IRow
 }
-function normalizeRecords(dataSource: Record[], measures: string[]): NRReturns {
-    const maxMeasures: Record = {};
-    const minMeasures: Record = {};
-    const totalMeasures: Record = {};
+function normalizeRecords(dataSource: IRow[], measures: string[]): NRReturns {
+    const maxMeasures: IRow = {};
+    const minMeasures: IRow = {};
+    const totalMeasures: IRow = {};
     measures.forEach(mea => {
         maxMeasures[mea] = -Infinity;
         minMeasures[mea] = Infinity;
@@ -21,9 +21,9 @@ function normalizeRecords(dataSource: Record[], measures: string[]): NRReturns {
             minMeasures[mea] = Math.min(record[mea], minMeasures[mea])
         })
     })
-    const newData: Record[] = [];
+    const newData: IRow[] = [];
     dataSource.forEach(record => {
-        const norRecord: Record = { ... record };
+        const norRecord: IRow = { ... record };
         measures.forEach(mea => {
             // norRecord[mea] = norRecord[mea] - minMeasures[mea]
             totalMeasures[mea] += Math.abs(norRecord[mea]);
@@ -43,10 +43,10 @@ function normalizeRecords(dataSource: Record[], measures: string[]): NRReturns {
     }
 }
 
-function normalize2PositiveRecords(dataSource: Record[], measures: string[]): NRReturns {
-  const maxMeasures: Record = {};
-  const minMeasures: Record = {};
-  const totalMeasures: Record = {};
+function normalize2PositiveRecords(dataSource: IRow[], measures: string[]): NRReturns {
+  const maxMeasures: IRow = {};
+  const minMeasures: IRow = {};
+  const totalMeasures: IRow = {};
   measures.forEach((mea) => {
     maxMeasures[mea] = -Infinity;
     minMeasures[mea] = Infinity;
@@ -58,9 +58,9 @@ function normalize2PositiveRecords(dataSource: Record[], measures: string[]): NR
       minMeasures[mea] = Math.min(record[mea], minMeasures[mea]);
     });
   });
-  const newData: Record[] = [];
+  const newData: IRow[] = [];
   dataSource.forEach((record) => {
-    const norRecord: Record = { ...record };
+    const norRecord: IRow = { ...record };
     measures.forEach((mea) => {
       norRecord[mea] = norRecord[mea] - minMeasures[mea]
       totalMeasures[mea] += norRecord[mea];
@@ -83,7 +83,7 @@ function normalize2PositiveRecords(dataSource: Record[], measures: string[]): NR
   };
 }
 
-export function checkMajorFactor(data: Record[], childrenData: Map<any, Record[]>, dimensions: string[], measures: string[]): { majorKey: string; majorSum: number } {
+export function checkMajorFactor(data: IRow[], childrenData: Map<any, IRow[]>, dimensions: string[], measures: string[]): { majorKey: string; majorSum: number } {
     const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalizeRecords(data, measures);
     let majorSum = Infinity;
     let majorKey = '';
@@ -114,7 +114,7 @@ export function checkMajorFactor(data: Record[], childrenData: Map<any, Record[]
     return { majorKey, majorSum };
 }
 
-export function checkChildOutlier(data: Record[], childrenData: Map<any, Record[]>, dimensions: string[], measures: string[]): { outlierKey: string; outlierSum: number } {
+export function checkChildOutlier(data: IRow[], childrenData: Map<any, IRow[]>, dimensions: string[], measures: string[]): { outlierKey: string; outlierSum: number } {
     // const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalize2PositiveRecords(data, measures);
     const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalizeRecords(data, measures);
     let outlierSum = -Infinity;
@@ -151,7 +151,7 @@ export interface IPredicate {
     type: 'discrete' | 'continuous';
     range: Set<any> | [number, number];
 }
-export function getPredicates(selection: Record[], dimensions: string[], measures: string[]): IPredicate[] {
+export function getPredicates(selection: IRow[], dimensions: string[], measures: string[]): IPredicate[] {
     const predicates: IPredicate[] = [];
     dimensions.forEach(dim => {
         predicates.push({
@@ -197,7 +197,7 @@ export function getPredicatesFromVegaSignals(signals: Filters, dimensions: strin
     return predicates;
 }
 
-export function filterByPredicates(data: Record[], predicates: IPredicate[]): Record[] {
+export function filterByPredicates(data: IRow[], predicates: IPredicate[]): IRow[] {
     const filterData = data.filter((record) => {
       return predicates.every((pre) => {
         if (pre.type === 'continuous') {
@@ -213,7 +213,7 @@ export function filterByPredicates(data: Record[], predicates: IPredicate[]): Re
     return filterData;
 }
 
-export function applyFilters(dataSource: Record[], filters: Filters): Record[] {
+export function applyFilters(dataSource: IRow[], filters: Filters): IRow[] {
     let filterKeys = Object.keys(filters);
     return dataSource.filter((record) => {
         let keep = true;
