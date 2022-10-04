@@ -2,24 +2,12 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from 'immer';
 import { v4 as uuidv4 } from 'uuid';
 import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
 import { GEMO_TYPES } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { CommonStore } from "./commonStore";
-
-interface IVisualConfig {
-    defaultAggregated: boolean;
-    geoms:  string[];        
-    stack: 'none' | 'stack' | 'normalize';
-    showActions: boolean;
-    interactiveScale: boolean;
-    sorted: 'none' | 'ascending' | 'descending';
-    size: {
-        mode: 'auto' | 'fixed';
-        width: number;
-        height: number;
-    }
-}
+import { VisSpecWithHistory } from "../models/visSpecHistory";
+import { dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 
 export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
     'dimensions',
@@ -42,8 +30,6 @@ function getChannelSizeLimit (channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
     return CHANNEL_LIMIT[channel];
 }
-
-
 
 function geomAdapter (geom: string) {
     switch (geom) {
@@ -108,134 +94,7 @@ type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
 
-interface IVisSpec {
-    readonly visId: string;
-    readonly name?: [string, Record<string, any>?];
-    readonly encodings: DeepReadonly<DraggableFieldState>;
-    readonly config: DeepReadonly<IVisualConfig>;
-}
-
 const MAX_HISTORY_SIZE = 20;
-
-class IVisSpecWithHistory {
-
-    readonly visId: IVisSpec['visId'];
-    private snapshots: Pick<IVisSpec, 'name' | 'encodings' | 'config'>[];
-    private cursor: number;
-
-    constructor(data: IVisSpec) {
-        this.visId = data.visId;
-        this.snapshots = [{
-            name: data.name,
-            encodings: data.encodings,
-            config: data.config,
-        }];
-        this.cursor = 0;
-    }
-
-    private get frame(): Readonly<IVisSpec> {
-        return {
-            visId: this.visId,
-            ...this.snapshots[this.cursor]!,
-        };
-    }
-
-    private batchFlag = false;
-
-    private commit(snapshot: Partial<Readonly<IVisSpecWithHistory['snapshots'][0]>>): void {
-        if (this.batchFlag) {
-            // batch this commit
-            this.snapshots[this.cursor] = toJS({
-                ...this.frame,
-                ...snapshot,
-            });
-
-            return;
-        }
-
-        this.batchFlag = true;
-
-        this.snapshots = [
-            ...this.snapshots.slice(0, this.cursor + 1),
-            toJS({
-                ...this.frame,
-                ...snapshot,
-            }),
-        ];
-
-        if (this.snapshots.length > MAX_HISTORY_SIZE) {
-            this.snapshots.splice(0, 1);
-        }
-
-        this.cursor = this.snapshots.length - 1;
-
-        requestAnimationFrame(() => this.batchFlag = false);
-    }
-
-    public get canUndo() {
-        return this.cursor > 0;
-    }
-
-    public undo(): boolean {
-        if (this.cursor === 0) {
-            return false;
-        }
-
-        this.cursor -= 1;
-
-        return true;
-    }
-
-    public get canRedo() {
-        return this.cursor < this.snapshots.length - 1;
-    }
-
-    public redo(): boolean {
-        if (this.cursor === this.snapshots.length - 1) {
-            return false;
-        }
-
-        this.cursor += 1;
-
-        return true;
-    }
-
-    public rebase() {
-        this.snapshots = [this.snapshots[this.cursor]];
-        this.cursor = 0;
-    }
-
-    get name() {
-        return this.frame.name;
-    }
-
-    set name(name: IVisSpec['name']) {
-        this.commit({
-            name,
-        });
-    }
-
-    get encodings(): DeepReadonly<DraggableFieldState> {
-        return this.frame.encodings;
-    }
-
-    set encodings(encodings: IVisSpec['encodings']) {
-        this.commit({
-            encodings,
-        });
-    }
-
-    get config(): DeepReadonly<IVisualConfig> {
-        return this.frame.config;
-    }
-
-    set config(config: IVisSpec['config']) {
-        this.commit({
-            config,
-        });
-    }
-
-}
 
 export class VizSpecStore {
     // public fields: IViewField[] = [];
@@ -273,7 +132,7 @@ export class VizSpecStore {
      * (an `immer` draft) of `this.visList[this.visIndex]`.
      */
     public readonly visualConfig: Readonly<IVisualConfig>;
-    public visList: IVisSpecWithHistory[] = [];
+    public visList: VisSpecWithHistory[] = [];
     public visIndex: number = 0;
     public canUndo = false;
     public canRedo = false;
@@ -282,7 +141,7 @@ export class VizSpecStore {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
         this.visualConfig = initVisualConfig();
-        this.visList.push(new IVisSpecWithHistory({
+        this.visList.push(new VisSpecWithHistory({
             name: ['main.tablist.autoTitle', { idx: 1 }],
             visId: uuidv4(),
             config: this.visualConfig,
@@ -294,7 +153,7 @@ export class VizSpecStore {
         // FIXME!!!!!
         this.reactions.push(
             reaction(() => commonStore.currentDataset, (dataset) => {
-                this.initState();
+                // this.initState();
                 this.initMetaState(dataset);
             }),
             reaction(() => this.visList[this.visIndex], frame => {
@@ -412,7 +271,7 @@ export class VizSpecStore {
         return fields;
     }
     public addVisualization () {
-        this.visList.push(new IVisSpecWithHistory({
+        this.visList.push(new VisSpecWithHistory({
             name: ['main.tablist.autoTitle', { idx: this.visList.length + 1 }],
             visId: uuidv4(),
             config: initVisualConfig(),
@@ -724,5 +583,21 @@ export class VizSpecStore {
         this.reactions.forEach(rec => {
             rec();
         })
+    }
+    public exportAsRaw () {
+        const pureVisList = dumpsGWPureSpec(this.visList);
+        return stringifyGWContent({
+            datasets: toJS(this.commonStore.datasets),
+            dataSources: this.commonStore.dataSources,
+            specList: pureVisList
+        })
+    }
+    public importRaw (raw: string) {
+        const content = parseGWContent(raw);
+        this.commonStore.datasets = content.datasets;
+        this.commonStore.dataSources = content.dataSources;
+        this.commonStore.dsIndex = Math.max(content.datasets.length - 1, 0);
+        this.visList = parseGWPureSpec(content.specList)
+        this.visIndex = 0;
     }
 }

@@ -58,7 +58,9 @@
             "cur_dataset": "Current Dataset"
         },
         "buttons": {
-            "create_dataset": "Create Dataset"
+            "create_dataset": "Create Dataset",
+            "export_as_file": "Save As File",
+            "import_file": "Import Graphic Walker File"
         },
         "dialog": {
             "create_data_source": "New Data Source",

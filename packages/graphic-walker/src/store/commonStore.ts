@@ -1,4 +1,4 @@
-import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, Record } from '../interfaces';
+import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { extendCountField } from '../utils';
@@ -15,7 +15,7 @@ export class CommonStore {
     public dsIndex: number = 0;
     public tmpDSName: string = '';
     public tmpDSRawFields: IMutField[] = [];
-    public tmpDataSource: Record[] = [];
+    public tmpDataSource: IRow[] = [];
     public showDSPanel: boolean = false;
     public showInsightBoard: boolean = false;
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
@@ -83,7 +83,7 @@ export class CommonStore {
         this.tmpDSName = name;
     }
 
-    public updateTempDS (rawData: Record[]) {
+    public updateTempDS (rawData: IRow[]) {
         const result = transData(rawData);
         // TODO: need fix web-data-loader issue #2
         this.tmpDataSource = result.dataSource.slice(0, -1);

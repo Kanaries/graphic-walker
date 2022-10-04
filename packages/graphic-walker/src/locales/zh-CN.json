@@ -58,7 +58,9 @@
             "cur_dataset": "当前数据集"
         },
         "buttons": {
-            "create_dataset": "创建数据集"
+            "create_dataset": "创建数据集",
+            "export_as_file": "保存到文件",
+            "import_file": "导入文件"
         },
         "dialog": {
             "create_data_source": "创建数据源",
