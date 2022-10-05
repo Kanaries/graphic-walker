@@ -5,6 +5,7 @@
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
     "build": "tsc && vite build",
+    "build:app": "vite build --config vite-app.config.ts",
     "serve": "vite preview",
     "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist"
   },
