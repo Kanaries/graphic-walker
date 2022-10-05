@@ -7,9 +7,6 @@ import typescript from '@rollup/plugin-typescript'
 export default defineConfig({
   server: {
     port: 2002,
-    proxy: {
-      '/datasets': 'http://localhost:8080',
-    },
   },
   plugins: [
     // @ts-ignore

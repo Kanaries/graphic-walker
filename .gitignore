@@ -8,3 +8,6 @@ build
 icons
 
 react.svg
+
+doc_images
+**/public/datasets
