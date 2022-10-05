@@ -1,10 +1,10 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { DraggableProvided } from "react-beautiful-dnd";
-import { useGlobalStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
+import { useGlobalStore } from '../../store';
 
 
 interface FilterPillProps {

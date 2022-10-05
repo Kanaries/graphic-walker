@@ -1,8 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { COLORS } from "../config";
 import { useTranslation } from 'react-i18next';
-
+import { COLORS } from "../config";
 
 export const AestheticSegment = styled.div`
   border: 1px solid #dfe3e8;

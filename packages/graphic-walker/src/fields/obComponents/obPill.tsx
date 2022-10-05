@@ -1,13 +1,13 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from 'react-beautiful-dnd';
 import { COUNT_FIELD_ID } from '../../constants';
 import { IDraggableStateKey } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import { Pill } from '../components';
 import { AGGREGATOR_LIST } from '../fieldsContext';
-import { useTranslation } from 'react-i18next';
 
 
 interface PillProps {

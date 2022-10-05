@@ -1,9 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useGlobalStore } from '../store';
 import styled from 'styled-components'
 import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
+import { useGlobalStore } from '../store';
 
 
 export const MenubarContainer = styled.div({

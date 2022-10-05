@@ -3,11 +3,12 @@
  * https://github.com/vega/vega-lite/issues/4680
  */
 import React, { useEffect, useRef } from 'react';
-import { IField, IViewField, IRow } from '../interfaces';
 import embed from 'vega-embed';
 import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import { ScenegraphEvent } from 'vega';
+import { IField, IRow } from '../interfaces';
+
 const SELECTION_NAME = 'geom';
 interface ReactVegaProps {
     rows: IField[];

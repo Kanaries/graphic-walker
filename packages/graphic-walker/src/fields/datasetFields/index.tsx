@@ -1,14 +1,9 @@
 import React from 'react';
-import { NestContainer } from '../../components/container'
 import { observer } from 'mobx-react-lite';
-import {
-    Droppable,
-    Draggable,
-} from "react-beautiful-dnd";
+import { Droppable } from "react-beautiful-dnd";
 import { useTranslation } from 'react-i18next';
-
+import { NestContainer } from '../../components/container'
 import { useGlobalStore } from '../../store';
-import DataTypeIcon from '../../components/dataTypeIcon';
 import { IViewField, DraggableFieldState } from '../../interfaces';
 import DimFields from './dimFields';
 import MeaFields from './meaFields';

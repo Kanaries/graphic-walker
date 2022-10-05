@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import embed, { vega, Result } from 'vega-embed';
 import { Spec } from 'vega';
-// import { Result } from 'vega-embed';
 
 interface GenVegaProps {
   dataSource: any[];

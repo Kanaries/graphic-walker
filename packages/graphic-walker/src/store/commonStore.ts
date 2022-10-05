@@ -3,12 +3,6 @@ import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { extendCountField } from '../utils';
 
-interface VisualConfig {
-    defaultAggregated: boolean;
-    geoms: string[];
-    defaultStack: boolean;
-}
-
 export class CommonStore {
     public datasets: IDataSet[] = [];
     public dataSources: IDataSource[] = [];
