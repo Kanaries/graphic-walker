@@ -1,17 +1,10 @@
-import React from 'react';
-import { FieldListContainer } from "../components";
-import {
-    Droppable,
-    Draggable
-  } from "react-beautiful-dnd";
-
-import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
-
-import OBFieldContainer from '../obComponents/obFContainer';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Droppable } from "react-beautiful-dnd";
 import { useGlobalStore } from '../../store';
-
+import { FieldListContainer } from "../components";
+import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
+import OBFieldContainer from '../obComponents/obFContainer';
 
 const PosFields: React.FC = props => {
     const { vizStore } = useGlobalStore();

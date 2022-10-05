@@ -2,7 +2,6 @@ import React from 'react';
 import styled from 'styled-components';
 import { filter, fromEvent, map, throttleTime } from 'rxjs';
 
-
 const SliderContainer = styled.div({
     display: 'flex',
     flexDirection: 'column',

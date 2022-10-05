@@ -1,14 +1,13 @@
-import { observer } from 'mobx-react-lite';
 import React, { useRef } from 'react';
-import { Container } from '../components/container';
-import Modal from '../components/modal';
-// import DataSourcePanel from './pannel';
-import DataSelection from './dataSelection';
-import { useGlobalStore } from '../store';
+import { observer } from 'mobx-react-lite';
 import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
+import { Container } from '../components/container';
+import Modal from '../components/modal';
+import { useGlobalStore } from '../store';
 import { download } from '../utils/save';
 import GwFile from './dataSelection/gwFile';
+import DataSelection from './dataSelection';
 
 interface DSSegmentProps {
     preWorkDone: boolean;

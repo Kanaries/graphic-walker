@@ -1,4 +1,4 @@
-import { IStackMode } from "./interfaces";
+import { DraggableFieldState, IStackMode } from "./interfaces";
 
 export const GEMO_TYPES: Readonly<string[]> = [
     'auto',
@@ -38,3 +38,20 @@ export const COLORS = {
 }
 
 export const MAX_HISTORY_SIZE = 20;
+
+export const CHANNEL_LIMIT = {
+    rows: Infinity,
+    columns: Infinity,
+    color: 1,
+    opacity: 1,
+    size: 1,
+    shape: 1,
+    theta: 1,
+    radius: 1
+}
+
+export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
+    'dimensions',
+    'measures',
+    'fields'
+]

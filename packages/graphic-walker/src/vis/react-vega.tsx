@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { IViewField, IRow, IStackMode } from '../interfaces';
 import embed from 'vega-embed';
 import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import { ScenegraphEvent } from 'vega';
-import { autoMark } from '../utils/autoMark';
 import { ISemanticType } from 'visual-insights';
 import styled from 'styled-components';
+import { autoMark } from '../utils/autoMark';
 import { COUNT_FIELD_ID } from '../constants';
+
+import { IViewField, IRow, IStackMode } from '../interfaces';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;

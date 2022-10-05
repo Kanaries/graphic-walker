@@ -1,9 +1,8 @@
 import React from 'react';
-import { IMutField } from '../interfaces';
 import styled from 'styled-components';
 import { observer } from 'mobx-react-lite';
+import { IMutField } from '../interfaces';
 import { useGlobalStore } from '../store';
-import DataTypeIcon from '../components/dataTypeIcon';
 
 interface TableProps {
     size?: number;

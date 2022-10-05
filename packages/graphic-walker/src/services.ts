@@ -1,5 +1,6 @@
+import { toJS } from 'mobx';
+import { View, Specification } from 'visual-insights';
 import { IRow, Filters, SemanticType, IMeasure, IMutField, IFilterField } from './interfaces';
-// import { Insight } from 'visual-insights';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -9,9 +10,7 @@ import { IRow, Filters, SemanticType, IMeasure, IMutField, IFilterField } from '
 // eslint-disable-next-line
 import ExplainerWorker from './workers/explainer.worker?worker&inline';
 import FilterWorker from './workers/filter.worker?worker&inline';
-import { View, Specification } from 'visual-insights';
 import { IExplaination, IMeasureWithStat } from './insights';
-import { toJS } from 'mobx';
 
 interface WorkerState {
     eWorker: Worker | null;

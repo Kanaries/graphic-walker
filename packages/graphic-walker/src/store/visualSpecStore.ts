@@ -2,29 +2,12 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from 'immer';
 import { v4 as uuidv4 } from 'uuid';
 import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
-import { GEMO_TYPES } from "../config";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisualConfig } from "../interfaces";
+import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
-import { CommonStore } from "./commonStore";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
-
-export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
-    'dimensions',
-    'measures',
-    'fields'
-]
-
-const CHANNEL_LIMIT = {
-    rows: Infinity,
-    columns: Infinity,
-    color: 1,
-    opacity: 1,
-    size: 1,
-    shape: 1,
-    theta: 1,
-    radius: 1
-}
+import { CommonStore } from "./commonStore";
 
 function getChannelSizeLimit (channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
@@ -94,7 +77,6 @@ type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
 
-const MAX_HISTORY_SIZE = 20;
 
 export class VizSpecStore {
     // public fields: IViewField[] = [];

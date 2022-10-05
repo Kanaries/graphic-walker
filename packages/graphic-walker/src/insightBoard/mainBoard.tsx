@@ -3,12 +3,11 @@ import embed from 'vega-embed';
 import { Insight, Utils, UnivariateSummary } from 'visual-insights';
 import ReactJson from 'react-json-view';
 import { IField, Filters, IMeasure, IRow } from '../interfaces';
-import { baseVis, IReasonType } from './std2vegaSpec';
-import { getExplaination, IVisSpace } from '../services';
-import RadioGroupButtons from './radioGroupButtons';
 import { IExplaination, IMeasureWithStat } from '../insights';
+import { getExplaination, IVisSpace } from '../services';
+import { baseVis, IReasonType } from './std2vegaSpec';
+import RadioGroupButtons from './radioGroupButtons';
 import { formatFieldName, mergeMeasures } from './utils'
-
 
 const collection  = Insight.IntentionWorkerCollection.init();
 

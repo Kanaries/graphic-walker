@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Specification } from 'visual-insights';
+import { observer } from 'mobx-react-lite';
+import { LightBulbIcon } from '@heroicons/react/24/outline'
+import { toJS } from 'mobx';
+import { useTranslation } from 'react-i18next';
 import { IMutField, IRow } from './interfaces';
 import VisualSettings from './visualSettings';
 import { Container, NestContainer } from './components/container';
@@ -11,18 +16,12 @@ import ReactiveRenderer from './renderer/index';
 import DataSourceSegment from './dataSource/index';
 import { useGlobalStore } from './store';
 import { preAnalysis, destroyWorker } from './services'
-import { observer } from 'mobx-react-lite';
-import { LightBulbIcon } from '@heroicons/react/24/outline'
-import { toJS } from 'mobx';
-import "tailwindcss/tailwind.css"
-import './index.css'
-import { Specification } from 'visual-insights';
-// import PureTabs from './components/tabs/pureTab';
 import VisNav from './segments/visNav';
-import { useTranslation } from 'react-i18next';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import Menubar from './visualSettings/menubar';
 import FilterField from './fields/filterField';
+import "tailwindcss/tailwind.css"
+import './index.css'
 
 
 export interface EditorProps {
