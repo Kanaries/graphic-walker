@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { COUNT_FIELD_ID } from '../constants';
 import { IRow, Filters, IMutField } from '../interfaces';
 interface NRReturns {
@@ -239,7 +240,7 @@ export function extendCountField (dataSource: IRow[], fields: IMutField[]): {
     }))
     const nextFields = fields.concat({
         fid: COUNT_FIELD_ID,
-        name: '记录数',
+        name: i18next.t('constant.row_count'),
         analyticType: 'measure',
         semanticType: 'quantitative'
     })

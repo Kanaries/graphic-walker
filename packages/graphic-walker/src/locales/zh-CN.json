@@ -1,5 +1,10 @@
 {
     "constant": {
+        "row_count": "行数",
+        "analytic_type": {
+            "dimension": "维度",
+            "measure": "度量"
+        },
         "mark_type": {
             "__enum__": "标记类型",
             "auto": "自动",
