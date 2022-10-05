@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { observer } from 'mobx-react-lite';
 import { IMutField } from '../interfaces';
 import { useGlobalStore } from '../store';
+import { useTranslation } from 'react-i18next';
 
 interface TableProps {
     size?: number;
@@ -69,6 +70,14 @@ const Table: React.FC<TableProps> = props => {
     const { size = 10 } = props;
     const { commonStore } = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
+    const { t } = useTranslation();
+
+    const analyticTypeList = useMemo<{value: string; label: string}[]>(() => {
+        return TYPE_LIST.map(at => ({
+            value: at.value,
+            label: t(`constant.analytic_type.${at.value}`)
+        }))
+    }, [])
  
     return (
         <Container>
@@ -77,7 +86,7 @@ const Table: React.FC<TableProps> = props => {
                     <tr>
                         {tmpDSRawFields.map((field, fIndex) => (
                             <th key={field.fid} className={getHeaderType(field)}>
-                                {/* <DataTypeIcon dataType={field.dataType} /> <b>{field.key}</b> */}
+                                <b>{field.name || field.fid}</b>
                                 <div>
                                     <select
                                         className="border-b border-gray-300 hover:bg-gray-100 hover:border-gray-600"
@@ -85,7 +94,7 @@ const Table: React.FC<TableProps> = props => {
                                         commonStore.updateTempFieldAnalyticType(field.fid, e.target.value as IMutField['analyticType'])
                                     }}>
                                         {
-                                            TYPE_LIST.map(type => <option key={type.value} value={type.value}>{type.label}</option>)
+                                            analyticTypeList.map(type => <option key={type.value} value={type.value}>{type.label}</option>)
                                         }
                                     </select>
                                 </div>

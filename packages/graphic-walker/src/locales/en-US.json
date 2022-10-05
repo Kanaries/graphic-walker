@@ -1,5 +1,10 @@
 {
     "constant": {
+        "row_count": "Row count",
+        "analytic_type": {
+            "dimension": "dimension",
+            "measure": "measure"
+        },
         "mark_type": {
             "__enum__": "Mark Type",
             "auto": "Auto",
