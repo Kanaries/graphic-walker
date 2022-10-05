@@ -1,3 +1,5 @@
+<img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md)
+
 # graphic-walker
 ![](https://img.shields.io/github/license/kanaries/graphic-walker)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker)
@@ -24,7 +26,7 @@ When the data is ready, click the 'Submit' button to use the data. On the left-h
 ![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/after_load_data.png)
 
 
-Create your first with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
+Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
 
 ![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/vis-barchart-01.png)
 
