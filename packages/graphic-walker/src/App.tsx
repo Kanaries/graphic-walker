@@ -28,12 +28,13 @@ export interface EditorProps {
 	dataSource?: IRow[];
 	rawFields?: IMutField[];
 	spec?: Specification;
+	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 }
 
 const App: React.FC<EditorProps> = props => {
-	const { dataSource = [], rawFields = [], spec, i18nLang = 'en-US', i18nResources } = props;
+	const { dataSource = [], rawFields = [], spec, i18nLang = 'en-US', i18nResources, hideDataSourceConfig } = props;
 	const { commonStore, vizStore } = useGlobalStore();
 	const [insightReady, setInsightReady] = useState<boolean>(true);
 
@@ -88,7 +89,7 @@ const App: React.FC<EditorProps> = props => {
 
 	return (
 		<div className="App">
-			<DataSourceSegment preWorkDone={insightReady} />
+			{ !hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
 			<div className='px-2 mx-2'>
 				<VisNav />
 				{/* <PureTabs tabs={[{label: 'a', key: 'a'}, {label: 'b', key: 'b'}]} selectedKey='a' onSelected={() => {}} /> */}

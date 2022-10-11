@@ -9,7 +9,7 @@
             "__enum__": "Mark Type",
             "auto": "Auto",
             "bar": "Bar",
-            "line": "Polyline",
+            "line": "Line",
             "area": "Area",
             "trail": "Trail",
             "point": "Scatter",

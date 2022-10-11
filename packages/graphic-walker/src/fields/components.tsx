@@ -16,7 +16,7 @@ export const AestheticSegment = styled.div`
     }
   }
   .aes-container{
-
+    overflow-x: auto;
   }
 
 `
@@ -147,6 +147,8 @@ export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   overflow-y: hidden;
   padding: 0 10px;
   user-select: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   /* --tw-ring-offset-shadow: 0 0 #0000;
   --tw-ring-shadow: 0 0 #0000;
   --tw-shadow-color: rgb(6 182 212/0.5);
