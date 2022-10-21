@@ -131,8 +131,9 @@ export class VizSpecStore {
         }));
         makeAutoObservable(this, {
             visList: observable.shallow,
+            // @ts-expect-error private fields are not supported
+            reactions: false
         });
-        // FIXME!!!!!
         this.reactions.push(
             reaction(() => commonStore.currentDataset, (dataset) => {
                 // this.initState();

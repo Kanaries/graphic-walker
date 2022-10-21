@@ -4,7 +4,7 @@ import { StoreWrapper } from './store/index';
 import { FieldsContextWrapper } from './fields/fieldsContext';
 
 export const GraphicWalker: React.FC<EditorProps> = props => {
-    return <StoreWrapper>
+    return <StoreWrapper keepAlive={props.keepAlive}>
         <FieldsContextWrapper>
             <App {...props} />
         </FieldsContextWrapper>

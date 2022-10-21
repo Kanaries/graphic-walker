@@ -15,18 +15,37 @@ const initStore: GlobalStore = {
     vizStore
 }
 
-const StoreContext = React.createContext<GlobalStore>(initStore);
+const StoreContext = React.createContext<GlobalStore>(null!);
 
-export const StoreWrapper: React.FC = props => {
-    useEffect(() => {
-        return () => {
-            initStore.vizStore.destroy();
-            initStore.commonStore.destroy();
+export function destroyGWStore() {
+    initStore.commonStore.destroy();
+    initStore.vizStore.destroy();
+}
+
+export function rebootGWStore() {
+    const cs = new CommonStore();
+    const vs = new VizSpecStore(cs);
+    initStore.commonStore = cs;
+    initStore.vizStore = vs;
+}
+
+export class StoreWrapper extends React.Component<{ keepAlive?: boolean }> {
+    constructor(props: { keepAlive?: boolean }) {
+        super(props)
+        if (props.keepAlive) {
+            rebootGWStore();
         }
-    }, [])
-    return <StoreContext.Provider value={initStore}>
-        { props.children }
-    </StoreContext.Provider>
+    }
+    componentWillUnmount() {
+        if (!this.props.keepAlive) {
+            destroyGWStore();
+        }
+    }
+    render() {
+        return <StoreContext.Provider value={initStore}>
+            { this.props.children }
+        </StoreContext.Provider>
+    }
 }
 
 export function useGlobalStore() {
