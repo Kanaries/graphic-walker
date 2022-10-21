@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -10,7 +10,8 @@
     "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "license": "AGPL",
   "main": "./dist/graphic-walker.umd.js",
@@ -26,7 +27,8 @@
     }
   },
   "prettier": {
-    "tabWidth": 4
+    "tabWidth": 4,
+    "printWidth": 120
   },
   "types": "./dist/index.d.ts",
   "dependencies": {

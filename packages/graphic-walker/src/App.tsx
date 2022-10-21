@@ -31,6 +31,7 @@ export interface EditorProps {
 	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
+	keepAlive?: boolean;
 }
 
 const App: React.FC<EditorProps> = props => {
