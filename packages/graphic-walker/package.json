@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -34,7 +34,6 @@
   "dependencies": {
     "@heroicons/react": "^2.0.8",
     "@kanaries/web-data-loader": "0.1.5",
-    "@types/styled-components": "^5.1.26",
     "autoprefixer": "^10.3.5",
     "i18next": "^21.9.1",
     "i18next-browser-languagedetector": "^6.1.5",
@@ -62,6 +61,7 @@
     "@types/react": "^17.x",
     "@types/react-beautiful-dnd": "^13.1.2",
     "@types/react-dom": "^17.x",
+    "@types/styled-components": "^5.1.26",
     "@types/uuid": "^8.3.1",
     "@vitejs/plugin-react-refresh": "^1.3.6",
     "typescript": "^4.3.2",
