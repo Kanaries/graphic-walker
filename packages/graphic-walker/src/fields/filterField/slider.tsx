@@ -79,9 +79,9 @@ const SliderSlice = styled.div({
 
 
 const nicer = (range: readonly [number, number], value: number): string => {
-    const precision = /(\.\d*)$/.exec(((range[1] - range[0]) / 1000).toString())![0].length;
+    const precision = /(\.\d*)$/.exec(((range[1] - range[0]) / 1000).toString())?.[0].length;
     
-    return value.toFixed(precision).replace(/\.?0+$/, '');
+    return precision === undefined ? `${value}` : value.toFixed(precision).replace(/\.?0+$/, '');
 };
 
 interface SliderProps {

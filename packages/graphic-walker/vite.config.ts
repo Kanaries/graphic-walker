@@ -2,6 +2,11 @@ import { defineConfig } from 'vite'
 import path from 'path';
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import typescript from '@rollup/plugin-typescript'
+import { peerDependencies } from './package.json'
+
+
+// @see https://styled-components.com/docs/faqs#marking-styledcomponents-as-external-in-your-package-dependencies
+const modulesNotToBundle = Object.keys(peerDependencies);
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -20,7 +25,7 @@ export default defineConfig({
     }
   ],
   resolve: {
-    dedupe: ['react', 'react-dom'],
+    dedupe: modulesNotToBundle,
   },
   build: {
     lib: {
@@ -29,8 +34,14 @@ export default defineConfig({
       fileName: (format) => `graphic-walker.${format}.js`
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
-      
+      external: modulesNotToBundle,
+      output: {
+        globals: {
+          'react': 'React',
+          'react-dom': 'ReactDOM',
+          'styled-components': 'styled',
+        },
+      },
     },
     minify: 'esbuild',
     sourcemap: true,
