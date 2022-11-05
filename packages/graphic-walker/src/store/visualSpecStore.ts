@@ -452,6 +452,7 @@ export class VizSpecStore {
                 analyticType: 'dimension',
             };
             encodings.dimensions.push(binField);
+            this.commonStore.binnedFields.set(binField.fid, originField.fid);
             this.commonStore.currentDataset.dataSource = makeBinField(this.commonStore.currentDataset.dataSource, originField.fid, binField.fid)
         });
     }

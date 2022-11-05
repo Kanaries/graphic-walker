@@ -9,6 +9,8 @@ export class CommonStore {
     public dsIndex: number = 0;
     public tmpDSName: string = '';
     public tmpDSRawFields: IMutField[] = [];
+    /** binField.fid -> originField.fid */
+    public binnedFields = new Map<string, string>();
     public tmpDataSource: IRow[] = [];
     public showDSPanel: boolean = false;
     public showInsightBoard: boolean = false;
@@ -21,7 +23,8 @@ export class CommonStore {
         makeAutoObservable(this, {
             dataSources: observable.ref,
             tmpDataSource: observable.ref,
-            filters: observable.ref
+            filters: observable.ref,
+            binnedFields: false,
         });
     }
     public get currentDataset (): DataSet {

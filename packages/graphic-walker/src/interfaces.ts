@@ -152,3 +152,36 @@ export interface IVisSpec {
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }
+
+type IFilter = {
+    fid: string;
+    disable?: boolean;
+    type: 'set';
+    values: any[];
+} | {
+    fid: string;
+    disable?: boolean;
+    type: 'range';
+    range: [number, number];
+};
+
+interface IFieldEncode {
+    field?: string;
+    title?: string;
+    type?: ISemanticType;
+    aggregate?: string;
+    bin?: boolean;
+    scale?: any;
+    stack?: any;
+}
+
+export interface ViewContentEntry {
+    fields: IField[];
+    filters: IFilter[];
+    encodes: IFieldEncode[];
+}
+
+export type ViewContentChangeEvent = {
+    dataName: string;
+    entry: ViewContentEntry;
+};

@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { LightBulbIcon } from '@heroicons/react/24/outline'
 import { toJS } from 'mobx';
 import { useTranslation } from 'react-i18next';
-import { IMutField, IRow } from './interfaces';
+import { IMutField, IRow, ViewContentEntry } from './interfaces';
 import VisualSettings from './visualSettings';
 import { Container, NestContainer } from './components/container';
 import ClickMenu from './components/clickMenu';
@@ -20,6 +20,7 @@ import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import Menubar from './visualSettings/menubar';
 import FilterField from './fields/filterField';
+import { fromViewData } from './utils/viewContent';
 import "tailwindcss/tailwind.css"
 import './index.css'
 
@@ -32,10 +33,11 @@ export interface EditorProps {
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean;
+	onViewContentChange?: (dataName: string, entry: ViewContentEntry) => void;
 }
 
 const App: React.FC<EditorProps> = props => {
-	const { dataSource = [], rawFields = [], spec, i18nLang = 'en-US', i18nResources, hideDataSourceConfig } = props;
+	const { dataSource = [], rawFields = [], spec, i18nLang = 'en-US', i18nResources, hideDataSourceConfig, onViewContentChange } = props;
 	const { commonStore, vizStore } = useGlobalStore();
 	const [insightReady, setInsightReady] = useState<boolean>(true);
 
@@ -87,6 +89,24 @@ const App: React.FC<EditorProps> = props => {
 			destroyWorker();
 		}
 	}, [currentDataset, spec]);
+
+	// fire callback
+	const { draggableFieldState, visualConfig: { defaultAggregated, stack } } = vizStore;
+	useEffect(() => {
+		if (onViewContentChange) {
+			const entry = fromViewData(
+				currentDataset.rawFields,
+				commonStore.binnedFields,
+				draggableFieldState,
+				defaultAggregated,
+				stack,
+			);
+			onViewContentChange(
+				currentDataset.name,
+				entry,
+			);
+		}
+	}, [commonStore, currentDataset, draggableFieldState, onViewContentChange, defaultAggregated, stack]);
 
 	return (
 		<div className="App">
