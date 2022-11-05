@@ -28,12 +28,13 @@ const ReactiveRenderer: React.FC = props => {
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
     
-    const onGeomClick = useCallback((values: any, e: any) => {
-        runInAction(() => {
-            commonStore.showEmbededMenu([e.pageX, e.pageY])
-            commonStore.setFilters(values);
-        })
-    }, [])
+    // TODO: find a better place for this feature s.v.p.
+    // const __onImpossibleInteractionForDataInterpretation = useCallback((values: any, e: any) => {
+    //     runInAction(() => {
+    //         commonStore.showEmbededMenu([e.pageX, e.pageY])
+    //         commonStore.setFilters(values);
+    //     })
+    // }, [])
 
     // apply filters
     const { dataSource } = currentDataset;
@@ -93,10 +94,12 @@ const ReactiveRenderer: React.FC = props => {
         shape={shape[0]}
         opacity={opacity[0]}
         size={sizeChannel[0]}
-        onGeomClick={onGeomClick}
-        showActions={showActions}
+        showActions={showActions || true}
         width={size.width - 12 * 4}
         height={size.height - 12 * 4}
+        // TODO: configurable
+        selectEncoding="none"
+        brushEncoding="default"
     />
     </Resizable>
 }

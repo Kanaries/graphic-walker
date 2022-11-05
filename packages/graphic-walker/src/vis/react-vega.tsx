@@ -36,6 +36,8 @@ interface ReactVegaProps {
   width: number;
   height: number;
   onGeomClick?: (values: any, e: any) => void
+  selectEncoding: SingleViewProps['selectEncoding'];
+  brushEncoding: SingleViewProps['brushEncoding'];
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -59,6 +61,9 @@ const geomClick$ = selection$.pipe(
 function getFieldType(field: IViewField): 'quantitative' | 'nominal' | 'ordinal' | 'temporal' {
   return field.semanticType
 }
+const BRUSH_SIGNAL_NAME = "__gw_brush__";
+const POINT_SIGNAL_NAME = "__gw_point__";
+
 interface SingleViewProps {
   x: IViewField;
   y: IViewField;
@@ -75,6 +80,8 @@ interface SingleViewProps {
   defaultAggregated: boolean;
   stack: IStackMode;
   geomType: string;
+  selectEncoding: 'default' | 'none';
+  brushEncoding: 'x' | 'y' | 'default' | 'none';
 }
 
 function availableChannels (geomType: string): Set<string> {
@@ -163,7 +170,9 @@ function getSingleView(props: SingleViewProps) {
     yOffset,
     defaultAggregated,
     stack,
-    geomType
+    geomType,
+    selectEncoding,
+    brushEncoding,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
@@ -179,15 +188,97 @@ function getSingleView(props: SingleViewProps) {
     channelAggregate(encoding, fields);
   }
   channelStack(encoding, stack);
-  const spec = {
-    mark: {
-      type: markType,
-      opacity: 0.96,
-      tooltip: true
-    },
-    encoding
+  if (brushEncoding === 'none' && selectEncoding === 'none') {
+    return {
+      mark: {
+        type: markType,
+        opacity: 0.96,
+        tooltip: true
+      },
+      encoding
+    };
+  }
+  const mark = {
+    type: markType,
+    opacity: 0.96,
+    tooltip: true
   };
-  return spec;
+  const multipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
+    return Boolean(channel.aggregate);
+  });
+  if (multipleLayers) {
+    return {
+      layer: [
+        {
+          params: [
+            {
+              name: BRUSH_SIGNAL_NAME,
+              select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+            },
+          ],
+          mark,
+          encoding: {
+            ...encoding,
+            color: 'color' in encoding ? {
+              condition: {
+                ...encoding.color,
+                test: 'false',
+              },
+              value: '#8884',
+            } : {
+              value: '#8884',
+            },
+          },
+        },
+        {
+          transform: [{ filter: { param: BRUSH_SIGNAL_NAME }}],
+          mark,
+          encoding: {
+            ...encoding,
+            color: encoding.color ?? { value: 'steelblue' },
+          },
+        },
+      ],
+    };
+  } else if (brushEncoding !== 'none') {
+    return {
+      params: [
+        {
+          name: BRUSH_SIGNAL_NAME,
+          select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+        },
+      ],
+      mark,
+      encoding: {
+        ...encoding,
+        color: {
+          condition: {
+            ...encoding.color,
+            param: BRUSH_SIGNAL_NAME,
+          },
+          value: '#8884',
+        },
+      },
+    };
+  }
+  return {
+    params: [
+      {
+        name: POINT_SIGNAL_NAME,
+        select: { type: 'point' },
+      },
+    ],
+    mark,
+    encoding: {
+      ...encoding,
+      color: {
+        condition: {
+          param: POINT_SIGNAL_NAME,
+        },
+        value: '#8884',
+      },
+    },
+  };
 }
 const ReactVega: React.FC<ReactVegaProps> = props => {
   const {
@@ -208,7 +299,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     interactiveScale,
     layoutMode,
     width,
-    height
+    height,
+    selectEncoding,
+    brushEncoding,
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
@@ -295,14 +388,30 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         yOffset: NULL_FIELD,
         defaultAggregated: defaultAggregate,
         stack,
-        geomType
+        geomType,
+        selectEncoding,
+        brushEncoding,
       });
-      // if (layoutMode === 'fixed') {
-      //   spec.width = 800;
-      //   spec.height = 600;
-      // }
+      // console.log('!!!', singleView, { ...spec, ...singleView })
+      if (layoutMode === 'fixed') {
+        spec.width = 800;
+        spec.height = 600;
+      }
       spec.mark = singleView.mark;
-      spec.encoding = singleView.encoding;
+      if ('encoding' in singleView) {
+        spec.encoding = singleView.encoding;
+      }
+      if ('layer' in singleView) {
+        if ('params' in spec) {
+          const basicParams = spec['params'];
+          delete spec['params'];
+          singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+        }
+        spec.layer = singleView.layer;
+      } else if ('params' in singleView) {
+        spec.params.push(...singleView.params!);
+      }
+      // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
           try {
@@ -340,7 +449,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
             yOffset: NULL_FIELD,
             defaultAggregated: defaultAggregate,
             stack,
-            geomType
+            geomType,
+            selectEncoding,
+            brushEncoding,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           const ans = { ...spec, ...singleView }
@@ -384,7 +495,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     interactiveScale,
     layoutMode,
     width,
-    height
+    height,
+    selectEncoding,
+    brushEncoding,
   ]);
 
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
