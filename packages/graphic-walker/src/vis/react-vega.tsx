@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import embed from 'vega-embed';
-import { Subject } from 'rxjs'
+import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import { ScenegraphEvent } from 'vega';
 import { ISemanticType } from 'visual-insights';
@@ -61,8 +61,16 @@ const geomClick$ = selection$.pipe(
 function getFieldType(field: IViewField): 'quantitative' | 'nominal' | 'ordinal' | 'temporal' {
   return field.semanticType
 }
+
 const BRUSH_SIGNAL_NAME = "__gw_brush__";
 const POINT_SIGNAL_NAME = "__gw_point__";
+
+interface ParamStoreEntry {
+  signal: typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME;
+  /** 这个标记用于防止循环 */
+  source: number;
+  data: any;
+}
 
 interface SingleViewProps {
   x: IViewField;
@@ -273,6 +281,7 @@ function getSingleView(props: SingleViewProps) {
       ...encoding,
       color: {
         condition: {
+          ...encoding.color,
           param: POINT_SIGNAL_NAME,
         },
         value: '#8884',
@@ -432,8 +441,18 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         spec.height = Math.floor(height / rowRepeatFields.length) - 5;
         spec.autosize = 'fit'
       }
+      const combinedParamStore$ = new Subject<ParamStoreEntry>();
+      const throttledParamStore$ = combinedParamStore$.pipe(
+        op.throttleTime(Math.log1p(dataSource.length) * rowRepeatFields.length * colRepeatFields.length)
+      );
+      const subscriptions: Subscription[] = [];
+      const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
+        subscriptions.push(throttledParamStore$.subscribe(cb));
+      };
+      let index = 0;
       for (let i = 0; i < rowRepeatFields.length; i++) {
-        for (let j = 0; j < colRepeatFields.length; j++) {
+        for (let j = 0; j < colRepeatFields.length; j++, index++) {
+          const sourceId = index;
           const singleView = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
@@ -454,9 +473,64 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
             brushEncoding,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
-          const ans = { ...spec, ...singleView }
+          let commonSpec = { ...spec };
+          if ('layer' in singleView) {
+            if ('params' in commonSpec) {
+              const { params: basicParams, ...spec } = commonSpec;
+              commonSpec = spec;
+              singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+            }
+            commonSpec.layer = singleView.layer;
+          } else if ('params' in singleView) {
+            commonSpec.params = [...commonSpec.params, ...singleView.params!];
+          }
+          const ans = { ...commonSpec, ...singleView }
+          if ('params' in commonSpec) {
+            ans.params = commonSpec.params;
+          }
+          // console.log(JSON.stringify(ans, undefined, 2));
           if (node) {
             embed(node, ans, { mode: 'vega-lite', actions: showActions }).then(res => {
+              // 这种 case 下，我们来考虑联动的 params
+              // vega 使用 Data 来维护 params 的状态，只需要打通这些状态就可以实现联动
+              const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
+                name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
+              ).map(name => name.replace(/_store$/, ''));
+              try {
+                for (const param of paramStores) {
+                  let noBroadcasting = false;
+                  // 发出
+                  res.view.addSignalListener(param, name => {
+                    if (noBroadcasting) {
+                      noBroadcasting = false;
+                      return;
+                    }
+                    if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
+                      const data = res.view.getState().data?.[`${name}_store`];
+                      combinedParamStore$.next({
+                        signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
+                        source: sourceId,
+                        data: data ?? null,
+                      });
+                    }
+                  });
+                  // 订阅
+                  subscribe(entry => {
+                    if (entry.source === sourceId || !entry.data) {
+                      return;
+                    }
+                    // 防止被动更新触发广播
+                    noBroadcasting = true;
+                    res.view.setState({
+                      data: {
+                        [`${entry.signal}_store`]: entry.data,
+                      },
+                    });
+                  });
+                }
+              } catch (error) {
+                console.warn('Crossing filter failed', error);
+              }
               try {
                 res.view.addEventListener('click', (e) => {
                   click$.next(e);
@@ -471,6 +545,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
           }
         }
       }
+      return () => {
+        subscriptions.forEach(sub => sub.unsubscribe());
+      };
     }
 
   }, [

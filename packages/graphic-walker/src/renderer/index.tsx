@@ -98,8 +98,8 @@ const ReactiveRenderer: React.FC = props => {
         width={size.width - 12 * 4}
         height={size.height - 12 * 4}
         // TODO: configurable
-        selectEncoding="none"
-        brushEncoding="default"
+        selectEncoding="default"
+        brushEncoding="none"
     />
     </Resizable>
 }
