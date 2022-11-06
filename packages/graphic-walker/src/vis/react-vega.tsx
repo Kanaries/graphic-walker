@@ -401,11 +401,10 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         selectEncoding,
         brushEncoding,
       });
-      // console.log('!!!', singleView, { ...spec, ...singleView })
-      if (layoutMode === 'fixed') {
-        spec.width = 800;
-        spec.height = 600;
-      }
+      // if (layoutMode === 'fixed') {
+      //   spec.width = 800;
+      //   spec.height = 600;
+      // }
       spec.mark = singleView.mark;
       if ('encoding' in singleView) {
         spec.encoding = singleView.encoding;
