@@ -144,6 +144,11 @@ export interface IVisualConfig {
         width: number;
         height: number;
     }
+    exploration: {
+        mode: 'none' | 'brush' | 'point';
+        /** works when mode is 'brush' */
+        brushDirection: 'default' | 'x' | 'y';
+    };
 }
 
 export interface IVisSpec {

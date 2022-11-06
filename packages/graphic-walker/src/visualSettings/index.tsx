@@ -6,7 +6,7 @@ import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { LiteForm } from '../components/liteForm';
 import SizeSetting from '../components/sizeSetting';
-import { CHART_LAYOUT_TYPE, GEMO_TYPES, STACK_MODE } from '../config';
+import { BRUSH_DIRECTIONS, CHART_LAYOUT_TYPE, EXPLORATION_TYPES, GEMO_TYPES, STACK_MODE } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode } from '../interfaces';
 
@@ -225,6 +225,68 @@ const VisualSettings: React.FC = () => {
                 >
                     {t('size')}
                 </label>
+            </div>
+            <div className="item">
+                <label
+                    id="dropdown:exploration_mode:label"
+                    htmlFor="dropdown:exploration_mode"
+                >
+                    {tGlobal(`constant.exploration_mode.__enum__`)}
+                </label>
+                <select
+                    className="border border-gray-500 rounded-sm text-xs pt-0.5 pb-0.5 pl-2 pr-2 cursor-pointer"
+                    id="dropdown:exploration_mode"
+                    aria-describedby="dropdown:exploration_mode:label"
+                    value={visualConfig.exploration.mode}
+                    onChange={e => {
+                        vizStore.setExploration({
+                            mode: e.target.value as (typeof EXPLORATION_TYPES)[number]
+                        });
+                    }}
+                >
+                    {EXPLORATION_TYPES.map(g => (
+                        <option
+                            key={g}
+                            value={g}
+                            className="cursor-pointer"
+                            aria-selected={visualConfig.exploration.mode === g}
+                        >
+                            {tGlobal(`constant.exploration_mode.${g}`)}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="item" style={{ opacity: visualConfig.exploration.mode !== 'brush' ? 0.3 : undefined }}>
+                <label
+                    id="dropdown:brush_mode:label"
+                    htmlFor="dropdown:brush_mode"
+                >
+                    {tGlobal(`constant.brush_mode.__enum__`)}
+                </label>
+                <select
+                    className="border border-gray-500 rounded-sm text-xs pt-0.5 pb-0.5 pl-2 pr-2 cursor-pointer"
+                    id="dropdown:brush_mode"
+                    aria-describedby="dropdown:brush_mode:label"
+                    disabled={visualConfig.exploration.mode !== 'brush'}
+                    aria-disabled={visualConfig.exploration.mode !== 'brush'}
+                    value={visualConfig.exploration.brushDirection}
+                    onChange={e => {
+                        vizStore.setExploration({
+                            brushDirection: e.target.value as (typeof BRUSH_DIRECTIONS)[number]
+                        });
+                    }}
+                >
+                    {BRUSH_DIRECTIONS.map(g => (
+                        <option
+                            key={g}
+                            value={g}
+                            className="cursor-pointer"
+                            aria-selected={visualConfig.exploration.brushDirection === g}
+                        >
+                            {tGlobal(`constant.brush_mode.${g}`)}
+                        </option>
+                    ))}
+                </select>
             </div>
             <div className="item">
                 <input

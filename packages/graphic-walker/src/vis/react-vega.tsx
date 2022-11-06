@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import embed from 'vega-embed';
-import { Subject } from 'rxjs'
+import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import { ScenegraphEvent } from 'vega';
 import { ISemanticType } from 'visual-insights';
@@ -36,6 +36,8 @@ interface ReactVegaProps {
   width: number;
   height: number;
   onGeomClick?: (values: any, e: any) => void
+  selectEncoding: SingleViewProps['selectEncoding'];
+  brushEncoding: SingleViewProps['brushEncoding'];
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -59,6 +61,17 @@ const geomClick$ = selection$.pipe(
 function getFieldType(field: IViewField): 'quantitative' | 'nominal' | 'ordinal' | 'temporal' {
   return field.semanticType
 }
+
+const BRUSH_SIGNAL_NAME = "__gw_brush__";
+const POINT_SIGNAL_NAME = "__gw_point__";
+
+interface ParamStoreEntry {
+  signal: typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME;
+  /** 这个标记用于防止循环 */
+  source: number;
+  data: any;
+}
+
 interface SingleViewProps {
   x: IViewField;
   y: IViewField;
@@ -75,6 +88,8 @@ interface SingleViewProps {
   defaultAggregated: boolean;
   stack: IStackMode;
   geomType: string;
+  selectEncoding: 'default' | 'none';
+  brushEncoding: 'x' | 'y' | 'default' | 'none';
 }
 
 function availableChannels (geomType: string): Set<string> {
@@ -163,7 +178,9 @@ function getSingleView(props: SingleViewProps) {
     yOffset,
     defaultAggregated,
     stack,
-    geomType
+    geomType,
+    selectEncoding,
+    brushEncoding,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
@@ -179,15 +196,98 @@ function getSingleView(props: SingleViewProps) {
     channelAggregate(encoding, fields);
   }
   channelStack(encoding, stack);
-  const spec = {
-    mark: {
-      type: markType,
-      opacity: 0.96,
-      tooltip: true
-    },
-    encoding
+  if (brushEncoding === 'none' && selectEncoding === 'none') {
+    return {
+      mark: {
+        type: markType,
+        opacity: 0.96,
+        tooltip: true
+      },
+      encoding
+    };
+  }
+  const mark = {
+    type: markType,
+    opacity: 0.96,
+    tooltip: true
   };
-  return spec;
+  const multipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
+    return Boolean(channel.aggregate);
+  });
+  if (multipleLayers) {
+    return {
+      layer: [
+        {
+          params: [
+            {
+              name: BRUSH_SIGNAL_NAME,
+              select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+            },
+          ],
+          mark,
+          encoding: {
+            ...encoding,
+            color: 'color' in encoding ? {
+              condition: {
+                ...encoding.color,
+                test: 'false',
+              },
+              value: '#8882',
+            } : {
+              value: '#8882',
+            },
+          },
+        },
+        {
+          transform: [{ filter: { param: BRUSH_SIGNAL_NAME }}],
+          mark,
+          encoding: {
+            ...encoding,
+            color: encoding.color ?? { value: 'steelblue' },
+          },
+        },
+      ],
+    };
+  } else if (brushEncoding !== 'none') {
+    return {
+      params: [
+        {
+          name: BRUSH_SIGNAL_NAME,
+          select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+        },
+      ],
+      mark,
+      encoding: {
+        ...encoding,
+        color: {
+          condition: {
+            ...encoding.color,
+            param: BRUSH_SIGNAL_NAME,
+          },
+          value: '#8882',
+        },
+      },
+    };
+  }
+  return {
+    params: [
+      {
+        name: POINT_SIGNAL_NAME,
+        select: { type: 'point' },
+      },
+    ],
+    mark,
+    encoding: {
+      ...encoding,
+      color: {
+        condition: {
+          ...encoding.color,
+          param: POINT_SIGNAL_NAME,
+        },
+        value: '#8882',
+      },
+    },
+  };
 }
 const ReactVega: React.FC<ReactVegaProps> = props => {
   const {
@@ -208,7 +308,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     interactiveScale,
     layoutMode,
     width,
-    height
+    height,
+    selectEncoding,
+    brushEncoding,
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
@@ -222,7 +324,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     return () => {
       clickSub.unsubscribe();
     }
-  }, []);
+  }, [onGeomClick]);
   const rowDims = useMemo(() => rows.filter(f => f.analyticType === 'dimension'), [rows]);
   const colDims = useMemo(() => columns.filter(f => f.analyticType === 'dimension'), [columns]);
   const rowMeas = useMemo(() => rows.filter(f => f.analyticType === 'measure'), [rows]);
@@ -295,14 +397,30 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         yOffset: NULL_FIELD,
         defaultAggregated: defaultAggregate,
         stack,
-        geomType
+        geomType,
+        selectEncoding,
+        brushEncoding,
       });
-      // if (layoutMode === 'fixed') {
-      //   spec.width = 800;
-      //   spec.height = 600;
-      // }
+      // console.log('!!!', singleView, { ...spec, ...singleView })
+      if (layoutMode === 'fixed') {
+        spec.width = 800;
+        spec.height = 600;
+      }
       spec.mark = singleView.mark;
-      spec.encoding = singleView.encoding;
+      if ('encoding' in singleView) {
+        spec.encoding = singleView.encoding;
+      }
+      if ('layer' in singleView) {
+        if ('params' in spec) {
+          const basicParams = spec['params'];
+          delete spec['params'];
+          singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+        }
+        spec.layer = singleView.layer;
+      } else if ('params' in singleView) {
+        spec.params.push(...singleView.params!);
+      }
+      // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
           try {
@@ -323,8 +441,18 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         spec.height = Math.floor(height / rowRepeatFields.length) - 5;
         spec.autosize = 'fit'
       }
+      const combinedParamStore$ = new Subject<ParamStoreEntry>();
+      const throttledParamStore$ = combinedParamStore$.pipe(
+        op.throttleTime(Math.log1p(dataSource.length) * rowRepeatFields.length * colRepeatFields.length)
+      );
+      const subscriptions: Subscription[] = [];
+      const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
+        subscriptions.push(throttledParamStore$.subscribe(cb));
+      };
+      let index = 0;
       for (let i = 0; i < rowRepeatFields.length; i++) {
-        for (let j = 0; j < colRepeatFields.length; j++) {
+        for (let j = 0; j < colRepeatFields.length; j++, index++) {
+          const sourceId = index;
           const singleView = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
@@ -340,12 +468,69 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
             yOffset: NULL_FIELD,
             defaultAggregated: defaultAggregate,
             stack,
-            geomType
+            geomType,
+            selectEncoding,
+            brushEncoding,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
-          const ans = { ...spec, ...singleView }
+          let commonSpec = { ...spec };
+          if ('layer' in singleView) {
+            if ('params' in commonSpec) {
+              const { params: basicParams, ...spec } = commonSpec;
+              commonSpec = spec;
+              singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+            }
+            commonSpec.layer = singleView.layer;
+          } else if ('params' in singleView) {
+            commonSpec.params = [...commonSpec.params, ...singleView.params!];
+          }
+          const ans = { ...commonSpec, ...singleView }
+          if ('params' in commonSpec) {
+            ans.params = commonSpec.params;
+          }
+          // console.log(JSON.stringify(ans, undefined, 2));
           if (node) {
             embed(node, ans, { mode: 'vega-lite', actions: showActions }).then(res => {
+              // 这种 case 下，我们来考虑联动的 params
+              // vega 使用 Data 来维护 params 的状态，只需要打通这些状态就可以实现联动
+              const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
+                name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
+              ).map(name => name.replace(/_store$/, ''));
+              try {
+                for (const param of paramStores) {
+                  let noBroadcasting = false;
+                  // 发出
+                  res.view.addSignalListener(param, name => {
+                    if (noBroadcasting) {
+                      noBroadcasting = false;
+                      return;
+                    }
+                    if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
+                      const data = res.view.getState().data?.[`${name}_store`];
+                      combinedParamStore$.next({
+                        signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
+                        source: sourceId,
+                        data: data ?? null,
+                      });
+                    }
+                  });
+                  // 订阅
+                  subscribe(entry => {
+                    if (entry.source === sourceId || !entry.data) {
+                      return;
+                    }
+                    // 防止被动更新触发广播
+                    noBroadcasting = true;
+                    res.view.setState({
+                      data: {
+                        [`${entry.signal}_store`]: entry.data,
+                      },
+                    });
+                  });
+                }
+              } catch (error) {
+                console.warn('Crossing filter failed', error);
+              }
               try {
                 res.view.addEventListener('click', (e) => {
                   click$.next(e);
@@ -360,6 +545,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
           }
         }
       }
+      return () => {
+        subscriptions.forEach(sub => sub.unsubscribe());
+      };
     }
 
   }, [
@@ -384,7 +572,9 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     interactiveScale,
     layoutMode,
     width,
-    height
+    height,
+    selectEncoding,
+    brushEncoding,
   ]);
 
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
