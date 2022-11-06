@@ -24,6 +24,18 @@
             "auto": "自动",
             "fixed": "固定"
         },
+        "exploration_mode": {
+            "__enum__": "探索交互",
+            "none": "关",
+            "brush": "范围",
+            "point": "目标"
+        },
+        "brush_mode": {
+            "__enum__": "框选方向",
+            "default": "所有",
+            "x": "仅 X 轴",
+            "y": "仅 Y 轴"
+        },
         "stack_mode": {
             "__enum__": "堆叠模式",
             "none": "关闭",
