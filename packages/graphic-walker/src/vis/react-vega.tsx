@@ -232,9 +232,9 @@ function getSingleView(props: SingleViewProps) {
                 ...encoding.color,
                 test: 'false',
               },
-              value: '#8884',
+              value: '#8882',
             } : {
-              value: '#8884',
+              value: '#8882',
             },
           },
         },
@@ -264,7 +264,7 @@ function getSingleView(props: SingleViewProps) {
             ...encoding.color,
             param: BRUSH_SIGNAL_NAME,
           },
-          value: '#8884',
+          value: '#8882',
         },
       },
     };
@@ -284,7 +284,7 @@ function getSingleView(props: SingleViewProps) {
           ...encoding.color,
           param: POINT_SIGNAL_NAME,
         },
-        value: '#8884',
+        value: '#8882',
       },
     },
   };
@@ -324,7 +324,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     return () => {
       clickSub.unsubscribe();
     }
-  }, []);
+  }, [onGeomClick]);
   const rowDims = useMemo(() => rows.filter(f => f.analyticType === 'dimension'), [rows]);
   const colDims = useMemo(() => columns.filter(f => f.analyticType === 'dimension'), [columns]);
   const rowMeas = useMemo(() => rows.filter(f => f.analyticType === 'measure'), [rows]);

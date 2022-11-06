@@ -10,7 +10,7 @@ import ReactVega from '../vis/react-vega';
 const ReactiveRenderer: React.FC = props => {
     const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration } = visualConfig;
     const { currentDataset } = commonStore;
     const { filters } = draggableFieldState;
 
@@ -27,14 +27,17 @@ const ReactiveRenderer: React.FC = props => {
     const colLeftFacetFields = columns.slice(0, -1).filter(f => f.analyticType === 'dimension');
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
+
+    const shouldTriggerMenu = exploration.mode === 'none';
     
-    // TODO: find a better place for this feature s.v.p.
-    // const __onImpossibleInteractionForDataInterpretation = useCallback((values: any, e: any) => {
-    //     runInAction(() => {
-    //         commonStore.showEmbededMenu([e.pageX, e.pageY])
-    //         commonStore.setFilters(values);
-    //     })
-    // }, [])
+    const handleGeomClick = useCallback((values: any, e: any) => {
+        if (shouldTriggerMenu) {
+            runInAction(() => {
+                commonStore.showEmbededMenu([e.pageX, e.pageY])
+                commonStore.setFilters(values);
+            });
+        }
+    }, [shouldTriggerMenu]);
 
     // apply filters
     const { dataSource } = currentDataset;
@@ -94,12 +97,12 @@ const ReactiveRenderer: React.FC = props => {
         shape={shape[0]}
         opacity={opacity[0]}
         size={sizeChannel[0]}
-        showActions={showActions || true}
+        showActions={showActions}
         width={size.width - 12 * 4}
         height={size.height - 12 * 4}
-        // TODO: configurable
-        selectEncoding="default"
-        brushEncoding="none"
+        brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
+        selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}
+        onGeomClick={handleGeomClick}
     />
     </Resizable>
 }

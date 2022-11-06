@@ -2,7 +2,7 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from 'immer';
 import { v4 as uuidv4 } from 'uuid';
 import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisualConfig } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
@@ -69,12 +69,26 @@ function initVisualConfig (): IVisualConfig {
             mode: 'auto',
             width: 320,
             height: 200
-        }
+        },
+        exploration: {
+            mode: 'brush',
+            brushDirection: 'default',
+        },
     }
 }
 
 type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
+};
+
+const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>['specList']): IVisSpec[] => {
+    return backwards.map(content => ({
+        ...content,
+        config: {
+            ...initVisualConfig(),
+            ...content.config,
+        },
+    }));
 };
 
 
@@ -363,6 +377,16 @@ export class VizSpecStore {
             config.size.height = height;
         });
     }
+    public setExploration(value: Partial<IVisualConfig['exploration']>) {
+        this.useMutable(({ config }) => {
+            if (value.mode) {
+                config.exploration.mode = value.mode;
+            }
+            if (value.brushDirection) {
+                config.exploration.brushDirection = value.brushDirection;
+            }
+        });
+    }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
         if (MetaFieldKeys.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
@@ -580,7 +604,8 @@ export class VizSpecStore {
         this.commonStore.datasets = content.datasets;
         this.commonStore.dataSources = content.dataSources;
         this.commonStore.dsIndex = Math.max(content.datasets.length - 1, 0);
-        this.visList = parseGWPureSpec(content.specList)
+        // 补上初始化新版本特性
+        this.visList = parseGWPureSpec(forwardVisualConfigs(content.specList));
         this.visIndex = 0;
     }
 }
