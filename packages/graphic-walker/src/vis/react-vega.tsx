@@ -232,9 +232,9 @@ function getSingleView(props: SingleViewProps) {
                 ...encoding.color,
                 test: 'false',
               },
-              value: '#8882',
+              value: '#888',
             } : {
-              value: '#8882',
+              value: '#888',
             },
           },
         },
@@ -264,7 +264,7 @@ function getSingleView(props: SingleViewProps) {
             ...encoding.color,
             param: BRUSH_SIGNAL_NAME,
           },
-          value: '#8882',
+          value: '#888',
         },
       },
     };
@@ -284,7 +284,7 @@ function getSingleView(props: SingleViewProps) {
           ...encoding.color,
           param: POINT_SIGNAL_NAME,
         },
-        value: '#8882',
+        value: '#888',
       },
     },
   };
@@ -442,7 +442,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
       }
       const combinedParamStore$ = new Subject<ParamStoreEntry>();
       const throttledParamStore$ = combinedParamStore$.pipe(
-        op.throttleTime(Math.log1p(dataSource.length) * rowRepeatFields.length * colRepeatFields.length)
+        op.throttleTime(dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length)
       );
       const subscriptions: Subscription[] = [];
       const subscribe = (cb: (entry: ParamStoreEntry) => void) => {

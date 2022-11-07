@@ -97,7 +97,7 @@ const ReactiveRenderer: React.FC = props => {
         shape={shape[0]}
         opacity={opacity[0]}
         size={sizeChannel[0]}
-        showActions={showActions}
+        showActions={showActions || true}
         width={size.width - 12 * 4}
         height={size.height - 12 * 4}
         brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
