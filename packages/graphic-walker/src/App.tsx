@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { LightBulbIcon } from '@heroicons/react/24/outline'
 import { toJS } from 'mobx';
 import { useTranslation } from 'react-i18next';
-import { IMutField, IRow, ViewContentEntry } from './interfaces';
+import { IMutField, IRow, IGWViewData } from './interfaces';
 import VisualSettings from './visualSettings';
 import { Container, NestContainer } from './components/container';
 import ClickMenu from './components/clickMenu';
@@ -33,7 +33,8 @@ export interface EditorProps {
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean;
-	onViewContentChange?: (dataName: string, entry: ViewContentEntry) => void;
+	/** @experimental works when `hideDataSourceConfig` is `false` */
+	onViewContentChange?: (data: IGWViewData) => void;
 }
 
 const App: React.FC<EditorProps> = props => {
@@ -91,22 +92,20 @@ const App: React.FC<EditorProps> = props => {
 	}, [currentDataset, spec]);
 
 	// fire callback
-	const { draggableFieldState, visualConfig: { defaultAggregated, stack } } = vizStore;
+	const { draggableFieldState, visualConfig: { defaultAggregated, stack, geoms } } = vizStore;
 	useEffect(() => {
-		if (onViewContentChange) {
+		if (onViewContentChange && hideDataSourceConfig) {
 			const entry = fromViewData(
 				currentDataset.rawFields,
 				commonStore.binnedFields,
 				draggableFieldState,
 				defaultAggregated,
 				stack,
+				geoms[0],
 			);
-			onViewContentChange(
-				currentDataset.name,
-				entry,
-			);
+			onViewContentChange(entry);
 		}
-	}, [commonStore, currentDataset, draggableFieldState, onViewContentChange, defaultAggregated, stack]);
+	}, [commonStore, currentDataset, draggableFieldState, onViewContentChange, defaultAggregated, stack, hideDataSourceConfig, geoms[0]]);
 
 	return (
 		<div className="App">

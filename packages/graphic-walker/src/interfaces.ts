@@ -1,6 +1,7 @@
 import { StatFuncName } from "visual-insights/build/esm/statistics";
 import { AggFC } from 'cube-core/built/types';
 import { IAnalyticType, IMutField as VIMutField, ISemanticType } from 'visual-insights';
+import type { AnyMark } from "vega-lite/build/src/mark";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -131,23 +132,27 @@ export type IFilterRule = {
 
 
 export type IStackMode = 'none' | 'stack' | 'normalize';
+export type ISortMode = 'none' | 'ascending' | 'descending';
+export type ISizeMode = 'auto' | 'fixed';
+export type IExplorationMode = 'none' | 'brush' | 'point';
+export type IBrushDirection = 'default' | 'x' | 'y';
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms:  string[];        
-    stack: 'none' | 'stack' | 'normalize';
+    stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
-    sorted: 'none' | 'ascending' | 'descending';
+    sorted: ISortMode;
     size: {
-        mode: 'auto' | 'fixed';
+        mode: ISizeMode;
         width: number;
         height: number;
-    }
+    };
     exploration: {
-        mode: 'none' | 'brush' | 'point';
+        mode: IExplorationMode;
         /** works when mode is 'brush' */
-        brushDirection: 'default' | 'x' | 'y';
+        brushDirection: IBrushDirection;
     };
 }
 
@@ -170,23 +175,34 @@ type IFilter = {
     range: [number, number];
 };
 
-interface IFieldEncode {
-    field?: string;
-    title?: string;
-    type?: ISemanticType;
-    aggregate?: string;
-    bin?: boolean;
-    scale?: any;
-    stack?: any;
+export interface IEncodedChannel {
+    field: string;
+    title: string;
+    type: ISemanticType;
+    aggregate?: string | undefined;
+    /**
+     * only applicable for x, y, theta, and radius channels with continuous domains.
+     * @default
+     * /** zero for plots with all of the following conditions are true:
+     * (1) the mark is bar, area, or arc;
+     * (2) the stacked measure channel (x or y) has a linear scale;
+     * (3) At least one of non-position channels mapped to an unaggregated field that is different from x and y.
+     * Otherwise, null by default. *\/
+     * @see https://vega.github.io/vega-lite/docs/stack.html#encoding
+     */
+    stack?: IStackMode | undefined;
+    bin?: boolean | undefined;
+    order?: IViewField['sort'];
 }
 
-export interface ViewContentEntry {
+export type VegaEncodingKey = 'x' | 'y' | 'color' | 'opacity' | 'row' | 'column' | 'size' | 'shape';
+
+export interface IGWViewData {
+    markType?: (AnyMark & string) | undefined;
     fields: IField[];
     filters: IFilter[];
-    encodes: IFieldEncode[];
+    encoding: Partial<Record<
+        VegaEncodingKey,
+        IEncodedChannel | undefined
+    >>;
 }
-
-export type ViewContentChangeEvent = {
-    dataName: string;
-    entry: ViewContentEntry;
-};
