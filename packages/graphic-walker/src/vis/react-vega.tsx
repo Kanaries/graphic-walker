@@ -211,10 +211,10 @@ function getSingleView(props: SingleViewProps) {
     opacity: 0.96,
     tooltip: true
   };
-  const multipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
-    return Boolean(channel.aggregate);
+  const shouldUseMultipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
+    return typeof channel.aggregate === 'string' && /* 这种 case 对应行数 */ typeof channel.field === 'string';
   });
-  if (multipleLayers) {
+  if (shouldUseMultipleLayers) {
     return {
       layer: [
         {
