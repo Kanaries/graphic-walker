@@ -89,6 +89,7 @@ interface SingleViewProps {
   stack: IStackMode;
   geomType: string;
   enableCrossFilter: boolean;
+  asCrossFilterTrigger: boolean;
   selectEncoding: 'default' | 'none';
   brushEncoding: 'x' | 'y' | 'default' | 'none';
 }
@@ -183,6 +184,7 @@ function getSingleView(props: SingleViewProps) {
     selectEncoding,
     brushEncoding,
     enableCrossFilter,
+    asCrossFilterTrigger,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
@@ -307,7 +309,7 @@ function getSingleView(props: SingleViewProps) {
 
   if (brushEncoding !== 'none') {
     return {
-      transform: [
+      transform: asCrossFilterTrigger ? [] : [
         { filter: { param: BRUSH_SIGNAL_NAME } }
       ],
       params: [
@@ -327,6 +329,9 @@ function getSingleView(props: SingleViewProps) {
   }
 
   return {
+    transform: asCrossFilterTrigger ? [] : [
+      { filter: { param: POINT_SIGNAL_NAME } }
+    ],
     params: [
       {
         name: POINT_SIGNAL_NAME,
@@ -334,7 +339,7 @@ function getSingleView(props: SingleViewProps) {
       },
     ],
     mark,
-    encoding: {
+    encoding: asCrossFilterTrigger ? {
       ...encoding,
       color: {
         condition: {
@@ -343,7 +348,7 @@ function getSingleView(props: SingleViewProps) {
         },
         value: '#888',
       },
-    },
+    } : encoding,
   };
 }
 const ReactVega: React.FC<ReactVegaProps> = props => {
@@ -392,8 +397,10 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
   const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
 
+  const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
 
   useEffect(() => {
+    setCrossFilterTriggerIdx(-1);
     setViewPlaceholders(views => {
       const viewNum = Math.max(1, rowRepeatFields.length * colRepeatFields.length)
       const nextViews = new Array(viewNum).fill(null).map((v, i) => views[i] || React.createRef())
@@ -458,6 +465,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         selectEncoding,
         brushEncoding,
         enableCrossFilter: false,
+        asCrossFilterTrigger: false,
       });
       // if (layoutMode === 'fixed') {
       //   spec.width = 800;
@@ -482,8 +490,8 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
       // #[END bad-layer-interaction]
 
       if ('params' in singleView) {
-          spec.params.push(...singleView.params!);
-        }
+        spec.params.push(...singleView.params!);
+      }
       // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
@@ -535,7 +543,8 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
             geomType,
             selectEncoding,
             brushEncoding,
-            enableCrossFilter: true,
+            enableCrossFilter: crossFilterTriggerIdx !== -1,
+            asCrossFilterTrigger: crossFilterTriggerIdx === sourceId,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
@@ -579,10 +588,8 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
                     }
                     if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
                       const data = res.view.getState().data?.[`${name}_store`];
-                      if (name === BRUSH_SIGNAL_NAME) {
-                        res.view.setState({
-                          [`${BRUSH_SIGNAL_NAME}_store`]: null,
-                        });
+                      if (!data || (Array.isArray(data) && data.length === 0)) {
+                        setCrossFilterTriggerIdx(-1);
                       }
                       combinedParamStore$.next({
                         signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
@@ -609,6 +616,11 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
                 console.warn('Crossing filter failed', error);
               }
               try {
+                res.view.addEventListener('mouseover', () => {
+                  if (sourceId !== crossFilterTriggerIdx) {
+                    setCrossFilterTriggerIdx(sourceId);
+                  }
+                });
                 res.view.addEventListener('click', (e) => {
                   click$.next(e);
                 })
@@ -651,6 +663,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     height,
     selectEncoding,
     brushEncoding,
+    crossFilterTriggerIdx,
   ]);
 
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
