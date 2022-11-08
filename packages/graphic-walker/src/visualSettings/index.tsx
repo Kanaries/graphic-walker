@@ -6,9 +6,9 @@ import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { LiteForm } from '../components/liteForm';
 import SizeSetting from '../components/sizeSetting';
-import { BRUSH_DIRECTIONS, CHART_LAYOUT_TYPE, EXPLORATION_TYPES, GEMO_TYPES, STACK_MODE } from '../config';
+import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
 import { useGlobalStore } from '../store';
-import { IStackMode } from '../interfaces';
+import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS } from '../interfaces';
 
 
 export const LiteContainer = styled.div`
@@ -272,7 +272,7 @@ const VisualSettings: React.FC = () => {
                     value={visualConfig.exploration.brushDirection}
                     onChange={e => {
                         vizStore.setExploration({
-                            brushDirection: e.target.value as (typeof BRUSH_DIRECTIONS)[number]
+                            brushDirection: e.target.value as IBrushDirection
                         });
                     }}
                 >
