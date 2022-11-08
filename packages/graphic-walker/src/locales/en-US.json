@@ -30,6 +30,18 @@
             "auto": "Auto",
             "fixed": "Fixed"
         },
+        "exploration_mode": {
+            "__enum__": "Exploration Mode",
+            "none": "Off",
+            "brush": "Brush",
+            "point": "Point"
+        },
+        "brush_mode": {
+            "__enum__": "Brush Direction",
+            "default": "Both",
+            "x": "X-Only",
+            "y": "Y-Only"
+        },
         "draggable_key": {
             "fields": "Fields",
             "columns": "Columns",

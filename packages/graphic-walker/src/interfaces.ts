@@ -129,13 +129,26 @@ export type IFilterRule = {
     value: Set<string | number>;
 };
 
+export const EXPLORATION_TYPES = [
+    'none',
+    'brush',
+    'point',
+] as const;
+
+export const BRUSH_DIRECTIONS = [
+    'default',
+    'x',
+    'y',
+] as const;
 
 export type IStackMode = 'none' | 'stack' | 'normalize';
+export type IExplorationType = (typeof EXPLORATION_TYPES)[number];
+export type IBrushDirection = (typeof BRUSH_DIRECTIONS)[number];
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms:  string[];        
-    stack: 'none' | 'stack' | 'normalize';
+    stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
@@ -144,6 +157,11 @@ export interface IVisualConfig {
         width: number;
         height: number;
     }
+    exploration: {
+        mode: IExplorationType;
+        /** works when mode is 'brush' */
+        brushDirection: IBrushDirection;
+    };
 }
 
 export interface IVisSpec {
