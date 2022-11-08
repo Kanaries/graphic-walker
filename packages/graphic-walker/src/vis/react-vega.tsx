@@ -515,7 +515,11 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
       }
       const combinedParamStore$ = new Subject<ParamStoreEntry>();
       const throttledParamStore$ = combinedParamStore$.pipe(
-        op.throttleTime(dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length)
+        op.throttleTime(
+          dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length,
+          undefined,
+          { leading: false, trailing: true }
+        )
       );
       const subscriptions: Subscription[] = [];
       const subscribe = (cb: (entry: ParamStoreEntry) => void) => {

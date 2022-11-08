@@ -25,18 +25,6 @@ export const CHART_LAYOUT_TYPE: Readonly<string[]> = [
     'fixed',
 ] as const;
 
-export const EXPLORATION_TYPES = [
-    'none',
-    'brush',
-    'point',
-] as const;
-
-export const BRUSH_DIRECTIONS = [
-    'default',
-    'x',
-    'y',
-] as const;
-
 export const COLORS = {
     // tableau style
     // dimension: 'rgb(73, 150, 178)',
