@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
@@ -88,6 +88,7 @@ interface SingleViewProps {
   defaultAggregated: boolean;
   stack: IStackMode;
   geomType: string;
+  enableCrossFilter: boolean;
   selectEncoding: 'default' | 'none';
   brushEncoding: 'x' | 'y' | 'default' | 'none';
 }
@@ -181,6 +182,7 @@ function getSingleView(props: SingleViewProps) {
     geomType,
     selectEncoding,
     brushEncoding,
+    enableCrossFilter,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
@@ -196,7 +198,7 @@ function getSingleView(props: SingleViewProps) {
     channelAggregate(encoding, fields);
   }
   channelStack(encoding, stack);
-  if (brushEncoding === 'none' && selectEncoding === 'none') {
+  if (!enableCrossFilter || brushEncoding === 'none' && selectEncoding === 'none') {
     return {
       mark: {
         type: markType,
@@ -211,64 +213,119 @@ function getSingleView(props: SingleViewProps) {
     opacity: 0.96,
     tooltip: true
   };
-  const multipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
-    return Boolean(channel.aggregate);
-  });
-  if (multipleLayers) {
+
+  // TODO:
+  // 鉴于 Vega 中使用 layer 会导致一些难以覆盖的预期外行为，
+  // 破坏掉引入交互后视图的正确性，
+  // 目前不使用 layer 来实现交互（注掉以下代码）。
+  // 考虑 layer 的目的是 layer + condition 可以用于同时展现“全集”（context）和“选中”两层结构，尤其对于聚合数据有分析帮助；
+  // 同时，不需要关心作为筛选器的是哪一张图。
+  // 现在采用临时方案，区别产生筛选的来源，并对其他图仅借助 transform 展现筛选后的数据。
+  // #[BEGIN bad-layer-interaction]
+  // const shouldUseMultipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
+  //   return typeof channel.aggregate === 'string' && /* 这种 case 对应行数 */ typeof channel.field === 'string';
+  // });
+  // if (shouldUseMultipleLayers) {
+  //   if (['column', 'row'].some(key => key in encoding && encoding[key].length > 0)) {
+  //     // 这种情况 Vega 不能处理，是因为 Vega 不支持在 layer 中使用 column / row channel，
+  //     // 会导致渲染出来的视图无法与不使用交互时的结果不变。
+  //     return {
+  //       params: [
+  //         {
+  //           name: BRUSH_SIGNAL_NAME,
+  //           select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+  //         },
+  //       ],
+  //       mark,
+  //       encoding: {
+  //         ...encoding,
+  //         color: {
+  //           condition: {
+  //             ...encoding.color,
+  //             param: BRUSH_SIGNAL_NAME,
+  //           },
+  //           value: '#888',
+  //         },
+  //       },
+  //     };
+  //   }
+  //   return {
+  //     layer: [
+  //       {
+  //         params: [
+  //           {
+  //             name: BRUSH_SIGNAL_NAME,
+  //             select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+  //           },
+  //         ],
+  //         mark,
+  //         encoding: {
+  //           ...encoding,
+  //           color: 'color' in encoding ? {
+  //             condition: {
+  //               ...encoding.color,
+  //               test: 'false',
+  //             },
+  //             value: '#888',
+  //           } : {
+  //             value: '#888',
+  //           },
+  //         },
+  //       },
+  //       {
+  //         transform: [{ filter: { param: BRUSH_SIGNAL_NAME }}],
+  //         mark,
+  //         encoding: {
+  //           ...encoding,
+  //           color: encoding.color ?? { value: 'steelblue' },
+  //         },
+  //       },
+  //     ],
+  //   };
+  // } else if (brushEncoding !== 'none') {
+  //   return {
+  //     params: [
+  //       {
+  //         name: BRUSH_SIGNAL_NAME,
+  //         select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+  //       },
+  //     ],
+  //     mark,
+  //     encoding: {
+  //       ...encoding,
+  //       color: {
+  //         condition: {
+  //           ...encoding.color,
+  //           param: BRUSH_SIGNAL_NAME,
+  //         },
+  //         value: '#888',
+  //       },
+  //     },
+  //   };
+  // }
+  // #[END bad-layer-interaction]
+
+  if (brushEncoding !== 'none') {
     return {
-      layer: [
-        {
-          params: [
-            {
-              name: BRUSH_SIGNAL_NAME,
-              select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-            },
-          ],
-          mark,
-          encoding: {
-            ...encoding,
-            color: 'color' in encoding ? {
-              condition: {
-                ...encoding.color,
-                test: 'false',
-              },
-              value: '#8882',
-            } : {
-              value: '#8882',
-            },
-          },
-        },
-        {
-          transform: [{ filter: { param: BRUSH_SIGNAL_NAME }}],
-          mark,
-          encoding: {
-            ...encoding,
-            color: encoding.color ?? { value: 'steelblue' },
-          },
-        },
+      transform: [
+        { filter: { param: BRUSH_SIGNAL_NAME } }
       ],
-    };
-  } else if (brushEncoding !== 'none') {
-    return {
       params: [
+        // {
+        //   name: BRUSH_SIGNAL_DISPLAY_NAME,
+        //   select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
+        //   on: '__YOU_CANNOT_MODIFY_THIS_SIGNAL__',
+        // },
         {
           name: BRUSH_SIGNAL_NAME,
           select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
         },
       ],
       mark,
-      encoding: {
-        ...encoding,
-        color: {
-          condition: {
-            ...encoding.color,
-            param: BRUSH_SIGNAL_NAME,
-          },
-          value: '#8882',
-        },
-      },
+      encoding,
     };
   }
+
   return {
     params: [
       {
@@ -284,7 +341,7 @@ function getSingleView(props: SingleViewProps) {
           ...encoding.color,
           param: POINT_SIGNAL_NAME,
         },
-        value: '#8882',
+        value: '#888',
       },
     },
   };
@@ -400,26 +457,33 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         geomType,
         selectEncoding,
         brushEncoding,
+        enableCrossFilter: false,
       });
-      // console.log('!!!', singleView, { ...spec, ...singleView })
-      if (layoutMode === 'fixed') {
-        spec.width = 800;
-        spec.height = 600;
-      }
+      // if (layoutMode === 'fixed') {
+      //   spec.width = 800;
+      //   spec.height = 600;
+      // }
       spec.mark = singleView.mark;
       if ('encoding' in singleView) {
         spec.encoding = singleView.encoding;
       }
-      if ('layer' in singleView) {
-        if ('params' in spec) {
-          const basicParams = spec['params'];
-          delete spec['params'];
-          singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+
+      // #[BEGIN bad-layer-interaction]
+      // if ('layer' in singleView) {
+      //   if ('params' in spec) {
+      //     const basicParams = spec['params'];
+      //     delete spec['params'];
+      //     singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+      //   }
+      //   spec.layer = singleView.layer;
+      // } else if ('params' in singleView) {
+      //   spec.params.push(...singleView.params!);
+      // }
+      // #[END bad-layer-interaction]
+
+      if ('params' in singleView) {
+          spec.params.push(...singleView.params!);
         }
-        spec.layer = singleView.layer;
-      } else if ('params' in singleView) {
-        spec.params.push(...singleView.params!);
-      }
       // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
@@ -443,7 +507,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
       }
       const combinedParamStore$ = new Subject<ParamStoreEntry>();
       const throttledParamStore$ = combinedParamStore$.pipe(
-        op.throttleTime(Math.log1p(dataSource.length) * rowRepeatFields.length * colRepeatFields.length)
+        op.throttleTime(dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length)
       );
       const subscriptions: Subscription[] = [];
       const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
@@ -471,17 +535,25 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
             geomType,
             selectEncoding,
             brushEncoding,
+            enableCrossFilter: true,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
-          if ('layer' in singleView) {
-            if ('params' in commonSpec) {
-              const { params: basicParams, ...spec } = commonSpec;
-              commonSpec = spec;
-              singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
-            }
-            commonSpec.layer = singleView.layer;
-          } else if ('params' in singleView) {
+
+          // #[BEGIN bad-layer-interaction]
+          // if ('layer' in singleView) {
+          //   if ('params' in commonSpec) {
+          //     const { params: basicParams, ...spec } = commonSpec;
+          //     commonSpec = spec;
+          //     singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
+          //   }
+          //   commonSpec.layer = singleView.layer;
+          // } else if ('params' in singleView) {
+          //   commonSpec.params = [...commonSpec.params, ...singleView.params!];
+          // }
+          // #[END bad-layer-interaction]
+
+          if ('params' in singleView) {
             commonSpec.params = [...commonSpec.params, ...singleView.params!];
           }
           const ans = { ...commonSpec, ...singleView }
@@ -507,6 +579,11 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
                     }
                     if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
                       const data = res.view.getState().data?.[`${name}_store`];
+                      if (name === BRUSH_SIGNAL_NAME) {
+                        res.view.setState({
+                          [`${BRUSH_SIGNAL_NAME}_store`]: null,
+                        });
+                      }
                       combinedParamStore$.next({
                         signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
                         source: sourceId,
@@ -549,7 +626,6 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
         subscriptions.forEach(sub => sub.unsubscribe());
       };
     }
-
   }, [
     dataSource,
     allFieldIds,
