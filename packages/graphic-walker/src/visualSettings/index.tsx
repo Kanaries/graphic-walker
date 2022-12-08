@@ -1,4 +1,4 @@
-import { BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/outline';
+import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronDownIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import styled from 'styled-components'
@@ -9,6 +9,7 @@ import SizeSetting from '../components/sizeSetting';
 import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS } from '../interfaces';
+import { IReactVegaHandler } from '../vis/react-vega';
 
 
 export const LiteContainer = styled.div`
@@ -16,9 +17,27 @@ export const LiteContainer = styled.div`
     border: 1px solid #d9d9d9;
     padding: 1em;
     background-color: #fff;
+    .menu-root {
+        position: relative;
+        & > *:not(.trigger) {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            border: 1px solid #8884;
+        }
+        &:not(:hover) > *:not(.trigger):not(:hover) {
+            display: none;
+        }
+    }
 `;
 
-const VisualSettings: React.FC = () => {
+interface IVisualSettings {
+    rendererHandler?: React.RefObject<IReactVegaHandler>;
+}
+
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
     const { vizStore } = useGlobalStore();
     const { visualConfig, sortCondition } = vizStore;
     const { t: tGlobal } = useTranslation();
@@ -306,6 +325,48 @@ const VisualSettings: React.FC = () => {
                 >
                     {t('toggle.debug')}
                 </label>
+            </div>
+            <div className='item'>
+                <label
+                    className="text-xs text-color-gray-700 mr-2"
+                    htmlFor="button:transpose"
+                    id="button:transpose:label"
+                >
+                    {t('button.export_chart')}
+                </label>
+                <PhotoIcon
+                    className="w-4 inline-block cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    id="button:export_chart"
+                    aria-describedby="button:export_chart:label"
+                    xlinkTitle={t('button.export_chart')}
+                    aria-label={t('button.export_chart')}
+                    onClick={() => rendererHandler?.current?.downloadPNG()}
+                />
+                <div className="menu-root flex flex-col items-center justify-center">
+                    <ChevronDownIcon
+                        className="w-4 h-3 inline-block mr-1 cursor-pointer trigger"
+                        role="button"
+                        tabIndex={0}
+                    />
+                    <div>
+                        <button
+                            className="text-xs min-w-96 w-full pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            aria-label={t('button.export_chart_as', { type: 'png' })}
+                            onClick={() => rendererHandler?.current?.downloadPNG()}
+                        >
+                            {t('button.export_chart_as', { type: 'png' })}
+                        </button>
+                        <button
+                            className="text-xs min-w-96 w-full pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            aria-label={t('button.export_chart_as', { type: 'svg' })}
+                            onClick={() => rendererHandler?.current?.downloadSVG()}
+                        >
+                            {t('button.export_chart_as', { type: 'svg' })}
+                        </button>
+                    </div>
+                </div>
             </div>
         </LiteForm>
     </LiteContainer>

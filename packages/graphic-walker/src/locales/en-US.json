@@ -116,7 +116,9 @@
                 "button": {
                     "ascending": "Sort in Ascending Order",
                     "descending": "Sort in Descending Order",
-                    "transpose": "Transpose"
+                    "transpose": "Transpose",
+                    "export_chart": "Export",
+                    "export_chart_as": "Export as {{type}}"
                 },
                 "size": "Resize",
                 "size_setting": {
