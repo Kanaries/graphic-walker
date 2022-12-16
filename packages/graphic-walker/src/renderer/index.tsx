@@ -1,13 +1,13 @@
 import { runInAction, toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Resizable } from 're-resizable';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, forwardRef } from 'react';
 import { applyFilter } from '../services';
 import { useGlobalStore } from '../store';
-import ReactVega from '../vis/react-vega';
+import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 
 
-const ReactiveRenderer: React.FC = props => {
+const ReactiveRenderer = forwardRef<IReactVegaHandler, {}>(function ReactiveRenderer (props, ref) {
     const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration } = visualConfig;
@@ -100,11 +100,12 @@ const ReactiveRenderer: React.FC = props => {
         showActions={showActions}
         width={size.width - 12 * 4}
         height={size.height - 12 * 4}
+        ref={ref}
         brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
         selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}
         onGeomClick={handleGeomClick}
     />
     </Resizable>
-}
+});
 
 export default observer(ReactiveRenderer);

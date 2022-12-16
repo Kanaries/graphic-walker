@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Specification } from 'visual-insights';
 import { observer } from 'mobx-react-lite';
 import { LightBulbIcon } from '@heroicons/react/24/outline'
 import { toJS } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import { IMutField, IRow } from './interfaces';
+import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import { Container, NestContainer } from './components/container';
 import ClickMenu from './components/clickMenu';
@@ -88,6 +89,8 @@ const App: React.FC<EditorProps> = props => {
 		}
 	}, [currentDataset, spec]);
 
+	const rendererRef = useRef<IReactVegaHandler>(null);
+
 	return (
 		<div className="App">
 			{ !hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
@@ -97,7 +100,7 @@ const App: React.FC<EditorProps> = props => {
 			</div>
 			<Container style={{ marginTop: '0em', borderTop: 'none' }}>
 				<Menubar />
-				<VisualSettings />
+				<VisualSettings rendererHandler={rendererRef} />
 				<div className="grid grid-cols-12 xl:grid-cols-6">
 					<div className="col-span-3 xl:col-span-1">
 						<DatasetFields />
@@ -113,7 +116,7 @@ const App: React.FC<EditorProps> = props => {
 						<NestContainer style={{ minHeight: '600px', overflow: 'auto' }} onMouseLeave={() => {
 							vizEmbededMenu.show && commonStore.closeEmbededMenu();
 						}}>
-							{datasets.length > 0 && <ReactiveRenderer />}
+							{datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
 							<InsightBoard />
 							{vizEmbededMenu.show && (
 								<ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
