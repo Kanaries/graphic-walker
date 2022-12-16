@@ -101,15 +101,15 @@ const App: React.FC<EditorProps> = props => {
 			<Container style={{ marginTop: '0em', borderTop: 'none' }}>
 				<Menubar />
 				<VisualSettings rendererHandler={rendererRef} />
-				<div className="grid grid-cols-12 xl:grid-cols-6">
-					<div className="col-span-3 xl:col-span-1">
+				<div className="md:grid md:grid-cols-12 xl:grid-cols-6">
+					<div className="md:col-span-3 xl:col-span-1">
 						<DatasetFields />
 					</div>
-					<div className="col-span-2 xl:col-span-1">
+					<div className="md:col-span-2 xl:col-span-1">
 						<FilterField />
 						<AestheticFields />
 					</div>
-					<div className="col-span-7 xl:col-span-4">
+					<div className="md:col-span-7 xl:col-span-4">
 						<div>
 							<PosFields />
 						</div>

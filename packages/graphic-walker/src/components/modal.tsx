@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import styled from 'styled-components';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 
-
 const Background = styled.div({
   position: 'fixed',
   left: 0,
@@ -14,7 +13,13 @@ const Background = styled.div({
 });
 
 const Container = styled.div`
-  width: 880px;
+  width: 98%;
+  @media (min-width: 600px) {
+    width: 80%;
+  }
+  @media (min-width: 1100px) {
+    width: 880px;
+  }
   max-height: 800px;
   overflow: auto;
   > div.header {

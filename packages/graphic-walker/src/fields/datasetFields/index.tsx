@@ -1,17 +1,24 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { useTranslation } from "react-i18next";
+import styled from 'styled-components';
 import { NestContainer } from "../../components/container";
 import DimFields from "./dimFields";
 import MeaFields from "./meaFields";
+
+const DSContainer = styled(NestContainer)`
+    @media (min-width: 768px) {
+        height: 680px;
+    }
+`
 
 const DatasetFields: React.FC = (props) => {
     const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.DatasetFields" });
 
     return (
-        <NestContainer className="flex flex-col" style={{ height: "680px", paddingBlock: 0 }}>
+        <DSContainer className="flex md:flex-col" style={{ paddingBlock: 0 }}>
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t("field_list")}</h4>
-            <div className="pd-1 overflow-y-auto" style={{ maxHeight: "380px" }}>
+            <div className="pd-1 overflow-y-auto" style={{ maxHeight: "380px", minHeight: '100px' }}>
                 <Droppable droppableId="dimensions" direction="vertical">
                     {(provided, snapshot) => <DimFields provided={provided} />}
                 </Droppable>
@@ -21,7 +28,7 @@ const DatasetFields: React.FC = (props) => {
                     {(provided, snapshot) => <MeaFields provided={provided} />}
                 </Droppable>
             </div>
-        </NestContainer>
+        </DSContainer>
     );
 };
 
