@@ -116,7 +116,9 @@
                 "button": {
                     "ascending": "升序排序",
                     "descending": "降序排序",
-                    "transpose": "转置"
+                    "transpose": "转置",
+                    "export_chart": "导出",
+                    "export_chart_as": "导出 {{type}}"
                 },
                 "size": "调整尺寸",
                 "size_setting": {

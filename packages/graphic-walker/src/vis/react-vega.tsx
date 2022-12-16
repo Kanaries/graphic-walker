@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
-import { ScenegraphEvent } from 'vega';
+import type { ScenegraphEvent, View } from 'vega';
 import { ISemanticType } from 'visual-insights';
 import styled from 'styled-components';
 import { autoMark } from '../utils/autoMark';
@@ -17,6 +17,12 @@ const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
 `
 
 const SELECTION_NAME = 'geom';
+export interface IReactVegaHandler {
+  getSVGData: () => Promise<string[]>;
+  getCanvasData: () => Promise<string[]>;
+  downloadSVG: (filename?: string) => Promise<string[]>;
+  downloadPNG: (filename?: string) => Promise<string[]>;
+}
 interface ReactVegaProps {
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
@@ -351,7 +357,7 @@ function getSingleView(props: SingleViewProps) {
     } : encoding,
   };
 }
-const ReactVega: React.FC<ReactVegaProps> = props => {
+const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
     dataSource = [],
     rows = [],
@@ -408,7 +414,10 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     })
   }, [rowRepeatFields, colRepeatFields])
 
+  const vegaRefs = useRef<View[]>([]);
+
   useEffect(() => {
+    vegaRefs.current = [];
 
     const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
     const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
@@ -495,6 +504,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
       // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
+          vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
               click$.next(e);
@@ -576,6 +586,7 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
           // console.log(JSON.stringify(ans, undefined, 2));
           if (node) {
             embed(node, ans, { mode: 'vega-lite', actions: showActions }).then(res => {
+              vegaRefs.current.push(res.view);
               // 这种 case 下，我们来考虑联动的 params
               // vega 使用 Data 来维护 params 的状态，只需要打通这些状态就可以实现联动
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
@@ -670,12 +681,52 @@ const ReactVega: React.FC<ReactVegaProps> = props => {
     crossFilterTriggerIdx,
   ]);
 
+  useImperativeHandle(ref, () => ({
+    getSVGData() {
+      return Promise.all(vegaRefs.current.map(view => view.toSVG()));
+    },
+    async getCanvasData() {
+      const canvases = await Promise.all(vegaRefs.current.map(view => view.toCanvas()));
+      return canvases.map(canvas => canvas.toDataURL('image/png'));
+    },
+    async downloadSVG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
+      const data = await Promise.all(vegaRefs.current.map(view => view.toSVG()));
+      const files: string[] = [];
+      for (let i = 0; i < data.length; i += 1) {
+        const d = data[i];
+        const file = new File([d], `${filename}${data.length > 1 ? `_${i + 1}` : ''}.svg`);
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.download = file.name;
+        a.href = url;
+        a.click();
+        requestAnimationFrame(() => {
+          URL.revokeObjectURL(url);
+        });
+      }
+      return files;
+    },
+    async downloadPNG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
+      const canvases = await Promise.all(vegaRefs.current.map(view => view.toCanvas(2)));
+      const data = canvases.map(canvas => canvas.toDataURL('image/png', 1));
+      const files: string[] = [];
+      for (let i = 0; i < data.length; i += 1) {
+        const d = data[i];
+        const a = document.createElement('a');
+        a.download = `${filename}${data.length > 1 ? `_${i + 1}` : ''}.png`;
+        a.href = d.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+        a.click();
+      }
+      return files;
+    },
+  }));
+
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
     {/* <div ref={container}></div> */}
     {
       viewPlaceholders.map((view, i) => <div key={i} ref={view}></div>)
     }
   </CanvaContainer>
-}
+});
 
 export default ReactVega;
