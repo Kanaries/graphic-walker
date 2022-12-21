@@ -71,7 +71,6 @@ npm i --save @kanaries/graphic-walker
 In your app:
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
-import 'graphic-walker/dist/style.css'
 
 const YourEmbeddingTableauStyleApp: React.FC = props => {
     const { dataSource, fields } = props;
