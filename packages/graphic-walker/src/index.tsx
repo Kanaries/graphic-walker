@@ -37,7 +37,11 @@ export const GraphicWalker: React.FC<EditorProps> = props => {
             ), root);
             shadowRoot.appendChild(root);
             return () => {
-                shadowRoot.innerHTML = '';
+                for (const node of shadowRoot.children) {
+                    node.remove();
+                }
+                // @see https://stackoverflow.com/questions/20090059/how-to-remove-a-shadow-root-from-an-html-element-adorned-with-a-shadow-dom-from/57583697#57583697
+                container.outerHTML = container.outerHTML;
                 DOM.setBody(document.body);
                 DOM.setHead(document.head);
             };
