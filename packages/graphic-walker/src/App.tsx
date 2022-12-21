@@ -21,8 +21,6 @@ import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import Menubar from './visualSettings/menubar';
 import FilterField from './fields/filterField';
-import "tailwindcss/tailwind.css"
-import './index.css'
 
 
 export interface EditorProps {
