@@ -71,7 +71,7 @@ function initVisualConfig (): IVisualConfig {
             height: 200
         },
         exploration: {
-            mode: 'brush',
+            mode: 'none',
             brushDirection: 'default',
         },
     }
