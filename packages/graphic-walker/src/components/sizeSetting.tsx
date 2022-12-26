@@ -1,5 +1,5 @@
 import { ArrowsPointingOutIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 
 
@@ -21,10 +21,17 @@ const SizeSetting: React.FC<SizeSettingProps> = props => {
                 setShow(false);
             };
 
-            document.body.addEventListener('click', closeDialog);
+            let subscribed = false;
+            const timer = setTimeout(() => {
+                subscribed = true;
+                document.body.addEventListener('click', closeDialog);
+            }, 200);
 
             return () => {
-                document.body.removeEventListener('click', closeDialog);
+                clearTimeout(timer);
+                if (subscribed) {
+                    document.body.removeEventListener('click', closeDialog);
+                }
             };
         }
     }, [show]);
