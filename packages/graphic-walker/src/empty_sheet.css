@@ -1,0 +1,9 @@
+/* 
+ * This file is empty and importing it causes no side effect
+ * expect creating an empty <style> tag in the <head>.
+ * GraphicWalker starts using encapsuled css styles since v0.2.10
+ * so it's no more necessary to explicitly import a styled file
+ * from the production directory.
+ * This file will be temporarily kept to avoid breaking compiling
+ * while trying to import the out-dated style file.
+ */
