@@ -6,6 +6,7 @@ import App, { EditorProps } from './App';
 import { StoreWrapper } from './store/index';
 import { FieldsContextWrapper } from './fields/fieldsContext';
 
+import './empty_sheet.css';
 import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from './index.css?inline';
 import { observer } from 'mobx-react-lite';
