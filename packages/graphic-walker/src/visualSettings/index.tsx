@@ -1,8 +1,19 @@
-import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronDownIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import {
+    ArrowUturnLeftIcon,
+    BarsArrowDownIcon,
+    BarsArrowUpIcon,
+    ChevronDownIcon,
+    PhotoIcon,
+    ArrowPathIcon,
+    ArrowsPointingOutIcon,
+    CubeIcon,
+    Square3Stack3DIcon,
+    StopIcon,
+    ArrowUturnRightIcon,
+} from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components'
-import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { LiteForm } from '../components/liteForm';
 import SizeSetting from '../components/sizeSetting';
@@ -10,6 +21,8 @@ import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
+import Toolbar, { ToolbarItemProps } from '../components/toolbar';
+import { ButtonWithShortcut } from './menubar';
 
 
 export const LiteContainer = styled.div`
@@ -33,162 +46,160 @@ export const LiteContainer = styled.div`
     }
 `;
 
+const Invisible = styled.div`
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    width: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+`;
+
 interface IVisualSettings {
     rendererHandler?: React.RefObject<IReactVegaHandler>;
 }
 
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
     const { vizStore } = useGlobalStore();
-    const { visualConfig, sortCondition } = vizStore;
+    const { visualConfig, sortCondition, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
-    return <LiteContainer>
+    const { defaultAggregated, geoms: [markType], stack, interactiveScale } = visualConfig;
+
+    const items = useMemo<ToolbarItemProps[]>(() => {
+        return [
+            {
+                key: 'undo',
+                label: 'undo (Ctrl + Z)',
+                icon: () => (
+                    <>
+                        <ArrowUturnLeftIcon />
+                        <Invisible aria-hidden>
+                            <ButtonWithShortcut
+                                label="undo"
+                                disabled={!canUndo}
+                                handler={vizStore.undo.bind(vizStore)}
+                                shortcut="Ctrl+Z"
+                            />
+                        </Invisible>
+                    </>
+                ),
+                onClick: () => vizStore.undo(),
+                disabled: !canUndo,
+            },
+            {
+                key: 'redo',
+                label: 'redo (Ctrl+Shift+Z)',
+                icon: () => (
+                    <>
+                        <ArrowUturnRightIcon />
+                        <Invisible aria-hidden>
+                            <ButtonWithShortcut
+                                label="redo"
+                                disabled={!canRedo}
+                                handler={vizStore.redo.bind(vizStore)}
+                                shortcut="Ctrl+Shift+Z"
+                            />
+                        </Invisible>
+                    </>
+                ),
+                onClick: () => vizStore.redo(),
+                disabled: !canRedo,
+            },
+            '-',
+            {
+                key: 'aggregation',
+                label: t('toggle.aggregation'),
+                icon: CubeIcon,
+                checked: defaultAggregated,
+                onChange: checked => {
+                    vizStore.setVisualConfig('defaultAggregated', checked);
+                },
+            },
+            {
+                key: 'mark_type',
+                label: tGlobal('constant.mark_type.__enum__'),
+                icon: StopIcon,
+                options: GEMO_TYPES.map(g => ({
+                    key: g,
+                    label: tGlobal(`constant.mark_type.${g}`),
+                    icon: () => <></>,
+                })),
+                value: markType,
+                onSelect: value => {
+                    vizStore.setVisualConfig('geoms', [value]);
+                },
+            },
+            {
+                key: 'stack_mode',
+                label: tGlobal('constant.stack_mode.__enum__'),
+                icon: Square3Stack3DIcon,
+                options: STACK_MODE.map(g => ({
+                    key: g,
+                    label: tGlobal(`constant.stack_mode.${g}`),
+                    icon: () => <></>,
+                })),
+                value: stack,
+                onSelect: value => {
+                    vizStore.setVisualConfig('stack', value as IStackMode);
+                },
+            },
+            {
+                key: 'axes_resize',
+                label: t('toggle.axes_resize'),
+                icon: ArrowsPointingOutIcon,
+                checked: interactiveScale,
+                onChange: checked => {
+                    vizStore.setVisualConfig('interactiveScale', checked);
+                },
+            },
+            '-',
+            {
+                key: 'transpose',
+                label: t('button.transpose'),
+                icon: () => <ArrowPathIcon />,
+                onClick: () => vizStore.transpose(),
+            },
+            {
+                key: 'sort:asc',
+                label: t('button.ascending'),
+                icon: () => <BarsArrowUpIcon />,
+                onClick: () => vizStore.applyDefaultSort('ascending'),
+            },
+            {
+                key: 'sort:dec',
+                label: t('button.descending'),
+                icon: () => <BarsArrowDownIcon />,
+                onClick: () => vizStore.applyDefaultSort('descending'),
+            },
+            '-',
+        ];
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale]);
+
+    return <>
+    <div style={{ margin: '0.38em 0.2em' }}>
+        <Toolbar
+            items={items}
+            styles={{
+                root: {
+                    '--background-color': '#fff',
+                    '--color': '#777',
+                    '--color-hover': '#555',
+                    '--blue': '#282958',
+                    '--blue-dark': '#1d1e38',
+                },
+                container: {
+                    border: '1px solid #d9d9d9',
+                    boxSizing: 'content-box',
+                },
+            }}
+        />
+    </div>
+    <LiteContainer>
         <LiteForm style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div className="item">
-                <input
-                    className="cursor-pointer"
-                    type="checkbox"
-                    id="toggle:aggregation"
-                    aria-describedby="toggle:aggregation:label"
-                    checked={visualConfig.defaultAggregated}
-                    onChange={(e) => {
-                        vizStore.setVisualConfig('defaultAggregated', e.target.checked);
-                    }}
-                />
-                <label
-                    className="text-xs text-color-gray-700 ml-2 cursor-pointer"
-                    id="toggle:aggregation:label"
-                    htmlFor="toggle:aggregation"
-                >
-                    {t('toggle.aggregation')}
-                </label>
-            </div>
-            <div className="item">
-                <label
-                    className="px-2"
-                    id="dropdown:mark_type:label"
-                    htmlFor="dropdown:mark_type"
-                >
-                    {tGlobal('constant.mark_type.__enum__')}
-                </label>
-                <select
-                    className="border border-gray-500 rounded-sm text-xs pt-0.5 pb-0.5 pl-2 pr-2 cursor-pointer"
-                    id="dropdown:mark_type"
-                    aria-describedby="dropdown:mark_type:label"
-                    value={visualConfig.geoms[0]}
-                    onChange={(e) => {
-                        vizStore.setVisualConfig('geoms', [e.target.value]);
-                    }}
-                >
-                    {GEMO_TYPES.map(g => (
-                        <option
-                            key={g}
-                            value={g}
-                            aria-selected={visualConfig.geoms[0] === g}
-                            className="cursor-pointer"
-                        >
-                            {tGlobal(`constant.mark_type.${g}`)}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="item">
-                <label
-                    className="px-2"
-                    id="dropdown:stack:label"
-                    htmlFor="dropdown:stack"
-                >
-                    {tGlobal('constant.stack_mode.__enum__')}
-                </label>
-                <select
-                    className="border border-gray-500 rounded-sm text-xs pt-0.5 pb-0.5 pl-2 pr-2 cursor-pointer"
-                    id="dropdown:stack"
-                    aria-describedby="dropdown:stack:label"
-                    value={visualConfig.stack}
-                    onChange={(e) => {
-                        vizStore.setVisualConfig('stack', e.target.value as IStackMode);
-                    }}
-                >
-                    {STACK_MODE.map(g => (
-                        <option
-                            key={g}
-                            value={g}
-                            aria-selected={visualConfig.stack === g}
-                            className="cursor-pointer"
-                        >
-                            {tGlobal(`constant.stack_mode.${g}`)}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="item">
-                <input
-                    type="checkbox"
-                    className="cursor-pointer"
-                    id="toggle:axes_resize"
-                    aria-describedby="toggle:axes_resize:label"
-                    checked={visualConfig.interactiveScale}
-                    onChange={(e) => {
-                        vizStore.setVisualConfig('interactiveScale', e.target.checked);
-                    }}
-                />
-                <label
-                    className="text-xs text-color-gray-700 ml-2 cursor-pointer"
-                    id="toggle:axes_resize:label"
-                    htmlFor="toggle:axes_resize"
-                >
-                    {t('toggle.axes_resize')}
-                </label>
-            </div>
-            <div className="item">
-                <label className="text-xs text-color-gray-700 mx-2">
-                    {t('sort')}
-                </label>
-                <BarsArrowUpIcon
-                    className={`w-4 inline-block mr-1 ${!sortCondition ? 'text-gray-300 cursor-not-allowed' : 'cursor-pointer'}`}
-                    onClick={() => {
-                        vizStore.applyDefaultSort('ascending')
-                    }}
-                    role="button"
-                    tabIndex={!sortCondition ? undefined : 0}
-                    aria-disabled={!sortCondition}
-                    xlinkTitle={t('button.ascending')}
-                    aria-label={t('button.ascending')}
-                />
-                <BarsArrowDownIcon
-                    className={`w-4 inline-block mr-1 ${!sortCondition ? 'text-gray-300 cursor-not-allowed' : 'cursor-pointer'}`}
-                    onClick={() => {
-                        vizStore.applyDefaultSort('descending');
-                    }}
-                    role="button"
-                    tabIndex={!sortCondition ? undefined : 0}
-                    aria-disabled={!sortCondition}
-                    xlinkTitle={t('button.descending')}
-                    aria-label={t('button.descending')}
-                />
-            </div>
-            <div className='item'>
-                <label
-                    className="text-xs text-color-gray-700 mr-2"
-                    htmlFor="button:transpose"
-                    id="button:transpose:label"
-                >
-                    {t('button.transpose')}
-                </label>
-                <ArrowPathIcon
-                    className="w-4 inline-block mr-1 cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    id="button:transpose"
-                    aria-describedby="button:transpose:label"
-                    xlinkTitle={t('button.transpose')}
-                    aria-label={t('button.transpose')}
-                    onClick={() => {
-                        vizStore.transpose();
-                    }}
-                />
-            </div>
             <div className="item">
                 <label
                     id="dropdown:layout_type:label"
@@ -369,7 +380,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 </div>
             </div>
         </LiteForm>
-    </LiteContainer>
+    </LiteContainer></>
 }
 
 export default observer(VisualSettings);
