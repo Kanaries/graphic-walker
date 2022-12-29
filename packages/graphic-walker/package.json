@@ -7,8 +7,7 @@
     "build": "tsc && vite build",
     "build:app": "vite build --config vite-app.config.ts",
     "serve": "vite preview",
-    "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist",
-    "postinstall": "patch-package"
+    "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist"
   },
   "files": [
     "dist",
@@ -35,17 +34,16 @@
   "dependencies": {
     "@heroicons/react": "^2.0.8",
     "@kanaries/web-data-loader": "0.1.5",
+    "@kanatayou/react-beautiful-dnd": "0.0.1",
     "autoprefixer": "^10.3.5",
     "i18next": "^21.9.1",
     "i18next-browser-languagedetector": "^6.1.5",
     "immer": "^9.0.15",
     "mobx": "^6.3.3",
     "mobx-react-lite": "^3.2.1",
-    "patch-package": "^6.5.0",
     "postcss": "^8.3.7",
     "postinstall-postinstall": "^2.1.0",
     "re-resizable": "^6.9.8",
-    "react-beautiful-dnd": "^13.1.1",
     "react-i18next": "^11.18.6",
     "react-json-view": "^1.21.3",
     "react-shadow": "^20.0.0",

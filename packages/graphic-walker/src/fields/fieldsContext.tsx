@@ -5,7 +5,7 @@ import {
     DropResult,
     ResponderProvided,
     DraggableLocation,
-} from "react-beautiful-dnd";
+} from "@kanatayou/react-beautiful-dnd";
 import { useGlobalStore } from '../store';
 window['__react-beautiful-dnd-disable-dev-warnings'] = true;
 

@@ -3,7 +3,7 @@ import React from 'react';
 import {
     Draggable,
     Droppable, DroppableProvided,
-} from "react-beautiful-dnd";
+} from "@kanatayou/react-beautiful-dnd";
 
 import { useGlobalStore } from '../../store';
 import { FilterFieldContainer, FilterFieldsContainer } from '../components';
