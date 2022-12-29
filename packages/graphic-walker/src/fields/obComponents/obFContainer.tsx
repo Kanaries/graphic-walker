@@ -5,7 +5,7 @@ import { useGlobalStore } from '../../store';
 import {
     Draggable,
     DroppableProvided
-} from "react-beautiful-dnd";
+} from "@kanatayou/react-beautiful-dnd";
 import { IDraggableStateKey } from '../../interfaces';
 import OBPill from './obPill';
 

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
-import { DOM } from 'react-beautiful-dnd';
+import { DOM } from '@kanatayou/react-beautiful-dnd';
+import { observer } from 'mobx-react-lite';
 import App, { EditorProps } from './App';
 import { StoreWrapper } from './store/index';
 import { FieldsContextWrapper } from './fields/fieldsContext';
@@ -9,7 +10,6 @@ import { FieldsContextWrapper } from './fields/fieldsContext';
 import './empty_sheet.css';
 import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from './index.css?inline';
-import { observer } from 'mobx-react-lite';
 
 
 export const GraphicWalker: React.FC<EditorProps> = observer(props => {
