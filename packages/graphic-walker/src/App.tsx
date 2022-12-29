@@ -19,7 +19,6 @@ import { useGlobalStore } from './store';
 import { preAnalysis, destroyWorker } from './services'
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
-import Menubar from './visualSettings/menubar';
 import FilterField from './fields/filterField';
 
 
@@ -97,7 +96,6 @@ const App: React.FC<EditorProps> = props => {
 				{/* <PureTabs tabs={[{label: 'a', key: 'a'}, {label: 'b', key: 'b'}]} selectedKey='a' onSelected={() => {}} /> */}
 			</div>
 			<Container style={{ marginTop: '0em', borderTop: 'none' }}>
-				<Menubar />
 				<VisualSettings rendererHandler={rendererRef} />
 				<div className="md:grid md:grid-cols-12 xl:grid-cols-6">
 					<div className="md:col-span-3 xl:col-span-1">

@@ -35,7 +35,7 @@ interface ButtonWithShortcutProps {
     icon?: JSX.Element;
 }
 
-const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, shortcut, disabled, handler, icon }) => {
+export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, shortcut, disabled, handler, icon }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.menubar' });
 
     const rule = React.useMemo(() => {
