@@ -13,8 +13,10 @@ const attrName = 'data-tooltip-host-id';
 let flag = 0;
 
 const Bubble = styled.div`
+    border-radius: 1px;
     transform: translate(-50%, -100%);
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.12));
+    filter: drop-shadow(0 1.6px 1.2px rgba(0, 0, 0, 0.15)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.12));
+    user-select: none;
     ::before {
         content: "";
         display: block;
@@ -25,6 +27,7 @@ const Bubble = styled.div`
         height: 8px;
         transform: translate(-50%, 50%) rotate(45deg);
         background-color: #fff;
+        border-radius: 1px;
     }
 `;
 
@@ -69,7 +72,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content }) {
                     className="fixed text-xs p-1 px-3 text-gray-500 bg-white z-50"
                     onMouseOver={() => setHover(true)}
                     onMouseOut={() => setHover(false)}
-                    style={{ left: pos[0], top: pos[1] }}
+                    style={{ left: pos[0], top: pos[1] - 4 }}
                 >
                     {content}
                 </Bubble>,

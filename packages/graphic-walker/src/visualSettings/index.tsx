@@ -16,6 +16,7 @@ import {
     PaintBrushIcon,
     CursorArrowRaysIcon,
     WrenchIcon,
+    ChevronUpDownIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -164,7 +165,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             {
                 key: 'axes_resize',
                 label: t('toggle.axes_resize'),
-                icon: ArrowsPointingOutIcon,
+                icon: ChevronUpDownIcon,
                 checked: interactiveScale,
                 onChange: checked => {
                     vizStore.setVisualConfig('interactiveScale', checked);
