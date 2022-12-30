@@ -1,5 +1,5 @@
 import React from 'react';
-import { Draggable, DroppableProvided } from '@kanatayou/react-beautiful-dnd';
+import { Draggable, DroppableProvided } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
 import { useGlobalStore } from '../../store';
 import DataTypeIcon from '../../components/dataTypeIcon';

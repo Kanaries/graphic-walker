@@ -1,5 +1,5 @@
 import React from 'react';
-import { Droppable } from "@kanatayou/react-beautiful-dnd";
+import { Droppable } from "@kanaries/react-beautiful-dnd";
 import { DRAGGABLE_STATE_KEYS } from './fieldsContext';
 import { AestheticFieldContainer } from './components'
 import OBFieldContainer from './obComponents/obFContainer';
