@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useRef, useState } from 'react';
 import { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
-import { DOM } from '@kanatayou/react-beautiful-dnd';
+import { DOM } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
 import App, { EditorProps } from './App';
 import { StoreWrapper } from './store/index';

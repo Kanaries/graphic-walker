@@ -1,5 +1,5 @@
 import React from "react";
-import { Droppable } from "@kanatayou/react-beautiful-dnd";
+import { Droppable } from "@kanaries/react-beautiful-dnd";
 import { useTranslation } from "react-i18next";
 import styled from 'styled-components';
 import { NestContainer } from "../../components/container";
