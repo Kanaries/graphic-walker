@@ -17,9 +17,13 @@ import {
     CursorArrowRaysIcon,
     WrenchIcon,
     ChevronUpDownIcon,
+    XMarkIcon,
+    ChevronDoubleUpIcon,
+    ArrowsUpDownIcon,
+    LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { SVGProps, useMemo } from 'react';
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
@@ -143,7 +147,19 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 options: GEMO_TYPES.map(g => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
-                    icon: () => <></>,
+                    icon: {
+                        auto: LightBulbIcon,
+                        bar: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9,4v16h6v-16Z" /></svg>,
+                        line: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M5,6L19,18" /></svg>,
+                        area: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M5,20v-17l14,4V20Z" /></svg>,
+                        trail: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M5,6l7,4l7-2v2l-7,4l-7,-4z" /></svg>,
+                        point: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9,12 A3,3,0,0,1,16,12 A3,3,0,0,1,9,12" /></svg>,
+                        circle: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6,12 A6,6,0,0,1,18,12 A6,6,0,0,1,6,12" /></svg>,
+                        tick: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M5,12h14" /></svg>,
+                        rect: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M5,5v14h14v-14z" /></svg>,
+                        arc: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12,21l-9,-15a12,12,0,0,1,18,0Z" /></svg>,
+                        boxplot: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M7,7v9h10v-9Zm0,4h8M12,7v-6m-3,0h6M12,16v7m-3,0h6" /></svg>,
+                    }[g],
                 })),
                 value: markType,
                 onSelect: value => {
@@ -157,7 +173,11 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 options: STACK_MODE.map(g => ({
                     key: g,
                     label: tGlobal(`constant.stack_mode.${g}`),
-                    icon: () => <></>,
+                    icon: {
+                        none: XMarkIcon,
+                        stack: ChevronDoubleUpIcon,
+                        normalize: ArrowsUpDownIcon,
+                    }[g],
                 })),
                 value: stack,
                 onSelect: value => {
@@ -317,7 +337,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
         ];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions]);
 
-    return <div style={{ margin: '0.38em 0.2em' }}>
+    return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar
             items={items}
             styles={{
@@ -331,6 +351,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 container: {
                     border: '1px solid #d9d9d9',
                     boxSizing: 'content-box',
+                    borderRadius: '1px',
                 },
             }}
         />
