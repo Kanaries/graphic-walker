@@ -3,6 +3,7 @@ import styled from "styled-components";
 import produce from "immer";
 import { IToolbarItem, IToolbarProps, ToolbarItemContainer } from "./toolbar-item";
 import { ToolbarContainer, useHandlers, ToolbarItemContainerElement } from "./components";
+import Callout from "../callout";
 
 
 const OptionGroup = styled(ToolbarContainer)`
@@ -71,7 +72,7 @@ export interface ToolbarSelectButtonItem<T extends string = string> extends IToo
 
 const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(function ToolbarSelectButton(props) {
     const { item, styles, openedKey, setOpenedKey } = props;
-    const { key, icon: Icon, label, disabled, options, value, onSelect } = item;
+    const { key, icon: Icon, disabled, options, value, onSelect } = item;
     const id = `${key}::button`;
     
     const opened = openedKey === id;
@@ -144,9 +145,9 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                 )}
                 <TriggerFlag aria-hidden id={id} />
             </ToolbarItemContainer>
-            {/* {opened && (
-                <Callout target={`#${id}`} role="dialog" gapSpace={0} directionalHint={DirectionalHint.bottomCenter} beakWidth={8} styles={{ calloutMain: { background: 'unset' }, beakCurtain: { background: 'unset' }, beak: { backgroundColor: 'var(--bg-color-light)' } }}>
-                    <OptionGroup theme={theme} role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled}>
+            {opened && (
+                <Callout target={`#${id}`}>
+                    <OptionGroup role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled} onMouseDown={e => e.stopPropagation()}>
                         {options.map((option, idx, arr) => {
                             const selected = option.key === value;
                             const OptionIcon = option.icon;
@@ -180,13 +181,13 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                                     }}
                                 >
                                     <OptionIcon style={styles?.icon} />
-                                    <label>{option.label}</label>
+                                    <label className="text-xs">{option.label}</label>
                                 </Option>
                             );
                         })}
                     </OptionGroup>
                 </Callout>
-            )} */}
+            )}
         </>
     );
 });

@@ -1,5 +1,5 @@
 import { ChevronDownIcon, Cog6ToothIcon, Cog8ToothIcon } from "@heroicons/react/24/solid";
-import React, { HTMLAttributes, memo, useEffect, useRef } from "react";
+import React, { HTMLAttributes, memo, ReactNode, useEffect, useMemo, useRef } from "react";
 import styled from "styled-components";
 import ToolbarButton, { ToolbarButtonItem } from "./toolbar-button";
 import ToolbarToggleButton, { ToolbarToggleButtonItem } from "./toolbar-toggle-button";
@@ -7,6 +7,7 @@ import ToolbarSelectButton, { ToolbarSelectButtonItem } from "./toolbar-select-b
 import { ToolbarContainer, ToolbarItemContainerElement, ToolbarSplitter, useHandlers } from "./components";
 import Toolbar, { ToolbarProps } from ".";
 import Tooltip from "../tooltip";
+import Callout from "../callout";
 
 
 const ToolbarSplit = styled.div<{ open: boolean }>`
@@ -63,7 +64,10 @@ export interface IToolbarProps<P extends Exclude<ToolbarItemProps, typeof Toolba
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
+    renderSlot: (node: ReactNode) => void;
 }
+
+let idFlag = 0;
 
 export const ToolbarItemContainer = memo<{
     props: IToolbarProps;
@@ -73,14 +77,14 @@ export const ToolbarItemContainer = memo<{
     {
         props: {
             item: { key, label, disabled = false, menu, form },
-            styles, openedKey, setOpenedKey,
+            styles, openedKey, setOpenedKey, renderSlot,
         },
         handlers,
         children,
         ...props
     }
 ) {
-    // const id = useId();
+    const id = useMemo(() => `toolbar-item-${idFlag++}`, []);
     const splitOnly = Boolean(form || menu) && handlers === null;
 
     const opened = Boolean(form || menu) && key === openedKey && !disabled;
@@ -90,19 +94,6 @@ export const ToolbarItemContainer = memo<{
     const splitHandlers = useHandlers(() => {
         setOpenedKey(opened ? null : key);
     }, disabled ?? false, [' '], false);
-
-    // useEffect(() => {
-    //     if (opened) {
-    //         requestAnimationFrame(() => {
-    //             const firstOption = document.getElementById(layerId)?.querySelector('*[role=button]');
-    //             if (firstOption instanceof HTMLElement) {
-    //                 // set tab position
-    //                 firstOption.focus();
-    //                 firstOption.blur();
-    //             }
-    //         });
-    //     }
-    // }, [opened, layerId]);
 
     useEffect(() => {
         if (opened) {
@@ -133,61 +124,64 @@ export const ToolbarItemContainer = memo<{
         }
     }, [setOpenedKey, opened]);
 
+    useEffect(() => {
+        if (opened && menu) {
+            renderSlot(<Toolbar {...menu} />);
+            return () => renderSlot(null);
+        }
+    }, [opened, menu, renderSlot]);
+
     return (
-        <Tooltip content={label}>
-            <ToolbarItemContainerElement
-                role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled ?? false}
-                split={Boolean(form || menu)}
-                style={styles?.item}
-                className={opened ? 'open' : undefined}
-                aria-haspopup={splitOnly ? 'menu' : 'false'}
-                {...(splitOnly ? splitHandlers : handlers)}
-                {...props}
-                // id={id}
-            >
-                {children}
-                {form ? (
-                    <ToolbarSplit
-                        open={opened}
-                        {...splitHandlers}
-                    >
-                        <Cog6ToothIcon style={styles?.splitIcon}/>
-                    </ToolbarSplit>
-                ) : (
-                    menu && (
-                        splitOnly ? (
-                            <ToolbarSplit
-                                open={opened}
-                                {...splitHandlers}
-                            >
-                                <ChevronDownIcon style={styles?.splitIcon} />
-                            </ToolbarSplit>
-                        ) : (
-                            <ToolbarSplit
-                                role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled} aria-haspopup="menu"
-                                open={opened}
-                                {...splitHandlers}
-                            >
-                                <Cog8ToothIcon style={styles?.splitIcon} />
-                            </ToolbarSplit>
+        <>
+            <Tooltip content={label}>
+                <ToolbarItemContainerElement
+                    role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled ?? false}
+                    split={Boolean(form || menu)}
+                    style={styles?.item}
+                    className={opened ? 'open' : undefined}
+                    aria-haspopup={splitOnly ? 'menu' : 'false'}
+                    {...(splitOnly ? splitHandlers : handlers)}
+                    {...props}
+                    id={id}
+                >
+                    {children}
+                    {form ? (
+                        <ToolbarSplit
+                            open={opened}
+                            {...splitHandlers}
+                        >
+                            <Cog6ToothIcon style={styles?.splitIcon}/>
+                        </ToolbarSplit>
+                    ) : (
+                        menu && (
+                            splitOnly ? (
+                                <ToolbarSplit
+                                    open={opened}
+                                    {...splitHandlers}
+                                >
+                                    <ChevronDownIcon style={styles?.splitIcon} />
+                                </ToolbarSplit>
+                            ) : (
+                                <ToolbarSplit
+                                    role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled} aria-haspopup="menu"
+                                    open={opened}
+                                    {...splitHandlers}
+                                >
+                                    <Cog8ToothIcon style={styles?.splitIcon} />
+                                </ToolbarSplit>
+                            )
                         )
-                    )
-                )}
-            </ToolbarItemContainerElement>
-            {/* {opened && (
-                form ? (
-                    <Callout target={`#${id}`} role="dialog" gapSpace={0} directionalHint={DirectionalHint.bottomCenter} beakWidth={8} styles={{ calloutMain: { background: 'unset' }, beakCurtain: { background: 'unset' }, beak: { backgroundColor: 'var(--bg-color-light)' } }}>
-                        <FormContainer>
-                            {form}
-                        </FormContainer>
-                    </Callout>
-                ) : (menu && (
-                    <Layer hostId={layerId}>
-                        <Toolbar {...menu} />
-                    </Layer>
-                ))
-            )} */}
-        </Tooltip>
+                    )}
+                </ToolbarItemContainerElement>
+            </Tooltip>
+            {opened && form && (
+                <Callout target={`#${id}`}>
+                    <FormContainer onMouseDown={e => e.stopPropagation()}>
+                        {form}
+                    </FormContainer>
+                </Callout>
+            )}
+        </>
     );
 });
 
@@ -196,16 +190,17 @@ const ToolbarItem = memo<{
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
-}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey }) {
+    renderSlot: (node: ReactNode) => void;
+}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot }) {
     if (item === ToolbarItemSplitter) {
         return  <ToolbarSplitter />;
     }
     if ('checked' in item) {
-        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} />;
+        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
     } else if ('options' in item) {
-        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} />;
+        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
     }
-    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} />;
+    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
 });
 
 

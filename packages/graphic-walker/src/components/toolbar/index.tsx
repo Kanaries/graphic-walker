@@ -1,4 +1,4 @@
-import React, { CSSProperties, memo, useState } from "react";
+import React, { CSSProperties, memo, ReactNode, useState } from "react";
 import styled from "styled-components";
 import { ToolbarContainer, ToolbarSplitter } from "./components";
 import ToolbarItem, { ToolbarItemProps, ToolbarItemSplitter } from "./toolbar-item";
@@ -25,8 +25,8 @@ export interface ToolbarProps {
 }
 
 const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, styles }) {
-    // const layerId = useId();
     const [openedKey, setOpenedKey] = useState<string | null>(null);
+    const [slot, setSlot] = useState<ReactNode>(null);
 
     return (
         <Root style={styles?.root}>
@@ -42,11 +42,12 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, styles }) {
                             styles={styles}
                             openedKey={openedKey}
                             setOpenedKey={setOpenedKey}
+                            renderSlot={node => setSlot(node)}
                         />
                     );
                 })}
             </ToolbarContainer>
-            {/* <LayerHost id={layerId} /> */}
+            {slot}
         </Root>
     );
 });
