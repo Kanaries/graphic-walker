@@ -67,6 +67,8 @@ const FormContainer = styled.div`
     margin: 2px;
     border-radius: 1.2px;
     padding: 0.5em;
+    display: flex;
+    flex-direction: column;
 `;
 
 interface IVisualSettings {
@@ -296,14 +298,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 form: (
                     <FormContainer>
                         <button
-                            className="text-xs min-w-96 w-full pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => rendererHandler?.current?.downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
-                            className="text-xs min-w-96 w-full pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => rendererHandler?.current?.downloadSVG()}
                         >
