@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { createContext, useEffect, useRef, useState } from 'react';
 import { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
 import { DOM } from '@kanatayou/react-beautiful-dnd';
@@ -12,8 +12,9 @@ import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from './index.css?inline';
 
 
-export const GraphicWalker: React.FC<EditorProps> = observer(props => {
+export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
+export const GraphicWalker: React.FC<EditorProps> = observer(props => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,9 @@ export const GraphicWalker: React.FC<EditorProps> = observer(props => {
                 <StyleSheetManager target={shadowRoot}>
                     <StoreWrapper keepAlive={props.keepAlive}>
                         <FieldsContextWrapper>
-                            <App {...props} />
+                            <ShadowDomContext.Provider value={{ root: shadowRoot }}>
+                                <App {...props} />
+                            </ShadowDomContext.Provider>
                         </FieldsContextWrapper>
                     </StoreWrapper>
                 </StyleSheetManager>

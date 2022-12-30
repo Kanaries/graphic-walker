@@ -6,6 +6,7 @@ import ToolbarToggleButton, { ToolbarToggleButtonItem } from "./toolbar-toggle-b
 import ToolbarSelectButton, { ToolbarSelectButtonItem } from "./toolbar-select-button";
 import { ToolbarContainer, ToolbarItemContainerElement, ToolbarSplitter, useHandlers } from "./components";
 import Toolbar, { ToolbarProps } from ".";
+import Tooltip from "../tooltip";
 
 
 const ToolbarSplit = styled.div<{ open: boolean }>`
@@ -133,7 +134,7 @@ export const ToolbarItemContainer = memo<{
     }, [setOpenedKey, opened]);
 
     return (
-        <>
+        <Tooltip content={label}>
             <ToolbarItemContainerElement
                 role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled ?? false}
                 split={Boolean(form || menu)}
@@ -186,7 +187,7 @@ export const ToolbarItemContainer = memo<{
                     </Layer>
                 ))
             )} */}
-        </>
+        </Tooltip>
     );
 });
 
