@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Droppable } from "@kanatayou/react-beautiful-dnd";
+import { Droppable } from "@kanaries/react-beautiful-dnd";
 import { useGlobalStore } from '../../store';
 import { FieldListContainer } from "../components";
 import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';

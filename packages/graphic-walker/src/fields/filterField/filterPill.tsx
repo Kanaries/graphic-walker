@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { DraggableProvided } from "@kanatayou/react-beautiful-dnd";
+import { DraggableProvided } from "@kanaries/react-beautiful-dnd";
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
