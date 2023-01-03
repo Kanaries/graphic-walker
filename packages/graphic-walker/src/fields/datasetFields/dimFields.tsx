@@ -19,7 +19,7 @@ const DimFields: React.FC<Props> = props => {
                     return (
                         <>
                             <FieldPill
-                                className="pt-0.5 pb-0.5 pl-2 pr-2 m-1 text-xs hover:bg-blue-100 rounded-full truncate"
+                                className="pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 rounded-full truncate border border-transparent"
                                 ref={provided.innerRef}
                                 isDragging={snapshot.isDragging}
                                 {...provided.draggableProps}
@@ -28,7 +28,7 @@ const DimFields: React.FC<Props> = props => {
                                 <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} /> {f.name}&nbsp;
                             </FieldPill>
                             {
-                                <FieldPill className={`pt-0.5 pb-0.5 pl-2 pr-2 m-1 text-xs hover:bg-blue-100 rounded-full border-blue-400 border truncate ${snapshot.isDragging ? '' : 'hidden'}`}
+                                <FieldPill className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 rounded-full border-blue-400 border truncate ${snapshot.isDragging ? '' : 'hidden'}`}
                                 isDragging={snapshot.isDragging}
                                 >
                                     <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} /> {f.name}&nbsp;
