@@ -1,4 +1,4 @@
-import React, { memo, useContext, useEffect, useMemo, useState } from "react";
+import React, { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { ShadowDomContext } from "..";
@@ -7,6 +7,12 @@ import { ShadowDomContext } from "..";
 export interface TooltipProps {
     children: JSX.Element;
     content: string | JSX.Element | JSX.Element[];
+    /** @default 250 */
+    showDelay?: number;
+    /** @default 250 */
+    hideDelay?: number;
+    /** @default 3_000 */
+    autoHide?: number;
 }
 
 const attrName = 'data-tooltip-host-id';
@@ -31,7 +37,7 @@ const Bubble = styled.div`
     }
 `;
 
-const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content }) {
+const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content, autoHide = 3_000, showDelay = 250, hideDelay = 250 }) {
     const hostId = useMemo(() => flag++, []);
     const [pos, setPos] = useState<[number, number]>([0, 0]);
     const [show, setShow] = useState(false);
@@ -46,20 +52,63 @@ const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content }) {
         };
     }
 
+    const autoHideRef = useRef(autoHide);
+    autoHideRef.current = autoHide;
+    const showDelayRef = useRef(showDelay);
+    showDelayRef.current = showDelay;
+    const hideDelayRef = useRef(hideDelay);
+    hideDelayRef.current = hideDelay;
+
     useEffect(() => {
         const item = root?.querySelector(`[${attrName}="${hostId}"]`) as HTMLElement | null;
         if (item) {
-            const handleMouseOver = () => {
-                const rect = item.getBoundingClientRect();
-                setPos([rect.x + rect.width / 2, rect.y]);
-                setShow(true);
+            let showTimer: NodeJS.Timeout | null = null;
+            let hideTimer: NodeJS.Timeout | null = null;
+            let autoHideTimer: NodeJS.Timeout | null = null;
+            const resetTimers = () => {
+                for (const timer of [showTimer, hideTimer, autoHideTimer]) {
+                    if (timer) {
+                        clearTimeout(timer);
+                    }
+                }
             };
-            const handleMouseOut = () => setShow(false);
+            const handleMouseOver = () => {
+                resetTimers();
+                showTimer = setTimeout(() => {
+                    const rect = item.getBoundingClientRect();
+                    setPos([rect.x + rect.width / 2, rect.y]);
+                    setShow(true);
+                    autoHideTimer = setTimeout(() => {
+                        handleMouseOut();
+                    }, autoHideRef.current);
+                }, showDelayRef.current);
+            };
+            const handleMouseMove = () => {
+                for (const timer of [hideTimer, autoHideTimer]) {
+                    if (timer) {
+                        clearTimeout(timer);
+                    }
+                }
+                autoHideTimer = setTimeout(() => {
+                    handleMouseOut();
+                }, autoHideRef.current);
+            };
+            const handleMouseOut = () => {
+                resetTimers();
+                hideTimer = setTimeout(() => {
+                    setShow(false);
+                }, hideDelayRef.current);
+            };
             item.addEventListener('mouseover', handleMouseOver);
+            item.addEventListener('mousemove', handleMouseMove);
             item.addEventListener('mouseout', handleMouseOut);
             return () => {
                 item.removeEventListener('mouseover', handleMouseOver);
+                item.removeEventListener('mousemove', handleMouseMove);
                 item.removeEventListener('mouseout', handleMouseOut);
+                if (autoHideTimer) {
+                    clearTimeout(autoHideTimer);
+                }
             };
         }
     }, [root, hostId]);
