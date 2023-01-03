@@ -28,7 +28,7 @@ export default function PureTabs(props: PureTabsProps) {
     }, [tabs.length]);
     
     useEffect(() => {
-        clearEditStatus
+        clearEditStatus();
     }, [clearEditStatus]);
 
     return (
@@ -54,6 +54,12 @@ export default function PureTabs(props: PureTabsProps) {
                         contentEditable={editList[tabIndex]}
                         onInput={(e) => {
                             onEditLabel && onEditLabel(`${e.currentTarget.textContent}`, tabIndex)
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                clearEditStatus();
+                                e.preventDefault();
+                            }
                         }}
                         key={tab.key}
                         className={classNames(
