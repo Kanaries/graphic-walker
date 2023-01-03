@@ -23,7 +23,7 @@ import {
     LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { SVGProps, useMemo } from 'react';
+import React, { SVGProps, useCallback, useMemo } from 'react';
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
@@ -33,6 +33,7 @@ import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS } from
 import { IReactVegaHandler } from '../vis/react-vega';
 import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
+import throttle from '../utils/throttle';
 
 
 export const LiteContainer = styled.div`
@@ -89,6 +90,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
         defaultAggregated, geoms: [markType], stack, interactiveScale, size: { mode: sizeMode, width, height },
         exploration: { mode: explorationMode, brushDirection }, showActions,
     } = visualConfig;
+
+    const downloadPNG = useCallback(throttle(() => {
+        rendererHandler?.current?.downloadPNG();
+    }, 200), [rendererHandler]);
+
+    const downloadSVG = useCallback(throttle(() => {
+        rendererHandler?.current?.downloadSVG();
+    }, 200), [rendererHandler]);
 
     const items = useMemo<ToolbarItemProps[]>(() => {
         return [
@@ -184,15 +193,6 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                     vizStore.setVisualConfig('stack', value as IStackMode);
                 },
             },
-            {
-                key: 'axes_resize',
-                label: t('toggle.axes_resize'),
-                icon: ChevronUpDownIcon,
-                checked: interactiveScale,
-                onChange: checked => {
-                    vizStore.setVisualConfig('interactiveScale', checked);
-                },
-            },
             '-',
             {
                 key: 'transpose',
@@ -213,6 +213,15 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 onClick: () => vizStore.applyDefaultSort('descending'),
             },
             '-',
+            {
+                key: 'axes_resize',
+                label: t('toggle.axes_resize'),
+                icon: ChevronUpDownIcon,
+                checked: interactiveScale,
+                onChange: checked => {
+                    vizStore.setVisualConfig('interactiveScale', checked);
+                },
+            },
             {
                 key: 'scale',
                 icon: ArrowsPointingOutIcon,
@@ -320,14 +329,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                         <button
                             className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'png' })}
-                            onClick={() => rendererHandler?.current?.downloadPNG()}
+                            onClick={() => downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
                             className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
-                            onClick={() => rendererHandler?.current?.downloadSVG()}
+                            onClick={() => downloadSVG()}
                         >
                             {t('button.export_chart_as', { type: 'svg' })}
                         </button>
@@ -335,7 +344,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 ),
             },
         ];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar
