@@ -15,7 +15,7 @@ It is extremely easy to embed in your apps just as a react component 🎉! The o
 
 ##### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
-+ A grammar of graphics based visual analytic user interface where users can build visualization from low-level visual channel encodings. 
++ A grammar of graphics based visual analytic user interface where users can build visualization from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them.
 + Using webworker to handle computation tasks which allow you to use it as a pure front-end app.
 

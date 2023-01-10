@@ -157,5 +157,19 @@
             "unselect_all": "Unselect All",
             "reverse": "Reverse Selection"
         }
+    },
+    "explain": {
+        "lg_than": "greater than",
+        "sm_than": "less than",
+        "expection": "Expectation",
+        "unrecognized": "Unrecognized",
+        "score": "score",
+        "contains": "contains",
+        "reason": {
+            "selection_dim_distribution": "clues in other dimensions",
+            "selection_mea_distribution": "clues in other measures",
+            "children_major_factor": "major factor",
+            "children_outlier": "outlier"
+        }
     }
 }
