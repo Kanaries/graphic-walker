@@ -123,11 +123,11 @@ const InsightMainBoard: React.FC<InsightMainBoardProps> = (props) => {
                 .map((k, ki) => {
                     return (
                         <div key={`dim-${ki}`}>
-                            <div className="inline bg-gray-400 p-1 rounded underline text-white">
+                            <div className="inline bg-gray-400 py-0.5 px-2 mx-2 rounded-full underline text-white">
                                 {formatFieldName(k, fields)}
                             </div>
                             <div className="inline text-lg ml-1 mr-1">=</div>
-                            <div className="inline bg-blue-600 p-1 rounded text-white">{filters[k]}</div>
+                            <div className="inline bg-blue-600 py-0.5 px-2 mx-2 rounded-full text-white">{filters[k]}</div>
                         </div>
                     );
                 });
@@ -139,13 +139,13 @@ const InsightMainBoard: React.FC<InsightMainBoardProps> = (props) => {
     const valueDesc = useMemo<React.ReactElement[]>(() => {
         const meaStatus = valueExp.map((mea, mi) => (
             <div key={`mea-${mi}`}>
-                <span className="bg-gray-400 p-1 rounded underline text-white">
+                <span className="bg-gray-400 py-0.5 px-2 mx-2 rounded-full underline text-white">
                     {formatFieldName(mea.key, fields)}({mea.op})
                 </span>
-                <span className="bg-red-500 p-1 rounded text-white">
+                <span className="bg-red-500 py-0.5 px-2 mx-2 rounded-full text-white">
                     {mea.score === 1 ? t("explain.lg_than") : t("explain.sm_than")}
-                    {t("explain.expection")}{" "}
                 </span>
+                <span>{t("explain.expection")}{" "}</span>
             </div>
         ));
         return meaStatus;
@@ -177,21 +177,21 @@ const InsightMainBoard: React.FC<InsightMainBoardProps> = (props) => {
                     <div ref={container}></div>
                     {recSpaces[visIndex] && (
                         <div>
-                            {t("constant.analytic_type.dimension")}
+                            {t("constant.analytic_type.dimension")} = 
                             {recSpaces[visIndex].dimensions.map((f) => formatFieldName(f, fields)).join(", ")}
                             <br />
-                            {t("constant.analytic_type.measure")}
+                            {t("constant.analytic_type.measure")} = 
                             {recSpaces[visIndex].measures
                                 .map((m) => m.key)
                                 .map((f) => formatFieldName(f, fields))
                                 .join(", ")}
                             <br />
-                            {t("explain.contains")}
+                            {" " + t("explain.contains") + " "}
                             {recSpaces[visIndex].type
                                 ? t(`explain.reason.${IReasonTypes[recSpaces[visIndex].type]}`)
                                 : t("explain.unrecognized")}{" "}
                             ，{t("explain.score")}
-                            {recSpaces[visIndex].score}。
+                            {recSpaces[visIndex].score}
                             <br />
                             {recSpaces[visIndex].description &&
                                 recSpaces[visIndex].description.intMeasures &&
