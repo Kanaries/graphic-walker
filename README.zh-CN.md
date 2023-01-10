@@ -156,3 +156,7 @@ const YourApp = props => {
 ```
 
 GraphicWalker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources should follow [this format](https://www.i18next.com/misc/json-format). You can simply fork and edit `/locales/en-US.json` to start your translation.
+
+## LICENSE
+
+请参考 [LICENSE](./LICENSE) 文件.
