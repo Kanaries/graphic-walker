@@ -3,7 +3,7 @@
 # graphic-walker
 ![](https://img.shields.io/github/license/kanaries/graphic-walker)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker)
-![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/Auto%20Build)
+![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml)
 
 
 Graphic Walker 是一个tableau的开源替代，它可以帮助数据科学家或分析师们使用简单的拖拉拽操作就可以探索数据并制作可视化图表。
