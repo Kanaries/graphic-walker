@@ -15,9 +15,6 @@ export function autoMark(semanticTypeList: ISemanticType[]): string {
         couter.set(s, 0)
     })
     for (let st of semanticTypeList) {
-        // if (!couter.has(st)) {
-        //     couter.set(st, 0);
-        // }
         couter.set(st, couter.get(st)! + 1);
     }
     if (couter.get('nominal') === 1 || couter.get('ordinal') === 1) {
@@ -30,5 +27,4 @@ export function autoMark(semanticTypeList: ISemanticType[]): string {
         return 'point'
     }
     return 'point'
-    // if (cou)
 }

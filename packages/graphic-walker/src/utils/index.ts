@@ -26,7 +26,6 @@ function normalizeRecords(dataSource: IRow[], measures: string[]): NRReturns {
     dataSource.forEach(record => {
         const norRecord: IRow = { ... record };
         measures.forEach(mea => {
-            // norRecord[mea] = norRecord[mea] - minMeasures[mea]
             totalMeasures[mea] += Math.abs(norRecord[mea]);
         })
         newData.push(norRecord)
@@ -71,9 +70,7 @@ function normalize2PositiveRecords(dataSource: IRow[], measures: string[]): NRRe
   newData.forEach((record) => {
     measures.forEach((mea) => {
       record[mea] /= totalMeasures[mea];
-    //   if (isNaN(record[mea])) {
-    //       record[mea] = 1
-    //   }
+
     });
   });
   return {

@@ -63,9 +63,6 @@ export function compareDistribution (distribution1: IRow[], distribution2: IRow[
             tagsForD2[targetRecordIndex] = true;
             const targetRecord = distribution2[targetRecordIndex];
             for (let mea of measures) {
-                // score += Math.abs(targetRecord[mea] - record[mea]);
-                // if (targetRecord[mea] === 0 || record[mea] === 0) continue;
-                // score += Math.max(targetRecord[mea], record[mea]) / Math.min(targetRecord[mea], record[mea]);
                 
                 score = Math.max(
                     score,
@@ -77,7 +74,6 @@ export function compareDistribution (distribution1: IRow[], distribution2: IRow[
         } else {
             for (let mea of measures) {
                 score = Math.max(score, record[mea])
-                // score += Math.abs(record[mea])
                 count++;
             }
         }
@@ -86,7 +82,6 @@ export function compareDistribution (distribution1: IRow[], distribution2: IRow[
         if (!tagsForD2[i]) {
             tagsForD2[i] = true;
             for (let mea of measures) {
-                // score += Math.abs(distribution2[i][mea])
                 score = Math.max(score, distribution2[i][mea]);
                 count++;
             }
@@ -122,7 +117,6 @@ export function normalizeByMeasures (dataSource: IRow[], measures: string[]) {
 export function getDistributionDifference(dataSource: IRow[], dimensions: string[], measure1: string, measure2: string): number {
     let score = 0;
     for (let record of dataSource) {
-        // score += Math.abs(record[measure1] - record[measure2])
         if (record[measure1] === 0 || record[measure2] === 0) continue;
         score += Math.max(record[measure1], record[measure2]) / Math.min(record[measure1], record[measure2]);
     }
