@@ -54,7 +54,6 @@ function getExplaination(props) {
 
 function main (e) {
     const { type, data } = e.data;
-    console.log(type, data)
     let res = false;
     try {
         switch (type) {
@@ -69,7 +68,6 @@ function main (e) {
         }
         self.postMessage(res);
     } catch (error) {
-        // discuss
         console.log(error)
         self.postMessage(false)
     }

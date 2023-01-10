@@ -501,7 +501,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       if ('params' in singleView) {
         spec.params.push(...singleView.params!);
       }
-      // console.log(JSON.stringify(spec, undefined, 2));
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
           vegaRefs.current = [res.view];
@@ -583,7 +582,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           if ('params' in commonSpec) {
             ans.params = commonSpec.params;
           }
-          // console.log(JSON.stringify(ans, undefined, 2));
           if (node) {
             embed(node, ans, { mode: 'vega-lite', actions: showActions }).then(res => {
               vegaRefs.current.push(res.view);
