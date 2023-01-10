@@ -4,10 +4,6 @@ import CSVData from './csvData';
 import PublicData from './publicData';
 import { useTranslation } from 'react-i18next';
 
-interface IDataSelectionProps {
-
-}
-
 const DataSelection: React.FC = props =>{
     const [sourceType, setSourceType] = useState<'file' | 'public'>('file');
     const { t } = useTranslation('translation', { keyPrefix: 'DataSource' });

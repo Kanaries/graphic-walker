@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { ShadowDomContext } from "..";
 
-
 export interface TooltipProps {
     children: JSX.Element;
     content: string | JSX.Element | JSX.Element[];
@@ -15,7 +14,7 @@ export interface TooltipProps {
     autoHide?: number;
 }
 
-const attrName = 'data-tooltip-host-id';
+const attrName = "data-tooltip-host-id";
 let flag = 0;
 
 const Bubble = styled.div`
@@ -37,15 +36,21 @@ const Bubble = styled.div`
     }
 `;
 
-const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content, autoHide = 3_000, showDelay = 250, hideDelay = 250 }) {
+const Tooltip = memo<TooltipProps>(function Tooltip({
+    children,
+    content,
+    autoHide = 3_000,
+    showDelay = 250,
+    hideDelay = 250,
+}) {
     const hostId = useMemo(() => flag++, []);
     const [pos, setPos] = useState<[number, number]>([0, 0]);
     const [show, setShow] = useState(false);
     const [hover, setHover] = useState(false);
     const shadowDomMeta = useContext(ShadowDomContext);
     const { root } = shadowDomMeta;
-    const element = typeof children === 'object' ? { ...children as any } : children;
-    if ('props' in element) {
+    const element = typeof children === "object" ? { ...(children as any) } : children;
+    if ("props" in element) {
         element.props = {
             ...element.props,
             [attrName]: hostId,
@@ -99,13 +104,13 @@ const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content, autoHi
                     setShow(false);
                 }, hideDelayRef.current);
             };
-            item.addEventListener('mouseover', handleMouseOver);
-            item.addEventListener('mousemove', handleMouseMove);
-            item.addEventListener('mouseout', handleMouseOut);
+            item.addEventListener("mouseover", handleMouseOver);
+            item.addEventListener("mousemove", handleMouseMove);
+            item.addEventListener("mouseout", handleMouseOut);
             return () => {
-                item.removeEventListener('mouseover', handleMouseOver);
-                item.removeEventListener('mousemove', handleMouseMove);
-                item.removeEventListener('mouseout', handleMouseOut);
+                item.removeEventListener("mouseover", handleMouseOver);
+                item.removeEventListener("mousemove", handleMouseMove);
+                item.removeEventListener("mouseout", handleMouseOut);
                 if (autoHideTimer) {
                     clearTimeout(autoHideTimer);
                 }
@@ -116,20 +121,21 @@ const Tooltip = memo<TooltipProps>(function Tooltip ({ children, content, autoHi
     return (
         <>
             {element}
-            {(show || hover) && root && createPortal(
-                <Bubble
-                    className="fixed text-xs p-1 px-3 text-gray-500 bg-white z-50"
-                    onMouseOver={() => setHover(true)}
-                    onMouseOut={() => setHover(false)}
-                    style={{ left: pos[0], top: pos[1] - 4 }}
-                >
-                    {content}
-                </Bubble>,
-                root
-            )}
+            {(show || hover) &&
+                root &&
+                createPortal(
+                    <Bubble
+                        className="fixed text-xs p-1 px-3 text-gray-500 bg-white z-50"
+                        onMouseOver={() => setHover(true)}
+                        onMouseOut={() => setHover(false)}
+                        style={{ left: pos[0], top: pos[1] - 4 }}
+                    >
+                        {content}
+                    </Bubble>,
+                    root
+                )}
         </>
     );
 });
-
 
 export default Tooltip;
