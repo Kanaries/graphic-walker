@@ -3,7 +3,7 @@
 # graphic-walker
 ![](https://img.shields.io/github/license/kanaries/graphic-walker)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker)
-![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/Auto%20Build)
+![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml)
 ![](https://img.shields.io/twitter/follow/kanaries_data?style=social)
 
 Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations.
