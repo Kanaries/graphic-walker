@@ -13,6 +13,7 @@ Main features:
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics based visual analytic user interface where users can build visualization from low-level visual channel encodings. 
 + A Data Explainer which explains why some patterns occur / what may cause them.
++ Using webworker to handle computation tasks which allow you to use it as a pure front-end app.
 
 ## Usage
 

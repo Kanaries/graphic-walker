@@ -10,9 +10,11 @@ Graphic Walker 是一个tableau的开源替代，它可以帮助数据科学家�
 
 
 主要特性
-
++ 一个简单易用的只需拖拉拽即可生成可视化的图形交互界面。
 + 一个基于图形语法的可视化搭建系统，相比于传统的基于图表的搭建工具，能够更好的支持数据分析的场景，并在可视化探索中更加灵活。
-+ 一个提供数据中异常模式的归因解释器。
++ 一个提供数据中异常模式的归因解释器（tableau数据解释器/salesforce einstein）。
++ 极其简单的嵌入方式，你可以像引入一个react组件一样简单的将graphic-walker嵌入到你的应用中。
++ graphic-walker将重型但计算放入web-worker中，充分利用客户端算力，使得其可以支持纯客户端部署。
 
 
 ## 使用
@@ -56,6 +58,9 @@ Graphic Walker 是一个tableau的开源替代，它可以帮助数据科学家�
 
 如果你是一位工程师，想要继承graphic-walker，可以根据情况选择适合你的方式
 ### 方法一：作为独立应用使用
+
+按照应用的构建步骤依次执行。
+
 ```bash
 yarn install
 
@@ -63,6 +68,9 @@ yarn workspace @kanaries/graphic-walker build:app
 ```
 
 ###  方法二：作为嵌入模块使用
+
+`graphic-walker`提供了非常简单易用的集成方式，你只需要像引入react组件一样，将其引入，即可立即开始使用。
+
 ```bash
 yarn add @kanaries/graphic-walker
 
