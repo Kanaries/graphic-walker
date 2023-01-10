@@ -110,13 +110,13 @@ npm run dev
 
 ## I18n 多语言支持
 
-GraphicWalker now support _English_ (as `"en"` or `"en-US"`) and _Chinese_ (as `"zh"` or `"zh-CN"`) with built-in locale resources. You can simply provide a valid string value (enumerated above) as `props.i18nLang` to set a language or synchronize your global i18n language with the component like the example given as follow.
+GraphicWalker 现在支持 _英语_ (as `"en"` or `"en-US"`) and _中文_ (as `"zh"` or `"zh-CN"`) 。其内置了多语言模块，你可以简单的通过一个语言参数来控制整个组件界面展示的语言`props.i18nLang`。具体实现可以参考下面的案例
 
 ```typescript
 const YourApp = props => {
     // ...
 
-    const curLang = /* get your i18n language */;
+    const curLang = /* 这里是你的语言标签 */;
 
     return <GraphicWalker
         dataSource={dataSource}
@@ -126,9 +126,9 @@ const YourApp = props => {
 }
 ```
 
-### Customize I18n
+### 自定义语言
 
-If you need i18n support to cover languages not supported currently, or to totally rewrite the content of any built-in resource(s), you can also provide your resource(s) as `props.i18nResources` to GraphicWalker like this.
+如果你想要自定义组件的语言标签，可以按照对应的标签结构传入一个你的语言配置项`props.i18nResources`。如下所示
 
 ```typescript
 const yourResources = {
@@ -155,7 +155,8 @@ const YourApp = props => {
 }
 ```
 
-GraphicWalker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources should follow [this format](https://www.i18next.com/misc/json-format). You can simply fork and edit `/locales/en-US.json` to start your translation.
+`graphic-walker` 使用了 `react-i18next`作为多语言模块，其是基于`i18next`实现的，所以建议参考其文档[格式](https://www.i18next.com/misc/json-format)。或者你也可以fork或clone此项目后，直接怼
+GraphicWalker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources `/locales/en-US.json`进行复制并修改。
 
 ## LICENSE
 
