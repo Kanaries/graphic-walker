@@ -152,3 +152,7 @@ GraphicWalker uses `react-i18next` to support i18n, which is based on `i18next`,
 ## What's next
 
 Graphic Walker is basically manual data exploration software. When facing more complex datasets, manual exploration can cost a lot of time, [Rath](https://github.com/Kanaries/Rath) is software providing a different data analysis experience with automation enhancement.
+
+## LICENSE
+
+Please refer to [LICENSE](./LICENSE) file.
