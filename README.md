@@ -7,9 +7,13 @@
 [![](https://img.shields.io/twitter/follow/kanaries_data?style=social)](https://twitter.com/kanaries_data)
 [![](https://img.shields.io/discord/987366424634884096)](https://discord.gg/WWHraZ8SeV)
 
-Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. You can easily embed graphic-walker in your app as a simple react component!
+Graphic Walker is an different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
 
-Main features:
+##### Why is it different?
+
+It is extremely easy to embed in your apps just as a react component 🎉! The original purpose of graphic-walker is not to be a heavily BI platform, but a easy to embed, lite, plugin or components.
+
+##### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics based visual analytic user interface where users can build visualization from low-level visual channel encodings. 
 + A Data Explainer which explains why some patterns occur / what may cause them.
