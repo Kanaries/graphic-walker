@@ -1,15 +1,16 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md)
 
 # graphic-walker
-![](https://img.shields.io/github/license/kanaries/graphic-walker)
+![](https://img.shields.io/github/license/Kanaries/graphic-walker)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker)
 ![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml)
-![](https://img.shields.io/twitter/follow/kanaries_data?style=social)
+[![](https://img.shields.io/twitter/follow/kanaries_data?style=social)](https://twitter.com/kanaries_data)
+[![](https://img.shields.io/discord/987366424634884096)](https://discord.gg/WWHraZ8SeV)
 
-Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations.
+Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. You can easily embed graphic-walker in your app as a simple react component!
 
 Main features:
-
++ A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics based visual analytic user interface where users can build visualization from low-level visual channel encodings. 
 + A Data Explainer which explains why some patterns occur / what may cause them.
 
@@ -59,7 +60,9 @@ yarn install
 yarn workspace @kanaries/graphic-walker build
 ```
 
-### Method 2: use as an embedding component module
+### Method 2: Use as an embedding component module 🔥
+Using graphic walker can be extremely easily. It provides a single react component which allow you to easily embed it in your app.
+
 ```bash
 yarn add @kanaries/graphic-walker
 
