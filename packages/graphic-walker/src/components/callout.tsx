@@ -1,8 +1,7 @@
-import React, { memo, ReactNode, useContext, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import styled from 'styled-components';
-import { ShadowDomContext } from '..';
-
+import React, { memo, ReactNode, useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import styled from "styled-components";
+import { ShadowDomContext } from "..";
 
 export interface CalloutProps {
     target: string;
@@ -31,14 +30,14 @@ const Bubble = styled.div`
     }
 `;
 
-const Callout = memo<CalloutProps>(function Callout ({ target, children }) {
+const Callout = memo<CalloutProps>(function Callout({ target, children }) {
     const shadowDomMeta = useContext(ShadowDomContext);
     const { root } = shadowDomMeta;
     const [pos, setPos] = useState<[number, number] | null>(null);
 
     useEffect(() => {
         const el = (
-            target.startsWith('#') ? root?.getElementById(target.slice(1)) : root?.querySelector(target)
+            target.startsWith("#") ? root?.getElementById(target.slice(1)) : root?.querySelector(target)
         ) as HTMLElement | null;
         if (el) {
             const rect = el.getBoundingClientRect();
@@ -46,13 +45,16 @@ const Callout = memo<CalloutProps>(function Callout ({ target, children }) {
         }
     }, [target, root]);
 
-    return root && pos && createPortal(
-        <Bubble role="dialog" className="fixed bg-white z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
-            {children}
-        </Bubble>,
-        root
+    return (
+        root &&
+        pos &&
+        createPortal(
+            <Bubble role="dialog" className="fixed bg-white z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
+                {children}
+            </Bubble>,
+            root
+        )
     );
 });
-
 
 export default Callout;

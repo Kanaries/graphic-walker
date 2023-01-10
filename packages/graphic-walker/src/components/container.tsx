@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 export const Container = styled.div`
     border: 1px solid #d9d9d9;
@@ -13,4 +13,4 @@ export const NestContainer = styled.div`
     font-size: 12px;
     margin: 0.2em;
     background-color: #fff;
-`
+`;

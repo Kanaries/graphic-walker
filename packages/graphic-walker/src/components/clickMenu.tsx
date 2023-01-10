@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const MenuContainer = styled.div`
     min-width: 100px;
@@ -17,13 +17,13 @@ interface ClickMenuProps {
     y: number;
 }
 
-const ClickMenu: React.FC<ClickMenuProps> = props => {
-    const { x, y, children } = props
-    return <MenuContainer className="shadow-lg text-sm" style={{ left: x + 'px', top: y + 'px' }}>
-        {
-            children
-        }
-    </MenuContainer>
-}
+const ClickMenu: React.FC<ClickMenuProps> = (props) => {
+    const { x, y, children } = props;
+    return (
+        <MenuContainer className="shadow-lg text-sm" style={{ left: x + "px", top: y + "px" }}>
+            {children}
+        </MenuContainer>
+    );
+};
 
 export default ClickMenu;
