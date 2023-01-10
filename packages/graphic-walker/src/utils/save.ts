@@ -26,7 +26,6 @@ export function stringifyGWContent (info: IStoInfo) {
 export function parseGWContent (raw: string): IStoInfo {
     return JSON.parse(raw)
 }
-// JSON.stringify
 
 export function download(data: string, filename: string, type: string) {
     var file = new Blob([data], {type: type});
