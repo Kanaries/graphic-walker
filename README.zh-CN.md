@@ -56,6 +56,14 @@ Graphic Walker 是一个非常规的tableau的开源替代，它可以帮助数�
 
 当你完成探索，可以选择将结果导出到文件，这样你下次在分析时，可以快速的导入之前分析的结果。
 
+有时你可能会有更深的问题，比如为什么12月份的销量会高，等等。
+
+下面是一个例子，在共享单车数据集中，为什么注册用户在1月份的租用量会低于预期。数据解释器会给出潜在的解释（比如一月份的假期占比高）
+
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
+
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
+
 ## 部署
 
 

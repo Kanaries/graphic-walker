@@ -52,6 +52,16 @@ To make a facet view of several subviews divided by the value in dimension, put 
 
 When you finish exploration, you can save the result into a local file, which can be imported next time.
 
+Sometimes you may have futher questions, such as why sales in Dec. is high. Graphic Walker provides a data explainer for these cases.
+
+For example, in bike sharing dataset, ask why registered rents in Jan. is lower than expectation, the explainer will try to find some potential explanations: 
+
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
+
+(percent of number of workingday is less than average)
+
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
+
 ## Deploy
 
 If you want to use Graphic Walker as a data exploration tool without thinking about deployment details, you can use our online out-of-the-box version.
