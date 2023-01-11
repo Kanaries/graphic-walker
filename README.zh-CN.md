@@ -21,6 +21,8 @@ Graphic Walker 是一个非常规的tableau的开源替代，它可以帮助数�
 + 极其简单的嵌入方式，你可以像引入一个react组件一样简单的将graphic-walker嵌入到你的应用中。
 + graphic-walker将重型但计算放入web-worker中，充分利用客户端算力，使得其可以支持纯客户端部署。
 
+> Graphic Walker 是一个轻量级的可嵌入的可视化分析组件。 如果你对更未来的数据分析工具感兴趣，可以了解我们在做的另一个开源工具 [RATH](https://github.com/Kanaries/Rath), 一个增强分析BI应用，支持全自动的数据洞察发现，因果分析和智能可视化生成。
+
 
 ## 使用
 
