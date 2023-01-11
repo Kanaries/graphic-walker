@@ -27,7 +27,7 @@ const DataSelection: React.FC = props =>{
             <div
                 className={
                     `pb-1 cursor-pointer ${
-                        sourceType === 'public' ? 'underline' : ''
+                        sourceType === 'public' ? 'underline border-r-2 border-black' : ''
                     } hover:bg-gray-200 hover:text-purple-600`
                 }
                 onClick={() => { setSourceType('public'); }}

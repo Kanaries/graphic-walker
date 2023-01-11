@@ -9,11 +9,11 @@
 
 Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
 
-##### Why is it different?
+#### Why is it different?
 
 It is extremely easy to embed in your apps just as a React component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
 
-##### Main features
+#### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics-based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them.
@@ -160,6 +160,32 @@ const YourApp = props => {
 ```
 
 Graphic Walker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources should follow [this format](https://www.i18next.com/misc/json-format). You can simply fork and edit `/locales/en-US.json` to start your translation.
+
+## API
+
+Graphic Walker Props interfacer
+
+```ts
+export interface EditorProps {
+	dataSource?: IRow[];
+	rawFields?: IMutField[];
+	spec?: Specification;
+	hideDataSourceConfig?: boolean;
+	i18nLang?: string;
+	i18nResources?: { [lang: string]: Record<string, string | any> };
+	keepAlive?: boolean;
+}
+```
+
+property description
+
++ `dataSource`, type `Array<{[key: string]: any}>`, array of key-value object data.
++ `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts).  array of fields(columns) of the data.
++ `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). visualization specification
++ `hideDataSourceConfig` at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controled component, you can hide those component by setting this prop to `true`
++ `i18nLang`, type `string`. lang label
++ `i18nResources` custom lang config
++ `keepAlive`, type `boolean`. whether to keep the component state when it is unmounted. If `true`, after you unmount the graphic-walker component, the state will still be store, and will be restore when the component is mount again.
 
 ## What's next
 

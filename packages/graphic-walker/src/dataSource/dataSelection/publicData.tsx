@@ -43,7 +43,7 @@ const PublicData: React.FC<IPublicDataProps> = props => {
             }
         </div>
         <hr className="m-1" />
-        <button className="inline-block min-w-96 text-xs mr-2 pt-1 pb-1 pl-6 pr-6 bg-yellow-600 rounded-sm hover:bg-yellow-500 text-white font-bold disabled:bg-gray-300"
+        <button className="inline-block min-w-96 text-xs mr-2 pt-1 pb-1 pl-6 pr-6 bg-black rounded-sm hover:bg-gray-500 text-white font-bold disabled:bg-gray-300"
             disabled={tmpDataSource.length === 0}
             onClick={() => { commonStore.commitTempDS() }}
         >
