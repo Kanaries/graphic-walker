@@ -1,12 +1,12 @@
 {
   "name": "graphic-walker-home",
   "version": "1.0.0",
-  "description": "![](https://img.shields.io/github/license/kanaries/graphic-walker) ![](https://img.shields.io/npm/v/@kanaries/graphic-walker) ![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/Auto%20Build)",
+  "description": "![](https://img.shields.io/github/license/kanaries/graphic-walker) ![](https://img.shields.io/npm/v/@kanaries/graphic-walker) ![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/auto-build.yml)",
   "private": true,
   "dependencies": {},
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn workspace @kanaries/graphic-walker build"
   },
   "workspaces": {
     "packages": ["packages/*"]
@@ -15,7 +15,7 @@
     "type": "git",
     "url": "git+https://github.com/Kanaries/graphic-walker.git"
   },
-  "keywords": [],
+  "keywords": ["visualization", "EDA", "data-analysis"],
   "author": "",
   "license": "Apache 2.0",
   "bugs": {
