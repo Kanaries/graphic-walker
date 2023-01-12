@@ -6,7 +6,7 @@
 ![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml?style=flat-square)
 [![](https://img.shields.io/twitter/follow/kanaries_data?style=social)](https://twitter.com/kanaries_data)
 [![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/WWHraZ8SeV)
-[![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)]()
+[![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/@kanaries_data)
 [![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
