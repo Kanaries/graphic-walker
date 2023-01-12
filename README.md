@@ -1,11 +1,14 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md)
 
 # graphic-walker
-![](https://img.shields.io/github/license/Kanaries/graphic-walker)
-![](https://img.shields.io/npm/v/@kanaries/graphic-walker)
-![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml)
+![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
+![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
+![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml?style=flat-square)
 [![](https://img.shields.io/twitter/follow/kanaries_data?style=social)](https://twitter.com/kanaries_data)
-[![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord)](https://discord.gg/WWHraZ8SeV)
+[![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/WWHraZ8SeV)
+[![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)]()
+[![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
+[![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
 Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
 
