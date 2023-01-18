@@ -16,7 +16,7 @@ const DatasetFields: React.FC = (props) => {
     const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.DatasetFields" });
 
     return (
-        <DSContainer className="flex md:flex-col" style={{ paddingBlock: 0, paddingInline: '0.6em' }}>
+        <DSContainer className="border-gray-200 flex md:flex-col" style={{ paddingBlock: 0, paddingInline: '0.6em' }}>
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t("field_list")}</h4>
             <div className="pd-1 overflow-y-auto" style={{ maxHeight: "380px", minHeight: '100px' }}>
                 <Droppable droppableId="dimensions" direction="vertical">

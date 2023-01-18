@@ -38,7 +38,7 @@ import throttle from '../utils/throttle';
 
 export const LiteContainer = styled.div`
     margin: 0.2em;
-    border: 1px solid #d9d9d9;
+    border: 1px solid #e5e7eb;
     padding: 1em;
     background-color: #fff;
     .menu-root {
@@ -358,7 +358,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                     '--blue-dark': '#1d1e38',
                 },
                 container: {
-                    border: '1px solid #d9d9d9',
+                    border: '1px solid #e5e7eb',
                     boxSizing: 'content-box',
                     borderRadius: '1px',
                 },
