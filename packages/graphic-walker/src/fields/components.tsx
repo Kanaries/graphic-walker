@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { COLORS } from "../config";
 
 export const AestheticSegment = styled.div`
-  border: 1px solid #dfe3e8;
+  border: 1px solid #e5e7eb;
   font-size: 12px;
   margin: 0.2em;
 
   .aes-header{
-    border-bottom: 1px solid #dfe3e8;
+    border-bottom: 1px solid #e5e7eb;
     padding: 0.6em;
     h4 {
       font-weight: 400;
@@ -84,13 +84,13 @@ export const FilterFieldsContainer = styled.div({
 
 export const FieldListSegment = styled.div`
   display: flex;
-  border: 1px solid #dfe3e8;
+  border: 1px solid #e5e7eb;
   margin: 0.2em;
   font-size: 12px;
   div.fl-header {
     /* flex-basis: 100px; */
     width: 100px;
-    border-right: 1px solid #dfe3e8;
+    border-right: 1px solid #e5e7eb;
     flex-shrink: 0;
     h4 {
       margin: 0.6em;
@@ -106,24 +106,24 @@ export const FieldListSegment = styled.div`
   }
 `;
 
-export const FilterFieldSegment = styled.div({
-  border: '1px solid #dfe3e8',
-  fontSize: '12px',
-  margin: '0.2em',
+export const FilterFieldSegment = styled.div`
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  margin: 0.2em;
 
-  '.flt-header': {
-    borderBottom: '1px solid #dfe3e8',
-    padding: '0.6em',
+  .flt-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.6em;
 
-    '> h4': {
-      fontWeight: 400,
-    },
+    > h4 {
+      font-weight: 400;
+    };
   },
 
-  '.flt-container': {
+  .flt-container {
 
   },
-});
+`
 
 export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   background-color: ${props => props.colType === 'continuous' ? COLORS.white : COLORS.black};

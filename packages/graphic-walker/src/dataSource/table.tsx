@@ -89,7 +89,7 @@ const Table: React.FC<TableProps> = props => {
                                 <b>{field.name || field.fid}</b>
                                 <div>
                                     <select
-                                        className="border-b border-gray-300 hover:bg-gray-100 hover:border-gray-600"
+                                        className="border-b border-gray-200 hover:bg-gray-100 hover:border-gray-600"
                                         value={field.analyticType} onChange={(e) => {
                                         commonStore.updateTempFieldAnalyticType(field.fid, e.target.value as IMutField['analyticType'])
                                     }}>

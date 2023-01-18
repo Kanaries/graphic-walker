@@ -48,11 +48,11 @@
     "react-json-view": "^1.21.3",
     "react-shadow": "^20.0.0",
     "rxjs": "^7.3.0",
-    "tailwindcss": "^2.2.15",
+    "tailwindcss": "^3.2.4",
     "uuid": "^8.3.2",
     "vega": "^5.22.1",
-    "vega-embed": "^6.20.8",
-    "vega-lite": "^5.2.0",
+    "vega-embed": "^6.21.0",
+    "vega-lite": "^5.6.0",
     "visual-insights": "0.7.15"
   },
   "devDependencies": {

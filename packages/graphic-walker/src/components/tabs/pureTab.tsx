@@ -33,7 +33,7 @@ export default function PureTabs(props: PureTabsProps) {
 
     return (
         <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
-            <nav className="-mb-px flex h-8 border-gray-300 border-l" role="tablist" aria-label="Tabs">
+            <nav className="-mb-px flex h-8 border-gray-200 border-l" role="tablist" aria-label="Tabs">
                 {tabs.map((tab, tabIndex) => (
                     <span
                         role="tab"
@@ -64,9 +64,9 @@ export default function PureTabs(props: PureTabsProps) {
                         key={tab.key}
                         className={classNames(
                             tab.key === selectedKey
-                                ? "border-transparent text-black bg-gray-100"
-                                : "text-gray-500 hover:text-gray-700 hover:border-gray-300",
-                            "whitespace-nowrap border-gray-300 py-1 px-2 border-t border-r border-b pr-6 text-sm cursor-pointer"
+                                ? "text-black bg-gray-100"
+                                : "text-gray-500 hover:text-gray-700",
+                            "whitespace-nowrap border-gray-200 py-1 px-2 border-t border-r border-b pr-6 text-sm cursor-pointer"
                         )}
                     />
                 ))}

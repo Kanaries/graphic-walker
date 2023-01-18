@@ -60,7 +60,7 @@ const DataSourcePanel: React.FC<DSPanelProps> = props => {
                     onChange={e => {
                         commonStore.updateTempName(e.target.value)
                     }}
-                    className="text-xs p-1 border border-gray-300 outline-none focus:outline-none focus:border-blue-500"
+                    className="text-xs p-1 border border-gray-200 outline-none focus:outline-none focus:border-blue-500"
                 />
             </div>
             <Table />
