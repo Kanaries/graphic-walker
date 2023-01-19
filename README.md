@@ -1,4 +1,4 @@
-<img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md)
+<img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
 # graphic-walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
@@ -20,7 +20,7 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics-based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them.
-+ Using webworker to handle computational tasks which allow you to use it as a pure front-end app.
++ Using WebWorker to handle computational tasks which allow you to use it as a pure front-end app.
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
@@ -28,7 +28,7 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 
 First, upload your CSV file, preview your data, and define the analytic type of columns (dimension or measure).
 
-> We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embeding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
+> We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
 ![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
 
@@ -57,13 +57,13 @@ To make a facet view of several subviews divided by the value in dimension, put 
 
 When you finish exploration, you can save the result into a local file, which can be imported next time.
 
-Sometimes you may have futher questions, such as why sales in Dec. is high. Graphic Walker provides a data explainer for these cases.
+Sometimes you may have further questions, such as why sales in Dec. is high. Graphic Walker provides a data explainer for these cases.
 
 For example, in bike sharing dataset, ask why registered rents in Jan. is lower than expectation, the explainer will try to find some potential explanations: 
 
 ![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
 
-(percent of number of workingday is less than average)
+(percent of number of working days is less than average)
 
 ![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
 
@@ -175,7 +175,7 @@ Graphic Walker uses `react-i18next` to support i18n, which is based on `i18next`
 
 ## API
 
-Graphic Walker Props interfacer
+Graphic Walker Props interface
 
 ```ts
 export interface EditorProps {
@@ -194,7 +194,7 @@ property description
 + `dataSource`, type `Array<{[key: string]: any}>`, array of key-value object data.
 + `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts).  array of fields(columns) of the data.
 + `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). visualization specification
-+ `hideDataSourceConfig` at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controled component, you can hide those component by setting this prop to `true`
++ `hideDataSourceConfig` at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`
 + `i18nLang`, type `string`. lang label
 + `i18nResources` custom lang config
 + `keepAlive`, type `boolean`. whether to keep the component state when it is unmounted. If `true`, after you unmount the graphic-walker component, the state will still be store, and will be restore when the component is mount again.
