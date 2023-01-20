@@ -2,6 +2,7 @@ import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow 
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { extendCountField } from '../utils';
+import { DBEngine } from '../db';
 
 export class CommonStore {
     public datasets: IDataSet[] = [];
@@ -15,13 +16,16 @@ export class CommonStore {
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
 
     public filters: Filters = {};
+    public db!: DBEngine;
     constructor () {
+        this.db = new DBEngine();
         this.datasets = [];
         this.dataSources = [];
         makeAutoObservable(this, {
             dataSources: observable.ref,
             tmpDataSource: observable.ref,
-            filters: observable.ref
+            filters: observable.ref,
+            db: false
         });
     }
     public get currentDataset (): DataSet {
@@ -90,9 +94,9 @@ export class CommonStore {
         this.tmpDSName = dataset.name;
     }
 
-    public commitTempDS () {
+    public async commitTempDS () {
         const { tmpDSName, tmpDSRawFields, tmpDataSource } = this;
-        this.addAndUseDS({
+        await this.addAndUseDS({
             dataSource: tmpDataSource,
             rawFields: tmpDSRawFields,
             name: tmpDSName
@@ -105,26 +109,60 @@ export class CommonStore {
         this.initTempDS();
         this.showDSPanel = true;
     }
-    public addAndUseDS(dataset: IDataSetInfo) {
-        const datasetId = this.addDS(dataset);
+    public async addAndUseDS(dataset: IDataSetInfo) {
+        const datasetId = await this.addDS(dataset);
         this.dsIndex = this.datasets.length - 1;
         return datasetId
     }
-    public addDS(dataset: IDataSetInfo) {
+    public async createDataset (dataset: IDataSetInfo) {
+        if (this.db.db) {
+            const timestamp = new Date().getTime();
+            const datasetId = `dst${timestamp}`
+            const fileName = `${datasetId}.json`
+            await this.db.db.registerFileText(fileName, JSON.stringify(dataset.dataSource));
+            const conn = await this.db.db.connect();
+            await conn.insertJSONFromPath(fileName, { name: datasetId })
+            await conn.close()
+            await this.db.db.dropFile(fileName);
+            const newDataset: IDataSet = {
+                id: datasetId,
+                name: dataset.name,
+                rawFields: dataset.rawFields,
+                dsId: datasetId
+            }
+            this.datasets.push(newDataset)
+            return newDataset
+        } else {
+            throw new Error('DB is not init.')
+        }
+    }
+    public async queryInDataset (datasetId: string, sql: string) {
+        const dataset = this.datasets.find(d => d.id === datasetId);
+        if (!dataset) throw new Error('dataset not existed')
+        console.log('query in dataset', dataset)
+        return this.db.query(sql.replace('{table}', dataset.dsId))
+    }
+    public async addDS(datasetInfo: IDataSetInfo) {
         const timestamp = new Date().getTime();
-        const dataSetId = `dst-${timestamp}`
-        const dataSourceId = `dse-${timestamp}`;
+        // const dataSetId = `dst_${timestamp}`
+        const dataSourceId = `dse_${timestamp}`;
+        let createdDataset: IDataSet | null = null;
+        if (this.db.db) {
+            createdDataset = await this.createDataset(datasetInfo)
+        } else {
+            throw new Error("DB is not init.")
+        }
         this.dataSources.push({
             id: dataSourceId,
-            data: dataset.dataSource
+            data: datasetInfo.dataSource
         })
-        this.datasets.push({
-            id: dataSetId,
-            name: dataset.name,
-            rawFields: dataset.rawFields,
-            dsId: dataSourceId
-        })
-        return dataSetId;
+        // this.datasets.push({
+        //     id: dataSetId,
+        //     name: dataset.name,
+        //     rawFields: dataset.rawFields,
+        //     dsId: dataSourceId
+        // })
+        return createdDataset?.id
     }
     public removeDS(datasetId: string) {
         const datasetIndex = this.datasets.findIndex(d => d.id === datasetId);
@@ -141,9 +179,9 @@ export class CommonStore {
             this.dsIndex = datasetIndex;
         }
     }
-    public createPlaceholderDS() {
+    public async createPlaceholderDS() {
         this.addDS({
-            name: '新数据源',
+            name: 'new dataset',
             dataSource: [],
             rawFields: []
         })

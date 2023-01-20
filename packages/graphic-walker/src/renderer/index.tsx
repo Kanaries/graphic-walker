@@ -42,6 +42,13 @@ const ReactiveRenderer = forwardRef<IReactVegaHandler, {}>(function ReactiveRend
     // apply filters
     const { dataSource } = currentDataset;
 
+    if (currentDataset) {
+        commonStore.queryInDataset(currentDataset.id, "select * from {table};").then(res => {
+            console.log('qurry', res)
+    
+        })
+    }
+
     const [data, setData] = useState(dataSource);
     const pendingPromiseRef = useRef<Promise<typeof data> | null>(null);
 
