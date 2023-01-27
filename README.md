@@ -4,7 +4,7 @@
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml?style=flat-square)
-[![](https://img.shields.io/twitter/follow/kanaries_data?style=social)](https://twitter.com/kanaries_data)
+[![](https://img.shields.io/badge/twitter-kanaries_data-03A9F4?style=flat-square&logo=twitter)](https://twitter.com/kanaries_data)
 [![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/WWHraZ8SeV)
 [![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/@kanaries_data)
 [![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
@@ -18,9 +18,9 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 
 #### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
-+ A grammar of graphics-based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
-+ A Data Explainer which explains why some patterns occur / what may cause them.
-+ Using WebWorker to handle computational tasks which allow you to use it as a pure front-end app.
++ A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
++ A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
++ Using webworker to handle computational tasks which allow you to use it as a pure front-end app.
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
