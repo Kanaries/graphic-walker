@@ -7,18 +7,17 @@ import DimFields from "./dimFields";
 import MeaFields from "./meaFields";
 
 const DSContainer = styled(NestContainer)`
-    @media (min-width: 768px) {
-        height: 680px;
-    }
-`
+    padding-block: 0;
+    padding-inline: 0.6em;
+`;
 
 const DatasetFields: React.FC = (props) => {
     const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.DatasetFields" });
 
     return (
-        <DSContainer className="border-gray-200 flex md:flex-col" style={{ paddingBlock: 0, paddingInline: '0.6em' }}>
+        <DSContainer className="flex-1 border-gray-200 flex md:flex-col">
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t("field_list")}</h4>
-            <div className="pd-1 overflow-y-auto" style={{ maxHeight: "380px", minHeight: '100px' }}>
+            <div className="pd-1 overflow-y-auto flex flex-col items-stretch" style={{ maxHeight: "min(380px, 60%)", minHeight: 'max(100px, 20%)' }}>
                 <Droppable droppableId="dimensions" direction="vertical">
                     {(provided, snapshot) => <DimFields provided={provided} />}
                 </Droppable>

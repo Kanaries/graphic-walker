@@ -1,18 +1,22 @@
 import React, { useContext, useEffect } from 'react';
 import { CommonStore } from './commonStore'
+import { ViewStore } from './viewStore';
 import { VizSpecStore } from './visualSpecStore'
 
 interface GlobalStore {
     commonStore: CommonStore;
     vizStore: VizSpecStore;
+    viewStore: ViewStore;
 }
 
 const commonStore = new CommonStore();
 const vizStore = new VizSpecStore(commonStore);
+const viewStore = new ViewStore();
 
 const initStore: GlobalStore = {
     commonStore,
-    vizStore
+    vizStore,
+    viewStore,
 }
 
 const StoreContext = React.createContext<GlobalStore>(null!);

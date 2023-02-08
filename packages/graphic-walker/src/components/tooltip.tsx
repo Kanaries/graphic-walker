@@ -6,12 +6,18 @@ import { ShadowDomContext } from "..";
 export interface TooltipProps {
     children: JSX.Element;
     content: string | JSX.Element | JSX.Element[];
+    /** @default false */
+    disabled?: boolean;
     /** @default 250 */
     showDelay?: number;
     /** @default 250 */
     hideDelay?: number;
     /** @default 3_000 */
     autoHide?: number;
+    /** @default "top" */
+    at?: 'top' | 'right' | 'bottom' | 'left';
+    /** @default 0 */
+    distance?: number;
 }
 
 const attrName = "data-tooltip-host-id";
@@ -19,29 +25,60 @@ let flag = 0;
 
 const Bubble = styled.div`
     border-radius: 1px;
-    transform: translate(-50%, -100%);
     filter: drop-shadow(0 1.6px 1.2px rgba(0, 0, 0, 0.15)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.12));
     user-select: none;
     ::before {
         content: "";
         display: block;
         position: absolute;
-        bottom: 0;
-        left: 50%;
         width: 8px;
         height: 8px;
-        transform: translate(-50%, 50%) rotate(45deg);
         background-color: #fff;
         border-radius: 1px;
+    }
+    &.top {
+        transform: translate(-50%, -100%);
+        ::before {
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 50%) rotate(45deg);
+        }
+    }
+    &.right {
+        transform: translate(0, -50%);
+        ::before {
+            left: 0;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+    }
+    &.bottom {
+        transform: translate(-50%, 100%);
+        ::before {
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+    }
+    &.left {
+        transform: translate(-100%, -50%);
+        ::before {
+            right: 0;
+            top: 50%;
+            transform: translate(50%, -50%) rotate(45deg);
+        }
     }
 `;
 
 const Tooltip = memo<TooltipProps>(function Tooltip({
     children,
     content,
+    disabled = false,
     autoHide = 3_000,
     showDelay = 250,
     hideDelay = 250,
+    at = 'top',
+    distance = 0,
 }) {
     const hostId = useMemo(() => flag++, []);
     const [pos, setPos] = useState<[number, number]>([0, 0]);
@@ -65,6 +102,10 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
     hideDelayRef.current = hideDelay;
 
     useEffect(() => {
+        if (disabled) {
+            setShow(false);
+            return;
+        }
         const item = root?.querySelector(`[${attrName}="${hostId}"]`) as HTMLElement | null;
         if (item) {
             let showTimer: NodeJS.Timeout | null = null;
@@ -81,7 +122,27 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 resetTimers();
                 showTimer = setTimeout(() => {
                     const rect = item.getBoundingClientRect();
-                    setPos([rect.x + rect.width / 2, rect.y]);
+                    switch (at) {
+                        case 'top': {
+                            setPos([rect.x + rect.width / 2, rect.y]);
+                            break;
+                        }
+                        case 'right': {
+                            setPos([rect.x + rect.width, rect.y + rect.height / 2]);
+                            break;
+                        }
+                        case 'bottom': {
+                            setPos([rect.x + rect.width / 2, rect.y + rect.height / 2]);
+                            break;
+                        }
+                        case 'left': {
+                            setPos([rect.x, rect.y + rect.height / 2]);
+                            break;
+                        }
+                        default: {
+                            return;
+                        }
+                    }
                     setShow(true);
                     autoHideTimer = setTimeout(() => {
                         handleMouseOut();
@@ -116,7 +177,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 }
             };
         }
-    }, [root, hostId]);
+    }, [at, root, hostId, disabled]);
 
     return (
         <>
@@ -125,10 +186,15 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 root &&
                 createPortal(
                     <Bubble
-                        className="fixed text-xs p-1 px-3 text-gray-500 bg-white z-50"
+                        className={`${at} fixed text-xs p-1 px-3 text-gray-500 bg-white z-50`}
                         onMouseOver={() => setHover(true)}
                         onMouseOut={() => setHover(false)}
-                        style={{ left: pos[0], top: pos[1] - 4 }}
+                        style={{
+                            top: { left: pos[0], top: pos[1] - distance },
+                            right: { left: pos[0] + distance, top: pos[1] },
+                            bottom: { left: pos[0], top: pos[1] + distance },
+                            left: { left: pos[0] - distance, top: pos[1] },
+                        }[at]}
                     >
                         {content}
                     </Bubble>,

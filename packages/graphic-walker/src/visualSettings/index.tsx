@@ -346,7 +346,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
         ];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG]);
 
-    return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
+    return <div className="w-full flex-grow-0 flex-shrink-0">
         <Toolbar
             items={items}
             styles={{
@@ -358,7 +358,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                     '--blue-dark': '#1d1e38',
                 },
                 container: {
-                    border: '1px solid #e5e7eb',
+                    borderBottom: '1px solid #e5e7eb',
                     boxSizing: 'content-box',
                     borderRadius: '1px',
                 },

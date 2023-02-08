@@ -1,26 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, CSSProperties } from "react";
 import { Specification } from "visual-insights";
 import { observer } from "mobx-react-lite";
-import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { toJS } from "mobx";
 import { useTranslation } from "react-i18next";
 import { IMutField, IRow } from "./interfaces";
-import type { IReactVegaHandler } from "./vis/react-vega";
-import VisualSettings from "./visualSettings";
-import { Container, NestContainer } from "./components/container";
-import ClickMenu from "./components/clickMenu";
-import InsightBoard from "./insightBoard/index";
-import PosFields from "./fields/posFields";
-import AestheticFields from "./fields/aestheticFields";
-import DatasetFields from "./fields/datasetFields/index";
-import ReactiveRenderer from "./renderer/index";
+import { Container } from "./components/container";
 import DataSourceSegment from "./dataSource/index";
 import { useGlobalStore } from "./store";
 import { preAnalysis, destroyWorker } from "./services";
-import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
-import FilterField from "./fields/filterField";
-import PageNav from "./components/pageNav";
+import { PrimarySideBar } from "./components/primarySideBar";
+import { Main } from "./components/main";
 
 export interface EditorProps {
     dataSource?: IRow[];
@@ -30,16 +20,22 @@ export interface EditorProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean;
+    styles?: {
+        shadowRoot?: CSSProperties;
+        app?: CSSProperties;
+        root?: CSSProperties;
+        container?: CSSProperties;
+    };
 }
 
 const App: React.FC<EditorProps> = (props) => {
-    const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig } = props;
+    const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig, styles } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
 
-    const { currentDataset, datasets, vizEmbededMenu } = commonStore;
+    const { currentDataset } = commonStore;
 
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const curLang = i18n.language;
 
     useEffect(() => {
@@ -86,59 +82,13 @@ const App: React.FC<EditorProps> = (props) => {
         };
     }, [currentDataset, spec]);
 
-    const rendererRef = useRef<IReactVegaHandler>(null);
-
     return (
-        <div className="App">
-            {/* <div className="grow-0">
-                <PageNav />
-            </div> */}
-            <div className="">
-                {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
-                <div className="px-2 mx-2">
-                    <VisNav />
-                </div>
-                <Container style={{ marginTop: "0em", borderTop: "none" }}>
-                    <VisualSettings rendererHandler={rendererRef} />
-                    <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                        <div className="md:col-span-3 xl:col-span-1">
-                            <DatasetFields />
-                        </div>
-                        <div className="md:col-span-2 xl:col-span-1">
-                            <FilterField />
-                            <AestheticFields />
-                        </div>
-                        <div className="md:col-span-7 xl:col-span-4">
-                            <div>
-                                <PosFields />
-                            </div>
-                            <NestContainer
-                                style={{ minHeight: "600px", overflow: "auto" }}
-                                onMouseLeave={() => {
-                                    vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                }}
-                            >
-                                {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
-                                <InsightBoard />
-                                {vizEmbededMenu.show && (
-                                    <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
-                                        <div
-                                            className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
-                                            onClick={() => {
-                                                commonStore.closeEmbededMenu();
-                                                commonStore.setShowInsightBoard(true);
-                                            }}
-                                        >
-                                            <span className="flex-1 pr-2">{t("App.labels.data_interpretation")}</span>
-                                            <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
-                                        </div>
-                                    </ClickMenu>
-                                )}
-                            </NestContainer>
-                        </div>
-                    </div>
-                </Container>
-            </div>
+        <div className="App GW_app w-full h-full flex flex-col" style={styles?.app}>
+            {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} style={styles?.container} />}
+            <Container className="GW_container p-0 GW__root flex-1 flex flex-row" style={{ ...styles?.container, ...styles?.root }}>
+                <PrimarySideBar />
+                <Main />
+            </Container>
         </div>
     );
 };

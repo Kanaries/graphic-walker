@@ -5,6 +5,9 @@ export const Container = styled.div`
     padding: 1em;
     margin: 1em;
     background-color: #fff;
+    :not(:last-child) {
+        margin-bottom: 0;
+    }
 `;
 
 export const NestContainer = styled.div`

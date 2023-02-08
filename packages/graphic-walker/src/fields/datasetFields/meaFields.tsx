@@ -12,7 +12,7 @@ const MeaFields: React.FC<Props> = props => {
     const { provided } = props;
     const { vizStore } = useGlobalStore();
     const measures = vizStore.draggableFieldState.measures;
-    return <div {...provided.droppableProps} ref={provided.innerRef}>
+    return <div className="flex-1" {...provided.droppableProps} ref={provided.innerRef}>
         {measures.map((f, index) => (
             <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                 {(provided, snapshot) => {

@@ -32,7 +32,7 @@ export const GraphicWalker: React.FC<EditorProps> = observer(props => {
     }, []);
 
     return (
-        <root.div mode="open" ref={rootRef}>
+        <root.div className="GW__shadowRoot" mode="open" ref={rootRef} style={props.styles?.shadowRoot}>
             <style>{tailwindStyle}</style>
             <style>{style}</style>
             {shadowRoot && (

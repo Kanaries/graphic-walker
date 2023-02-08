@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { CSSProperties, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
@@ -11,17 +11,18 @@ import DataSelection from './dataSelection';
 
 interface DSSegmentProps {
     preWorkDone: boolean;
+    style?: CSSProperties;
 }
 
 const DataSourceSegment: React.FC<DSSegmentProps> = props => {
-    const { preWorkDone } = props;
+    const { preWorkDone, style } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const gwFileRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
 
     const { currentDataset, datasets, showDSPanel } = commonStore;
 
-    return <Container className="flex flex-row items-stretch">
+    return <Container className="GW__container flex-grow-0 flex-shrink-0 flex flex-row items-stretch" style={style}>
         <GwFile fileRef={gwFileRef} />
         {!preWorkDone && <div className="animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>}
         <label className="text-xs mr-1 whitespace-nowrap self-center h-4">

@@ -171,5 +171,9 @@
             "children_major_factor": "子节点主要因素",
             "children_outlier": "子节点异常"
         }
+    },
+    "primary_menu_key": {
+        "chart": "图",
+        "dashboard": "报表"
     }
 }
