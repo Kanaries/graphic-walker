@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import path from 'path';
-import reactRefresh from '@vitejs/plugin-react-refresh'
+import react from '@vitejs/plugin-react'
 import typescript from '@rollup/plugin-typescript'
 
 // https://vitejs.dev/config/
@@ -9,8 +9,7 @@ export default defineConfig({
     port: 2002,
   },
   plugins: [
-    // @ts-ignore
-    reactRefresh(),
+    react(),
     // @ts-ignore
     {
       ...typescript({
