@@ -18,6 +18,8 @@ export interface TooltipProps {
     at?: 'top' | 'right' | 'bottom' | 'left';
     /** @default 0 */
     distance?: number;
+    /** @default "none" */
+    overflowMode?: 'none' | 'parent' | 'children';
 }
 
 const attrName = "data-tooltip-host-id";
@@ -79,6 +81,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
     hideDelay = 250,
     at = 'top',
     distance = 0,
+    overflowMode = 'none',
 }) {
     const hostId = useMemo(() => flag++, []);
     const [pos, setPos] = useState<[number, number]>([0, 0]);
@@ -120,6 +123,25 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
             };
             const handleMouseOver = () => {
                 resetTimers();
+                if (overflowMode === 'parent') {
+                    if (item.scrollWidth <= item.offsetWidth && item.scrollHeight <= item.offsetHeight) {
+                        return;
+                    }
+                } else if (overflowMode === 'children') {
+                    let anyChildOverflowing = false;
+                    for (const child of item.children) {
+                        if (!(child instanceof HTMLElement)) {
+                            continue;
+                        }
+                        if (child.scrollWidth > child.offsetWidth || child.scrollHeight > child.offsetHeight) {
+                            anyChildOverflowing = true;
+                            break;
+                        }
+                    }
+                    if (!anyChildOverflowing) {
+                        return;
+                    }
+                }
                 showTimer = setTimeout(() => {
                     const rect = item.getBoundingClientRect();
                     switch (at) {
@@ -177,7 +199,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 }
             };
         }
-    }, [at, root, hostId, disabled]);
+    }, [at, root, hostId, disabled, overflowMode]);
 
     return (
         <>

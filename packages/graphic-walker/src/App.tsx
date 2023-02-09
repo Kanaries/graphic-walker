@@ -83,9 +83,9 @@ const App: React.FC<EditorProps> = (props) => {
     }, [currentDataset, spec]);
 
     return (
-        <div className="App GW_app w-full h-full flex flex-col" style={styles?.app}>
+        <div className="App GW_app w-full h-full flex flex-col overflow-hidden" style={styles?.app}>
             {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} style={styles?.container} />}
-            <Container className="GW_container p-0 GW__root flex-1 flex flex-row" style={{ ...styles?.container, ...styles?.root }}>
+            <Container className="GW_container p-0 GW__root flex-1 flex flex-row overflow-hidden" style={{ ...styles?.container, ...styles?.root }}>
                 <PrimarySideBar />
                 <Main />
             </Container>
