@@ -22,7 +22,7 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
-+ Using webworker to handle computational tasks which allow you to use it as a pure front-end app.
++ Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
