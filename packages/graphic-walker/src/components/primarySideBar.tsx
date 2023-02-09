@@ -3,17 +3,18 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../store";
 import { PrimaryMenuItems, PrimaryMenuKey } from "../store/viewStore";
-import ChartList from "./feature/mainView/chartList";
+import ChartList from "./feature/chart/chartList";
+import DashboardList from "./feature/dashboard/dashboardList";
 import Tooltip from "./tooltip";
 
 
-export const PrimarySideBar = observer(function PrimarySideBar () {
+export const PrimarySideBar = observer<{ direction: 'portrait' | 'landscape' }>(function PrimarySideBar ({ direction }) {
     const { t } = useTranslation();
     const { viewStore } = useGlobalStore();
     const { showPrimarySideBar, primaryMenuKey } = viewStore;
     
     return (
-        <aside className="GW__primarySideBar h-full border-r border-gray-200 flex flex-row overflow-hidden">
+        <aside className={`GW__primarySideBar h-full border-r border-gray-200 flex flex-row overflow-hidden ${direction === 'portrait' && showPrimarySideBar ? 'flex-1 border-r-0' : ''}`}>
             <div role="tablist" className="h-full flex flex-col items-center">
                 {PrimaryMenuItems.map(item => {
                     const Icon = item.icon;
@@ -33,6 +34,7 @@ export const PrimarySideBar = observer(function PrimarySideBar () {
                                         viewStore.togglePrimarySideBar();
                                     } else {
                                         viewStore.setPrimaryMenuKey(item.key);
+                                        viewStore.togglePrimarySideBar(true);
                                     }
                                 }}
                             >
@@ -43,9 +45,10 @@ export const PrimarySideBar = observer(function PrimarySideBar () {
                 })}
             </div>
             {showPrimarySideBar && (
-                <div className="h-full flex flex-col items-stretch bg-slate-50 min-w-96">
+                <div className="flex-1 h-full flex flex-col items-stretch bg-slate-50 overflow-hidden">
                     {{
                         [PrimaryMenuKey.chart]: <ChartList />,
+                        [PrimaryMenuKey.dashboard]: <DashboardList />,
                     }[primaryMenuKey]}
                 </div>
             )}

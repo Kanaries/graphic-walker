@@ -28,7 +28,7 @@ export class ViewStore {
     public primaryMenuKey: PrimaryMenuKey;
 
     constructor() {
-        this.showPrimarySideBar = true;
+        this.showPrimarySideBar = false;
         this.primaryMenuKey = PrimaryMenuKey.chart;
         makeAutoObservable(this, {});
     }

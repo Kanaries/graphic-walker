@@ -104,7 +104,7 @@
     },
     "main": {
         "tablist": {
-            "new": "+ 新建",
+            "new": "新建图表",
             "autoTitle": "图表 {{idx}}"
         },
         "tabpanel": {
@@ -173,7 +173,10 @@
         }
     },
     "primary_menu_key": {
-        "chart": "图",
+        "chart": "图表",
         "dashboard": "报表"
+    },
+    "dashboard": {
+        "new": "新建报表"
     }
 }

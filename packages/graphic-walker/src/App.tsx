@@ -1,4 +1,4 @@
-import React, { useState, useEffect, CSSProperties } from "react";
+import React, { useState, useEffect, CSSProperties, useRef } from "react";
 import { Specification } from "visual-insights";
 import { observer } from "mobx-react-lite";
 import { toJS } from "mobx";
@@ -11,6 +11,8 @@ import { preAnalysis, destroyWorker } from "./services";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
 import { PrimarySideBar } from "./components/primarySideBar";
 import { Main } from "./components/main";
+import { useWorkspaceContextProvider } from "./store/dashboard/workspace";
+import { useDashboardContextProvider } from "./store/dashboard";
 
 export interface EditorProps {
     dataSource?: IRow[];
@@ -32,6 +34,9 @@ const App: React.FC<EditorProps> = (props) => {
     const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig, styles } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
+    const DashboardCtxProvider = useDashboardContextProvider();
+    const DashboardWspProvider = useWorkspaceContextProvider();
+    const [[w, h], setSize] = useState<[number, number]>([0, 0]);
 
     const { currentDataset } = commonStore;
 
@@ -82,14 +87,33 @@ const App: React.FC<EditorProps> = (props) => {
         };
     }, [currentDataset, spec]);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const { current: container } = containerRef;
+        if (container) {
+            const cb = (): void => {
+                const { width, height } = container.getBoundingClientRect();
+                setSize([width, height]);
+            };
+            const ro = new ResizeObserver(cb);
+            ro.observe(container);
+            return () => ro.disconnect();
+        }
+    }, []);
+
     return (
-        <div className="App GW_app w-full h-full flex flex-col overflow-hidden" style={styles?.app}>
-            {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} style={styles?.container} />}
-            <Container className="GW_container p-0 GW__root flex-1 flex flex-row overflow-hidden" style={{ ...styles?.container, ...styles?.root }}>
-                <PrimarySideBar />
-                <Main />
-            </Container>
-        </div>
+        <DashboardWspProvider>
+            <DashboardCtxProvider>
+                <div className="App GW_app w-full h-full flex flex-col overflow-hidden" style={styles?.app}>
+                    {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} style={styles?.container} />}
+                    <Container className="GW_container p-0 GW__root flex-1 flex flex-row overflow-hidden" style={{ ...styles?.container, ...styles?.root }} ref={containerRef}>
+                        <PrimarySideBar direction={w < h ? 'portrait' : 'landscape'} />
+                        <Main direction={w < h ? 'portrait' : 'landscape'} />
+                    </Container>
+                </div>
+            </DashboardCtxProvider>
+        </DashboardWspProvider>
     );
 };
 

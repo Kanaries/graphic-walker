@@ -104,7 +104,7 @@
     },
     "main": {
         "tablist": {
-            "new": "+ New",
+            "new": "New Chart",
             "autoTitle": "Chart {{idx}}"
         },
         "tabpanel": {
@@ -175,5 +175,8 @@
     "primary_menu_key": {
         "chart": "Chart",
         "dashboard": "Dashboard"
+    },
+    "dashboard": {
+        "new": "New Dashboard"
     }
 }
