@@ -32,7 +32,7 @@ First, upload your CSV file, preview your data, and define the analytic type of 
 
 > We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
-![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
+![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
