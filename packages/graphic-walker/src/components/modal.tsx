@@ -56,6 +56,7 @@ const Modal: React.FC<ModalProps> = (props) => {
             // at a different element and then released when the mouse is moved on the target element.
             // This case is required to be prevented, especially disturbing when interacting
             // with a Slider component.
+            className="border border-gray-300"
             onMouseDown={() => (prevMouseDownTimeRef.current = Date.now())}
             onMouseOut={() => (prevMouseDownTimeRef.current = 0)}
             onMouseUp={() => {

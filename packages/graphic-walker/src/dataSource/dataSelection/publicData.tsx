@@ -35,7 +35,7 @@ const PublicData: React.FC<IPublicDataProps> = props => {
                             })
                         })
                     }}
-                    className="border rounded border-gray-400 p-2 m-2 cursor-pointer hover:bg-gray-50"
+                    className="border rounded border-gray-300 p-2 m-2 cursor-pointer hover:bg-gray-50"
                     >
                 <div>{data.title}</div>
                 {/* <p>{data.title}</p> */}
