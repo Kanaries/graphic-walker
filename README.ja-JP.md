@@ -31,7 +31,7 @@ Graphic Walker は React コンポーネントの形で、プラグインとし�
 
 > 導入できるデータソースの種類を増やす予定がありますので、追加をご希望する方は気軽に私たちに連絡または issue で教えてください。開発者には、直接にデータを props として Graphic Walker に入力することができます。[Rath](https://github.com/Kanaries/Rath) はその方法で、多くのデータソースをサポートします。また、[Rath](https://github.com/Kanaries/Rath) でデータを導入してセーブするファイルを Graphic Walker に取り込むこともできます。Graphic Walker で導入できないデータを [Rath](https://github.com/Kanaries/Rath) で処理したり、変換したりしてから Graphic Walker で分析する選択肢もあります。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
 
 確認が完了したら、『Submit』をクリックしましょう。データの各ディメンションとメジャーは左のリストに表示されます。それらをその右側のスペース（行、列、色、不透明度など）にドロップしたら、可視化が生成します。
 

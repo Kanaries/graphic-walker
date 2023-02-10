@@ -30,7 +30,7 @@ Graphic Walker 是一个非常规的tableau的开源替代，它可以帮助数�
 
 > 我们正在开发更多的数据源支持类型，欢迎在issue中提出你希望支持的数据源类型，或参与开发贡献。如果你是一位开发者，由于Graphic Walker可以被当做嵌入系统直接使用，所以你可以通过参数传递的方式为Graphic Walker直接传递数据源，这样就无需单独为gw适配您自己的数据源类型，而是直接与当前的系统集成。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
 
 
 当数据准备好后，点击确认按钮。进入分析界面。在分析界面的左侧，字段列表中列出来所有的可选字段类型，这些字段都来源于数据源中的列。你可以通过简单的拖拉拽来将他们拖入你想要的视觉通道中（如行、列、颜色、大小等）来通过可视化的方式分析他们。
