@@ -64,8 +64,8 @@ const CSVData: React.FC<ICSVData> = (props) => {
                     {t("submit")}
                 </button>
             </div>
-            <div className="mt-1 mb-1">
-                <label className="block text-xs text-gray-800">{t("dataset_name")}</label>
+            <div className="my-2">
+                <label className="block text-xs text-gray-800 mb-1 font-bold">{t("dataset_name")}</label>
                 <input
                     type="text"
                     placeholder={t("dataset_name")}
@@ -73,7 +73,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                     onChange={(e) => {
                         commonStore.updateTempName(e.target.value);
                     }}
-                    className="text-xs p-1 border border-gray-200 outline-none focus:outline-none focus:border-blue-500"
+                    className="text-xs p-2 rounded border border-gray-200 outline-none focus:outline-none focus:border-blue-500 placeholder:italic placeholder:text-slate-400"
                 />
             </div>
             <Table />

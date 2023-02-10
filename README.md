@@ -32,7 +32,7 @@ First, upload your CSV file, preview your data, and define the analytic type of 
 
 > We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
+![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-01.png)
 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
@@ -41,21 +41,21 @@ When the data is ready, click the 'Submit' button to use the data. On the left-h
 
 Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-bar-01.png)
+![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-bar-01.png)
 
 
 You can change the mark type into others to make different charts, for example a line chart.
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-line-01.png)
+![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-line-01.png)
 
 
 To compare different measures, you can create a concat view by adding more than one measure into rows/columns.
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-area-01.png)
+![graphic walker area chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-area-01.png)
 
 To make a facet view of several subviews divided by the value in dimension, put dimensions into rows or columns to make a facets view. The rules are similar to Tableau.
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-scatter-01.png)
+![graphic walker scatter chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-scatter-01.png)
 
 When you finish exploration, you can save the result into a local file, which can be imported next time.
 
@@ -63,11 +63,11 @@ Sometimes you may have further questions, such as why sales in Dec. is high. Gra
 
 For example, in bike sharing dataset, ask why registered rents in Jan. is lower than expectation, the explainer will try to find some potential explanations: 
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
+![graphic walker explain data button](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
 
 (percent of number of working days is less than average)
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
+![graphic walker explain data result](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
 
 ## Deploy
 
