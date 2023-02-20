@@ -30,6 +30,7 @@ export interface EditorProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean;
+    fixContainer?: boolean;
 }
 
 const App: React.FC<EditorProps> = (props) => {

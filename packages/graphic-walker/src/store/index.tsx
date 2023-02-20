@@ -29,8 +29,12 @@ export function rebootGWStore() {
     initStore.vizStore = vs;
 }
 
-export class StoreWrapper extends React.Component<{ keepAlive?: boolean }> {
-    constructor(props: { keepAlive?: boolean }) {
+interface StoreWrapperProps {
+    keepAlive?: boolean;
+    rootContainer?: HTMLDivElement | null;
+}
+export class StoreWrapper extends React.Component<StoreWrapperProps> {
+    constructor(props: StoreWrapperProps) {
         super(props)
         if (props.keepAlive) {
             rebootGWStore();
@@ -42,6 +46,7 @@ export class StoreWrapper extends React.Component<{ keepAlive?: boolean }> {
         }
     }
     render() {
+        initStore.commonStore.rootContainer = this.props.rootContainer ?? null;
         return <StoreContext.Provider value={initStore}>
             { this.props.children }
         </StoreContext.Provider>
