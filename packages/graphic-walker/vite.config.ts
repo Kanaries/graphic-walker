@@ -24,25 +24,26 @@ export default defineConfig({
     }
   ],
   resolve: {
-    dedupe: modulesNotToBundle,
+    //dedupe: modulesNotToBundle,
   },
   build: {
     lib: {
       entry: path.resolve(__dirname, './src/index.tsx'),
       name: 'GraphicWalker',
-      fileName: (format) => `graphic-walker.${format}.js`
+      fileName: (format) => `graphic-walker.${format}.js`,
+      formats: ['iife']
     },
     rollupOptions: {
-      external: modulesNotToBundle,
-      output: {
-        globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM',
-          'styled-components': 'styled',
-        },
-      },
+      // external: modulesNotToBundle,
+      // output: {
+      //   globals: {
+      //     'react': 'React',
+      //     'react-dom': 'ReactDOM',
+      //     'styled-components': 'styled',
+      //   },
+      // },
     },
     minify: 'esbuild',
-    sourcemap: true,
+    sourcemap: false,
   }
 })

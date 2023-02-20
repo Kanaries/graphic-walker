@@ -49,3 +49,17 @@ export const GraphicWalker: React.FC<EditorProps> = observer(props => {
         </root.div>
     );
 });
+
+import ReactDOM from 'react-dom';
+export const GWalkerMap = new Map<string, any>()
+export function GWalker(props: EditorProps, id: string) {
+    const c = 
+    (<React.StrictMode>
+        <GraphicWalker {...props} />
+    </React.StrictMode>);
+    GWalkerMap[id] = c;
+    ReactDOM.render(c,
+    document.getElementById(id)
+  )
+}
+console.log("GraphicWalker =", exports)
