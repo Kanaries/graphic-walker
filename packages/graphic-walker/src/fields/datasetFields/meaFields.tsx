@@ -4,18 +4,22 @@ import { observer } from 'mobx-react-lite';
 import { useGlobalStore } from '../../store';
 import DataTypeIcon from '../../components/dataTypeIcon';
 import { FieldPill } from './fieldPill';
+import { fixDraggableOffset } from '../../pitch/dnd-offset';
 
 interface Props {
     provided: DroppableProvided;
 }
 const MeaFields: React.FC<Props> = props => {
     const { provided } = props;
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const measures = vizStore.draggableFieldState.measures;
     return <div {...provided.droppableProps} ref={provided.innerRef}>
         {measures.map((f, index) => (
             <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                 {(provided, snapshot) => {
+                    if (snapshot.isDragging && provided.draggableProps.style) {
+                        fixDraggableOffset(provided, commonStore.rootContainer)
+                    }
                     return (
                         <>
                             <FieldPill

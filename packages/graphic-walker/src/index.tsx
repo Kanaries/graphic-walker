@@ -17,6 +17,7 @@ export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ roo
 export const GraphicWalker: React.FC<EditorProps> = observer(props => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
+    const fixContainer = props.fixContainer ?? false;
 
     useEffect(() => {
         if (rootRef.current) {
@@ -37,7 +38,7 @@ export const GraphicWalker: React.FC<EditorProps> = observer(props => {
             <style>{style}</style>
             {shadowRoot && (
                 <StyleSheetManager target={shadowRoot}>
-                    <StoreWrapper keepAlive={props.keepAlive}>
+                    <StoreWrapper keepAlive={props.keepAlive} rootContainer={fixContainer ? rootRef.current : null}>
                         <FieldsContextWrapper>
                             <ShadowDomContext.Provider value={{ root: shadowRoot }}>
                                 <App {...props} />
