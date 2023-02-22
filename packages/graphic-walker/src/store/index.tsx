@@ -31,7 +31,6 @@ export function rebootGWStore() {
 
 interface StoreWrapperProps {
     keepAlive?: boolean;
-    rootContainer?: HTMLDivElement | null;
 }
 export class StoreWrapper extends React.Component<StoreWrapperProps> {
     constructor(props: StoreWrapperProps) {
@@ -46,7 +45,6 @@ export class StoreWrapper extends React.Component<StoreWrapperProps> {
         }
     }
     render() {
-        initStore.commonStore.rootContainer = this.props.rootContainer ?? null;
         return <StoreContext.Provider value={initStore}>
             { this.props.children }
         </StoreContext.Provider>

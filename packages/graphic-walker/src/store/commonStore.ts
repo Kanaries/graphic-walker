@@ -13,7 +13,6 @@ export class CommonStore {
     public showDSPanel: boolean = false;
     public showInsightBoard: boolean = false;
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
-    public rootContainer: HTMLDivElement | null = null;
 
     public filters: Filters = {};
     constructor () {
@@ -22,8 +21,7 @@ export class CommonStore {
         makeAutoObservable(this, {
             dataSources: observable.ref,
             tmpDataSource: observable.ref,
-            filters: observable.ref,
-            rootContainer: false
+            filters: observable.ref
         });
     }
     public get currentDataset (): DataSet {

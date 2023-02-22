@@ -1,4 +1,8 @@
-const throttle = (fn: () => void, time: number, options?: Partial<{ leading: boolean; trailing: boolean }>): () => void => {
+const throttle = (
+    fn: () => void,
+    time: number,
+    options?: Partial<{ leading: boolean; trailing: boolean }>
+): (() => void) => {
     const { leading = true, trailing = false } = options ?? {};
 
     let dirty = false;

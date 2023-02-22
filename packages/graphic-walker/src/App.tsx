@@ -20,7 +20,6 @@ import { preAnalysis, destroyWorker } from "./services";
 import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
 import FilterField from "./fields/filterField";
-import PageNav from "./components/pageNav";
 
 export interface EditorProps {
     dataSource?: IRow[];
@@ -30,7 +29,6 @@ export interface EditorProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean;
-    fixContainer?: boolean;
 }
 
 const App: React.FC<EditorProps> = (props) => {
