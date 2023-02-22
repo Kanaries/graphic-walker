@@ -10,7 +10,7 @@ interface Props {
 }
 const MeaFields: React.FC<Props> = props => {
     const { provided } = props;
-    const { vizStore, commonStore } = useGlobalStore();
+    const { vizStore } = useGlobalStore();
     const measures = vizStore.draggableFieldState.measures;
     return <div {...provided.droppableProps} ref={provided.innerRef}>
         {measures.map((f, index) => (

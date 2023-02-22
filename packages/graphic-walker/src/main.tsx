@@ -9,7 +9,7 @@ inject();
 
 ReactDOM.render(
     <React.StrictMode>
-        <GraphicWalker fixContainer />
+        <GraphicWalker />
     </React.StrictMode>,
     document.getElementById("root")
 );

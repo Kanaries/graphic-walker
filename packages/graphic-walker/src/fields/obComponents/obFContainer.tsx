@@ -18,7 +18,7 @@ interface FieldContainerProps {
 }
 const OBFieldContainer: React.FC<FieldContainerProps> = props => {
     const { provided, dkey } = props;
-    const { vizStore, commonStore } = useGlobalStore();
+    const { vizStore} = useGlobalStore();
     const { draggableFieldState } = vizStore;
     return <FieldsContainer
         {...provided.droppableProps}

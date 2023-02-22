@@ -10,7 +10,7 @@ interface Props {
 }
 const DimFields: React.FC<Props> = props => {
     const { provided } = props;
-    const { vizStore, commonStore } = useGlobalStore();
+    const { vizStore } = useGlobalStore();
     const dimensions = vizStore.draggableFieldState.dimensions;
     return <div {...provided.droppableProps} ref={provided.innerRef}>
         {dimensions.map((f, index) => (
