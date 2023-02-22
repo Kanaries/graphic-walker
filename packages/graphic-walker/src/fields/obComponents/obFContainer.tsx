@@ -8,7 +8,6 @@ import {
 } from "@kanaries/react-beautiful-dnd";
 import { IDraggableStateKey } from '../../interfaces';
 import OBPill from './obPill';
-import { fixDraggableOffset } from '../../pitch/dnd-offset';
 
 interface FieldContainerProps {
     provided: DroppableProvided
@@ -29,9 +28,6 @@ const OBFieldContainer: React.FC<FieldContainerProps> = props => {
         {draggableFieldState[dkey.id].map((f, index) => (
             <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                 {(provided, snapshot) => {
-                    if (snapshot.isDragging && provided.draggableProps.style) {
-                        fixDraggableOffset(provided, commonStore.rootContainer)
-                    }
                     return (
                         <OBPill dkey={dkey} fIndex={index} provided={provided} />
                     );
