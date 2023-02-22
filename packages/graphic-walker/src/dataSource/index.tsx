@@ -8,6 +8,7 @@ import { useGlobalStore } from '../store';
 import { download } from '../utils/save';
 import GwFile from './dataSelection/gwFile';
 import DataSelection from './dataSelection';
+import DefaultButton from '../components/button/default';
 
 interface DSSegmentProps {
     preWorkDone: boolean;
@@ -39,28 +40,25 @@ const DataSourceSegment: React.FC<DSSegmentProps> = props => {
             ))}
         </select>
 
-        <button className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm hover:bg-gray-200"
+        <DefaultButton
+            text={t('DataSource.buttons.create_dataset')}
             onClick={() => { commonStore.startDSBuildingTask() }}
-        >
-            {t('DataSource.buttons.create_dataset')}
-        </button>
-        <button className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm hover:bg-gray-200"
+        />
+        <DefaultButton
+            text={t('DataSource.buttons.export_as_file')}
             onClick={() => {
                 const res = vizStore.exportAsRaw();
                 download(res, 'graphic-walker-notebook.json', 'text/plain')
             }}
-        >
-            {t('DataSource.buttons.export_as_file')}
-        </button>
-        <button className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm hover:bg-gray-200"
+        />
+        <DefaultButton
+            text={t('DataSource.buttons.import_file')}
             onClick={() => {
                 if (gwFileRef.current) {
                     gwFileRef.current.click();
                 }
             }}
-        >
-            {t('DataSource.buttons.import_file')}
-        </button>
+        />
         {showDSPanel && (
             <Modal
                 title={t('DataSource.dialog.create_data_source')}

@@ -6,6 +6,8 @@ import styled from "styled-components";
 import { useGlobalStore } from "../../store";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
+import DefaultButton from "../../components/button/default";
+import PrimaryButton from "../../components/button/primary";
 
 const Container = styled.div`
     overflow-x: auto;
@@ -44,25 +46,21 @@ const CSVData: React.FC<ICSVData> = (props) => {
                 }}
             />
             <div className="mt-1 mb-1">
-                <button
-                    className="inline-block min-w-96 text-xs mr-2 pt-1 pb-1 pl-6 pr-6 border border-gray-500 rounded-sm cursor-pointer hover:bg-gray-200"
+                <DefaultButton
                     onClick={() => {
                         if (fileRef.current) {
                             fileRef.current.click();
                         }
                     }}
-                >
-                    {t("open")}
-                </button>
-                <button
-                    className="inline-block min-w-96 text-xs mr-2 pt-1 pb-1 pl-6 pr-6 bg-black rounded-sm hover:bg-gray-500 text-white font-bold disabled:bg-gray-300"
+                    text={t("open")}
+                />
+                <PrimaryButton
+                    text={t("submit")}
                     disabled={tmpDataSource.length === 0}
                     onClick={() => {
                         onSubmitData();
                     }}
-                >
-                    {t("submit")}
-                </button>
+                />
             </div>
             <div className="my-2">
                 <label className="block text-xs text-gray-800 mb-1 font-bold">{t("dataset_name")}</label>
