@@ -3,7 +3,7 @@ import { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
 import { DOM } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
-import App, { EditorProps } from './App';
+import App, { IGWProps } from './App';
 import { StoreWrapper } from './store/index';
 import { FieldsContextWrapper } from './fields/fieldsContext';
 
@@ -14,7 +14,7 @@ import style from './index.css?inline';
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
-export const GraphicWalker: React.FC<EditorProps> = observer(props => {
+export const GraphicWalker: React.FC<IGWProps> = observer(props => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
 

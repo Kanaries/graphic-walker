@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Specification } from "visual-insights";
 import { observer } from "mobx-react-lite";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
@@ -20,8 +20,9 @@ import { preAnalysis, destroyWorker } from "./services";
 import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
 import FilterField from "./fields/filterField";
+import { guardDataKeys } from "./utils/dataPrep";
 
-export interface EditorProps {
+export interface IGWProps {
     dataSource?: IRow[];
     rawFields?: IMutField[];
     spec?: Specification;
@@ -29,10 +30,14 @@ export interface EditorProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean;
+    /**
+     * auto parse field key into a safe string. default is true
+     */
+    fieldKeyGuard?: boolean;
 }
 
-const App: React.FC<EditorProps> = (props) => {
-    const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig } = props;
+const App: React.FC<IGWProps> = (props) => {
+    const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig, fieldKeyGuard = true } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
 
@@ -53,16 +58,30 @@ const App: React.FC<EditorProps> = (props) => {
         }
     }, [i18nLang, curLang]);
 
+    const safeDataset = useMemo(() => {
+        let safeData = dataSource;
+        let safeMetas = rawFields;
+        if (fieldKeyGuard) {
+            const { safeData: _safeData, safeMetas: _safeMetas } = guardDataKeys(dataSource, rawFields);
+            safeData = _safeData;
+            safeMetas = _safeMetas;
+        }
+        return {
+            safeData,
+            safeMetas,
+        };
+    }, [rawFields, dataSource, fieldKeyGuard]);
+
     // use as an embeding module, use outside datasource from props.
     useEffect(() => {
-        if (dataSource.length > 0) {
+        if (safeDataset.safeData.length > 0 && safeDataset.safeMetas.length > 0) {
             commonStore.addAndUseDS({
                 name: "context dataset",
-                dataSource: dataSource,
-                rawFields,
+                dataSource: safeDataset.safeData,
+                rawFields: safeDataset.safeMetas,
             });
         }
-    }, [dataSource, rawFields]);
+    }, [safeDataset]);
 
     // do preparation analysis work when using a new dataset
     useEffect(() => {
