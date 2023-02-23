@@ -27,6 +27,15 @@ export interface IMutField {
     analyticType: IAnalyticType;
 };
 
+export interface IUncertainMutField {
+    fid: string;
+    key?: string;
+    name?: string;
+    disable?: boolean;
+    semanticType: ISemanticType | '?';
+    analyticType: IAnalyticType | '?';
+}
+
 export interface IField {
     /**
      * fid: key in data record

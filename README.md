@@ -180,7 +180,7 @@ Graphic Walker uses `react-i18next` to support i18n, which is based on `i18next`
 Graphic Walker Props interface
 
 ```ts
-export interface EditorProps {
+export interface IGWProps {
 	dataSource?: IRow[];
 	rawFields?: IMutField[];
 	spec?: Specification;

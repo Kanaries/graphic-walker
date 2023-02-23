@@ -1,4 +1,4 @@
-import { IRow } from '../interfaces';
+import { IRow } from "../interfaces";
 
 export function normalizeWithParent(
     data: IRow[],
@@ -11,69 +11,72 @@ export function normalizeWithParent(
 } {
     const totalMeasuresOfParent: IRow = {};
     const totalMeasures: IRow = {};
-    measures.forEach(mea => {
+    measures.forEach((mea) => {
         totalMeasuresOfParent[mea] = 0;
         totalMeasures[mea] = 0;
-    })
-    parentData.forEach(record => {
-        measures.forEach(mea => {
-            totalMeasuresOfParent[mea] += Math.abs(record[mea])
-        })
-    })
-    data.forEach(record => {
-        measures.forEach(mea => {
+    });
+    parentData.forEach((record) => {
+        measures.forEach((mea) => {
+            totalMeasuresOfParent[mea] += Math.abs(record[mea]);
+        });
+    });
+    data.forEach((record) => {
+        measures.forEach((mea) => {
             totalMeasures[mea] += Math.abs(record[mea]);
-        })
-    })
+        });
+    });
     const normalizedParentData: IRow[] = [];
-    parentData.forEach(record => {
+    parentData.forEach((record) => {
         const newRecord = { ...record };
-        measures.forEach(mea => {
+        measures.forEach((mea) => {
             newRecord[mea] /= totalMeasuresOfParent[mea];
-        })
+        });
         normalizedParentData.push(newRecord);
-    })
+    });
     const normalizedData: IRow[] = [];
-    data.forEach(record => {
+    data.forEach((record) => {
         const newRecord = { ...record };
-        measures.forEach(mea => {
+        measures.forEach((mea) => {
             if (syncScale) {
                 newRecord[mea] /= totalMeasuresOfParent[mea];
             } else {
-                newRecord[mea] /= totalMeasures[mea]
+                newRecord[mea] /= totalMeasures[mea];
             }
-        })
+        });
         normalizedData.push(newRecord);
-    })
+    });
     return {
         normalizedData,
-        normalizedParentData
+        normalizedParentData,
     };
 }
 
-export function compareDistribution (distribution1: IRow[], distribution2: IRow[], dimensions: string[], measures: string[]): number {
+export function compareDistribution(
+    distribution1: IRow[],
+    distribution2: IRow[],
+    dimensions: string[],
+    measures: string[]
+): number {
     let score = 0;
     let count = 0;
     const tagsForD2: boolean[] = distribution2.map(() => false);
     for (let record of distribution1) {
         let targetRecordIndex = distribution2.findIndex((r, i) => {
-            return !tagsForD2[i] && dimensions.every(dim => r[dim] === record[dim])
-        })
+            return !tagsForD2[i] && dimensions.every((dim) => r[dim] === record[dim]);
+        });
         if (targetRecordIndex > -1) {
             tagsForD2[targetRecordIndex] = true;
             const targetRecord = distribution2[targetRecordIndex];
             for (let mea of measures) {
-                
                 score = Math.max(
                     score,
-                    Math.max(targetRecord[mea], record[mea]) /
-                        Math.min(targetRecord[mea], record[mea])
+                    Math.max(targetRecord[mea], record[mea]) / Math.min(targetRecord[mea], record[mea])
                 );
                 count++;
             }
         } else {
             for (let mea of measures) {
-                score = Math.max(score, record[mea])
+                score = Math.max(score, record[mea]);
                 count++;
             }
         }
@@ -90,31 +93,36 @@ export function compareDistribution (distribution1: IRow[], distribution2: IRow[
     return score;
 }
 
-export function normalizeByMeasures (dataSource: IRow[], measures: string[]) {
+export function normalizeByMeasures(dataSource: IRow[], measures: string[]) {
     let sums: Map<string, number> = new Map();
 
-    measures.forEach(mea => {
+    measures.forEach((mea) => {
         sums.set(mea, 0);
-    })
+    });
 
-    dataSource.forEach(record => {
-        measures.forEach(mea => {
+    dataSource.forEach((record) => {
+        measures.forEach((mea) => {
             sums.set(mea, sums.get(mea)! + Math.abs(record[mea]));
-        })
-    })
+        });
+    });
 
     const ans: IRow[] = [];
-    dataSource.forEach(record => {
+    dataSource.forEach((record) => {
         const norRecord: IRow = { ...record };
-        measures.forEach(mea => {
+        measures.forEach((mea) => {
             norRecord[mea] /= sums.get(mea)!;
-        })
+        });
         ans.push(norRecord);
     });
     return ans;
 }
 
-export function getDistributionDifference(dataSource: IRow[], dimensions: string[], measure1: string, measure2: string): number {
+export function getDistributionDifference(
+    dataSource: IRow[],
+    dimensions: string[],
+    measure1: string,
+    measure2: string
+): number {
     let score = 0;
     for (let record of dataSource) {
         if (record[measure1] === 0 || record[measure2] === 0) continue;
@@ -123,7 +131,7 @@ export function getDistributionDifference(dataSource: IRow[], dimensions: string
     return score;
 }
 
-export function makeBinField (dataSource: IRow[], fid: string, binFid: string, binSize: number | undefined = 10) {
+export function makeBinField(dataSource: IRow[], fid: string, binFid: string, binSize: number | undefined = 10) {
     let _min = Infinity;
     let _max = -Infinity;
     for (let i = 0; i < dataSource.length; i++) {
@@ -132,21 +140,21 @@ export function makeBinField (dataSource: IRow[], fid: string, binFid: string, b
         if (val < _min) _min = val;
     }
     const step = (_max - _min) / binSize;
-    return dataSource.map(r => {
+    return dataSource.map((r) => {
         let bIndex = Math.floor((r[fid] - _min) / step);
         if (bIndex === binSize) bIndex = binSize - 1;
         return {
             ...r,
-            [binFid]: bIndex * step + _min
-        }
-    })
+            [binFid]: bIndex * step + _min,
+        };
+    });
 }
 
-export function makeLogField (dataSource: IRow[], fid: string, logFid: string) {
-    return dataSource.map(r => {
+export function makeLogField(dataSource: IRow[], fid: string, logFid: string) {
+    return dataSource.map((r) => {
         return {
             ...r,
-            [logFid]: (typeof r[fid] === 'number' && r[fid] > 0) ? Math.log10(r[fid]) : null
-        }
-    })
+            [logFid]: typeof r[fid] === "number" && r[fid] > 0 ? Math.log10(r[fid]) : null,
+        };
+    });
 }

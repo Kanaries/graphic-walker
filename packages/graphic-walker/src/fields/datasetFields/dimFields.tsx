@@ -16,6 +16,7 @@ const DimFields: React.FC<Props> = props => {
         {dimensions.map((f, index) => (
             <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                 {(provided, snapshot) => {
+          
                     return (
                         <>
                             <FieldPill
