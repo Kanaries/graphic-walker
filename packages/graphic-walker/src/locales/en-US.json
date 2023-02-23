@@ -5,6 +5,12 @@
             "dimension": "dimension",
             "measure": "measure"
         },
+        "semantic_type": {
+            "nominal": "nominal",
+            "ordinal": "ordinal",
+            "temporal": "temporal",
+            "quantitative": "quantitative"
+        },
         "mark_type": {
             "__enum__": "Mark Type",
             "auto": "Auto",

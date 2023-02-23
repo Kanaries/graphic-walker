@@ -9,6 +9,8 @@ import { autoMark } from '../utils/autoMark';
 import { COUNT_FIELD_ID } from '../constants';
 
 import { IViewField, IRow, IStackMode } from '../interfaces';
+import { useTranslation } from 'react-i18next';
+import { getVegaTimeFormatRules } from './temporalFormat';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -119,12 +121,9 @@ function channelEncode(props: EncodeProps) {
         title: props[c].name,
         type: props[c].semanticType
       }
-      if (props[c].semanticType === 'temporal') {
-        encoding[c].axis = { format: '%Y-%m' }
-      }
     }
   })
-  // FIXME: 临时处理逻辑，只处理xy排序
+  // FIXME: temporal fix, only for x and y relative order
   if (encoding.x && encoding.y) {
     if ((props.x.sort && props.x.sort) || (props.y && props.y.sort)) {
       if (props.x.sort !== 'none' && (props.y.sort === 'none' || !Boolean(props.y.sort)))  {
@@ -383,6 +382,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
+  const { i18n } = useTranslation();
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
       if (onGeomClick) {
@@ -502,7 +502,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.params.push(...singleView.params!);
       }
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions }).then(res => {
+        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
@@ -583,10 +583,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             ans.params = commonSpec.params;
           }
           if (node) {
-            embed(node, ans, { mode: 'vega-lite', actions: showActions }).then(res => {
+            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
               vegaRefs.current.push(res.view);
-              // 这种 case 下，我们来考虑联动的 params
-              // vega 使用 Data 来维护 params 的状态，只需要打通这些状态就可以实现联动
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
               ).map(name => name.replace(/_store$/, ''));
@@ -611,12 +609,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                       });
                     }
                   });
-                  // 订阅
                   subscribe(entry => {
                     if (entry.source === sourceId || !entry.data) {
                       return;
                     }
-                    // 防止被动更新触发广播
                     noBroadcasting = true;
                     res.view.setState({
                       data: {
