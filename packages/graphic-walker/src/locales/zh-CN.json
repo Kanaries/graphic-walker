@@ -5,6 +5,12 @@
             "dimension": "维度",
             "measure": "度量"
         },
+        "semantic_type": {
+            "nominal": "类别类型",
+            "ordinal": "有序类型",
+            "temporal": "时间类型",
+            "quantitative": "数值类型"
+        },
         "mark_type": {
             "__enum__": "标记类型",
             "auto": "自动",

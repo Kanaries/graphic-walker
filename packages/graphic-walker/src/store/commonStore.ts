@@ -73,6 +73,13 @@ export class CommonStore {
         }
     }
 
+    public updateTempFieldSemanticType (fieldKey: string, semanticType: IMutField['semanticType']) {
+        const field = this.tmpDSRawFields.find(f => f.fid === fieldKey);
+        if (field) {
+            field.semanticType = semanticType;
+        }
+    }
+
     public updateTempName (name: string) {
         this.tmpDSName = name;
     }

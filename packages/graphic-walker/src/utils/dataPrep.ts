@@ -36,7 +36,6 @@ export function guardDataKeys (data: IRow[], metas: IMutField[]): {
         from: metas[i].fid,
         to: f.fid
     }));
-    console.log(keyEncodeList, metas, safeMetas)
     const safeData = updateRowKeys(data, keyEncodeList);
     return {
         safeData,

@@ -36,16 +36,8 @@ const Container = styled.div`
         }
     }
 `;
-const TYPE_LIST = [
-    {
-        value: "dimension",
-        label: "维度",
-    },
-    {
-        value: "measure",
-        label: "度量",
-    },
-];
+const ANALYTIC_TYPE_LIST = ["dimension", "measure"];
+const SEMANTIC_TYPE_LIST = ["nominal", "ordinal", "quantitative", "temporal"];
 // function getCellType(field: IMutField): 'number' | 'text' {
 //     return field.dataType === 'number' || field.dataType === 'integer' ? 'number' : 'text';
 // }
@@ -79,9 +71,16 @@ const Table: React.FC<TableProps> = (props) => {
     const { t } = useTranslation();
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
-        return TYPE_LIST.map((at) => ({
-            value: at.value,
-            label: t(`constant.analytic_type.${at.value}`),
+        return ANALYTIC_TYPE_LIST.map((at) => ({
+            value: at,
+            label: t(`constant.analytic_type.${at}`),
+        }));
+    }, []);
+
+    const semanticTypeList = useMemo<{ value: string; label: string }[]>(() => {
+        return SEMANTIC_TYPE_LIST.map((st) => ({
+            value: st,
+            label: t(`constant.semantic_type.${st}`),
         }));
     }, []);
 
@@ -121,13 +120,27 @@ const Table: React.FC<TableProps> = (props) => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div
-                                        className={
-                                            "inline-block px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
-                                            getSemanticColors(field)
-                                        }
-                                    >
-                                        {field.semanticType}
+                                    <div>
+                                    <select
+                                            className={
+                                                "inline-block px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
+                                                getSemanticColors(field)
+                                            }
+                                            // className="border-b border-gray-200 bg-gray-50 pl-0 mt-2 font-light"
+                                            value={field.semanticType}
+                                            onChange={(e) => {
+                                                commonStore.updateTempFieldSemanticType(
+                                                    field.fid,
+                                                    e.target.value as IMutField["semanticType"]
+                                                );
+                                            }}
+                                        >
+                                            {semanticTypeList.map((type) => (
+                                                <option key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </th>
