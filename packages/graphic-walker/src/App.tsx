@@ -135,6 +135,9 @@ const App: React.FC<IGWProps> = (props) => {
                                 onMouseLeave={() => {
                                     vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                 }}
+                                onClick={() => {
+                                    vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                }}
                             >
                                 {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
                                 <InsightBoard />

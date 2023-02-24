@@ -32,6 +32,7 @@ const ReactiveRenderer = forwardRef<IReactVegaHandler, {}>(function ReactiveRend
     
     const handleGeomClick = useCallback((values: any, e: any) => {
         if (shouldTriggerMenu) {
+            e.stopPropagation();
             runInAction(() => {
                 commonStore.showEmbededMenu([e.pageX, e.pageY])
                 commonStore.setFilters(values);
