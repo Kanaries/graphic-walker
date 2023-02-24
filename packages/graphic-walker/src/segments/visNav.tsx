@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { observer } from "mobx-react-lite";
-import PureTabs, { ITabOption } from "../components/tabs/pureTab";
+import EditableTabs, { ITabOption } from "../components/tabs/editableTab";
 import { useGlobalStore } from "../store";
 
 
@@ -36,7 +36,7 @@ const VisNav: React.FC = (props) => {
     }, [])
 
     return (
-        <PureTabs
+        <EditableTabs
             selectedKey={visList[visIndex].visId}
             tabs={tabs}
             onEditLabel={editLabelHandler}

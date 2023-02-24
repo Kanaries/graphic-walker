@@ -81,6 +81,10 @@
     "App": {
         "labels": {
             "data_interpretation": "数据解读"
+        },
+        "segments": {
+            "vis": "可视化",
+            "data": "数据"
         }
     },
     "DataSource": {
@@ -177,5 +181,9 @@
             "children_major_factor": "子节点主要因素",
             "children_outlier": "子节点异常"
         }
+    },
+    "actions": {
+        "prev": "向前",
+        "next": "向后"
     }
 }
