@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { toJS } from "mobx";
 import { useTranslation } from "react-i18next";
-import { IMutField, IRow } from "./interfaces";
+import { IMutField, IRow, ISegmentKey } from "./interfaces";
 import type { IReactVegaHandler } from "./vis/react-vega";
 import VisualSettings from "./visualSettings";
 import { Container, NestContainer } from "./components/container";
@@ -21,6 +21,8 @@ import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
 import FilterField from "./fields/filterField";
 import { guardDataKeys } from "./utils/dataPrep";
+import SegmentNav from "./segments/segmentNav";
+import DatasetConfig from "./dataSource/datasetConfig";
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -37,11 +39,19 @@ export interface IGWProps {
 }
 
 const App: React.FC<IGWProps> = (props) => {
-    const { dataSource = [], rawFields = [], spec, i18nLang = "en-US", i18nResources, hideDataSourceConfig, fieldKeyGuard = true } = props;
+    const {
+        dataSource = [],
+        rawFields = [],
+        spec,
+        i18nLang = "en-US",
+        i18nResources,
+        hideDataSourceConfig,
+        fieldKeyGuard = true,
+    } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
 
-    const { currentDataset, datasets, vizEmbededMenu } = commonStore;
+    const { currentDataset, datasets, vizEmbededMenu, segmentKey } = commonStore;
 
     const { t, i18n } = useTranslation();
     const curLang = i18n.language;
@@ -114,48 +124,63 @@ const App: React.FC<IGWProps> = (props) => {
             <div className="">
                 {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
                 <div className="px-2 mx-2">
-                    <VisNav />
+                    <SegmentNav />
+                    {
+                        segmentKey === ISegmentKey.vis && <VisNav />
+                    }
                 </div>
-                <Container style={{ marginTop: "0em", borderTop: "none" }}>
-                    <VisualSettings rendererHandler={rendererRef} />
-                    <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                        <div className="md:col-span-3 xl:col-span-1">
-                            <DatasetFields />
-                        </div>
-                        <div className="md:col-span-2 xl:col-span-1">
-                            <FilterField />
-                            <AestheticFields />
-                        </div>
-                        <div className="md:col-span-7 xl:col-span-4">
-                            <div>
-                                <PosFields />
+                {segmentKey === ISegmentKey.vis && (
+                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                        <VisualSettings rendererHandler={rendererRef} />
+                        <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
+                            <div className="md:col-span-3 xl:col-span-1">
+                                <DatasetFields />
                             </div>
-                            <NestContainer
-                                style={{ minHeight: "600px", overflow: "auto" }}
-                                onMouseLeave={() => {
-                                    vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                }}
-                            >
-                                {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
-                                <InsightBoard />
-                                {vizEmbededMenu.show && (
-                                    <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
-                                        <div
-                                            className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
-                                            onClick={() => {
-                                                commonStore.closeEmbededMenu();
-                                                commonStore.setShowInsightBoard(true);
-                                            }}
-                                        >
-                                            <span className="flex-1 pr-2">{t("App.labels.data_interpretation")}</span>
-                                            <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
-                                        </div>
-                                    </ClickMenu>
-                                )}
-                            </NestContainer>
+                            <div className="md:col-span-2 xl:col-span-1">
+                                <FilterField />
+                                <AestheticFields />
+                            </div>
+                            <div className="md:col-span-7 xl:col-span-4">
+                                <div>
+                                    <PosFields />
+                                </div>
+                                <NestContainer
+                                    style={{ minHeight: "600px", overflow: "auto" }}
+                                    onMouseLeave={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
+                                    onClick={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
+                                >
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
+                                    <InsightBoard />
+                                    {vizEmbededMenu.show && (
+                                        <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
+                                            <div
+                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
+                                                onClick={() => {
+                                                    commonStore.closeEmbededMenu();
+                                                    commonStore.setShowInsightBoard(true);
+                                                }}
+                                            >
+                                                <span className="flex-1 pr-2">
+                                                    {t("App.labels.data_interpretation")}
+                                                </span>
+                                                <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
+                                            </div>
+                                        </ClickMenu>
+                                    )}
+                                </NestContainer>
+                            </div>
                         </div>
-                    </div>
-                </Container>
+                    </Container>
+                )}
+                {segmentKey === ISegmentKey.data && (
+                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                        <DatasetConfig />
+                    </Container>
+                )}
             </div>
         </div>
     );

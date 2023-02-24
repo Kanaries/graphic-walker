@@ -81,6 +81,10 @@
     "App": {
         "labels": {
             "data_interpretation": "Interpret Data"
+        },
+        "segments": {
+            "vis": "Visualization",
+            "data": "Data"
         }
     },
     "DataSource": {
@@ -177,5 +181,9 @@
             "children_major_factor": "major factor",
             "children_outlier": "outlier"
         }
+    },
+    "actions": {
+        "prev": "Previous",
+        "next": "Next"
     }
 }
