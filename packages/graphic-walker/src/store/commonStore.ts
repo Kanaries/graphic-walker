@@ -1,4 +1,4 @@
-import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow } from '../interfaces';
+import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { extendCountField } from '../utils';
@@ -13,8 +13,9 @@ export class CommonStore {
     public showDSPanel: boolean = false;
     public showInsightBoard: boolean = false;
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
-
+    public showDataConfig: boolean = false;
     public filters: Filters = {};
+    public segmentKey: ISegmentKey = ISegmentKey.vis;
     constructor () {
         this.datasets = [];
         this.dataSources = [];
@@ -44,8 +45,14 @@ export class CommonStore {
             dataSource: []
         }
     }
+    public setSegmentKey (sk: ISegmentKey) {
+        this.segmentKey = sk;
+    }
     public setShowDSPanel (show: boolean) {
         this.showDSPanel = show;
+    }
+    public setShowDataConfig (show: boolean) {
+        this.showDataConfig = show;
     }
     public setShowInsightBoard (show: boolean) {
         this.showInsightBoard = show;
@@ -64,6 +71,25 @@ export class CommonStore {
     }
     public updateTempFields (fields: IMutField[]) {
         this.tmpDSRawFields = fields;
+    }
+
+    public updateCurrentDatasetMetas (fid: string, diffMeta: Partial<IMutField>) {
+        const dataset = this.datasets[this.dsIndex];
+        const field = dataset.rawFields.find(f => f.fid === fid);
+        if (field) {
+            for (let mk in diffMeta) {
+                field[mk] = diffMeta[mk];
+            }
+        }
+    }
+
+    public updateTempDatasetMetas (fid: string, diffMeta: Partial<IMutField>) {
+        const field = this.tmpDSRawFields.find(f => f.fid === fid);
+        if (field) {
+            for (let mk in diffMeta) {
+                field[mk] = diffMeta[mk];
+            }
+        }
     }
 
     public updateTempFieldAnalyticType (fieldKey: string, analyticType: IMutField['analyticType']) {

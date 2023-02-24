@@ -11,14 +11,14 @@ export interface ITabOption {
     key: string;
     options?: Record<string, any>;
 }
-interface PureTabsProps {
+interface EditableTabsProps {
     tabs: ITabOption[];
     selectedKey: string;
     onSelected: (selectedKey: string, index: number) => void;
     allowEdit?: boolean;
     onEditLabel?: (label: string, index: number) => void;
 }
-export default function PureTabs(props: PureTabsProps) {
+export default function EditableTabs(props: EditableTabsProps) {
     const { tabs, selectedKey, onSelected, allowEdit, onEditLabel } = props;
     const [editList, setEditList] = useState<boolean[]>([]);
     const { t } = useTranslation();
@@ -66,7 +66,7 @@ export default function PureTabs(props: PureTabsProps) {
                             tab.key === selectedKey
                                 ? "text-black bg-gray-100"
                                 : "text-gray-500 hover:text-gray-700",
-                            "whitespace-nowrap border-gray-200 py-1 px-2 border-t border-r border-b pr-6 text-sm cursor-pointer"
+                            "whitespace-nowrap border-gray-200 py-1 px-2 border-r border-t border-b pr-6 text-sm cursor-pointer"
                         )}
                     />
                 ))}

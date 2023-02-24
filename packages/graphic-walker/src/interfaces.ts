@@ -179,3 +179,8 @@ export interface IVisSpec {
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }
+
+export enum ISegmentKey {
+    vis = 'vis',
+    data = 'data'
+}
