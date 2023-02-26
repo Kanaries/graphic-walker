@@ -20,16 +20,6 @@ const Container = styled.div`
         box-sizing: content-box;
         border-collapse: collapse;
         font-size: 12px;
-        thead {
-            th {
-            }
-            th.number {
-                border-top: 3px solid #5cdbd3;
-            }
-            th.text {
-                border-top: 3px solid #69c0ff;
-            }
-        }
         tbody {
             td {
             }
@@ -52,17 +42,17 @@ function getHeaderType(field: IMutField): "number" | "text" {
 }
 
 function getHeaderClassNames(field: IMutField) {
-    return field.analyticType === "dimension" ? "border-t-4 border-blue-400" : "border-t-4 border-teal-400";
+    return field.analyticType === "dimension" ? "border-t-4 border-blue-400" : "border-t-4 border-purple-400";
 }
 
 function getSemanticColors(field: IMutField): string {
     switch (field.semanticType) {
         case "nominal":
-            return "bg-indigo-100 text-indigo-800";
+            return "bg-sky-100 text-sky-800";
         case "ordinal":
-            return "bg-purple-100 text-purple-800";
+            return "bg-indigo-100 text-indigo-800";
         case "quantitative":
-            return "bg-green-100 text-green-800";
+            return "bg-purple-100 text-purple-800";
         case "temporal":
             return "bg-yellow-100 text-yellow-800";
         default:
@@ -129,7 +119,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                             <span
                                                 className={
                                                     "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
-                                                    (field.analyticType === "dimension" ? "bg-blue-500" : "bg-teal-500")
+                                                    (field.analyticType === "dimension" ? "bg-blue-500" : "bg-purple-500")
                                                 }
                                             >
                                                 {field.analyticType}
