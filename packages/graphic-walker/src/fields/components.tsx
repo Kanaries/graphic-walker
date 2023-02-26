@@ -16,7 +16,7 @@ export const AestheticSegment = styled.div`
     }
   }
   .aes-container{
-    overflow-x: auto;
+    /* overflow-x: auto; */
   }
 
 `
@@ -144,7 +144,7 @@ export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   font-size: 12px;
   height: 20px;
   min-width: 150px;
-  overflow-y: hidden;
+  /* overflow-y: hidden; */
   padding: 0 10px;
   user-select: none;
   text-overflow: ellipsis;

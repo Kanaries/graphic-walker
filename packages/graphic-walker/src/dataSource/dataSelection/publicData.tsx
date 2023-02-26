@@ -43,13 +43,12 @@ const PublicData: React.FC<IPublicDataProps> = props => {
             </div>)
             }
         </div>
-        <hr className="m-1" />
         <PrimaryButton
+            className='my-1'
             disabled={tmpDataSource.length === 0}
             onClick={() => { commonStore.commitTempDS() }}
             text={t('submit')}
         />
-        <hr className="m-1" />
         <Table />
     </div>
 }

@@ -152,7 +152,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             {
                 key: 'mark_type',
                 label: tGlobal('constant.mark_type.__enum__'),
-                icon: StopIcon,
+                icon: () => <StopIcon className="text-orange-500" />,
                 options: GEMO_TYPES.map(g => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
