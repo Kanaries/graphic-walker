@@ -33,7 +33,7 @@ export default function EditableTabs(props: EditableTabsProps) {
 
     return (
         <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
-            <nav className="-mb-px flex h-8 border-gray-200 border-l" role="tablist" aria-label="Tabs">
+            <nav className="-mb-px flex h-8 border-gray-200" role="tablist" aria-label="Tabs">
                 {tabs.map((tab, tabIndex) => (
                     <span
                         role="tab"
@@ -64,9 +64,9 @@ export default function EditableTabs(props: EditableTabsProps) {
                         key={tab.key}
                         className={classNames(
                             tab.key === selectedKey
-                                ? "text-black bg-gray-100"
-                                : "text-gray-500 hover:text-gray-700",
-                            "whitespace-nowrap border-gray-200 py-1 px-2 border-r border-t border-b pr-6 text-sm cursor-pointer"
+                                ? "border rounded-t"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
+                            "whitespace-nowrap border-gray-200 py-1 px-2 pr-6 text-sm cursor-pointer"
                         )}
                     />
                 ))}

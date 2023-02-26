@@ -1,6 +1,9 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
 import { XCircleIcon } from "@heroicons/react/24/outline";
+import { Fragment, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const Background = styled.div({
     position: "fixed",
@@ -30,7 +33,7 @@ const Container = styled.div`
         align-items: center;
     }
     > div.container {
-        padding: 1em;
+        padding: 0.5em 1em 1em 1em;
     }
     position: fixed;
     left: 50%;
@@ -43,12 +46,12 @@ const Container = styled.div`
 `;
 interface ModalProps {
     onClose?: () => void;
+    show?: boolean;
     title?: string;
 }
 const Modal: React.FC<ModalProps> = (props) => {
-    const { onClose, title } = props;
+    const { onClose, title, show } = props;
     const prevMouseDownTimeRef = useRef(0);
-
     return (
         <Background
             // This is a safer replacement of onClick handler.
@@ -56,7 +59,7 @@ const Modal: React.FC<ModalProps> = (props) => {
             // at a different element and then released when the mouse is moved on the target element.
             // This case is required to be prevented, especially disturbing when interacting
             // with a Slider component.
-            className="border border-gray-300"
+            className={"border border-gray-300 " + (show ? "block" : "hidden")}
             onMouseDown={() => (prevMouseDownTimeRef.current = Date.now())}
             onMouseOut={() => (prevMouseDownTimeRef.current = 0)}
             onMouseUp={() => {
@@ -65,17 +68,20 @@ const Modal: React.FC<ModalProps> = (props) => {
                 }
             }}
         >
-            <Container role="dialog" className="shadow-lg" onMouseDown={(e) => e.stopPropagation()}>
-                <div className="header relative h-9">
-                    <header className="font-bold">{title}</header>
-                    <XCircleIcon
-                        className="text-red-600 absolute right-2 w-6 cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        aria-label="close dialog"
-                        onClick={onClose}
-                    />
+            <Container role="dialog" className="shadow-lg rounded-md border border-gray-100" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    onClick={() => {
+                        onClose?.();
+                    }}
+                  >
+                    <span className="sr-only">Close</span>
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                  </button>
                 </div>
+                <div className="px-6 pt-4 text-base font-semibold leading-6 text-gray-900">{title}</div>
                 <div className="container">{props.children}</div>
             </Container>
         </Background>

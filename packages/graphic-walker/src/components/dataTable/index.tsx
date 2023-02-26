@@ -3,6 +3,8 @@ import styled from "styled-components";
 import { IMutField, IRow } from "../../interfaces";
 import { useTranslation } from "react-i18next";
 import Pagination from "./pagination";
+import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import DropdownContext from "../dropdownContext";
 
 interface DataTableProps {
     size?: number;
@@ -116,53 +118,51 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                 >
                                     <b>{field.name || field.fid}</b>
                                     <div>
-                                        <select
-                                            className={
-                                                "px-2 py font-normal mt-2 rounded-full text-xs text-white " +
-                                                (field.analyticType === "dimension" ? "bg-blue-500" : "bg-teal-500")
-                                            }
-                                            // className="border-b border-gray-200 bg-gray-50 pl-0 mt-2 font-light"
-                                            value={field.analyticType}
-                                            onChange={(e) => {
+                                        <DropdownContext
+                                            options={analyticTypeList}
+                                            onSelect={(value) => {
                                                 onMetaChange(field.fid, fIndex, {
-                                                    analyticType: e.target.value as IMutField["analyticType"],
+                                                    analyticType: value as IMutField["analyticType"],
                                                 });
                                             }}
                                         >
-                                            {analyticTypeList.map((type) => (
-                                                <option key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            <span
+                                                className={
+                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
+                                                    (field.analyticType === "dimension" ? "bg-blue-500" : "bg-teal-500")
+                                                }
+                                            >
+                                                {field.analyticType}
+                                                <ChevronUpDownIcon className="ml-2 w-3" />
+                                            </span>
+                                        </DropdownContext>
                                     </div>
                                     <div>
-                                        <select
-                                            className={
-                                                "inline-block px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
-                                                getSemanticColors(field)
-                                            }
-                                            // className="border-b border-gray-200 bg-gray-50 pl-0 mt-2 font-light"
-                                            value={field.semanticType}
-                                            onChange={(e) => {
+                                        <DropdownContext
+                                            options={semanticTypeList}
+                                            onSelect={(value) => {
                                                 onMetaChange(field.fid, fIndex, {
-                                                    semanticType: e.target.value as IMutField["semanticType"],
+                                                    semanticType: value as IMutField["semanticType"],
                                                 });
                                             }}
                                         >
-                                            {semanticTypeList.map((type) => (
-                                                <option key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            <span
+                                                className={
+                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
+                                                    getSemanticColors(field)
+                                                }
+                                            >
+                                                {field.semanticType}
+                                                <ChevronUpDownIcon className="ml-2 w-3" />
+                                            </span>
+                                        </DropdownContext>
                                     </div>
                                 </div>
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-gray-100 bg-white">
                     {data.slice(from, to).map((row, index) => (
                         <tr className={"divide-x divide-gray-200 " + (index % 2 ? "bg-gray-50" : "")} key={index}>
                             {metas.map((field) => (

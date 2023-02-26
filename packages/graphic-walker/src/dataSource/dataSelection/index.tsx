@@ -3,7 +3,7 @@ import { useState } from "react";
 import CSVData from "./csvData";
 import PublicData from "./publicData";
 import { useTranslation } from "react-i18next";
-import PureTabs from "../../components/tabs/editableTab";
+import PureTabs from "../../components/tabs/defaultTab";
 
 const DataSelection: React.FC = (props) => {
     const [sourceType, setSourceType] = useState<"file" | "public">("file");
@@ -26,7 +26,6 @@ const DataSelection: React.FC = (props) => {
                         setSourceType(sk as "public" | "file");
                     }}
                 />
-                <hr className="mt-1 mb-1" />
                 {sourceType === "file" && <CSVData />}
                 {sourceType === "public" && <PublicData />}
             </div>

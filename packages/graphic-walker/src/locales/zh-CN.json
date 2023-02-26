@@ -184,6 +184,7 @@
     },
     "actions": {
         "prev": "向前",
-        "next": "向后"
+        "next": "向后",
+        "drop_field": "拖拽字段至此"
     }
 }

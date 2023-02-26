@@ -50,8 +50,8 @@
         },
         "draggable_key": {
             "fields": "Fields",
-            "columns": "Columns",
-            "rows": "Rows",
+            "columns": "X-Axis",
+            "rows": "Y-Axis",
             "color": "Color",
             "opacity": "Opacity",
             "size": "Size",
@@ -184,6 +184,7 @@
     },
     "actions": {
         "prev": "Previous",
-        "next": "Next"
+        "next": "Next",
+        "drop_field": "Drop Field Here"
     }
 }

@@ -45,8 +45,9 @@ const CSVData: React.FC<ICSVData> = (props) => {
                     }
                 }}
             />
-            <div className="mt-1 mb-1">
+            <div className="my-1">
                 <DefaultButton
+                    className="mr-2"
                     onClick={() => {
                         if (fileRef.current) {
                             fileRef.current.click();
@@ -55,6 +56,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                     text={t("open")}
                 />
                 <PrimaryButton
+                    className="mr-2"
                     text={t("submit")}
                     disabled={tmpDataSource.length === 0}
                     onClick={() => {

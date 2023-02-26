@@ -11,6 +11,7 @@ import { COUNT_FIELD_ID } from '../constants';
 import { IViewField, IRow, IStackMode } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
+import { DEFAULT_THEME } from './theme';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -502,7 +503,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.params.push(...singleView.params!);
       }
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
+        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: DEFAULT_THEME }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
