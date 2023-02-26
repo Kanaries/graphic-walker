@@ -26,5 +26,19 @@ export const DEFAULT_THEME = {
         ],
         diverging: ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
         heatmap: ["#000000", "#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+        ramp: [
+            "#EBCCFF",
+            "#CCB0FF",
+            "#AE95FF",
+            "#907BFF",
+            "#7262FD",
+            "#5349E0",
+            "#2F32C3",
+            "#001BA7",
+            "#00068C"
+        ],
+    },
+    scale: {
+        continuous: { range: ["#f7fbff", "#08306b"] },
     },
 };

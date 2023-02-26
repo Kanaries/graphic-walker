@@ -12,6 +12,9 @@ const InsightBoard: React.FC = (props) => {
     const onCloseModal = useCallback(() => {
         commonStore.setShowInsightBoard(false);
     }, []);
+    if (!showInsightBoard) {
+        return null;
+    }
     return (
         <Modal onClose={onCloseModal} show={showInsightBoard}>
             <InsightMainBoard

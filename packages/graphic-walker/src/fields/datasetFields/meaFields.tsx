@@ -6,8 +6,6 @@ import DataTypeIcon from "../../components/dataTypeIcon";
 import { FieldPill } from "./fieldPill";
 import DropdownContext, { IDropdownContextOption } from "../../components/dropdownContext";
 
-
-
 interface Props {
     provided: DroppableProvided;
 }
@@ -19,23 +17,23 @@ const MeaFields: React.FC<Props> = (props) => {
     const MEA_ACTION_OPTIONS = useMemo<IDropdownContextOption[]>(() => {
         return [
             {
-                value: 'bin',
-                label: 'Bin',
+                value: "bin",
+                label: "Bin",
             },
             {
-                value: 'log10',
-                label: 'Log10',
-            }
-        ]
-    }, [])
+                value: "log10",
+                label: "Log10",
+            },
+        ];
+    }, []);
 
-    const fieldActionHandler = useCallback((selectedValue: any, index: number) => {
-        if (selectedValue === 'bin') {
-            vizStore.createBinField("measures", index);
-        } else if (selectedValue === 'log10') {
-            vizStore.createLogField("measures", index);
+    const fieldActionHandler = useCallback((selectedValue: any, opIndex: number, meaIndex: number) => {
+        if (selectedValue === "bin") {
+            vizStore.createBinField("measures", meaIndex);
+        } else if (selectedValue === "log10") {
+            vizStore.createLogField("measures", meaIndex);
         }
-    }, [])
+    }, []);
     return (
         <div {...provided.droppableProps} ref={provided.innerRef}>
             {measures.map((f, index) => (
@@ -43,9 +41,17 @@ const MeaFields: React.FC<Props> = (props) => {
                     {(provided, snapshot) => {
                         return (
                             <div className="block">
-                                <DropdownContext disable={snapshot.isDragging} options={MEA_ACTION_OPTIONS} onSelect={fieldActionHandler}>
+                                <DropdownContext
+                                    disable={snapshot.isDragging}
+                                    options={MEA_ACTION_OPTIONS}
+                                    onSelect={(v, opIndex) => {
+                                        fieldActionHandler(v, opIndex, index);
+                                    }}
+                                >
                                     <FieldPill
-                                        className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 rounded-full truncate border border-transparent ${snapshot.isDragging ? 'bg-blue-100' : ''}`}
+                                        className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 rounded-full truncate border border-transparent ${
+                                            snapshot.isDragging ? "bg-purple-100" : ""
+                                        }`}
                                         isDragging={snapshot.isDragging}
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
@@ -57,8 +63,8 @@ const MeaFields: React.FC<Props> = (props) => {
                                 </DropdownContext>
                                 {
                                     <FieldPill
-                                        className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 rounded-full border-blue-400 border truncate ${
-                                            snapshot.isDragging ? "bg-blue-100" : "hidden"
+                                        className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 rounded-full border-purple-400 border truncate ${
+                                            snapshot.isDragging ? "bg-purple-100" : "hidden"
                                         }`}
                                         isDragging={snapshot.isDragging}
                                     >
