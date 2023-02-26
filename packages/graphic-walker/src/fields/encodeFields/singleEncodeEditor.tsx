@@ -36,7 +36,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
             {channelItem && (
                 <DropdownSelect className="shrink grow static" buttonClassName="rounded-none" options={allFieldOptions} selectedKey={channelItem.fid} onSelect={(value) => {}} />
             )}
-            {!channelItem && <div className="p-1.5 bg-gray-50 shrink-0 grow-0 border border-gray-200 flex item-center justify-center grow text-gray-500">
+            {!channelItem && <div className="p-1.5 bg-gray-50 border border-gray-200 flex item-center justify-center grow text-gray-500">
                 <PlusSmallIcon className="w-4" />{t('actions.drop_field')}</div>}
         </div>
     );

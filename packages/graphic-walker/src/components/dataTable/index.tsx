@@ -138,7 +138,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         >
                                             <span
                                                 className={
-                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
+                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs " +
                                                     getSemanticColors(field)
                                                 }
                                             >
