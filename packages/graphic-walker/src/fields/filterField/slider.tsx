@@ -197,7 +197,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                         tabIndex={-1}
                         onMouseDown={ev => {
                             if (ev.buttons === 1) {
-                                mouseOffsetRef.current = ev.nativeEvent.offsetX;
+                                mouseOffsetRef.current = ev.nativeEvent.offsetX - (ev.target as HTMLDivElement).getBoundingClientRect().width;
                                 setDragging('left');
                             }
                         }}

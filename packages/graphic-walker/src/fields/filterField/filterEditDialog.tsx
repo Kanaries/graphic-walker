@@ -116,7 +116,7 @@ const FilterEditDialog: React.FC = observer(() => {
             <header className="text-lg font-semibold py-2 outline-none">
                 {t('form.name')}
             </header>
-            <input className="border py-1 px-4" readOnly value={uncontrolledField.name}/>
+            <input className="border py-1 px-4 bg-white text-gray-800" readOnly value={uncontrolledField.name}/>
             <header className="text-lg font-semibold py-2 outline-none">
                 {t('form.rule')}
             </header>
