@@ -34,7 +34,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                 </div>
             )}
             {channelItem && (
-                <DropdownSelect className="shrink grow static" buttonClassName="rounded-none" options={allFieldOptions} selectedKey={channelItem.fid} onSelect={(value) => {}} />
+                <DropdownSelect className="shrink grow static" buttonClassName="rounded-none" options={allFieldOptions} selectedKey={channelItem.fid} onSelect={(value) => vizStore.replaceField(dkey.id, 0, value)} />
             )}
             {!channelItem && <div className="p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400">
                 {t('actions.drop_field')}</div>}
