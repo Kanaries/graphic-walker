@@ -40,7 +40,7 @@ export interface IGWProps {
     themeKey?: 'vega' | 'g2';
 }
 
-const App: React.FC<IGWProps> = (props) => {
+const App = observer<IGWProps>(function App (props) {
     const {
         dataSource = [],
         rawFields = [],
@@ -187,6 +187,6 @@ const App: React.FC<IGWProps> = (props) => {
             </div>
         </div>
     );
-};
+});
 
-export default observer(App);
+export default App;

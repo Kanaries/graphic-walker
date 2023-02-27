@@ -123,7 +123,12 @@ function channelEncode(props: EncodeProps) {
       encoding[c] = {
         field: props[c].fid,
         title: props[c].name,
-        type: props[c].semanticType
+        type: props[c].semanticType,
+      }
+      if (props[c].analyticType !== 'measure') {
+        // if `aggregate` is set to null,
+        // do not aggregate this field
+        encoding[c].aggregate = null;
       }
     }
   })
@@ -147,7 +152,7 @@ function channelEncode(props: EncodeProps) {
 }
 function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[]) {
   Object.values(encoding).forEach(c => {
-    const targetField = fields.find(f => f.fid === c.field);
+    const targetField = fields.find(f => f.fid === c.field && !('aggregate' in c));
     if (targetField && targetField.fid === COUNT_FIELD_ID) {
       c.field = undefined;
       c.aggregate = 'count';
