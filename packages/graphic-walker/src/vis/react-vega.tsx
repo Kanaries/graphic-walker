@@ -49,7 +49,7 @@ interface ReactVegaProps {
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
   /** @default "vega" */
-  themeKey?: 'vega' | 'antv';
+  themeKey?: 'vega' | 'g2';
 }
 const NULL_FIELD: IViewField = {
   dragId: '',

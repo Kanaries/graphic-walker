@@ -36,7 +36,8 @@ export interface IGWProps {
      * auto parse field key into a safe string. default is true
      */
     fieldKeyGuard?: boolean;
-    themeKey?: 'vega' | 'antv';
+    /** @default "vega" */
+    themeKey?: 'vega' | 'g2';
 }
 
 const App: React.FC<IGWProps> = (props) => {
@@ -48,7 +49,7 @@ const App: React.FC<IGWProps> = (props) => {
         i18nResources,
         hideDataSourceConfig,
         fieldKeyGuard = true,
-        themeKey = 'antv',
+        themeKey = 'vega',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);

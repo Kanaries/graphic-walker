@@ -122,5 +122,5 @@ export const AntVTheme = {
 
 export const builtInThemes: { [themeKey: string]: { light: any; dark: any; } } = {
     vega: VegaTheme,
-    antv: AntVTheme,
+    g2: AntVTheme,
 };
