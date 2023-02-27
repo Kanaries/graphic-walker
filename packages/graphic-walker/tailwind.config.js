@@ -1,14 +1,14 @@
 module.exports = {
-  purge: [
+  content: [
     "./src/**/*.tsx"
   ],
-  darkMode: false, // or 'media' or 'class'
   theme: {
     minWidth: {
       '96': '96px'
     },
     extend: {},
   },
+  darkMode: 'media', // or 'media' or 'class
   variants: {
     extend: {
       'backgroundColor': ['disabled']

@@ -73,7 +73,7 @@ const FilterPill: React.FC<FilterPillProps> = observer(props => {
                 {field.name}
             </header>
             <div
-                className="bg-white text-gray-500 hover:bg-gray-100 flex flex-row output"
+                className="bg-white dark:bg-zinc-900  text-gray-500 hover:bg-gray-100 flex flex-row output"
                 onClick={() => vizStore.setFilterEditing(fIndex)}
                 style={{ cursor: 'pointer' }}
                 title={t('to_edit')}

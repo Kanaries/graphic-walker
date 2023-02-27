@@ -11,6 +11,8 @@ import { COUNT_FIELD_ID } from '../constants';
 import { IViewField, IRow, IStackMode } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
+import { builtInThemes } from './theme';
+import { useCurrentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -46,6 +48,8 @@ interface ReactVegaProps {
   onGeomClick?: (values: any, e: any) => void
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
+  /** @default "vega" */
+  themeKey?: 'vega' | 'g2';
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -119,7 +123,12 @@ function channelEncode(props: EncodeProps) {
       encoding[c] = {
         field: props[c].fid,
         title: props[c].name,
-        type: props[c].semanticType
+        type: props[c].semanticType,
+      }
+      if (props[c].analyticType !== 'measure') {
+        // if `aggregate` is set to null,
+        // do not aggregate this field
+        encoding[c].aggregate = null;
       }
     }
   })
@@ -143,7 +152,7 @@ function channelEncode(props: EncodeProps) {
 }
 function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[]) {
   Object.values(encoding).forEach(c => {
-    const targetField = fields.find(f => f.fid === c.field);
+    const targetField = fields.find(f => f.fid === c.field && !('aggregate' in c));
     if (targetField && targetField.fid === COUNT_FIELD_ID) {
       c.field = undefined;
       c.aggregate = 'count';
@@ -378,11 +387,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     selectEncoding,
     brushEncoding,
+    themeKey = 'vega',
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
+  const mediaTheme = useCurrentMediaTheme();
+  const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
       if (onGeomClick) {
@@ -502,7 +514,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.params.push(...singleView.params!);
       }
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
+        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
@@ -583,7 +595,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             ans.params = commonSpec.params;
           }
           if (node) {
-            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
+            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
               vegaRefs.current.push(res.view);
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
@@ -673,6 +685,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     selectEncoding,
     brushEncoding,
     crossFilterTriggerIdx,
+    themeConfig,
   ]);
 
   useImperativeHandle(ref, () => ({

@@ -36,9 +36,11 @@ export interface IGWProps {
      * auto parse field key into a safe string. default is true
      */
     fieldKeyGuard?: boolean;
+    /** @default "vega" */
+    themeKey?: 'vega' | 'g2';
 }
 
-const App: React.FC<IGWProps> = (props) => {
+const App = observer<IGWProps>(function App (props) {
     const {
         dataSource = [],
         rawFields = [],
@@ -47,6 +49,7 @@ const App: React.FC<IGWProps> = (props) => {
         i18nResources,
         hideDataSourceConfig,
         fieldKeyGuard = true,
+        themeKey = 'vega',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
@@ -117,7 +120,7 @@ const App: React.FC<IGWProps> = (props) => {
     const rendererRef = useRef<IReactVegaHandler>(null);
 
     return (
-        <div className="App">
+        <div className="App dark:bg-zinc-900 dark:text-white m-0 p-0">
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
@@ -153,7 +156,7 @@ const App: React.FC<IGWProps> = (props) => {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     }}
                                 >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} />}
                                     <InsightBoard />
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
@@ -184,6 +187,6 @@ const App: React.FC<IGWProps> = (props) => {
             </div>
         </div>
     );
-};
+});
 
-export default observer(App);
+export default App;

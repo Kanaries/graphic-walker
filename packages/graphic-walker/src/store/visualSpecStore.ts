@@ -53,6 +53,7 @@ function initEncoding(): DraggableFieldState {
         shape: [],
         radius: [],
         theta: [],
+        details: [],
         filters: [],
     };
 }
@@ -442,6 +443,21 @@ export class VizSpecStore {
         this.useMutable(({ encodings }) => {
             const fields = encodings[sourceKey];
             fields.splice(sourceIndex, 1);
+        });
+    }
+    public replaceField(sourceKey: keyof DraggableFieldState, sourceIndex: number, fid: string) {
+        if (MetaFieldKeys.includes(sourceKey)) return;
+        const enteringField = [
+            ...this.draggableFieldState.dimensions,
+            ...this.draggableFieldState.measures
+        ].find(which => which.fid === fid);
+        if (!enteringField) {
+            return;
+        }
+
+        this.useMutable(({ encodings }) => {
+            const fields = encodings[sourceKey];
+            fields.splice(sourceIndex, 1, toJS(enteringField));
         });
     }
     private appendFilter(index: number, data: IViewField) {

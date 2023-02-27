@@ -8,9 +8,11 @@ const MenuContainer = styled.div`
     position: absolute;
     z-index: 99;
     cursor: pointer;
-    /* box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, 0.09); */
-    /* border-radius: 2px; */
     padding: 4px;
+    @media (prefers-color-scheme: dark) {
+        background-color: #000;
+        border: 1px solid #4b5563;
+    }
 `;
 interface ClickMenuProps {
     x: number;

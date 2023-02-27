@@ -5,18 +5,25 @@ import { COLORS } from "../config";
 
 export const AestheticSegment = styled.div`
   border: 1px solid #e5e7eb;
+  // dark mode
+  @media (prefers-color-scheme: dark) {
+    border: 1px solid #2d3748;
+  }
   font-size: 12px;
   margin: 0.2em;
 
   .aes-header{
     border-bottom: 1px solid #e5e7eb;
+    @media (prefers-color-scheme: dark) {
+      border-bottom: 1px solid #2d3748;
+    }
     padding: 0.6em;
     h4 {
       font-weight: 400;
     }
   }
   .aes-container{
-    overflow-x: auto;
+    /* overflow-x: auto; */
   }
 
 `
@@ -85,12 +92,18 @@ export const FilterFieldsContainer = styled.div({
 export const FieldListSegment = styled.div`
   display: flex;
   border: 1px solid #e5e7eb;
+  @media (prefers-color-scheme: dark) {
+    border: 1px solid #2d3748;
+  }
   margin: 0.2em;
   font-size: 12px;
   div.fl-header {
     /* flex-basis: 100px; */
     width: 100px;
     border-right: 1px solid #e5e7eb;
+    @media (prefers-color-scheme: dark) {
+      border-right: 1px solid #2d3748;
+    }
     flex-shrink: 0;
     h4 {
       margin: 0.6em;
@@ -108,11 +121,17 @@ export const FieldListSegment = styled.div`
 
 export const FilterFieldSegment = styled.div`
   border: 1px solid #e5e7eb;
+  @media (prefers-color-scheme: dark) {
+    border: 1px solid #2d3748;
+  }
   font-size: 12px;
   margin: 0.2em;
 
   .flt-header {
     border-bottom: 1px solid #e5e7eb;
+    @media (prefers-color-scheme: dark) {
+      border-bottom: 1px solid #2d3748;
+    }
     padding: 0.6em;
 
     > h4 {
@@ -144,7 +163,7 @@ export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   font-size: 12px;
   height: 20px;
   min-width: 150px;
-  overflow-y: hidden;
+  /* overflow-y: hidden; */
   padding: 0 10px;
   user-select: none;
   text-overflow: ellipsis;

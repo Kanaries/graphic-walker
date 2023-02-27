@@ -258,3 +258,22 @@ export function extendCountField(
         fields: nextFields,
     };
 }
+
+export function getRange (nums: number[]): [number, number] {
+    let _min = Infinity;
+    let _max = -Infinity;
+    for (let i = 0; i < nums.length; i++) {
+        _min = Math.min(_min, nums[i]);
+        _max = Math.max(_max, nums[i]);
+    }
+    return [_min, _max];
+}
+
+export function makeNumbersBeautiful (nums: number[]): number[] {
+    const [min, max] = getRange(nums);
+    const range = max - min;
+    const step = Math.pow(10, Math.floor(Math.log10(range)));
+    return nums.map((num) => {
+        return Math.round(num / step) * step;
+    })
+}

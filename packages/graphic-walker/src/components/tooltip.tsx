@@ -32,6 +32,9 @@ const Bubble = styled.div`
         height: 8px;
         transform: translate(-50%, 50%) rotate(45deg);
         background-color: #fff;
+        @media (prefers-color-scheme: dark) {
+            background-color: #000;
+        }
         border-radius: 1px;
     }
 `;
@@ -125,7 +128,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 root &&
                 createPortal(
                     <Bubble
-                        className="fixed text-xs p-1 px-3 text-gray-500 bg-white z-50"
+                        className="fixed text-xs p-1 px-3 text-gray-500 bg-white dark:bg-zinc-900  z-50"
                         onMouseOver={() => setHover(true)}
                         onMouseOut={() => setHover(false)}
                         style={{ left: pos[0], top: pos[1] - 4 }}

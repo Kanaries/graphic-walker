@@ -140,12 +140,13 @@ export function makeBinField(dataSource: IRow[], fid: string, binFid: string, bi
         if (val < _min) _min = val;
     }
     const step = (_max - _min) / binSize;
+    const beaStep = Math.max(-Math.round(Math.log10(_max - _min)) + 2, 0)
     return dataSource.map((r) => {
         let bIndex = Math.floor((r[fid] - _min) / step);
         if (bIndex === binSize) bIndex = binSize - 1;
         return {
             ...r,
-            [binFid]: bIndex * step + _min,
+            [binFid]: Number(((bIndex * step + _min)).toFixed(beaStep)),
         };
     });
 }
