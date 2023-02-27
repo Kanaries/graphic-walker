@@ -114,6 +114,7 @@ interface EncodeProps extends Pick<SingleViewProps, 'column' | 'opacity' | 'colo
 function channelEncode(props: EncodeProps) {
   const avcs = availableChannels(props.geomType)
   const encoding: {[key: string]: any} = {}
+  const originDraggableId: {[key: string]: string} = {};
   Object.keys(props).filter(c => avcs.has(c)).forEach(c => {
     if (props[c] !== NULL_FIELD) {
       encoding[c] = {
@@ -121,6 +122,7 @@ function channelEncode(props: EncodeProps) {
         title: props[c].name,
         type: props[c].semanticType
       }
+      originDraggableId[c] = props[c].dragId;
     }
   })
   // FIXME: temporal fix, only for x and y relative order
@@ -139,11 +141,15 @@ function channelEncode(props: EncodeProps) {
       }
     }
   }
-  return encoding
+  return { encoding, originDraggableId };
 }
-function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[]) {
-  Object.values(encoding).forEach(c => {
-    const targetField = fields.find(f => f.fid === c.field);
+function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[], originDraggableId: {[key: string]: string}) {
+  Object.entries(encoding).forEach(([key, c]) => {
+    const draggableId = originDraggableId[key];
+    if (!draggableId) {
+      return;
+    }
+    const targetField = fields.find(f => f.dragId === draggableId);
     if (targetField && targetField.fid === COUNT_FIELD_ID) {
       c.field = undefined;
       c.aggregate = 'count';
@@ -200,9 +206,9 @@ function getSingleView(props: SingleViewProps) {
     markType = autoMark(types);
   }
 
-  let encoding = channelEncode({ geomType: markType, x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius })
+  let { encoding, originDraggableId } = channelEncode({ geomType: markType, x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius })
   if (defaultAggregated) {
-    channelAggregate(encoding, fields);
+    channelAggregate(encoding, fields, originDraggableId);
   }
   channelStack(encoding, stack);
   if (!enableCrossFilter || brushEncoding === 'none' && selectEncoding === 'none') {
