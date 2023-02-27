@@ -35,14 +35,14 @@ const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
             >
-                <Menu.Items className="absolute left-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg border border-gray-50 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <Menu.Items className="absolute left-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-zinc-900  shadow-lg border border-gray-50 dark:border-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
                         {options.map((option, index) => (
                             <Menu.Item>
                                 {(p) => (
                                     <span
                                         className={classNames(
-                                            p.active ? "bg-gray-100 text-gray-900" : "text-gray-700",
+                                            p.active ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50" : "text-gray-700 dark:text-gray-200",
                                             "block px-4 py-2 text-sm"
                                         )}
                                         onClick={() => {

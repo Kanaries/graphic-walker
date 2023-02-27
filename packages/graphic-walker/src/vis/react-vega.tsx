@@ -11,7 +11,8 @@ import { COUNT_FIELD_ID } from '../constants';
 import { IViewField, IRow, IStackMode } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { DEFAULT_THEME } from './theme';
+import { DEFAULT_DARK_THEME, DEFAULT_THEME } from './theme';
+import { currentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -384,6 +385,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
+  const mediaTheme = currentMediaTheme();
+  const themeConfig = mediaTheme === 'dark' ? DEFAULT_DARK_THEME : DEFAULT_THEME;
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
       if (onGeomClick) {
@@ -503,7 +506,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.params.push(...singleView.params!);
       }
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: DEFAULT_THEME }).then(res => {
+        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
@@ -584,7 +587,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             ans.params = commonSpec.params;
           }
           if (node) {
-            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language) }).then(res => {
+            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
               vegaRefs.current.push(res.view);
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)

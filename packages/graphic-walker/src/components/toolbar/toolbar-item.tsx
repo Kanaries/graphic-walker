@@ -35,6 +35,9 @@ const FormContainer = styled(ToolbarContainer)`
     width: max-content;
     height: max-content;
     background-color: #fff;
+    @media (prefers-color-scheme: dark) {
+        background-color: #000;
+    }
 `;
 
 export interface IToolbarItem {

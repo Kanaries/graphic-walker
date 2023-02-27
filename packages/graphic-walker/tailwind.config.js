@@ -8,6 +8,7 @@ module.exports = {
     },
     extend: {},
   },
+  darkMode: 'media', // or 'media' or 'class
   variants: {
     extend: {
       'backgroundColor': ['disabled']

@@ -83,7 +83,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const to = Math.min((pageIndex + 1) * size, data.length - 1);
 
     return (
-        <Container className="rounded border-gray-200 border">
+        <Container className="rounded border-gray-200 dark:border-gray-700 border">
             <Pagination
                 total={data.length}
                 from={from + 1}
@@ -95,15 +95,15 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     setPageIndex(Math.max(0, pageIndex - 1));
                 }}
             />
-            <table className="min-w-full divide-y divide-gray-30">
-                <thead className="bg-gray-50">
-                    <tr className="divide-x divide-gray-200">
+            <table className="min-w-full divide-y">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr className="divide-x divide-gray-200 dark:divide-gray-600">
                         {metas.map((field, fIndex) => (
                             <th key={field.fid} className={""}>
                                 <div
                                     className={
                                         getHeaderClassNames(field) +
-                                        " whitespace-nowrap py-3.5 px-6 text-left text-xs font-semibold text-gray-900 sm:pl-6"
+                                        " whitespace-nowrap py-3.5 px-6 text-left text-xs font-semibold text-gray-900 dark:text-gray-50 sm:pl-6"
                                     }
                                 >
                                     <b>{field.name || field.fid}</b>
@@ -152,15 +152,15 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-600 bg-white dark:bg-zinc-900">
                     {data.slice(from, to).map((row, index) => (
-                        <tr className={"divide-x divide-gray-200 " + (index % 2 ? "bg-gray-50" : "")} key={index}>
+                        <tr className={"divide-x divide-gray-200 dark:divide-gray-600 " + (index % 2 ? "bg-gray-50 dark:bg-gray-800" : "")} key={index}>
                             {metas.map((field) => (
                                 <td
                                     key={field.fid + index}
                                     className={
                                         getHeaderType(field) +
-                                        " whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 sm:pl-6"
+                                        " whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6"
                                     }
                                 >
                                     {row[field.fid]}

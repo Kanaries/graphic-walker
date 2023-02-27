@@ -41,6 +41,10 @@ export const LiteContainer = styled.div`
     border: 1px solid #e5e7eb;
     padding: 1em;
     background-color: #fff;
+    @media (prefers-color-scheme: dark) {
+        background-color: #000;
+        border: 1px solid #4b5563;
+    }
     .menu-root {
         position: relative;
         & > *:not(.trigger) {
@@ -327,14 +331,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 form: (
                     <FormContainer>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200"
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => downloadSVG()}
                         >
@@ -351,11 +355,11 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             items={items}
             styles={{
                 root: {
-                    '--background-color': '#fff',
-                    '--color': '#777',
-                    '--color-hover': '#555',
-                    '--blue': '#282958',
-                    '--blue-dark': '#1d1e38',
+                    // '--background-color': '#fff',
+                    // '--color': '#777',
+                    // '--color-hover': '#555',
+                    // '--blue': '#282958',
+                    // '--blue-dark': '#1d1e38',
                 },
                 container: {
                     border: '1px solid #e5e7eb',
