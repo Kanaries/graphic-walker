@@ -11,7 +11,7 @@ import { COUNT_FIELD_ID } from '../constants';
 import { IViewField, IRow, IStackMode } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { DEFAULT_DARK_THEME, DEFAULT_THEME } from './theme';
+import { builtInThemes } from './theme';
 import { useCurrentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
@@ -48,6 +48,8 @@ interface ReactVegaProps {
   onGeomClick?: (values: any, e: any) => void
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
+  /** @default "vega" */
+  themeKey?: 'vega' | 'antv';
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -380,13 +382,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     selectEncoding,
     brushEncoding,
+    themeKey = 'vega',
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
   const mediaTheme = useCurrentMediaTheme();
-  const themeConfig = mediaTheme === 'dark' ? DEFAULT_DARK_THEME : DEFAULT_THEME;
+  const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
       if (onGeomClick) {
@@ -677,6 +680,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     selectEncoding,
     brushEncoding,
     crossFilterTriggerIdx,
+    themeConfig,
   ]);
 
   useImperativeHandle(ref, () => ({

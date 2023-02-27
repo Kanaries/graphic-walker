@@ -114,5 +114,13 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
             }
         }
     }
+    @media (prefers-color-scheme: dark) {
+        color: var(--dark-mode-color);
+        :hover, :focus, &.open {
+            background-image: linear-gradient(#202020CC, #262626CC);
+            --background-color: #202020;
+            color: var(--dark-mode-color-hover);
+        }
+    }
     transition: color 100ms, background-image 100ms;
 `;

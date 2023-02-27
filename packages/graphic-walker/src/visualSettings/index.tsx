@@ -336,14 +336,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 form: (
                     <FormContainer>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => downloadSVG()}
                         >
@@ -360,9 +360,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             items={items}
             styles={{
                 root: {
-                    '--background-color': 'inherit',
-                    // '--color': '#777',
-                    // '--color-hover': '#555',
+                    '--background-color': '#fff',
+                    '--dark-background-color': '#000',
+                    '--color': '#777',
+                    '--color-hover': '#555',
+                    '--dark-color': '#999',
+                    '--dark-color-hover': '#bbb',
                     '--blue': 'rgb(79,70,229)',
                     '--blue-dark': 'rgb(9, 6, 65)',
                 },
