@@ -27,6 +27,9 @@ const Bubble = styled.div`
         transform: translate(-50%, -50%) rotate(45deg);
         background-color: #fff;
         border-radius: 1px;
+        @media (prefers-color-scheme: dark) {
+            background-color: #000;
+        }
     }
 `;
 
@@ -49,7 +52,7 @@ const Callout = memo<CalloutProps>(function Callout({ target, children }) {
         root &&
         pos &&
         createPortal(
-            <Bubble role="dialog" className="fixed bg-white z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
+            <Bubble role="dialog" className="fixed bg-white dark:bg-zinc-900  z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
                 {children}
             </Bubble>,
             root

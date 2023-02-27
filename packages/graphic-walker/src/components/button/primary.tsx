@@ -2,10 +2,14 @@ import React from "react";
 import { ButtonBaseProps } from "./base";
 
 const PrimaryButton: React.FC<ButtonBaseProps> = (props) => {
-    const { text, onClick, disabled } = props;
+    const { text, onClick, disabled, className } = props;
+    let btnClassName = "inline-flex items-center rounded border border-transparent bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    if (className) {
+        btnClassName = btnClassName + " " + className;
+    }
     return (
         <button
-            className="inline-block min-w-96 text-xs ml-2 pt-1 pb-1 pl-6 pr-6 border border-gray-800 bg-gray-800 text-white rounded-sm hover:bg-white border-gray-800 hover:text-gray-800 cursor-pointer disabled:bg-gray-400 disabled:border-gray-400 disabled:text-white disabled:cursor-not-allowed disabled:text-white"
+            className={btnClassName}
             onClick={onClick}
             disabled={disabled}
         >

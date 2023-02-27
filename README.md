@@ -12,7 +12,7 @@
 
 Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-scatter-01.png)
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-dark-scatter.png)
 
 ### Why is it different?
 
@@ -23,6 +23,7 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
 + Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
++ Graphic Walker now supports Dark Theme! 🤩
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
@@ -37,6 +38,10 @@ First, upload your CSV file, preview your data, and define the analytic type of 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
 ![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/after_load_data.png)
+
+You can also view raw data any time or edit the meta data.
+
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/dark-theme-gw-data.png)
 
 
 Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)

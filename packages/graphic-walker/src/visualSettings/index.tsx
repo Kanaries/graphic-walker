@@ -41,6 +41,10 @@ export const LiteContainer = styled.div`
     border: 1px solid #e5e7eb;
     padding: 1em;
     background-color: #fff;
+    @media (prefers-color-scheme: dark) {
+        background-color: #000;
+        border: 1px solid #4b5563;
+    }
     .menu-root {
         position: relative;
         & > *:not(.trigger) {
@@ -74,6 +78,10 @@ const FormContainer = styled.div`
     padding: 0.5em;
     display: flex;
     flex-direction: column;
+    color: #444;
+    @media (prefers-color-scheme: dark) {
+        color: #aaa;
+    }
 `;
 
 interface IVisualSettings {
@@ -153,6 +161,11 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 key: 'mark_type',
                 label: tGlobal('constant.mark_type.__enum__'),
                 icon: StopIcon,
+                styles: {
+                    icon: {
+                        color: 'rgb(294,115,22)',
+                    },
+                },
                 options: GEMO_TYPES.map(g => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
@@ -327,14 +340,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 form: (
                     <FormContainer>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white hover:bg-gray-200"
+                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => downloadSVG()}
                         >
@@ -343,7 +356,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                     </FormContainer>
                 ),
             },
-        ];
+        ] as ToolbarItemProps[];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
@@ -352,15 +365,18 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             styles={{
                 root: {
                     '--background-color': '#fff',
+                    '--dark-background-color': '#000',
                     '--color': '#777',
                     '--color-hover': '#555',
-                    '--blue': '#282958',
-                    '--blue-dark': '#1d1e38',
+                    '--dark-color': '#999',
+                    '--dark-color-hover': '#bbb',
+                    '--blue': 'rgb(79,70,229)',
+                    '--blue-dark': 'rgb(9, 6, 65)',
                 },
                 container: {
-                    border: '1px solid #e5e7eb',
-                    boxSizing: 'content-box',
-                    borderRadius: '1px',
+                    // border: '1px solid #e5e7eb',
+                    // boxSizing: 'content-box',
+                    // borderRadius: '1px',
                 },
             }}
         />

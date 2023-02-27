@@ -36,20 +36,19 @@ const PublicData: React.FC<IPublicDataProps> = props => {
                             })
                         })
                     }}
-                    className="border rounded border-gray-300 p-2 m-2 cursor-pointer hover:bg-gray-50"
+                    className="border rounded border-gray-300 dark:border-gray-600 p-2 m-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
                     >
                 <div>{data.title}</div>
                 {/* <p>{data.title}</p> */}
             </div>)
             }
         </div>
-        <hr className="m-1" />
         <PrimaryButton
+            className='my-1'
             disabled={tmpDataSource.length === 0}
             onClick={() => { commonStore.commitTempDS() }}
             text={t('submit')}
         />
-        <hr className="m-1" />
         <Table />
     </div>
 }
