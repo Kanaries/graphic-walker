@@ -51,6 +51,7 @@ export interface IToolbarItem {
     disabled?: boolean;
     menu?: ToolbarProps;
     form?: JSX.Element;
+    styles?: Partial<Pick<NonNullable<ToolbarProps['styles']>, 'item' | 'icon' | 'splitIcon'>>;
 }
 
 export const ToolbarItemSplitter = '-';

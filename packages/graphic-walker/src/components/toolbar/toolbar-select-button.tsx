@@ -129,6 +129,11 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
     const currentOption = options.find(opt => opt.key === value);
     const CurrentIcon = currentOption?.icon;
 
+    const mergedIconStyles = {
+        ...styles?.icon,
+        ...item.styles?.icon,
+    };
+
     return (
         <>
             <ToolbarItemContainer
@@ -140,20 +145,18 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                 handlers={handlers}
                 aria-haspopup="listbox"
             >
-                <Icon style={styles?.icon} />
+                <Icon style={mergedIconStyles} />
                 {CurrentIcon && (
                     <CurrentIcon
                         style={{
-                            ...styles?.icon,
                             position: 'absolute',
                             left: 'calc(var(--height) - var(--icon-size) * 1.2)',
                             bottom: 'calc((var(--height) - var(--icon-size)) * 0.1)',
                             width: 'calc(var(--icon-size) * 0.6)',
                             height: 'calc(var(--icon-size) * 0.6)',
                             margin: 'calc((var(--height) - var(--icon-size)) * 0.2)',
-                            filter: 'drop-shadow(0 0 0.5px var(--background-color)) '.repeat(4),
                             pointerEvents: 'none',
-                            color: '#1d1e38',
+                            ...mergedIconStyles,
                         }}
                     />
                 )}

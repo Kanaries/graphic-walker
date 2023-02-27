@@ -12,7 +12,7 @@ import { IViewField, IRow, IStackMode } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { DEFAULT_DARK_THEME, DEFAULT_THEME } from './theme';
-import { currentMediaTheme } from '../utils/media';
+import { useCurrentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -385,7 +385,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
-  const mediaTheme = currentMediaTheme();
+  const mediaTheme = useCurrentMediaTheme();
   const themeConfig = mediaTheme === 'dark' ? DEFAULT_DARK_THEME : DEFAULT_THEME;
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {

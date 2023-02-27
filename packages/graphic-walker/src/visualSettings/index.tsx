@@ -156,7 +156,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             {
                 key: 'mark_type',
                 label: tGlobal('constant.mark_type.__enum__'),
-                icon: () => <StopIcon className="text-orange-500" />,
+                icon: StopIcon,
+                styles: {
+                    icon: {
+                        color: 'rgb(294,115,22)',
+                    },
+                },
                 options: GEMO_TYPES.map(g => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
@@ -355,16 +360,16 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
             items={items}
             styles={{
                 root: {
-                    // '--background-color': '#fff',
+                    '--background-color': 'inherit',
                     // '--color': '#777',
                     // '--color-hover': '#555',
-                    // '--blue': '#282958',
-                    // '--blue-dark': '#1d1e38',
+                    '--blue': 'rgb(79,70,229)',
+                    '--blue-dark': 'rgb(9, 6, 65)',
                 },
                 container: {
-                    border: '1px solid #e5e7eb',
-                    boxSizing: 'content-box',
-                    borderRadius: '1px',
+                    // border: '1px solid #e5e7eb',
+                    // boxSizing: 'content-box',
+                    // borderRadius: '1px',
                 },
             }}
         />

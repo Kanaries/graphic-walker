@@ -46,10 +46,13 @@ export const ToolbarContainer = styled.div`
     height: var(--height);
     background-color: var(--background-color);
     color: var(--color);
+    border: 1px solid;
+    border-color: #e5e7eb;
     // dark mode
     @media (prefers-color-scheme: dark) {
         background-color: var(--background-color-dark);
         color: var(--color-dark);
+        border-color: #4b5563;
     }
     /* box-shadow: 0px 1px 3px 1px rgba(136, 136, 136, 0.1); */
     border-radius: 2px;
