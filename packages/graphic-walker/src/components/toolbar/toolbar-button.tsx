@@ -12,13 +12,18 @@ const ToolbarButton = memo<IToolbarProps<ToolbarButtonItem>>(function ToolbarBut
     const { icon: Icon, label, disabled, onClick } = item;
     const handlers = useHandlers(() => onClick?.(), disabled ?? false);
 
+    const mergedIconStyles = {
+        ...styles?.icon,
+        ...item.styles?.icon,
+    };
+
     return (
         <>
             <ToolbarItemContainer
                 props={props}
                 handlers={onClick ? handlers : null}
             >
-                <Icon style={styles?.icon} />
+                <Icon style={mergedIconStyles} />
             </ToolbarItemContainer>
         </>
     );

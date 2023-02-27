@@ -46,6 +46,14 @@ export const ToolbarContainer = styled.div`
     height: var(--height);
     background-color: var(--background-color);
     color: var(--color);
+    border: 1px solid;
+    border-color: #e5e7eb;
+    // dark mode
+    @media (prefers-color-scheme: dark) {
+        background-color: var(--background-color-dark);
+        color: var(--color-dark);
+        border-color: #4b5563;
+    }
     /* box-shadow: 0px 1px 3px 1px rgba(136, 136, 136, 0.1); */
     border-radius: 2px;
     overflow: hidden;
@@ -94,7 +102,6 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
     &[aria-disabled=false] {
         cursor: pointer;
         :hover, :focus, &.open {
-            background-image: linear-gradient(#FFFFFFCC, #FEFEFECC);
             --background-color: #FEFEFE;
             color: var(--color-hover);
             &.split * svg {
@@ -103,6 +110,16 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
             }
             & svg {
                 text-shadow: 0 0 1.5px var(--shadow-color);
+            }
+            background-color: var(--background-color);
+        }
+    }
+    @media (prefers-color-scheme: dark) {
+        color: var(--dark-mode-color);
+        &[aria-disabled=false] {
+            :hover, :focus, &.open {
+                --background-color: #202020;
+                color: var(--dark-mode-color-hover);
             }
         }
     }

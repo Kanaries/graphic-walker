@@ -109,6 +109,7 @@ const FilterEditDialog: React.FC = observer(() => {
     
     return uncontrolledField ? (
         <Modal
+            show={Boolean(uncontrolledField)}
             title={t('editing')}
             onClose={() => vizStore.closeFilterEditing()}
         >

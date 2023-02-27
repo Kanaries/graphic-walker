@@ -50,6 +50,11 @@ const ToolbarToggleButton = memo<IToolbarProps<ToolbarToggleButtonItem>>(functio
     const { icon: Icon, label, disabled, checked, onChange } = item;
     const handlers = useHandlers(() => onChange(!checked), disabled ?? false);
 
+    const mergedIconStyles = {
+        ...styles?.icon,
+        ...item.styles?.icon,
+    };
+
     return (
         <>
             <ToolbarItemContainer
@@ -59,7 +64,7 @@ const ToolbarToggleButton = memo<IToolbarProps<ToolbarToggleButtonItem>>(functio
                 aria-checked={checked}
             >
                 <ToggleContainer checked={checked}>
-                    <Icon style={styles?.icon} />
+                    <Icon style={mergedIconStyles} />
                 </ToggleContainer>
             </ToolbarItemContainer>
         </>

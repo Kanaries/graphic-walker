@@ -7,7 +7,7 @@ import { useGlobalStore } from '../store';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 
 
-const ReactiveRenderer = forwardRef<IReactVegaHandler, {}>(function ReactiveRenderer (props, ref) {
+const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: 'vega' | 'g2' }>(function ReactiveRenderer ({ themeKey }, ref) {
     const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration } = visualConfig;
@@ -105,6 +105,7 @@ const ReactiveRenderer = forwardRef<IReactVegaHandler, {}>(function ReactiveRend
         brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
         selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}
         onGeomClick={handleGeomClick}
+        themeKey={themeKey}
     />
     </Resizable>
 });
