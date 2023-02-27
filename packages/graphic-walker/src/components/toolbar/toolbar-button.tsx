@@ -8,9 +8,9 @@ export interface ToolbarButtonItem extends IToolbarItem {
 }
 
 const ToolbarButton = memo<IToolbarProps<ToolbarButtonItem>>(function ToolbarButton(props) {
-    const { item, styles } = props;
-    const { icon: Icon, label, disabled, onClick } = item;
-    const handlers = useHandlers(() => onClick?.(), disabled ?? false);
+    const { item, styles, disabled: invisible } = props;
+    const { icon: Icon, disabled = false, onClick } = item;
+    const handlers = useHandlers(() => onClick?.(), invisible || disabled);
 
     const mergedIconStyles = {
         ...styles?.icon,
@@ -18,14 +18,14 @@ const ToolbarButton = memo<IToolbarProps<ToolbarButtonItem>>(function ToolbarBut
     };
 
     return (
-        <>
-            <ToolbarItemContainer
-                props={props}
-                handlers={onClick ? handlers : null}
-            >
-                <Icon style={mergedIconStyles} />
-            </ToolbarItemContainer>
-        </>
+        <ToolbarItemContainer
+            invisible={invisible}
+            props={props}
+            handlers={onClick ? handlers : null}
+            aria-hidden={invisible}
+        >
+            <Icon style={mergedIconStyles} />
+        </ToolbarItemContainer>
     );
 });
 

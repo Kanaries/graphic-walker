@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useRef, useState } from 'react';
-import { StyleSheetManager } from 'styled-components';
+import styled, { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
 import { DOM } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
@@ -11,6 +11,13 @@ import './empty_sheet.css';
 import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from './index.css?inline';
 
+
+const AppRoot = styled(root.div)`
+    flex: 1 1 max-content;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+`;
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
@@ -32,7 +39,7 @@ export const GraphicWalker: React.FC<IGWProps> = observer(props => {
     }, []);
 
     return (
-        <root.div mode="open" ref={rootRef}>
+        <AppRoot mode="open" ref={rootRef}>
             <style>{tailwindStyle}</style>
             <style>{style}</style>
             {shadowRoot && (
@@ -46,6 +53,6 @@ export const GraphicWalker: React.FC<IGWProps> = observer(props => {
                     </StoreWrapper>
                 </StyleSheetManager>
             )}
-        </root.div>
+        </AppRoot>
     );
 });

@@ -85,14 +85,14 @@ export interface ToolbarSelectButtonItem<T extends string = string> extends IToo
 }
 
 const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(function ToolbarSelectButton(props) {
-    const { item, styles, openedKey, setOpenedKey } = props;
-    const { key, icon: Icon, disabled, options, value, onSelect } = item;
+    const { item, styles, overflowMode = 'fold', openedKey, setOpenedKey, disabled: invisible } = props;
+    const { key, icon: Icon, disabled = false, options, value, onSelect } = item;
     const id = `${key}::button`;
     
     const opened = openedKey === id;
     const handlers = useHandlers(() => {
         setOpenedKey(opened ? null : id);
-    }, disabled ?? false);
+    }, invisible || disabled);
 
     const openedRef = useRef(opened);
     openedRef.current = opened;
@@ -137,6 +137,7 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
     return (
         <>
             <ToolbarItemContainer
+                invisible={invisible}
                 props={produce(props, draft => {
                     if (currentOption) {
                         draft.item.label = `${draft.item.label}: ${currentOption.label}`;
@@ -144,6 +145,7 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                 })}
                 handlers={handlers}
                 aria-haspopup="listbox"
+                aria-hidden={invisible}
             >
                 <Icon style={mergedIconStyles} />
                 {CurrentIcon && (
@@ -160,11 +162,11 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                         }}
                     />
                 )}
-                <TriggerFlag aria-hidden id={id} />
+                {invisible || <TriggerFlag aria-hidden id={id} />}
             </ToolbarItemContainer>
-            {opened && (
+            {opened && !invisible && (
                 <Callout target={`#${id}`}>
-                    <OptionGroup role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled} onMouseDown={e => e.stopPropagation()}>
+                    <OptionGroup role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled} onMouseDown={e => e.stopPropagation()} overflowMode={overflowMode}>
                         {options.map((option, idx, arr) => {
                             const selected = option.key === value;
                             const OptionIcon = option.icon;

@@ -39,7 +39,7 @@ export const useHandlers = (action: () => void, disabled: boolean, triggerKeys: 
     }), [allowPropagation]);
 };
 
-export const ToolbarContainer = styled.div`
+export const ToolbarContainer = styled.div<{ overflowMode: 'fold' | 'scroll' }>`
     --height: 36px;
     --icon-size: 18px;
     width: 100%;
@@ -59,9 +59,16 @@ export const ToolbarContainer = styled.div`
     overflow: hidden;
     display: flex;
     flex-direction: row;
-    > * {
-        flex-grow: 0;
-        flex-shrink: 0;
+    ${({ overflowMode }) => overflowMode === 'fold' ? `flex-wrap: wrap;` : ''}
+    .items {
+        ${({ overflowMode }) => overflowMode === 'scroll' ? `overflow-x: auto;` : ''}
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        > * {
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
     }
 `;
 

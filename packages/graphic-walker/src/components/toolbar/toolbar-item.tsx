@@ -69,19 +69,23 @@ export interface IToolbarProps<P extends Exclude<ToolbarItemProps, typeof Toolba
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
     renderSlot: (node: ReactNode) => void;
+    overflowMode?: ToolbarProps['overflowMode'];
+    disabled: boolean;
 }
 
 let idFlag = 0;
 
 export const ToolbarItemContainer = memo<{
+    invisible: boolean;
     props: IToolbarProps;
     handlers: ReturnType<typeof useHandlers> | null;
     children: unknown;
 } & HTMLAttributes<HTMLDivElement>>(function ToolbarItemContainer (
     {
+        invisible,
         props: {
             item: { key, label, disabled = false, menu, form },
-            styles, openedKey, setOpenedKey, renderSlot,
+            styles, overflowMode = 'fold', openedKey, setOpenedKey, renderSlot,
         },
         handlers,
         children,
@@ -146,7 +150,7 @@ export const ToolbarItemContainer = memo<{
                     aria-haspopup={splitOnly ? 'menu' : 'false'}
                     {...(splitOnly ? splitHandlers : handlers)}
                     {...props}
-                    id={id}
+                    id={invisible ? undefined : id}
                 >
                     {children}
                     {form ? (
@@ -189,9 +193,9 @@ export const ToolbarItemContainer = memo<{
                     )}
                 </ToolbarItemContainerElement>
             </Tooltip>
-            {opened && form && (
+            {opened && !invisible && form && (
                 <Callout target={`#${id}`}>
-                    <FormContainer onMouseDown={e => e.stopPropagation()}>
+                    <FormContainer overflowMode={overflowMode} onMouseDown={e => e.stopPropagation()}>
                         {form}
                     </FormContainer>
                 </Callout>
@@ -206,16 +210,17 @@ const ToolbarItem = memo<{
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
     renderSlot: (node: ReactNode) => void;
-}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot }) {
+    disabled: boolean;
+}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot, disabled }) {
     if (item === ToolbarItemSplitter) {
-        return  <ToolbarSplitter />;
+        return <ToolbarSplitter />;
     }
     if ('checked' in item) {
-        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
     } else if ('options' in item) {
-        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
     }
-    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
 });
 
 

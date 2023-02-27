@@ -32,6 +32,8 @@ export interface IGWProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean;
+    /** @default "auto" */
+    overflowMode?: 'auto' | 'hidden';
     /**
      * auto parse field key into a safe string. default is true
      */
@@ -48,6 +50,7 @@ const App = observer<IGWProps>(function App (props) {
         i18nLang = "en-US",
         i18nResources,
         hideDataSourceConfig,
+        overflowMode = 'auto',
         fieldKeyGuard = true,
         themeKey = 'vega',
     } = props;
@@ -124,7 +127,7 @@ const App = observer<IGWProps>(function App (props) {
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
-            <div className="">
+            <div className={`w-full h-full ${overflowMode === 'hidden' ? 'overflow-hidden' : 'overflow-auto'}`}>
                 {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
                 <div className="px-2 mx-2">
                     <SegmentNav />
@@ -135,18 +138,23 @@ const App = observer<IGWProps>(function App (props) {
                 {segmentKey === ISegmentKey.vis && (
                     <Container style={{ marginTop: "0em", borderTop: "none" }}>
                         <VisualSettings rendererHandler={rendererRef} />
-                        <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                            <div className="md:col-span-3 xl:col-span-1">
-                                <DatasetFields />
+                        <div className="k-lg:grid k-lg:grid-cols-12 k-xl:grid-cols-6">
+                            <div className="k-lg:col-span-3 k-xl:col-span-1 k-sm:grid k-sm:grid-cols-3">
+                                <div className="col-span-3 k-sm:col-span-2 k-lg:col-span-3">
+                                    <DatasetFields />
+                                </div>
+                                <div className="hidden k-sm:block k-sm:col-span-1 k-lg:hidden">
+                                    <FilterField />
+                                </div>
                             </div>
-                            <div className="md:col-span-2 xl:col-span-1">
-                                <FilterField />
+                            <div className="k-lg:col-span-2 k-xl:col-span-1">
+                                <div className="block k-sm:hidden k-lg:block mt-[2px] k-sm:mt-0">
+                                    <FilterField />
+                                </div>
                                 <AestheticFields />
                             </div>
-                            <div className="md:col-span-7 xl:col-span-4">
-                                <div>
-                                    <PosFields />
-                                </div>
+                            <div className="k-lg:col-span-7 k-xl:col-span-4">
+                                <PosFields />
                                 <NestContainer
                                     style={{ minHeight: "600px", overflow: "auto" }}
                                     onMouseLeave={() => {
