@@ -63,7 +63,7 @@ const DropdownSelect: React.FC<IDropdownSelectProps> = (props) => {
                                 key={op.value}
                                 className={({ active }) =>
                                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                        active ? "bg-amber-100 text-amber-900" : "text-gray-900"
+                                        active ? "bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-50" : "text-gray-900 dark:text-amber-50"
                                     }`
                                 }
                                 value={op.value}

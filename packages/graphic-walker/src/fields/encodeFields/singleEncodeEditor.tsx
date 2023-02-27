@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
 import DropdownSelect from "./singleEncodeDropDown";
 import { DroppableProvided } from "react-beautiful-dnd";
-import { PlusSmallIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 
 interface SingleEncodeEditorProps {
@@ -37,7 +37,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                 <DropdownSelect className="shrink grow static" buttonClassName="rounded-none" options={allFieldOptions} selectedKey={channelItem.fid} onSelect={(value) => {}} />
             )}
             {!channelItem && <div className="p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400">
-                <PlusSmallIcon className="w-4" />{t('actions.drop_field')}</div>}
+                {t('actions.drop_field')}</div>}
         </div>
     );
 };
