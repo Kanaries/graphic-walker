@@ -141,9 +141,9 @@ function channelEncode(props: EncodeProps) {
   }
   return encoding
 }
-function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[]) {
-  Object.values(encoding).forEach(c => {
-    const targetField = fields.find(f => f.fid === c.field);
+function channelAggregate(encoding: {[key: string]: any}, fields: {[key: string]: IViewField}) {
+  Object.entries(encoding).forEach(([key, c]) => {
+    const targetField = fields[key];
     if (targetField && targetField.fid === COUNT_FIELD_ID) {
       c.field = undefined;
       c.aggregate = 'count';
@@ -191,7 +191,7 @@ function getSingleView(props: SingleViewProps) {
     enableCrossFilter,
     asCrossFilterTrigger,
   } = props
-  const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
+  const fields = { x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius };
   let markType = geomType;
   if (geomType === 'auto') {
     const types: ISemanticType[] = [];
