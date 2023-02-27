@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import type { IFilterField, IFilterRule } from '../../interfaces';
 import { useGlobalStore } from '../../store';
+import PureTabs from '../../components/tabs/defaultTab';
 import Slider from './slider';
 
 
@@ -368,27 +369,16 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
 
     return (
         <TabsContainer>
-            <TabList role="tablist">
-                {
-                    tabs.map((tab, i) => (
-                        <TabHeader
-                            key={i}
-                            role="tab"
-                            aria-selected={which === tab}
-                            id={`filter-tab-${tab.replaceAll(/ /g, '_')}`}
-                            aria-controls={`filter-panel-${tab.replaceAll(/ /g, '_')}`}
-                            tabIndex={-1}
-                            onClick={() => {
-                                if (which !== tab) {
-                                    setWhich(tab);
-                                }
-                            }}
-                        >
-                            {t(tab.replaceAll(/ /g, '_'))}
-                        </TabHeader>
-                    ))
-                }
-            </TabList>
+            <PureTabs
+                selectedKey={which}
+                tabs={tabs.map(tab => ({
+                    key: tab,
+                    label: t(tab.replaceAll(/ /g, '_')),
+                }))}
+                onSelected={sk => {
+                    setWhich(sk as typeof which);
+                }}
+            />
             <TabPanel>
                 {
                     tabs.map((tab, i) => {
