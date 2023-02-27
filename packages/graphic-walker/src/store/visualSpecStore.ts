@@ -53,6 +53,7 @@ function initEncoding(): DraggableFieldState {
         shape: [],
         radius: [],
         theta: [],
+        details: [],
         filters: [],
     };
 }

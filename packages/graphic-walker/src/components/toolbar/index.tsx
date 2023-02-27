@@ -11,6 +11,11 @@ const Root = styled.div`
     --color-hover: #555;
     --blue: #282958;
     --blue-dark: #1d1e38;
+    --dark-mode-background-color: #1f1f1f;
+    --dark-mode-color: #aaa;
+    --dark-mode-color-hover: #ccc;
+    --dark-mode-blue: #282958;
+    --dark-mode-blue-dark: #1d1e38;
 `;
 
 export interface ToolbarProps {

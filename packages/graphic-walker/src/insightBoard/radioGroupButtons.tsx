@@ -9,9 +9,16 @@ const RGBContainer = styled.div`
         border: 1px solid #f0f0f0;
         background-color: #f0f0f0;
         cursor: pointer;
+        @media (prefers-color-scheme: dark) {
+            background-color: #000;
+            border: 1px solid #4b5563;
+        }
     }
     .choosen.option {
         background-color: #fff;
+        @media (prefers-color-scheme: dark) {
+            background-color: #000;
+        }
     }
 `;
 

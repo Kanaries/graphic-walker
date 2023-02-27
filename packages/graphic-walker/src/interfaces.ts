@@ -119,6 +119,7 @@ export interface DraggableFieldState {
     shape: IViewField[];
     theta: IViewField[];
     radius: IViewField[];
+    details: IViewField[];
     filters: IFilterField[];
 }
 

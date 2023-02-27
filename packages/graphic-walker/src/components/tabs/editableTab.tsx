@@ -32,8 +32,8 @@ export default function EditableTabs(props: EditableTabsProps) {
     }, [clearEditStatus]);
 
     return (
-        <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
-            <nav className="-mb-px flex h-8 border-gray-200" role="tablist" aria-label="Tabs">
+        <div className="border-b border-gray-200 dark:border-gray-800 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
+            <nav className="-mb-px flex h-8 border-gray-200 dark:border-gray-800" role="tablist" aria-label="Tabs">
                 {tabs.map((tab, tabIndex) => (
                     <span
                         role="tab"
@@ -65,8 +65,8 @@ export default function EditableTabs(props: EditableTabsProps) {
                         className={classNames(
                             tab.key === selectedKey
                                 ? "border rounded-t"
-                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
-                            "whitespace-nowrap border-gray-200 py-1 px-2 pr-6 text-sm cursor-pointer"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-50 dark:hover:text-gray-200 dark:hover:bg-gray-800",
+                            "whitespace-nowrap border-gray-200 dark:border-gray-700 py-1 px-2 pr-6 text-sm cursor-pointer dark:text-white"
                         )}
                     />
                 ))}
