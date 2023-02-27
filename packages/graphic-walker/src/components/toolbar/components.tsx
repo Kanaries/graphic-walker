@@ -102,7 +102,6 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
     &[aria-disabled=false] {
         cursor: pointer;
         :hover, :focus, &.open {
-            background-image: linear-gradient(#FFFFFFCC, #FEFEFECC);
             --background-color: #FEFEFE;
             color: var(--color-hover);
             &.split * svg {
@@ -112,14 +111,16 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
             & svg {
                 text-shadow: 0 0 1.5px var(--shadow-color);
             }
+            background-color: var(--background-color);
         }
     }
     @media (prefers-color-scheme: dark) {
         color: var(--dark-mode-color);
-        :hover, :focus, &.open {
-            background-image: linear-gradient(#202020CC, #262626CC);
-            --background-color: #202020;
-            color: var(--dark-mode-color-hover);
+        &[aria-disabled=false] {
+            :hover, :focus, &.open {
+                --background-color: #202020;
+                color: var(--dark-mode-color-hover);
+            }
         }
     }
     transition: color 100ms, background-image 100ms;

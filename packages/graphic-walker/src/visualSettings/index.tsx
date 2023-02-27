@@ -78,6 +78,10 @@ const FormContainer = styled.div`
     padding: 0.5em;
     display: flex;
     flex-direction: column;
+    color: #444;
+    @media (prefers-color-scheme: dark) {
+        color: #aaa;
+    }
 `;
 
 interface IVisualSettings {
