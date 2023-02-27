@@ -38,7 +38,7 @@ const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
                 <Menu.Items className="absolute left-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-zinc-900  shadow-lg border border-gray-50 dark:border-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
                         {options.map((option, index) => (
-                            <Menu.Item>
+                            <Menu.Item key={option.value}>
                                 {(p) => (
                                     <span
                                         className={classNames(

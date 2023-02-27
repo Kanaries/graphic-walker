@@ -36,6 +36,7 @@ export interface IGWProps {
      * auto parse field key into a safe string. default is true
      */
     fieldKeyGuard?: boolean;
+    themeKey?: 'vega' | 'antv';
 }
 
 const App: React.FC<IGWProps> = (props) => {
@@ -47,6 +48,7 @@ const App: React.FC<IGWProps> = (props) => {
         i18nResources,
         hideDataSourceConfig,
         fieldKeyGuard = true,
+        themeKey = 'antv',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
@@ -153,7 +155,7 @@ const App: React.FC<IGWProps> = (props) => {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     }}
                                 >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} />}
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} />}
                                     <InsightBoard />
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
