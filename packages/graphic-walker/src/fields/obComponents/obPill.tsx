@@ -36,7 +36,7 @@ const OBPill: React.FC<PillProps> = (props) => {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
-            <span>{field.name}</span>&nbsp;
+            <span className="flex-1 truncate">{field.name}</span>&nbsp;
             {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}
@@ -44,7 +44,7 @@ const OBPill: React.FC<PillProps> = (props) => {
                         vizStore.setFieldAggregator(dkey.id, fIndex, value);
                     }}
                 >
-                    <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
+                    <span className="bg-transparent text-gray-200 dark:text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
                         {field.aggName || ""}
                         <ChevronUpDownIcon className="w-3" />
                     </span>
