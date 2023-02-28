@@ -25,15 +25,15 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
     const { currentDataset, datasets, showDSPanel } = commonStore;
 
     return (
-        <Container className="flex items-center">
+        <Container className="flex items-center @container">
             <GwFile fileRef={gwFileRef} />
             {!preWorkDone && (
-                <div className="animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>
+                <div className="grow-0 shrink-0 animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>
             )}
             {/* <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
                 {t("DataSource.labels.cur_dataset")}
             </label> */}
-            <div className="mr-2">
+            <div className="flex-1 flex flex-col @lg:items-center @lg:flex-row space-y-2 @lg:space-x-2 @lg:space-y-0">
                 <DropdownSelect
                     options={datasets.map((d) => ({ label: d.name, value: d.id }))}
                     selectedKey={currentDataset.id}
@@ -42,33 +42,28 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
                     }}
                     placeholder={t("DataSource.labels.cur_dataset")}
                 />
-            </div>
-
-            <PrimaryButton
-                className="mr-2"
-                text={t("DataSource.buttons.create_dataset")}
-                onClick={() => {
-                    commonStore.startDSBuildingTask();
-                }}
-            />
-            <DefaultButton
-                className="mr-2"
-                text={t("DataSource.buttons.export_as_file")}
-                onClick={() => {
-                    const res = vizStore.exportAsRaw();
-                    download(res, "graphic-walker-notebook.json", "text/plain");
-                }}
-            />
-            <DefaultButton
-                className="mr-2"
-                text={t("DataSource.buttons.import_file")}
-                onClick={() => {
-                    if (gwFileRef.current) {
-                        gwFileRef.current.click();
-                    }
-                }}
-            />
-            <Modal
+                <PrimaryButton
+                    text={t("DataSource.buttons.create_dataset")}
+                    onClick={() => {
+                        commonStore.startDSBuildingTask();
+                    }}
+                />
+                <DefaultButton
+                    text={t("DataSource.buttons.export_as_file")}
+                    onClick={() => {
+                        const res = vizStore.exportAsRaw();
+                        download(res, "graphic-walker-notebook.json", "text/plain");
+                    }}
+                />
+                <DefaultButton
+                    text={t("DataSource.buttons.import_file")}
+                    onClick={() => {
+                        if (gwFileRef.current) {
+                            gwFileRef.current.click();
+                        }
+                    }}
+                />
+                <Modal
                     title={t("DataSource.dialog.create_data_source")}
                     onClose={() => {
                         commonStore.setShowDSPanel(false);
@@ -77,6 +72,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
                 >
                     <DataSelection />
                 </Modal>
+            </div>
             {/* {showDSPanel && (
                 <Modal
                     title={t("DataSource.dialog.create_data_source")}
@@ -87,8 +83,8 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
                     <DataSelection />
                 </Modal>
             )} */}
-            {preWorkDone && <CheckCircleIcon className="text-green-500 w-5 inline-block ml-2" />}
-            {!preWorkDone && <ArrowPathIcon className="text-yellow-500 w-5 inline-block ml-2" />}
+            {preWorkDone && <CheckCircleIcon className="grow-0 shrink-0 text-green-500 w-5 inline-block ml-2" />}
+            {!preWorkDone && <ArrowPathIcon className="grow-0 shrink-0 text-yellow-500 w-5 inline-block ml-2" />}
         </Container>
     );
 };

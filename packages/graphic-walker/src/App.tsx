@@ -123,11 +123,11 @@ const App = observer<IGWProps>(function App (props) {
     const rendererRef = useRef<IReactVegaHandler>(null);
 
     return (
-        <div className="App dark:bg-zinc-900 dark:text-white m-0 p-0">
+        <div className="App dark:bg-zinc-900 dark:text-white m-0 p-0 w-full h-full overflow-hidden">
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
-            <div className={`w-full h-full ${overflowMode === 'hidden' ? 'overflow-hidden' : 'overflow-auto'}`}>
+            <div className={`w-full h-full ${overflowMode === 'hidden' ? 'overflow-hidden' : 'overflow-auto'} @container`}>
                 {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
                 <div className="px-2 mx-2">
                     <SegmentNav />
@@ -136,24 +136,24 @@ const App = observer<IGWProps>(function App (props) {
                     }
                 </div>
                 {segmentKey === ISegmentKey.vis && (
-                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                    <Container style={{ marginTop: "0em", borderTop: "none" }} className="@container/main">
                         <VisualSettings rendererHandler={rendererRef} />
-                        <div className="k-lg:grid k-lg:grid-cols-12 k-xl:grid-cols-6">
-                            <div className="k-lg:col-span-3 k-xl:col-span-1 k-sm:grid k-sm:grid-cols-3">
-                                <div className="col-span-3 k-sm:col-span-2 k-lg:col-span-3">
+                        <div className="@lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6">
+                            <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3">
+                                <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3">
                                     <DatasetFields />
                                 </div>
-                                <div className="hidden k-sm:block k-sm:col-span-1 k-lg:hidden">
+                                <div className="hidden @sm/main:block @sm/main:col-span-1 @lg/main:hidden">
                                     <FilterField />
                                 </div>
                             </div>
-                            <div className="k-lg:col-span-2 k-xl:col-span-1">
-                                <div className="block k-sm:hidden k-lg:block mt-[2px] k-sm:mt-0">
+                            <div className="@lg/main:col-span-2 @xl/main:col-span-1">
+                                <div className="block @sm/main:hidden @lg/main:block mt-[2px] @sm/main:mt-0">
                                     <FilterField />
                                 </div>
                                 <AestheticFields />
                             </div>
-                            <div className="k-lg:col-span-7 k-xl:col-span-4">
+                            <div className="@lg/main:col-span-7 @xl/main:col-span-4">
                                 <PosFields />
                                 <NestContainer
                                     style={{ minHeight: "600px", overflow: "auto" }}
