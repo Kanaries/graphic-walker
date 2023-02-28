@@ -58,7 +58,7 @@ export const FilterFieldContainer: React.FC = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <FilterFieldSegment>
+    <FilterFieldSegment className="flex-1">
       <div className="flt-header cursor-default select-none">
         <h4>{t('filters')}</h4>
       </div>

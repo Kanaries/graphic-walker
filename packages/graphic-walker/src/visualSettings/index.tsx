@@ -359,7 +359,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
         ] as ToolbarItemProps[];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG]);
 
-    return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
+    return <div style={{ margin: '0.38em 0.18em 0.2em' }}>
         <Toolbar
             items={items}
             styles={{

@@ -12,16 +12,16 @@ export default function Pagination(props: PaginationProps) {
     const { t } = useTranslation();
     return (
         <nav
-            className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 px-4 py-3 sm:px-6"
+            className="sticky left-0 right-0 flex items-center justify-between bg-white dark:bg-zinc-900 px-4 py-3 sm:px-6 @container"
             aria-label="Pagination"
         >
-            <div className="hidden sm:block">
+            <div className="hidden @xs:block">
                 <p className="text-sm text-gray-800 dark:text-gray-100">
                     Showing <span className="font-medium">{from}</span> to <span className="font-medium">{to}</span> of{" "}
                     <span className="font-medium">{total}</span> results
                 </p>
             </div>
-            <div className="flex flex-1 justify-between sm:justify-end">
+            <div className="flex flex-1 justify-between @sm:justify-end">
                 <button
                     onClick={() => {
                         onPrev();

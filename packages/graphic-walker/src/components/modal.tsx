@@ -9,20 +9,14 @@ const Background = styled.div({
     position: "fixed",
     left: 0,
     top: 0,
-    width: "100vw",
-    height: "100vh",
+    right: 0,
+    bottom: 0,
     backdropFilter: "blur(1px)",
     zIndex: 25535,
 });
 
 const Container = styled.div`
-    width: 98%;
-    @media (min-width: 600px) {
-        width: 80%;
-    }
-    @media (min-width: 1100px) {
-        width: 880px;
-    }
+    width: calc(100% - 2em);
     max-height: 800px;
     overflow: auto;
     > div.header {
@@ -65,7 +59,7 @@ const Modal: React.FC<ModalProps> = (props) => {
             // at a different element and then released when the mouse is moved on the target element.
             // This case is required to be prevented, especially disturbing when interacting
             // with a Slider component.
-            className={"border border-gray-300 dark:border-gray-600 " + (show ? "block" : "hidden")}
+            className={show ? "block" : "hidden"}
             onMouseDown={() => (prevMouseDownTimeRef.current = Date.now())}
             onMouseOut={() => (prevMouseDownTimeRef.current = 0)}
             onMouseUp={() => {
@@ -74,7 +68,7 @@ const Modal: React.FC<ModalProps> = (props) => {
                 }
             }}
         >
-            <Container role="dialog" className="shadow-lg rounded-md border border-gray-100 dark:border-gray-800" onMouseDown={(e) => e.stopPropagation()}>
+            <Container role="dialog" className="shadow-lg rounded-md border border-gray-100 dark:border-gray-800 @sm:w-[80%] max-w-[880px]" onMouseDown={(e) => e.stopPropagation()}>
             <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                   <button
                     type="button"

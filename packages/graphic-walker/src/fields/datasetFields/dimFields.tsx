@@ -13,7 +13,7 @@ const DimFields: React.FC<Props> = (props) => {
     const { vizStore } = useGlobalStore();
     const dimensions = vizStore.draggableFieldState.dimensions;
     return (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
+        <div {...provided.droppableProps} ref={provided.innerRef} className="min-h-[100px]">
             {dimensions.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {

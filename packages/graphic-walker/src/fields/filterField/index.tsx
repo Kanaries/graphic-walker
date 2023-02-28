@@ -44,17 +44,15 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
 
 const FilterField: React.FC = () => {
     return (
-        <div>
-            <FilterFieldContainer>
-                <Droppable droppableId="filters" direction="vertical">
-                    {(provided, snapshot) => (
-                        <FilterItemContainer
-                            provided={provided}
-                        />
-                    )}
-                </Droppable>
-            </FilterFieldContainer>
-        </div>
+        <FilterFieldContainer>
+            <Droppable droppableId="filters" direction="vertical">
+                {(provided, snapshot) => (
+                    <FilterItemContainer
+                        provided={provided}
+                    />
+                )}
+            </Droppable>
+        </FilterFieldContainer>
     );
 };
 

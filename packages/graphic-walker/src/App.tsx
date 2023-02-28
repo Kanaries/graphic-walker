@@ -139,11 +139,11 @@ const App = observer<IGWProps>(function App (props) {
                     <Container style={{ marginTop: "0em", borderTop: "none" }} className="@container/main">
                         <VisualSettings rendererHandler={rendererRef} />
                         <div className="@lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6">
-                            <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3">
-                                <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3">
+                            <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3 -mb-0.5 @lg/main:mb-0">
+                                <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3 flex flex-col">
                                     <DatasetFields />
                                 </div>
-                                <div className="hidden @sm/main:block @sm/main:col-span-1 @lg/main:hidden">
+                                <div className="hidden h-full @sm/main:flex flex-col @sm/main:col-span-1 @lg/main:hidden">
                                     <FilterField />
                                 </div>
                             </div>

@@ -35,7 +35,7 @@ const MeaFields: React.FC<Props> = (props) => {
         }
     }, []);
     return (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
+        <div {...provided.droppableProps} ref={provided.innerRef} className="min-h-[120px]">
             {measures.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {
