@@ -1,10 +1,12 @@
 import { observer } from "mobx-react-lite";
 import React, { useState, useEffect, forwardRef } from "react";
-import { applyFilter, transformDataService } from "../services";
-import { useGlobalStore } from "../store";
-import { IReactVegaHandler } from "../vis/react-vega";
+import { applyFilter, applyViewQuery, transformDataService } from "../services";
 import { IDarkMode, IThemeKey } from "../interfaces";
 import SpecRenderer from "./specRenderer";
+import { runInAction, toJS } from 'mobx';
+import { Resizable } from 're-resizable';
+import { useGlobalStore } from '../store';
+import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -13,7 +15,7 @@ interface RendererProps {
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const { themeKey, dark } = props;
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures } = vizStore;
     const { currentDataset } = commonStore;
     const { dataSource } = currentDataset;
 
@@ -29,6 +31,21 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 console.error(err);
             });
     }, [dataSource, viewFilters, allFields]);
+
+    useEffect(() => {
+        const dims = vizStore.viewDimensions
+        const meas = vizStore.viewMeasures;
+        applyViewQuery(dataSource, dims.concat(meas), {
+            op: 'aggregate',
+            groupBy: dims.map(f => f.fid),
+            agg: Object.fromEntries(meas.map(f => [f.fid, f.aggName as any]))
+        }).then(data => {
+            setViewData(data);
+        }).catch((err) => {
+            console.error(err);
+        });
+    }, [dataSource, viewDimensions, viewMeasures]);
+
 
     return <SpecRenderer data={viewData} ref={ref} themeKey={themeKey} dark={dark} />;
 });

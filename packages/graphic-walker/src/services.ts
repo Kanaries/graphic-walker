@@ -11,7 +11,9 @@ import { IRow, Filters, SemanticType, IMeasure, IMutField, IFilterField } from '
 import ExplainerWorker from './workers/explainer.worker?worker&inline';
 import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
+import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
 import { IExplaination, IMeasureWithStat } from './insights';
+import { IViewQuery, queryView } from './lib/viewQuery';
 
 interface WorkerState {
     eWorker: Worker | null;
@@ -142,8 +144,8 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]
 
 export const transformDataService = async (data: IRow[], columns: IMutField[]): Promise<IRow[]> => {
     if (columns.length === 0 || data.length === 0) return data;
+    const worker = new TransformDataWorker();
     try {
-        const worker = new TransformDataWorker();
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
             columns: toJS(columns),
@@ -151,5 +153,23 @@ export const transformDataService = async (data: IRow[], columns: IMutField[]): 
         return res;
     } catch (error) {
         throw new Error('Uncaught error in TransformDataWorker', { cause: error });
+    } finally {
+        worker.terminate();
+    }
+}
+
+export const applyViewQuery = async (data: IRow[], metas: IMutField[], query: IViewQuery): Promise<IRow[]> => {
+    const worker = new ViewQueryWorker();
+    try {
+        const res: IRow[] = await workerService(worker, {
+            dataSource: data,
+            metas: toJS(metas),
+            query: toJS(query),
+        });
+        return res;
+    } catch (err) {
+        throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+    } finally {
+        worker.terminate();
     }
 }
