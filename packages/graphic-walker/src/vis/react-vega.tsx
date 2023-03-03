@@ -130,6 +130,9 @@ function channelEncode(props: EncodeProps) {
         // do not aggregate this field
         encoding[c].aggregate = null;
       }
+      if (props[c].analyticType === 'measure') {
+        encoding[c].type = 'quantitative'
+      }
     }
   })
   // FIXME: temporal fix, only for x and y relative order
