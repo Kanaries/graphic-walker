@@ -1,5 +1,8 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
+![graphic-walker-banner](https://user-images.githubusercontent.com/22167673/222895294-47ddd664-106e-45ff-a613-e7919522cb79.png)
+
+
 # graphic-walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
@@ -11,8 +14,6 @@
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
 Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
-
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-dark-scatter.png)
 
 ### Why is it different?
 
