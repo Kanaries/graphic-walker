@@ -105,7 +105,9 @@
             "file": {
                 "open": "打开文件...",
                 "submit": "确认",
-                "dataset_name": "数据集名称"
+                "dataset_name": "数据集名称",
+                "choose_file": "选择文件",
+                "get_start_desc": "创建一个数据集以开始分析"
             },
             "public": {
                 "submit": "确认"
