@@ -105,7 +105,9 @@
             "file": {
                 "open": "Open...",
                 "submit": "Submit",
-                "dataset_name": "Dataset Name"
+                "dataset_name": "Dataset Name",
+                "choose_file": "Choose a Data File",
+                "get_start_desc": "Get started by creating a dataset."
             },
             "public": {
                 "submit": "Submit"
