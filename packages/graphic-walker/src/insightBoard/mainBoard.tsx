@@ -9,6 +9,8 @@ import { baseVis, IReasonType } from "./std2vegaSpec";
 import RadioGroupButtons from "./radioGroupButtons";
 import { formatFieldName, mergeMeasures } from "./utils";
 import { useTranslation } from "react-i18next";
+import { useCurrentMediaTheme } from "../utils/media";
+import { builtInThemes } from "../vis/theme";
 
 const collection = Insight.IntentionWorkerCollection.init();
 
@@ -41,6 +43,8 @@ const InsightMainBoard: React.FC<InsightMainBoardProps> = (props) => {
     const [valueExp, setValueExp] = useState<IMeasureWithStat[]>([]);
     const { t } = useTranslation();
     const container = useRef<HTMLDivElement>(null);
+    const mediaTheme = useCurrentMediaTheme();
+    const themeConfig = builtInThemes['g2'][mediaTheme];
 
     const dimsWithTypes = useMemo(() => {
         const dimensions = fields
@@ -111,10 +115,13 @@ const InsightMainBoard: React.FC<InsightMainBoardProps> = (props) => {
                 true
             );
             if (container.current) {
-                embed(container.current, _vegaSpec);
+                embed(container.current, _vegaSpec, {
+                    actions: false,
+                    config: themeConfig
+                });
             }
         }
-    }, [visIndex, recSpaces, visSpaces, fields, dataSource]);
+    }, [visIndex, recSpaces, visSpaces, fields, dataSource, themeConfig]);
 
     const FilterDesc = useMemo<React.ReactElement[]>(() => {
         if (filters) {
