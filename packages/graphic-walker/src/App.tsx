@@ -138,7 +138,7 @@ const App = observer<IGWProps>(function App (props) {
                 </div>
                 {segmentKey === ISegmentKey.vis && (
                     <div style={{ marginTop: "0em", borderTop: "none" }} className="m-4 p-4 border border-zinc-200 dark:border-zinc-800">
-                        <VisualSettings rendererHandler={rendererRef} />
+                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />
