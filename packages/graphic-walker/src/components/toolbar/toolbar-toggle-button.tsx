@@ -46,7 +46,7 @@ export interface ToolbarToggleButtonItem extends IToolbarItem {
 }
 
 const ToolbarToggleButton = memo<IToolbarProps<ToolbarToggleButtonItem>>(function ToolbarToggleButton(props) {
-    const { item, styles } = props;
+    const { item, styles, darkModePreference } = props;
     const { icon: Icon, label, disabled, checked, onChange } = item;
     const handlers = useHandlers(() => onChange(!checked), disabled ?? false);
 
@@ -62,6 +62,7 @@ const ToolbarToggleButton = memo<IToolbarProps<ToolbarToggleButtonItem>>(functio
                 handlers={handlers}
                 role="checkbox"
                 aria-checked={checked}
+                darkModePreference={darkModePreference}
             >
                 <ToggleContainer checked={checked}>
                     <Icon style={mergedIconStyles} />
