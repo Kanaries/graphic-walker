@@ -4,10 +4,9 @@ import { observer } from "mobx-react-lite";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { toJS } from "mobx";
 import { useTranslation } from "react-i18next";
-import { IMutField, IRow, ISegmentKey } from "./interfaces";
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey } from "./interfaces";
 import type { IReactVegaHandler } from "./vis/react-vega";
 import VisualSettings from "./visualSettings";
-import { Container, NestContainer } from "./components/container";
 import ClickMenu from "./components/clickMenu";
 import InsightBoard from "./insightBoard/index";
 import PosFields from "./fields/posFields";
@@ -23,6 +22,7 @@ import FilterField from "./fields/filterField";
 import { guardDataKeys } from "./utils/dataPrep";
 import SegmentNav from "./segments/segmentNav";
 import DatasetConfig from "./dataSource/datasetConfig";
+import { useCurrentMediaTheme } from "./utils/media";
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -37,7 +37,8 @@ export interface IGWProps {
      */
     fieldKeyGuard?: boolean;
     /** @default "vega" */
-    themeKey?: 'vega' | 'g2';
+    themeKey?: IThemeKey;
+    dark?: IDarkMode;
 }
 
 const App = observer<IGWProps>(function App (props) {
@@ -50,6 +51,7 @@ const App = observer<IGWProps>(function App (props) {
         hideDataSourceConfig,
         fieldKeyGuard = true,
         themeKey = 'vega',
+        dark = 'media',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
@@ -117,14 +119,16 @@ const App = observer<IGWProps>(function App (props) {
         };
     }, [currentDataset, spec]);
 
+    const darkMode = useCurrentMediaTheme(dark);
+
     const rendererRef = useRef<IReactVegaHandler>(null);
 
     return (
-        <div className="App font-sans dark:bg-zinc-900 dark:text-white m-0 p-0">
+        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
-            <div className="">
+            <div className="bg-white dark:bg-zinc-900 dark:text-white">
                 {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
                 <div className="px-2 mx-2">
                     <SegmentNav />
@@ -133,7 +137,7 @@ const App = observer<IGWProps>(function App (props) {
                     }
                 </div>
                 {segmentKey === ISegmentKey.vis && (
-                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                    <div style={{ marginTop: "0em", borderTop: "none" }} className="m-4 p-4 border border-zinc-200 dark:border-zinc-800">
                         <VisualSettings rendererHandler={rendererRef} />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
@@ -147,7 +151,8 @@ const App = observer<IGWProps>(function App (props) {
                                 <div>
                                     <PosFields />
                                 </div>
-                                <NestContainer
+                                <div
+                                    className="m-0.5 p-1 border border-zinc-200 dark:border-zinc-800"
                                     style={{ minHeight: "600px", overflow: "auto" }}
                                     onMouseLeave={() => {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
@@ -156,7 +161,7 @@ const App = observer<IGWProps>(function App (props) {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     }}
                                 >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} />}
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />}
                                     <InsightBoard />
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
@@ -174,15 +179,15 @@ const App = observer<IGWProps>(function App (props) {
                                             </div>
                                         </ClickMenu>
                                     )}
-                                </NestContainer>
+                                </div>
                             </div>
                         </div>
-                    </Container>
+                    </div>
                 )}
                 {segmentKey === ISegmentKey.data && (
-                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                    <div className="m-4 p-4 border border-zinc-200 dark:border-zinc-800" style={{ marginTop: "0em", borderTop: "none" }}>
                         <DatasetConfig />
-                    </Container>
+                    </div>
                 )}
             </div>
         </div>

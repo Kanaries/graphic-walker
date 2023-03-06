@@ -185,3 +185,6 @@ export enum ISegmentKey {
     vis = 'vis',
     data = 'data'
 }
+
+export type IThemeKey = 'vega' | 'g2';
+export type IDarkMode = 'media' | 'light' | 'dark';

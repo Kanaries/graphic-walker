@@ -9,7 +9,7 @@ inject();
 
 ReactDOM.render(
     <React.StrictMode>
-        <GraphicWalker themeKey="g2" />
+        <GraphicWalker themeKey="g2" dark="light" />
     </React.StrictMode>,
     document.getElementById("root")
 );
