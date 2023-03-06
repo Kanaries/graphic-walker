@@ -118,7 +118,6 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
             };
 
             const dragHandler = fromEvent(document.body, 'mousemove').pipe(
-                throttleTime(100),
                 map(ev => {
                     if (!trackRef.current || !dragging) {
                         return null;
@@ -142,6 +141,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
 
                     return pos;
                 }),
+                throttleTime(100),
                 filter(pos => {
                     return pos !== null && pos !== range[dragging === 'left' ? 0 : 1];
                 }),

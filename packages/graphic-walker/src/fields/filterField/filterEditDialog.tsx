@@ -1,64 +1,29 @@
-import { CheckCircleIcon } from '@heroicons/react/24/outline';
-import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { observer } from "mobx-react-lite";
+import React from "react";
+import { useTranslation } from "react-i18next";
 
-import Modal from '../../components/modal';
-import type { IFilterField, IFilterRule } from '../../interfaces';
-import { useGlobalStore } from '../../store';
-import Tabs, { RuleFormProps } from './tabs';
+import Modal from "../../components/modal";
+import type { IFilterField, IFilterRule } from "../../interfaces";
+import { useGlobalStore } from "../../store";
+import Tabs, { RuleFormProps } from "./tabs";
+import DefaultButton from "../../components/button/default";
+import PrimaryButton from "../../components/button/primary";
 
-
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({
-    field,
-    onChange,
-}) => {
-    return (
-        <Tabs
-            field={field}
-            onChange={onChange}
-            tabs={['range', 'one of']}
-        />
-    );
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({
-    field,
-    onChange,
-}) => {
-    return (
-        <Tabs
-            field={field}
-            onChange={onChange}
-            tabs={['one of']}
-        />
-    );
+const NominalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of"]} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({
-    field,
-    onChange,
-}) => {
-    return (
-        <Tabs
-            field={field}
-            onChange={onChange}
-            tabs={['range', 'one of']}
-        />
-    );
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({
-    field,
-    onChange,
-}) => {
-    return (
-        <Tabs
-            field={field}
-            onChange={onChange}
-            tabs={['one of', 'temporal range']}
-        />
-    );
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
@@ -67,7 +32,7 @@ const FilterEditDialog: React.FC = observer(() => {
     const { vizStore } = useGlobalStore();
     const { editingFilterIdx, draggableFieldState } = vizStore;
 
-    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
+    const { t } = useTranslation("translation", { keyPrefix: "filters" });
 
     const field = React.useMemo(() => {
         return editingFilterIdx !== null ? draggableFieldState.filters[editingFilterIdx] : null;
@@ -83,14 +48,20 @@ const FilterEditDialog: React.FC = observer(() => {
         }
     }, [field]);
 
-    const handleChange = React.useCallback((r: IFilterRule) => {
-        if (editingFilterIdx !== null) {
-            setUncontrolledField(uf => ({
-                ...uf,
-                rule: r,
-            }) as IFilterField);
-        }
-    }, [editingFilterIdx]);
+    const handleChange = React.useCallback(
+        (r: IFilterRule) => {
+            if (editingFilterIdx !== null) {
+                setUncontrolledField(
+                    (uf) =>
+                        ({
+                            ...uf,
+                            rule: r,
+                        } as IFilterField)
+                );
+            }
+        },
+        [editingFilterIdx]
+    );
 
     const handleSubmit = React.useCallback(() => {
         if (editingFilterIdx !== null) {
@@ -100,45 +71,38 @@ const FilterEditDialog: React.FC = observer(() => {
         vizStore.closeFilterEditing();
     }, [editingFilterIdx, uncontrolledField]);
 
-    const Form = field ? ({
-        quantitative: QuantitativeRuleForm,
-        nominal: NominalRuleForm,
-        ordinal: OrdinalRuleForm,
-        temporal: TemporalRuleForm,
-    }[field.semanticType] as React.FC<RuleFormProps>) : EmptyForm;
-    
+    const Form = field
+        ? ({
+              quantitative: QuantitativeRuleForm,
+              nominal: NominalRuleForm,
+              ordinal: OrdinalRuleForm,
+              temporal: TemporalRuleForm,
+          }[field.semanticType] as React.FC<RuleFormProps>)
+        : EmptyForm;
+
     return uncontrolledField ? (
-        <Modal
-            show={Boolean(uncontrolledField)}
-            title={t('editing')}
-            onClose={() => vizStore.closeFilterEditing()}
-        >
-            <header className="text-lg font-semibold py-2 outline-none">
-                {t('form.name')}
-            </header>
-            <input className="border py-1 px-4 bg-white text-gray-800" readOnly value={uncontrolledField.name}/>
-            <header className="text-lg font-semibold py-2 outline-none">
-                {t('form.rule')}
-            </header>
-            <Form
-                field={uncontrolledField}
-                onChange={handleChange}
-            />
-            <div className="flex justify-center text-green-500 mt-4">
-                <CheckCircleIcon
-                    width="3em"
-                    height="3em"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="ok"
-                    className="cursor-pointer hover:bg-green-50 p-1"
-                    onClick={handleSubmit}
-                    strokeWidth="1.5"
-                />
+        <Modal show={Boolean(uncontrolledField)} title={t("editing")} onClose={() => vizStore.closeFilterEditing()}>
+            <div className="p-4">
+                <h2 className="text-base font-semibold py-2 outline-none">{t("form.name")}</h2>
+                <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-0.5 text-sm font-medium text-indigo-800">
+                    {uncontrolledField.name}
+                </span>
+                <h3 className="text-base font-semibold py-2 outline-none">{t("form.rule")}</h3>
+                <Form field={uncontrolledField} onChange={handleChange} />
+                <div className="mt-4">
+                    <PrimaryButton
+                        onClick={handleSubmit}
+                        text={t("btn.confirm")}
+                    />
+                    <DefaultButton
+                        className="ml-2"
+                        onClick={() => vizStore.closeFilterEditing()}
+                        text={t("btn.cancel")}
+                    />
+                </div>
             </div>
         </Modal>
     ) : null;
 });
-
 
 export default FilterEditDialog;
