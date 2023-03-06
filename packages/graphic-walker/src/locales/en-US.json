@@ -167,7 +167,9 @@
         "btn": {
             "select_all": "Select All",
             "unselect_all": "Unselect All",
-            "reverse": "Reverse Selection"
+            "reverse": "Reverse Selection",
+            "confirm": "Confirm",
+            "cancel": "Cancel"
         }
     },
     "explain": {
@@ -187,6 +189,7 @@
     "actions": {
         "prev": "Previous",
         "next": "Next",
-        "drop_field": "Drop Field Here"
+        "drop_field": "Drop Field Here",
+        "confirm": "Confirm"
     }
 }
