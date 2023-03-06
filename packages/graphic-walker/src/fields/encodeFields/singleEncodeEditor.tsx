@@ -48,7 +48,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 >
                                     <TrashIcon className="w-4" />
                                 </div>
-                                <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2">
+                                <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
                                     <span className="flex-1 truncate">
                                         {channelItem.name}
                                     </span>

@@ -5,9 +5,10 @@ import React, { useState, useCallback, useEffect, useRef, forwardRef } from "rea
 import { applyFilter } from "../services";
 import { useGlobalStore } from "../store";
 import ReactVega, { IReactVegaHandler } from "../vis/react-vega";
+import { IDarkMode, IThemeKey } from "../interfaces";
 
-const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: "vega" | "g2" }>(function ReactiveRenderer(
-    { themeKey },
+const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: IThemeKey; dark?: IDarkMode }>(function ReactiveRenderer(
+    { themeKey, dark },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
@@ -128,6 +129,7 @@ const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: "vega" | "g2
                 selectEncoding={exploration.mode === "point" ? "default" : "none"}
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
+                dark={dark}
             />
         </Resizable>
     );

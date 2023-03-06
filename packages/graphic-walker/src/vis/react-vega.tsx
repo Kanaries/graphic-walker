@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { autoMark } from '../utils/autoMark';
 import { COUNT_FIELD_ID } from '../constants';
 
-import { IViewField, IRow, IStackMode } from '../interfaces';
+import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
@@ -49,7 +49,8 @@ interface ReactVegaProps {
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
   /** @default "vega" */
-  themeKey?: 'vega' | 'g2';
+  themeKey?: IThemeKey;
+  dark?: IDarkMode;
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -391,12 +392,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     selectEncoding,
     brushEncoding,
     themeKey = 'vega',
+    dark = 'media'
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
-  const mediaTheme = useCurrentMediaTheme();
+  const mediaTheme = useCurrentMediaTheme(dark);
   const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {

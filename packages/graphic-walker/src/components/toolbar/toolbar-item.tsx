@@ -8,6 +8,7 @@ import { ToolbarContainer, ToolbarItemContainerElement, ToolbarSplitter, useHand
 import Toolbar, { ToolbarProps } from ".";
 import Tooltip from "../tooltip";
 import Callout from "../callout";
+import { useCurrentMediaTheme } from "../../utils/media";
 
 
 const ToolbarSplit = styled.div<{ open: boolean }>`
@@ -34,10 +35,7 @@ const ToolbarSplit = styled.div<{ open: boolean }>`
 const FormContainer = styled(ToolbarContainer)`
     width: max-content;
     height: max-content;
-    background-color: #fff;
-    @media (prefers-color-scheme: dark) {
-        background-color: #000;
-    }
+    background-color: ${({ dark }) => dark ? '#000' : '#fff'};
 `;
 
 export interface IToolbarItem {
@@ -65,6 +63,7 @@ export type ToolbarItemProps = (
 
 export interface IToolbarProps<P extends Exclude<ToolbarItemProps, typeof ToolbarItemSplitter> = Exclude<ToolbarItemProps, typeof ToolbarItemSplitter>> {
     item: P;
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
@@ -74,6 +73,7 @@ export interface IToolbarProps<P extends Exclude<ToolbarItemProps, typeof Toolba
 let idFlag = 0;
 
 export const ToolbarItemContainer = memo<{
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     props: IToolbarProps;
     handlers: ReturnType<typeof useHandlers> | null;
     children: unknown;
@@ -84,6 +84,7 @@ export const ToolbarItemContainer = memo<{
             styles, openedKey, setOpenedKey, renderSlot,
         },
         handlers,
+        darkModePreference,
         children,
         ...props
     }
@@ -130,15 +131,18 @@ export const ToolbarItemContainer = memo<{
 
     useEffect(() => {
         if (opened && menu) {
-            renderSlot(<Toolbar {...menu} />);
+            renderSlot(<Toolbar {...menu} darkModePreference={darkModePreference} />);
             return () => renderSlot(null);
         }
     }, [opened, menu, renderSlot]);
 
+    const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
+
     return (
         <>
-            <Tooltip content={label}>
+            <Tooltip content={label} darkModePreference={darkModePreference}>
                 <ToolbarItemContainerElement
+                    dark={dark}
                     role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled ?? false}
                     split={Boolean(form || menu)}
                     style={styles?.item}
@@ -190,8 +194,8 @@ export const ToolbarItemContainer = memo<{
                 </ToolbarItemContainerElement>
             </Tooltip>
             {opened && form && (
-                <Callout target={`#${id}`}>
-                    <FormContainer onMouseDown={e => e.stopPropagation()}>
+                <Callout target={`#${id}`} darkModePreference={darkModePreference}>
+                    <FormContainer dark={dark} onMouseDown={e => e.stopPropagation()}>
                         {form}
                     </FormContainer>
                 </Callout>
@@ -202,20 +206,21 @@ export const ToolbarItemContainer = memo<{
 
 const ToolbarItem = memo<{
     item: ToolbarItemProps;
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
     renderSlot: (node: ReactNode) => void;
-}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot }) {
+}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot, darkModePreference }) {
     if (item === ToolbarItemSplitter) {
         return  <ToolbarSplitter />;
     }
     if ('checked' in item) {
-        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} darkModePreference={darkModePreference} />;
     } else if ('options' in item) {
-        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} darkModePreference={darkModePreference} />;
     }
-    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} />;
+    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} darkModePreference={darkModePreference} />;
 });
 
 
