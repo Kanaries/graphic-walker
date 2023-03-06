@@ -39,21 +39,15 @@ export const useHandlers = (action: () => void, disabled: boolean, triggerKeys: 
     }), [allowPropagation]);
 };
 
-export const ToolbarContainer = styled.div`
+export const ToolbarContainer = styled.div<{ dark: boolean }>`
     --height: 36px;
     --icon-size: 18px;
     width: 100%;
     height: var(--height);
-    background-color: var(--background-color);
-    color: var(--color);
+    background-color: ${({ dark }) => dark ? 'var(--background-color-dark)' : 'var(--background-color)'};
+    color: ${({ dark }) => dark ? 'var(--color-dark)' : 'var(--color)'};
     border: 1px solid;
-    border-color: #e5e7eb;
-    // dark mode
-    @media (prefers-color-scheme: dark) {
-        background-color: var(--background-color-dark);
-        color: var(--color-dark);
-        border-color: #4b5563;
-    }
+    border-color: ${({ dark }) => dark ? '#4b5563' : '#e5e7eb'};
     /* box-shadow: 0px 1px 3px 1px rgba(136, 136, 136, 0.1); */
     border-radius: 2px;
     overflow: hidden;
@@ -73,7 +67,7 @@ export const ToolbarSplitter = styled.div`
     background: #bbbbbb50;
 `;
 
-export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
+export const ToolbarItemContainerElement = styled.div<{ split: boolean; dark: boolean }>`
     display: inline-flex;
     flex-direction: row;
     user-select: none;
@@ -81,7 +75,7 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
     width: ${({ split }) => split ? 'calc(var(--height) + 10px)' : 'var(--height)'};
     height: var(--height);
     overflow: hidden;
-    color: var(--color);
+    color: ${({ dark }) => dark ? 'var(--dark-mode-color)' : 'var(--color)'};
     position: relative;
     > svg {
         flex-grow: 0;
@@ -102,8 +96,8 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
     &[aria-disabled=false] {
         cursor: pointer;
         :hover, :focus, &.open {
-            --background-color: #FEFEFE;
-            color: var(--color-hover);
+            --background-color: ${({ dark }) => dark ? '#202020' : '#FEFEFE'};
+            color: ${({ dark }) => dark ? 'var(--dark-mode-color-hover)' : 'var(--color-hover)'};
             &.split * svg {
                 pointer-events: none;
                 transform: translate(-50%, -20%);
@@ -112,15 +106,6 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean }>`
                 text-shadow: 0 0 1.5px var(--shadow-color);
             }
             background-color: var(--background-color);
-        }
-    }
-    @media (prefers-color-scheme: dark) {
-        color: var(--dark-mode-color);
-        &[aria-disabled=false] {
-            :hover, :focus, &.open {
-                --background-color: #202020;
-                color: var(--dark-mode-color-hover);
-            }
         }
     }
     transition: color 100ms, background-image 100ms;

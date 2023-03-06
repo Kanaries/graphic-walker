@@ -1,7 +1,9 @@
 import React, { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
+import type { IDarkMode } from "../interfaces";
 import { ShadowDomContext } from "..";
+import { useCurrentMediaTheme } from "../utils/media";
 
 export interface TooltipProps {
     children: JSX.Element;
@@ -12,12 +14,13 @@ export interface TooltipProps {
     hideDelay?: number;
     /** @default 3_000 */
     autoHide?: number;
+    darkModePreference: IDarkMode;
 }
 
 const attrName = "data-tooltip-host-id";
 let flag = 0;
 
-const Bubble = styled.div`
+const Bubble = styled.div<{ dark: boolean }>`
     border-radius: 1px;
     transform: translate(-50%, -100%);
     filter: drop-shadow(0 1.6px 1.2px rgba(0, 0, 0, 0.15)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.12));
@@ -31,10 +34,7 @@ const Bubble = styled.div`
         width: 8px;
         height: 8px;
         transform: translate(-50%, 50%) rotate(45deg);
-        background-color: #fff;
-        @media (prefers-color-scheme: dark) {
-            background-color: #000;
-        }
+        background-color: ${({ dark }) => dark ? '#000' : '#fff'};
         border-radius: 1px;
     }
 `;
@@ -45,6 +45,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
     autoHide = 3_000,
     showDelay = 250,
     hideDelay = 250,
+    darkModePreference = 'media',
 }) {
     const hostId = useMemo(() => flag++, []);
     const [pos, setPos] = useState<[number, number]>([0, 0]);
@@ -121,6 +122,8 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
         }
     }, [root, hostId]);
 
+    const darkMode = useCurrentMediaTheme(darkModePreference);
+    
     return (
         <>
             {element}
@@ -128,7 +131,8 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 root &&
                 createPortal(
                     <Bubble
-                        className="fixed text-xs p-1 px-3 text-gray-500 bg-white dark:bg-zinc-900  z-50"
+                        className={`${darkMode === 'dark' ? 'dark bg-zinc-900' : 'bg-white'} fixed text-xs p-1 px-3 text-gray-500 z-50`}
+                        dark={darkMode === 'dark'}
                         onMouseOver={() => setHover(true)}
                         onMouseOut={() => setHover(false)}
                         style={{ left: pos[0], top: pos[1] - 4 }}
