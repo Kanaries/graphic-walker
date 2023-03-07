@@ -22,7 +22,7 @@ const DatasetFields: React.FC = (props) => {
                     {(provided, snapshot) => <DimFields provided={provided} />}
                 </Droppable>
             </div>
-            <div className="border-t dark:border-gray-800 flex-grow pd-1 overflow-y-auto">
+            <div className="border-t dark:border-gray-700 flex-grow pd-1 overflow-y-auto">
                 <Droppable droppableId="measures" direction="vertical">
                     {(provided, snapshot) => <MeaFields provided={provided} />}
                 </Droppable>

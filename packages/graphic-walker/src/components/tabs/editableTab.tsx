@@ -32,8 +32,8 @@ export default function EditableTabs(props: EditableTabsProps) {
     }, [clearEditStatus]);
 
     return (
-        <div className="border-b border-gray-200 dark:border-gray-800 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
-            <nav className="-mb-px flex h-8 border-gray-200 dark:border-gray-800" role="tablist" aria-label="Tabs">
+        <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden" onMouseLeave={clearEditStatus}>
+            <nav className="-mb-px flex h-8 border-gray-200 dark:border-gray-700" role="tablist" aria-label="Tabs">
                 {tabs.map((tab, tabIndex) => (
                     <span
                         role="tab"
