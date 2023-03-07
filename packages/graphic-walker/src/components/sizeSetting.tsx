@@ -14,7 +14,7 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
     const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.settings.size_setting" });
 
     return (
-        <>
+        <div className="text-zinc-400">
             {children}
             <div className="mt-4 w-60">
                 <input
@@ -52,7 +52,7 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
                     {`${t("height")}: ${height}`}
                 </output>
             </div>
-        </>
+        </div>
     );
 };
 
