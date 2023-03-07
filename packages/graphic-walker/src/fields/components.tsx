@@ -7,7 +7,7 @@ export const FieldListContainer: React.FC<{ name: string }> = (props) => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-800">
+    <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-700">
       <div className="fl-header border-r border-gray-200 dark:border-gray-800 cursor-default select-none">
         <h4 className="font-normal">{t(props.name)}</h4>
       </div>
@@ -20,7 +20,7 @@ export const AestheticFieldContainer: React.FC<{ name: string }> = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-800">
+    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700">
       <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
         <h4 className="font-normal">{t(props.name)}</h4>
       </div>
@@ -33,7 +33,7 @@ export const FilterFieldContainer: React.FC = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-800">
+    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700">
       <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
         <h4 className="font-normal">{t('filters')}</h4>
       </div>
