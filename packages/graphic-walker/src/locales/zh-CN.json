@@ -137,7 +137,8 @@
                     "descending": "降序排序",
                     "transpose": "转置",
                     "export_chart": "导出",
-                    "export_chart_as": "导出 {{type}}"
+                    "export_chart_as": "导出 {{type}}",
+                    "export_spec_list": "导出vis-list"
                 },
                 "size": "调整尺寸",
                 "size_setting": {

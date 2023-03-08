@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
 import { useCurrentMediaTheme } from '../utils/media';
+import { useGlobalStore } from '../store';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -51,6 +52,7 @@ interface ReactVegaProps {
   /** @default "vega" */
   themeKey?: IThemeKey;
   dark?: IDarkMode;
+  onUpdate?: (view: React.MutableRefObject<View[]>, store, ...args) => any;
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -392,10 +394,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     selectEncoding,
     brushEncoding,
     themeKey = 'vega',
-    dark = 'media'
+    dark = 'media',
+    onUpdate,
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
+  const store = useGlobalStore();
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
   const mediaTheme = useCurrentMediaTheme(dark);
@@ -664,6 +668,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         subscriptions.forEach(sub => sub.unsubscribe());
       };
     }
+
+    if (onUpdate) onUpdate(vegaRefs, store, props);
   }, [
     dataSource,
     allFieldIds,

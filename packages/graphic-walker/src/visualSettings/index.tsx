@@ -23,7 +23,7 @@ import {
     LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { SVGProps, useCallback, useMemo } from 'react';
+import React, { SVGProps, useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
@@ -35,6 +35,7 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
+import Modal from '../components/modal';
 
 
 const Invisible = styled.div`
@@ -66,7 +67,7 @@ interface IVisualSettings {
 }
 
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference }) => {
-    const { vizStore } = useGlobalStore();
+    const { commonStore, vizStore } = useGlobalStore();
     const { visualConfig, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
@@ -331,6 +332,13 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                             onClick={() => downloadSVG()}
                         >
                             {t('button.export_chart_as', { type: 'svg' })}
+                        </button>
+                        <button
+                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'}`}
+                            aria-label={t('button.export_spec_list')}
+                            onClick={() => (commonStore.showSpecExport = true) }
+                        >
+                            {t('button.export_spec_list')}
                         </button>
                     </FormContainer>
                 ),

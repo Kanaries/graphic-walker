@@ -137,7 +137,8 @@
                     "descending": "Sort in Descending Order",
                     "transpose": "Transpose",
                     "export_chart": "Export",
-                    "export_chart_as": "Export as {{type}}"
+                    "export_chart_as": "Export as {{type}}",
+                    "export_spec_list": "Export as vis-list"
                 },
                 "size": "Resize",
                 "size_setting": {

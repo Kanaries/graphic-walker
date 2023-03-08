@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { toJS } from "mobx";
 import { useTranslation } from "react-i18next";
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey } from "./interfaces";
+import { IDarkMode, IDataSet, IMutField, IRow, ISegmentKey, IThemeKey, IVisSpec } from "./interfaces";
 import type { IReactVegaHandler } from "./vis/react-vega";
 import VisualSettings from "./visualSettings";
 import ClickMenu from "./components/clickMenu";
@@ -23,6 +23,10 @@ import { guardDataKeys } from "./utils/dataPrep";
 import SegmentNav from "./segments/segmentNav";
 import DatasetConfig from "./dataSource/datasetConfig";
 import { useCurrentMediaTheme } from "./utils/media";
+import { View } from "vega-typings";
+import { VizSpecStore } from "./store/visualSpecStore";
+import Modal from "./components/modal";
+import VisExport from "./components/visExport"
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -39,6 +43,8 @@ export interface IGWProps {
     /** @default "vega" */
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    visSpec?: {datasets: IDataSet[], specList: IVisSpec[]} | string;
+    onVegaUpdate?: (views: React.MutableRefObject<View[]>, globalStore, ...args) => any;
 }
 
 const App = observer<IGWProps>(function App (props) {
@@ -52,6 +58,8 @@ const App = observer<IGWProps>(function App (props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        visSpec,
+        onVegaUpdate
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
@@ -109,7 +117,20 @@ const App = observer<IGWProps>(function App (props) {
             }).then(() => {
                 setInsightReady(true);
 
-                if (spec) {
+                if (visSpec) {
+                    let _visSpec;
+                    if (typeof visSpec === 'string') {
+                        _visSpec = JSON.parse(visSpec);
+                    }
+                    else _visSpec = visSpec;
+                    try{
+                        _visSpec.datasets && _visSpec.specList &&
+                        vizStore.importVisSpec(_visSpec);
+                    } catch(e) {
+                        console.error(e);
+                    }
+                }
+                else if (spec) {
                     vizStore.renderSpec(spec);
                 }
             });
@@ -117,14 +138,19 @@ const App = observer<IGWProps>(function App (props) {
         return () => {
             destroyWorker();
         };
-    }, [currentDataset, spec]);
+    }, [currentDataset, spec, visSpec]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+
     return (
+    <>
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+            <Modal title={"Export Vis Config As"} show={commonStore.showSpecExport} onClose={() => (commonStore.showSpecExport = false) }>
+                <VisExport></VisExport>
+            </Modal>
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
@@ -161,7 +187,7 @@ const App = observer<IGWProps>(function App (props) {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     }}
                                 >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />}
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} onVegaUpdate={onVegaUpdate} />}
                                     <InsightBoard />
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
@@ -191,6 +217,7 @@ const App = observer<IGWProps>(function App (props) {
                 )}
             </div>
         </div>
+    </>
     );
 });
 

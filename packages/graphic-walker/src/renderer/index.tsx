@@ -6,9 +6,11 @@ import { applyFilter } from "../services";
 import { useGlobalStore } from "../store";
 import ReactVega, { IReactVegaHandler } from "../vis/react-vega";
 import { IDarkMode, IThemeKey } from "../interfaces";
+import { View } from "vega-typings"
+import { VizSpecStore } from "../store/visualSpecStore";
 
-const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: IThemeKey; dark?: IDarkMode }>(function ReactiveRenderer(
-    { themeKey, dark },
+const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: IThemeKey; dark?: IDarkMode; onVegaUpdate?: (views: React.MutableRefObject<View[]>, vizStore: VizSpecStore, ...args)=>any }>(function ReactiveRenderer(
+    { themeKey, dark, onVegaUpdate },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
@@ -130,6 +132,7 @@ const ReactiveRenderer = forwardRef<IReactVegaHandler, { themeKey?: IThemeKey; d
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
+                onUpdate={onVegaUpdate}
             />
         </Resizable>
     );

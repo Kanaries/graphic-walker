@@ -2,7 +2,7 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from "immer";
 import { v4 as uuidv4 } from "uuid";
 import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IDataSet, IVisualConfig } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
@@ -685,5 +685,26 @@ export class VizSpecStore {
         // 补上初始化新版本特性
         this.visList = parseGWPureSpec(forwardVisualConfigs(content.specList));
         this.visIndex = 0;
+    }
+    public exportVisSpec() {
+        const pureVisList = dumpsGWPureSpec(this.visList);
+        return {
+            dataSourceIds: this.commonStore.dataSources.map(ds => ds.id),
+            datasets: toJS(this.commonStore.datasets),
+            specList: pureVisList
+        }
+    }
+    public importVisSpec(visSpec: {dataSourceIds: string[], datasets: IDataSet[], specList: IVisSpec[]}) {
+        const {dataSourceIds, datasets, specList: pureVisList} = visSpec;
+        if (dataSourceIds.length === this.commonStore.dataSources.length) {
+            // FIXME: cannot deal with non-fixed data source
+            for (let i = 0;i < dataSourceIds.length;++i){
+                this.commonStore.dataSources[i].id = dataSourceIds[i];
+            }
+        }
+        this.commonStore.datasets = datasets;
+        this.commonStore.dsIndex = Math.max(pureVisList.length - 1, 0);
+        this.visList = parseGWPureSpec(forwardVisualConfigs(pureVisList));
+        this.visIndex = (this.visList?.length || 0) - 1;
     }
 }

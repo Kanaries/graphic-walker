@@ -16,6 +16,9 @@ export class CommonStore {
     public showDataConfig: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    private _showSpecExport: boolean = false;
+    public get showSpecExport() { return this._showSpecExport; }
+    public set showSpecExport(v: boolean) { this._showSpecExport = v; }
     constructor () {
         this.datasets = [];
         this.dataSources = [];
