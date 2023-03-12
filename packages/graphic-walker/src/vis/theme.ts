@@ -1,22 +1,26 @@
 const DEFAULT_COLOR = "#5B8FF9";
-
+const DARK_COMMON_DESIGN = {
+    background: "transparent",
+    axis: {
+        gridColor: "#666",
+        domainColor: "#d1d5db", // change axis color to white
+        tickColor: "#d1d5db", // change tick color to white
+        labelColor: "#d1d5db", // change label color to white
+        titleColor: "#d1d5db", // change title color to white
+    },
+    legend: {
+        labelColor: "#d1d5db", // change legend label color to white
+        titleColor: "#d1d5db" // change legend title color to white
+    },
+    view: {
+        stroke: '#666'
+    }
+}
 export const VegaTheme = {
     light: {
         background: "transparent",
     },
-    dark: {
-        background: "transparent",
-        axis: {
-            gridColor: "#666",
-            domainColor: "#d1d5db", // change axis color to white
-            tickColor: "#d1d5db", // change tick color to white
-            labelColor: "#d1d5db", // change label color to white
-        },
-        legend: {
-            labelColor: "#d1d5db", // change legend label color to white
-            titleColor: "#d1d5db" // change legend title color to white
-        },
-    },
+    dark: DARK_COMMON_DESIGN
 } as const;
 
 export const AntVTheme = {
@@ -65,6 +69,7 @@ export const AntVTheme = {
         },
     },
     dark: {
+        ...DARK_COMMON_DESIGN,
         area: { fill: DEFAULT_COLOR },
         bar: { fill: DEFAULT_COLOR },
         circle: { fill: DEFAULT_COLOR },
@@ -76,17 +81,6 @@ export const AntVTheme = {
         errorbar: { stroke: DEFAULT_COLOR },
         errorband: { fill: DEFAULT_COLOR },
         arc: { fill: DEFAULT_COLOR },
-        background: "transparent", // change background color to dark gray
-        axis: {
-            gridColor: "#666",
-            domainColor: "#d1d5db", // change axis color to white
-            tickColor: "#d1d5db", // change tick color to white
-            labelColor: "#d1d5db", // change label color to white
-        },
-        legend: {
-            labelColor: "#d1d5db", // change legend label color to white
-            titleColor: "#d1d5db" // change legend title color to white
-        },
         range: {
             category: [
                 "#5B8FF9",
