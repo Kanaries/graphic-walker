@@ -1,6 +1,10 @@
 const DEFAULT_COLOR = "#5B8FF9";
 const DARK_COMMON_DESIGN = {
     background: "transparent",
+    header: {
+        titleColor: "#d1d5db", // change title color to white
+        labelColor: "#d1d5db", // change label color to white
+    },
     axis: {
         gridColor: "#666",
         domainColor: "#d1d5db", // change axis color to white
