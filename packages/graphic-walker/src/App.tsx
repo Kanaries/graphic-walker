@@ -137,7 +137,7 @@ const App = observer<IGWProps>(function App (props) {
                     }
                 </div>
                 {segmentKey === ISegmentKey.vis && (
-                    <div style={{ marginTop: "0em", borderTop: "none" }} className="m-4 p-4 border border-zinc-200 dark:border-zinc-800">
+                    <div style={{ marginTop: "0em", borderTop: "none" }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
@@ -152,7 +152,7 @@ const App = observer<IGWProps>(function App (props) {
                                     <PosFields />
                                 </div>
                                 <div
-                                    className="m-0.5 p-1 border border-zinc-200 dark:border-zinc-800"
+                                    className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
                                     style={{ minHeight: "600px", overflow: "auto" }}
                                     onMouseLeave={() => {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
@@ -166,7 +166,7 @@ const App = observer<IGWProps>(function App (props) {
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
-                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
+                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                                                 onClick={() => {
                                                     commonStore.closeEmbededMenu();
                                                     commonStore.setShowInsightBoard(true);
@@ -185,7 +185,7 @@ const App = observer<IGWProps>(function App (props) {
                     </div>
                 )}
                 {segmentKey === ISegmentKey.data && (
-                    <div className="m-4 p-4 border border-zinc-200 dark:border-zinc-800" style={{ marginTop: "0em", borderTop: "none" }}>
+                    <div className="m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: "0em", borderTop: "none" }}>
                         <DatasetConfig />
                     </div>
                 )}

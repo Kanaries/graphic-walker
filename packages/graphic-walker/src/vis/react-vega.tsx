@@ -105,6 +105,7 @@ interface SingleViewProps {
   asCrossFilterTrigger: boolean;
   selectEncoding: 'default' | 'none';
   brushEncoding: 'x' | 'y' | 'default' | 'none';
+  hideLegend?: boolean;
 }
 
 function availableChannels (geomType: string): Set<string> {
@@ -203,9 +204,16 @@ function getSingleView(props: SingleViewProps) {
     brushEncoding,
     enableCrossFilter,
     asCrossFilterTrigger,
+    hideLegend = false,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
+  let config: any = {};
+  if (hideLegend) {
+    config.legend = {
+      disable: true
+    };
+  }
   if (geomType === 'auto') {
     const types: ISemanticType[] = [];
     if (x !== NULL_FIELD) types.push(x.semanticType)//types.push(getFieldType(x));
@@ -220,6 +228,7 @@ function getSingleView(props: SingleViewProps) {
   channelStack(encoding, stack);
   if (!enableCrossFilter || brushEncoding === 'none' && selectEncoding === 'none') {
     return {
+      config,
       mark: {
         type: markType,
         opacity: 0.96,
@@ -327,6 +336,7 @@ function getSingleView(props: SingleViewProps) {
 
   if (brushEncoding !== 'none') {
     return {
+      config,
       transform: asCrossFilterTrigger ? [] : [
         { filter: { param: BRUSH_SIGNAL_NAME } }
       ],
@@ -347,6 +357,7 @@ function getSingleView(props: SingleViewProps) {
   }
 
   return {
+    config,
     transform: asCrossFilterTrigger ? [] : [
       { filter: { param: POINT_SIGNAL_NAME } }
     ],
@@ -555,6 +566,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       for (let i = 0; i < rowRepeatFields.length; i++) {
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
+          const hasLegend = i === 0 && j === colRepeatFields.length - 1;
           const singleView = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
@@ -575,6 +587,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             brushEncoding,
             enableCrossFilter: crossFilterTriggerIdx !== -1,
             asCrossFilterTrigger: crossFilterTriggerIdx === sourceId,
+            hideLegend: !hasLegend,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
