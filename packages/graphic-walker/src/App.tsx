@@ -166,7 +166,7 @@ const App = observer<IGWProps>(function App (props) {
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
-                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
+                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                                                 onClick={() => {
                                                     commonStore.closeEmbededMenu();
                                                     commonStore.setShowInsightBoard(true);
