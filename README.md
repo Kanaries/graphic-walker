@@ -134,7 +134,7 @@ npm run dev
 
 ## I18n Support
 
-Graphic Walker now support _English_ (as `"en"` or `"en-US"`) and _Chinese_ (as `"zh"` or `"zh-CN"`) with built-in locale resources. You can simply provide a valid string value (enumerated above) as `props.i18nLang` to set a language or synchronize your global i18n language with the component like the following example:
+Graphic Walker now support _English_ (as `"en"` or `"en-US"`) , _Japanese_ (as `"ja"` or `"ja-JP"`) ,  _Chinese_ (as `"zh"` or `"zh-CN"`) with built-in locale resources. You can simply provide a valid string value (enumerated above) as `props.i18nLang` to set a language or synchronize your global i18n language with the component like the following example:
 
 ```typescript
 const YourApp = props => {
