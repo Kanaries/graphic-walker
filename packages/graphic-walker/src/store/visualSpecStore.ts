@@ -139,7 +139,7 @@ export class VizSpecStore {
         this.visualConfig = initVisualConfig();
         this.visList.push(
             new VisSpecWithHistory({
-                name: ["main.tablist.autoTitle", { idx: 1 }],
+                name: 'Chart 1',
                 visId: uuidv4(),
                 config: this.visualConfig,
                 encodings: this.draggableFieldState,
@@ -275,10 +275,11 @@ export class VizSpecStore {
             });
         return fields;
     }
-    public addVisualization() {
+    public addVisualization(defaultName?: string) {
+        const name = defaultName || 'Chart ' + (this.visList.length + 1);
         this.visList.push(
             new VisSpecWithHistory({
-                name: ["main.tablist.autoTitle", { idx: this.visList.length + 1 }],
+                name,
                 visId: uuidv4(),
                 config: initVisualConfig(),
                 encodings: initEncoding(),
@@ -290,9 +291,10 @@ export class VizSpecStore {
         this.visIndex = visIndex;
     }
     public setVisName(visIndex: number, name: string) {
-        this.useMutable(() => {
-            this.visList[visIndex].name = [name];
-        });
+        this.visList[visIndex] = this.visList[visIndex].clone();
+        this.visList[visIndex].updateLatest({
+            name
+        })
     }
     public initState() {
         this.useMutable((tab) => {

@@ -1,6 +1,6 @@
 import { StatFuncName } from "visual-insights/build/esm/statistics";
 import { AggFC } from 'cube-core/built/types';
-import { IAnalyticType, IMutField as VIMutField, ISemanticType } from 'visual-insights';
+import { IAnalyticType, ISemanticType } from 'visual-insights';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -176,7 +176,7 @@ export interface IVisualConfig {
 
 export interface IVisSpec {
     readonly visId: string;
-    readonly name?: [string, Record<string, any>?];
+    readonly name?: string;
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }

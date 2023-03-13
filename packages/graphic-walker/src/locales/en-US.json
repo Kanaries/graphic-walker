@@ -117,7 +117,8 @@
     "main": {
         "tablist": {
             "new": "+ New",
-            "autoTitle": "Chart {{idx}}"
+            "auto_title": "Chart {{idx}}",
+            "chart_name": "Chart Name"
         },
         "tabpanel": {
             "menubar": {
@@ -190,6 +191,7 @@
         "prev": "Previous",
         "next": "Next",
         "drop_field": "Drop Field Here",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "cancel": "Cancel"
     }
 }

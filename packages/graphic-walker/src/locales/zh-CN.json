@@ -117,7 +117,8 @@
     "main": {
         "tablist": {
             "new": "+ 新建",
-            "autoTitle": "图表 {{idx}}"
+            "auto_title": "图表 {{idx}}",
+            "chart_name": "图表名称"
         },
         "tabpanel": {
             "menubar": {
@@ -190,6 +191,7 @@
         "prev": "向前",
         "next": "向后",
         "drop_field": "拖拽字段至此",
-        "confirm": "确认"
+        "confirm": "确认",
+        "cencel": "取消"
     }
 }
