@@ -129,7 +129,6 @@ export class VisSpecWithHistory {
     }
 
     public clone () {
-        console.log(this.snapshots)
         const nextVSWH = new VisSpecWithHistory(this.frame);
         nextVSWH.cursor = this.cursor;
         return nextVSWH;

@@ -28,7 +28,6 @@ const VisNav: React.FC = (props) => {
     useEffect(() => {
         if (visList.length === 1) {
             // should set the first vis name when the component is mounted
-            console.log(t('main.tablist.auto_title', { idx: 1 }))
             vizStore.setVisName(0, t('main.tablist.auto_title', { idx: 1 }));
         }
         // no need to add deps here

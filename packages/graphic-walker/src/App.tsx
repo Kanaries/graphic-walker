@@ -14,7 +14,7 @@ import AestheticFields from "./fields/aestheticFields";
 import DatasetFields from "./fields/datasetFields/index";
 import ReactiveRenderer from "./renderer/index";
 import DataSourceSegment from "./dataSource/index";
-import { useGlobalStore } from "./store";
+import { IGlobalStore, useGlobalStore } from "./store";
 import { preAnalysis, destroyWorker } from "./services";
 import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
@@ -39,6 +39,7 @@ export interface IGWProps {
     /** @default "vega" */
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    storeRef?: React.MutableRefObject<IGlobalStore | null>;
 }
 
 const App = observer<IGWProps>(function App (props) {
@@ -51,7 +52,7 @@ const App = observer<IGWProps>(function App (props) {
         hideDataSourceConfig,
         fieldKeyGuard = true,
         themeKey = 'vega',
-        dark = 'media',
+        dark = 'media'
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
