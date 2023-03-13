@@ -117,7 +117,8 @@
     "main": {
       "tablist": {
         "new": "+ 新規作成",
-        "autoTitle": "グラフ {{idx}}"
+        "auto_title": "グラフ {{idx}}",
+        "chart_name": "グラフ名"
       },
       "tabpanel": {
         "menubar": {
@@ -190,6 +191,7 @@
       "prev": "前へ",
       "next": "次へ",
       "drop_field": "ここにフィールドをドロップ",
-      "confirm": "確認"
+      "confirm": "確認",
+      "cancel": "キャンセル"
     }
   }

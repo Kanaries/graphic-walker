@@ -6,7 +6,6 @@ import localeEnUs from './en-US.json';
 import localeJaJp from './ja-JP.json';
 import localeZhCn from './zh-CN.json';
 
-
 const locales: Resource & { 'en-US': any } = {
     'en': {
         translation: localeEnUs,
