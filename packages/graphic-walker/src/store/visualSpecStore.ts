@@ -275,6 +275,19 @@ export class VizSpecStore {
             });
         return fields;
     }
+    public get allFields(): IViewField[] {
+        const { draggableFieldState } = this;
+        const dimensions = toJS(draggableFieldState.dimensions);
+        const measures = toJS(draggableFieldState.measures);
+        return [...dimensions, ...measures];
+    }
+    public get viewFilters() {
+        const { draggableFieldState } = this;
+        const state = toJS(draggableFieldState);
+        return state.filters;
+    }
+
+
     public addVisualization(defaultName?: string) {
         const name = defaultName || 'Chart ' + (this.visList.length + 1);
         this.visList.push(
@@ -494,19 +507,26 @@ export class VizSpecStore {
     public createBinField(stateKey: keyof DraggableFieldState, index: number) {
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
+            const newVarKey = uuidv4();
             const binField: IViewField = {
-                fid: uuidv4(),
-                dragId: uuidv4(),
+                fid: newVarKey,
+                dragId: newVarKey,
                 name: `bin(${originField.name})`,
                 semanticType: "ordinal",
                 analyticType: "dimension",
+                computed: true,
+                expressoion: {
+                    op: 'bin',
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid
+                        }
+                    ]
+                }
             };
             encodings.dimensions.push(binField);
-            this.commonStore.currentDataset.dataSource = makeBinField(
-                this.commonStore.currentDataset.dataSource,
-                originField.fid,
-                binField.fid
-            );
         });
     }
     public createLogField(stateKey: keyof DraggableFieldState, index: number) {
@@ -516,19 +536,27 @@ export class VizSpecStore {
 
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
+            const newVarKey = uuidv4();
             const logField: IViewField = {
-                fid: uuidv4(),
-                dragId: uuidv4(),
+                fid: newVarKey,
+                dragId: newVarKey,
                 name: `log10(${originField.name})`,
                 semanticType: "quantitative",
                 analyticType: originField.analyticType,
+                aggName: 'sum',
+                computed: true,
+                expressoion: {
+                    op: 'log10',
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid
+                        }
+                    ]
+                }
             };
             encodings[stateKey].push(logField);
-            this.commonStore.currentDataset.dataSource = makeLogField(
-                this.commonStore.currentDataset.dataSource,
-                originField.fid,
-                logField.fid
-            );
         });
     }
     public setFieldAggregator(stateKey: keyof DraggableFieldState, index: number, aggName: string) {

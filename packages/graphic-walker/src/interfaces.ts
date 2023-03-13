@@ -36,6 +36,28 @@ export interface IUncertainMutField {
     analyticType: IAnalyticType | '?';
 }
 
+
+export type IExpParamter = {
+    type: 'field';
+    value: string;
+} | {
+    type: 'value';
+    value: any;
+} | {
+    type: 'expression';
+    value: IExpression;
+} | {
+    type: 'constant';
+    value: any;
+}
+
+
+export interface IExpression {
+    op: 'bin' | 'log2' | 'log10';
+    params: IExpParamter[];
+    as: string;
+}
+
 export interface IField {
     /**
      * fid: key in data record
@@ -52,6 +74,8 @@ export interface IField {
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
     cmp?: (a: any, b: any) => number;
+    computed?: boolean;
+    expressoion?: IExpression;
 }
 
 export interface IViewField extends IField {
