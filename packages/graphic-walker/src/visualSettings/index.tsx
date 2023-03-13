@@ -21,6 +21,7 @@ import {
     ChevronDoubleUpIcon,
     ArrowsUpDownIcon,
     LightBulbIcon,
+    CodeBracketSquareIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -66,7 +67,7 @@ interface IVisualSettings {
 }
 
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference }) => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const { visualConfig, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
@@ -335,6 +336,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     </FormContainer>
                 ),
             },
+            {
+                key: 'export_code',
+                label: t('button.export_code'),
+                icon: CodeBracketSquareIcon,
+                onClick: () => {
+                    commonStore.setShowCodeExportPanel(true);
+                }
+            }
         ] as ToolbarItemProps[];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark]);
 
