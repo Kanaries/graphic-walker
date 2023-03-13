@@ -700,6 +700,13 @@ export class VizSpecStore {
             specList: pureVisList,
         });
     }
+    public exportViewSpecAsRaw() {
+        const pureVisList = dumpsGWPureSpec(this.visList);
+        return JSON.stringify({
+            datasets: toJS(this.commonStore.datasets),
+            specList: pureVisList,
+        });
+    }
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.commonStore.datasets = content.datasets;
