@@ -152,13 +152,6 @@ export class VizSpecStore {
         });
         this.reactions.push(
             reaction(
-                () => commonStore.currentDataset,
-                (dataset) => {
-                    // this.initState();
-                    this.initMetaState(dataset);
-                }
-            ),
-            reaction(
                 () => this.visList[this.visIndex],
                 (frame) => {
                     // @ts-ignore Allow assignment here to trigger watch
@@ -712,7 +705,6 @@ export class VizSpecStore {
         this.commonStore.datasets = content.datasets;
         this.commonStore.dataSources = content.dataSources;
         this.commonStore.dsIndex = Math.max(content.datasets.length - 1, 0);
-        // 补上初始化新版本特性
         this.visList = parseGWPureSpec(forwardVisualConfigs(content.specList));
         this.visIndex = 0;
     }

@@ -176,7 +176,7 @@ export class CommonStore {
     }
     public createPlaceholderDS() {
         this.addDS({
-            name: '新数据源',
+            name: 'new dataset',
             dataSource: [],
             rawFields: []
         })
