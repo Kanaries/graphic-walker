@@ -85,7 +85,8 @@ const CodeExport: React.FC = observer((props) => {
                 />
                 {tabKey === "graphic-walker" && (
                     <div className="text-sm px-6 max-h-56 overflow-auto">
-                        <div dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
+                        <div dangerouslySetInnerHTML={{
+                            __html: `<p>vis_spec = """</p>\n${syntaxHighlight(code)}<p>"""</p><p>pyg.walk(df, spec=vis_spec)</p>` }} />
                     </div>
                 )}
                 <div className="mt-4 flex justify-start">
@@ -94,8 +95,15 @@ const CodeExport: React.FC = observer((props) => {
                         className="mr-2 px-6"
                         text="Copy to Clipboard"
                         onClick={() => {
-                            navigator.clipboard.writeText(JSON.stringify(code));
+                            navigator.clipboard.writeText(`vis_spec = """${JSON.stringify(code)}\n"""\npyg.walk(df, spec=vis_spec)`);
                             commonStore.setShowCodeExportPanel(false);
+                        }}
+                    />
+                    <DefaultButton
+                        text={t("Edit & Preview")}
+                        className="mr-2 px-6"
+                        onClick={() => {
+
                         }}
                     />
                     <DefaultButton
