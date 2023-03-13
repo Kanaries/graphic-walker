@@ -14,6 +14,7 @@ export class CommonStore {
     public showInsightBoard: boolean = false;
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     public showDataConfig: boolean = false;
+    public showCodeExportPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     constructor () {
@@ -60,6 +61,9 @@ export class CommonStore {
     public showEmbededMenu (position: [number, number]) {
         this.vizEmbededMenu.show = true;
         this.vizEmbededMenu.position = position;
+    }
+    public setShowCodeExportPanel (show: boolean) {
+        this.showCodeExportPanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;

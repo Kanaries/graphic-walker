@@ -23,6 +23,7 @@ import { guardDataKeys } from "./utils/dataPrep";
 import SegmentNav from "./segments/segmentNav";
 import DatasetConfig from "./dataSource/datasetConfig";
 import { useCurrentMediaTheme } from "./utils/media";
+import CodeExport from "./components/codeExport";
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -140,6 +141,7 @@ const App = observer<IGWProps>(function App (props) {
                 {segmentKey === ISegmentKey.vis && (
                     <div style={{ marginTop: "0em", borderTop: "none" }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                        <CodeExport />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />

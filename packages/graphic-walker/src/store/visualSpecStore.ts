@@ -702,10 +702,7 @@ export class VizSpecStore {
     }
     public exportViewSpec() {
         const pureVisList = dumpsGWPureSpec(this.visList);
-        return {
-            datasets: toJS(this.commonStore.datasets),
-            specList: pureVisList,
-        };
+        return pureVisList
     }
     public importStoInfo (stoInfo: IStoInfo) {
         this.commonStore.datasets = stoInfo.datasets;
