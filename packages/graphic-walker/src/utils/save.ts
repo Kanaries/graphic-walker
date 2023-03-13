@@ -9,10 +9,9 @@ export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
     return list.map((l) => new VisSpecWithHistory(l));
 }
 
-interface IStoInfo {
+export interface IStoInfo {
     datasets: IDataSet[];
     specList: {
-        /** 由于 gw 内部实现暂时未锁版本，这里获取到的信息可能会与当前实例内容有偏差，需要用初始值合入 */
         [K in keyof IVisSpec]: K extends "config" ? Partial<IVisSpec[K]> : IVisSpec[K];
     }[];
     dataSources: IDataSource[];

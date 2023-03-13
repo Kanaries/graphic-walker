@@ -6,7 +6,7 @@ import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisua
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
-import { dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
+import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 
 function getChannelSizeLimit(channel: string): number {
@@ -707,12 +707,15 @@ export class VizSpecStore {
             specList: pureVisList,
         };
     }
+    public importStoInfo (stoInfo: IStoInfo) {
+        this.commonStore.datasets = stoInfo.datasets;
+        this.commonStore.dataSources = stoInfo.dataSources;
+        this.commonStore.dsIndex = Math.max(stoInfo.datasets.length - 1, 0);
+        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
+        this.visIndex = 0;
+    }
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
-        this.commonStore.datasets = content.datasets;
-        this.commonStore.dataSources = content.dataSources;
-        this.commonStore.dsIndex = Math.max(content.datasets.length - 1, 0);
-        this.visList = parseGWPureSpec(forwardVisualConfigs(content.specList));
-        this.visIndex = 0;
+        this.importStoInfo(content);
     }
 }
