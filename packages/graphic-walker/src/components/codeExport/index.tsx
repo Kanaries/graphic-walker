@@ -38,14 +38,21 @@ const syntaxHighlight = (json: any) => {
     );
 };
 
+enum HLType {
+    id, num, sign
+}
 const CodeExport: React.FC = observer((props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showCodeExportPanel } = commonStore;
     const { t } = useTranslation();
-    const [tabKey, setTabKey] = useState<string>("graphic-walker");
+    const [tabKey, setTabKey] = useState<string>("pygwalker");
     const [code, setCode] = useState<any>("");
 
     const specTabs: ITabOption[] = [
+        {
+            key: "pygwalker",
+            label: "PyGWalker",
+        },
         {
             key: "graphic-walker",
             label: "Graphic-Walker",
@@ -57,9 +64,14 @@ const CodeExport: React.FC = observer((props) => {
         },
     ];
 
+    const hlId = (s: string) => {
+        const cls = 'text-violet-800';
+        return `<span class="${cls}">${s}</span>`
+    }
+
     useEffect(() => {
         if (showCodeExportPanel) {
-            if (tabKey === "graphic-walker") {
+            if (tabKey === "graphic-walker" || tabKey === "pygwalker") {
                 const res = vizStore.exportViewSpec();
                 setCode(res);
             } else {
@@ -85,8 +97,14 @@ const CodeExport: React.FC = observer((props) => {
                 />
                 {tabKey === "graphic-walker" && (
                     <div className="text-sm px-6 max-h-56 overflow-auto">
+                        <div dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
+                    </div>
+                )}
+                {tabKey === "pygwalker" && (
+                    <div className="text-sm px-6 max-h-56 overflow-auto">
                         <div dangerouslySetInnerHTML={{
-                            __html: `<p>vis_spec = """</p>\n${syntaxHighlight(code)}<p>"""</p><p>pyg.walk(df, spec=vis_spec)</p>` }} />
+                            __html: `<p>${hlId("vis_spec")}\
+                             = """</p>\n${syntaxHighlight(code)}<p>"""</p><p>${hlId("pyg")}.${hlId("walk")}(${hlId("df")}, spec=${hlId("vis_spec")})</p>` }} />
                     </div>
                 )}
                 <div className="mt-4 flex justify-start">
@@ -95,7 +113,11 @@ const CodeExport: React.FC = observer((props) => {
                         className="mr-2 px-6"
                         text="Copy to Clipboard"
                         onClick={() => {
-                            navigator.clipboard.writeText(`vis_spec = """${JSON.stringify(code)}\n"""\npyg.walk(df, spec=vis_spec)`);
+                            let output = JSON.stringify(code);
+                            if (tabKey === "pygwalker") {
+                                output = `vis_spec = """\n${output}\n"""\npyg.walk(df, spec=vis_spec)`
+                            }
+                            navigator.clipboard.writeText(output);
                             commonStore.setShowCodeExportPanel(false);
                         }}
                     />
