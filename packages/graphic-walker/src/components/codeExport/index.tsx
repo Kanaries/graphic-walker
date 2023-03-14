@@ -121,13 +121,13 @@ const CodeExport: React.FC = observer((props) => {
                             commonStore.setShowCodeExportPanel(false);
                         }}
                     />
-                    <DefaultButton
+                    {/* <DefaultButton
                         text={t("Edit & Preview")}
                         className="mr-2 px-6"
                         onClick={() => {
 
                         }}
-                    />
+                    /> */}
                     <DefaultButton
                         text={t("actions.cancel")}
                         className="mr-2 px-6"
