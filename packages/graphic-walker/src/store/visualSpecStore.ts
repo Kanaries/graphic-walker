@@ -92,6 +92,17 @@ const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["spec
     }));
 };
 
+function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
+    return Object.values(state).every((value) => {
+        if (Array.isArray(value)) {
+            if (value.length !== 0) console.log(value);
+            return value.length === 0;
+        }
+        return true;
+        // value.length === 0
+    });
+}
+
 export class VizSpecStore {
     // public fields: IViewField[] = [];
     private commonStore: CommonStore;
@@ -160,6 +171,15 @@ export class VizSpecStore {
                     this.visualConfig = frame.config;
                     this.canUndo = frame.canUndo;
                     this.canRedo = frame.canRedo;
+                }
+            ),
+            reaction(
+                () => commonStore.currentDataset,
+                (dataset) => {
+                    // this.initState();
+                    if (isDraggableStateEmpty(this.draggableFieldState) && dataset.dataSource.length > 0 && dataset.rawFields.length > 0) {
+                        this.initMetaState(dataset);
+                    }
                 }
             )
         );
@@ -705,11 +725,11 @@ export class VizSpecStore {
         return pureVisList
     }
     public importStoInfo (stoInfo: IStoInfo) {
+        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
+        this.visIndex = 0;
         this.commonStore.datasets = stoInfo.datasets;
         this.commonStore.dataSources = stoInfo.dataSources;
         this.commonStore.dsIndex = Math.max(stoInfo.datasets.length - 1, 0);
-        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
-        this.visIndex = 0;
     }
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
