@@ -42,13 +42,13 @@ const CodeExport: React.FC = observer((props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showCodeExportPanel } = commonStore;
     const { t } = useTranslation();
-    const [tabKey, setTabKey] = useState<string>("vega");
+    const [tabKey, setTabKey] = useState<string>("graphic-walker");
     const [code, setCode] = useState<any>("");
 
     const specTabs: ITabOption[] = [
         {
-            key: "pygwalker",
-            label: "PyGWalker",
+            key: "graphic-walker",
+            label: "Graphic-Walker",
         },
         {
             key: "vega-lite",
@@ -59,7 +59,7 @@ const CodeExport: React.FC = observer((props) => {
 
     useEffect(() => {
         if (showCodeExportPanel) {
-            if (tabKey === "pygwalker") {
+            if (tabKey === "graphic-walker") {
                 const res = vizStore.exportViewSpec();
                 setCode(res);
             } else {
@@ -83,7 +83,7 @@ const CodeExport: React.FC = observer((props) => {
                         setTabKey(k as string);
                     }}
                 />
-                {tabKey === "pygwalker" && (
+                {tabKey === "graphic-walker" && (
                     <div className="text-sm px-6 max-h-56 overflow-auto">
                         <div dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
                     </div>
