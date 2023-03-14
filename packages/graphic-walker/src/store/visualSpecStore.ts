@@ -93,14 +93,7 @@ const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["spec
 };
 
 function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
-    return Object.values(state).every((value) => {
-        if (Array.isArray(value)) {
-            if (value.length !== 0) console.log(value);
-            return value.length === 0;
-        }
-        return true;
-        // value.length === 0
-    });
+    return Object.values(state).every((value) => value.length === 0);
 }
 
 export class VizSpecStore {
