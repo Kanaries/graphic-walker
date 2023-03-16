@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Modal from "../modal";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
@@ -38,15 +38,21 @@ const syntaxHighlight = (json: any) => {
     );
 };
 
-enum HLType {
-    id, num, sign
-}
 const CodeExport: React.FC = observer((props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showCodeExportPanel } = commonStore;
     const { t } = useTranslation();
     const [tabKey, setTabKey] = useState<string>("pygwalker");
     const [code, setCode] = useState<any>("");
+    const [manualCopy, setManualCopy] = useState<boolean>(false);
+
+    const copyOutput = useMemo(() => {
+        let output = JSON.stringify(code);
+        if (tabKey === "pygwalker") {
+            output = `vis_spec = """${output}"""\npyg.walk(df, spec=vis_spec)`;
+        }
+        return output;
+    }, [code, tabKey]);
 
     const specTabs: ITabOption[] = [
         {
@@ -79,6 +85,7 @@ const CodeExport: React.FC = observer((props) => {
             }
         }
     }, [tabKey, showCodeExportPanel]);
+
     return (
         <Modal
             show={showCodeExportPanel}
@@ -112,13 +119,20 @@ const CodeExport: React.FC = observer((props) => {
                         // text={t("actions.confirm")}
                         className="mr-2 px-6"
                         text="Copy to Clipboard"
-                        onClick={() => {
-                            let output = JSON.stringify(code);
-                            if (tabKey === "pygwalker") {
-                                output = `vis_spec = """\n${output}\n"""\npyg.walk(df, spec=vis_spec)`
+                        onClick={async () => {
+                            if (!manualCopy) {
+                                const queryOpts = { name: 'clipboard-read' as PermissionName, allowWithoutGesture: false };
+                                const permissionStatus = await navigator.permissions.query(queryOpts);
+                                try {
+                                    if (permissionStatus.state !== 'denied') {
+                                        navigator.clipboard.writeText(copyOutput);
+                                        commonStore.setShowCodeExportPanel(false);
+                                    }
+                                    else { setManualCopy(true); }
+                                } catch(e) { setManualCopy(true); }
+                            } else {
+                                setManualCopy(false);
                             }
-                            navigator.clipboard.writeText(output);
-                            commonStore.setShowCodeExportPanel(false);
                         }}
                     />
                     {/* <DefaultButton
@@ -136,6 +150,10 @@ const CodeExport: React.FC = observer((props) => {
                         }}
                     />
                 </div>
+                { manualCopy && <div className="text-sm px-6 max-h-56">
+                    <textarea style={{fontFamily: "monospace"}} readOnly={true} rows={3} cols={90} wrap="off" defaultValue={copyOutput} />
+                    <p style={{textAlign: 'right'}}>The Clipboard API has been blocked in this environment. Please copy manully.</p>
+                </div>}
             </div>
         </Modal>
     );

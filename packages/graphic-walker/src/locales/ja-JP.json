@@ -138,7 +138,8 @@
             "descending": "降順に並べ替える",
             "transpose": "転置",
             "export_chart": "エクスポート",
-            "export_chart_as": "{{type}}としてエクスポート"
+            "export_chart_as": "{{type}}としてエクスポート",
+            "export_code": "輸出コード"
           },
           "size": "サイズ変更",
           "size_setting": {
