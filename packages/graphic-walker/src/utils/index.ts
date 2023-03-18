@@ -277,3 +277,7 @@ export function makeNumbersBeautiful (nums: number[]): number[] {
         return Math.round(num / step) * step;
     })
 }
+
+export function classNames(...classes: string[]) {
+    return classes.filter(Boolean).join(' ')
+}

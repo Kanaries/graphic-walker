@@ -153,7 +153,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-600 bg-white dark:bg-zinc-900">
-                    {data.slice(from, to).map((row, index) => (
+                    {data.slice(from, to + 1).map((row, index) => (
                         <tr className={"divide-x divide-gray-200 dark:divide-gray-600 " + (index % 2 ? "bg-gray-50 dark:bg-gray-800" : "")} key={index}>
                             {metas.map((field) => (
                                 <td
@@ -163,7 +163,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         " whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6"
                                     }
                                 >
-                                    {row[field.fid]}
+                                    {`${row[field.fid]}`}
                                 </td>
                             ))}
                         </tr>
