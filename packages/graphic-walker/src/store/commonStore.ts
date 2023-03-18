@@ -116,11 +116,13 @@ export class CommonStore {
 
     public updateTempDS (rawData: IRow[]) {
         const result = transData(rawData);
-        // TODO: need fix web-data-loader issue #2
-        this.tmpDataSource = result.dataSource.slice(0, -1);
+        this.tmpDataSource = result.dataSource;
         this.tmpDSRawFields = result.fields;
     }
-
+    /**
+     * update temp dataset (standard) with dataset info
+     * @param dataset 
+     */
     public updateTempSTDDS (dataset: IDataSetInfo) {
         this.tmpDataSource = dataset.dataSource;
         this.tmpDSRawFields = dataset.rawFields;

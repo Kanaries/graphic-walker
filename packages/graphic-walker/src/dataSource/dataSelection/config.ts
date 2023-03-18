@@ -26,3 +26,14 @@ export const charsetOptions: IDropdownSelectOption[] = [
         value: 'GB18030',
     },
 ]
+
+export const SUPPORTED_FILE_TYPES: IDropdownSelectOption[] = [
+    {
+        label: 'CSV',
+        value: 'csv',
+    },
+    {
+        label: 'JSON',
+        value: 'json',
+    }
+]
