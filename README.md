@@ -181,6 +181,8 @@ const YourApp = props => {
 
 Graphic Walker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources should follow [this format](https://www.i18next.com/misc/json-format). You can simply fork and edit `/locales/en-US.json` to start your translation.
 
+It is recommended to use [chatGPT-i18n](https://github.com/ObservedObserver/chatgpt-i18n) to translate to your target languages.
+
 ## API
 
 Graphic Walker Props interface
