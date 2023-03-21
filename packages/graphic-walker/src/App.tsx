@@ -4,10 +4,9 @@ import { observer } from "mobx-react-lite";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { toJS } from "mobx";
 import { useTranslation } from "react-i18next";
-import { IMutField, IRow, ISegmentKey } from "./interfaces";
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey } from "./interfaces";
 import type { IReactVegaHandler } from "./vis/react-vega";
 import VisualSettings from "./visualSettings";
-import { Container, NestContainer } from "./components/container";
 import ClickMenu from "./components/clickMenu";
 import InsightBoard from "./insightBoard/index";
 import PosFields from "./fields/posFields";
@@ -15,7 +14,7 @@ import AestheticFields from "./fields/aestheticFields";
 import DatasetFields from "./fields/datasetFields/index";
 import ReactiveRenderer from "./renderer/index";
 import DataSourceSegment from "./dataSource/index";
-import { useGlobalStore } from "./store";
+import { IGlobalStore, useGlobalStore } from "./store";
 import { preAnalysis, destroyWorker } from "./services";
 import VisNav from "./segments/visNav";
 import { mergeLocaleRes, setLocaleLanguage } from "./locales/i18n";
@@ -23,6 +22,8 @@ import FilterField from "./fields/filterField";
 import { guardDataKeys } from "./utils/dataPrep";
 import SegmentNav from "./segments/segmentNav";
 import DatasetConfig from "./dataSource/datasetConfig";
+import { useCurrentMediaTheme } from "./utils/media";
+import CodeExport from "./components/codeExport";
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -39,7 +40,9 @@ export interface IGWProps {
      */
     fieldKeyGuard?: boolean;
     /** @default "vega" */
-    themeKey?: 'vega' | 'g2';
+    themeKey?: IThemeKey;
+    dark?: IDarkMode;
+    storeRef?: React.MutableRefObject<IGlobalStore | null>;
 }
 
 const App = observer<IGWProps>(function App (props) {
@@ -53,6 +56,7 @@ const App = observer<IGWProps>(function App (props) {
         overflowMode = 'auto',
         fieldKeyGuard = true,
         themeKey = 'vega',
+        dark = 'media'
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
@@ -120,25 +124,28 @@ const App = observer<IGWProps>(function App (props) {
         };
     }, [currentDataset, spec]);
 
+    const darkMode = useCurrentMediaTheme(dark);
+
     const rendererRef = useRef<IReactVegaHandler>(null);
 
     return (
-        <div className="App dark:bg-zinc-900 dark:text-white m-0 p-0 w-full h-full overflow-hidden">
+        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0 w-full h-full overflow-hidden`}>
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
-            <div className={`w-full h-full ${overflowMode === 'hidden' ? 'overflow-hidden' : 'overflow-auto'} @container`}>
+            <div className={`w-full h-full bg-white dark:bg-zinc-900 dark:text-white ${overflowMode === 'hidden' ? 'overflow-hidden flex flex-col' : 'overflow-auto'} @container`}>
                 {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
-                <div className="px-2 mx-2">
+                <div className="grow-0 shrink-0 px-2 mx-2">
                     <SegmentNav />
                     {
                         segmentKey === ISegmentKey.vis && <VisNav />
                     }
                 </div>
                 {segmentKey === ISegmentKey.vis && (
-                    <Container style={{ marginTop: "0em", borderTop: "none" }} className="@container/main">
-                        <VisualSettings rendererHandler={rendererRef} />
-                        <div className="@lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6">
+                    <div className={`flex-1 m-4 mt-0 border-none py-4 border border-gray-200 dark:border-gray-700 @container/main overflow-hidden ${overflowMode === 'hidden' ? 'flex flex-col' : ''}`}>
+                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                        <CodeExport />
+                        <div className="flex-1 @lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6 overflow-hidden">
                             <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3 -mb-0.5 @lg/main:mb-0">
                                 <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3 flex flex-col">
                                     <DatasetFields />
@@ -155,7 +162,8 @@ const App = observer<IGWProps>(function App (props) {
                             </div>
                             <div className="@lg/main:col-span-7 @xl/main:col-span-4">
                                 <PosFields />
-                                <NestContainer
+                                <div
+                                    className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
                                     style={{ minHeight: "600px", overflow: "auto" }}
                                     onMouseLeave={() => {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
@@ -164,12 +172,12 @@ const App = observer<IGWProps>(function App (props) {
                                         vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     }}
                                 >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} />}
+                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />}
                                     <InsightBoard />
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
-                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100"
+                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                                                 onClick={() => {
                                                     commonStore.closeEmbededMenu();
                                                     commonStore.setShowInsightBoard(true);
@@ -182,15 +190,15 @@ const App = observer<IGWProps>(function App (props) {
                                             </div>
                                         </ClickMenu>
                                     )}
-                                </NestContainer>
+                                </div>
                             </div>
                         </div>
-                    </Container>
+                    </div>
                 )}
                 {segmentKey === ISegmentKey.data && (
-                    <Container style={{ marginTop: "0em", borderTop: "none" }}>
+                    <div className="flex-1 m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: "0em", borderTop: "none" }}>
                         <DatasetConfig />
-                    </Container>
+                    </div>
                 )}
             </div>
         </div>

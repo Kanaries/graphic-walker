@@ -3,38 +3,13 @@ import styled from "styled-components";
 import { useTranslation } from 'react-i18next';
 import { COLORS } from "../config";
 
-export const AestheticSegment = styled.div`
-  border: 1px solid #e5e7eb;
-  // dark mode
-  @media (prefers-color-scheme: dark) {
-    border: 1px solid #2d3748;
-  }
-  font-size: 12px;
-  margin: 0.2em;
-
-  .aes-header{
-    border-bottom: 1px solid #e5e7eb;
-    @media (prefers-color-scheme: dark) {
-      border-bottom: 1px solid #2d3748;
-    }
-    padding: 0.6em;
-    h4 {
-      font-weight: 400;
-    }
-  }
-  .aes-container{
-    /* overflow-x: auto; */
-  }
-
-`
-
 export const FieldListContainer: React.FC<{ name: string }> = (props) => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <FieldListSegment>
-      <div className="fl-header">
-        <h4>{t(props.name)}</h4>
+    <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-700">
+      <div className="fl-header border-r border-gray-200 dark:border-gray-800 cursor-default select-none">
+        <h4 className="font-normal">{t(props.name)}</h4>
       </div>
       <div className="fl-container">{props.children}</div>
     </FieldListSegment>
@@ -45,12 +20,12 @@ export const AestheticFieldContainer: React.FC<{ name: string }> = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <AestheticSegment>
-      <div className="aes-header cursor-default select-none">
-        <h4>{t(props.name)}</h4>
+    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700">
+      <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
+        <h4 className="font-normal">{t(props.name)}</h4>
       </div>
-      <div className="aes-container">{props.children}</div>
-    </AestheticSegment>
+      <div>{props.children}</div>
+    </div>
   );
 }
 
@@ -58,12 +33,12 @@ export const FilterFieldContainer: React.FC = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <FilterFieldSegment className="flex-1">
-      <div className="flt-header cursor-default select-none">
-        <h4>{t('filters')}</h4>
+    <div className="h-full m-0.5 text-xs border border-gray-200 dark:border-gray-700">
+      <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
+        <h4 className="font-normal">{t('filters')}</h4>
       </div>
-      <div className="flt-container">{props.children}</div>
-    </FilterFieldSegment>
+      <div>{props.children}</div>
+    </div>
   );
 }
 
@@ -91,19 +66,11 @@ export const FilterFieldsContainer = styled.div({
 
 export const FieldListSegment = styled.div`
   display: flex;
-  border: 1px solid #e5e7eb;
-  @media (prefers-color-scheme: dark) {
-    border: 1px solid #2d3748;
-  }
   margin: 0.2em;
   font-size: 12px;
   div.fl-header {
     /* flex-basis: 100px; */
     width: 100px;
-    border-right: 1px solid #e5e7eb;
-    @media (prefers-color-scheme: dark) {
-      border-right: 1px solid #2d3748;
-    }
     flex-shrink: 0;
     h4 {
       margin: 0.6em;
@@ -112,10 +79,6 @@ export const FieldListSegment = styled.div`
   }
   div.fl-container {
     flex-grow: 10;
-    /* display: flex;
-    flex-wrap: wrap; */
-    /* overflow-x: auto;
-    overflow-y: hidden; */
   }
 `;
 
@@ -137,11 +100,11 @@ export const FilterFieldSegment = styled.div`
     > h4 {
       font-weight: 400;
     };
-  },
+  }
 
   .flt-container {
 
-  },
+  }
 `
 
 export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`

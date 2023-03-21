@@ -53,7 +53,7 @@ function inferAnalyticTypeFromSemanticType(semanticType: ISemanticType): IAnalyt
 export function inferSemanticType(data: IRow[], fid: string): ISemanticType {
     let st = UnivariateSummary.getFieldType(data, fid);
     if (st === 'nominal') {
-        if (isDateTimeArray(data.map((row) => row[fid]))) st = 'temporal';
+        if (isDateTimeArray(data.map((row) => `${row[fid]}`))) st = 'temporal';
     } else if (st === 'ordinal') {
         const valueSet: Set<number> = new Set();
         let _max = -Infinity;

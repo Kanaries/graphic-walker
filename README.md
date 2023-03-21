@@ -1,5 +1,8 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
+![graphic-walker-banner](https://user-images.githubusercontent.com/22167673/222895294-47ddd664-106e-45ff-a613-e7919522cb79.png)
+
+
 # graphic-walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
@@ -11,8 +14,6 @@
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
 Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
-
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-dark-scatter.png)
 
 ### Why is it different?
 
@@ -133,7 +134,7 @@ npm run dev
 
 ## I18n Support
 
-Graphic Walker now support _English_ (as `"en"` or `"en-US"`) and _Chinese_ (as `"zh"` or `"zh-CN"`) with built-in locale resources. You can simply provide a valid string value (enumerated above) as `props.i18nLang` to set a language or synchronize your global i18n language with the component like the following example:
+Graphic Walker now support _English_ (as `"en"` or `"en-US"`) , _Japanese_ (as `"ja"` or `"ja-JP"`) ,  _Chinese_ (as `"zh"` or `"zh-CN"`) with built-in locale resources. You can simply provide a valid string value (enumerated above) as `props.i18nLang` to set a language or synchronize your global i18n language with the component like the following example:
 
 ```typescript
 const YourApp = props => {
@@ -179,6 +180,8 @@ const YourApp = props => {
 ```
 
 Graphic Walker uses `react-i18next` to support i18n, which is based on `i18next`, so your translation resources should follow [this format](https://www.i18next.com/misc/json-format). You can simply fork and edit `/locales/en-US.json` to start your translation.
+
+It is recommended to use [chatGPT-i18n](https://github.com/ObservedObserver/chatgpt-i18n) to translate to your target languages.
 
 ## API
 

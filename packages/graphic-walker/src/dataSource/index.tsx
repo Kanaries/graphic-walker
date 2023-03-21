@@ -2,7 +2,6 @@ import React, { useRef } from "react";
 import { observer } from "mobx-react-lite";
 import { CheckCircleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import { Container } from "../components/container";
 import Modal from "../components/modal";
 import { useGlobalStore } from "../store";
 import { download } from "../utils/save";
@@ -25,7 +24,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
     const { currentDataset, datasets, showDSPanel } = commonStore;
 
     return (
-        <Container className="flex items-center">
+        <div className="flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
             <GwFile fileRef={gwFileRef} />
             {!preWorkDone && (
                 <div className="grow-0 shrink-0 animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>
@@ -85,7 +84,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
             )} */}
             {preWorkDone && <CheckCircleIcon className="grow-0 shrink-0 text-green-500 w-5 inline-block ml-2" />}
             {!preWorkDone && <ArrowPathIcon className="grow-0 shrink-0 text-yellow-500 w-5 inline-block ml-2" />}
-        </Container>
+        </div>
     );
 };
 

@@ -1,5 +1,5 @@
 import { ChevronDownIcon, Cog6ToothIcon, Cog8ToothIcon } from "@heroicons/react/24/solid";
-import React, { HTMLAttributes, memo, ReactNode, useEffect, useMemo, useRef } from "react";
+import React, { ForwardRefExoticComponent, HTMLAttributes, memo, ReactNode, SVGProps, useEffect, useMemo, useRef } from "react";
 import styled from "styled-components";
 import ToolbarButton, { ToolbarButtonItem } from "./toolbar-button";
 import ToolbarToggleButton, { ToolbarToggleButtonItem } from "./toolbar-toggle-button";
@@ -8,6 +8,7 @@ import { ToolbarContainer, ToolbarItemContainerElement, ToolbarSplitter, useHand
 import Toolbar, { ToolbarProps } from ".";
 import Tooltip from "../tooltip";
 import Callout from "../callout";
+import { useCurrentMediaTheme } from "../../utils/media";
 
 
 const ToolbarSplit = styled.div<{ open: boolean }>`
@@ -34,18 +35,21 @@ const ToolbarSplit = styled.div<{ open: boolean }>`
 const FormContainer = styled(ToolbarContainer)`
     width: max-content;
     height: max-content;
-    background-color: #fff;
-    @media (prefers-color-scheme: dark) {
-        background-color: #000;
-    }
+    background-color: ${({ dark }) => dark ? '#000' : '#fff'};
 `;
 
 export interface IToolbarItem {
     key: string;
-    icon: (props: React.ComponentProps<'svg'> & {
-        title?: string;
-        titleId?: string;
-    }) => JSX.Element;
+    icon: (
+        | ((props: React.ComponentProps<'svg'> & {
+            title?: string;
+            titleId?: string;
+        }) => JSX.Element)
+        | ForwardRefExoticComponent<SVGProps<SVGSVGElement> & {
+            title?: string | undefined;
+            titleId?: string | undefined;
+        }>
+    );
     label: string;
     /** @default false */
     disabled?: boolean;
@@ -65,6 +69,7 @@ export type ToolbarItemProps = (
 
 export interface IToolbarProps<P extends Exclude<ToolbarItemProps, typeof ToolbarItemSplitter> = Exclude<ToolbarItemProps, typeof ToolbarItemSplitter>> {
     item: P;
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
@@ -77,6 +82,7 @@ let idFlag = 0;
 
 export const ToolbarItemContainer = memo<{
     invisible: boolean;
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     props: IToolbarProps;
     handlers: ReturnType<typeof useHandlers> | null;
     children: unknown;
@@ -88,6 +94,7 @@ export const ToolbarItemContainer = memo<{
             styles, overflowMode = 'fold', openedKey, setOpenedKey, renderSlot,
         },
         handlers,
+        darkModePreference,
         children,
         ...props
     }
@@ -134,15 +141,18 @@ export const ToolbarItemContainer = memo<{
 
     useEffect(() => {
         if (opened && menu) {
-            renderSlot(<Toolbar {...menu} />);
+            renderSlot(<Toolbar {...menu} darkModePreference={darkModePreference} />);
             return () => renderSlot(null);
         }
     }, [opened, menu, renderSlot]);
 
+    const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
+
     return (
         <>
-            <Tooltip content={label}>
+            <Tooltip content={label} darkModePreference={darkModePreference}>
                 <ToolbarItemContainerElement
+                    dark={dark}
                     role="button" tabIndex={disabled ? undefined : 0} aria-label={label} aria-disabled={disabled ?? false}
                     split={Boolean(form || menu)}
                     style={styles?.item}
@@ -195,7 +205,7 @@ export const ToolbarItemContainer = memo<{
             </Tooltip>
             {opened && !invisible && form && (
                 <Callout target={`#${id}`}>
-                    <FormContainer overflowMode={overflowMode} onMouseDown={e => e.stopPropagation()}>
+                    <FormContainer overflowMode={overflowMode} dark={dark} onMouseDown={e => e.stopPropagation()}>
                         {form}
                     </FormContainer>
                 </Callout>
@@ -206,21 +216,22 @@ export const ToolbarItemContainer = memo<{
 
 const ToolbarItem = memo<{
     item: ToolbarItemProps;
+    darkModePreference: NonNullable<ToolbarProps['darkModePreference']>;
     styles?: ToolbarProps['styles'];
     openedKey: string | null;
     setOpenedKey: (key: string | null) => void;
     renderSlot: (node: ReactNode) => void;
     disabled: boolean;
-}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot, disabled }) {
+}>(function ToolbarItem ({ item, styles, openedKey, setOpenedKey, renderSlot, disabled, darkModePreference }) {
     if (item === ToolbarItemSplitter) {
         return <ToolbarSplitter />;
     }
     if ('checked' in item) {
-        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
+        return <ToolbarToggleButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} darkModePreference={darkModePreference} />;
     } else if ('options' in item) {
-        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
+        return <ToolbarSelectButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} darkModePreference={darkModePreference} />;
     }
-    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} />;
+    return <ToolbarButton item={item} styles={styles} openedKey={openedKey} setOpenedKey={setOpenedKey} renderSlot={renderSlot} disabled={disabled} darkModePreference={darkModePreference} />;
 });
 
 

@@ -4,6 +4,7 @@ import produce from "immer";
 import { IToolbarItem, IToolbarProps, ToolbarItemContainer } from "./toolbar-item";
 import { ToolbarContainer, useHandlers, ToolbarItemContainerElement } from "./components";
 import Callout from "../callout";
+import { useCurrentMediaTheme } from "../../utils/media";
 
 
 const OptionGroup = styled(ToolbarContainer)`
@@ -21,16 +22,7 @@ const OptionGroup = styled(ToolbarContainer)`
         --dark-mode-color: #aaa;
         --dark-mode-color-hover: #ccc;
         --dark-mode-blue: #282958;
-    background-color: var(--background-color);
-    // dark mode
-    @media (prefers-color-scheme: dark) {
-        /* --dark-mode-background-color: #1f1f1f;
-        --dark-mode-background-color-hover: #2f2f2f;
-        --dark-mode-color: #aaa;
-        --dark-mode-color-hover: #ccc;
-        --dark-mode-blue: #282958; */
-        background-color: var(--dark-mode-background-color);
-    }
+    background-color: ${({ dark }) => dark ? 'var(--dark-mode-background-color)' : 'var(--background-color)'};
 `;
 
 const Option = styled(ToolbarItemContainerElement)`
@@ -85,7 +77,7 @@ export interface ToolbarSelectButtonItem<T extends string = string> extends IToo
 }
 
 const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(function ToolbarSelectButton(props) {
-    const { item, styles, overflowMode = 'fold', openedKey, setOpenedKey, disabled: invisible } = props;
+    const { darkModePreference, item, styles, overflowMode = 'fold', openedKey, setOpenedKey, disabled: invisible } = props;
     const { key, icon: Icon, disabled = false, options, value, onSelect } = item;
     const id = `${key}::button`;
     
@@ -134,10 +126,13 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
         ...item.styles?.icon,
     };
 
+    const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
+
     return (
         <>
             <ToolbarItemContainer
                 invisible={invisible}
+                darkModePreference={darkModePreference}
                 props={produce(props, draft => {
                     if (currentOption) {
                         draft.item.label = `${draft.item.label}: ${currentOption.label}`;
@@ -165,8 +160,8 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                 {invisible || <TriggerFlag aria-hidden id={id} />}
             </ToolbarItemContainer>
             {opened && !invisible && (
-                <Callout target={`#${id}`}>
-                    <OptionGroup role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled} onMouseDown={e => e.stopPropagation()} overflowMode={overflowMode}>
+                <Callout target={`#${id}`} darkModePreference={darkModePreference}>
+                    <OptionGroup dark={dark} role="listbox" aria-activedescendant={`${id}::${value}`} aria-describedby={id} aria-disabled={disabled} onMouseDown={e => e.stopPropagation()} overflowMode={overflowMode}>
                         {options.map((option, idx, arr) => {
                             const selected = option.key === value;
                             const OptionIcon = option.icon;
@@ -175,6 +170,7 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
                             const next = arr[(idx + 1) % arr.length];
                             return (
                                 <Option
+                                    dark={dark}
                                     key={option.key}
                                     id={optionId}
                                     role="option"

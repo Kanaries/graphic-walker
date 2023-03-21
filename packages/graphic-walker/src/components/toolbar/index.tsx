@@ -1,12 +1,14 @@
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import React, { CSSProperties, memo, ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import type { IDarkMode } from "../../interfaces";
+import { useCurrentMediaTheme } from "../../utils/media";
 import { ToolbarContainer, ToolbarSplitter } from "./components";
 import ToolbarButton from "./toolbar-button";
 import ToolbarItem, { ToolbarItemProps, ToolbarItemSplitter } from "./toolbar-item";
 
 
-const Root = styled.div`
+const Root = styled.div<{ darkModePreference: IDarkMode }>`
     width: 100%;
     --background-color: #f7f7f7;
     --color: #777;
@@ -18,6 +20,7 @@ const Root = styled.div`
     --dark-mode-color-hover: #ccc;
     --dark-mode-blue: #282958;
     --dark-mode-blue-dark: #1d1e38;
+    --dark-mode-preference: ${({ darkModePreference }) => darkModePreference};
 `;
 
 const ShowMoreButton = styled.div`
@@ -29,6 +32,7 @@ const ShowMoreButton = styled.div`
 `;
 
 export interface ToolbarProps {
+    darkModePreference?: IDarkMode;
     items: ToolbarItemProps[];
     /** @default "fold" */
     overflowMode?: 'scroll' | 'fold';
@@ -43,9 +47,10 @@ export interface ToolbarProps {
 
 const OverflowMoreKey = '__overflow_more__';
 
-const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fold', styles }) {
+const Toolbar = memo<ToolbarProps>(function Toolbar ({ darkModePreference = 'media', items, overflowMode = 'fold', styles }) {
     const [openedKey, setOpenedKey] = useState<string | null>(null);
     const [slot, setSlot] = useState<ReactNode>(null);
+    const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [itemsFoldedStartIdx, setItemsFoldedStartIdx] = useState(-1);
@@ -82,8 +87,8 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fo
     }, [items, overflowMode]);
 
     return (
-        <Root style={styles?.root}>
-            <ToolbarContainer overflowMode={overflowMode} style={styles?.container}>
+        <Root darkModePreference={darkModePreference} style={styles?.root}>
+            <ToolbarContainer dark={dark} overflowMode={overflowMode} style={styles?.container}>
                 <div className={`items flex-1 h-full flex ${overflowMode === 'fold' ? 'flex-wrap' : 'overflow-hidden'}`} ref={containerRef}>
                     {items.map((item, i) => {
                         if (item === ToolbarItemSplitter) {
@@ -98,6 +103,7 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fo
                                 setOpenedKey={setOpenedKey}
                                 renderSlot={node => setSlot(node)}
                                 disabled={itemsFoldedStartIdx !== -1 && i >= itemsFoldedStartIdx}
+                                darkModePreference={darkModePreference}
                             />
                         );
                     })}
@@ -111,8 +117,8 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fo
                                     key: OverflowMoreKey,
                                     label: 'More',
                                     form: (
-                                        <Root style={styles?.root} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
-                                            <ToolbarContainer overflowMode={overflowMode} style={{ ...styles?.container, border: 'none' }}>
+                                        <Root darkModePreference={darkModePreference} style={styles?.root} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                                            <ToolbarContainer dark={dark} overflowMode={overflowMode} style={{ ...styles?.container, border: 'none' }}>
                                                 {items.slice(itemsFoldedStartIdx).map(item => {
                                                     if (item === ToolbarItemSplitter) {
                                                         return null;
@@ -126,6 +132,7 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fo
                                                             setOpenedKey={setOpenedKey}
                                                             renderSlot={node => setSlot(node)}
                                                             disabled={false}
+                                                            darkModePreference={darkModePreference}
                                                         />
                                                     );
                                                 })}
@@ -137,6 +144,7 @@ const Toolbar = memo<ToolbarProps>(function Toolbar ({ items, overflowMode = 'fo
                                 setOpenedKey={key => setShowMore(Boolean(key))}
                                 renderSlot={() => {}}
                                 disabled={false}
+                                darkModePreference={darkModePreference}
                             />
                         )}
                     </ShowMoreButton>

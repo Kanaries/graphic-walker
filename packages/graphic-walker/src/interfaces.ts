@@ -1,6 +1,6 @@
 import { StatFuncName } from "visual-insights/build/esm/statistics";
 import { AggFC } from 'cube-core/built/types';
-import { IAnalyticType, IMutField as VIMutField, ISemanticType } from 'visual-insights';
+import { IAnalyticType, ISemanticType } from 'visual-insights';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -36,6 +36,28 @@ export interface IUncertainMutField {
     analyticType: IAnalyticType | '?';
 }
 
+
+export type IExpParamter = {
+    type: 'field';
+    value: string;
+} | {
+    type: 'value';
+    value: any;
+} | {
+    type: 'expression';
+    value: IExpression;
+} | {
+    type: 'constant';
+    value: any;
+}
+
+
+export interface IExpression {
+    op: 'bin' | 'log2' | 'log10';
+    params: IExpParamter[];
+    as: string;
+}
+
 export interface IField {
     /**
      * fid: key in data record
@@ -52,6 +74,8 @@ export interface IField {
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
     cmp?: (a: any, b: any) => number;
+    computed?: boolean;
+    expressoion?: IExpression;
 }
 
 export interface IViewField extends IField {
@@ -176,7 +200,7 @@ export interface IVisualConfig {
 
 export interface IVisSpec {
     readonly visId: string;
-    readonly name?: [string, Record<string, any>?];
+    readonly name?: string;
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }
@@ -185,3 +209,6 @@ export enum ISegmentKey {
     vis = 'vis',
     data = 'data'
 }
+
+export type IThemeKey = 'vega' | 'g2';
+export type IDarkMode = 'media' | 'light' | 'dark';

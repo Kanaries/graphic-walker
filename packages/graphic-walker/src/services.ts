@@ -10,6 +10,7 @@ import { IRow, Filters, SemanticType, IMeasure, IMutField, IFilterField } from '
 // eslint-disable-next-line
 import ExplainerWorker from './workers/explainer.worker?worker&inline';
 import FilterWorker from './workers/filter.worker?worker&inline';
+import TransformDataWorker from './workers/transform.worker?worker&inline';
 import { IExplaination, IMeasureWithStat } from './insights';
 
 interface WorkerState {
@@ -105,7 +106,8 @@ export function destroyWorker() {
 let filterWorker: Worker | null = null;
 let filterWorkerAutoTerminator: NodeJS.Timeout | null = null;
 
-export const applyFilter = async (data: readonly IRow[], filters: readonly IFilterField[]): Promise<IRow[]> => {
+export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]): Promise<IRow[]> => {
+    if (filters.length === 0) return data;
     if (filterWorkerAutoTerminator !== null) {
         clearTimeout(filterWorkerAutoTerminator);
         filterWorkerAutoTerminator = null;
@@ -137,3 +139,17 @@ export const applyFilter = async (data: readonly IRow[], filters: readonly IFilt
         }, 60_000); // Destroy the worker when no request is received for 60 secs
     }
 };
+
+export const transformDataService = async (data: IRow[], columns: IMutField[]): Promise<IRow[]> => {
+    if (columns.length === 0 || data.length === 0) return data;
+    try {
+        const worker = new TransformDataWorker();
+        const res: IRow[] = await workerService(worker, {
+            dataSource: data,
+            columns: toJS(columns),
+        });
+        return res;
+    } catch (error) {
+        throw new Error('Uncaught error in TransformDataWorker', { cause: error });
+    }
+}

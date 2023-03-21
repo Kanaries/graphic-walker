@@ -27,6 +27,14 @@ export class VisSpecWithHistory {
 
     private batchFlag = false;
 
+    public updateLatest(snapshot: Partial<Readonly<VisSpecWithHistory['snapshots'][0]>>) {
+        this.snapshots[this.cursor] = {
+            ...this.snapshots[this.cursor],
+            ...snapshot,
+        }
+    }
+
+
     private commit(snapshot: Partial<Readonly<VisSpecWithHistory['snapshots'][0]>>): void {
         if (this.batchFlag) {
             // batch this commit
@@ -118,6 +126,12 @@ export class VisSpecWithHistory {
         this.commit({
             config,
         });
+    }
+
+    public clone () {
+        const nextVSWH = new VisSpecWithHistory(this.frame);
+        nextVSWH.cursor = this.cursor;
+        return nextVSWH;
     }
 
     public exportGW (): IVisSpec {

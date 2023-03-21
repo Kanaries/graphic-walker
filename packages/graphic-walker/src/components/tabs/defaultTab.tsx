@@ -7,6 +7,7 @@ function classNames(...classes: string[]) {
 export interface ITabOption {
     label: string | ReactElement;
     key: string;
+    disabled?: boolean;
 }
 interface DefaultProps {
     tabs: ITabOption[];
@@ -26,14 +27,15 @@ export default function Default(props: DefaultProps) {
                         role="tab"
                         tabIndex={0}
                         onClick={() => {
-                            onSelected(tab.key, tabIndex)
+                            !tab.disabled && onSelected(tab.key, tabIndex)
                         }}
                         key={tab.key}
                         className={classNames(
                             tab.key === selectedKey
                             ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-300'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:text-gray-400',
-                          'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer'
+                          'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer',
+                            tab.disabled ? 'opacity-50 cursor-not-allowed' : ''
                         )}
                     >{tab.label}</span>
                 ))}

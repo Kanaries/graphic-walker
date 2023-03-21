@@ -21,6 +21,7 @@ import {
     ChevronDoubleUpIcon,
     ArrowsUpDownIcon,
     LightBulbIcon,
+    CodeBracketSquareIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -29,37 +30,13 @@ import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
 import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
 import { useGlobalStore } from '../store';
-import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS } from '../interfaces';
+import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
 import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
+import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
 
-
-export const LiteContainer = styled.div`
-    margin: 0.2em;
-    border: 1px solid #e5e7eb;
-    padding: 1em;
-    background-color: #fff;
-    @media (prefers-color-scheme: dark) {
-        background-color: #000;
-        border: 1px solid #4b5563;
-    }
-    .menu-root {
-        position: relative;
-        & > *:not(.trigger) {
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            border: 1px solid #8884;
-        }
-        &:not(:hover) > *:not(.trigger):not(:hover) {
-            display: none;
-        }
-    }
-`;
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -79,17 +56,18 @@ const FormContainer = styled.div`
     display: flex;
     flex-direction: column;
     color: #444;
-    @media (prefers-color-scheme: dark) {
+    .dark {
         color: #aaa;
     }
 `;
 
 interface IVisualSettings {
+    darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler>;
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
-    const { vizStore } = useGlobalStore();
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference }) => {
+    const { vizStore, commonStore } = useGlobalStore();
     const { visualConfig, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
@@ -106,6 +84,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
     const downloadSVG = useCallback(throttle(() => {
         rendererHandler?.current?.downloadSVG();
     }, 200), [rendererHandler]);
+
+    const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
 
     const items = useMemo<ToolbarItemProps[]>(() => {
         return [
@@ -338,16 +318,16 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                 label: t('button.export_chart'),
                 icon: PhotoIcon,
                 form: (
-                    <FormContainer>
+                    <FormContainer className={dark ? 'dark' : ''}>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'}`}
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => downloadPNG()}
                         >
                             {t('button.export_chart_as', { type: 'png' })}
                         </button>
                         <button
-                            className="text-xs pt-1 pb-1 pl-6 pr-6 bg-white dark:bg-zinc-900  hover:bg-gray-200 text-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'}`}
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => downloadSVG()}
                         >
@@ -356,11 +336,20 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler }) => {
                     </FormContainer>
                 ),
             },
+            {
+                key: 'export_code',
+                label: t('button.export_code'),
+                icon: CodeBracketSquareIcon,
+                onClick: () => {
+                    commonStore.setShowCodeExportPanel(true);
+                }
+            }
         ] as ToolbarItemProps[];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark]);
 
-    return <div style={{ margin: '0.38em 0.18em 0.2em' }}>
+    return <div className="mx-[0.12em] mt-[0.38em] mb-[0.2em]">
         <Toolbar
+            darkModePreference={darkModePreference}
             items={items}
             styles={{
                 root: {

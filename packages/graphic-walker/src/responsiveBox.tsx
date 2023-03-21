@@ -72,6 +72,7 @@ const ResizeHandler = styled.div<{ active: boolean; at: 'right' | 'bottom' }>`
 const MIN_SIZE = 320;
 
 const ResponsiveBox: FC = () => {
+    const [hideDS, setHideDS] = useState(false);
     const [doResize, setDoResize] = useState(true);
     const [allowScroll, setAllowScroll] = useState(true);
     const [width, setWidth] = useState(window.innerWidth - 160);
@@ -139,6 +140,10 @@ const ResponsiveBox: FC = () => {
     return (
         <Container>
             <label>
+                <input type="checkbox" checked={hideDS} onChange={e => setHideDS(e.target.checked)} />
+                Hide Dataset Panel
+            </label>
+            <label>
                 <input type="checkbox" checked={doResize} onChange={e => setDoResize(e.target.checked)} />
                 Toggle Resize
             </label>
@@ -148,7 +153,7 @@ const ResponsiveBox: FC = () => {
             </label>
             <Box ref={targetRef} active={doResize} style={{ width, height }}>
                 <ContentBody active={doResize} style={{ width, height }}>
-                    <GraphicWalker overflowMode={allowScroll ? 'auto' : 'hidden'} themeKey="g2" />
+                    <GraphicWalker hideDataSourceConfig={hideDS} overflowMode={allowScroll ? 'auto' : 'hidden'} themeKey="g2" />
                 </ContentBody>
                 <ResizeHandler
                     active={doResize}

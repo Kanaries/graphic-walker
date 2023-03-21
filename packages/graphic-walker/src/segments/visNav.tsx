@@ -1,5 +1,6 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
 import EditableTabs, { ITabOption } from "../components/tabs/editableTab";
 import { useGlobalStore } from "../store";
 
@@ -11,25 +12,35 @@ const VisNav: React.FC = (props) => {
     const { visIndex, visList } = vizStore;
     const { currentDataset } = commonStore;
 
+    const { t } = useTranslation();
+
     const tabs: ITabOption[] = visList.map((v) => ({
         key: v.visId,
-        label: v.name?.[0] || 'vis',
-        options: v.name?.[1],
+        label: v.name ?? 'vis',
+        editable: true
     }));
 
     tabs.push({
         key: ADD_KEY,
-        label: 'main.tablist.new'
+        label: t('main.tablist.new')
     });
+
+    useEffect(() => {
+        if (visList.length === 1) {
+            // should set the first vis name when the component is mounted
+            vizStore.setVisName(0, t('main.tablist.auto_title', { idx: 1 }));
+        }
+        // no need to add deps here
+    }, [])
 
     const visSelectionHandler = useCallback((tabKey: string, tabIndex: number) => {
         if (tabKey === ADD_KEY) {
-            vizStore.addVisualization();
+            vizStore.addVisualization(t('main.tablist.auto_title', { idx: visList.length + 1 }));
             vizStore.initMetaState(currentDataset)
         } else {
             vizStore.selectVisualization(tabIndex);
         }
-    }, [currentDataset, vizStore])
+    }, [currentDataset, vizStore, visList.length])
 
     const editLabelHandler = useCallback((content: string, tabIndex: number) => {
         vizStore.setVisName(tabIndex, content)

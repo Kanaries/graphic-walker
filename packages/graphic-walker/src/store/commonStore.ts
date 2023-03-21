@@ -14,6 +14,7 @@ export class CommonStore {
     public showInsightBoard: boolean = false;
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     public showDataConfig: boolean = false;
+    public showCodeExportPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     constructor () {
@@ -60,6 +61,9 @@ export class CommonStore {
     public showEmbededMenu (position: [number, number]) {
         this.vizEmbededMenu.show = true;
         this.vizEmbededMenu.position = position;
+    }
+    public setShowCodeExportPanel (show: boolean) {
+        this.showCodeExportPanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;
@@ -112,11 +116,13 @@ export class CommonStore {
 
     public updateTempDS (rawData: IRow[]) {
         const result = transData(rawData);
-        // TODO: need fix web-data-loader issue #2
-        this.tmpDataSource = result.dataSource.slice(0, -1);
+        this.tmpDataSource = result.dataSource;
         this.tmpDSRawFields = result.fields;
     }
-
+    /**
+     * update temp dataset (standard) with dataset info
+     * @param dataset 
+     */
     public updateTempSTDDS (dataset: IDataSetInfo) {
         this.tmpDataSource = dataset.dataSource;
         this.tmpDSRawFields = dataset.rawFields;
@@ -176,7 +182,7 @@ export class CommonStore {
     }
     public createPlaceholderDS() {
         this.addDS({
-            name: '新数据源',
+            name: 'new dataset',
             dataSource: [],
             rawFields: []
         })

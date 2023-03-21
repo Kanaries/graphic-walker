@@ -6,7 +6,7 @@ import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisua
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
-import { dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
+import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 
 function getChannelSizeLimit(channel: string): number {
@@ -92,6 +92,10 @@ const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["spec
     }));
 };
 
+function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
+    return Object.values(state).every((value) => value.length === 0);
+}
+
 export class VizSpecStore {
     // public fields: IViewField[] = [];
     private commonStore: CommonStore;
@@ -139,7 +143,7 @@ export class VizSpecStore {
         this.visualConfig = initVisualConfig();
         this.visList.push(
             new VisSpecWithHistory({
-                name: ["main.tablist.autoTitle", { idx: 1 }],
+                name: 'Chart 1',
                 visId: uuidv4(),
                 config: this.visualConfig,
                 encodings: this.draggableFieldState,
@@ -152,13 +156,6 @@ export class VizSpecStore {
         });
         this.reactions.push(
             reaction(
-                () => commonStore.currentDataset,
-                (dataset) => {
-                    // this.initState();
-                    this.initMetaState(dataset);
-                }
-            ),
-            reaction(
                 () => this.visList[this.visIndex],
                 (frame) => {
                     // @ts-ignore Allow assignment here to trigger watch
@@ -167,6 +164,15 @@ export class VizSpecStore {
                     this.visualConfig = frame.config;
                     this.canUndo = frame.canUndo;
                     this.canRedo = frame.canRedo;
+                }
+            ),
+            reaction(
+                () => commonStore.currentDataset,
+                (dataset) => {
+                    // this.initState();
+                    if (isDraggableStateEmpty(this.draggableFieldState) && dataset.dataSource.length > 0 && dataset.rawFields.length > 0) {
+                        this.initMetaState(dataset);
+                    }
                 }
             )
         );
@@ -275,10 +281,24 @@ export class VizSpecStore {
             });
         return fields;
     }
-    public addVisualization() {
+    public get allFields(): IViewField[] {
+        const { draggableFieldState } = this;
+        const dimensions = toJS(draggableFieldState.dimensions);
+        const measures = toJS(draggableFieldState.measures);
+        return [...dimensions, ...measures];
+    }
+    public get viewFilters() {
+        const { draggableFieldState } = this;
+        const state = toJS(draggableFieldState);
+        return state.filters;
+    }
+
+
+    public addVisualization(defaultName?: string) {
+        const name = defaultName || 'Chart ' + (this.visList.length + 1);
         this.visList.push(
             new VisSpecWithHistory({
-                name: ["main.tablist.autoTitle", { idx: this.visList.length + 1 }],
+                name,
                 visId: uuidv4(),
                 config: initVisualConfig(),
                 encodings: initEncoding(),
@@ -290,9 +310,10 @@ export class VizSpecStore {
         this.visIndex = visIndex;
     }
     public setVisName(visIndex: number, name: string) {
-        this.useMutable(() => {
-            this.visList[visIndex].name = [name];
-        });
+        this.visList[visIndex] = this.visList[visIndex].clone();
+        this.visList[visIndex].updateLatest({
+            name
+        })
     }
     public initState() {
         this.useMutable((tab) => {
@@ -492,19 +513,26 @@ export class VizSpecStore {
     public createBinField(stateKey: keyof DraggableFieldState, index: number) {
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
+            const newVarKey = uuidv4();
             const binField: IViewField = {
-                fid: uuidv4(),
-                dragId: uuidv4(),
+                fid: newVarKey,
+                dragId: newVarKey,
                 name: `bin(${originField.name})`,
                 semanticType: "ordinal",
                 analyticType: "dimension",
+                computed: true,
+                expressoion: {
+                    op: 'bin',
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid
+                        }
+                    ]
+                }
             };
             encodings.dimensions.push(binField);
-            this.commonStore.currentDataset.dataSource = makeBinField(
-                this.commonStore.currentDataset.dataSource,
-                originField.fid,
-                binField.fid
-            );
         });
     }
     public createLogField(stateKey: keyof DraggableFieldState, index: number) {
@@ -514,19 +542,27 @@ export class VizSpecStore {
 
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
+            const newVarKey = uuidv4();
             const logField: IViewField = {
-                fid: uuidv4(),
-                dragId: uuidv4(),
+                fid: newVarKey,
+                dragId: newVarKey,
                 name: `log10(${originField.name})`,
                 semanticType: "quantitative",
                 analyticType: originField.analyticType,
+                aggName: 'sum',
+                computed: true,
+                expressoion: {
+                    op: 'log10',
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid
+                        }
+                    ]
+                }
             };
             encodings[stateKey].push(logField);
-            this.commonStore.currentDataset.dataSource = makeLogField(
-                this.commonStore.currentDataset.dataSource,
-                originField.fid,
-                logField.fid
-            );
         });
     }
     public setFieldAggregator(stateKey: keyof DraggableFieldState, index: number, aggName: string) {
@@ -677,13 +713,19 @@ export class VizSpecStore {
             specList: pureVisList,
         });
     }
+    public exportViewSpec() {
+        const pureVisList = dumpsGWPureSpec(this.visList);
+        return pureVisList
+    }
+    public importStoInfo (stoInfo: IStoInfo) {
+        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
+        this.visIndex = 0;
+        this.commonStore.datasets = stoInfo.datasets;
+        this.commonStore.dataSources = stoInfo.dataSources;
+        this.commonStore.dsIndex = Math.max(stoInfo.datasets.length - 1, 0);
+    }
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
-        this.commonStore.datasets = content.datasets;
-        this.commonStore.dataSources = content.dataSources;
-        this.commonStore.dsIndex = Math.max(content.datasets.length - 1, 0);
-        // 补上初始化新版本特性
-        this.visList = parseGWPureSpec(forwardVisualConfigs(content.specList));
-        this.visIndex = 0;
+        this.importStoInfo(content);
     }
 }

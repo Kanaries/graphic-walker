@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { autoMark } from '../utils/autoMark';
 import { COUNT_FIELD_ID } from '../constants';
 
-import { IViewField, IRow, IStackMode } from '../interfaces';
+import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
@@ -49,7 +49,8 @@ interface ReactVegaProps {
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
   /** @default "vega" */
-  themeKey?: 'vega' | 'g2';
+  themeKey?: IThemeKey;
+  dark?: IDarkMode;
 }
 const NULL_FIELD: IViewField = {
   dragId: '',
@@ -104,6 +105,7 @@ interface SingleViewProps {
   asCrossFilterTrigger: boolean;
   selectEncoding: 'default' | 'none';
   brushEncoding: 'x' | 'y' | 'default' | 'none';
+  hideLegend?: boolean;
 }
 
 function availableChannels (geomType: string): Set<string> {
@@ -129,6 +131,9 @@ function channelEncode(props: EncodeProps) {
         // if `aggregate` is set to null,
         // do not aggregate this field
         encoding[c].aggregate = null;
+      }
+      if (props[c].analyticType === 'measure') {
+        encoding[c].type = 'quantitative'
       }
     }
   })
@@ -199,9 +204,16 @@ function getSingleView(props: SingleViewProps) {
     brushEncoding,
     enableCrossFilter,
     asCrossFilterTrigger,
+    hideLegend = false,
   } = props
   const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
   let markType = geomType;
+  let config: any = {};
+  if (hideLegend) {
+    config.legend = {
+      disable: true
+    };
+  }
   if (geomType === 'auto') {
     const types: ISemanticType[] = [];
     if (x !== NULL_FIELD) types.push(x.semanticType)//types.push(getFieldType(x));
@@ -216,6 +228,7 @@ function getSingleView(props: SingleViewProps) {
   channelStack(encoding, stack);
   if (!enableCrossFilter || brushEncoding === 'none' && selectEncoding === 'none') {
     return {
+      config,
       mark: {
         type: markType,
         opacity: 0.96,
@@ -323,6 +336,7 @@ function getSingleView(props: SingleViewProps) {
 
   if (brushEncoding !== 'none') {
     return {
+      config,
       transform: asCrossFilterTrigger ? [] : [
         { filter: { param: BRUSH_SIGNAL_NAME } }
       ],
@@ -343,6 +357,7 @@ function getSingleView(props: SingleViewProps) {
   }
 
   return {
+    config,
     transform: asCrossFilterTrigger ? [] : [
       { filter: { param: POINT_SIGNAL_NAME } }
     ],
@@ -388,12 +403,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     selectEncoding,
     brushEncoding,
     themeKey = 'vega',
+    dark = 'media'
   } = props;
   // const container = useRef<HTMLDivElement>(null);
   // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
-  const mediaTheme = useCurrentMediaTheme();
+  const mediaTheme = useCurrentMediaTheme(dark);
   const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
@@ -550,6 +566,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       for (let i = 0; i < rowRepeatFields.length; i++) {
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
+          const hasLegend = i === 0 && j === colRepeatFields.length - 1;
           const singleView = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
@@ -570,6 +587,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             brushEncoding,
             enableCrossFilter: crossFilterTriggerIdx !== -1,
             asCrossFilterTrigger: crossFilterTriggerIdx === sourceId,
+            hideLegend: !hasLegend,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };

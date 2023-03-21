@@ -8,7 +8,7 @@ module.exports = {
     },
     extend: {},
   },
-  darkMode: 'media', // or 'media' or 'class
+  darkMode: 'class', // or 'media' or 'class
   variants: {
     extend: {
       'backgroundColor': ['disabled']
@@ -16,5 +16,14 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/container-queries'),
+  ],
+  safelist: [
+    'text-orange-500',
+    'text-green-500',
+    'text-blue-500',
+    'text-red-500',
+    {
+      pattern: /text-([a-z]+)-(500)/,
+    }
   ],
 }

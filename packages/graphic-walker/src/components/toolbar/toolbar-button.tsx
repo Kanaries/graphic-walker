@@ -8,8 +8,8 @@ export interface ToolbarButtonItem extends IToolbarItem {
 }
 
 const ToolbarButton = memo<IToolbarProps<ToolbarButtonItem>>(function ToolbarButton(props) {
-    const { item, styles, disabled: invisible } = props;
-    const { icon: Icon, disabled = false, onClick } = item;
+    const { item, styles, disabled: invisible, darkModePreference } = props;
+    const { icon: Icon, label, disabled = false, onClick } = item;
     const handlers = useHandlers(() => onClick?.(), invisible || disabled);
 
     const mergedIconStyles = {
@@ -23,6 +23,8 @@ const ToolbarButton = memo<IToolbarProps<ToolbarButtonItem>>(function ToolbarBut
             props={props}
             handlers={onClick ? handlers : null}
             aria-hidden={invisible}
+            aria-label={label}
+            darkModePreference={darkModePreference}
         >
             <Icon style={mergedIconStyles} />
         </ToolbarItemContainer>

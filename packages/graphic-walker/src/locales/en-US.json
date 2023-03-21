@@ -105,7 +105,9 @@
             "file": {
                 "open": "Open...",
                 "submit": "Submit",
-                "dataset_name": "Dataset Name"
+                "dataset_name": "Dataset Name",
+                "choose_file": "Choose a Data File",
+                "get_start_desc": "Get started by creating a dataset."
             },
             "public": {
                 "submit": "Submit"
@@ -115,7 +117,8 @@
     "main": {
         "tablist": {
             "new": "+ New",
-            "autoTitle": "Chart {{idx}}"
+            "auto_title": "Chart {{idx}}",
+            "chart_name": "Chart Name"
         },
         "tabpanel": {
             "menubar": {
@@ -165,7 +168,9 @@
         "btn": {
             "select_all": "Select All",
             "unselect_all": "Unselect All",
-            "reverse": "Reverse Selection"
+            "reverse": "Reverse Selection",
+            "confirm": "Confirm",
+            "cancel": "Cancel"
         }
     },
     "explain": {
@@ -185,6 +190,8 @@
     "actions": {
         "prev": "Previous",
         "next": "Next",
-        "drop_field": "Drop Field Here"
+        "drop_field": "Drop Field Here",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
     }
 }

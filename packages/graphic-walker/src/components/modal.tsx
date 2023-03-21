@@ -1,9 +1,6 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
-import { XCircleIcon } from "@heroicons/react/24/outline";
-import { Fragment, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 const Background = styled.div({
     position: "fixed",
@@ -19,16 +16,6 @@ const Container = styled.div`
     width: calc(100% - 2em);
     max-height: 800px;
     overflow: auto;
-    > div.header {
-        background-color: #f0f0f0;
-        display: flex;
-        padding: 12px;
-        font-size: 14px;
-        align-items: center;
-        @media (prefers-color-scheme: dark) {
-            background-color: #000;
-        }
-    }
     > div.container {
         padding: 0.5em 1em 1em 1em;
     }
@@ -36,10 +23,6 @@ const Container = styled.div`
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background-color: #fff;
-    @media (prefers-color-scheme: dark) {
-        background-color: #000;
-    }
     /* box-shadow: 0px 0px 12px 3px rgba(0, 0, 0, 0.19); */
     border-radius: 4px;
     z-index: 999;
@@ -68,8 +51,8 @@ const Modal: React.FC<ModalProps> = (props) => {
                 }
             }}
         >
-            <Container role="dialog" className="shadow-lg rounded-md border border-gray-100 dark:border-gray-800 @sm:w-[80%] max-w-[880px]" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
+            <Container role="dialog" className="bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800 @sm:w-[80%] max-w-[880px]" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                   <button
                     type="button"
                     className="rounded-md bg-white dark:bg-zinc-900 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"

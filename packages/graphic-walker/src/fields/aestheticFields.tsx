@@ -14,7 +14,7 @@ const AestheticFields: React.FC = props => {
                 <Droppable droppableId={dkey.id} direction="horizontal">
                     {(provided, snapshot) => (
                         // <OBFieldContainer dkey={dkey} provided={provided} />
-                        <SingleEncodeEditor dkey={dkey} provided={provided} />
+                        <SingleEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />
                     )}
                 </Droppable>
             </AestheticFieldContainer>)
