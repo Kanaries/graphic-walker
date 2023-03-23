@@ -74,7 +74,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                             d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
                         />
                     </svg>
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">{t("choose_file")}</h3>
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-50">{t("choose_file")}</h3>
                     <p className="mt-1 text-sm text-gray-500">{t("get_start_desc")}</p>
                 </div>
             )}
@@ -93,7 +93,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                                             classNames(
                                                 checked
                                                     ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                                                    : "ring-1 ring-inset ring-gray-300 bg-white text-gray-900 hover:bg-gray-50",
+                                                    : "ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
                                                 "flex cursor-pointer items-center justify-center rounded py-1 px-8 text-sm font-semibold uppercase sm:flex-1"
                                             )
                                         }
