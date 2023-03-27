@@ -8,6 +8,7 @@ import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
+import { createCountField } from "../utils";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -322,6 +323,7 @@ export class VizSpecStore {
         });
     }
     public initMetaState(dataset: DataSet) {
+        const countField = createCountField();
         this.useMutable(({ encodings }) => {
             encodings.fields = dataset.rawFields.map((f) => ({
                 dragId: uuidv4(),
@@ -330,7 +332,8 @@ export class VizSpecStore {
                 aggName: f.analyticType === "measure" ? "sum" : undefined,
                 analyticType: f.analyticType,
                 semanticType: f.semanticType,
-            }));
+            }))//.concat(countField);
+            encodings.fields.push(countField);
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === "dimension")
                 .map((f) => ({
@@ -350,17 +353,10 @@ export class VizSpecStore {
                     semanticType: f.semanticType,
                     aggName: "sum",
                 }));
+            encodings.measures.push(countField);
         });
 
         this.freezeHistory();
-        // this.draggableFieldState.measures.push({
-        //     dragId: uuidv4(),
-        //     fid: COUNT_FIELD_ID,
-        //     name: '记录数',
-        //     analyticType: 'measure',
-        //     semanticType: 'quantitative',
-        //     aggName: 'count'
-        // })
     }
     public clearState() {
         this.useMutable(({ encodings }) => {

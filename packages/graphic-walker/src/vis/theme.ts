@@ -56,6 +56,18 @@ export const AntVTheme = {
             ],
             diverging: ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
             heatmap: ["#000000", "#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+            // ordinal: [
+            //     '#B8E1FF',
+            //     // '#9AC5FF',
+            //     // '#7DAAFF',
+            //     // '#5B8FF9',
+            //     // '#3D76DD',
+            //     // '#085EC0',
+            //     // '#0047A5',
+            //     // '#00318A',
+            //     '#001D70'
+            // ],
+            // ordinal: 'blues',
             ramp: [
                 "#EBCCFF",
                 "#CCB0FF",

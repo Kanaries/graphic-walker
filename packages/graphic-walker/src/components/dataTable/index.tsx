@@ -48,15 +48,15 @@ function getHeaderClassNames(field: IMutField) {
 function getSemanticColors(field: IMutField): string {
     switch (field.semanticType) {
         case "nominal":
-            return "bg-sky-100 text-sky-800";
+            return "border border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-100 dark:border-sky-600";
         case "ordinal":
-            return "bg-indigo-100 text-indigo-800";
+            return "border border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100 dark:border-indigo-600";
         case "quantitative":
-            return "bg-purple-100 text-purple-800";
+            return "border border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100 dark:border-purple-600";
         case "temporal":
-            return "bg-yellow-100 text-yellow-800";
+            return "border border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-600";
         default:
-            return "bg-gray-400";
+            return "border border-transparent bg-gray-400";
     }
 }
 
@@ -97,7 +97,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             />
             <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 dark:bg-gray-900">
-                    <tr className="divide-x divide-gray-200 dark:divide-gray-600">
+                    <tr className="divide-x divide-gray-200 dark:divide-gray-700">
                         {metas.map((field, fIndex) => (
                             <th key={field.fid} className={""}>
                                 <div
@@ -152,9 +152,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-600 bg-white dark:bg-zinc-900">
-                    {data.slice(from, to).map((row, index) => (
-                        <tr className={"divide-x divide-gray-200 dark:divide-gray-600 " + (index % 2 ? "bg-gray-50 dark:bg-gray-800" : "")} key={index}>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
+                    {data.slice(from, to + 1).map((row, index) => (
+                        <tr className={"divide-x divide-gray-200 dark:divide-gray-700 " + (index % 2 ? "bg-gray-50 dark:bg-gray-900" : "")} key={index}>
                             {metas.map((field) => (
                                 <td
                                     key={field.fid + index}
@@ -163,7 +163,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         " whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6"
                                     }
                                 >
-                                    {row[field.fid]}
+                                    {`${row[field.fid]}`}
                                 </td>
                             ))}
                         </tr>

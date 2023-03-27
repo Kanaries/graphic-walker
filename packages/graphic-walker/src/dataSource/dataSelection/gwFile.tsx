@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React from "react";
 import { useGlobalStore } from "../../store";
 import { observer } from "mobx-react-lite";
 
@@ -7,7 +7,7 @@ interface GWFileProps {
     fileRef: React.RefObject<HTMLInputElement>;
 }
 const GWFile: React.FC<GWFileProps> = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
+    const { vizStore } = useGlobalStore();
 
     return (
         <input

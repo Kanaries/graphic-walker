@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { COUNT_FIELD_ID } from "../constants";
-import { IRow, Filters, IMutField } from "../interfaces";
+import { IRow, Filters, IMutField, IViewField } from "../interfaces";
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -259,6 +259,24 @@ export function extendCountField(
     };
 }
 
+export function createCountField(): IViewField {
+    return {
+        // viewId: "",
+        dragId: COUNT_FIELD_ID,
+        fid: COUNT_FIELD_ID,
+        name: i18next.t("constant.row_count"),
+        analyticType: "measure",
+        semanticType: "quantitative",
+        aggName: 'sum',
+        computed: true,
+        expressoion: {
+            op: 'one',
+            params: [],
+            as: COUNT_FIELD_ID,
+        }
+    };
+}
+
 export function getRange (nums: number[]): [number, number] {
     let _min = Infinity;
     let _max = -Infinity;
@@ -276,4 +294,8 @@ export function makeNumbersBeautiful (nums: number[]): number[] {
     return nums.map((num) => {
         return Math.round(num / step) * step;
     })
+}
+
+export function classNames(...classes: string[]) {
+    return classes.filter(Boolean).join(' ')
 }
