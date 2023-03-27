@@ -97,7 +97,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             />
             <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 dark:bg-gray-900">
-                    <tr className="divide-x divide-gray-200 dark:divide-gray-600">
+                    <tr className="divide-x divide-gray-200 dark:divide-gray-700">
                         {metas.map((field, fIndex) => (
                             <th key={field.fid} className={""}>
                                 <div
@@ -152,9 +152,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-600 bg-white dark:bg-zinc-900">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
                     {data.slice(from, to + 1).map((row, index) => (
-                        <tr className={"divide-x divide-gray-200 dark:divide-gray-600 " + (index % 2 ? "bg-gray-50 dark:bg-gray-800" : "")} key={index}>
+                        <tr className={"divide-x divide-gray-200 dark:divide-gray-700 " + (index % 2 ? "bg-gray-50 dark:bg-gray-900" : "")} key={index}>
                             {metas.map((field) => (
                                 <td
                                     key={field.fid + index}

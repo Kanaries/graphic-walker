@@ -28,6 +28,8 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns
         }
     }
     switch (op) {
+        case 'one':
+            return one(exp.as, params, subFrame);
         case 'bin':
             return bin(exp.as, params, subFrame);
         case 'log2':
@@ -73,9 +75,20 @@ function log2(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFr
 }
 
 function log10(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
-    const { value } = params[0];
-    const field = data[value];
-    const newField = field.map((v: number) => Math.log10(v));
+    const { value: fieldKey } = params[0];
+    const fieldValues = data[fieldKey];
+    const newField = fieldValues.map((v: number) => Math.log10(v));
+    return {
+        ...data,
+        [resKey]: newField,
+    }
+}
+
+function one(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+    // const { value: fieldKey } = params[0];
+    if (Object.keys(data).length === 0) return data;
+    const len = data[Object.keys(data)[0]].length;
+    const newField = new Array(len).fill(1);
     return {
         ...data,
         [resKey]: newField,

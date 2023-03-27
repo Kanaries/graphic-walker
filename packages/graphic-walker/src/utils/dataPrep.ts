@@ -42,3 +42,27 @@ export function guardDataKeys (data: IRow[], metas: IMutField[]): {
         safeMetas
     }
 }
+
+const SPLITOR = '__'
+export function flatNestKeys (object: any): string[] {
+    const keys = Object.keys(object);
+    let flatColKeys: string[] = [];
+    for (let key of keys) {
+        if (typeof object[key] === 'object') {
+            const subKeys = flatNestKeys(object[key]);
+            flatColKeys = flatColKeys.concat(subKeys.map(k => `${key}${SPLITOR}${k}`));
+        } else {
+            flatColKeys.push(key)
+        }
+    }
+    return flatColKeys;
+}
+
+export function getValueByKeyPath (object: any, keyPath: string): any {
+    const keys = keyPath.split(SPLITOR);
+    let value = object;
+    for (let key of keys) {
+        value = value[key];
+    }
+    return value;
+}

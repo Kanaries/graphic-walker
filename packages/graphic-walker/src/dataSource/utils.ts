@@ -2,6 +2,7 @@ import { IRow, IMutField } from "../interfaces";
 import { inferMeta } from "../lib/inferMeta";
 import { guardDataKeys } from "../utils/dataPrep";
 
+
 export function transData(dataSource: IRow[]): {
     dataSource: IRow[];
     fields: IMutField[];
@@ -12,7 +13,11 @@ export function transData(dataSource: IRow[]): {
             fields: [],
         };
     }
-    const keys = Object.keys(dataSource[0]);
+    const sampleRecord = dataSource[0];
+    // const rawKeys = Object.keys(sampleRecord);
+    // let flatColKeys: string[] = flatNestKeys(sampleRecord);
+
+    const keys = Object.keys(sampleRecord);
     const metas = inferMeta({
         dataSource,
         fields: keys.map((k) => ({
@@ -21,7 +26,7 @@ export function transData(dataSource: IRow[]): {
             analyticType: "?",
             semanticType: "?",
         })),
-    });
+    })
     const { safeData, safeMetas } = guardDataKeys(dataSource, metas);
     const finalData: IRow[] = [];
     for (let record of safeData) {
@@ -30,7 +35,7 @@ export function transData(dataSource: IRow[]): {
             if (field.semanticType === "quantitative") {
                 newRecord[field.fid] = Number(record[field.fid]);
             } else {
-                newRecord[field.fid] = record[field.fid];
+                newRecord[field.fid] = record[field.fid];//getValueByKeyPath(record, field.fid);// record[field.fid];
             }
         }
         finalData.push(newRecord);

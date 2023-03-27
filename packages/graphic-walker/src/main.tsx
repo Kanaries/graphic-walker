@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
 import { GraphicWalker } from "./index";
 import ResponsiveBox from "./responsiveBox";
