@@ -39,7 +39,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                 {t('actions.drop_field')}
             </div>
             {channelItem && (
-                <div ref={drag} className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1">
+                <div ref={drag} className="flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1">
                     <div
                         onClick={() => {
                             vizStore.removeField(droppableId, 0);
@@ -48,7 +48,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                     >
                         <TrashIcon className="w-4" />
                     </div>
-                    <div className={`flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+                    <div className={`flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} overflow-visible`}>
                         <span className="flex-1 truncate">
                             {channelItem.name}
                         </span>

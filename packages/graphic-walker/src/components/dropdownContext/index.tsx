@@ -23,7 +23,7 @@ const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
     }
 
     return (
-        <Menu as="span" className="relative block text-left">
+        <Menu as="span" className="block text-left">
             <Menu.Button className="block w-full text-left">{props.children}</Menu.Button>
 
             <Transition
