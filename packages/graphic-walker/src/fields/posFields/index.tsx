@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Droppable } from "@kanaries/react-beautiful-dnd";
 import { useGlobalStore } from '../../store';
 import { FieldListContainer } from "../components";
-import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
 import OBFieldContainer from '../obComponents/obFContainer';
+import { DRAGGABLE_STATE_KEYS } from '../../utils/dnd.config';
 
 const PosFields: React.FC = props => {
     const { vizStore } = useGlobalStore();
@@ -20,11 +19,7 @@ const PosFields: React.FC = props => {
     return <div>
         {
             channels.map(dkey => <FieldListContainer name={dkey.id} key={dkey.id}>
-                <Droppable droppableId={dkey.id} direction="horizontal">
-                    {(provided, snapshot) => (
-                        <OBFieldContainer dkey={dkey} provided={provided} />
-                    )}
-                </Droppable>
+                <OBFieldContainer dkey={dkey} />
             </FieldListContainer>)
         }
     </div>

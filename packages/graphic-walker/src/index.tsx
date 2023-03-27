@@ -1,11 +1,11 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
 import styled, { StyleSheetManager } from "styled-components";
 import root from "react-shadow";
-import { DOM } from "@kanaries/react-beautiful-dnd";
 import { observer } from "mobx-react-lite";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import App, { IGWProps } from "./App";
 import { StoreWrapper } from "./store/index";
-import { FieldsContextWrapper } from "./fields/fieldsContext";
 
 import "./empty_sheet.css";
 import tailwindStyle from "tailwindcss/tailwind.css?inline";
@@ -29,12 +29,6 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         if (rootRef.current) {
             const shadowRoot = rootRef.current.shadowRoot!;
             setShadowRoot(shadowRoot);
-            DOM.setBody(shadowRoot);
-            DOM.setHead(shadowRoot);
-            return () => {
-                DOM.setBody(document.body);
-                DOM.setHead(document.head);
-            };
         }
     }, []);
 
@@ -45,11 +39,11 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
                 <style>{style}</style>
                 {shadowRoot && (
                     <StyleSheetManager target={shadowRoot}>
-                        <FieldsContextWrapper>
+                        <DndProvider backend={HTML5Backend}>
                             <ShadowDomContext.Provider value={{ root: shadowRoot }}>
                                 <App {...props} />
                             </ShadowDomContext.Provider>
-                        </FieldsContextWrapper>
+                        </DndProvider>
                     </StyleSheetManager>
                 )}
             </AppRoot>

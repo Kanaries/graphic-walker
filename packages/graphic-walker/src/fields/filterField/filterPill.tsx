@@ -1,14 +1,13 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { DraggableProvided } from "@kanaries/react-beautiful-dnd";
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useGlobalStore } from '../../store';
+import { useFieldDrag } from '../../utils/dnd.config';
 
 
 interface FilterPillProps {
-    provided: DraggableProvided;
     fIndex: number;
 }
 
@@ -54,22 +53,27 @@ const Pill = styled.div({
 });
 
 const FilterPill: React.FC<FilterPillProps> = observer(props => {
-    const { provided, fIndex } = props;
+    const { fIndex } = props;
     const { vizStore } = useGlobalStore();
     const { draggableFieldState } = vizStore;
 
     const field = draggableFieldState.filters[fIndex];
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
+    const ref = useRef<HTMLDivElement>(null);
+
+    const [{ isDragging }] = useFieldDrag('filters', field.dragId, fIndex, {
+        enableRemove: true,
+        enableSort: true,
+        ref,
+    });
 
     return (
         <Pill
             className="text-gray-900"
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
+            ref={ref}
         >
-            <header className="bg-indigo-50">
+            <header className={`bg-indigo-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
                 {field.name}
             </header>
             <div

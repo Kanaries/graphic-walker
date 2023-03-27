@@ -1,42 +1,30 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import {
-    Draggable,
-    Droppable, DroppableProvided,
-} from "@kanaries/react-beautiful-dnd";
-
 import { useGlobalStore } from '../../store';
 import { FilterFieldContainer, FilterFieldsContainer } from '../components';
+import { useFieldDrop } from '../../utils/dnd.config';
 import FilterPill from './filterPill';
 import FilterEditDialog from './filterEditDialog';
 
 
-interface FieldContainerProps {
-    provided: DroppableProvided;
-}
+interface FieldContainerProps {}
 
-const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided }) => {
+const FilterItemContainer: React.FC<FieldContainerProps> = observer(() => {
     const { vizStore } = useGlobalStore();
     const { draggableFieldState: { filters } } = vizStore;
 
+    const [{}, drop] = useFieldDrop('filters');
+
     return (
         <FilterFieldsContainer
-            {...provided.droppableProps}
-            ref={provided.innerRef}
+            ref={drop}
         >
             {filters.map((f, index) => (
-                <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
-                    {(provided, snapshot) => {
-                        return (
-                            <FilterPill
-                                fIndex={index}
-                                provided={provided}
-                            />
-                        );
-                    }}
-                </Draggable>
+                <FilterPill
+                    key={f.dragId}
+                    fIndex={index}
+                />
             ))}
-            {provided.placeholder}
             <FilterEditDialog />
         </FilterFieldsContainer>
     );
@@ -45,13 +33,7 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
 const FilterField: React.FC = () => {
     return (
         <FilterFieldContainer>
-            <Droppable droppableId="filters" direction="vertical">
-                {(provided, snapshot) => (
-                    <FilterItemContainer
-                        provided={provided}
-                    />
-                )}
-            </Droppable>
+            <FilterItemContainer />
         </FilterFieldContainer>
     );
 };

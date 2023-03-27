@@ -1,40 +1,44 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { observer } from "mobx-react-lite";
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { DraggableProvided } from "@kanaries/react-beautiful-dnd";
 import { COUNT_FIELD_ID } from "../../constants";
 import { IDraggableStateKey } from "../../interfaces";
 import { useGlobalStore } from "../../store";
 import { Pill } from "../components";
-import { AGGREGATOR_LIST } from "../fieldsContext";
 import DropdownContext from "../../components/dropdownContext";
+import { AGGREGATOR_LIST, useFieldDrag } from "../../utils/dnd.config";
 
 interface PillProps {
-    provided: DraggableProvided;
     fIndex: number;
     dkey: IDraggableStateKey;
 }
 const OBPill: React.FC<PillProps> = (props) => {
-    const { provided, dkey, fIndex } = props;
+    const { dkey, fIndex } = props;
     const { vizStore } = useGlobalStore();
     const { visualConfig } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
     const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
+    const ref = useRef<HTMLDivElement>(null);
+
+    const [{ isDragging }] = useFieldDrag(dkey.id, field.dragId, fIndex, {
+        enableRemove: true,
+        enableSort: true,
+        ref,
+    });
 
     const aggregationOptions = useMemo(() => {
         return AGGREGATOR_LIST.map((op) => ({
             value: op,
             label: t(op),
         }));
-    }, []);
+    }, [t]);
 
     return (
         <Pill
-            ref={provided.innerRef}
+            ref={ref}
             colType={field.analyticType === "dimension" ? "discrete" : "continuous"}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
+            className={isDragging ? 'cursor-grabbing' : 'cursor-grab'}
         >
             <span className="flex-1 truncate">{field.name}</span>&nbsp;
             {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
