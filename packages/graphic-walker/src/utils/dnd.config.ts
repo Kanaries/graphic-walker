@@ -1,4 +1,4 @@
-import { RefObject, useMemo } from "react";
+import { RefObject, useMemo, useState } from "react";
 import { type ConnectDragPreview, type ConnectDragSource, useDrag, useDrop, type XYCoord, type ConnectDropTarget } from "react-dnd";
 import type { DraggableFieldState, IDraggableStateKey } from "../interfaces";
 import { useGlobalStore } from "../store";
@@ -63,6 +63,9 @@ export interface IUseFieldDragOptions {
     enableSort?: boolean;
     /** @default false */
     enableRemove?: boolean;
+    /** @default 'vertical' */
+    direction?: 'horizontal' | 'vertical';
+    onWillInsert?: (index: number | null) => void;
 }
 
 export const EmptyItemId = 'empty-item';
@@ -73,7 +76,7 @@ export const useFieldDrag = (
     index: number,
     options?: Partial<IUseFieldDragOptions>,
 ): [IDragCollectedProps, ConnectDragSource | RefObject<HTMLDivElement>, ConnectDragPreview] => {
-    const { ref, enableSort = false, enableRemove = false } = options ?? {};
+    const { ref, enableSort = false, enableRemove = false, onWillInsert, direction = 'vertical' } = options ?? {};
     const { vizStore } = useGlobalStore();
 
     const [droppableProps, drop] = useDrop<IDragObject, IDropResult, ICollectedProps>(() => ({
@@ -84,36 +87,32 @@ export const useFieldDrag = (
                 return;
             }
             const dragIndex = item.index;
-            const hoverIndex = index;
-
-            // Don't replace items with themselves
-            if (dragIndex === hoverIndex) {
-                return;
-            }
+            let hoverIndex = index;
 
             // Determine rectangle on screen
             const hoverBoundingRect = ref.current?.getBoundingClientRect();
 
-            // Get vertical middle
-            const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+            // Get align middle
+            const hoverMiddle = (
+                hoverBoundingRect[direction === 'vertical' ? 'bottom' : 'right']
+                - hoverBoundingRect[direction === 'vertical' ? 'top' : 'left']
+            ) / 2;
 
             // Determine mouse position
             const clientOffset = monitor.getClientOffset();
 
             // Get pixels to the top
-            const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
+            const hoverClientPos = (clientOffset as XYCoord)[
+                direction === 'vertical' ? 'y' : 'x'
+            ] - hoverBoundingRect[direction === 'vertical' ? 'top' : 'left'];
 
-            // Only perform the move when the mouse has crossed half of the items height
-            // When dragging downwards, only move when the cursor is below 50%
-            // When dragging upwards, only move when the cursor is above 50%
-
-            // Dragging downwards
-            if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-                return;
+            if (hoverClientPos >= hoverMiddle) {
+                hoverIndex += 1;
             }
 
-            // Dragging upwards
-            if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+            // Don't replace items with themselves
+            if (dragIndex === hoverIndex) {
+                onWillInsert?.(null);
                 return;
             }
 
@@ -122,8 +121,9 @@ export const useFieldDrag = (
             // but it's good here for the sake of performance
             // to avoid expensive index searches.
             item.targetIndex = hoverIndex;
+            onWillInsert?.(hoverIndex);
         },
-    }), [index, vizStore, ref]);
+    }), [index, vizStore, ref, onWillInsert, direction]);
 
     const [props, drag, preview] = useDrag<IDragObject, IDropResult, IDragCollectedProps>(() => ({
         type: TargetType.Field,
@@ -133,6 +133,7 @@ export const useFieldDrag = (
             targetIndex: undefined,
         },
         end(item, monitor) {
+            onWillInsert?.(null);
             const dropResult = monitor.getDropResult();
             if (!dropResult) {
                 if (enableRemove) {
@@ -143,7 +144,12 @@ export const useFieldDrag = (
             if (item) {
                 if (dropId === dropResult.dropId) {
                     if (item.targetIndex !== undefined && item.targetIndex !== item.index) {
-                        vizStore.reorderField(dropId, item.index, item.targetIndex);
+                        if (item.targetIndex > item.index) {
+                            // skip the current item
+                            vizStore.reorderField(dropId, item.index, item.targetIndex - 1);
+                        } else {
+                            vizStore.reorderField(dropId, item.index, item.targetIndex);
+                        }
                     }
                 } else {
                     const target = vizStore.draggableFieldState[dropResult.dropId];
@@ -155,7 +161,7 @@ export const useFieldDrag = (
             isDragging: monitor.isDragging(),
             handlerId: monitor.getHandlerId() as string,
         }),
-    }), [dropId, dragId, index, vizStore, enableSort, enableRemove]);
+    }), [dropId, dragId, index, vizStore, enableSort, enableRemove, onWillInsert]);
 
     const shouldApplyDrop = enableSort && ref;
 

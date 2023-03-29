@@ -131,6 +131,7 @@ export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   user-select: none;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: relative;
   /* --tw-ring-offset-shadow: 0 0 #0000;
   --tw-ring-shadow: 0 0 #0000;
   --tw-shadow-color: rgb(6 182 212/0.5);
@@ -138,4 +139,22 @@ export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
   --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
 `
+
+export const PillPlaceholder = styled.div`
+  background-color: transparent;
+  user-select: none;
+  border-radius: 10px;
+  border-style: dashed;
+  border-width: 1px;
+  box-sizing: border-box;
+  pointer-events: none;
+  font-size: 12px;
+  height: 20px;
+  min-width: 150px;
+  padding: 0 10px;
+  user-select: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.5;
+`;
 

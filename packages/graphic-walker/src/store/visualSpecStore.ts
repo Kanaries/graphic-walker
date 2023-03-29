@@ -409,7 +409,7 @@ export class VizSpecStore {
         });
     }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
-        if (MetaFieldKeys.includes(stateKey)) return;
+        // if (MetaFieldKeys.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
 
         this.useMutable(({ encodings }) => {

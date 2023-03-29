@@ -1,6 +1,6 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { observer } from "mobx-react-lite";
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { COUNT_FIELD_ID } from "../../constants";
 import { IDraggableStateKey } from "../../interfaces";
@@ -12,9 +12,11 @@ import { AGGREGATOR_LIST, useFieldDrag } from "../../utils/dnd.config";
 interface PillProps {
     fIndex: number;
     dkey: IDraggableStateKey;
+    onWillInsert?: (index: number | null) => void;
+    onDragChange?: (index: number | null) => void;
 }
 const OBPill: React.FC<PillProps> = (props) => {
-    const { dkey, fIndex } = props;
+    const { dkey, fIndex, onWillInsert, onDragChange } = props;
     const { vizStore } = useGlobalStore();
     const { visualConfig } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
@@ -25,6 +27,8 @@ const OBPill: React.FC<PillProps> = (props) => {
         enableRemove: true,
         enableSort: true,
         ref,
+        onWillInsert,
+        direction: 'horizontal',
     });
 
     const aggregationOptions = useMemo(() => {
@@ -34,11 +38,15 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, [t]);
 
+    useEffect(() => {
+        onDragChange?.(isDragging ? fIndex : null);
+    }, [onDragChange, isDragging, fIndex]);
+
     return (
         <Pill
             ref={ref}
             colType={field.analyticType === "dimension" ? "discrete" : "continuous"}
-            className={isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+            className={isDragging ? 'cursor-grabbing opacity-30' : 'cursor-grab'}
         >
             <span className="flex-1 truncate">{field.name}</span>&nbsp;
             {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (

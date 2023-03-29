@@ -34,7 +34,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     }, []);
 
     return (
-        <div className="p-1 select-none relative" ref={drop}>
+        <div className={`p-1 select-none relative ${isDragging ? 'opacity-30' : ''}`} ref={drop}>
             <div className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${/*snapshot.draggingFromThisWith || */isOver || !channelItem ? 'opacity-100' : 'opacity-0'} relative z-0`}>
                 {t('actions.drop_field')}
             </div>
