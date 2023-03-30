@@ -351,6 +351,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         <Toolbar
             darkModePreference={darkModePreference}
             items={items}
+            overflowMode="scroll"
             styles={{
                 root: {
                     '--background-color': '#fff',

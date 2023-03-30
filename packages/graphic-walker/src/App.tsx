@@ -24,6 +24,7 @@ import SegmentNav from "./segments/segmentNav";
 import DatasetConfig from "./dataSource/datasetConfig";
 import { useCurrentMediaTheme } from "./utils/media";
 import CodeExport from "./components/codeExport";
+import ZenModeToggle from "./components/zenModeToggle";
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -61,7 +62,7 @@ const App = observer<IGWProps>(function App (props) {
     const { commonStore, vizStore } = useGlobalStore();
     const [insightReady, setInsightReady] = useState<boolean>(true);
 
-    const { currentDataset, datasets, vizEmbededMenu, segmentKey } = commonStore;
+    const { currentDataset, datasets, vizEmbededMenu, segmentKey, zenMode } = commonStore;
 
     const { t, i18n } = useTranslation();
     const curLang = i18n.language;
@@ -128,78 +129,92 @@ const App = observer<IGWProps>(function App (props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const chart = segmentKey === ISegmentKey.vis && (
+        <>
+            <div
+                className={`${zenMode ? '' : 'm-0.5 p-1 border border-gray-200 dark:border-gray-700'} relative group`}
+                style={{ minHeight: "600px", overflow: "auto" }}
+                onMouseLeave={() => {
+                    vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                }}
+                onClick={() => {
+                    vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                }}
+            >
+                {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />}
+                <InsightBoard />
+                {vizEmbededMenu.show && (
+                    <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
+                        <div
+                            className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                            onClick={() => {
+                                commonStore.closeEmbededMenu();
+                                commonStore.setShowInsightBoard(true);
+                            }}
+                        >
+                            <span className="flex-1 pr-2">
+                                {t("App.labels.data_interpretation")}
+                            </span>
+                            <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
+                        </div>
+                    </ClickMenu>
+                )}
+                <ZenModeToggle className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-20 group-hover:hover:opacity-90" />
+            </div>
+        </>
+    );
+
+    const main = (
+        <>
+            {segmentKey === ISegmentKey.vis && !zenMode && (
+                <div className={`flex-1 @md:m-4 mt-0 border-none py-2 @md:py-4 @md:border border-gray-200 dark:border-gray-700 @container/main overflow-hidden ${overflowMode === 'hidden' ? 'flex flex-col' : ''}`}>
+                    <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                    <CodeExport />
+                    <div className="flex-1 @lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6 overflow-hidden">
+                        <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3 -mb-0.5 @lg/main:mb-0">
+                            <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3 flex flex-col">
+                                <DatasetFields />
+                            </div>
+                            <div className="hidden h-full @sm/main:flex flex-col @sm/main:col-span-1 @lg/main:hidden">
+                                <FilterField />
+                            </div>
+                        </div>
+                        <div className="@lg/main:col-span-2 @xl/main:col-span-1">
+                            <div className="block @sm/main:hidden @lg/main:block mt-[2px] @sm/main:mt-0">
+                                <FilterField />
+                            </div>
+                            <AestheticFields />
+                        </div>
+                        <div className="@lg/main:col-span-7 @xl/main:col-span-4">
+                            <PosFields />
+                            {chart}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {segmentKey === ISegmentKey.vis && zenMode && chart}
+            {segmentKey === ISegmentKey.data && (
+                <div className="flex-1 @md:m-4 p-4 @md:border border-gray-200 dark:border-gray-700" style={{ marginTop: "0em", borderTop: "none" }}>
+                    <DatasetConfig />
+                </div>
+            )}
+        </>
+    );
+
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0 w-full h-full overflow-hidden`}>
             {/* <div className="grow-0">
                 <PageNav />
             </div> */}
             <div className={`w-full h-full bg-white dark:bg-zinc-900 dark:text-white ${overflowMode === 'hidden' ? 'overflow-hidden flex flex-col' : 'overflow-auto'} @container`}>
-                {!hideDataSourceConfig && <DataSourceSegment preWorkDone={insightReady} />}
-                <div className="grow-0 shrink-0 px-2 mx-2">
+                {!hideDataSourceConfig && !zenMode && <DataSourceSegment preWorkDone={insightReady} />}
+                <div className={`grow-0 shrink-0 px-[0.12em] @md:px-2 @md:mx-2 ${zenMode ? 'hidden' : ''}`}>
                     <SegmentNav />
                     {
                         segmentKey === ISegmentKey.vis && <VisNav />
                     }
                 </div>
-                {segmentKey === ISegmentKey.vis && (
-                    <div className={`flex-1 m-4 mt-0 border-none py-4 border border-gray-200 dark:border-gray-700 @container/main overflow-hidden ${overflowMode === 'hidden' ? 'flex flex-col' : ''}`}>
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
-                        <CodeExport />
-                        <div className="flex-1 @lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6 overflow-hidden">
-                            <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3 -mb-0.5 @lg/main:mb-0">
-                                <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3 flex flex-col">
-                                    <DatasetFields />
-                                </div>
-                                <div className="hidden h-full @sm/main:flex flex-col @sm/main:col-span-1 @lg/main:hidden">
-                                    <FilterField />
-                                </div>
-                            </div>
-                            <div className="@lg/main:col-span-2 @xl/main:col-span-1">
-                                <div className="block @sm/main:hidden @lg/main:block mt-[2px] @sm/main:mt-0">
-                                    <FilterField />
-                                </div>
-                                <AestheticFields />
-                            </div>
-                            <div className="@lg/main:col-span-7 @xl/main:col-span-4">
-                                <PosFields />
-                                <div
-                                    className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
-                                    style={{ minHeight: "600px", overflow: "auto" }}
-                                    onMouseLeave={() => {
-                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    }}
-                                    onClick={() => {
-                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    }}
-                                >
-                                    {datasets.length > 0 && <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />}
-                                    <InsightBoard />
-                                    {vizEmbededMenu.show && (
-                                        <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
-                                            <div
-                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                                                onClick={() => {
-                                                    commonStore.closeEmbededMenu();
-                                                    commonStore.setShowInsightBoard(true);
-                                                }}
-                                            >
-                                                <span className="flex-1 pr-2">
-                                                    {t("App.labels.data_interpretation")}
-                                                </span>
-                                                <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
-                                            </div>
-                                        </ClickMenu>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {segmentKey === ISegmentKey.data && (
-                    <div className="flex-1 m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: "0em", borderTop: "none" }}>
-                        <DatasetConfig />
-                    </div>
-                )}
+                {main}
             </div>
         </div>
     );

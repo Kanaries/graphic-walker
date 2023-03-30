@@ -24,7 +24,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
     const { currentDataset, datasets, showDSPanel } = commonStore;
 
     return (
-        <div className="flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center mb-2 @md:m-4 @md:mb-4 p-4 border-b @md:border border-gray-200 dark:border-gray-700">
             <GwFile fileRef={gwFileRef} />
             {!preWorkDone && (
                 <div className="grow-0 shrink-0 animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>

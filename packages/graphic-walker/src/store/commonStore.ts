@@ -17,6 +17,7 @@ export class CommonStore {
     public showCodeExportPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public zenMode = false;
     constructor () {
         this.datasets = [];
         this.dataSources = [];
@@ -67,6 +68,9 @@ export class CommonStore {
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;
+    }
+    public toggleZenMode (value: boolean) {
+        this.zenMode = value;
     }
     public initTempDS () {
         this.tmpDSName = 'New Dataset'
