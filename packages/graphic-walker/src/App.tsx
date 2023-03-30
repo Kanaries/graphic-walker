@@ -171,16 +171,11 @@ const App = observer<IGWProps>(function App (props) {
                     <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
                     <CodeExport />
                     <div className="flex-1 @lg/main:grid @lg/main:grid-cols-12 @xl/main:grid-cols-6 overflow-hidden">
-                        <div className="@lg/main:col-span-3 @xl/main:col-span-1 @sm/main:grid @sm/main:grid-cols-3 -mb-0.5 @lg/main:mb-0">
-                            <div className="col-span-3 @sm/main:col-span-2 @lg/main:col-span-3 flex flex-col">
-                                <DatasetFields />
-                            </div>
-                            <div className="hidden h-full @sm/main:flex flex-col @sm/main:col-span-1 @lg/main:hidden">
-                                <FilterField />
-                            </div>
+                        <div className="-mb-0.5 @lg/main:mb-0 flex flex-col">
+                            <DatasetFields />
                         </div>
                         <div className="@lg/main:col-span-2 @xl/main:col-span-1">
-                            <div className="block @sm/main:hidden @lg/main:block mt-[2px] @sm/main:mt-0">
+                            <div className="mt-[2px] @sm/main:mt-0">
                                 <FilterField />
                             </div>
                             <AestheticFields />
