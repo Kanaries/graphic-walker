@@ -7,7 +7,7 @@ import SingleEncodeEditor from './encodeFields/singleEncodeEditor';
 const aestheticFields = DRAGGABLE_STATE_KEYS.filter(f => ['color', 'opacity', 'size', 'shape'].includes(f.id));
 
 const AestheticFields: React.FC = props => {
-    return <div className="grid grid-cols-2 @lg:grid-cols-1">
+    return <div className="grid grid-cols-2 @xl:grid-cols-1">
         {
             aestheticFields.map(dkey => <AestheticFieldContainer name={dkey.id} key={dkey.id}>
                 <SingleEncodeEditor dkey={dkey} />

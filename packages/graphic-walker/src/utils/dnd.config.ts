@@ -1,5 +1,5 @@
-import { RefObject, useMemo, useState } from "react";
-import { type ConnectDragPreview, type ConnectDragSource, useDrag, useDrop, type XYCoord, type ConnectDropTarget } from "react-dnd";
+import { RefObject, useEffect, useMemo, useRef } from "react";
+import { type ConnectDragPreview, type ConnectDragSource, useDrag, useDrop, type XYCoord } from "react-dnd";
 import type { DraggableFieldState, IDraggableStateKey } from "../interfaces";
 import { useGlobalStore } from "../store";
 
@@ -35,7 +35,8 @@ export enum TargetType {
 export type DropType = keyof DraggableFieldState;
 
 export interface IDragObject {
-    draggableId: string;
+    dropId: string;
+    dragId: string;
     index: number;
     targetIndex?: number | undefined;
 }
@@ -56,16 +57,11 @@ export interface IDragCollectedProps {
 
 export interface IUseFieldDragOptions {
     ref?: RefObject<HTMLDivElement>;
-    /**
-     * requires `ref`
-     * @default false
-     */
     enableSort?: boolean;
     /** @default false */
     enableRemove?: boolean;
     /** @default 'vertical' */
     direction?: 'horizontal' | 'vertical';
-    onWillInsert?: (index: number | null) => void;
 }
 
 export const EmptyItemId = 'empty-item';
@@ -76,17 +72,18 @@ export const useFieldDrag = (
     index: number,
     options?: Partial<IUseFieldDragOptions>,
 ): [IDragCollectedProps, ConnectDragSource | RefObject<HTMLDivElement>, ConnectDragPreview] => {
-    const { ref, enableSort = false, enableRemove = false, onWillInsert, direction = 'vertical' } = options ?? {};
+    const { ref: passedRef, enableSort = false, enableRemove = false, direction = 'vertical' } = options ?? {};
+    const localRef = useRef<HTMLDivElement>(null);
+    const ref = passedRef ?? localRef;
     const { vizStore } = useGlobalStore();
 
     const [droppableProps, drop] = useDrop<IDragObject, IDropResult, ICollectedProps>(() => ({
         accept: TargetType.Field,
         hover(item, monitor) {
             item.targetIndex = item.index;
-            if (!ref?.current) {
+            if (!ref.current) {
                 return;
             }
-            const dragIndex = item.index;
             let hoverIndex = index;
 
             // Determine rectangle on screen
@@ -110,40 +107,34 @@ export const useFieldDrag = (
                 hoverIndex += 1;
             }
 
-            // Don't replace items with themselves
-            if (dragIndex === hoverIndex) {
-                onWillInsert?.(null);
-                return;
-            }
-
             // Note: we're mutating the monitor item here!
             // Generally it's better to avoid mutations,
             // but it's good here for the sake of performance
             // to avoid expensive index searches.
             item.targetIndex = hoverIndex;
-            onWillInsert?.(hoverIndex);
         },
-    }), [index, vizStore, ref, onWillInsert, direction]);
+    }), [index, vizStore, ref, direction]);
 
     const [props, drag, preview] = useDrag<IDragObject, IDropResult, IDragCollectedProps>(() => ({
         type: TargetType.Field,
         item: {
             index,
-            draggableId: dragId,
+            dropId,
+            dragId,
             targetIndex: undefined,
         },
         end(item, monitor) {
-            onWillInsert?.(null);
             const dropResult = monitor.getDropResult();
             if (!dropResult) {
                 if (enableRemove) {
                     vizStore.removeField(dropId, item.index);
                 }
+                item.targetIndex = undefined;
                 return;
             }
             if (item) {
                 if (dropId === dropResult.dropId) {
-                    if (item.targetIndex !== undefined && item.targetIndex !== item.index) {
+                    if (enableSort && item.targetIndex !== undefined && item.targetIndex !== item.index) {
                         if (item.targetIndex > item.index) {
                             // skip the current item
                             vizStore.reorderField(dropId, item.index, item.targetIndex - 1);
@@ -156,38 +147,100 @@ export const useFieldDrag = (
                     vizStore.moveField(dropId, item.index, dropResult.dropId, item.targetIndex ?? target.length);
                 }
             }
+            item.targetIndex = undefined;
         },
         collect: monitor => ({
             isDragging: monitor.isDragging(),
             handlerId: monitor.getHandlerId() as string,
         }),
-    }), [dropId, dragId, index, vizStore, enableSort, enableRemove, onWillInsert]);
+    }), [dropId, dragId, index, vizStore, enableRemove]);
 
-    const shouldApplyDrop = enableSort && ref;
-
-    if (shouldApplyDrop) {
-        drag(drop(ref));
-    }
-
-    const providerRef = shouldApplyDrop ? ref : drag;
+    drag(drop(ref));
 
     const mergedProps = useMemo(() => ({
         ...droppableProps,
         ...props,
     }), [droppableProps, props]);
 
-    return [mergedProps, providerRef, preview];
+    useEffect(() => {
+        drag(drop(ref));
+        const e = ref.current;
+        if (e) {
+            e.setAttribute('data-we', 'true');
+            return () => {
+                e.removeAttribute('data-we');
+            };
+        }
+    });
+
+    return [mergedProps, ref, preview];
 };
 
-export const useFieldDrop = (dropId: keyof DraggableFieldState): [ICollectedProps, ConnectDropTarget] => {
-    return useDrop<IDragObject, IDropResult, ICollectedProps>(() => ({
+export interface IUseFieldDropOptions {
+    /** @default false */
+    multiple?: boolean;
+    onWillInsert?: (target: { index: number; data: IDragObject } | null) => void;
+    onWillReplace?: (target: IDragObject | null) => void;
+    ref?: RefObject<HTMLDivElement>;
+}
+
+export const useFieldDrop = (
+    dropId: keyof DraggableFieldState,
+    options: IUseFieldDropOptions = {},
+): [ICollectedProps, RefObject<HTMLDivElement>] => {
+    const { multiple = false, onWillInsert, onWillReplace, ref: passedRef } = options;
+    const localRef = useRef<HTMLDivElement>(null);
+    const ref = passedRef ?? localRef;
+    const onWillInsertRef = useRef(onWillInsert);
+    onWillInsertRef.current = onWillInsert;
+    const onWillReplaceRef = useRef(onWillReplace);
+    onWillReplaceRef.current = onWillReplace;
+    const [droppableProps, drop] = useDrop<IDragObject, IDropResult, ICollectedProps>(() => ({
         accept: TargetType.Field,
         drop: () => ({
             dropId,
         }),
+        hover: (item, monitor) => {
+            if (!ref.current || !monitor.canDrop()) {
+                onWillInsertRef.current?.(null);
+                onWillReplaceRef.current?.(null);
+                return;
+            }
+            const sourceIndex = item.index;
+            const targetIndex = item.targetIndex;
+            const isSourceSelf = item.dropId === dropId;
+            if (typeof targetIndex !== 'number' || ((sourceIndex === targetIndex || sourceIndex + 1 === targetIndex) && isSourceSelf)) {
+                onWillInsertRef.current?.(null);
+                onWillReplaceRef.current?.(null);
+                return;
+            }
+            if (multiple) {
+                onWillInsertRef.current?.({
+                    index: targetIndex,
+                    data: item,
+                });
+            } else {
+                onWillReplaceRef.current?.(item);
+            }
+        },
         collect: monitor => ({
             isOver: monitor.isOver(),
             canDrop: monitor.canDrop(),
         }),
-    }), [dropId]);
+    }), [dropId, ref, multiple]);
+
+    useEffect(() => {
+        drop(ref);
+    });
+    
+    const { isOver, canDrop } = droppableProps;
+
+    useEffect(() => {
+        if (!isOver || !canDrop) {
+            onWillInsertRef.current?.(null);
+            onWillReplaceRef.current?.(null);
+        }
+    }, [isOver, canDrop]);
+
+    return [droppableProps, ref];
 };

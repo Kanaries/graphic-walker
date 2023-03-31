@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
@@ -60,12 +60,10 @@ const FilterPill: React.FC<FilterPillProps> = observer(props => {
     const field = draggableFieldState.filters[fIndex];
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
-    const ref = useRef<HTMLDivElement>(null);
 
-    const [{ isDragging }] = useFieldDrag('filters', field.dragId, fIndex, {
+    const [{ isDragging }, ref] = useFieldDrag('filters', field.dragId, fIndex, {
         enableRemove: true,
         enableSort: true,
-        ref,
     });
 
     return (

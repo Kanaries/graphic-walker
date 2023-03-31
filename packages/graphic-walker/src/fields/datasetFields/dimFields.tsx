@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { Fragment, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
 import DataTypeIcon from "../../components/dataTypeIcon";
@@ -11,22 +11,12 @@ import { FieldPill } from "./fieldPill";
 interface IDimDraggableProps {
     data: IViewField;
     index: number;
-    onWillInsert?: (index: number | null) => void;
-    onDragChange?: (index: number | null) => void;
 }
 
-const DimDraggable: React.FC<IDimDraggableProps> = ({ data: f, index, onWillInsert, onDragChange }) => {
-    const ref = useRef<HTMLDivElement>(null)
-
-    const [{ isDragging }] = useFieldDrag('dimensions', f.dragId, index, {
+const DimDraggable: React.FC<IDimDraggableProps> = ({ data: f, index }) => {
+    const [{ isDragging }, ref] = useFieldDrag('dimensions', f.dragId, index, {
         enableSort: true,
-        ref,
-        onWillInsert,
     });
-
-    useEffect(() => {
-        onDragChange?.(isDragging ? index : null);
-    }, [onDragChange, isDragging, index]);
 
     return (
         <FieldPill
@@ -44,19 +34,13 @@ interface Props {}
 const DimFields: React.FC<Props> = () => {
     const { vizStore } = useGlobalStore();
     const dimensions = vizStore.draggableFieldState.dimensions;
-    const [{ isOver }, drop] = useFieldDrop('dimensions');
-    const [dragIndex, setDragIndex] = useState<number | null>(null);
-    const [willInsertIdx, setWillInsertIdx] = useState<number | null>(null);
-
-    const placeholderIdx = dragIndex !== null && willInsertIdx !== null && dragIndex !== willInsertIdx ? (
-        willInsertIdx
-    ) : null;
-
-    useEffect(() => {
-        if (!isOver) {
-            setWillInsertIdx(null);
-        }
-    }, [isOver]);
+    const [placeholderIdx, setPlaceholderIdx] = useState<number | null>(null);
+    const [{}, drop] = useFieldDrop('dimensions', {
+        multiple: true,
+        onWillInsert(target) {
+            setPlaceholderIdx(target?.index ?? null);
+        },
+    });
 
     return (
         <div ref={drop} className="min-h-[100px]">
@@ -64,7 +48,7 @@ const DimFields: React.FC<Props> = () => {
                 return (
                     <Fragment key={f.dragId}>
                         {index === placeholderIdx && <PillPlaceholder />}
-                        <DimDraggable index={index} data={f} onWillInsert={setWillInsertIdx} onDragChange={setDragIndex} />
+                        <DimDraggable index={index} data={f} />
                         {index === arr.length - 1 && placeholderIdx === index + 1 && <PillPlaceholder />}
                     </Fragment>
                 );

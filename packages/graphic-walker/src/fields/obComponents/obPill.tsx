@@ -1,6 +1,6 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { observer } from "mobx-react-lite";
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { COUNT_FIELD_ID } from "../../constants";
 import { IDraggableStateKey } from "../../interfaces";
@@ -12,22 +12,17 @@ import { AGGREGATOR_LIST, useFieldDrag } from "../../utils/dnd.config";
 interface PillProps {
     fIndex: number;
     dkey: IDraggableStateKey;
-    onWillInsert?: (index: number | null) => void;
-    onDragChange?: (index: number | null) => void;
 }
 const OBPill: React.FC<PillProps> = (props) => {
-    const { dkey, fIndex, onWillInsert, onDragChange } = props;
+    const { dkey, fIndex } = props;
     const { vizStore } = useGlobalStore();
     const { visualConfig } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
     const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
-    const ref = useRef<HTMLDivElement>(null);
 
-    const [{ isDragging }] = useFieldDrag(dkey.id, field.dragId, fIndex, {
+    const [{ isDragging }, ref] = useFieldDrag(dkey.id, field.dragId, fIndex, {
         enableRemove: true,
         enableSort: true,
-        ref,
-        onWillInsert,
         direction: 'horizontal',
     });
 
@@ -37,10 +32,6 @@ const OBPill: React.FC<PillProps> = (props) => {
             label: t(op),
         }));
     }, [t]);
-
-    useEffect(() => {
-        onDragChange?.(isDragging ? fIndex : null);
-    }, [onDragChange, isDragging, fIndex]);
 
     return (
         <Pill
