@@ -2,10 +2,10 @@ import { IRow } from "visual-insights";
 import { IMutField } from "../interfaces";
 import { aggregate } from "./op/aggregate";
 import { fold } from "./op/fold";
-import { IAggQuery, IBinQuery, IFoldQuery } from "./interfaces";
+import { IAggQuery, IBinQuery, IFoldQuery, IRawQuery } from "./interfaces";
 import { bin } from "./op/bin";
 
-export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery;
+export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
 
 export function queryView (rawData: IRow[], metas: IMutField[], query: IViewQuery) {
     switch (query.op) {
@@ -15,6 +15,7 @@ export function queryView (rawData: IRow[], metas: IMutField[], query: IViewQuer
             return fold(rawData, query);
         case 'bin':
             return bin(rawData, query);
+        case 'raw':
         default:
             return rawData;
     }

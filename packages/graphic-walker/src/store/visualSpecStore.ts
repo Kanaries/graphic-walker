@@ -41,7 +41,7 @@ function geomAdapter(geom: string) {
     }
 }
 
-function initEncoding(): DraggableFieldState {
+export function initEncoding(): DraggableFieldState {
     return {
         dimensions: [],
         measures: [],
@@ -59,7 +59,7 @@ function initEncoding(): DraggableFieldState {
     };
 }
 
-function initVisualConfig(): IVisualConfig {
+export function initVisualConfig(): IVisualConfig {
     return {
         defaultAggregated: true,
         geoms: [GEMO_TYPES[0]!],

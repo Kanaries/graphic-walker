@@ -3,16 +3,15 @@ import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
-import { ISemanticType } from 'visual-insights';
 import styled from 'styled-components';
-import { autoMark } from '../utils/autoMark';
-import { COUNT_FIELD_ID } from '../constants';
 
 import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
 import { useCurrentMediaTheme } from '../utils/media';
+import { SingleViewProps, getSingleView } from './spec/view';
+import { NULL_FIELD } from './spec/field';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -52,14 +51,7 @@ interface ReactVegaProps {
   themeKey?: IThemeKey;
   dark?: IDarkMode;
 }
-const NULL_FIELD: IViewField = {
-  dragId: '',
-  fid: '',
-  name: '',
-  semanticType: 'quantitative',
-  analyticType: 'measure',
-  aggName: 'sum'
-}
+
 const click$ = new Subject<ScenegraphEvent>();
 const selection$ = new Subject<any>();
 const geomClick$ = selection$.pipe(
@@ -71,9 +63,6 @@ const geomClick$ = selection$.pipe(
     return false
   })
 );
-function getFieldType(field: IViewField): 'quantitative' | 'nominal' | 'ordinal' | 'temporal' {
-  return field.semanticType
-}
 
 const BRUSH_SIGNAL_NAME = "__gw_brush__";
 const POINT_SIGNAL_NAME = "__gw_point__";
@@ -85,301 +74,7 @@ interface ParamStoreEntry {
   data: any;
 }
 
-interface SingleViewProps {
-  x: IViewField;
-  y: IViewField;
-  color: IViewField;
-  opacity: IViewField;
-  size: IViewField;
-  shape: IViewField,
-  xOffset: IViewField;
-  yOffset: IViewField;
-  row: IViewField;
-  column: IViewField;
-  theta: IViewField;
-  radius: IViewField;
-  defaultAggregated: boolean;
-  stack: IStackMode;
-  geomType: string;
-  enableCrossFilter: boolean;
-  asCrossFilterTrigger: boolean;
-  selectEncoding: 'default' | 'none';
-  brushEncoding: 'x' | 'y' | 'default' | 'none';
-  hideLegend?: boolean;
-}
 
-function availableChannels (geomType: string): Set<string> {
-  if (geomType === 'arc') {
-    return new Set(['opacity', 'color', 'size', 'theta', 'radius'])
-  }
-  return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape'])
-}
-interface EncodeProps extends Pick<SingleViewProps, 'column' | 'opacity' | 'color' | 'row' | 'size' | 'x' | 'y' | 'xOffset' | 'yOffset' | 'shape' | 'theta' | 'radius'> {
-  geomType: string;
-}
-function channelEncode(props: EncodeProps) {
-  const avcs = availableChannels(props.geomType)
-  const encoding: {[key: string]: any} = {}
-  Object.keys(props).filter(c => avcs.has(c)).forEach(c => {
-    if (props[c] !== NULL_FIELD) {
-      encoding[c] = {
-        field: props[c].fid,
-        title: props[c].name,
-        type: props[c].semanticType,
-      }
-      if (props[c].analyticType !== 'measure') {
-        // if `aggregate` is set to null,
-        // do not aggregate this field
-        encoding[c].aggregate = null;
-      }
-      if (props[c].analyticType === 'measure') {
-        encoding[c].type = 'quantitative'
-      }
-    }
-  })
-  // FIXME: temporal fix, only for x and y relative order
-  if (encoding.x && encoding.y) {
-    if ((props.x.sort && props.x.sort) || (props.y && props.y.sort)) {
-      if (props.x.sort !== 'none' && (props.y.sort === 'none' || !Boolean(props.y.sort)))  {
-        encoding.x.sort = {
-          encoding: 'y',
-          order: props.x.sort
-        }
-      } else if (props.y.sort && props.y.sort !== 'none' && (props.x.sort === 'none' || !Boolean(props.x.sort)))  {
-        encoding.y.sort = {
-          encoding: 'x',
-          order: props.y.sort
-        }
-      }
-    }
-  }
-  return encoding
-}
-function channelAggregate(encoding: {[key: string]: any}, fields: IViewField[]) {
-  Object.values(encoding).forEach(c => {
-    const targetField = fields.find(f => f.fid === c.field && !('aggregate' in c));
-    if (targetField && targetField.fid === COUNT_FIELD_ID) {
-      c.field = undefined;
-      c.aggregate = 'count';
-      c.title = 'Count'
-    } else if (targetField && targetField.analyticType === 'measure') {
-      c.title = `${targetField.aggName}(${targetField.name})`;
-      c.aggregate = targetField.aggName;
-    }
-  })
-}
-function channelStack(encoding: {[key: string]: any}, stackMode: IStackMode) {
-  if (stackMode === 'stack') return;
-  if (encoding.x && encoding.x.type === 'quantitative') {
-    encoding.x.stack = stackMode === 'none' ? null : 'normalize'
-  }
-  if (encoding.y && encoding.y.type === 'quantitative') {
-    encoding.y.stack = stackMode === 'none' ? null : 'normalize'
-  }
-}
-// TODO: xOffset等通道的特性不太稳定，建议后续vega相关特性稳定后，再使用。
-// 1. 场景太细，仅仅对对应的坐标轴是nominal(可能由ordinal)时，才可用
-// 2. 部分geom type会出现bug，如line，会出现组间的错误连接
-// "vega": "^5.22.0",
-// "vega-embed": "^6.20.8",
-// "vega-lite": "^5.2.0",
-function getSingleView(props: SingleViewProps) {
-  const {
-    x,
-    y,
-    color,
-    opacity,
-    size,
-    shape,
-    theta,
-    radius,
-    row,
-    column,
-    xOffset,
-    yOffset,
-    defaultAggregated,
-    stack,
-    geomType,
-    selectEncoding,
-    brushEncoding,
-    enableCrossFilter,
-    asCrossFilterTrigger,
-    hideLegend = false,
-  } = props
-  const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius]
-  let markType = geomType;
-  let config: any = {};
-  if (hideLegend) {
-    config.legend = {
-      disable: true
-    };
-  }
-  if (geomType === 'auto') {
-    const types: ISemanticType[] = [];
-    if (x !== NULL_FIELD) types.push(x.semanticType)//types.push(getFieldType(x));
-    if (y !== NULL_FIELD) types.push(y.semanticType)//types.push(getFieldType(yField));
-    markType = autoMark(types);
-  }
-
-  let encoding = channelEncode({ geomType: markType, x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius })
-  if (defaultAggregated) {
-    channelAggregate(encoding, fields);
-  }
-  channelStack(encoding, stack);
-  if (!enableCrossFilter || brushEncoding === 'none' && selectEncoding === 'none') {
-    return {
-      config,
-      mark: {
-        type: markType,
-        opacity: 0.96,
-        tooltip: true
-      },
-      encoding
-    };
-  }
-  const mark = {
-    type: markType,
-    opacity: 0.96,
-    tooltip: true
-  };
-
-  // TODO:
-  // 鉴于 Vega 中使用 layer 会导致一些难以覆盖的预期外行为，
-  // 破坏掉引入交互后视图的正确性，
-  // 目前不使用 layer 来实现交互（注掉以下代码）。
-  // 考虑 layer 的目的是 layer + condition 可以用于同时展现“全集”（context）和“选中”两层结构，尤其对于聚合数据有分析帮助；
-  // 同时，不需要关心作为筛选器的是哪一张图。
-  // 现在采用临时方案，区别产生筛选的来源，并对其他图仅借助 transform 展现筛选后的数据。
-  // #[BEGIN bad-layer-interaction]
-  // const shouldUseMultipleLayers = brushEncoding !== 'none' && Object.values(encoding).some(channel => {
-  //   return typeof channel.aggregate === 'string' && /* 这种 case 对应行数 */ typeof channel.field === 'string';
-  // });
-  // if (shouldUseMultipleLayers) {
-  //   if (['column', 'row'].some(key => key in encoding && encoding[key].length > 0)) {
-  //     // 这种情况 Vega 不能处理，是因为 Vega 不支持在 layer 中使用 column / row channel，
-  //     // 会导致渲染出来的视图无法与不使用交互时的结果不变。
-  //     return {
-  //       params: [
-  //         {
-  //           name: BRUSH_SIGNAL_NAME,
-  //           select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-  //         },
-  //       ],
-  //       mark,
-  //       encoding: {
-  //         ...encoding,
-  //         color: {
-  //           condition: {
-  //             ...encoding.color,
-  //             param: BRUSH_SIGNAL_NAME,
-  //           },
-  //           value: '#888',
-  //         },
-  //       },
-  //     };
-  //   }
-  //   return {
-  //     layer: [
-  //       {
-  //         params: [
-  //           {
-  //             name: BRUSH_SIGNAL_NAME,
-  //             select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-  //           },
-  //         ],
-  //         mark,
-  //         encoding: {
-  //           ...encoding,
-  //           color: 'color' in encoding ? {
-  //             condition: {
-  //               ...encoding.color,
-  //               test: 'false',
-  //             },
-  //             value: '#888',
-  //           } : {
-  //             value: '#888',
-  //           },
-  //         },
-  //       },
-  //       {
-  //         transform: [{ filter: { param: BRUSH_SIGNAL_NAME }}],
-  //         mark,
-  //         encoding: {
-  //           ...encoding,
-  //           color: encoding.color ?? { value: 'steelblue' },
-  //         },
-  //       },
-  //     ],
-  //   };
-  // } else if (brushEncoding !== 'none') {
-  //   return {
-  //     params: [
-  //       {
-  //         name: BRUSH_SIGNAL_NAME,
-  //         select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-  //       },
-  //     ],
-  //     mark,
-  //     encoding: {
-  //       ...encoding,
-  //       color: {
-  //         condition: {
-  //           ...encoding.color,
-  //           param: BRUSH_SIGNAL_NAME,
-  //         },
-  //         value: '#888',
-  //       },
-  //     },
-  //   };
-  // }
-  // #[END bad-layer-interaction]
-
-  if (brushEncoding !== 'none') {
-    return {
-      config,
-      transform: asCrossFilterTrigger ? [] : [
-        { filter: { param: BRUSH_SIGNAL_NAME } }
-      ],
-      params: [
-        // {
-        //   name: BRUSH_SIGNAL_DISPLAY_NAME,
-        //   select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-        //   on: '__YOU_CANNOT_MODIFY_THIS_SIGNAL__',
-        // },
-        {
-          name: BRUSH_SIGNAL_NAME,
-          select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-        },
-      ],
-      mark,
-      encoding,
-    };
-  }
-
-  return {
-    config,
-    transform: asCrossFilterTrigger ? [] : [
-      { filter: { param: POINT_SIGNAL_NAME } }
-    ],
-    params: [
-      {
-        name: POINT_SIGNAL_NAME,
-        select: { type: 'point' },
-      },
-    ],
-    mark,
-    encoding: asCrossFilterTrigger ? {
-      ...encoding,
-      color: {
-        condition: {
-          ...encoding.color,
-          param: POINT_SIGNAL_NAME,
-        },
-        value: '#888',
-      },
-    } : encoding,
-  };
-}
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
     dataSource = [],
@@ -405,8 +100,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     themeKey = 'vega',
     dark = 'media'
   } = props;
-  // const container = useRef<HTMLDivElement>(null);
-  // const containers = useRef<(HTMLDivElement | null)[]>([]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
   const mediaTheme = useCurrentMediaTheme(dark);
@@ -504,27 +197,11 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         enableCrossFilter: false,
         asCrossFilterTrigger: false,
       });
-      // if (layoutMode === 'fixed') {
-      //   spec.width = 800;
-      //   spec.height = 600;
-      // }
+
       spec.mark = singleView.mark;
       if ('encoding' in singleView) {
         spec.encoding = singleView.encoding;
       }
-
-      // #[BEGIN bad-layer-interaction]
-      // if ('layer' in singleView) {
-      //   if ('params' in spec) {
-      //     const basicParams = spec['params'];
-      //     delete spec['params'];
-      //     singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
-      //   }
-      //   spec.layer = singleView.layer;
-      // } else if ('params' in singleView) {
-      //   spec.params.push(...singleView.params!);
-      // }
-      // #[END bad-layer-interaction]
 
       if ('params' in singleView) {
         spec.params.push(...singleView.params!);
@@ -591,19 +268,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
-
-          // #[BEGIN bad-layer-interaction]
-          // if ('layer' in singleView) {
-          //   if ('params' in commonSpec) {
-          //     const { params: basicParams, ...spec } = commonSpec;
-          //     commonSpec = spec;
-          //     singleView.layer![0].params = [...basicParams, ...singleView.layer![0].params ?? []];
-          //   }
-          //   commonSpec.layer = singleView.layer;
-          // } else if ('params' in singleView) {
-          //   commonSpec.params = [...commonSpec.params, ...singleView.params!];
-          // }
-          // #[END bad-layer-interaction]
 
           if ('params' in singleView) {
             commonSpec.params = [...commonSpec.params, ...singleView.params!];
