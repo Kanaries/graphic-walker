@@ -2,7 +2,15 @@ export interface IAggQuery {
     op: 'aggregate';
     groupBy: string[];
     agg: {
-        [field: string]: 'sum' | 'avg' | 'count' | 'max' | 'min';
+        [field: string]:
+            | 'sum'
+            | 'count'
+            | 'max'
+            | 'min'
+            | 'mean'
+            | 'median'
+            | 'variance'
+            | 'stdev';
     };
 }
 
@@ -23,4 +31,9 @@ export interface IBinQuery {
     binBy: string;
     newBinCol: string;
     binSize: number;
+}
+
+
+export interface IRawQuery {
+    op: 'raw';
 }
