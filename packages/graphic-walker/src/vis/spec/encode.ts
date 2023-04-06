@@ -44,6 +44,12 @@ export function channelEncode(props: IEncodeProps) {
             }
         });
     // FIXME: temporal fix, only for x and y relative order
+    if (encoding.x) {
+        encoding.x.axis = { labelOverlap: true }
+    }
+    if (encoding && encoding.y) {
+        encoding.y.axis = { labelOverlap: true }
+    }
     if (encoding.x && encoding.y) {
         if ((props.x.sort && props.x.sort) || (props.y && props.y.sort)) {
             if (props.x.sort !== 'none' && (props.y.sort === 'none' || !Boolean(props.y.sort))) {

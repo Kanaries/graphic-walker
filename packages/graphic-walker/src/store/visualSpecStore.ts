@@ -2,13 +2,14 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from "immer";
 import { v4 as uuidv4 } from "uuid";
 import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
+import { DataSet, DraggableFieldState, IExpression, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
+import { IViewQuery } from "../lib/viewQuery";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -506,19 +507,19 @@ export class VizSpecStore {
             encodings.rows = fieldsInCup as typeof encodings.rows; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number) {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
             const newVarKey = uuidv4();
             const binField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `bin(${originField.name})`,
+                name: `${binType}(${originField.name})`,
                 semanticType: "ordinal",
                 analyticType: "dimension",
                 computed: true,
                 expressoion: {
-                    op: 'bin',
+                    op: binType,
                     as: newVarKey,
                     params: [
                         {
@@ -531,7 +532,7 @@ export class VizSpecStore {
             encodings.dimensions.push(binField);
         });
     }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number) {
+    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
         if (stateKey === "filters") {
             return;
         }
@@ -542,13 +543,13 @@ export class VizSpecStore {
             const logField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `log10(${originField.name})`,
+                name: `${scaleType}(${originField.name})`,
                 semanticType: "quantitative",
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
                 expressoion: {
-                    op: 'log10',
+                    op: scaleType,
                     as: newVarKey,
                     params: [
                         {
