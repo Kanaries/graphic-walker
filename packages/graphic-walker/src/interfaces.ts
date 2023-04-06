@@ -53,7 +53,7 @@ export type IExpParamter = {
 
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
     params: IExpParamter[];
     as: string;
 }
