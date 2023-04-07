@@ -1,16 +1,20 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { v4 as uuidv4 } from "uuid";
 import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
+import { nanoid } from "nanoid";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
     return CHANNEL_LIMIT[channel];
+}
+
+function uniqueId(): string {
+    return "gw_" + nanoid(4);
 }
 
 function geomAdapter(geom: string) {
@@ -44,7 +48,6 @@ export function initEncoding(): DraggableFieldState {
     return {
         dimensions: [],
         measures: [],
-        fields: [],
         rows: [],
         columns: [],
         color: [],
@@ -144,7 +147,7 @@ export class VizSpecStore {
         this.visList.push(
             new VisSpecWithHistory({
                 name: 'Chart 1',
-                visId: uuidv4(),
+                visId: uniqueId(),
                 config: this.visualConfig,
                 encodings: this.draggableFieldState,
             })
@@ -299,7 +302,7 @@ export class VizSpecStore {
         this.visList.push(
             new VisSpecWithHistory({
                 name,
-                visId: uuidv4(),
+                visId: uniqueId(),
                 config: initVisualConfig(),
                 encodings: initEncoding(),
             })
@@ -324,19 +327,10 @@ export class VizSpecStore {
     public initMetaState(dataset: DataSet) {
         const countField = createCountField();
         this.useMutable(({ encodings }) => {
-            encodings.fields = dataset.rawFields.map((f) => ({
-                dragId: uuidv4(),
-                fid: f.fid,
-                name: f.name || f.fid,
-                aggName: f.analyticType === "measure" ? "sum" : undefined,
-                analyticType: f.analyticType,
-                semanticType: f.semanticType,
-            }))//.concat(countField);
-            encodings.fields.push(countField);
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === "dimension")
                 .map((f) => ({
-                    dragId: uuidv4(),
+                    dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
                     semanticType: f.semanticType,
@@ -345,7 +339,7 @@ export class VizSpecStore {
             encodings.measures = dataset.rawFields
                 .filter((f) => f.analyticType === "measure")
                 .map((f) => ({
-                    dragId: uuidv4(),
+                    dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
                     analyticType: f.analyticType,
@@ -436,7 +430,7 @@ export class VizSpecStore {
                 // use a different dragId
                 movingField = {
                     ...toJS(encodings[sourceKey][sourceIndex]), // toJS will NOT shallow copy a object here
-                    dragId: uuidv4(),
+                    dragId: uniqueId(),
                 };
             } else {
                 [movingField] = encodings[sourceKey].splice(sourceIndex, 1);
@@ -480,7 +474,7 @@ export class VizSpecStore {
         this.useMutable(({ encodings }) => {
             encodings.filters.splice(index, 0, {
                 ...toJS(data),
-                dragId: uuidv4(),
+                dragId: uniqueId(),
                 rule: null,
             });
             this.editingFilterIdx = index;
@@ -508,7 +502,7 @@ export class VizSpecStore {
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
-            const newVarKey = uuidv4();
+            const newVarKey = uniqueId();
             const binField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
@@ -537,7 +531,7 @@ export class VizSpecStore {
 
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
-            const newVarKey = uuidv4();
+            const newVarKey = uniqueId();
             const logField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
@@ -635,7 +629,7 @@ export class VizSpecStore {
 
         this.useMutable(({ encodings }) => {
             const cloneField = { ...toJS(field) };
-            cloneField.dragId = uuidv4();
+            cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
         });
     }
@@ -643,7 +637,7 @@ export class VizSpecStore {
         const tab = this.visList[this.visIndex];
 
         if (tab) {
-            const fields = tab.encodings.fields;
+            const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
             // thi
             // const [xField, yField, ] = spec.position;
             this.clearState();
