@@ -31,6 +31,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const theta = draggableFieldState.theta;
     const radius = draggableFieldState.radius;
     const sizeChannel = draggableFieldState.size;
+    const details = draggableFieldState.details;
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
     const colLeftFacetFields = useMemo(
@@ -102,6 +103,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 shape={shape[0]}
                 opacity={opacity[0]}
                 size={sizeChannel[0]}
+                details={details}
                 showActions={showActions}
                 width={size.width - 12 * 4}
                 height={size.height - 12 * 4}

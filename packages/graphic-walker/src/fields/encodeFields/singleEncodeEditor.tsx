@@ -1,15 +1,14 @@
-import React, { useMemo } from "react";
-import { IDraggableStateKey } from "../../interfaces";
-import { observer } from "mobx-react-lite";
-import { useGlobalStore } from "../../store";
-import DropdownSelect from "./singleEncodeDropDown";
-import { DroppableProvided } from "react-beautiful-dnd";
-import { ChevronUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useTranslation } from "react-i18next";
-import { COUNT_FIELD_ID } from "../../constants";
-import DropdownContext from "../../components/dropdownContext";
-import { AGGREGATOR_LIST } from "../fieldsContext";
-import { Draggable, DroppableStateSnapshot } from "@kanaries/react-beautiful-dnd";
+import React, { useMemo } from 'react';
+import { IDraggableStateKey } from '../../interfaces';
+import { observer } from 'mobx-react-lite';
+import { useGlobalStore } from '../../store';
+import { DroppableProvided } from 'react-beautiful-dnd';
+import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
+import { COUNT_FIELD_ID } from '../../constants';
+import DropdownContext from '../../components/dropdownContext';
+import { AGGREGATOR_LIST } from '../fieldsContext';
+import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 
 interface SingleEncodeEditorProps {
     dkey: IDraggableStateKey;

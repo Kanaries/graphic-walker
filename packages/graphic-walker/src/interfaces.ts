@@ -1,19 +1,28 @@
-import { StatFuncName } from "visual-insights/build/esm/statistics";
-import { AggFC } from 'cube-core/built/types';
-import { IAnalyticType, ISemanticType } from 'visual-insights';
-
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
+export type ISemanticType = 'quantitative' | 'nominal' | 'ordinal' | 'temporal';
+export type IDataType = 'number' | 'integer' | 'boolean' | 'date' | 'string';
+export type IAnalyticType = 'dimension' | 'measure';
 
 export interface IRow {
     [key: string]: any;
 }
-/**
- * @deprecated
- */
-export type SemanticType = 'quantitative' | 'nominal' | 'ordinal' | 'temporal';
 
+export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
+export interface Specification {
+    position?: string[];
+    color?: string[];
+    size?: string[];
+    shape?: string[];
+    opacity?: string[];
+    facets?: string[];
+    page?: string[];
+    filter?: string[];
+    highFacets?: string[];
+    geomType?: string[];
+    aggregate?: boolean;
+}
 export interface Filters {
     [key: string]: any[];
 }
@@ -25,7 +34,7 @@ export interface IMutField {
     disable?: boolean;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
-};
+}
 
 export interface IUncertainMutField {
     fid: string;
@@ -36,21 +45,23 @@ export interface IUncertainMutField {
     analyticType: IAnalyticType | '?';
 }
 
-
-export type IExpParamter = {
-    type: 'field';
-    value: string;
-} | {
-    type: 'value';
-    value: any;
-} | {
-    type: 'expression';
-    value: IExpression;
-} | {
-    type: 'constant';
-    value: any;
-}
-
+export type IExpParamter =
+    | {
+          type: 'field';
+          value: string;
+      }
+    | {
+          type: 'value';
+          value: any;
+      }
+    | {
+          type: 'expression';
+          value: IExpression;
+      }
+    | {
+          type: 'constant';
+          value: any;
+      };
 
 export interface IExpression {
     op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
@@ -83,13 +94,6 @@ export interface IViewField extends IField {
     sort?: 'none' | 'ascending' | 'descending';
 }
 
-export interface Measure extends IField {
-    aggregator?: AggFC;
-    minWidth?: number;
-    formatter?: (value: number | undefined) => number | string;
-    [key: string]: any;
-}
-
 export interface DataSet {
     id: string;
     name: string;
@@ -104,7 +108,20 @@ export interface IFieldNeighbor {
 
 export interface IMeasure {
     key: string;
-    op: StatFuncName
+    op: IAggregator;
+}
+
+export interface IPredicate {
+    key: string;
+    type: "discrete" | "continuous";
+    range: Set<any> | [number, number];
+}
+
+export interface IExplainProps {
+    dataSource: IRow[];
+    predicates: IPredicate[];
+    viewFields: IField[];
+    metas: IField[];
 }
 
 export interface IDataSet {
@@ -119,12 +136,12 @@ export interface IDataSet {
 export interface IDataSetInfo {
     name: string;
     rawFields: IMutField[];
-    dataSource: IRow[]
+    dataSource: IRow[];
 }
 
 export interface IDataSource {
     id: string;
-    data: IRow[]
+    data: IRow[];
 }
 
 export interface IFilterField extends IViewField {
@@ -149,39 +166,34 @@ export interface DraggableFieldState {
 
 export interface IDraggableStateKey {
     id: keyof DraggableFieldState;
-    mode: number
+    mode: number;
 }
 
-export type IFilterRule = {
-    type: 'range';
-    value: readonly [number, number];
-} | {
-    type: 'temporal range';
-    value: readonly [number, number];
-} | {
-    type: 'one of';
-    value: Set<string | number>;
-};
+export type IFilterRule =
+    | {
+          type: 'range';
+          value: readonly [number, number];
+      }
+    | {
+          type: 'temporal range';
+          value: readonly [number, number];
+      }
+    | {
+          type: 'one of';
+          value: Set<string | number>;
+      };
 
-export const EXPLORATION_TYPES = [
-    'none',
-    'brush',
-    'point',
-] as const;
+export const EXPLORATION_TYPES = ['none', 'brush', 'point'] as const;
 
-export const BRUSH_DIRECTIONS = [
-    'default',
-    'x',
-    'y',
-] as const;
+export const BRUSH_DIRECTIONS = ['default', 'x', 'y'] as const;
 
 export type IStackMode = 'none' | 'stack' | 'normalize';
-export type IExplorationType = (typeof EXPLORATION_TYPES)[number];
-export type IBrushDirection = (typeof BRUSH_DIRECTIONS)[number];
+export type IExplorationType = typeof EXPLORATION_TYPES[number];
+export type IBrushDirection = typeof BRUSH_DIRECTIONS[number];
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
-    geoms:  string[];        
+    geoms: string[];
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
@@ -190,7 +202,7 @@ export interface IVisualConfig {
         mode: 'auto' | 'fixed';
         width: number;
         height: number;
-    }
+    };
     exploration: {
         mode: IExplorationType;
         /** works when mode is 'brush' */
@@ -207,7 +219,7 @@ export interface IVisSpec {
 
 export enum ISegmentKey {
     vis = 'vis',
-    data = 'data'
+    data = 'data',
 }
 
 export type IThemeKey = 'vega' | 'g2';

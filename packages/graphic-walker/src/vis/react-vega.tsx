@@ -40,6 +40,7 @@ interface ReactVegaProps {
   shape?: IViewField;
   theta?: IViewField;
   radius?: IViewField;
+  details?: Readonly<IViewField[]>;
   showActions: boolean;
   layoutMode: string;
   width: number;
@@ -97,6 +98,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     selectEncoding,
     brushEncoding,
+    details = [],
     themeKey = 'vega',
     dark = 'media'
   } = props;
@@ -189,6 +191,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         column: colFacetField,
         xOffset: NULL_FIELD,
         yOffset: NULL_FIELD,
+        details,
         defaultAggregated: defaultAggregate,
         stack,
         geomType,
@@ -257,6 +260,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             column: colFacetField,
             xOffset: NULL_FIELD,
             yOffset: NULL_FIELD,
+            details,
             defaultAggregated: defaultAggregate,
             stack,
             geomType,
@@ -368,6 +372,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     brushEncoding,
     crossFilterTriggerIdx,
     themeConfig,
+    details
   ]);
 
   useImperativeHandle(ref, () => ({

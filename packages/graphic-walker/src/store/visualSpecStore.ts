@@ -1,15 +1,12 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
 import { v4 as uuidv4 } from "uuid";
-import { Specification } from "visual-insights";
-import { DataSet, DraggableFieldState, IExpression, IFilterRule, IViewField, IVisSpec, IVisualConfig } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
-import { makeBinField, makeLogField } from "../utils/normalization";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
-import { IViewQuery } from "../lib/viewQuery";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -19,6 +16,7 @@ function getChannelSizeLimit(channel: string): number {
 function geomAdapter(geom: string) {
     switch (geom) {
         case "interval":
+        case "bar":
             return "bar";
         case "line":
             return "line";
@@ -649,6 +647,7 @@ export class VizSpecStore {
             // thi
             // const [xField, yField, ] = spec.position;
             this.clearState();
+            this.setVisualConfig('defaultAggregated', Boolean(spec.aggregate));
             if ((spec.geomType?.length ?? 0) > 0) {
                 this.setVisualConfig(
                     "geoms",

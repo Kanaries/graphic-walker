@@ -1,5 +1,4 @@
-import { IRow } from "visual-insights";
-import { IMutField } from "../interfaces";
+import { IMutField, IRow } from "../interfaces";
 import { aggregate } from "./op/aggregate";
 import { fold } from "./op/fold";
 import { IAggQuery, IBinQuery, IFoldQuery, IRawQuery } from "./interfaces";
