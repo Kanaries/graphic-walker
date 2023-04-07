@@ -1,40 +1,47 @@
-import { runInAction, toJS } from "mobx";
-import { observer } from "mobx-react-lite";
-import { Resizable } from "re-resizable";
-import React, { useState, useCallback, useEffect, useRef, forwardRef, useMemo } from "react";
-import { applyFilter } from "../services";
-import { useGlobalStore } from "../store";
-import ReactVega, { IReactVegaHandler } from "../vis/react-vega";
-import { IDarkMode, IRow, IThemeKey } from "../interfaces";
+import { runInAction } from 'mobx';
+import { Resizable } from 're-resizable';
+import React, { useCallback, forwardRef, useMemo } from 'react';
+
+import { useGlobalStore } from '../store';
+import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import LoadingLayer from '../components/loadingLayer';
 
 interface SpecRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
+    loading: boolean;
+    draggableFieldState: DeepReadonly<DraggableFieldState>;
+    visualConfig: IVisualConfig;
 }
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data },
+    { themeKey, dark, data, loading, draggableFieldState, visualConfig },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
-    const { draggableFieldState, visualConfig } = vizStore;
+    // const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration } = visualConfig;
 
-    const rows = toJS(draggableFieldState.rows);
-    const columns = toJS(draggableFieldState.columns);
-    const color = toJS(draggableFieldState.color);
-    const opacity = toJS(draggableFieldState.opacity);
-    const shape = toJS(draggableFieldState.shape);
-    const theta = toJS(draggableFieldState.theta);
-    const radius = toJS(draggableFieldState.radius);
-    const sizeChannel = toJS(draggableFieldState.size);
+    const rows = draggableFieldState.rows;
+    const columns = draggableFieldState.columns;
+    const color = draggableFieldState.color;
+    const opacity = draggableFieldState.opacity;
+    const shape = draggableFieldState.shape;
+    const theta = draggableFieldState.theta;
+    const radius = draggableFieldState.radius;
+    const sizeChannel = draggableFieldState.size;
+    const details = draggableFieldState.details;
 
-    const rowLeftFacetFields = rows.slice(0, -1).filter((f) => f.analyticType === "dimension");
-    const colLeftFacetFields = columns.slice(0, -1).filter((f) => f.analyticType === "dimension");
+    const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
+    const colLeftFacetFields = useMemo(
+        () => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'),
+        [columns]
+    );
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
-    const shouldTriggerMenu = exploration.mode === "none";
+    const shouldTriggerMenu = exploration.mode === 'none';
 
     const handleGeomClick = useCallback(
         (values: any, e: any) => {
@@ -48,15 +55,15 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         },
         [shouldTriggerMenu]
     );
-    const enableResize = size.mode === "fixed" && !hasFacet;
+    const enableResize = size.mode === 'fixed' && !hasFacet;
 
     return (
         <Resizable
-            className={enableResize ? "border-blue-400 border-2 overflow-hidden" : ""}
-            style={{ padding: "12px" }}
+            className={enableResize ? 'border-blue-400 border-2 overflow-hidden' : ''}
+            style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
                 vizStore.setChartLayout({
-                    mode: "fixed",
+                    mode: 'fixed',
                     width: size.width + d.width,
                     height: size.height + d.height,
                 });
@@ -76,10 +83,11 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                       }
             }
             size={{
-                width: size.width + "px",
-                height: size.height + "px",
+                width: size.width + 'px',
+                height: size.height + 'px',
             }}
         >
+            {loading && <LoadingLayer />}
             <ReactVega
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
@@ -95,12 +103,13 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 shape={shape[0]}
                 opacity={opacity[0]}
                 size={sizeChannel[0]}
+                details={details}
                 showActions={showActions}
                 width={size.width - 12 * 4}
                 height={size.height - 12 * 4}
                 ref={ref}
-                brushEncoding={exploration.mode === "brush" ? exploration.brushDirection : "none"}
-                selectEncoding={exploration.mode === "point" ? "default" : "none"}
+                brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
+                selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
@@ -109,4 +118,4 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     );
 });
 
-export default observer(SpecRenderer);
+export default SpecRenderer;

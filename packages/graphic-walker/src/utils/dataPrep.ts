@@ -1,5 +1,4 @@
-import { IRow } from "visual-insights";
-import { IMutField } from "../interfaces";
+import { IMutField, IRow } from "../interfaces";
 
 function updateRowKeys(data: IRow[], keyEncodeList: {from: string; to: string}[]): IRow[] {
     return data.map((row) => {

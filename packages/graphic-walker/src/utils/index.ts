@@ -236,29 +236,6 @@ export function applyFilters(dataSource: IRow[], filters: Filters): IRow[] {
     });
 }
 
-export function extendCountField(
-    dataSource: IRow[],
-    fields: IMutField[]
-): {
-    dataSource: IRow[];
-    fields: IMutField[];
-} {
-    const nextData = dataSource.map((r) => ({
-        ...r,
-        [COUNT_FIELD_ID]: 1,
-    }));
-    const nextFields = fields.concat({
-        fid: COUNT_FIELD_ID,
-        name: i18next.t("constant.row_count"),
-        analyticType: "measure",
-        semanticType: "quantitative",
-    });
-    return {
-        dataSource: nextData,
-        fields: nextFields,
-    };
-}
-
 export function createCountField(): IViewField {
     return {
         // viewId: "",

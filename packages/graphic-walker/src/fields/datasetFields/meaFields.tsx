@@ -21,17 +21,25 @@ const MeaFields: React.FC<Props> = (props) => {
                 label: "Bin",
             },
             {
+                value: 'binCount',
+                label: 'Bin Count'
+            },
+            {
                 value: "log10",
                 label: "Log10",
+            },
+            {
+                value: "log2",
+                label: "Log2",
             },
         ];
     }, []);
 
     const fieldActionHandler = useCallback((selectedValue: any, opIndex: number, meaIndex: number) => {
-        if (selectedValue === "bin") {
-            vizStore.createBinField("measures", meaIndex);
-        } else if (selectedValue === "log10") {
-            vizStore.createLogField("measures", meaIndex);
+        if (selectedValue === "bin" || selectedValue === 'binCount') {
+            vizStore.createBinField("measures", meaIndex, selectedValue);
+        } else if (selectedValue === "log10" || selectedValue === "log2") {
+            vizStore.createLogField("measures", meaIndex, selectedValue);
         }
     }, []);
     return (

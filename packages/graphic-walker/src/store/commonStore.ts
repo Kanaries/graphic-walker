@@ -1,7 +1,6 @@
 import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
-import { createCountField, extendCountField } from '../utils';
 
 export class CommonStore {
     public datasets: IDataSet[] = [];
