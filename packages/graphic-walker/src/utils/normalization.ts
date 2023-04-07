@@ -146,7 +146,9 @@ export function makeBinField(dataSource: IRow[], fid: string, binFid: string, bi
         if (bIndex === binSize) bIndex = binSize - 1;
         return {
             ...r,
-            [binFid]: Number(((bIndex * step + _min)).toFixed(beaStep)),
+            [binFid]: [bIndex * step + _min, (bIndex + 1) * step + _min],
+            
+            // [binFid]: Number(((bIndex * step + _min)).toFixed(beaStep)),
         };
     });
 }

@@ -17,7 +17,7 @@ const syntaxHighlight = (json: any) => {
         .replace(/>/g, "&gt;")
         .replace(/\n/g, "<br>")
         .replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;")
-        .replace(/\s/g, "&nbsp;&nbsp;");
+        .replace(/\s/g, "&nbsp;");
     return json.replace(
         /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
         function (match) {
@@ -84,8 +84,8 @@ const CodeExport: React.FC = observer((props) => {
                     }}
                 />
                 {tabKey === "graphic-walker" && (
-                    <div className="text-sm px-6 max-h-56 overflow-auto">
-                        <div dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
+                    <div className="text-sm px-6 max-h-96 overflow-auto">
+                        <code dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
                     </div>
                 )}
                 <div className="mt-4 flex justify-start">

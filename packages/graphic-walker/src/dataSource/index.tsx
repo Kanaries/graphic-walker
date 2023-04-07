@@ -12,11 +12,9 @@ import DropdownSelect from "../components/dropdownSelect";
 import PrimaryButton from "../components/button/primary";
 
 interface DSSegmentProps {
-    preWorkDone: boolean;
 }
 
 const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
-    const { preWorkDone } = props;
     const { commonStore, vizStore } = useGlobalStore();
     const gwFileRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
@@ -26,9 +24,6 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
     return (
         <div className="flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
             <GwFile fileRef={gwFileRef} />
-            {!preWorkDone && (
-                <div className="animate-spin inline-block mr-2 ml-2 w-4 h-4 rounded-full border-t-2 border-l-2 border-blue-500"></div>
-            )}
             {/* <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
                 {t("DataSource.labels.cur_dataset")}
             </label> */}
@@ -76,18 +71,6 @@ const DataSourceSegment: React.FC<DSSegmentProps> = (props) => {
                 >
                     <DataSelection />
                 </Modal>
-            {/* {showDSPanel && (
-                <Modal
-                    title={t("DataSource.dialog.create_data_source")}
-                    onClose={() => {
-                        commonStore.setShowDSPanel(false);
-                    }}
-                >
-                    <DataSelection />
-                </Modal>
-            )} */}
-            {preWorkDone && <CheckCircleIcon className="text-green-500 w-5 inline-block ml-2" />}
-            {!preWorkDone && <ArrowPathIcon className="text-yellow-500 w-5 inline-block ml-2" />}
         </div>
     );
 };

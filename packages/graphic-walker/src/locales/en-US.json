@@ -58,7 +58,8 @@
             "shape": "Shape",
             "theta": "Angle",
             "radius": "Radius",
-            "filters": "Filters"
+            "filters": "Filters",
+            "details": "Details"
         },
         "aggregator": {
             "sum": "Sum",
