@@ -1,16 +1,10 @@
+import { IAggregator } from "../interfaces";
+
 export interface IAggQuery {
     op: 'aggregate';
     groupBy: string[];
     agg: {
-        [field: string]:
-            | 'sum'
-            | 'count'
-            | 'max'
-            | 'min'
-            | 'mean'
-            | 'median'
-            | 'variance'
-            | 'stdev';
+        [field: string]: IAggregator;
     };
 }
 

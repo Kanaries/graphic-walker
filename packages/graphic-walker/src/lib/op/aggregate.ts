@@ -1,4 +1,4 @@
-import { IRow } from "visual-insights";
+import { IRow } from "../../interfaces";
 import { IAggQuery } from "../interfaces";
 import { sum, mean, median, stdev, variance, max, min, count } from "./stat";
 

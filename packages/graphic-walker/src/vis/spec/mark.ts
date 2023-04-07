@@ -1,4 +1,4 @@
-import { ISemanticType } from "visual-insights";
+import { ISemanticType } from "../../interfaces";
 
 /**
  *

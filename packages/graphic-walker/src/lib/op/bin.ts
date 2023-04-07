@@ -1,4 +1,4 @@
-import { IRow } from "visual-insights";
+import { IRow } from "../../interfaces";
 import { IBinQuery } from "../interfaces";
 
 export function bin (dataSource: IRow[], query: IBinQuery): IRow[] {

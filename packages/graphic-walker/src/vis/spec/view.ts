@@ -1,15 +1,14 @@
-import { ISemanticType } from 'visual-insights';
-import { IStackMode, IViewField } from '../../interfaces';
+import { ISemanticType, IStackMode, IViewField } from '../../interfaces';
 import { autoMark } from './mark';
 import { NULL_FIELD } from './field';
 import { channelAggregate } from './aggregate';
 import { IEncodeProps, channelEncode } from './encode';
-import { channelStack } from './stack'
+import { channelStack } from './stack';
+import { addTooltipEncode } from './tooltip';
 
 const BRUSH_SIGNAL_NAME = '__gw_brush__';
 const POINT_SIGNAL_NAME = '__gw_point__';
 export interface SingleViewProps extends IEncodeProps {
-    
     defaultAggregated: boolean;
     stack: IStackMode;
     enableCrossFilter: boolean;
@@ -32,6 +31,7 @@ export function getSingleView(props: SingleViewProps) {
         column,
         xOffset,
         yOffset,
+        details,
         defaultAggregated,
         stack,
         geomType,
@@ -70,27 +70,25 @@ export function getSingleView(props: SingleViewProps) {
         yOffset,
         theta,
         radius,
+        details
     });
+    addTooltipEncode(encoding, details)
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }
     channelStack(encoding, stack);
-    if (!enableCrossFilter || (brushEncoding === 'none' && selectEncoding === 'none')) {
-        return {
-            config,
-            mark: {
-                type: markType,
-                opacity: 0.96,
-                tooltip: true,
-            },
-            encoding,
-        };
-    }
     const mark = {
         type: markType,
         opacity: 0.96,
-        tooltip: true,
+        tooltip: { content: 'data' }
     };
+    if (!enableCrossFilter || (brushEncoding === 'none' && selectEncoding === 'none')) {
+        return {
+            config,
+            mark,
+            encoding,
+        };
+    }
 
     if (brushEncoding !== 'none') {
         return {

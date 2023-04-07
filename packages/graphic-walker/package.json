@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.2.16",
+  "version": "0.2.18",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -47,15 +47,13 @@
     "postinstall-postinstall": "^2.1.0",
     "re-resizable": "^6.9.8",
     "react-i18next": "^11.18.6",
-    "react-json-view": "^1.21.3",
     "react-shadow": "^20.0.0",
     "rxjs": "^7.3.0",
     "tailwindcss": "^3.2.4",
     "uuid": "^8.3.2",
     "vega": "^5.22.1",
     "vega-embed": "^6.21.0",
-    "vega-lite": "^5.6.0",
-    "visual-insights": "0.7.15"
+    "vega-lite": "^5.6.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.5",

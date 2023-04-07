@@ -1,11 +1,13 @@
-import React, { useEffect } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
 import { GraphicWalker } from "./index";
 
 import { inject } from "@vercel/analytics";
 import "./index.css";
 
-inject();
+if (!import.meta.env.DEV) {
+    inject();
+}
 
 ReactDOM.render(
     <React.StrictMode>

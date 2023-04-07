@@ -1,4 +1,4 @@
-import { IRow } from "visual-insights";
+import { IRow } from "../../interfaces";
 import { IFoldQuery } from "../interfaces";
 
 export function fold (data: IRow[], query: IFoldQuery): IRow[] {
