@@ -36,6 +36,8 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns
             return log2(exp.as, params, subFrame);
         case 'log10':
             return log10(exp.as, params, subFrame);
+        case 'binCount':
+            return binCount(exp.as, params, subFrame);
         default:
             return subFrame;
     }
@@ -58,6 +60,33 @@ function bin(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: 
         if (bIndex === binSize) bIndex = binSize - 1;
         return Number(((bIndex * step + _min)).toFixed(beaStep))
     });
+    return {
+        ...data,
+        [resKey]: newValues,
+    }
+}
+
+function binCount(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
+    const { value: fieldKey } = params[0];
+    const fieldValues = data[fieldKey] as number[];
+
+    const valueWithIndices: {val: number; index: number; orderIndex: number }[] = fieldValues.map((v, i) => ({
+        val: v,
+        index: i
+    })).sort((a, b) => a.val - b.val)
+        .map((item, i) => ({
+            val: item.val,
+            index: item.index,
+            orderIndex: i
+        }))
+
+    const groupSize = valueWithIndices.length / binSize;
+
+    const newValues = valueWithIndices.map(item => {
+        let bIndex = Math.floor(item.orderIndex / groupSize);
+        if (bIndex === binSize) bIndex = binSize - 1;
+        return bIndex + 1
+    })
     return {
         ...data,
         [resKey]: newValues,

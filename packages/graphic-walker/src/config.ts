@@ -53,5 +53,4 @@ export const CHANNEL_LIMIT = {
 export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
     'dimensions',
     'measures',
-    'fields'
 ]

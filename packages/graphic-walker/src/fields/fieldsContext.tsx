@@ -40,7 +40,6 @@ export const FieldsContextWrapper: React.FC = props => {
 export default FieldsContextWrapper;
 
 export const DRAGGABLE_STATE_KEYS: Readonly<IDraggableStateKey[]> = [
-    { id: 'fields', mode: 0 },
     { id: 'columns', mode: 0 },
     { id: 'rows', mode: 0 },
     { id: 'color', mode: 1 },
@@ -50,6 +49,7 @@ export const DRAGGABLE_STATE_KEYS: Readonly<IDraggableStateKey[]> = [
     { id: 'theta', mode: 1 },
     { id: 'radius', mode: 1 },
     { id: 'filters', mode: 1 },
+    { id: 'details', mode: 1 }
 ] as const;
 
 export const AGGREGATOR_LIST: Readonly<string[]> = [

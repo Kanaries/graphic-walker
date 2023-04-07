@@ -1,4 +1,4 @@
-import { ISemanticType } from "../interfaces";
+import { ISemanticType } from "../../interfaces";
 
 /**
  *
