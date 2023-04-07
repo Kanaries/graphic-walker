@@ -149,7 +149,6 @@ export interface IFilterField extends IViewField {
 }
 
 export interface DraggableFieldState {
-    fields: IViewField[];
     dimensions: IViewField[];
     measures: IViewField[];
     rows: IViewField[];
