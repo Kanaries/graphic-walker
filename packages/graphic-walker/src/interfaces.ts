@@ -209,6 +209,15 @@ export interface IVisualConfig {
     };
 }
 
+type ExtractEntries<T extends Record<keyof any, any>, V> = {
+    [key in keyof T]: Extract<T[key], V> extends V ? [key, Extract<T[key], V>] : never;
+};
+
+type ValidKeys<T extends [key: keyof any, value: any ]> = Exclude<T[0], Extract<T, [keyof any, never]>[keyof Extract<T, [keyof any, never]>]>;
+
+export type PickTypedKeys<T extends Record<keyof any, any>, V> = ValidKeys<ExtractEntries<T, V>[keyof ExtractEntries<T, V>]>;
+export type PickBoolean<T extends Record<keyof any, any>> = PickTypedKeys<T, boolean>;
+
 export interface IVisSpec {
     readonly visId: string;
     readonly name?: string;

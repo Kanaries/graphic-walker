@@ -1,12 +1,13 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, PickBoolean, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import type { WritableDraft } from "immer/dist/internal";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -114,7 +115,7 @@ export class VizSpecStore {
      * Members of it can only be got as READONLY objects.
      *
      * If you're trying to change the value of it and let mobx catch the action to trigger an update,
-     * please use `this.useMutable()` to access to a writable reference
+     * please use `this.editEncodings()` to access to a writable reference
      * (an `immer` draft) of `this.visList[this.visIndex]`.
      */
     public readonly draggableFieldState: DeepReadonly<DraggableFieldState>;
@@ -131,7 +132,7 @@ export class VizSpecStore {
      * Members of it can only be got as READONLY objects.
      *
      * If you're trying to change the value of it and let mobx catch the action to trigger an update,
-     * please use `this.useMutable()` to access to a writable reference
+     * please use `this.editConfigs()` to access to a writable reference
      * (an `immer` draft) of `this.visList[this.visIndex]`.
      */
     public readonly visualConfig: Readonly<IVisualConfig>;
@@ -182,52 +183,74 @@ export class VizSpecStore {
     }
     private __dangerous_is_inside_useMutable__ = false;
     /**
-     * @important NEVER recursively call `useMutable()`
-     * because the state will be overwritten by the root `useMutable()` call,
-     * update caused by recursive `useMutable()` call will be reverted or lead to unexpected behaviors.
+     * @important NEVER recursively call `editEncodings()`
+     * because the state will be overwritten by the root `editEncodings()` call,
+     * update caused by recursive `editEncodings()` call will be reverted or lead to unexpected behaviors.
      * Inline your invoking or just use block with IF statement to avoid this in your cases.
      *
-     * Allow to change any deep member of `encodings` or `config`
+     * Allow to change any deep member of `encodings`
      * in the active tab `this.visList[this.visIndex]`.
      *
-     * - `tab.encodings`
+     * - `encodings`
      *
      * A mutable reference of `this.draggableFieldState`
-     *
-     * - `tab.config`
-     *
-     * A mutable reference of `this.visualConfig`
      */
-    private useMutable(cb: (tab: { encodings: DraggableFieldState; config: IVisualConfig }) => void) {
+    private editEncodings(cb: (encodings: WritableDraft<DraggableFieldState>) => void | DraggableFieldState) {
         if (this.__dangerous_is_inside_useMutable__) {
             throw new Error(
-                "A recursive call of useMutable() is detected, " +
+                "A recursive call of editEncodings() is detected, " +
                     "this is prevented because update will be overwritten by parent execution context."
             );
         }
 
         this.__dangerous_is_inside_useMutable__ = true;
 
-        const { encodings, config } = produce(
-            {
-                encodings: this.visList[this.visIndex].encodings,
-                config: this.visList[this.visIndex].config,
-            },
-            (draft) => {
-                cb(draft);
-            }
-        ); // notice that cb() may unexpectedly returns a non-nullable value
+        const encodings = this.visList[this.visIndex].encodings as WritableDraft<DraggableFieldState>;
+        const nextEncodings = cb(encodings) || encodings;
 
-        this.visList[this.visIndex].encodings = encodings;
-        this.visList[this.visIndex].config = config;
+        this.visList[this.visIndex].encodings = nextEncodings;
 
         this.canUndo = this.visList[this.visIndex].canUndo;
         this.canRedo = this.visList[this.visIndex].canRedo;
 
-        // @ts-ignore Allow assignment here to trigger watch
-        this.visualConfig = config;
-        // @ts-ignore Allow assignment here to trigger watch
-        this.draggableFieldState = encodings;
+        // @ts-expect-error Allow assignment here to trigger watch
+        this.draggableFieldState = nextEncodings;
+
+        this.__dangerous_is_inside_useMutable__ = false;
+    }
+    /**
+     * @important NEVER recursively call `editConfigs()`
+     * because the state will be overwritten by the root `editConfigs()` call,
+     * update caused by recursive `editConfigs()` call will be reverted or lead to unexpected behaviors.
+     * Inline your invoking or just use block with IF statement to avoid this in your cases.
+     *
+     * Allow to change any deep member of `configs`
+     * in the active tab `this.visList[this.visIndex]`.
+     *
+     * - `configs`
+     *
+     * A mutable reference of `this.visualConfig`
+     */
+    private editConfigs(cb: (configs: WritableDraft<IVisualConfig>) => void | IVisualConfig) {
+        if (this.__dangerous_is_inside_useMutable__) {
+            throw new Error(
+                "A recursive call of editConfigs() is detected, " +
+                    "this is prevented because update will be overwritten by parent execution context."
+            );
+        }
+
+        this.__dangerous_is_inside_useMutable__ = true;
+
+        const configs = this.visList[this.visIndex].config as WritableDraft<IVisualConfig>;
+        const nextConfigs = cb(configs) || configs;
+
+        this.visList[this.visIndex].config = nextConfigs;
+
+        this.canUndo = this.visList[this.visIndex].canUndo;
+        this.canRedo = this.visList[this.visIndex].canRedo;
+
+        // @ts-expect-error Allow assignment here to trigger watch
+        this.visualConfig = nextConfigs;
 
         this.__dangerous_is_inside_useMutable__ = false;
     }
@@ -319,14 +342,14 @@ export class VizSpecStore {
         })
     }
     public initState() {
-        this.useMutable((tab) => {
-            tab.encodings = initEncoding();
-            this.freezeHistory();
+        this.editEncodings(() => {
+            return initEncoding();
         });
+        this.freezeHistory();
     }
     public initMetaState(dataset: DataSet) {
         const countField = createCountField();
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === "dimension")
                 .map((f) => ({
@@ -352,7 +375,7 @@ export class VizSpecStore {
         this.freezeHistory();
     }
     public clearState() {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             for (let key in encodings) {
                 if (!MetaFieldKeys.includes(key as keyof DraggableFieldState)) {
                     encodings[key] = [];
@@ -360,22 +383,27 @@ export class VizSpecStore {
             }
         });
     }
+    static booleanVisualConfigKeys: readonly PickBoolean<IVisualConfig>[] = [
+        "defaultAggregated", "showActions", "interactiveScale"
+    ];
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
-        this.useMutable(({ config }) => {
-            switch (true) {
-                case ["defaultAggregated", "defaultStack", "showActions", "interactiveScale"].includes(configKey): {
-                    return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
+        this.editConfigs(config => {
+            (() => {
+                switch (true) {
+                    case VizSpecStore.booleanVisualConfigKeys.includes(configKey as PickBoolean<IVisualConfig>): {
+                        return config[configKey as PickBoolean<IVisualConfig>] = Boolean(value);
+                    }
+                    case configKey === "geoms" && Array.isArray(value):
+                    case configKey === "size" && typeof value === "object":
+                    case configKey === "sorted":
+                    case configKey === "stack": {
+                        return (config[configKey] = value);
+                    }
+                    default: {
+                        console.error("unknown key" + configKey);
+                    }
                 }
-                case configKey === "geoms" && Array.isArray(value):
-                case configKey === "size" && typeof value === "object":
-                case configKey === "sorted":
-                case configKey === "stack": {
-                    return (config[configKey] = value);
-                }
-                default: {
-                    console.error("unknown key" + configKey);
-                }
-            }
+            })();
         });
     }
     public transformCoord(coord: "cartesian" | "polar") {
@@ -383,16 +411,16 @@ export class VizSpecStore {
         }
     }
     public setChartLayout(props: { mode: IVisualConfig["size"]["mode"]; width?: number; height?: number }) {
-        this.useMutable(({ config }) => {
+        this.editConfigs(config => {
             const { mode = config.size.mode, width = config.size.width, height = config.size.height } = props;
-
+    
             config.size.mode = mode;
             config.size.width = width;
             config.size.height = height;
         });
     }
     public setExploration(value: Partial<IVisualConfig["exploration"]>) {
-        this.useMutable(({ config }) => {
+        this.editConfigs(config => {
             if (value.mode) {
                 config.exploration.mode = value.mode;
             }
@@ -405,7 +433,7 @@ export class VizSpecStore {
         if (MetaFieldKeys.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const fields = encodings[stateKey];
             const [field] = fields.splice(sourceIndex, 1);
             fields.splice(destinationIndex, 0, field);
@@ -423,7 +451,7 @@ export class VizSpecStore {
             return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
         }
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             let movingField: IViewField;
             // 来源是不是metafield，是->clone；不是->直接删掉
             if (MetaFieldKeys.includes(sourceKey)) {
@@ -450,7 +478,7 @@ export class VizSpecStore {
     public removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
         if (MetaFieldKeys.includes(sourceKey)) return;
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const fields = encodings[sourceKey];
             fields.splice(sourceIndex, 1);
         });
@@ -465,13 +493,13 @@ export class VizSpecStore {
             return;
         }
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const fields = encodings[sourceKey];
             fields.splice(sourceIndex, 1, toJS(enteringField));
         });
     }
     private appendFilter(index: number, data: IViewField) {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings( encodings => {
             encodings.filters.splice(index, 0, {
                 ...toJS(data),
                 dragId: uniqueId(),
@@ -481,7 +509,8 @@ export class VizSpecStore {
         });
     }
     public writeFilter(index: number, rule: IFilterRule | null) {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
+            // @ts-expect-error - the filter item is a union type, but it only differs in the rule field
             encodings.filters[index].rule = rule;
         });
     }
@@ -492,7 +521,7 @@ export class VizSpecStore {
         this.editingFilterIdx = null;
     }
     public transpose() {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const fieldsInCup = encodings.columns;
 
             encodings.columns = encodings.rows;
@@ -500,7 +529,7 @@ export class VizSpecStore {
         });
     }
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const originField = encodings[stateKey][index];
             const newVarKey = uniqueId();
             const binField: IViewField = {
@@ -529,7 +558,7 @@ export class VizSpecStore {
             return;
         }
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const originField = encodings[stateKey][index];
             const newVarKey = uniqueId();
             const logField: IViewField = {
@@ -555,7 +584,7 @@ export class VizSpecStore {
         });
     }
     public setFieldAggregator(stateKey: keyof DraggableFieldState, index: number, aggName: string) {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const fields = encodings[stateKey];
 
             if (fields[index]) {
@@ -590,12 +619,12 @@ export class VizSpecStore {
         index: number,
         sortType: "none" | "ascending" | "descending"
     ) {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             encodings[stateKey][index].sort = sortType;
         });
     }
     public applyDefaultSort(sortType: "none" | "ascending" | "descending" = "ascending") {
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const { rows, columns } = encodings;
             const yField = rows.length > 0 ? rows[rows.length - 1] : null;
             const xField = columns.length > 0 ? columns[columns.length - 1] : null;
@@ -627,7 +656,7 @@ export class VizSpecStore {
             return;
         }
 
-        this.useMutable(({ encodings }) => {
+        this.editEncodings(encodings => {
             const cloneField = { ...toJS(field) };
             cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
