@@ -17,7 +17,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const { themeKey, dark } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig } = vizStore;
+    const { defaultAggregated } = visualConfig;
     const { currentDataset } = commonStore;
     const { dataSource } = currentDataset;
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
@@ -52,7 +53,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 console.error(err);
                 setWaiting(false);
             });
-    }, [dataSource, viewFilters, allFields, viewDimensions, viewMeasures]);
+    }, [dataSource, viewFilters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
 
     return (
         <SpecRenderer

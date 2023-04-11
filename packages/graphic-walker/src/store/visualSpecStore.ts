@@ -1,5 +1,4 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
-import produce from "immer";
 import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, PickBoolean, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
