@@ -11,7 +11,7 @@ export function queryView (rawData: IRow[], metas: IMutField[], query: IViewQuer
         case 'aggregate':
             return aggregate(rawData, query);
         case 'fold':
-            return fold(rawData, query);
+            return fold(rawData, query, metas);
         case 'bin':
             return bin(rawData, query);
         case 'raw':

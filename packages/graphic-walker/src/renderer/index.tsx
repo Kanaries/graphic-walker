@@ -8,6 +8,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -29,6 +30,18 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         setWaiting(true);
         applyFilter(dataSource, viewFilters)
             .then((data) => transformDataService(data, allFields))
+            .then((d) => {
+                const shouldFold = [...viewDimensions, ...viewMeasures].some(f => f.fid === MEA_KEY_ID);
+                if (shouldFold) {
+                    return applyViewQuery(d, allFields, {
+                        op: 'fold',
+                        foldBy: allFields.filter(f => f.analyticType === 'measure' && !f.viewLevel && f.semanticType === 'quantitative').map((f) => f.fid).slice(0, 3),
+                        newFoldKeyCol: MEA_KEY_ID,
+                        newFoldValueCol: MEA_VAL_ID,
+                    });
+                }
+                return d;
+            })
             .then((d) => {
                 // setViewData(d);
                 const dims = viewDimensions;

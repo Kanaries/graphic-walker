@@ -5,7 +5,7 @@ import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
-import { createCountField } from "../utils";
+import { createCountField, createVirtualFields } from "../utils";
 import { nanoid } from "nanoid";
 
 function getChannelSizeLimit(channel: string): number {
@@ -326,6 +326,7 @@ export class VizSpecStore {
     }
     public initMetaState(dataset: DataSet) {
         const countField = createCountField();
+        const virtualFields = createVirtualFields();
         this.useMutable(({ encodings }) => {
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === "dimension")
@@ -347,6 +348,9 @@ export class VizSpecStore {
                     aggName: "sum",
                 }));
             encodings.measures.push(countField);
+            for (const vf of virtualFields) {
+                encodings[`${vf.analyticType}s`].push(vf);
+            }
         });
 
         this.freezeHistory();
@@ -510,7 +514,7 @@ export class VizSpecStore {
                 semanticType: "ordinal",
                 analyticType: "dimension",
                 computed: true,
-                expressoion: {
+                expression: {
                     op: binType,
                     as: newVarKey,
                     params: [
@@ -540,7 +544,7 @@ export class VizSpecStore {
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
-                expressoion: {
+                expression: {
                     op: scaleType,
                     as: newVarKey,
                     params: [

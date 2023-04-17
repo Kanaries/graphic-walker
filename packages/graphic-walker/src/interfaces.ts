@@ -45,7 +45,7 @@ export interface IUncertainMutField {
     analyticType: IAnalyticType | '?';
 }
 
-export type IExpParamter =
+export type IExpParameter =
     | {
           type: 'field';
           value: string;
@@ -65,7 +65,7 @@ export type IExpParamter =
 
 export interface IExpression {
     op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
-    params: IExpParamter[];
+    params: IExpParameter[];
     as: string;
 }
 
@@ -86,7 +86,8 @@ export interface IField {
     analyticType: IAnalyticType;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
-    expressoion?: IExpression;
+    viewLevel?: boolean;
+    expression?: IExpression;
 }
 
 export interface IViewField extends IField {

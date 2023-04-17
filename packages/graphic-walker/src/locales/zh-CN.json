@@ -1,6 +1,8 @@
 {
     "constant": {
         "row_count": "行数",
+        "mea_key": "度量名称",
+        "mea_val": "度量值",
         "analytic_type": {
             "dimension": "维度",
             "measure": "度量"
