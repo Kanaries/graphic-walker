@@ -426,6 +426,15 @@ export class VizSpecStore {
         } else if (destinationKey === "filters") {
             return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
         }
+        if (MetaFieldKeys.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
+            // Cannot change the analytic type of a view level field
+            if (!MetaFieldKeys.includes(sourceKey)) {
+                this.useMutable(({ encodings }) => {
+                    encodings[sourceKey].splice(sourceIndex, 1);
+                });
+            }
+            return;
+        }
 
         this.useMutable(({ encodings }) => {
             let movingField: IViewField;
@@ -442,6 +451,7 @@ export class VizSpecStore {
             // 目的地是metafields的情况，只有在来源也是metafields时，会执行字段类型转化操作
             if (MetaFieldKeys.includes(destinationKey)) {
                 if (!MetaFieldKeys.includes(sourceKey)) return;
+                if (movingField.viewLevel) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
                 movingField.analyticType = destinationKey === "dimensions" ? "dimension" : "measure";
             }
