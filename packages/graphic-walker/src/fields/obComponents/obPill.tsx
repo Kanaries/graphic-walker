@@ -9,7 +9,7 @@ import { useGlobalStore } from "../../store";
 import { Pill } from "../components";
 import { AGGREGATOR_LIST } from "../fieldsContext";
 import DropdownContext from "../../components/dropdownContext";
-import SelectContext, { ISelectContextOption } from "../../components/selectContext";
+import SelectContext, { type ISelectContextOption } from "../../components/selectContext";
 
 interface PillProps {
     provided: DraggableProvided;
@@ -57,7 +57,13 @@ const OBPill: React.FC<PillProps> = (props) => {
                 >
                     <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
                         {foldQuery && (
-                            <SelectContext>
+                            <SelectContext
+                                options={foldOptions}
+                                selectedKeys={foldQuery.foldBy}
+                                onSelect={keys => {
+                                    vizStore.setFieldFoldBy(dkey.id, fIndex, keys);
+                                }}
+                            >
                                 {field.aggName || ""}
                             </SelectContext>
                         )}

@@ -50,7 +50,7 @@ const MeaFields: React.FC<Props> = (props) => {
                         return (
                             <div className="block">
                                 <DropdownContext
-                                    disable={snapshot.isDragging}
+                                    disable={snapshot.isDragging || f.viewLevel}
                                     options={MEA_ACTION_OPTIONS}
                                     onSelect={(v, opIndex) => {
                                         fieldActionHandler(v, opIndex, index);

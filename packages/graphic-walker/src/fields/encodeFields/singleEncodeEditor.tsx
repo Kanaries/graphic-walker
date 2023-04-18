@@ -72,6 +72,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             onSelect={keys => {
                                                 vizStore.setFieldFoldBy(dkey.id, 0, keys);
                                             }}
+                                            className="flex-1"
                                         >
                                             <span className="flex-1 truncate">
                                                 {channelItem.name}

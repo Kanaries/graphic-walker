@@ -13,9 +13,10 @@ interface ISelectContextProps {
     disable?: boolean;
     selectedKeys?: string[];
     onSelect?: (selectedKeys: string[]) => void;
+    className?: string;
 }
 const SelectContext: React.FC<ISelectContextProps> = (props) => {
-    const { options = [], disable = false, selectedKeys = [], onSelect } = props;
+    const { options = [], disable = false, selectedKeys = [], onSelect, className = '' } = props;
 
     const [selected, setSelected] = useState<ISelectContextOption[]>(options.filter(opt => selectedKeys.includes(opt.key)));
 
@@ -42,18 +43,18 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
 
     return (
         <Listbox multiple value={selected} onChange={setSelected}>
-            <div className="relative">
-                <Listbox.Button className="relative w-full flex items-center space-x-2">
-                    <span className="flex-1 block truncate">
+            <div className={`relative ${className}`}>
+                <div className="relative w-full flex items-center space-x-2">
+                    <span className="flex-1 block truncate text-start">
                         {props.children}
                     </span>
-                    <span className="pointer-events-none grow-0 shrink-0 flex items-center pr-2">
+                    <Listbox.Button className="grow-0 shrink-0 flex items-center">
                         <Cog6ToothIcon
                             className="h-5 w-5 text-gray-400"
                             aria-hidden="true"
                         />
-                    </span>
-                </Listbox.Button>
+                    </Listbox.Button>
+                </div>
                 <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"

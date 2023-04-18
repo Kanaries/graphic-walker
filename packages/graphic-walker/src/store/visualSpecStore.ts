@@ -514,6 +514,9 @@ export class VizSpecStore {
         });
     }
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
+        if (this.draggableFieldState[stateKey][index]?.viewLevel) {
+            return;
+        }
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
             const newVarKey = uniqueId();
@@ -540,6 +543,9 @@ export class VizSpecStore {
     }
     public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
         if (stateKey === "filters") {
+            return;
+        }
+        if (this.draggableFieldState[stateKey][index]?.viewLevel) {
             return;
         }
 
