@@ -577,6 +577,14 @@ export class VizSpecStore {
             }
         });
     }
+    public setFieldFoldBy(stateKey: keyof DraggableFieldState, index: number, foldBy: readonly string[]) {
+        this.useMutable(({ encodings }) => {
+            const field = encodings[stateKey]?.[index];
+            if (field?.viewQuery?.op === 'fold') {
+                field.viewQuery.foldBy = foldBy.slice();
+            }
+        });
+    }
     public get sortCondition() {
         const { rows, columns } = this.draggableFieldState;
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;

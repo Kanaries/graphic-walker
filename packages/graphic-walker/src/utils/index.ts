@@ -263,6 +263,12 @@ export function createVirtualFields(): IViewField[] {
             analyticType: "dimension",
             semanticType: "nominal",
             viewLevel: true,
+            viewQuery: {
+                op: 'fold',
+                foldBy: [],
+                newFoldKeyCol: MEA_KEY_ID,
+                newFoldValueCol: MEA_VAL_ID,
+            },
         },
         {
             dragId: MEA_VAL_ID,

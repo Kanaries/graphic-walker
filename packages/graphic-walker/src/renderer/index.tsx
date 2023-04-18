@@ -8,7 +8,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
-import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import type { IFoldQuery } from '../lib/interfaces';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -27,17 +27,16 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     useEffect(() => {
+        const realFields = allFields.filter((f) => !f.viewLevel);
         setWaiting(true);
         applyFilter(dataSource, viewFilters)
-            .then((data) => transformDataService(data, allFields))
+            .then((data) => transformDataService(data, realFields))
             .then((d) => {
-                const shouldFold = [...viewDimensions, ...viewMeasures].some(f => f.fid === MEA_KEY_ID);
-                if (shouldFold) {
-                    return applyViewQuery(d, allFields, {
-                        op: 'fold',
-                        foldBy: allFields.filter(f => f.analyticType === 'measure' && !f.viewLevel && f.semanticType === 'quantitative').map((f) => f.fid).slice(0, 3),
-                        newFoldKeyCol: MEA_KEY_ID,
-                        newFoldValueCol: MEA_VAL_ID,
+                const foldQueries = [...viewDimensions, ...viewMeasures].filter(f => f.viewQuery?.op === 'fold').map(f => f.viewQuery as IFoldQuery);
+                if (foldQueries.length > 0) {
+                    return applyViewQuery(d, realFields, {
+                        ...foldQueries[0],
+                        foldBy: [...new Set(foldQueries.map(f => f.foldBy).flat())],
                     });
                 }
                 return d;

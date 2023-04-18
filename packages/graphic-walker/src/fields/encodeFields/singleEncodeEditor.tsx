@@ -5,11 +5,12 @@ import { useGlobalStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
 import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { COUNT_FIELD_ID } from '../../constants';
+import { COUNT_FIELD_ID, MEA_KEY_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { AGGREGATOR_LIST } from '../fieldsContext';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
+import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 
 const PillActions = styled.div`
     overflow: visible !important;
@@ -24,7 +25,7 @@ interface SingleEncodeEditorProps {
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const { vizStore } = useGlobalStore();
-    const { draggableFieldState, visualConfig } = vizStore;
+    const { draggableFieldState, visualConfig, allFields } = vizStore;
     const channelItem = draggableFieldState[dkey.id][0];
     const { t } = useTranslation();
 
@@ -35,6 +36,14 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
         }));
     }, []);
 
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter(f => f.analyticType === 'measure' && !f.viewLevel);
+        return validFoldBy.map<ISelectContextOption>(f => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
             <div className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'} relative z-0`}>
@@ -43,6 +52,8 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
             {channelItem && (
                 <Draggable key={channelItem.dragId} draggableId={channelItem.dragId} index={0}>
                     {(provided, snapshot) => {
+                        const foldQuery = channelItem.viewQuery?.op === 'fold' ? channelItem.viewQuery : null;
+
                         return (
                             <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1">
                                 <div
@@ -54,9 +65,24 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                     <TrashIcon className="w-4" />
                                 </div>
                                 <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
-                                    <span className="flex-1 truncate">
-                                        {channelItem.name}
-                                    </span>
+                                    {foldQuery && (
+                                        <SelectContext
+                                            options={foldOptions}
+                                            selectedKeys={foldQuery.foldBy}
+                                            onSelect={keys => {
+                                                vizStore.setFieldFoldBy(dkey.id, 0, keys);
+                                            }}
+                                        >
+                                            <span className="flex-1 truncate">
+                                                {channelItem.name}
+                                            </span>
+                                        </SelectContext>
+                                    )}
+                                    {!foldQuery && (
+                                        <span className="flex-1 truncate">
+                                            {channelItem.name}
+                                        </span>
+                                    )}
                                     {channelItem.analyticType === "measure" && channelItem.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                                         <DropdownContext
                                             options={aggregationOptions}

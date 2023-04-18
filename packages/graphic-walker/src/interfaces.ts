@@ -1,3 +1,5 @@
+import type { IViewQuery } from "./lib/viewQuery";
+
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
@@ -86,8 +88,9 @@ export interface IField {
     analyticType: IAnalyticType;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
-    viewLevel?: boolean;
     expression?: IExpression;
+    viewLevel?: boolean;
+    viewQuery?: IViewQuery;
 }
 
 export interface IViewField extends IField {

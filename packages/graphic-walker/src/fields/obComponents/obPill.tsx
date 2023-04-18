@@ -9,6 +9,7 @@ import { useGlobalStore } from "../../store";
 import { Pill } from "../components";
 import { AGGREGATOR_LIST } from "../fieldsContext";
 import DropdownContext from "../../components/dropdownContext";
+import SelectContext, { ISelectContextOption } from "../../components/selectContext";
 
 interface PillProps {
     provided: DraggableProvided;
@@ -18,7 +19,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const { vizStore } = useGlobalStore();
-    const { visualConfig } = vizStore;
+    const { visualConfig, allFields } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
     const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
 
@@ -28,6 +29,16 @@ const OBPill: React.FC<PillProps> = (props) => {
             label: t(op),
         }));
     }, []);
+
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter(f => f.analyticType === 'measure' && !f.viewLevel);
+        return validFoldBy.map<ISelectContextOption>(f => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
+    const foldQuery = field.viewQuery?.op === 'fold' ? field.viewQuery : null;
 
     return (
         <Pill
@@ -45,7 +56,14 @@ const OBPill: React.FC<PillProps> = (props) => {
                     }}
                 >
                     <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                        {field.aggName || ""}
+                        {foldQuery && (
+                            <SelectContext>
+                                {field.aggName || ""}
+                            </SelectContext>
+                        )}
+                        {!foldQuery && (
+                            field.aggName || ""
+                        )}
                         <ChevronUpDownIcon className="w-3" />
                     </span>
                 </DropdownContext>
