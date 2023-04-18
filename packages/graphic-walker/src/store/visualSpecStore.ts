@@ -32,7 +32,7 @@ import {
 } from '../utils/save';
 import { CommonStore } from './commonStore';
 import { createCountField, createVirtualFields } from '../utils';
-import { COUNT_FIELD_ID } from '../constants';
+import { COUNT_FIELD_ID, MEA_KEY_ID } from '../constants';
 import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
 
@@ -435,7 +435,12 @@ export class VizSpecStore {
         if (sourceKey === 'filters') {
             return this.removeField(sourceKey, sourceIndex);
         } else if (destinationKey === 'filters') {
-            return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
+            const field = this.draggableFieldState[sourceKey][sourceIndex];
+            if (field.viewQuery) {
+                // Cannot filter on a view level dimension, this field is virtual
+                return;
+            }
+            return this.appendFilter(destinationIndex, field);
         }
         if (MetaFieldKeys.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
             // Cannot change the analytic type of a view level field
@@ -526,6 +531,9 @@ export class VizSpecStore {
         });
     }
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount'): string {
+        if (this.draggableFieldState[stateKey][index]?.fid === MEA_KEY_ID) {
+            return '';
+        }
         const newVarKey = uniqueId();
         const state = this.draggableFieldState;
         const existedRelatedBinField = state.dimensions.find(
@@ -562,6 +570,9 @@ export class VizSpecStore {
         if (stateKey === 'filters') {
             return;
         }
+        if (this.draggableFieldState[stateKey][index]?.fid === MEA_KEY_ID) {
+            return;
+        }
 
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
@@ -594,6 +605,14 @@ export class VizSpecStore {
 
             if (fields[index]) {
                 encodings[stateKey][index].aggName = aggName;
+            }
+        });
+    }
+    public setFieldFoldBy(stateKey: keyof DraggableFieldState, index: number, foldBy: readonly string[]) {
+        this.useMutable(({ encodings }) => {
+            const field = encodings[stateKey]?.[index];
+            if (field?.viewQuery?.op === 'fold') {
+                field.viewQuery.foldBy = foldBy.slice();
             }
         });
     }

@@ -9,6 +9,7 @@ import { useGlobalStore } from "../../store";
 import { Pill } from "../components";
 import { AGGREGATOR_LIST } from "../fieldsContext";
 import DropdownContext from "../../components/dropdownContext";
+import SelectContext, { type ISelectContextOption } from "../../components/selectContext";
 
 interface PillProps {
     provided: DraggableProvided;
@@ -18,7 +19,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const { vizStore } = useGlobalStore();
-    const { visualConfig } = vizStore;
+    const { visualConfig, allFields } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
     const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
 
@@ -29,6 +30,16 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, []);
 
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter(f => f.analyticType === 'measure' && !f.viewLevel);
+        return validFoldBy.map<ISelectContextOption>(f => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
+    const foldQuery = field.viewQuery?.op === 'fold' ? field.viewQuery : null;
+
     return (
         <Pill
             ref={provided.innerRef}
@@ -36,7 +47,21 @@ const OBPill: React.FC<PillProps> = (props) => {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
-            <span className="flex-1 truncate">{field.name}</span>&nbsp;
+            {foldQuery && (
+                <SelectContext
+                    options={foldOptions}
+                    selectedKeys={foldQuery.foldBy}
+                    onSelect={keys => {
+                        vizStore.setFieldFoldBy(dkey.id, fIndex, keys);
+                    }}
+                >
+                    <span className="flex-1 truncate">{field.name}</span>
+                </SelectContext>
+            )}
+            {!foldQuery && (
+                <span className="flex-1 truncate">{field.name}</span>
+            )}
+            &nbsp;
             {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}
