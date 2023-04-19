@@ -424,7 +424,12 @@ export class VizSpecStore {
         if (sourceKey === "filters") {
             return this.removeField(sourceKey, sourceIndex);
         } else if (destinationKey === "filters") {
-            return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
+            const field = this.draggableFieldState[sourceKey][sourceIndex];
+            if (field.viewQuery) {
+                // Cannot filter on a view level dimension, this field is virtual
+                return;
+            }
+            return this.appendFilter(destinationIndex, field);
         }
         if (MetaFieldKeys.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
             // Cannot change the analytic type of a view level field
