@@ -1,13 +1,13 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import styled from "styled-components";
 import { useTranslation } from 'react-i18next';
 import { COLORS } from "../config";
 
-export const FieldListContainer: React.FC<{ name: string }> = (props) => {
+export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProperties, 'translate'> }> = (props) => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-700">
+    <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-700 relative" style={props.style}>
       <div className="fl-header border-r border-gray-200 dark:border-gray-800 cursor-default select-none">
         <h4 className="font-normal">{t(props.name)}</h4>
       </div>
@@ -79,6 +79,8 @@ export const FieldListSegment = styled.div`
   }
   div.fl-container {
     flex-grow: 10;
+    position: relative;
+    z-index: 1;
   }
 `;
 

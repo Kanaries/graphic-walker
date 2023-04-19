@@ -47,7 +47,21 @@ const OBPill: React.FC<PillProps> = (props) => {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
-            <span className="flex-1 truncate">{field.name}</span>&nbsp;
+            {foldQuery && (
+                <SelectContext
+                    options={foldOptions}
+                    selectedKeys={foldQuery.foldBy}
+                    onSelect={keys => {
+                        vizStore.setFieldFoldBy(dkey.id, fIndex, keys);
+                    }}
+                >
+                    <span className="flex-1 truncate">{field.name}</span>
+                </SelectContext>
+            )}
+            {!foldQuery && (
+                <span className="flex-1 truncate">{field.name}</span>
+            )}
+            &nbsp;
             {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}
@@ -56,20 +70,7 @@ const OBPill: React.FC<PillProps> = (props) => {
                     }}
                 >
                     <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                        {foldQuery && (
-                            <SelectContext
-                                options={foldOptions}
-                                selectedKeys={foldQuery.foldBy}
-                                onSelect={keys => {
-                                    vizStore.setFieldFoldBy(dkey.id, fIndex, keys);
-                                }}
-                            >
-                                {field.aggName || ""}
-                            </SelectContext>
-                        )}
-                        {!foldQuery && (
-                            field.aggName || ""
-                        )}
+                        {field.aggName || ""}
                         <ChevronUpDownIcon className="w-3" />
                     </span>
                 </DropdownContext>
