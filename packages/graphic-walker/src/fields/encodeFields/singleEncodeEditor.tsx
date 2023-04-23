@@ -9,6 +9,12 @@ import { COUNT_FIELD_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { AGGREGATOR_LIST } from '../fieldsContext';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
+import styled from 'styled-components';
+
+const PillActions = styled.div`
+    overflow: visible !important;
+    width: calc(100% - 1.875rem);
+`;
 
 interface SingleEncodeEditorProps {
     dkey: IDraggableStateKey;
@@ -47,7 +53,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 >
                                     <TrashIcon className="w-4" />
                                 </div>
-                                <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
+                                <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
                                     <span className="flex-1 truncate">
                                         {channelItem.name}
                                     </span>
@@ -64,7 +70,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             </span>
                                         </DropdownContext>
                                     )}
-                                </div>
+                                </PillActions>
                             </div>
                         );
                     }}
