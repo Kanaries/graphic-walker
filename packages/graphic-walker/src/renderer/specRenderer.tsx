@@ -21,7 +21,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration, zeroBaseline } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -107,6 +107,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 showActions={showActions}
                 width={size.width - 12 * 4}
                 height={size.height - 12 * 4}
+                zeroBaseline={zeroBaseline}
                 ref={ref}
                 brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
                 selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}

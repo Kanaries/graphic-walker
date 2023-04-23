@@ -145,6 +145,11 @@
                 "size_setting": {
                     "width": "Width",
                     "height": "Height"
+                },
+                "axes_baseline": "Axes Baseline",
+                "axes_zero_baseline": {
+                    "true": "Include zero baseline",
+                    "false": "Exclude zero baseline"
                 }
             },
             "DatasetFields": {

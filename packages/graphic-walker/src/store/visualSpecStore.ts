@@ -78,6 +78,10 @@ export function initVisualConfig(): IVisualConfig {
             mode: "none",
             brushDirection: "default",
         },
+        zeroBaseline: {
+            x: true,
+            y: true,
+        }
     };
 }
 
@@ -399,6 +403,11 @@ export class VizSpecStore {
             if (value.brushDirection) {
                 config.exploration.brushDirection = value.brushDirection;
             }
+        });
+    }
+    public setZeroBaseline(axis: 'x' | 'y', zero: boolean) {
+        this.useMutable(({ config }) => {
+            config.zeroBaseline[axis] = zero;
         });
     }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {

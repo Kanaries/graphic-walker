@@ -45,6 +45,7 @@ interface ReactVegaProps {
   layoutMode: string;
   width: number;
   height: number;
+  zeroBaseline: Record<'x' | 'y', boolean>;
   onGeomClick?: (values: any, e: any) => void
   selectEncoding: SingleViewProps['selectEncoding'];
   brushEncoding: SingleViewProps['brushEncoding'];
@@ -100,8 +101,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     brushEncoding,
     details = [],
     themeKey = 'vega',
-    dark = 'media'
+    dark = 'media',
+    zeroBaseline: _zeroBaseline,
   } = props;
+  const zeroBaseline = useMemo(() => _zeroBaseline, [_zeroBaseline.x, _zeroBaseline.y]);
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
   const mediaTheme = useCurrentMediaTheme(dark);
@@ -199,6 +202,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         brushEncoding,
         enableCrossFilter: false,
         asCrossFilterTrigger: false,
+        zeroBaseline,
       });
 
       spec.mark = singleView.mark;
@@ -269,6 +273,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             enableCrossFilter: crossFilterTriggerIdx !== -1,
             asCrossFilterTrigger: crossFilterTriggerIdx === sourceId,
             hideLegend: !hasLegend,
+            zeroBaseline,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
@@ -372,7 +377,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     brushEncoding,
     crossFilterTriggerIdx,
     themeConfig,
-    details
+    details,
+    zeroBaseline,
   ]);
 
   useImperativeHandle(ref, () => ({

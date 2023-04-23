@@ -75,6 +75,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
     const {
         defaultAggregated, geoms: [markType], stack, interactiveScale, size: { mode: sizeMode, width, height },
         exploration: { mode: explorationMode, brushDirection }, showActions,
+        zeroBaseline: { x: zeroBaselineX, y: zeroBaselineY },
     } = visualConfig;
 
     const downloadPNG = useCallback(throttle(() => {
@@ -216,6 +217,39 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 },
             },
             {
+                key: 'axes_baseline',
+                label: t('axes_baseline'),
+                icon: () => <ChevronUpDownIcon className="rotate-45 scale-125 overflow-hidden" />,
+                form: (
+                    <FormContainer className={dark ? 'dark' : ''}>
+                        <div className="flex flex-col min-w-[16rem] text-sm space-y-2 p-2">
+                            <label className="flex items-center space-x-2">
+                                <span>{tGlobal('constant.draggable_key.columns')}</span>
+                                <input
+                                    type="checkbox"
+                                    checked={zeroBaselineX}
+                                    onChange={e => vizStore.setZeroBaseline('x', e.target.checked)}
+                                />
+                                <output className="text-xs opacity-75">
+                                    {t(`axes_zero_baseline.${zeroBaselineX}`)}
+                                </output>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <span>{tGlobal('constant.draggable_key.rows')}</span>
+                                <input
+                                    type="checkbox"
+                                    checked={zeroBaselineY}
+                                    onChange={e => vizStore.setZeroBaseline('y', e.target.checked)}
+                                />
+                                <output className="text-xs opacity-75">
+                                    {t(`axes_zero_baseline.${zeroBaselineY}`)}
+                                </output>
+                            </label>
+                        </div>
+                    </FormContainer>
+                ),
+            },
+            {
                 key: 'scale',
                 icon: ArrowsPointingOutIcon,
                 label: tGlobal(`constant.layout_type.__enum__`),
@@ -345,7 +379,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 }
             }
         ] as ToolbarItemProps[];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark, zeroBaselineX, zeroBaselineY]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar

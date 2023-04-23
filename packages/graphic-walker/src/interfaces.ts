@@ -207,6 +207,7 @@ export interface IVisualConfig {
         /** works when mode is 'brush' */
         brushDirection: IBrushDirection;
     };
+    zeroBaseline: Record<'x' | 'y', boolean>;
 }
 
 export interface IVisSpec {

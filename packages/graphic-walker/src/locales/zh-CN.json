@@ -145,6 +145,11 @@
                 "size_setting": {
                     "width": "宽度",
                     "height": "高度"
+                },
+                "axes_baseline": "坐标系基线",
+                "axes_zero_baseline": {
+                    "true": "强制包含零",
+                    "false": "不强制包含零"
                 }
             },
             "DatasetFields": {

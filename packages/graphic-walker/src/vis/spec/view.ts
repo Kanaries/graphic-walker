@@ -5,6 +5,7 @@ import { channelAggregate } from './aggregate';
 import { IEncodeProps, channelEncode } from './encode';
 import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
+import { setupZeroBaseline } from './interaction';
 
 const BRUSH_SIGNAL_NAME = '__gw_brush__';
 const POINT_SIGNAL_NAME = '__gw_point__';
@@ -16,6 +17,7 @@ export interface SingleViewProps extends IEncodeProps {
     selectEncoding: 'default' | 'none';
     brushEncoding: 'x' | 'y' | 'default' | 'none';
     hideLegend?: boolean;
+    zeroBaseline: Record<'x' | 'y', boolean>;
 }
 export function getSingleView(props: SingleViewProps) {
     const {
@@ -40,6 +42,7 @@ export function getSingleView(props: SingleViewProps) {
         enableCrossFilter,
         asCrossFilterTrigger,
         hideLegend = false,
+        zeroBaseline,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius];
     let markType = geomType;
@@ -73,6 +76,7 @@ export function getSingleView(props: SingleViewProps) {
         details
     });
     addTooltipEncode(encoding, details)
+    setupZeroBaseline(encoding, zeroBaseline);
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }

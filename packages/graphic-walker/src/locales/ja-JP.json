@@ -144,6 +144,11 @@
           "size_setting": {
             "width": "幅",
             "height": "高さ"
+          },
+          "axes_baseline": "ベースライン",
+          "axes_zero_baseline": {
+            "true": "０をビューポートに確保",
+            "false": "０をビューポートに確保しない"
           }
         },
         "DatasetFields": {
