@@ -56,7 +56,7 @@ const FormContainer = styled.div`
     display: flex;
     flex-direction: column;
     color: #444;
-    .dark {
+    &.dark, .dark {
         color: #aaa;
     }
 `;
