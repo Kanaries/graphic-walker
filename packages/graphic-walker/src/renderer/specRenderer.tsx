@@ -21,7 +21,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, exploration, zeroBaseline } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, zeroBaseline } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -41,19 +41,15 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
-    const shouldTriggerMenu = exploration.mode === 'none';
-
     const handleGeomClick = useCallback(
         (values: any, e: any) => {
-            if (shouldTriggerMenu) {
-                e.stopPropagation();
-                runInAction(() => {
-                    commonStore.showEmbededMenu([e.pageX, e.pageY]);
-                    commonStore.setFilters(values);
-                });
-            }
+            e.stopPropagation();
+            runInAction(() => {
+                commonStore.showEmbededMenu([e.pageX, e.pageY]);
+                commonStore.setFilters(values);
+            });
         },
-        [shouldTriggerMenu]
+        []
     );
     const enableResize = size.mode === 'fixed' && !hasFacet;
 
@@ -109,8 +105,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 height={size.height - 12 * 4}
                 zeroBaseline={zeroBaseline}
                 ref={ref}
-                brushEncoding={exploration.mode === 'brush' ? exploration.brushDirection : 'none'}
-                selectEncoding={exploration.mode === 'point' ? 'default' : 'none'}
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}

@@ -182,13 +182,7 @@ export type IFilterRule =
           value: Set<string | number>;
       };
 
-export const EXPLORATION_TYPES = ['none', 'brush', 'point'] as const;
-
-export const BRUSH_DIRECTIONS = ['default', 'x', 'y'] as const;
-
 export type IStackMode = 'none' | 'stack' | 'normalize';
-export type IExplorationType = typeof EXPLORATION_TYPES[number];
-export type IBrushDirection = typeof BRUSH_DIRECTIONS[number];
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
@@ -201,11 +195,6 @@ export interface IVisualConfig {
         mode: 'auto' | 'fixed';
         width: number;
         height: number;
-    };
-    exploration: {
-        mode: IExplorationType;
-        /** works when mode is 'brush' */
-        brushDirection: IBrushDirection;
     };
     zeroBaseline: Record<'x' | 'y', boolean>;
 }

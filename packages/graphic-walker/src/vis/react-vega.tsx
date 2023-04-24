@@ -47,8 +47,6 @@ interface ReactVegaProps {
   height: number;
   zeroBaseline: Record<'x' | 'y', boolean>;
   onGeomClick?: (values: any, e: any) => void
-  selectEncoding: SingleViewProps['selectEncoding'];
-  brushEncoding: SingleViewProps['brushEncoding'];
   /** @default "vega" */
   themeKey?: IThemeKey;
   dark?: IDarkMode;
@@ -97,8 +95,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     layoutMode,
     width,
     height,
-    selectEncoding,
-    brushEncoding,
     details = [],
     themeKey = 'vega',
     dark = 'media',
@@ -198,10 +194,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         defaultAggregated: defaultAggregate,
         stack,
         geomType,
-        selectEncoding,
-        brushEncoding,
-        enableCrossFilter: false,
-        asCrossFilterTrigger: false,
         zeroBaseline,
       });
 
@@ -210,9 +202,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
-      if ('params' in singleView) {
-        spec.params.push(...singleView.params!);
-      }
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
           vegaRefs.current = [res.view];
@@ -268,19 +257,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             defaultAggregated: defaultAggregate,
             stack,
             geomType,
-            selectEncoding,
-            brushEncoding,
-            enableCrossFilter: crossFilterTriggerIdx !== -1,
-            asCrossFilterTrigger: crossFilterTriggerIdx === sourceId,
             hideLegend: !hasLegend,
             zeroBaseline,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
 
-          if ('params' in singleView) {
-            commonSpec.params = [...commonSpec.params, ...singleView.params!];
-          }
           const ans = { ...commonSpec, ...singleView }
           if ('params' in commonSpec) {
             ans.params = commonSpec.params;
@@ -373,9 +355,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     layoutMode,
     width,
     height,
-    selectEncoding,
-    brushEncoding,
-    crossFilterTriggerIdx,
     themeConfig,
     details,
     zeroBaseline,

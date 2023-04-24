@@ -74,10 +74,6 @@ export function initVisualConfig(): IVisualConfig {
             width: 320,
             height: 200,
         },
-        exploration: {
-            mode: "none",
-            brushDirection: "default",
-        },
         zeroBaseline: {
             x: true,
             y: true,
@@ -393,16 +389,6 @@ export class VizSpecStore {
             config.size.mode = mode;
             config.size.width = width;
             config.size.height = height;
-        });
-    }
-    public setExploration(value: Partial<IVisualConfig["exploration"]>) {
-        this.useMutable(({ config }) => {
-            if (value.mode) {
-                config.exploration.mode = value.mode;
-            }
-            if (value.brushDirection) {
-                config.exploration.brushDirection = value.brushDirection;
-            }
         });
     }
     public setZeroBaseline(axis: 'x' | 'y', zero: boolean) {
