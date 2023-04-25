@@ -86,7 +86,7 @@ export interface IField {
     analyticType: IAnalyticType;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
-    expressoion?: IExpression;
+    expression?: IExpression;
 }
 
 export interface IViewField extends IField {
