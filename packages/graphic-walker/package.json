@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -19,7 +19,8 @@
   "exports": {
     ".": {
       "import": "./dist/graphic-walker.es.js",
-      "require": "./dist/graphic-walker.umd.js"
+      "require": "./dist/graphic-walker.umd.js",
+      "types": "./dist/index.d.ts"
     },
     "./dist/style.css": {
       "import": "./dist/style.css",
