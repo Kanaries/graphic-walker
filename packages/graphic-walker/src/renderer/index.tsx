@@ -8,6 +8,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
+import PivotTable from '../components/pivotTable';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -53,6 +54,14 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setWaiting(false);
             });
     }, [dataSource, viewFilters, allFields, viewDimensions, viewMeasures]);
+    return <PivotTable
+        data={viewData}
+        draggableFieldState={encodings}
+        visualConfig={viewConfig}
+        loading={waiting}
+        themeKey={themeKey}
+        dark={dark}
+    />
 
     return (
         <SpecRenderer
