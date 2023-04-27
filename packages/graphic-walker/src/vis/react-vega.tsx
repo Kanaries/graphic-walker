@@ -3,14 +3,14 @@ import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
-import styled from 'styled-components';
-
-import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
 import { useTranslation } from 'react-i18next';
+import styled from 'styled-components';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
+import { useCurrentMediaTheme } from '../utils/media';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
-import { useCurrentMediaTheme } from '../utils/media';
-import { SingleViewProps, getSingleView } from './spec/view';
+import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
@@ -73,6 +73,9 @@ interface ParamStoreEntry {
   data: any;
 }
 
+const marksNeedToOffsetWhenFold = [
+  'bar', 'rect'
+]
 
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
@@ -141,6 +144,22 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
     const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
 
+    const nonPosFields = [color, opacity, size, shape, theta, radius].filter(f => Boolean(f)) as IViewField[];
+    const alreadyFolded = nonPosFields.find(f => f.fid === MEA_KEY_ID);
+    const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(geomType) && [xField, yField].some(f => f.fid === MEA_VAL_ID);
+
+    let xOffsetField: IViewField = NULL_FIELD;
+    let yOffsetField: IViewField = NULL_FIELD;
+
+    if (shouldOffset) {
+      if (xField.fid !== MEA_VAL_ID) {
+        xOffsetField = { ...alreadyFolded };
+      }
+      if (yField.fid !== MEA_VAL_ID) {
+        yOffsetField = { ...alreadyFolded };
+      }
+    }
+
     const rowLeftFacetFields = rows.slice(0, -1).filter(f => f.analyticType === 'dimension');
     const colLeftFacetFields = columns.slice(0, -1).filter(f => f.analyticType === 'dimension');
 
@@ -185,8 +204,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         radius: radius ? radius : NULL_FIELD,
         row: rowFacetField,
         column: colFacetField,
-        xOffset: NULL_FIELD,
-        yOffset: NULL_FIELD,
+        xOffset: xOffsetField,
+        yOffset: yOffsetField,
         details,
         defaultAggregated: defaultAggregate,
         stack,
@@ -236,9 +255,22 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
           const hasLegend = i === 0 && j === colRepeatFields.length - 1;
+          const localXField = colRepeatFields[j] || NULL_FIELD;
+          const localYField = rowRepeatFields[i] || NULL_FIELD;
+          let localXOffsetField: IViewField = NULL_FIELD;
+          let localYOffsetField: IViewField = NULL_FIELD;
+          const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(geomType) && [localXField, localYField].some(f => f.fid === MEA_VAL_ID);
+          if (shouldOffset) {
+            if (localXField.fid !== MEA_VAL_ID) {
+              localXOffsetField = { ...alreadyFolded };
+            }
+            if (localYField.fid !== MEA_VAL_ID) {
+              localYOffsetField = { ...alreadyFolded };
+            }
+          }
           const singleView = getSingleView({
-            x: colRepeatFields[j] || NULL_FIELD,
-            y: rowRepeatFields[i] || NULL_FIELD,
+            x: localXField,
+            y: localYField,
             color: color ? color : NULL_FIELD,
             opacity: opacity ? opacity : NULL_FIELD,
             size: size ? size : NULL_FIELD,
@@ -247,8 +279,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             radius: radius ? radius : NULL_FIELD,
             row: rowFacetField,
             column: colFacetField,
-            xOffset: NULL_FIELD,
-            yOffset: NULL_FIELD,
+            xOffset: localXOffsetField,
+            yOffset: localYOffsetField,
             details,
             defaultAggregated: defaultAggregate,
             stack,
