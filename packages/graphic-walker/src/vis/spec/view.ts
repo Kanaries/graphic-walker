@@ -6,15 +6,9 @@ import { IEncodeProps, channelEncode } from './encode';
 import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
 
-const BRUSH_SIGNAL_NAME = '__gw_brush__';
-const POINT_SIGNAL_NAME = '__gw_point__';
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
     stack: IStackMode;
-    enableCrossFilter: boolean;
-    asCrossFilterTrigger: boolean;
-    selectEncoding: 'default' | 'none';
-    brushEncoding: 'x' | 'y' | 'default' | 'none';
     hideLegend?: boolean;
 }
 export function getSingleView(props: SingleViewProps) {
@@ -35,10 +29,6 @@ export function getSingleView(props: SingleViewProps) {
         defaultAggregated,
         stack,
         geomType,
-        selectEncoding,
-        brushEncoding,
-        enableCrossFilter,
-        asCrossFilterTrigger,
         hideLegend = false,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius];
@@ -82,55 +72,9 @@ export function getSingleView(props: SingleViewProps) {
         opacity: 0.96,
         tooltip: { content: 'data' }
     };
-    if (!enableCrossFilter || (brushEncoding === 'none' && selectEncoding === 'none')) {
-        return {
-            config,
-            mark,
-            encoding,
-        };
-    }
-
-    if (brushEncoding !== 'none') {
-        return {
-            config,
-            transform: asCrossFilterTrigger ? [] : [{ filter: { param: BRUSH_SIGNAL_NAME } }],
-            params: [
-                // {
-                //   name: BRUSH_SIGNAL_DISPLAY_NAME,
-                //   select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-                //   on: '__YOU_CANNOT_MODIFY_THIS_SIGNAL__',
-                // },
-                {
-                    name: BRUSH_SIGNAL_NAME,
-                    select: { type: 'interval', encodings: brushEncoding === 'default' ? undefined : [brushEncoding] },
-                },
-            ],
-            mark,
-            encoding,
-        };
-    }
-
     return {
         config,
-        transform: asCrossFilterTrigger ? [] : [{ filter: { param: POINT_SIGNAL_NAME } }],
-        params: [
-            {
-                name: POINT_SIGNAL_NAME,
-                select: { type: 'point' },
-            },
-        ],
         mark,
-        encoding: asCrossFilterTrigger
-            ? {
-                  ...encoding,
-                  color: {
-                      condition: {
-                          ...encoding.color,
-                          param: POINT_SIGNAL_NAME,
-                      },
-                      value: '#888',
-                  },
-              }
-            : encoding,
+        encoding,
     };
 }
