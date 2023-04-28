@@ -7,7 +7,7 @@ interface MetricTableProps {
 }
 const MetricTable: React.FC<MetricTableProps> = (props) => {
     const { matrix, measures } = props;
-    console.log(props)
+    // console.log(props)
     return (
         <tbody className="divide-y divide-gray-200 bg-white ">
             {matrix.map((row, rIndex) => {
