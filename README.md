@@ -13,7 +13,7 @@
 [![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
-Graphic Walker is a different type of open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
+Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
 
 ### Why is it different?
 
