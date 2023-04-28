@@ -44,12 +44,19 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
         return columns.filter((f) => f.analyticType === 'dimension');
     }, [columns]);
 
+    const measInRow = useMemo(() => {
+        return rows.filter((f) => f.analyticType === 'measure');
+    }, [rows]);
+
+    const measInColumn = useMemo(() => {
+        return columns.filter((f) => f.analyticType === 'measure');
+    }, [columns]);
+
     const measures = useMemo(() => {
-        return rows.concat(columns).filter(f => f.analyticType === 'measure');
-    }, [rows, columns])
+        return [...measInRow, ...measInColumn];
+    }, [measInRow, measInColumn]);
 
     useEffect(() => {
-        console.log(data);
         if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
             const lt = buildNestTree(
                 dimsInRow.map((d) => d.fid),
@@ -60,11 +67,11 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
                 data
             );
             const metric = buildMetricTableFromNestTree(lt, tt, data);
-            console.log({
-                lt,
-                tt,
-                metric,
-            });
+            // console.log({
+            //     lt,
+            //     tt,
+            //     metric,
+            // });
             // debugger
             unstable_batchedUpdates(() => {
                 setLeftTree(lt);
@@ -74,19 +81,19 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
         }
     }, [dimsInRow, dimsInColumn, data]);
 
-    console.log('render');
+    // console.log('render');
 
     // const { leftTree, topTree, metricTable } = store;
     return (
         <div>
             <div>
                 <h1>left</h1>
-                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} />}
+                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} measInRow={measInRow}  />}
             </div>
-            {/* <div>
+            <div>
                 <h1>top</h1>
-                {topTree && <TopTree data={topTree} />}
-            </div> */}
+                {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measInCol={measInColumn} />}
+            </div>
             <div>
                 <h1>metric</h1>
                 <MetricTable matrix={metricTable} measures={measures} />

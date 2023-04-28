@@ -9,12 +9,12 @@ export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow
         return;   
     }
     const key = nodeData[layerKeys[depth]];
-    console.log({
-        key,
-        nodeData,
-        layerKeys,
-        depth
-    })
+    // console.log({
+    //     key,
+    //     nodeData,
+    //     layerKeys,
+    //     depth
+    // })
     let child = tree.children.find((c) => c.key === key);
     if (!child) {
         // console.log(key, tree.children.map(c => c.key))
@@ -99,7 +99,7 @@ class NodeIterator {
         } else {
             this.current = null;
         }
-        console.log(this.current)
+        // console.log(this.current)
         return this.current;
     }
     public predicates (): { key: string; value: any }[] {
@@ -114,7 +114,7 @@ export function buildMetricTableFromNestTree (leftTree: INestNode, topTree: INes
     const mat: any[][] = [];
     const iteLeft = new NodeIterator(leftTree);
     const iteTop = new NodeIterator(topTree);
-    console.log(iteLeft, iteTop)
+    // console.log(iteLeft, iteTop)
     iteLeft.first();
     // return mat;
     while (iteLeft.current !== null) {
