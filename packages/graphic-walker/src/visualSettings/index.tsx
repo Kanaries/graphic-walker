@@ -11,10 +11,6 @@ import {
     ArrowUturnRightIcon,
     LockClosedIcon,
     LockOpenIcon,
-    ViewfinderCircleIcon,
-    ChatBubbleBottomCenterTextIcon,
-    PaintBrushIcon,
-    CursorArrowRaysIcon,
     WrenchIcon,
     ChevronUpDownIcon,
     XMarkIcon,
@@ -30,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
 import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
 import { useGlobalStore } from '../store';
-import { IStackMode, EXPLORATION_TYPES, IBrushDirection, BRUSH_DIRECTIONS, IDarkMode } from '../interfaces';
+import { IStackMode, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
 import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
@@ -74,7 +70,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
 
     const {
         defaultAggregated, geoms: [markType], stack, interactiveScale, size: { mode: sizeMode, width, height },
-        exploration: { mode: explorationMode, brushDirection }, showActions,
+        showActions,
     } = visualConfig;
 
     const downloadPNG = useCallback(throttle(() => {
@@ -251,60 +247,6 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             '-',
             {
-                key: 'exploration_mode',
-                icon: ViewfinderCircleIcon,
-                label: tGlobal(`constant.exploration_mode.__enum__`),
-                options: EXPLORATION_TYPES.map(g => ({
-                    key: g,
-                    label: tGlobal(`constant.exploration_mode.${g}`),
-                    icon: {
-                        none: ChatBubbleBottomCenterTextIcon,
-                        brush: PaintBrushIcon,
-                        point: CursorArrowRaysIcon,
-                    }[g],
-                })),
-                value: explorationMode,
-                onSelect: key => {
-                    vizStore.setExploration({
-                        mode: key as (typeof EXPLORATION_TYPES)[number]
-                    });
-                },
-                form: explorationMode === 'brush' ? (
-                    <FormContainer>
-                        <label
-                            id="dropdown:brush_mode:label"
-                            htmlFor="dropdown:brush_mode"
-                        >
-                            {tGlobal(`constant.brush_mode.__enum__`)}
-                        </label>
-                        <select
-                            className="border border-gray-500 rounded-sm text-xs pt-0.5 pb-0.5 pl-2 pr-2 cursor-pointer"
-                            id="dropdown:brush_mode"
-                            aria-describedby="dropdown:brush_mode:label"
-                            disabled={explorationMode !== 'brush'}
-                            aria-disabled={explorationMode !== 'brush'}
-                            value={brushDirection}
-                            onChange={e => {
-                                vizStore.setExploration({
-                                    brushDirection: e.target.value as IBrushDirection
-                                });
-                            }}
-                        >
-                            {BRUSH_DIRECTIONS.map(g => (
-                                <option
-                                    key={g}
-                                    value={g}
-                                    className="cursor-pointer"
-                                    aria-selected={brushDirection === g}
-                                >
-                                    {tGlobal(`constant.brush_mode.${g}`)}
-                                </option>
-                            ))}
-                        </select>
-                    </FormContainer>
-                ) : undefined,
-            },
-            {
                 key: 'debug',
                 label: t('toggle.debug'),
                 icon: WrenchIcon,
@@ -345,7 +287,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 }
             }
         ] as ToolbarItemProps[];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar
