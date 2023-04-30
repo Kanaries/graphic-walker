@@ -24,16 +24,13 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
         return;
     }
     cellRows[depth].push(
-        <td key={nanoid()} className="whitespace-nowrap p-2 text-xs text-gray-500 bg-gray-200 m-1 border border-red-500" colSpan={childrenSize * Math.max(meaNumber, 1)}>
+        <td key={nanoid()} className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300" colSpan={childrenSize * Math.max(meaNumber, 1)}>
             {node.value}
         </td>
     );
     for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
         renderTree(child, dimsInCol, depth + 1, cellRows, meaNumber);
-        // if (i < node.children.length - 1) {
-        //     cellRows.push([])
-        // }
     }
 }
 
@@ -44,26 +41,20 @@ export interface TreeProps {
 }
 const TopTree: React.FC<TreeProps> = (props) => {
     const { data, dimsInCol, measInCol } = props;
-    console.log({
-        data,
-        dimsInCol,
-        measInCol,
-    })
     const nodeCells: ReactNode[] = useMemo(() => {
         const cellRows: ReactNode[][] = new Array(dimsInCol.length + 1).fill(0).map(() => []);
         renderTree(data, dimsInCol, 0, cellRows, measInCol.length);
         const totalChildrenSize = cellRows[cellRows.length - 1].length;
-        cellRows.push(new Array(totalChildrenSize).fill(0).flatMap(() => measInCol.map((m) => <td key={nanoid()} className="whitespace-nowrap p-2 text-xs text-gray-500 bg-gray-200 m-1 border border-red-500">{m.name}</td>)));
+        cellRows.push(new Array(totalChildrenSize).fill(0).flatMap(() => measInCol.map((m) => <td key={nanoid()} className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300">{m.name}</td>)));
+        cellRows.shift();
         return cellRows;
     }, [data, dimsInCol, measInCol]);
     return (
-        <div>
-            <thead>
+            <thead className='border border-gray-300 bg-gray-50 border border-gray-300'>
                 {nodeCells.map((row, rIndex) => (
-                    <tr key={rIndex}>{row}</tr>
+                    <tr className="border border-gray-300" key={rIndex}>{row}</tr>
                 ))}
             </thead>
-        </div>
     );
 };
 
