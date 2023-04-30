@@ -27,7 +27,7 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     cellRows[cellRows.length - 1].push(
         <td
             key={nanoid()}
-            className="whitespace-nowrap p-2 text-xs text-gray-500 bg-gray-200 m-1 border border-red-500"
+            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
             rowSpan={childrenSize * Math.max(meaNumber, 1)}
         >
             {node.value}
@@ -52,6 +52,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
     const nodeCells: ReactNode[] = useMemo(() => {
         const cellRows: ReactNode[][] = [[]];
         renderTree(data, dimsInRow, 0, cellRows, measInRow.length);
+        cellRows[0].shift();
         if (measInRow.length > 0) {
             const ans: ReactNode[][] = [];
             for (let row of cellRows) {
@@ -59,7 +60,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ...row,
                     <td
                         key={nanoid()}
-                        className="whitespace-nowrap p-2 text-xs text-gray-500 bg-gray-200 m-1 border border-red-500"
+                        className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                     >
                         {measInRow[0].name}
                     </td>,
@@ -68,7 +69,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ans.push([
                         <td
                             key={nanoid()}
-                            className="whitespace-nowrap p-2 text-xs text-gray-500 bg-gray-200 m-1 border border-red-500"
+                            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                         >
                             {measInRow[j].name}
                         </td>,
@@ -80,13 +81,13 @@ const LeftTree: React.FC<TreeProps> = (props) => {
         return cellRows;
     }, [data, dimsInRow, measInRow]);
     return (
-        <div>
-            <thead>
-                {nodeCells.map((row, rIndex) => (
-                    <tr key={rIndex}>{row}</tr>
-                ))}
-            </thead>
-        </div>
+        <thead className="bg-gray-50 border border-gray-300 border border-gray-300">
+            {nodeCells.map((row, rIndex) => (
+                <tr className="border border-gray-300" key={rIndex}>
+                    {row}
+                </tr>
+            ))}
+        </thead>
     );
 };
 

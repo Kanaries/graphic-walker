@@ -17,6 +17,21 @@ import { INestNode } from './inteface';
 import { buildMetricTableFromNestTree, buildNestTree } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
+import { toJS } from 'mobx';
+
+// const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
+//     const store = usePivotTableStore();
+//     const { vizStore } = useGlobalStore();
+//     const { draggableFieldState } = vizStore;
+//     const { rows, columns } = draggableFieldState;
+//     return (
+//         <PivotTable
+//             {...props}
+//             draggableFieldState={draggableFieldState}
+//             visualConfig={visualConfig}
+//         />
+//     );
+// })
 
 interface PivotTableProps {
     themeKey?: IThemeKey;
@@ -26,11 +41,11 @@ interface PivotTableProps {
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
 }
-const PivotTable: React.FC<PivotTableProps> = observer((props) => {
-    const { data } = props;
+const PivotTable: React.FC<PivotTableProps> = (props) => {
+    const { data, draggableFieldState } = props;
     // const store = usePivotTableStore();
-    const { vizStore } = useGlobalStore();
-    const { draggableFieldState } = vizStore;
+    // const { vizStore } = useGlobalStore();
+    // const { draggableFieldState } = vizStore;
     const { rows, columns } = draggableFieldState;
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
@@ -52,10 +67,6 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
         return columns.filter((f) => f.analyticType === 'measure');
     }, [columns]);
 
-    const measures = useMemo(() => {
-        return [...measInRow, ...measInColumn];
-    }, [measInRow, measInColumn]);
-
     useEffect(() => {
         if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
             const lt = buildNestTree(
@@ -67,11 +78,6 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
                 data
             );
             const metric = buildMetricTableFromNestTree(lt, tt, data);
-            // console.log({
-            //     lt,
-            //     tt,
-            //     metric,
-            // });
             // debugger
             unstable_batchedUpdates(() => {
                 setLeftTree(lt);
@@ -81,26 +87,26 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
         }
     }, [dimsInRow, dimsInColumn, data]);
 
-    // console.log('render');
-
     // const { leftTree, topTree, metricTable } = store;
     return (
-        <div>
-            <div>
-                <h1>left</h1>
-                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} measInRow={measInRow}  />}
-            </div>
-            <div>
-                <h1>top</h1>
+        <div className="flex">
+            <table className="border border-gray-300 border-collapse">
+                <thead className="border border-gray-300">
+                    {new Array(dimsInColumn.length + (measInColumn.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
+                        <tr className="" key={i}>
+                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                        </tr>
+                    ))}
+                </thead>
+                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} measInRow={measInRow} />}
+            </table>
+            <table className="border border-gray-300 border-collapse">
                 {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measInCol={measInColumn} />}
-            </div>
-            <div>
-                <h1>metric</h1>
-                <MetricTable matrix={metricTable} measures={measures} />
-            </div>
+                {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
+            </table>
         </div>
     );
-});
+};
 
 export default PivotTable;
 

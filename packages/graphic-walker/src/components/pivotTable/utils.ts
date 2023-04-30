@@ -118,7 +118,6 @@ export function buildMetricTableFromNestTree (leftTree: INestNode, topTree: INes
     iteLeft.first();
     // return mat;
     while (iteLeft.current !== null) {
-        mat.push([])
         const vec: any[] = [];
         iteTop.first();
         while (iteTop.current !== null) {
