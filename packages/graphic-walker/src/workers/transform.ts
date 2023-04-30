@@ -6,7 +6,7 @@ export function transformData(data: IRow[], columns: IField[]) {
     let df = dataset2DataFrame(data, columns);
     for (let i = 0; i < computedFields.length; i++) {
         const field = computedFields[i];
-        df = execExpression(field.expressoion!, df, columns);
+        df = execExpression(field.expression!, df, columns);
     }
     return dataframe2Dataset(df, columns);
 }

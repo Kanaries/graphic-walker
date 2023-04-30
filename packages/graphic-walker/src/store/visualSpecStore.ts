@@ -496,7 +496,7 @@ export class VizSpecStore {
                 semanticType: "ordinal",
                 analyticType: "dimension",
                 computed: true,
-                expressoion: {
+                expression: {
                     op: binType,
                     as: newVarKey,
                     params: [
@@ -526,7 +526,7 @@ export class VizSpecStore {
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
-                expressoion: {
+                expression: {
                     op: scaleType,
                     as: newVarKey,
                     params: [
