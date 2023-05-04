@@ -18,6 +18,7 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
+import type { IDataQueryOptions } from './services';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -35,6 +36,8 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    /** @default "worker" */
+    queryMode?: IDataQueryOptions['mode'];
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -48,6 +51,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        queryMode = 'worker',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -148,7 +152,12 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
+                                        <ReactiveRenderer
+                                            ref={rendererRef}
+                                            themeKey={themeKey}
+                                            dark={dark}
+                                            queryMode={queryMode}
+                                        />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
