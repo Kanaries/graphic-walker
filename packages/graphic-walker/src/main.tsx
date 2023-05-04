@@ -23,7 +23,7 @@ if (isConcurrentModeAvailable) {
 } else {
     ReactDOM.render(
         <React.StrictMode>
-            <GraphicWalker themeKey="g2" />
+            <GraphicWalker themeKey="g2" queryMode="server" />
         </React.StrictMode>,
         document.getElementById('root') as HTMLElement
     );

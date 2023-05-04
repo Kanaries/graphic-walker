@@ -1,3 +1,5 @@
+import type { IViewQuery } from "./lib/viewQuery";
+
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
@@ -218,3 +220,44 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: {
+        [key in keyof Pick<IFilterField, 'fid' | 'rule'>]: NonNullable<IFilterField[key]>;
+    }[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        [key in keyof Pick<IViewField, 'fid' | 'expression'>]-?: NonNullable<IViewField[key]>;
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep;
+
+export interface IDataQueryPayload {
+    datasetId: string;
+    workflow: IDataQueryWorkflowStep[];
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);

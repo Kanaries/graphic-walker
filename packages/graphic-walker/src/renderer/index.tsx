@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, forwardRef } from 'react';
-import { applyFilter, applyViewQuery, transformDataService } from '../services';
+import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
+import { IDataQueryOptions, queryViewData } from '../services';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
 import SpecRenderer from './specRenderer';
 import { toJS } from 'mobx';
@@ -9,51 +9,67 @@ import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
 import PivotTable from '../components/pivotTable';
-import { getMeaAggKey } from '../utils';
+import { toWorkflow } from '../utils/workflow';
 
 interface RendererProps {
+    queryMode: IDataQueryOptions['mode'];
     themeKey?: IThemeKey;
     dark?: IDarkMode;
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { themeKey, dark, queryMode } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewDimensions, viewMeasures } = vizStore;
     const { currentDataset } = commonStore;
-    const { dataSource } = currentDataset;
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
+
+    const workflow = useMemo(() => {
+        return toWorkflow(
+            viewFilters,
+            allFields,
+            viewDimensions,
+            viewMeasures,
+            vizStore.visualConfig.defaultAggregated,
+        );
+    }, [viewFilters, allFields, viewDimensions, viewMeasures, vizStore.visualConfig.defaultAggregated]);
+
+    // Dependencies that should not trigger effect
+    const latestFromRef = useRef({ vizStore, allFields });
+    latestFromRef.current = { vizStore, allFields };
+
     useEffect(() => {
         setWaiting(true);
-        applyFilter(dataSource, viewFilters)
-            .then((data) => transformDataService(data, allFields))
-            .then((d) => {
-                // setViewData(d);
-                const dims = viewDimensions;
-                const meas = viewMeasures;
-                const config = toJS(vizStore.visualConfig);
-                return applyViewQuery(d, dims.concat(meas), {
-                    op: config.defaultAggregated ? 'aggregate' : 'raw',
-                    groupBy: dims.map((f) => f.fid),
-                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
-                });
-            })
-            .then((data) => {
-                unstable_batchedUpdates(() => {
-                    setViewData(data);
-                    setWaiting(false);
-                    setEncodings(toJS(vizStore.draggableFieldState));
-                    setViewConfig(toJS(vizStore.visualConfig));
-                });
-            })
-            .catch((err) => {
-                console.error(err);
+        queryViewData(
+            {
+                datasetId: currentDataset.id,
+                workflow,
+            },
+            {
+                mode: queryMode,
+                dataset: currentDataset,
+                columns: latestFromRef.current.allFields,
+            }
+        ).then(data => {
+            unstable_batchedUpdates(() => {
+                setViewData(data);
                 setWaiting(false);
+                setEncodings(toJS(latestFromRef.current.vizStore.draggableFieldState));
+                setViewConfig(toJS(latestFromRef.current.vizStore.visualConfig));
             });
-    }, [dataSource, viewFilters, allFields, viewDimensions, viewMeasures]);
+        }).catch((err) => {
+            console.error(err);
+            unstable_batchedUpdates(() => {
+                setViewData([]);
+                setWaiting(false);
+                setEncodings(initEncoding);
+                setViewConfig(initVisualConfig);
+            });
+        });
+    }, [queryMode, workflow, currentDataset]);
 
     if (viewConfig.geoms.includes('table')) {
         return (
