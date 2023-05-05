@@ -218,3 +218,12 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+
+export interface IGWSpecChangeDetail {
+    visSpec: IVisSpec[];
+    prev: IVisSpec[];
+}
+export interface IGWSpecChangeEvent extends CustomEvent<IGWSpecChangeDetail> {
+    type: 'specChange';
+}
+export type IGWEvent = IGWSpecChangeEvent;

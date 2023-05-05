@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IGWEvent, IGWSpecChangeDetail, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -19,6 +19,7 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import { reaction, toJS } from 'mobx';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -36,6 +37,7 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    onEvent?: (event: IGWEvent) => any;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -49,6 +51,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        onEvent,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -99,6 +102,31 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
+
+    /** handle spec-change events */
+    useEffect(() => {
+        const disposer = reaction(
+            () => {
+                const { draggableFieldState, visualConfig } = vizStore;
+                return { draggableFieldState, visualConfig, visSpec: vizStore.exportViewSpec() };
+
+            },
+            (args, prev, r) => {
+                const [argsJS, prevJS] = [toJS(args.visSpec), toJS(prev.visSpec)];
+                if (onEvent) {
+                    onEvent(new CustomEvent('specChange', {
+                        detail: {
+                            visSpec: argsJS,
+                            prev: prevJS,
+                        } as IGWSpecChangeDetail,
+                    }) as IGWEvent);
+                }
+            }
+        );
+        return () => {
+            disposer();
+        }
+    }, [onEvent, vizStore]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
