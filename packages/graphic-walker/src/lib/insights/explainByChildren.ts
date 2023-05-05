@@ -1,5 +1,5 @@
 import { IMeasure, IRow } from '../../interfaces';
-import { IPredicate, checkChildOutlier, checkMajorFactor, filterByPredicates } from '../../utils';
+import { IPredicate, checkChildOutlier, checkMajorFactor, filterByPredicates, getMeaAggKey } from '../../utils';
 import { aggregate } from '../op/aggregate';
 
 export function explainByChildren(
@@ -16,7 +16,11 @@ export function explainByChildren(
     const viewData = aggregate(dataSource, {
         groupBy: dimensions,
         op: 'aggregate',
-        agg: Object.fromEntries(measures.map((mea) => [mea.key, mea.op])),
+        measures: measures.map(mea => ({
+            field: mea.key,
+            agg: mea.op,
+            asFieldKey: getMeaAggKey(mea.key, mea.op)
+        }))
     });
     const measureIds = measures.map((m) => m.key);
     const parentData = filterByPredicates(viewData, predicates);
@@ -27,7 +31,11 @@ export function explainByChildren(
         const data = aggregate(dataSource, {
             groupBy: dimensions.concat(extendDim),
             op: 'aggregate',
-            agg: Object.fromEntries(measures.map((mea) => [mea.key, mea.op])),
+            measures: measures.map((mea) => ({
+                field: mea.key,
+                agg: mea.op,
+                asFieldKey: getMeaAggKey(mea.key, mea.op),
+            }))
         });
         let groups: Map<any, IRow[]> = new Map();
         for (let record of data) {

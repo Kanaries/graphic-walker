@@ -1,3 +1,4 @@
+import { getMeaAggKey } from ".";
 import type { IDataQueryPayload } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 
@@ -43,7 +44,11 @@ export const toWorkflow = (
             query: [{
                 op: 'aggregate',
                 groupBy: viewDimensions.map(f => f.fid),
-                agg: Object.fromEntries(aggregateOn),
+                measures: viewMeasures.map((f) => ({
+                    field: f.fid,
+                    agg: f.aggName as any,
+                    asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                })),
             }],
         });
     }

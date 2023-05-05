@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",

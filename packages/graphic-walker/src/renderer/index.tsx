@@ -9,6 +9,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
 import { toWorkflow } from '../utils/workflow';
 import type { IGWTransformer } from '../transformer';
+import PivotTable from '../components/pivotTable';
 
 interface RendererProps {
     transformer: IGWTransformer;
@@ -64,6 +65,19 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             setWaiting(false);
         });
     }, [transformer, workflow, currentDataset]);
+
+    if (viewConfig.geoms.includes('table')) {
+        return (
+            <PivotTable
+                data={viewData}
+                draggableFieldState={encodings}
+                visualConfig={viewConfig}
+                loading={waiting}
+                themeKey={themeKey}
+                dark={dark}
+            />
+        );
+    }
 
     return (
         <SpecRenderer
