@@ -74,10 +74,6 @@ export function initVisualConfig(): IVisualConfig {
             width: 320,
             height: 200,
         },
-        exploration: {
-            mode: "none",
-            brushDirection: "default",
-        },
     };
 }
 
@@ -391,16 +387,6 @@ export class VizSpecStore {
             config.size.height = height;
         });
     }
-    public setExploration(value: Partial<IVisualConfig["exploration"]>) {
-        this.useMutable(({ config }) => {
-            if (value.mode) {
-                config.exploration.mode = value.mode;
-            }
-            if (value.brushDirection) {
-                config.exploration.brushDirection = value.brushDirection;
-            }
-        });
-    }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
         if (MetaFieldKeys.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
@@ -510,7 +496,7 @@ export class VizSpecStore {
                 semanticType: "ordinal",
                 analyticType: "dimension",
                 computed: true,
-                expressoion: {
+                expression: {
                     op: binType,
                     as: newVarKey,
                     params: [
@@ -540,7 +526,7 @@ export class VizSpecStore {
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
-                expressoion: {
+                expression: {
                     op: scaleType,
                     as: newVarKey,
                     params: [

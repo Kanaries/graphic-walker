@@ -246,7 +246,7 @@ export function createCountField(): IViewField {
         semanticType: "quantitative",
         aggName: 'sum',
         computed: true,
-        expressoion: {
+        expression: {
             op: 'one',
             params: [],
             as: COUNT_FIELD_ID,
