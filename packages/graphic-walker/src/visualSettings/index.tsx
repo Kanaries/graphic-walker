@@ -283,7 +283,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             {
                 key: 'config',
-                label: 'config',
+                label: t('button.config'),
                 icon: Cog6ToothIcon,
                 onClick: () => {
                     commonStore.setShowVisualConfigPanel(true);
