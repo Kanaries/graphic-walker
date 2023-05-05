@@ -1,6 +1,5 @@
 import { toJS } from 'mobx';
-import produce, { enableMapSet } from 'immer';
-import type { IRow, IMutField, IResponse, Specification, IDataQueryPayload, DataSet, IFilterWorkflowStep } from './interfaces';
+import type { IRow, IMutField, Specification, IFilterWorkflowStep } from './interfaces';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -14,7 +13,6 @@ import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
 import { IViewQuery } from './lib/viewQuery';
 
-enableMapSet();
 
 // interface WorkerState {
 //     eWorker: Worker | null;
@@ -174,74 +172,3 @@ export const applyViewQuery = async (data: IRow[], metas: IMutField[], query: IV
         worker.terminate();
     }
 }
-
-export interface IDataQueryOptions {
-    mode: 'worker' | 'server';
-    dataset: DataSet;
-    columns: IMutField[];
-}
-
-export const queryViewData = async (
-    payload: IDataQueryPayload,
-    options: IDataQueryOptions,
-): Promise<IRow[]> => {
-    const { mode, dataset, columns } = options;
-    if (mode === 'server') {
-        const serverOrigin = localStorage.getItem('data_service') || 'http://localhost:3021';
-        const data = produce(payload, draft => {
-            for (const step of draft.workflow) {
-                if (step.type === 'filter') {
-                    for (const filter of step.filters) {
-                        if (filter.rule.type === 'one of') {
-                            // @ts-expect-error - stringify all sets as array
-                            filter.rule.value = Array.from(filter.rule.value);
-                        }
-                    }
-                }
-            }
-        });
-        const res = await fetch(`${serverOrigin}/api/data/v1/query`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-        if (res.status === 200 || res.status === 500) {
-            const result = await res.json() as IResponse<IRow[]>;
-            if (result.success === false) {
-                throw new Error(result.message);
-            }
-            return result.data;
-        } else {
-            throw new Error(`Failed to query data from server. ${res.status}: ${res.statusText}`);
-        }
-    } else {
-        const data = dataset.dataSource;
-        let res = data;
-        for await (const step of payload.workflow) {
-            switch (step.type) {
-                case 'filter': {
-                    res = await applyFilter(res, step.filters);
-                    break;
-                }
-                case 'transform': {
-                    res = await transformDataService(res, columns);
-                    break;
-                }
-                case 'view': {
-                    for await (const job of step.query) {
-                        res = await applyViewQuery(res, columns, job);
-                    }
-                    break;
-                }
-                default: {
-                    // @ts-expect-error - runtime check
-                    console.warn(new Error(`Unknown step type: ${step.type}`));
-                    break;
-                }
-            }
-        }
-        return res;
-    }
-};

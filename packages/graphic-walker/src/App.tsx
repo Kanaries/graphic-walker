@@ -18,7 +18,9 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
-import type { IDataQueryOptions } from './services';
+import type { IGWTransformer } from './transformer';
+import WebWorkerTransformer from './transformer/webWorkerTransformer';
+export type { IGWTransformer };
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -36,8 +38,8 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
-    /** @default "worker" */
-    queryMode?: IDataQueryOptions['mode'];
+    /** @default WebWorkerTransformer */
+    transformer?: IGWTransformer;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -51,7 +53,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
-        queryMode = 'worker',
+        transformer = new WebWorkerTransformer(),
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -156,7 +158,7 @@ const App = observer<IGWProps>(function App(props) {
                                             ref={rendererRef}
                                             themeKey={themeKey}
                                             dark={dark}
-                                            queryMode={queryMode}
+                                            transformer={transformer}
                                         />
                                     )}
                                     {/* {vizEmbededMenu.show && (
