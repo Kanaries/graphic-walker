@@ -161,6 +161,7 @@ export interface DraggableFieldState {
     radius: IViewField[];
     details: IViewField[];
     filters: IFilterField[];
+    text: IViewField[];
 }
 
 export interface IDraggableStateKey {

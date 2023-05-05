@@ -24,7 +24,8 @@
         "rect": "長方形",
         "arc": "アーク",
         "boxplot": "ボックスプロット",
-        "table": "表"
+        "table": "表",
+        "text": "本文"
       },
       "stack_mode": {
         "__enum__": "スタックモード",
@@ -59,7 +60,8 @@
         "shape": "形状",
         "theta": "角度",
         "radius": "半径",
-        "filters": "フィルター"
+        "filters": "フィルター",
+        "text": "本文"
       },
       "aggregator": {
         "sum": "合計",

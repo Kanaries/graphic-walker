@@ -24,7 +24,8 @@
             "rect": "Rectangle",
             "arc": "Arc",
             "boxplot": "Box (Box Plot)",
-            "table": "Table"
+            "table": "Table",
+            "text": "Text"
         },
         "stack_mode": {
             "__enum__": "Stack Mode",
@@ -60,7 +61,8 @@
             "theta": "Angle",
             "radius": "Radius",
             "filters": "Filters",
-            "details": "Details"
+            "details": "Details",
+            "text": "Text"
         },
         "aggregator": {
             "sum": "Sum",
