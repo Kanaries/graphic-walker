@@ -1,9 +1,10 @@
 import { makeAutoObservable, observable } from 'mobx';
-import { IGroupByQuery, INestNode } from './inteface';
+import { INestNode } from './inteface';
 import { IAggQuery } from '../../lib/interfaces';
 import { queryView } from '../../lib/viewQuery';
 import { IField, IRow } from '../../interfaces';
 import React, { createContext, useContext, useEffect } from 'react';
+import { getMeaAggKey } from '../../utils';
 
 class PivotTableStore {
     public leftTree: INestNode | null = null;
@@ -29,15 +30,15 @@ class PivotTableStore {
         this.topTree = null;
         this.viewData = [];
     }
-    public createTree(query: IGroupByQuery, viewData: IRow[]) {}
-
-    public createTopTree(query: IGroupByQuery, viewData) {}
-    public createLeftTree(query: IGroupByQuery, viewData) {}
-    public async queryData(leftQuery: IGroupByQuery, topQuery: IGroupByQuery) {
+    public async queryData(leftQuery: IAggQuery, topQuery: IAggQuery) {
         const viewQuery: IAggQuery = {
             op: 'aggregate',
             groupBy: leftQuery.groupBy.concat(topQuery.groupBy),
-            agg: Object.fromEntries(leftQuery.measures.concat(topQuery.measures).map((mea) => [mea.field, mea.agg])),
+            measures: leftQuery.measures.concat(topQuery.measures).map(mea => ({
+                field: mea.field,
+                agg: mea.agg,
+                asFieldKey: getMeaAggKey(mea.field, mea.agg)
+            }))
         };
         const viewData = queryView(this.dataSource, this.metas, viewQuery);
         this.viewData = viewData;

@@ -9,6 +9,7 @@ import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
 import PivotTable from '../components/pivotTable';
+import { getMeaAggKey } from '../utils';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -25,7 +26,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-
     useEffect(() => {
         setWaiting(true);
         applyFilter(dataSource, viewFilters)
@@ -38,7 +38,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 return applyViewQuery(d, dims.concat(meas), {
                     op: config.defaultAggregated ? 'aggregate' : 'raw',
                     groupBy: dims.map((f) => f.fid),
-                    agg: Object.fromEntries(meas.map((f) => [f.fid, f.aggName as any])),
+                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
                 });
             })
             .then((data) => {
@@ -54,14 +54,19 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setWaiting(false);
             });
     }, [dataSource, viewFilters, allFields, viewDimensions, viewMeasures]);
-    return <PivotTable
-        data={viewData}
-        draggableFieldState={encodings}
-        visualConfig={viewConfig}
-        loading={waiting}
-        themeKey={themeKey}
-        dark={dark}
-    />
+
+    if (viewConfig.geoms.includes('table')) {
+        return (
+            <PivotTable
+                data={viewData}
+                draggableFieldState={encodings}
+                visualConfig={viewConfig}
+                loading={waiting}
+                themeKey={themeKey}
+                dark={dark}
+            />
+        );
+    }
 
     return (
         <SpecRenderer

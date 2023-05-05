@@ -1,10 +1,19 @@
 import React from 'react';
-import { IField } from '../../interfaces';
+import { IField, IRow } from '../../interfaces';
+import { getMeaAggKey } from '../../utils';
 
 interface MetricTableProps {
     matrix: any[][];
     meaInRows: IField[];
     meaInColumns: IField[];
+}
+
+function getCellData (cell: IRow, measure: IField) {
+    const meaKey = getMeaAggKey(measure.fid, measure.aggName);
+    if (cell[meaKey] === undefined) {
+        return '--';
+    }
+    return cell[meaKey];
 }
 const MetricTable: React.FC<MetricTableProps> = (props) => {
     const { matrix, meaInRows, meaInColumns } = props;
@@ -15,7 +24,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                 if (meaInRows.length !== 0) {
                     return meaInRows.map((rowMea, rmIndex) => {
                         return (
-                            <tr className="divide-x divide-gray-200" key={`${rIndex}-${rowMea.fid}`}>
+                            <tr className="divide-x divide-gray-200" key={`${rIndex}-${rowMea.fid}-${rowMea.aggName}`}>
                                 {
                                     row.flatMap((cell, cIndex) => {
                                         cell = cell ?? {};
@@ -23,18 +32,18 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                             return meaInColumns.map((colMea, cmIndex) => (
                                                 <td
                                                     className="whitespace-nowrap p-2 text-xs text-gray-500"
-                                                    key={`${rIndex}-${cIndex}-${rowMea.fid}-${colMea.fid}-${colMea.fid}`}
+                                                    key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${colMea.fid}-${colMea.aggName}`}
                                                 >
-                                                    {cell[rowMea.fid] ?? '--'} , {cell[colMea.fid] ?? '--'}
+                                                    {getCellData(cell, rowMea)} , {getCellData(cell, colMea)}
                                                 </td>
                                             ));
                                         }
                                         return (
                                             <td
                                                 className="whitespace-nowrap p-2 text-xs text-gray-500"
-                                                key={`${rIndex}-${cIndex}-${rowMea.fid}`}
+                                                key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}`}
                                             >
-                                                {cell[rowMea.fid] ?? '--'}
+                                                {getCellData(cell, rowMea)}
                                             </td>
                                         );
                                     })
@@ -51,9 +60,11 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                 return meaInColumns.map((colMea, cmIndex) => (
                                     <td
                                         className="whitespace-nowrap p-2 text-xs text-gray-500"
-                                        key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}`}
+                                        key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                     >
-                                        {cell[meaInColumns[cmIndex].fid] ?? '--'}
+                                        {
+                                            getCellData(cell, colMea)
+                                        }
                                     </td>
                                 ));
                             }else if (meaInRows.length === 0 && meaInColumns.length === 0) {
@@ -62,21 +73,21 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                         className="whitespace-nowrap p-2 text-xs text-gray-500"
                                         key={`${rIndex}-${cIndex}`}
                                     >
-                                        {`${cell}`}
+                                        {`True`}
                                     </td>
                                 );
                             } else {
                                 return meaInRows.flatMap((rowMea, rmIndex) => (
                                     <td
                                         className="whitespace-nowrap p-2 text-xs text-gray-500"
-                                        key={`${rIndex}-${cIndex}-${rmIndex}-${rowMea.fid}`}
+                                        key={`${rIndex}-${cIndex}-${rmIndex}-${rowMea.fid}-${rowMea.aggName}`}
                                     >
                                         {meaInColumns.flatMap((colMea, cmIndex) => (
                                             <td
                                                 className="whitespace-nowrap p-2 text-xs text-gray-500"
-                                                key={`${rIndex}-${cIndex}-${rmIndex}-${cmIndex}-${colMea.fid}`}
+                                                key={`${rIndex}-${cIndex}-${rmIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                             >
-                                                {cell[rowMea.fid] ?? '--'} , {cell[colMea.fid] ?? '--'}
+                                                { getCellData(cell, rowMea) } , { getCellData(cell, colMea) }
                                             </td>
                                         ))}
                                     </td>

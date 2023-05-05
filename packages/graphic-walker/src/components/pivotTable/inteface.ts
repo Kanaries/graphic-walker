@@ -6,8 +6,3 @@ export interface INestNode {
     fieldKey: string;
     children: INestNode[];
 }
-
-export interface IGroupByQuery {
-    groupBy: string[];
-    measures: { field: string; agg: IAggregator }[];
-}

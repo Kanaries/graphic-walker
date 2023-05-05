@@ -1,7 +1,7 @@
 import { IAggregator, IExplainProps } from '../../interfaces';
-import { filterByPredicates } from '../../utils';
+import { filterByPredicates, getMeaAggKey } from '../../utils';
 import { aggregate } from '../op/aggregate';
-import { complementaryFields, groupByAnalyticTypes } from './utils';
+import { groupByAnalyticTypes } from './utils';
 
 export function explainValue(props: IExplainProps): number[] {
     const { viewFields, dataSource, predicates } = props;
@@ -9,7 +9,14 @@ export function explainValue(props: IExplainProps): number[] {
     const viewData = aggregate(dataSource, {
         groupBy: dimsInView.map((f) => f.fid),
         op: 'aggregate',
-        agg: Object.fromEntries(measInView.map((mea) => [mea.fid, (mea.aggName ?? 'sum') as IAggregator])),
+        measures: measInView.map((mea) => {
+            const agg = (mea.aggName ?? 'sum') as IAggregator;
+            return {
+                field: mea.fid,
+                agg,
+                asFieldKey: getMeaAggKey(mea.fid, agg),
+            }
+        }),
     });
     const selection = filterByPredicates(viewData, predicates);
     const cmps: number[] = [];
