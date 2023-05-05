@@ -23,7 +23,8 @@
             "tick": "Tick",
             "rect": "Rectangle",
             "arc": "Arc",
-            "boxplot": "Box (Box Plot)"
+            "boxplot": "Box (Box Plot)",
+            "table": "Table"
         },
         "stack_mode": {
             "__enum__": "Stack Mode",

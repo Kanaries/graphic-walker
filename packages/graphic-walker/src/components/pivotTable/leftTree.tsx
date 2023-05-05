@@ -1,8 +1,6 @@
-import React, { ReactElement, ReactNode, useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { INestNode } from './inteface';
 import { IField } from '../../interfaces';
-import { nanoid } from 'nanoid';
-import { getAllChildrenSize } from './utils';
 
 function getChildCount(node: INestNode): number {
     if (node.children.length === 0) {
@@ -26,7 +24,7 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     }
     cellRows[cellRows.length - 1].push(
         <td
-            key={nanoid()}
+            key={`${depth}-${node.fieldKey}-${node.value}`}
             className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
             rowSpan={childrenSize * Math.max(meaNumber, 1)}
         >
@@ -59,19 +57,19 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                 ans.push([
                     ...row,
                     <td
-                        key={nanoid()}
+                        key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
                         className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                     >
-                        {measInRow[0].name}
+                        {measInRow[0].aggName}({measInRow[0].name})
                     </td>,
                 ]);
                 for (let j = 1; j < measInRow.length; j++) {
                     ans.push([
                         <td
-                            key={nanoid()}
+                            key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
                             className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                         >
-                            {measInRow[j].name}
+                            {measInRow[j].aggName}({measInRow[j].name})
                         </td>,
                     ]);
                 }

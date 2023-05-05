@@ -16,7 +16,7 @@ export interface IEncodeProps {
     radius: IViewField;
     details: Readonly<IViewField[]>;
 }
-function availableChannels(geomType: string): Set<string> {
+export function availableChannels(geomType: string): Set<string> {
     if (geomType === 'arc') {
         return new Set(['opacity', 'color', 'size', 'theta', 'radius']);
     }

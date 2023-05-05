@@ -23,7 +23,8 @@
             "tick": "标记",
             "rect": "矩形",
             "arc": "弧形",
-            "boxplot": "统计箱"
+            "boxplot": "统计箱",
+            "table": "表格"
         },
         "layout_type": {
             "__enum__": "尺寸模式",
