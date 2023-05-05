@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { GraphicWalker } from './index';
+import KanariesServerTransformer from './transformer/kanariesServerTransformer';
 
 import { inject } from '@vercel/analytics';
 import './index.css';
@@ -21,9 +22,12 @@ if (isConcurrentModeAvailable) {
     const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
     root.render(<GraphicWalker themeKey="g2" />);
 } else {
+    const transformer = new KanariesServerTransformer({
+        server: '//localhost:3021',
+    });
     ReactDOM.render(
         <React.StrictMode>
-            <GraphicWalker themeKey="g2" queryMode="server" />
+            <GraphicWalker themeKey="g2" transformer={transformer} />
         </React.StrictMode>,
         document.getElementById('root') as HTMLElement
     );
