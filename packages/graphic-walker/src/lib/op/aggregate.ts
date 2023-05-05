@@ -1,4 +1,5 @@
 import { IRow } from "../../interfaces";
+import { getMeaAggKey } from "../../utils";
 import { IAggQuery } from "../interfaces";
 import { sum, mean, median, stdev, variance, max, min, count } from "./stat";
 
@@ -16,7 +17,7 @@ const aggregatorMap = {
 const KEY_JOINER = '___';
 
 export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
-    const { groupBy, agg } = query;
+    const { groupBy, measures } = query;
     const ans: Map<string, IRow> = new Map();
     const groups: Map<string, IRow[]> = new Map();
     for (let row of data) {
@@ -35,13 +36,14 @@ export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
         for (let k of groupBy) {
             aggRow[k] = subGroup[0][k];
         }
-        for (let meaKey in agg) {
-            if (aggRow[meaKey] === undefined) {
-                aggRow[meaKey] = 0;
+        for (let mea of measures) {
+            const aggMeaKey = getMeaAggKey(mea.field, mea.agg);
+            if (aggRow[aggMeaKey] === undefined) {
+                aggRow[aggMeaKey] = 0;
             }
-            const values: number[] = subGroup.map((r) => r[meaKey]) ?? [];
-            const aggregator = aggregatorMap[agg[meaKey]] ?? sum;
-            aggRow[meaKey] = aggregator(values);
+            const values: number[] = subGroup.map((r) => r[mea.field]) ?? [];
+            const aggregator = aggregatorMap[mea.agg] ?? sum;
+            aggRow[aggMeaKey] = aggregator(values);
         }
         ans.set(gk, aggRow);
     }
