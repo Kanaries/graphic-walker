@@ -1,4 +1,10 @@
 {
+    "config": {
+        "format": "格式",
+        "numberFormat": "数字格式",
+        "timeFormat": "时间格式",
+        "normalizedNumberFormat": "标准化数字格式"
+    },
     "constant": {
         "row_count": "行数",
         "analytic_type": {

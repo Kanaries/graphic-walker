@@ -18,6 +18,7 @@ import {
     ArrowsUpDownIcon,
     LightBulbIcon,
     CodeBracketSquareIcon,
+    Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -279,6 +280,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                         </button>
                     </FormContainer>
                 ),
+            },
+            {
+                key: 'config',
+                label: 'config',
+                icon: Cog6ToothIcon,
+                onClick: () => {
+                    commonStore.setShowVisualConfigPanel(true);
+                }
             },
             {
                 key: 'export_code',
