@@ -192,6 +192,11 @@ export interface IVisualConfig {
     showActions: boolean;
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
+    format: {
+        numberFormat?: string;
+        timeFormat?: string;
+        normalizedNumberFormat?: string;
+    };
     size: {
         mode: 'auto' | 'fixed';
         width: number;

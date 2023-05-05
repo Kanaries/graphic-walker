@@ -75,6 +75,11 @@ export function initVisualConfig(): IVisualConfig {
             width: 320,
             height: 200,
         },
+        format: {
+            numberFormat: undefined,
+            timeFormat: undefined,
+            normalizedNumberFormat: undefined
+        }
     };
 }
 
@@ -369,6 +374,9 @@ export class VizSpecStore {
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
+                case configKey === 'format' && typeof value === "object": {
+                    return config[configKey] = value
+                }
                 default: {
                     console.error("unknown key" + configKey);
                 }
@@ -619,6 +627,9 @@ export class VizSpecStore {
             cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
         });
+    }
+    public setVizFormatConfig (formatKey: keyof IVisualConfig['format'], value?: string) {
+        this.visualConfig[formatKey] = value
     }
     public renderSpec(spec: Specification) {
         const tab = this.visList[this.visIndex];

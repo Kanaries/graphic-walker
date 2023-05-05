@@ -1,4 +1,10 @@
 {
+    "config": {
+        "format": "Format",
+        "numberFormat": "Number format",
+        "timeFormat": "Time format",
+        "normalizedNumberFormat": "Normalized number format"
+    },
     "constant": {
         "row_count": "Row count",
         "analytic_type": {

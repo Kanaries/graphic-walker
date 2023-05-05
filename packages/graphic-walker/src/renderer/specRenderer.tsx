@@ -1,4 +1,4 @@
-import { runInAction } from 'mobx';
+import { runInAction, toJS } from 'mobx';
 import { Resizable } from 're-resizable';
 import React, { useCallback, forwardRef, useMemo } from 'react';
 
@@ -21,7 +21,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -33,6 +33,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const sizeChannel = draggableFieldState.size;
     const details = draggableFieldState.details;
     const text = draggableFieldState.text;
+    const format = toJS(_format)
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
     const colLeftFacetFields = useMemo(
@@ -86,6 +87,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         >
             {loading && <LoadingLayer />}
             <ReactVega
+                format={format}
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
                 geomType={geoms[0]}
