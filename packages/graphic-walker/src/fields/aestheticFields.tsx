@@ -6,7 +6,7 @@ import SingleEncodeEditor from './encodeFields/singleEncodeEditor';
 import { observer } from 'mobx-react-lite';
 import { useGlobalStore } from '../store';
 
-const aestheticFields = DRAGGABLE_STATE_KEYS.filter(f => ['color', 'opacity', 'size', 'shape', 'details'].includes(f.id));
+const aestheticFields = DRAGGABLE_STATE_KEYS.filter(f => ['color', 'opacity', 'size', 'shape', 'details', 'text'].includes(f.id));
 
 const AestheticFields: React.FC = props => {
     const { vizStore } = useGlobalStore();
@@ -14,13 +14,19 @@ const AestheticFields: React.FC = props => {
     const { geoms } = visualConfig;
 
     const channels = useMemo(() => {
-        if (geoms[0] === 'arc') {
-            return aestheticFields.filter(f => f.id !== 'shape');
+        switch (geoms[0]) {
+            case 'arc':
+            case 'line':
+            case 'area':
+            case 'boxplot':
+                return aestheticFields.filter(f => f.id !== 'shape');
+            case 'text':
+                return aestheticFields.filter(f => f.id === 'text' || f.id === 'color' || f.id === 'size' || f.id === 'opacity');
+            case 'table':
+                return []
+            default:
+                return aestheticFields.filter(f => f.id !== 'text');
         }
-        if (geoms[0] === 'table') {
-            return []
-        }
-        return aestheticFields
     }, [geoms[0]])
     return <div>
         {

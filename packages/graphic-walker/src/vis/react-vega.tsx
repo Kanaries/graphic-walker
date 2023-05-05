@@ -40,6 +40,7 @@ interface ReactVegaProps {
   shape?: IViewField;
   theta?: IViewField;
   radius?: IViewField;
+  text?: IViewField;
   details?: Readonly<IViewField[]>;
   showActions: boolean;
   layoutMode: string;
@@ -88,6 +89,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     theta,
     radius,
     shape,
+    text,
     onGeomClick,
     showActions,
     interactiveScale,
@@ -183,6 +185,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         shape: shape ? shape : NULL_FIELD,
         theta: theta ? theta : NULL_FIELD,
         radius: radius ? radius : NULL_FIELD,
+        text: text ? text : NULL_FIELD,
         row: rowFacetField,
         column: colFacetField,
         xOffset: NULL_FIELD,
@@ -247,6 +250,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             radius: radius ? radius : NULL_FIELD,
             row: rowFacetField,
             column: colFacetField,
+            text: text ? text : NULL_FIELD,
             xOffset: NULL_FIELD,
             yOffset: NULL_FIELD,
             details,
@@ -351,7 +355,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     width,
     height,
     themeConfig,
-    details
+    details,
+    text
   ]);
 
   useImperativeHandle(ref, () => ({

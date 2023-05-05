@@ -21,6 +21,7 @@ export function getSingleView(props: SingleViewProps) {
         shape,
         theta,
         radius,
+        text,
         row,
         column,
         xOffset,
@@ -31,7 +32,7 @@ export function getSingleView(props: SingleViewProps) {
         geomType,
         hideLegend = false,
     } = props;
-    const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius];
+    const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
     let config: any = {};
     if (hideLegend) {
@@ -60,7 +61,8 @@ export function getSingleView(props: SingleViewProps) {
         yOffset,
         theta,
         radius,
-        details
+        details,
+        text
     });
     addTooltipEncode(encoding, details)
     if (defaultAggregated) {

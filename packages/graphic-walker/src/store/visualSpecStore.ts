@@ -58,6 +58,7 @@ export function initEncoding(): DraggableFieldState {
         theta: [],
         details: [],
         filters: [],
+        text: [],
     };
 }
 

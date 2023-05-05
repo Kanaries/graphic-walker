@@ -24,7 +24,8 @@
             "rect": "矩形",
             "arc": "弧形",
             "boxplot": "统计箱",
-            "table": "表格"
+            "table": "表格",
+            "text": "文本"
         },
         "layout_type": {
             "__enum__": "尺寸模式",
@@ -60,7 +61,8 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "筛选器",
-            "details": "信息"
+            "details": "信息",
+            "text": "文本"
         },
         "aggregator": {
             "sum": "求和",

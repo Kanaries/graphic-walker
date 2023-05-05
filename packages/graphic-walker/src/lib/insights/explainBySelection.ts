@@ -1,8 +1,8 @@
-import { IExplainProps, IField } from '../../interfaces';
-import { filterByPredicates } from '../../utils';
+import { IAggregator, IExplainProps, IField } from '../../interfaces';
+import { filterByPredicates, getMeaAggKey } from '../../utils';
 import { compareDistribution, normalizeWithParent } from '../../utils/normalization';
 import { aggregate } from '../op/aggregate';
-import { complementaryFields, groupByAnalyticTypes, meaList2AggProps } from './utils';
+import { complementaryFields, groupByAnalyticTypes } from './utils';
 
 export function explainBySelection(props: IExplainProps) {
     const { metas, dataSource, viewFields, predicates } = props;
@@ -15,12 +15,21 @@ export function explainBySelection(props: IExplainProps) {
         const overallData = aggregate(dataSource, {
             groupBy: [extendDim.fid],
             op: 'aggregate',
-            agg: meaList2AggProps(measInView),
+            measures: measInView.map((mea) => ({
+                field: mea.fid,
+                agg: (mea.aggName ?? 'sum') as IAggregator,
+                asFieldKey: getMeaAggKey(mea.fid, (mea.aggName ?? 'sum') as IAggregator),
+            })),
+                
         });
         const viewData = aggregate(dataSource, {
             groupBy: dimsInView.map((f) => f.fid),
             op: 'aggregate',
-            agg: meaList2AggProps(measInView),
+            measures: measInView.map((mea) => ({
+                field: mea.fid,
+                agg: (mea.aggName ?? 'sum') as IAggregator,
+                asFieldKey: getMeaAggKey(mea.fid, (mea.aggName ?? 'sum') as IAggregator),
+            }))
         });
         const subData = filterByPredicates(viewData, predicates);
 
