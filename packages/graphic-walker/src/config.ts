@@ -11,7 +11,9 @@ export const GEMO_TYPES: Readonly<string[]> = [
     'tick',
     'rect',
     'arc',
+    'text',
     'boxplot',
+    'table'
 ] as const;
 
 export const STACK_MODE: Readonly<IStackMode[]> = [
@@ -47,7 +49,9 @@ export const CHANNEL_LIMIT = {
     size: 1,
     shape: 1,
     theta: 1,
-    radius: 1
+    radius: 1,
+    details: Infinity,
+    text: 1,
 }
 
 export const MetaFieldKeys: Array<keyof DraggableFieldState> = [

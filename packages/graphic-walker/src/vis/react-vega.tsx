@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef } from 'react';
-import embed from 'vega-embed';
+import embed, { vega } from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey } from '../interfaces';
+import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
@@ -27,6 +27,7 @@ export interface IReactVegaHandler {
   downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface ReactVegaProps {
+  format: IVisualConfig['format'];
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
   dataSource: IRow[];
@@ -40,6 +41,7 @@ interface ReactVegaProps {
   shape?: IViewField;
   theta?: IViewField;
   radius?: IViewField;
+  text?: IViewField;
   details?: Readonly<IViewField[]>;
   showActions: boolean;
   layoutMode: string;
@@ -88,6 +90,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     theta,
     radius,
     shape,
+    text,
     onGeomClick,
     showActions,
     interactiveScale,
@@ -96,12 +99,30 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     details = [],
     themeKey = 'vega',
-    dark = 'media'
+    dark = 'media',
+    format
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
   const mediaTheme = useCurrentMediaTheme(dark);
   const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
+
+  const vegaConfig = useMemo(() => {
+    const config: any = {
+      ...themeConfig,
+    }
+    if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
+      config.normalizedNumberFormat = format.normalizedNumberFormat;
+    }
+    if (format.numberFormat && format.numberFormat.length > 0) {
+      config.numberFormat = format.numberFormat;
+    }
+    if (format.timeFormat && format.timeFormat.length > 0) {
+      config.timeFormat = format.timeFormat;
+    }
+    return config;
+  }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
       if (onGeomClick) {
@@ -183,6 +204,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         shape: shape ? shape : NULL_FIELD,
         theta: theta ? theta : NULL_FIELD,
         radius: radius ? radius : NULL_FIELD,
+        text: text ? text : NULL_FIELD,
         row: rowFacetField,
         column: colFacetField,
         xOffset: NULL_FIELD,
@@ -199,7 +221,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
+        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
@@ -247,6 +269,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             radius: radius ? radius : NULL_FIELD,
             row: rowFacetField,
             column: colFacetField,
+            text: text ? text : NULL_FIELD,
             xOffset: NULL_FIELD,
             yOffset: NULL_FIELD,
             details,
@@ -263,7 +286,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             ans.params = commonSpec.params;
           }
           if (node) {
-            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: themeConfig }).then(res => {
+            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
               vegaRefs.current.push(res.view);
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
@@ -350,8 +373,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     layoutMode,
     width,
     height,
-    themeConfig,
-    details
+    vegaConfig,
+    details,
+    text
   ]);
 
   useImperativeHandle(ref, () => ({
