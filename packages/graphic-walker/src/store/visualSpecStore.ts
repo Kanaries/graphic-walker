@@ -7,6 +7,8 @@ import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGW
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import { IGWDataLoader } from "../dataLoader";
+import WebWorkerDataLoader from "../dataLoader/webWorkerDataLoader";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -142,6 +144,7 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    public dataLoader: IGWDataLoader = new WebWorkerDataLoader();
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -156,6 +159,7 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
+            dataLoader: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -715,5 +719,8 @@ export class VizSpecStore {
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
+    }
+    public setDataLoader(loader: IGWDataLoader) {
+        this.dataLoader = loader;
     }
 }

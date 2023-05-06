@@ -51,6 +51,14 @@ export const toWorkflow = (
                 })),
             }],
         });
+    } else {
+        steps.push({
+            type: 'view',
+            query: [{
+                op: 'raw',
+                fields: [...new Set([...viewDimensions, ...viewMeasures])].map(f => f.fid),
+            }],
+        });
     }
 
     return steps;
