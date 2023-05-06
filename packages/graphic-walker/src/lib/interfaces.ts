@@ -3,9 +3,7 @@ import { IAggregator } from "../interfaces";
 export interface IAggQuery {
     op: 'aggregate';
     groupBy: string[];
-    agg: {
-        [field: string]: IAggregator;
-    };
+    measures: { field: string; agg: IAggregator; asFieldKey: string }[];
 }
 
 // interface IFilterQuery {

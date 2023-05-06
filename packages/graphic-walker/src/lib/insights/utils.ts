@@ -10,10 +10,6 @@ export function groupByAnalyticTypes(fields: IField[]) {
     };
 }
 
-export function meaList2AggProps(measures: IField[]): IAggQuery['agg'] {
-    return Object.fromEntries(measures.map((mea) => [mea.fid, (mea.aggName ?? 'sum') as IAggregator]));
-}
-
 export function complementaryFields(props: { selection: IField[]; all: IField[] }): IField[] {
     return props.all
         .filter((f) => f.analyticType === 'dimension')
