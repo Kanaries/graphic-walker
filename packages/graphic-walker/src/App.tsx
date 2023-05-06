@@ -18,10 +18,10 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
-import type { IGWTransformer } from './transformer';
-import WebWorkerTransformer from './transformer/webWorkerTransformer';
+import type { IGWDataLoader } from './dataLoader';
+import WebWorkerDataLoader from './dataLoader/webWorkerDataLoader';
 import VisualConfig from './components/visualConfig';
-export type { IGWTransformer };
+
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -39,8 +39,8 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
-    /** @default WebWorkerTransformer */
-    transformer?: IGWTransformer;
+    /** @default WebWorkerDataLoader */
+    dataLoader?: IGWDataLoader;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -54,7 +54,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
-        transformer = new WebWorkerTransformer(),
+        dataLoader = new WebWorkerDataLoader(),
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -105,6 +105,10 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
+
+    useEffect(() => {
+        vizStore.setDataLoader(dataLoader);
+    }, [vizStore, dataLoader]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -160,7 +164,6 @@ const App = observer<IGWProps>(function App(props) {
                                             ref={rendererRef}
                                             themeKey={themeKey}
                                             dark={dark}
-                                            transformer={transformer}
                                         />
                                     )}
                                     {/* {vizEmbededMenu.show && (

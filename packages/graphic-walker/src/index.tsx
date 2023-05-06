@@ -49,3 +49,7 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         </StoreWrapper>
     );
 });
+
+export * from './interfaces';
+export type { IGWDataLoader as IGWTransformer } from './dataLoader';
+export { default as KanariesServerTransformer } from './dataLoader/kanariesServerDataLoader';
