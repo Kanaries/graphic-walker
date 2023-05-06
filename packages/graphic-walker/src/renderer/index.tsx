@@ -9,18 +9,16 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
 import PivotTable from '../components/pivotTable';
 import { toWorkflow } from '../utils/workflow';
-import type { IGWTransformer } from '../transformer';
 
 interface RendererProps {
-    transformer: IGWTransformer;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { transformer, themeKey, dark } = props;
+    const { themeKey, dark } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader } = vizStore;
     const { defaultAggregated } = visualConfig;
     const { currentDataset } = commonStore;
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
@@ -44,7 +42,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     useEffect(() => {
         setWaiting(true);
-        transformer.transform(
+        dataLoader.transform(
             {
                 datasetId: currentDataset.id,
                 workflow,
@@ -69,7 +67,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setViewConfig(initVisualConfig);
             });
         });
-    }, [transformer, workflow, currentDataset]);
+    }, [dataLoader, workflow, currentDataset]);
 
     if (viewConfig.geoms.includes('table')) {
         return (

@@ -47,6 +47,11 @@ export interface IUncertainMutField {
     analyticType: IAnalyticType | '?';
 }
 
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
+}
+
 export type IExpParamter =
     | {
           type: 'field';

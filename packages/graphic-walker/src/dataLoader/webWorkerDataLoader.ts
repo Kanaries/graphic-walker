@@ -1,8 +1,8 @@
-import type { GWTransformFunction, IGWTransformer } from ".";
+import type { GWTransformFunction, IGWDataLoader } from ".";
 import { applyFilter, applyViewQuery, transformDataService } from "../services";
 
 
-export default class WebWorkerTransformer implements IGWTransformer {
+export default class WebWorkerDataLoader implements IGWDataLoader {
 
     transform: GWTransformFunction = async (payload, options) => {
         const { dataset, columns } = options;
@@ -32,6 +32,35 @@ export default class WebWorkerTransformer implements IGWTransformer {
             }
         }
         return res;
+    };
+
+    statField: IGWDataLoader['statField'] = async (dataset, fid, { values = false, range = false }) => {
+        let min = Infinity;
+        let max = -Infinity;
+        const count = dataset.dataSource.reduce<Map<string | number, number>>((tmp, d) => {
+            const val = d[fid];
+
+            if (typeof val === 'number' && range) {
+                if (val < min) {
+                    min = val;
+                }
+                if (val > max) {
+                    max = val;
+                }
+            }
+
+            tmp.set(val, (tmp.get(val) ?? 0) + 1);
+            
+            return tmp;
+        }, new Map<string | number, number>());
+
+        return {
+            values: values ? [...count].map(([key, value]) => ({
+                value: key,
+                count: value,
+            })) : [],
+            range: range ? [min, max] : [0, 0],
+        };
     };
 
 }
