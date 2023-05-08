@@ -1,4 +1,4 @@
-import type { DataSet, IDataQueryPayload, IFieldStats, IMutField, IRow } from "../interfaces";
+import type { DataSet, IDataPreviewPayload, IDataQueryPayload, IFieldStats, IMutField, IRow } from "../interfaces";
 
 
 export interface IDataQueryOptions {
@@ -6,12 +6,14 @@ export interface IDataQueryOptions {
     columns: IMutField[];
 }
 
+export type GWStatFunction = (dataset: DataSet) => Promise<{ count: number }>;
+export type GWPreviewFunction = (payload: IDataPreviewPayload, options: IDataQueryOptions) => Promise<IRow[]>;
 export type GWTransformFunction = (payload: IDataQueryPayload, options: IDataQueryOptions) => Promise<IRow[]>;
+export type GWStatFieldFunction = (dataset: DataSet, fid: string, attributes: { values?: boolean; range?: boolean; }) => Promise<IFieldStats>;
 
 export interface IGWDataLoader {
+    stat: GWStatFunction;
+    preview: GWPreviewFunction;
     transform: GWTransformFunction;
-    statField: (dataset: DataSet, fid: string, attributes: {
-        values?: boolean;
-        range?: boolean;
-    }) => Promise<IFieldStats>;
+    statField: GWStatFieldFunction;
 }

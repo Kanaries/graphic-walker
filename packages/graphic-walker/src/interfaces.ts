@@ -250,6 +250,14 @@ export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowSte
 export interface IDataQueryPayload {
     datasetId: string;
     workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
+}
+
+export interface IDataPreviewPayload {
+    datasetId: string;
+    pageSize: number;
+    pageIndex: number;
 }
 
 export type IResponse<T> = (
