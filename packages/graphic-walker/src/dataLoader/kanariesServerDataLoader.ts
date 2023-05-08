@@ -1,6 +1,6 @@
 import produce, { enableMapSet } from 'immer';
 import type { IDataQueryPayload, IResponse, IRow } from '../interfaces';
-import type { GWTransformFunction, IGWDataLoader } from ".";
+import type { GWPreviewFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, IGWDataLoader } from ".";
 
 
 enableMapSet();
@@ -32,6 +32,42 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         }
     }
 
+    stat: GWStatFunction = async dataset => {
+        return {
+            count: (await this.#query({
+                datasetId: dataset.id,
+                workflow: [{
+                    type: 'view',
+                    query: [{
+                        op: 'aggregate',
+                        groupBy: [],
+                        measures: [{
+                            field: '*',
+                            agg: 'count',
+                            asFieldKey: 'count',
+                        }],
+                    }],
+                }],
+            }))[0].count,
+        };
+    }
+
+    preview: GWPreviewFunction = async payload => {
+        const { datasetId, pageIndex, pageSize } = payload;
+        return this.#query({
+            datasetId,
+            workflow: [{
+                type: 'view',
+                query: [{
+                    op: 'raw',
+                    fields: ['*'],
+                }],
+            }],
+            limit: pageSize,
+            offset: pageIndex * pageSize,
+        });
+    }
+
     transform: GWTransformFunction = async payload => {
         const data = produce(payload, draft => {
             for (const step of draft.workflow) {
@@ -48,7 +84,7 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return this.#query(data);
     };
 
-    statField: IGWDataLoader['statField'] = async (dataset, fid, { values = false, range = false }) => {
+    statField: GWStatFieldFunction = async (dataset, fid, { values = false, range = false }) => {
         const COUNT_ID = `count_${fid}`;
         const MIN_ID = `min_${fid}`;
         const MAX_ID = `max_${fid}`;

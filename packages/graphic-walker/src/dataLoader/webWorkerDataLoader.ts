@@ -1,8 +1,24 @@
-import type { GWTransformFunction, IGWDataLoader } from ".";
+import type { GWPreviewFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, IGWDataLoader } from ".";
 import { applyFilter, applyViewQuery, transformDataService } from "../services";
 
 
 export default class WebWorkerDataLoader implements IGWDataLoader {
+
+    preview: GWPreviewFunction = async (payload, options) => {
+        const { pageIndex, pageSize } = payload;
+        const { dataset } = options;
+        const data = dataset.dataSource;
+        const start = pageIndex * pageSize;
+        const end = start + pageSize;
+        const res = data.slice(start, end);
+        return res;
+    }
+
+    stat: GWStatFunction = async dataset => {
+        return {
+            count: dataset.dataSource.length,
+        };
+    }
 
     transform: GWTransformFunction = async (payload, options) => {
         const { dataset, columns } = options;
@@ -34,7 +50,7 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         return res;
     };
 
-    statField: IGWDataLoader['statField'] = async (dataset, fid, { values = false, range = false }) => {
+    statField: GWStatFieldFunction = async (dataset, fid, { values = false, range = false }) => {
         let min = Infinity;
         let max = -Infinity;
         const count = dataset.dataSource.reduce<Map<string | number, number>>((tmp, d) => {
