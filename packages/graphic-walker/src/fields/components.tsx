@@ -100,11 +100,11 @@ export const FilterFieldSegment = styled.div`
     > h4 {
       font-weight: 400;
     };
-  },
+  }
 
   .flt-container {
 
-  },
+  }
 `
 
 export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`

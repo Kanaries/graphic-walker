@@ -1,198 +1,206 @@
 {
+    "config": {
+        "format": "形式",
+        "numberFormat": "数字の形式",
+        "timeFormat": "時間の形式",
+        "normalizedNumberFormat": "正規化された数字の形式"
+    },
     "constant": {
-      "row_count": "行数",
-      "analytic_type": {
-        "dimension": "次元",
-        "measure": "尺度"
-      },
-      "semantic_type": {
-        "nominal": "名義尺度",
-        "ordinal": "順序尺度",
-        "temporal": "時間尺度",
-        "quantitative": "数量尺度"
-      },
-      "mark_type": {
-        "__enum__": "マークタイプ",
-        "auto": "自動",
-        "bar": "バー",
-        "line": "ライン",
-        "area": "エリア",
-        "trail": "トレイル",
-        "point": "散布図",
-        "circle": "円",
-        "tick": "棒線図",
-        "rect": "長方形",
-        "arc": "アーク",
-        "boxplot": "ボックスプロット"
-      },
-      "stack_mode": {
-        "__enum__": "スタックモード",
-        "none": "なし",
-        "stack": "スタック",
-        "normalize": "正規化"
-      },
-      "layout_type": {
-        "__enum__": "レイアウトタイプ",
-        "auto": "自動",
-        "fixed": "固定"
-      },
-      "exploration_mode": {
-        "__enum__": "探索モード",
-        "none": "オフ",
-        "brush": "ブラシ",
-        "point": "ポイント"
-      },
-      "brush_mode": {
-        "__enum__": "ブラシの方向",
-        "default": "両方",
-        "x": "X軸のみ",
-        "y": "Y軸のみ"
-      },
-      "draggable_key": {
-        "fields": "フィールド",
-        "columns": "X軸",
-        "rows": "Y軸",
-        "color": "色",
-        "opacity": "不透明度",
-        "size": "大きさ",
-        "shape": "形状",
-        "theta": "角度",
-        "radius": "半径",
-        "filters": "フィルター"
-      },
-      "aggregator": {
-        "sum": "合計",
-        "mean": "平均",
-        "count": "件数",
-        "median": "中央値",
-        "min": "最小値",
-        "max": "最大値",
-        "q1": "第一四分位数",
-        "q3": "第三四分位数",
-        "stdev": "標準偏差",
-        "variance": "分散"
-      },
-      "filter_type": {
-        "one_of": "1つ以上",
-        "range": "範囲",
-        "temporal_range": "日付範囲"
-      }
+        "row_count": "行数",
+        "analytic_type": {
+            "dimension": "次元",
+            "measure": "尺度"
+        },
+        "semantic_type": {
+            "nominal": "名義尺度",
+            "ordinal": "順序尺度",
+            "temporal": "時間尺度",
+            "quantitative": "数量尺度"
+        },
+        "mark_type": {
+            "__enum__": "マークタイプ",
+            "auto": "自動",
+            "bar": "バー",
+            "line": "ライン",
+            "area": "エリア",
+            "trail": "トレイル",
+            "point": "散布図",
+            "circle": "円",
+            "tick": "棒線図",
+            "rect": "長方形",
+            "arc": "アーク",
+            "boxplot": "ボックスプロット",
+            "table": "表",
+            "text": "本文"
+        },
+        "stack_mode": {
+            "__enum__": "スタックモード",
+            "none": "なし",
+            "stack": "スタック",
+            "normalize": "正規化"
+        },
+        "layout_type": {
+            "__enum__": "レイアウトタイプ",
+            "auto": "自動",
+            "fixed": "固定"
+        },
+        "exploration_mode": {
+            "__enum__": "探索モード",
+            "none": "オフ",
+            "brush": "ブラシ",
+            "point": "ポイント"
+        },
+        "brush_mode": {
+            "__enum__": "ブラシの方向",
+            "default": "両方",
+            "x": "X軸のみ",
+            "y": "Y軸のみ"
+        },
+        "draggable_key": {
+            "fields": "フィールド",
+            "columns": "X軸",
+            "rows": "Y軸",
+            "color": "色",
+            "opacity": "不透明度",
+            "size": "大きさ",
+            "shape": "形状",
+            "theta": "角度",
+            "radius": "半径",
+            "filters": "フィルター",
+            "text": "本文"
+        },
+        "aggregator": {
+            "sum": "合計",
+            "mean": "平均",
+            "count": "件数",
+            "median": "中央値",
+            "min": "最小値",
+            "max": "最大値",
+            "q1": "第一四分位数",
+            "q3": "第三四分位数",
+            "stdev": "標準偏差",
+            "variance": "分散"
+        },
+        "filter_type": {
+            "one_of": "1つ以上",
+            "range": "範囲",
+            "temporal_range": "日付範囲"
+        }
     },
     "App": {
-      "labels": {
-        "data_interpretation": "データ解釈"
-      },
-      "segments": {
-        "vis": "可視化",
-        "data": "データ"
-      }
+        "labels": {
+            "data_interpretation": "データ解釈"
+        },
+        "segments": {
+            "vis": "可視化",
+            "data": "データ"
+        }
     },
     "DataSource": {
-      "labels": {
-        "cur_dataset": "現在のデータセット"
-      },
-      "buttons": {
-        "create_dataset": "データセットを作成",
-        "export_as_file": "ファイルとして保存",
-        "import_file": "Graphic Walkerファイルをインポート"
-      },
-      "dialog": {
-        "create_data_source": "新しいデータソース",
-        "data_types": "データソースの種類",
-        "text_file_data": "ローカルファイル",
-        "public_data": "公開データセット",
-        "data_source_type": "データソースの種類：{{sourceType}}",
-        "file": {
-          "open": "開く...",
-          "submit": "提出する",
-          "dataset_name": "データセット名",
-          "choose_file": "データファイルを選択してください",
-          "get_start_desc": "データセットの作成を始めましょう。"
+        "labels": {
+            "cur_dataset": "現在のデータセット"
         },
-        "public": {
-          "submit": "提出する"
+        "buttons": {
+            "create_dataset": "データセットを作成",
+            "export_as_file": "ファイルとして保存",
+            "import_file": "Graphic Walkerファイルをインポート"
+        },
+        "dialog": {
+            "create_data_source": "新しいデータソース",
+            "data_types": "データソースの種類",
+            "text_file_data": "ローカルファイル",
+            "public_data": "公開データセット",
+            "data_source_type": "データソースの種類：{{sourceType}}",
+            "file": {
+                "open": "開く...",
+                "submit": "提出する",
+                "dataset_name": "データセット名",
+                "choose_file": "データファイルを選択してください",
+                "get_start_desc": "データセットの作成を始めましょう。"
+            },
+            "public": {
+                "submit": "提出する"
+            }
         }
-      }
     },
     "main": {
-      "tablist": {
-        "new": "+ 新規作成",
-        "auto_title": "グラフ {{idx}}",
-        "chart_name": "グラフ名"
-      },
-      "tabpanel": {
-        "menubar": {
-          "undo": "元に戻す",
-          "redo": "やり直し"
+        "tablist": {
+            "new": "+ 新規作成",
+            "auto_title": "グラフ {{idx}}",
+            "chart_name": "グラフ名"
         },
-        "settings": {
-          "toggle": {
-            "aggregation": "集計",
-            "stack": "スタック",
-            "axes_resize": "軸のサイズ変更",
-            "debug": "デバッグ"
-          },
-          "sort": "並べ替えの順序",
-          "button": {
-            "ascending": "昇順に並べ替える",
-            "descending": "降順に並べ替える",
-            "transpose": "転置",
-            "export_chart": "エクスポート",
-            "export_chart_as": "{{type}}としてエクスポート",
-            "export_code": "輸出コード"
-          },
-          "size": "サイズ変更",
-          "size_setting": {
-            "width": "幅",
-            "height": "高さ"
-          }
-        },
-        "DatasetFields": {
-          "field_list": "フィールド一覧"
+        "tabpanel": {
+            "menubar": {
+                "undo": "元に戻す",
+                "redo": "やり直し"
+            },
+            "settings": {
+                "toggle": {
+                    "aggregation": "集計",
+                    "stack": "スタック",
+                    "axes_resize": "軸のサイズ変更",
+                    "debug": "デバッグ"
+                },
+                "sort": "並べ替えの順序",
+                "button": {
+                    "ascending": "昇順に並べ替える",
+                    "descending": "降順に並べ替える",
+                    "transpose": "転置",
+                    "export_chart": "エクスポート",
+                    "export_chart_as": "{{type}}としてエクスポート"
+                },
+                "size": "サイズ変更",
+                "size_setting": {
+                    "width": "幅",
+                    "height": "高さ"
+                }
+            },
+            "DatasetFields": {
+                "field_list": "フィールド一覧"
+            }
         }
-      }
     },
     "filters": {
-      "to_edit": "このルールを編集",
-      "empty_rule": "! (空のルール)",
-      "editing": "ルールを編集",
-      "form": {
-        "name": "フィールド",
-        "rule": "ルール"
-      },
-      "header": {
-        "visibility": "表示",
-        "value": "ラベル",
-        "count": "件数"
-      },
-      "selected_keys": "{{ count }}件が選択されました",
-      "btn": {
-        "select_all": "すべて選択",
-        "unselect_all": "すべての選択を解除",
-        "reverse": "選択を反転する",
-        "confirm": "確認",
-        "cancel": "キャンセル"
-      }
+        "to_edit": "このルールを編集",
+        "empty_rule": "! (空のルール)",
+        "editing": "ルールを編集",
+        "form": {
+            "name": "フィールド",
+            "rule": "ルール"
+        },
+        "header": {
+            "visibility": "表示",
+            "value": "ラベル",
+            "count": "件数"
+        },
+        "selected_keys": "{{ count }}件が選択されました",
+        "btn": {
+            "select_all": "すべて選択",
+            "unselect_all": "すべての選択を解除",
+            "reverse": "選択を反転する",
+            "confirm": "確認",
+            "cancel": "キャンセル"
+        }
     },
     "explain": {
-      "lg_than": "より大きい",
-      "sm_than": "より小さい",
-      "expection": "期待値",
-      "unrecognized": "未認識",
-      "score": "スコア",
-      "contains": "を含む",
-      "reason": {
-        "selection_dim_distribution": "次元のヒント",
-        "selection_mea_distribution": "尺度のヒント",
-        "children_major_factor": "主要要因",
-        "children_outlier": "外れ値"
-      }
+        "lg_than": "より大きい",
+        "sm_than": "より小さい",
+        "expection": "期待値",
+        "unrecognized": "未認識",
+        "score": "スコア",
+        "contains": "を含む",
+        "reason": {
+            "selection_dim_distribution": "次元のヒント",
+            "selection_mea_distribution": "尺度のヒント",
+            "children_major_factor": "主要要因",
+            "children_outlier": "外れ値"
+        }
     },
     "actions": {
-      "prev": "前へ",
-      "next": "次へ",
-      "drop_field": "ここにフィールドをドロップ",
-      "confirm": "確認",
-      "cancel": "キャンセル"
+        "prev": "前へ",
+        "next": "次へ",
+        "drop_field": "ここにフィールドをドロップ",
+        "confirm": "確認",
+        "cancel": "キャンセル"
     }
-  }
+}

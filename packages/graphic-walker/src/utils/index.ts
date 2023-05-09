@@ -276,3 +276,10 @@ export function makeNumbersBeautiful (nums: number[]): number[] {
 export function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
+
+export function getMeaAggKey (meaKey: string, agg?: string | undefined) {
+    if (!agg) {
+        return meaKey;
+    }
+    return `${meaKey}_${agg}`;
+}
