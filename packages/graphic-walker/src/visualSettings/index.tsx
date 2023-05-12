@@ -298,8 +298,10 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     commonStore.setShowCodeExportPanel(true);
                 }
             },
-            '-',
-            ...additionalActions,
+            ...[additionalActions.length > 0 ? [
+                '-',
+                ...additionalActions,
+            ] : []],
         ] as ToolbarItemProps[];
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, additionalActions]);
 
