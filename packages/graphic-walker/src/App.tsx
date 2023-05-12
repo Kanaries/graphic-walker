@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import { reaction, toJS } from 'mobx';
 import VisualConfig from './components/visualConfig';
+import type { ToolbarItemProps } from './components/toolbar';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -38,6 +39,7 @@ export interface IGWProps {
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     onEvent?: (event: IGWEvent) => any;
+    additionalActions?: ToolbarItemProps[];
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -52,6 +54,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         onEvent,
+        additionalActions,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -152,7 +155,7 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} additionalActions={additionalActions} />
                         <CodeExport />
                         <VisualConfig />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
@@ -215,3 +218,5 @@ const App = observer<IGWProps>(function App(props) {
 });
 
 export default App;
+
+export type { ToolbarItemProps };

@@ -61,9 +61,10 @@ const FormContainer = styled.div`
 interface IVisualSettings {
     darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler>;
+    additionalActions?: ToolbarItemProps[];
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference }) => {
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, additionalActions = [] }) => {
     const { vizStore, commonStore } = useGlobalStore();
     const { visualConfig, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
@@ -296,9 +297,11 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 onClick: () => {
                     commonStore.setShowCodeExportPanel(true);
                 }
-            }
+            },
+            '-',
+            ...additionalActions,
         ] as ToolbarItemProps[];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, additionalActions]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar
