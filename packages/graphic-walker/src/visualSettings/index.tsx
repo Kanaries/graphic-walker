@@ -64,9 +64,11 @@ const FormContainer = styled.div`
 interface IVisualSettings {
     darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler>;
+    exclude?: string[];
+    extra?: ToolbarItemProps[];
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference }) => {
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, extra = [], exclude = [] }) => {
     const { vizStore, commonStore } = useGlobalStore();
     const { visualConfig, canUndo, canRedo } = vizStore;
     const { t: tGlobal } = useTranslation();
@@ -88,7 +90,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
     const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
 
     const items = useMemo<ToolbarItemProps[]>(() => {
-        return [
+        const builtInItems = [
             {
                 key: 'undo',
                 label: 'undo (Ctrl + Z)',
@@ -343,9 +345,20 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 onClick: () => {
                     commonStore.setShowCodeExportPanel(true);
                 }
-            }
+            },
         ] as ToolbarItemProps[];
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, explorationMode, brushDirection, showActions, downloadPNG, downloadSVG, dark]);
+
+        const items = builtInItems.filter(item => typeof item === 'string' || !exclude.includes(item.key));
+
+        if (extra.length > 0) {
+            items.push(
+                '-',
+                ...extra,
+            );
+        }
+
+        return items;
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, extra, exclude]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar
