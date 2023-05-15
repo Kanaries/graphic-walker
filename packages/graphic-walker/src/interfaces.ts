@@ -249,9 +249,11 @@ export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowSte
 
 export interface IDataQueryPayload {
     datasetId: string;
-    workflow: IDataQueryWorkflowStep[];
-    limit?: number;
-    offset?: number;
+    query: {
+        workflow: IDataQueryWorkflowStep[];
+        limit?: number;
+        offset?: number;
+    };
 }
 
 export interface IDataPreviewPayload {
