@@ -47,6 +47,8 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    /** @default false */
+    readOnly?: boolean;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -63,6 +65,7 @@ const App = observer<IGWProps>(function App(props) {
         dataLoader = new WebWorkerDataLoader(),
         datasetId,
         toolbar,
+        readOnly = false,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -121,6 +124,20 @@ const App = observer<IGWProps>(function App(props) {
     const darkMode = useCurrentMediaTheme(dark);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
+
+    if (readOnly) {
+        return (
+            <>
+                {datasets.length > 0 && (
+                    <ReactiveRenderer
+                        ref={rendererRef}
+                        themeKey={themeKey}
+                        dark={dark}
+                    />
+                )}
+            </>
+        );
+    }
 
     return (
         <div
