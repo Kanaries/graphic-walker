@@ -73,7 +73,9 @@ const StandaloneRenderer = forwardRef<IReactVegaHandler, StandaloneRendererProps
         dataLoader.transform(
             {
                 datasetId,
-                workflow,
+                query: {
+                    workflow,
+                },
             } as IDataQueryPayload,
             /** deprecated */
             {

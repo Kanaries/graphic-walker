@@ -37,18 +37,20 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return {
             count: (await this.#query({
                 datasetId: dataset.id,
-                workflow: [{
-                    type: 'view',
-                    query: [{
-                        op: 'aggregate',
-                        groupBy: [],
-                        measures: [{
-                            field: '*',
-                            agg: 'count',
-                            asFieldKey: 'count',
+                query: {
+                    workflow: [{
+                        type: 'view',
+                        query: [{
+                            op: 'aggregate',
+                            groupBy: [],
+                            measures: [{
+                                field: '*',
+                                agg: 'count',
+                                asFieldKey: 'count',
+                            }],
                         }],
                     }],
-                }],
+                },
             }))[0].count,
         };
     }
@@ -57,21 +59,23 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         const { datasetId, pageIndex, pageSize } = payload;
         return this.#query({
             datasetId,
-            workflow: [{
-                type: 'view',
-                query: [{
-                    op: 'raw',
-                    fields: ['*'],
+            query: {
+                workflow: [{
+                    type: 'view',
+                    query: [{
+                        op: 'raw',
+                        fields: ['*'],
+                    }],
                 }],
-            }],
-            limit: pageSize,
-            offset: pageIndex * pageSize,
+                limit: pageSize,
+                offset: pageIndex * pageSize,
+            },
         });
     }
 
     transform: GWTransformFunction = async payload => {
         const data = produce(payload, draft => {
-            for (const step of draft.workflow) {
+            for (const step of draft.query.workflow) {
                 if (step.type === 'filter') {
                     for (const filter of step.filters) {
                         if (filter.rule.type === 'one of') {
@@ -91,38 +95,42 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         const MAX_ID = `max_${fid}`;
         const valuesQueryPayload: IDataQueryPayload = {
             datasetId: dataset.id,
-            workflow: [{
-                type: 'view',
-                query: [{
-                    op: 'aggregate',
-                    groupBy: [fid],
-                    measures: [{
-                        field: fid,
-                        agg: 'count',
-                        asFieldKey: COUNT_ID,
+            query: {
+                workflow: [{
+                    type: 'view',
+                    query: [{
+                        op: 'aggregate',
+                        groupBy: [fid],
+                        measures: [{
+                            field: fid,
+                            agg: 'count',
+                            asFieldKey: COUNT_ID,
+                        }],
                     }],
                 }],
-            }],
+            },
         };
         const valuesRes = values ? await this.#query(valuesQueryPayload) : [];
         const rangeQueryPayload: IDataQueryPayload = {
             datasetId: dataset.id,
-            workflow: [{
-                type: 'view',
-                query: [{
-                    op: 'aggregate',
-                    groupBy: [],
-                    measures: [{
-                        field: fid,
-                        agg: 'min',
-                        asFieldKey: MIN_ID,
-                    }, {
-                        field: fid,
-                        agg: 'max',
-                        asFieldKey: MAX_ID,
+            query: {
+                workflow: [{
+                    type: 'view',
+                    query: [{
+                        op: 'aggregate',
+                        groupBy: [],
+                        measures: [{
+                            field: fid,
+                            agg: 'min',
+                            asFieldKey: MIN_ID,
+                        }, {
+                            field: fid,
+                            agg: 'max',
+                            asFieldKey: MAX_ID,
+                        }],
                     }],
                 }],
-            }],
+            },
         };
         const [rangeRes] = range ? await this.#query(rangeQueryPayload) : [{
             [MIN_ID]: 0,
