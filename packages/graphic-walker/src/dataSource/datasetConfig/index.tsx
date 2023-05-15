@@ -24,7 +24,7 @@ const DatasetConfig: React.FC = (props) => {
         };
     }, [currentDataset]);
     return (
-        <div>
+        <div className="relative">
             <DatasetTable size={100}
                 total={count}
                 onMetaChange={(fid, fIndex, diffMeta) => {
