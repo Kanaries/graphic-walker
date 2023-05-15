@@ -42,6 +42,7 @@ export interface IGWProps {
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     /** @default WebWorkerDataLoader */
     dataLoader?: IGWDataLoader;
+    datasetId?: string;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -60,6 +61,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         dataLoader = new WebWorkerDataLoader(),
+        datasetId,
         toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
@@ -102,7 +104,7 @@ const App = observer<IGWProps>(function App(props) {
                 name: 'context dataset',
                 dataSource: safeDataset.safeData,
                 rawFields: safeDataset.safeMetas,
-            });
+            }, datasetId);
         }
     }, [safeDataset]);
 
