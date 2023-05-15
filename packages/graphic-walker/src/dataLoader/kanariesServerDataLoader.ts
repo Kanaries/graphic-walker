@@ -14,8 +14,9 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
     constructor(protected readonly options: IGWTransformerOptions) {}
 
     async #query(data: IDataQueryPayload): Promise<IRow[]> {
-        const res = await fetch(`${this.options.server}/api/data/v1/query`, {
+        const res = await fetch(`${this.options.server}/api/ce/dataset/v2/query`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
