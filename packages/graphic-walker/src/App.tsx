@@ -21,6 +21,7 @@ import CodeExport from './components/codeExport';
 import type { IGWDataLoader } from './dataLoader';
 import WebWorkerDataLoader from './dataLoader/webWorkerDataLoader';
 import VisualConfig from './components/visualConfig';
+import type { ToolbarItemProps } from './components/toolbar';
 
 
 export interface IGWProps {
@@ -41,6 +42,10 @@ export interface IGWProps {
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     /** @default WebWorkerDataLoader */
     dataLoader?: IGWDataLoader;
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
+    };
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -55,6 +60,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         dataLoader = new WebWorkerDataLoader(),
+        toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -134,7 +140,7 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
