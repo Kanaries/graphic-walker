@@ -45,7 +45,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         dataLoader.transform(
             {
                 datasetId: currentDataset.id,
-                workflow,
+                query: {
+                    workflow,
+                },
             },
             {
                 dataset: currentDataset,
