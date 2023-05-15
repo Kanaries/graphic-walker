@@ -8,8 +8,8 @@ export const toWorkflow = (
     viewDimensions: VizSpecStore['viewDimensions'],
     viewMeasures: VizSpecStore['viewMeasures'],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
-): IDataQueryPayload['workflow'] => {
-    const steps: IDataQueryPayload['workflow'] = [];
+): IDataQueryPayload['query']['workflow'] => {
+    const steps: IDataQueryPayload['query']['workflow'] = [];
 
     // First, to apply filters on the detailed data
     const filters = viewFilters.filter(f => f.rule).map(f => ({
