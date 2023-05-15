@@ -11,15 +11,20 @@ interface SpecRendererProps {
     data: IRow[];
     loading: boolean;
     visSpecEncodings: DeepReadonly<DraggableFieldState>;
-    visualConfig?: IVisualConfig;
+    visualConfig?: Partial<DeepReadonly<IVisualConfig>>;
 }
+
+const initialVizConfig = initVisualConfig();
 
 const StandaloneSpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     { themeKey, dark, data, loading, visSpecEncodings, visualConfig },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = visualConfig || initVisualConfig()
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = {
+        ...initialVizConfig,
+        ...visualConfig,
+    };
 
     const rows = visSpecEncodings.rows;
     const columns = visSpecEncodings.columns;

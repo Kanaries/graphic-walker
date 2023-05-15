@@ -60,10 +60,12 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             });
         }).catch((err) => {
             console.error(err);
-            setViewData([]);
-            setWaiting(false);
-            setEncodings(initEncoding);
-            setViewConfig(initVisualConfig);
+            unstable_batchedUpdates(() => {
+                setViewData([]);
+                setWaiting(false);
+                setEncodings(initEncoding);
+                setViewConfig(initVisualConfig);
+            });
         });
     }, [dataLoader, workflow, currentDataset]);
 

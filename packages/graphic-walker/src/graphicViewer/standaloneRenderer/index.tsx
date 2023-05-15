@@ -14,8 +14,8 @@ import { IGWDataLoader } from '../../dataLoader';
 interface StandaloneRendererProps {
     datasetId: IDataQueryPayload['datasetId'];
     datasetName?: string;
-    // visSpec: {[K in keyof IVisSpec]: K extends "config" ? Partial<IVisSpec[K]> : IVisSpec[K];}
-    visSpec: IVisSpec;
+    visSpec: {[K in keyof IVisSpec]: K extends "config" ? Partial<IVisSpec[K]> : IVisSpec[K];}
+    // visSpec: IVisSpec;
     dataLoader: IGWDataLoader;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
@@ -87,8 +87,10 @@ const StandaloneRenderer = forwardRef<IReactVegaHandler, StandaloneRendererProps
             });
         }).catch((err) => {
             console.error(err);
-            setViewData([]);
-            setWaiting(false);
+            unstable_batchedUpdates(() => {
+                setViewData([]);
+                setWaiting(false);
+            });
         });
     }, [dataLoader, workflow, datasetId, datasetName]);
 
@@ -113,7 +115,7 @@ const StandaloneRenderer = forwardRef<IReactVegaHandler, StandaloneRendererProps
             themeKey={themeKey}
             dark={dark}
             visSpecEncodings={encodings}
-            visualConfig={viewConfig as IVisualConfig}
+            visualConfig={viewConfig}
         />
     );
 });

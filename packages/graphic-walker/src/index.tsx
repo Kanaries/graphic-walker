@@ -53,3 +53,4 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
 export * from './interfaces';
 export type { IGWDataLoader as IGWTransformer } from './dataLoader';
 export { default as KanariesServerTransformer } from './dataLoader/kanariesServerDataLoader';
+export { default as StandaloneRenderer } from './graphicViewer/standaloneRenderer';
