@@ -1,4 +1,4 @@
-import type { IDataQueryPayload } from "../interfaces";
+import type { IAggregator, IDataQueryPayload } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 
 
@@ -36,14 +36,18 @@ export const toWorkflow = (
     }
 
     // Finally, to apply the aggregation
-    const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
+    const aggregateOn = viewMeasures.filter(f => f.aggName).map<[string, IAggregator]>(f => [f.fid, f.aggName as IAggregator]);
     if (defaultAggregated && aggregateOn.length) {
         steps.push({
             type: 'view',
             query: [{
                 op: 'aggregate',
                 groupBy: viewDimensions.map(f => f.fid),
-                agg: Object.fromEntries(aggregateOn),
+                measures: aggregateOn.map(([fid, agg]) => ({
+                    field: fid,
+                    agg,
+                    asFieldKey: `${fid}_${agg}`,
+                })),
             }],
         });
     } else {

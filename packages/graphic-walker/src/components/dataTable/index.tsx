@@ -131,7 +131,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, [dataset, dataLoader, size, pageIndex, inMemory]);
 
     return (
-        <Container className="rounded border-gray-200 dark:border-gray-700 border">
+        <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
             <Pagination
                 total={total}
                 from={from + 1}
