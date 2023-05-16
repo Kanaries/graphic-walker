@@ -162,11 +162,7 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer
-                                            ref={rendererRef}
-                                            themeKey={themeKey}
-                                            dark={dark}
-                                        />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>

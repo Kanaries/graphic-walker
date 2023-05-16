@@ -10,9 +10,16 @@ import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
 
 interface DataTableProps {
+    /** page limit */
     size?: number;
+    /** total count of rows */
     total: number;
     dataset: DataSet;
+    /**
+     * @default false
+     * Enable this option will extract data from `dataset.dataSource`.
+     * This is useful when you want to preview a temporary table.
+     */
     inMemory?: boolean;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
 }
@@ -86,7 +93,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, []);
 
     const from = pageIndex * size;
-    const to = from + size;
+    const to = Math.min((pageIndex + 1) * size, total - 1);
 
     const [rows, setRows] = useState<IRow[]>([]);
     const [loading, setLoading] = useState(false);
