@@ -1,5 +1,5 @@
 import { getMeaAggKey } from ".";
-import type { IDataQueryPayload } from "../interfaces";
+import type { IDataQueryPayload, IDataQueryWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 
 
@@ -9,8 +9,8 @@ export const toWorkflow = (
     viewDimensions: VizSpecStore['viewDimensions'],
     viewMeasures: VizSpecStore['viewMeasures'],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
-): IDataQueryPayload['query']['workflow'] => {
-    const steps: IDataQueryPayload['query']['workflow'] = [];
+): IDataQueryWorkflowStep[] => {
+    const steps: IDataQueryWorkflowStep[] = [];
 
     // First, to apply filters on the detailed data
     const filters = viewFilters.filter(f => f.rule).map(f => ({

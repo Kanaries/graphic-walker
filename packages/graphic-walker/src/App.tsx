@@ -42,6 +42,7 @@ export interface IGWProps {
     /** @default WebWorkerDataLoader */
     dataLoader?: IGWDataLoader;
     datasetId?: string;
+    chartId?: string;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -57,6 +58,7 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         dataLoader = new WebWorkerDataLoader(),
         datasetId,
+        chartId,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -115,6 +117,21 @@ const App = observer<IGWProps>(function App(props) {
     const darkMode = useCurrentMediaTheme(dark);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
+
+    if (chartId) {
+        return (
+            <>
+                {datasets.length > 0 && (
+                    <ReactiveRenderer
+                        ref={rendererRef}
+                        themeKey={themeKey}
+                        dark={dark}
+                        chartId={chartId}
+                    />
+                )}
+            </>
+        );
+    }
 
     return (
         <div

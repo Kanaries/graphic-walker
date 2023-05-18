@@ -1,6 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IDataQueryWorkflowStep, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
@@ -145,6 +145,7 @@ export class VizSpecStore {
     public canRedo = false;
     public editingFilterIdx: number | null = null;
     public dataLoader: IGWDataLoader = new WebWorkerDataLoader();
+    public workflow: IDataQueryWorkflowStep[] = [];
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -160,6 +161,7 @@ export class VizSpecStore {
         makeAutoObservable(this, {
             visList: observable.shallow,
             dataLoader: observable.ref,
+            workflow: false,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -722,5 +724,8 @@ export class VizSpecStore {
     }
     public setDataLoader(loader: IGWDataLoader) {
         this.dataLoader = loader;
+    }
+    public setWorkflow(workflow: IDataQueryWorkflowStep[]) {
+        this.workflow = workflow;
     }
 }

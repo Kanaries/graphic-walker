@@ -24,6 +24,9 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         const { dataset, columns } = options;
         const data = dataset.dataSource;
         let res = data;
+        if ('chartId' in payload) {
+            return res;
+        }
         for await (const step of payload.query.workflow) {
             switch (step.type) {
                 case 'filter': {

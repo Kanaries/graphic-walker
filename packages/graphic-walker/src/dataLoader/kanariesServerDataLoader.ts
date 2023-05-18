@@ -74,7 +74,7 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
     }
 
     transform: GWTransformFunction = async payload => {
-        const data = produce(payload, draft => {
+        const data = 'chartId' in payload ? payload : produce(payload, draft => {
             for (const step of draft.query.workflow) {
                 if (step.type === 'filter') {
                     for (const filter of step.filters) {

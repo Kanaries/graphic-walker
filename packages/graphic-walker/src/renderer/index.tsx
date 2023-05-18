@@ -13,9 +13,10 @@ import PivotTable from '../components/pivotTable';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    chartId?: string;
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { themeKey, dark, chartId } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader } = vizStore;
@@ -43,7 +44,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     useEffect(() => {
         setWaiting(true);
         dataLoader.transform(
-            {
+            chartId ? {
+                chartId,
+            } : {
                 datasetId: currentDataset.id,
                 query: {
                     workflow,
@@ -59,15 +62,19 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setWaiting(false);
                 setEncodings(toJS(latestFromRef.current.vizStore.draggableFieldState));
                 setViewConfig(toJS(latestFromRef.current.vizStore.visualConfig));
+                vizStore.setWorkflow(workflow);
             });
         }).catch((err) => {
             console.error(err);
-            setViewData([]);
-            setWaiting(false);
-            setEncodings(initEncoding);
-            setViewConfig(initVisualConfig);
+            unstable_batchedUpdates(() => {
+                setViewData([]);
+                setWaiting(false);
+                setEncodings(initEncoding);
+                setViewConfig(initVisualConfig);
+                vizStore.setWorkflow([]);
+            });
         });
-    }, [dataLoader, workflow, currentDataset]);
+    }, [chartId, dataLoader, workflow, currentDataset, vizStore]);
 
     if (viewConfig.geoms.includes('table')) {
         return (

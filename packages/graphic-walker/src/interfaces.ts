@@ -247,14 +247,19 @@ export interface IViewWorkflowStep {
 
 export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep;
 
-export interface IDataQueryPayload {
-    datasetId: string;
-    query: {
-        workflow: IDataQueryWorkflowStep[];
-        limit?: number;
-        offset?: number;
-    };
-}
+export type IDataQueryPayload = (
+    | {
+        datasetId: string;
+        query: {
+            workflow: IDataQueryWorkflowStep[];
+            limit?: number;
+            offset?: number;
+        };
+    }
+    | {
+        chartId: string;
+    }
+)
 
 export interface IDataPreviewPayload {
     datasetId: string;
