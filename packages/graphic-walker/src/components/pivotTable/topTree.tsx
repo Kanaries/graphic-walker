@@ -24,7 +24,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
     }
     cellRows[depth].push(
         <td
-            key={`${depth}-${node.fieldKey}-${node.value}`}
+            key={`${depth}-${node.fieldKey}-${node.value}-${cellRows[depth].length}`}
             className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
             colSpan={childrenSize * Math.max(meaNumber, 1)}
         >
