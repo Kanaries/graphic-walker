@@ -68,7 +68,8 @@
             "radius": "Radius",
             "filters": "Filters",
             "details": "Details",
-            "text": "Text"
+            "text": "Text",
+            "table_values": "Values"
         },
         "aggregator": {
             "sum": "Sum",

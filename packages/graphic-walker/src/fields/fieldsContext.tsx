@@ -42,6 +42,7 @@ export default FieldsContextWrapper;
 export const DRAGGABLE_STATE_KEYS: Readonly<IDraggableStateKey[]> = [
     { id: 'columns', mode: 0 },
     { id: 'rows', mode: 0 },
+    { id: 'table_values', mode: 0 },
     { id: 'color', mode: 1 },
     { id: 'opacity', mode: 1 },
     { id: 'size', mode: 1 },

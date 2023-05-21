@@ -59,6 +59,7 @@ export function initEncoding(): DraggableFieldState {
         details: [],
         filters: [],
         text: [],
+        table_values: [],
     };
 }
 

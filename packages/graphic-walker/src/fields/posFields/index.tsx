@@ -15,6 +15,9 @@ const PosFields: React.FC = props => {
         if (geoms[0] === 'arc') {
             return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'radius' || f.id === 'theta');
         }
+        if (geoms[0] === 'table') {
+            return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'columns' || f.id === 'rows' || f.id === 'table_values');
+        }
         return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'columns' || f.id === 'rows');
     }, [geoms[0]])
     return <div>

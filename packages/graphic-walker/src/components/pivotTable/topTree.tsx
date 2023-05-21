@@ -40,19 +40,19 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
 export interface TreeProps {
     data: INestNode;
     dimsInCol: IField[];
-    measInCol: IField[];
+    measures: IField[];
 }
 const TopTree: React.FC<TreeProps> = (props) => {
-    const { data, dimsInCol, measInCol } = props;
+    const { data, dimsInCol, measures } = props;
     const nodeCells: ReactNode[] = useMemo(() => {
         const cellRows: ReactNode[][] = new Array(dimsInCol.length + 1).fill(0).map(() => []);
-        renderTree(data, dimsInCol, 0, cellRows, measInCol.length);
+        renderTree(data, dimsInCol, 0, cellRows, measures.length);
         const totalChildrenSize = cellRows[cellRows.length - 1].length;
         cellRows.push(
-            new Array(totalChildrenSize).fill(0).flatMap(() =>
-                measInCol.map((m) => (
+            new Array(totalChildrenSize).fill(0).flatMap((_, idx) =>
+                measures.map((m, mIdx) => (
                     <td
-                        key={`${cellRows.length}-${m.fid}-${m.aggName}`}
+                        key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}-${mIdx}`}
                         className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                     >
                         {m.aggName}({m.name})
@@ -62,7 +62,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
         );
         cellRows.shift();
         return cellRows;
-    }, [data, dimsInCol, measInCol]);
+    }, [data, dimsInCol, measures]);
     return (
         <thead className="border border-gray-300 bg-gray-50 border border-gray-300">
             {nodeCells.map((row, rIndex) => (

@@ -43,41 +43,15 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
 export interface TreeProps {
     data: INestNode;
     dimsInRow: IField[];
-    measInRow: IField[];
 }
 const LeftTree: React.FC<TreeProps> = (props) => {
-    const { data, dimsInRow, measInRow } = props;
+    const { data, dimsInRow } = props;
     const nodeCells: ReactNode[] = useMemo(() => {
         const cellRows: ReactNode[][] = [[]];
-        renderTree(data, dimsInRow, 0, cellRows, measInRow.length);
+        renderTree(data, dimsInRow, 0, cellRows, 0);
         cellRows[0].shift();
-        if (measInRow.length > 0) {
-            const ans: ReactNode[][] = [];
-            for (let row of cellRows) {
-                ans.push([
-                    ...row,
-                    <td
-                        key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
-                        className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
-                    >
-                        {measInRow[0].aggName}({measInRow[0].name})
-                    </td>,
-                ]);
-                for (let j = 1; j < measInRow.length; j++) {
-                    ans.push([
-                        <td
-                            key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
-                            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
-                        >
-                            {measInRow[j].aggName}({measInRow[j].name})
-                        </td>,
-                    ]);
-                }
-            }
-            return ans;
-        }
         return cellRows;
-    }, [data, dimsInRow, measInRow]);
+    }, [data, dimsInRow]);
     return (
         <thead className="bg-gray-50 border border-gray-300 border border-gray-300">
             {nodeCells.map((row, rIndex) => (

@@ -46,7 +46,7 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
     // const store = usePivotTableStore();
     // const { vizStore } = useGlobalStore();
     // const { draggableFieldState } = vizStore;
-    const { rows, columns } = draggableFieldState;
+    const { rows, columns, table_values } = draggableFieldState;
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
@@ -59,13 +59,9 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
         return columns.filter((f) => f.analyticType === 'dimension');
     }, [columns]);
 
-    const measInRow = useMemo(() => {
-        return rows.filter((f) => f.analyticType === 'measure');
-    }, [rows]);
-
-    const measInColumn = useMemo(() => {
-        return columns.filter((f) => f.analyticType === 'measure');
-    }, [columns]);
+    const measures = useMemo(() => {
+        return table_values.filter((f) => f.analyticType === 'measure');
+    }, [table_values]);
 
     useEffect(() => {
         if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
@@ -92,17 +88,17 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
         <div className="flex">
             <table className="border border-gray-300 border-collapse">
                 <thead className="border border-gray-300">
-                    {new Array(dimsInColumn.length + (measInColumn.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
+                    {new Array(dimsInColumn.length + (measures.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
                         <tr className="" key={i}>
-                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measures.length > 0 ? 1 : 0)}>_</td>
                         </tr>
                     ))}
                 </thead>
-                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} measInRow={measInRow} />}
+                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} />}
             </table>
             <table className="border border-gray-300 border-collapse">
-                {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measInCol={measInColumn} />}
-                {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
+                {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measures={measures} />}
+                {metricTable && <MetricTable matrix={metricTable} measures={measures}/>}
             </table>
         </div>
     );

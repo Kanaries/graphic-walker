@@ -162,6 +162,7 @@ export interface DraggableFieldState {
     details: IViewField[];
     filters: IFilterField[];
     text: IViewField[];
+    table_values: IViewField[];
 }
 
 export interface IDraggableStateKey {

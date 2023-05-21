@@ -67,7 +67,8 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文"
+            "text": "本文",
+            "table_values": "値"
         },
         "aggregator": {
             "sum": "合計",

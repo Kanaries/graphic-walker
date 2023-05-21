@@ -68,7 +68,8 @@
             "radius": "半径",
             "filters": "筛选器",
             "details": "信息",
-            "text": "文本"
+            "text": "文本",
+            "table_values": "值"
         },
         "aggregator": {
             "sum": "求和",
