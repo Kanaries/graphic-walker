@@ -25,7 +25,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
     cellRows[depth].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}-${cellRows[depth].length}`}
-            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
+            className="bg-white dark:bg-zinc-800 whitespace-nowrap p-2 text-xs text-gray-500 dark:text-white m-1 border border-gray-300"
             colSpan={childrenSize * Math.max(meaNumber, 1)}
         >
             {node.value}
@@ -53,7 +53,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                 measures.map((m, mIdx) => (
                     <td
                         key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}-${mIdx}`}
-                        className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
+                        className="bg-white dark:bg-zinc-800 whitespace-nowrap p-2 text-xs text-gray-500 dark:text-white m-1 border border-gray-300"
                     >
                         {m.aggName}({m.name})
                     </td>

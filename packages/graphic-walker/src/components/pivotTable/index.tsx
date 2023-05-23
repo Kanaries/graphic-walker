@@ -114,7 +114,7 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
                     {new Array(dimsInColumn.length + (measures.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
                         <tr className="" key={i}>
                             <td
-                                className="p-2 m-1 text-xs text-white border border-gray-300"
+                                className="bg-white dark:bg-zinc-800 p-2 m-1 text-xs text-white border border-gray-300"
                                 colSpan={dimsInRow.length + (measures.length > 0 ? 1 : 0)}
                             >
                                 _

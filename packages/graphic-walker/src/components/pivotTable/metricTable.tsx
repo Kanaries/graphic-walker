@@ -27,7 +27,13 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
         if (opacityMeaKey) meaToBeNormList.push(opacityMeaKey);
         if (sizeMeaKey) meaToBeNormList.push(sizeMeaKey);
         meaToBeNormList.forEach((mea) => {
-            const values = matrix.flatMap((row) => row.map((item) => item[mea]));
+            const values = matrix
+                .flatMap((row) =>
+                    row.map((item) => {
+                        return item !== undefined ? item[mea] : undefined;
+                    })
+                )
+                .filter((val) => val !== undefined);
             const min = Math.min(...values);
             const max = Math.max(...values);
             newMeaStats[mea] = { min, max };
@@ -39,7 +45,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
         (cell: IRow, measure: IField) => {
             const calculateNormVal = (meaKey) => minMaxNorm(cell[meaKey], meaStats[meaKey].min, meaStats[meaKey].max);
             const meaKey = getMeaAggKey(measure.fid, measure.aggName);
-            if (cell[meaKey] === undefined && !sizeMeaKey) {
+            if (cell[meaKey] === undefined) {
                 return '--';
             }
             let colorStyle = {};
@@ -60,6 +66,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                     width: `${normVal * 0.8 + 0.2}rem`,
                     height: `${normVal * 0.8 + 0.2}rem`,
                     background: colorStyle['color'] ? colorStyle['color'] : themeConfig.area.fill,
+                    opacity: opacityStyle['opacity'] ? opacityStyle['opacity'] : 1
                 };
 
                 return <div style={sizeStyle}></div>;
@@ -80,7 +87,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                 return measures.map((mea, meaIdx) => {
                                     return (
                                         <td
-                                            className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                            className="bg-white dark:bg-zinc-900 whitespace-nowrap p-2 text-xs text-gray-500 dark:text-white"
                                             key={`${rIndex}-${cIndex}-${meaIdx}`}
                                         >
                                             {getCellData(cell, mea)}
@@ -90,7 +97,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                             } else {
                                 return (
                                     <td
-                                        className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                        className="bg-white dark:bg-zinc-900 whitespace-nowrap p-2 text-xs text-gray-500 dark:text-white"
                                         key={`${rIndex}-${cIndex}`}
                                     >
                                         --

@@ -25,7 +25,7 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     cellRows[cellRows.length - 1].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}`}
-            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
+            className="bg-white dark:bg-zinc-800 whitespace-nowrap p-2 text-xs text-gray-500 dark:text-white m-1 border border-gray-300"
             rowSpan={childrenSize * Math.max(meaNumber, 1)}
         >
             {node.value}
