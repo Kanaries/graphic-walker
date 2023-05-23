@@ -23,7 +23,7 @@ const AestheticFields: React.FC = props => {
             case 'text':
                 return aestheticFields.filter(f => f.id === 'text' || f.id === 'color' || f.id === 'size' || f.id === 'opacity');
             case 'table':
-                return []
+                return aestheticFields.filter(f => f.id === 'color' || f.id === 'opacity' || f.id === 'size');
             default:
                 return aestheticFields.filter(f => f.id !== 'text');
         }

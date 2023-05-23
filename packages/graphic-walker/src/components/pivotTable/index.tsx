@@ -18,7 +18,9 @@ import { buildMetricTableFromNestTree, buildNestTree } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
 import { toJS } from 'mobx';
-
+import { builtInThemes } from '../../vis/theme';
+import { useCurrentMediaTheme } from '../../utils/media';
+import { getMeaAggKey } from '../../utils';
 // const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
 //     const store = usePivotTableStore();
 //     const { vizStore } = useGlobalStore();
@@ -42,11 +44,14 @@ interface PivotTableProps {
     visualConfig: IVisualConfig;
 }
 const PivotTable: React.FC<PivotTableProps> = (props) => {
-    const { data, draggableFieldState } = props;
+    const { data, draggableFieldState, themeKey = 'vega', dark = 'media' } = props;
+
+    const mediaTheme = useCurrentMediaTheme(dark);
+    const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
     // const store = usePivotTableStore();
     // const { vizStore } = useGlobalStore();
     // const { draggableFieldState } = vizStore;
-    const { rows, columns, table_values } = draggableFieldState;
+    const { rows, columns, table_values, color, opacity, size } = draggableFieldState;
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
@@ -62,6 +67,24 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
     const measures = useMemo(() => {
         return table_values.filter((f) => f.analyticType === 'measure');
     }, [table_values]);
+
+    const colorMeaKey = useMemo(() => {
+        return color.length === 1 && color[0].analyticType === 'measure'
+            ? getMeaAggKey(color[0].fid, color[0].aggName)
+            : undefined;
+    }, [color]);
+
+    const opacityMeaKey = useMemo(() => {
+        return opacity.length === 1 && opacity[0].analyticType === 'measure'
+            ? getMeaAggKey(opacity[0].fid, opacity[0].aggName)
+            : undefined;
+    }, [opacity]);
+
+    const sizeMeaKey = useMemo(() => {
+        return size.length === 1 && size[0].analyticType === 'measure'
+            ? getMeaAggKey(size[0].fid, size[0].aggName)
+            : undefined;
+    }, [size]);
 
     useEffect(() => {
         if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
@@ -90,7 +113,12 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
                 <thead className="border border-gray-300">
                     {new Array(dimsInColumn.length + (measures.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
                         <tr className="" key={i}>
-                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measures.length > 0 ? 1 : 0)}>_</td>
+                            <td
+                                className="p-2 m-1 text-xs text-white border border-gray-300"
+                                colSpan={dimsInRow.length + (measures.length > 0 ? 1 : 0)}
+                            >
+                                _
+                            </td>
                         </tr>
                     ))}
                 </thead>
@@ -98,7 +126,16 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
             </table>
             <table className="border border-gray-300 border-collapse">
                 {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measures={measures} />}
-                {metricTable && <MetricTable matrix={metricTable} measures={measures}/>}
+                {metricTable && (
+                    <MetricTable
+                        matrix={metricTable}
+                        measures={measures}
+                        themeConfig={themeConfig}
+                        colorMeaKey={colorMeaKey}
+                        opacityMeaKey={opacityMeaKey}
+                        sizeMeaKey={sizeMeaKey}
+                    />
+                )}
             </table>
         </div>
     );

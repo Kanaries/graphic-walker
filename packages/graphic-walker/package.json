@@ -39,6 +39,7 @@
     "@kanaries/react-beautiful-dnd": "0.0.1",
     "@kanaries/web-data-loader": "^0.1.7",
     "autoprefixer": "^10.3.5",
+    "d3-interpolate": "^3.0.1",
     "i18next": "^21.9.1",
     "i18next-browser-languagedetector": "^6.1.5",
     "immer": "^9.0.15",
