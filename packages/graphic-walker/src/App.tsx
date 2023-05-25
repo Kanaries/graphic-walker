@@ -19,6 +19,7 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import type { ToolbarItemProps } from './components/toolbar';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -36,6 +37,10 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
+    };
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -49,6 +54,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -124,7 +130,7 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} />
+                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
@@ -187,3 +193,5 @@ const App = observer<IGWProps>(function App(props) {
 });
 
 export default App;
+
+export type { ToolbarItemProps };
