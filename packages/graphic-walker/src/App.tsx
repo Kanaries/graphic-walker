@@ -52,6 +52,10 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    autoSize?: {
+        width: number;
+        height: number;
+    };
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -67,6 +71,7 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         toolbar,
         mode = 'editor',
+        autoSize,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -125,12 +130,12 @@ const App = observer<IGWProps>(function App(props) {
     const renderer = (
         <>
             {datasets.length > 0 && (
-                <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
+                <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} autoSize={autoSize} />
             )}
         </>
     );
 
-    if (mode === 'editor') {
+    if (mode === 'renderer') {
         return (
             <div
                 className={`${

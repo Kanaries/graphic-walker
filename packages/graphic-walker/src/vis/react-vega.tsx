@@ -51,6 +51,10 @@ interface ReactVegaProps {
   /** @default "vega" */
   themeKey?: IThemeKey;
   dark?: IDarkMode;
+  autoSize?: {
+    width: number;
+    height: number;
+};
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -100,7 +104,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     details = [],
     themeKey = 'vega',
     dark = 'media',
-    format
+    format,
+    autoSize,
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
@@ -188,7 +193,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       })
     }
     if (rowRepeatFields.length <= 1 && colRepeatFields.length <= 1) {
-      if (layoutMode === 'fixed') {
+      if (autoSize) {
+        spec.autosize = {
+          type: 'fit',
+          contains: 'padding'
+        };
+        spec.width = autoSize.width;
+        spec.height = autoSize.height;
+      } else if (layoutMode === 'fixed') {
         if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
           spec.autosize = 'fit'
         }
@@ -236,7 +248,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         });
       }
     } else {
-      if (layoutMode === 'fixed') {
+      if (autoSize) {
+        spec.autosize = {
+          type: 'fit',
+          contains: 'padding'
+        };
+        spec.width = autoSize.width;
+        spec.height = autoSize.height;
+      } else if (layoutMode === 'fixed') {
         spec.width = Math.floor(width / colRepeatFields.length) - 5;
         spec.height = Math.floor(height / rowRepeatFields.length) - 5;
         spec.autosize = 'fit'
@@ -375,7 +394,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     vegaConfig,
     details,
-    text
+    text,
+    autoSize,
   ]);
 
   useImperativeHandle(ref, () => ({

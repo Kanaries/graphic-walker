@@ -14,9 +14,13 @@ import { getMeaAggKey } from '../utils';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    autoSize?: {
+        width: number;
+        height: number;
+    };
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { themeKey, dark, autoSize } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewDimensions, viewMeasures } = vizStore;
@@ -77,6 +81,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             dark={dark}
             draggableFieldState={encodings}
             visualConfig={viewConfig}
+            autoSize={autoSize}
         />
     );
 });

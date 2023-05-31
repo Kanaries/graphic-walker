@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { type HTMLAttributes, createContext, useEffect, useRef, useState, useMemo } from "react";
 import { StyleSheetManager } from "styled-components";
 import root from "react-shadow";
 import { DOM } from "@kanaries/react-beautiful-dnd";
@@ -14,10 +14,11 @@ import style from "./index.css?inline";
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
-export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
+export const GraphicWalker = observer<IGWProps & Omit<HTMLAttributes<HTMLDivElement>, keyof IGWProps>>((props) => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
-    const { storeRef, keepAlive: ka = 'single-instance', id } = props;
+    const { storeRef, keepAlive: ka = 'single-instance', id, className, style: divStyle } = props;
+    const attrs = { className, style: divStyle };
 
     useEffect(() => {
         if (rootRef.current) {
@@ -48,8 +49,8 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
     }, [ka, id]);
 
     return (
-        <StoreWrapper keepAlive={keepAlive} storeRef={storeRef} id={id}>
-            <root.div mode="open" ref={rootRef}>
+        <StoreWrapper keepAlive={keepAlive} storeRef={storeRef}>
+            <root.div mode="open" ref={rootRef} {...attrs}>
                 <style>{tailwindStyle}</style>
                 <style>{style}</style>
                 {shadowRoot && (

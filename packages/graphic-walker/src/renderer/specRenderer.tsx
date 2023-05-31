@@ -14,9 +14,13 @@ interface SpecRendererProps {
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
+    autoSize?: {
+        width: number;
+        height: number;
+    };
 }
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data, loading, draggableFieldState, visualConfig },
+    { themeKey, dark, data, loading, draggableFieldState, visualConfig, autoSize },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
@@ -53,7 +57,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         },
         []
     );
-    const enableResize = size.mode === 'fixed' && !hasFacet;
+    const enableResize = !autoSize && size.mode === 'fixed' && !hasFacet;
 
     return (
         <Resizable
@@ -111,6 +115,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
+                autoSize={autoSize}
             />
         </Resizable>
     );
