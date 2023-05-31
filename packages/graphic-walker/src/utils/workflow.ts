@@ -1,4 +1,5 @@
-import type { IAggregator, IDataQueryPayload } from "../interfaces";
+import { getMeaAggKey } from ".";
+import type { IDataQueryWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 
 
@@ -8,8 +9,8 @@ export const toWorkflow = (
     viewDimensions: VizSpecStore['viewDimensions'],
     viewMeasures: VizSpecStore['viewMeasures'],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
-): IDataQueryPayload['query']['workflow'] => {
-    const steps: IDataQueryPayload['query']['workflow'] = [];
+): IDataQueryWorkflowStep[] => {
+    const steps: IDataQueryWorkflowStep[] = [];
 
     // First, to apply filters on the detailed data
     const filters = viewFilters.filter(f => f.rule).map(f => ({
@@ -36,17 +37,17 @@ export const toWorkflow = (
     }
 
     // Finally, to apply the aggregation
-    const aggregateOn = viewMeasures.filter(f => f.aggName).map<[string, IAggregator]>(f => [f.fid, f.aggName as IAggregator]);
+    const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
     if (defaultAggregated && aggregateOn.length) {
         steps.push({
             type: 'view',
             query: [{
                 op: 'aggregate',
                 groupBy: viewDimensions.map(f => f.fid),
-                measures: aggregateOn.map(([fid, agg]) => ({
-                    field: fid,
-                    agg,
-                    asFieldKey: `${fid}_${agg}`,
+                measures: viewMeasures.map((f) => ({
+                    field: f.fid,
+                    agg: f.aggName as any,
+                    asFieldKey: getMeaAggKey(f.fid, f.aggName!),
                 })),
             }],
         });

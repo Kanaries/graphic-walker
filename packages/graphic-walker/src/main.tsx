@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { GraphicWalker } from './index';
+import KanariesServerDataLoader from './dataLoader/kanariesServerDataLoader';
+import type { IMutField } from './interfaces';
 
 import { inject } from '@vercel/analytics';
 import './index.css';
@@ -21,10 +23,28 @@ if (isConcurrentModeAvailable) {
     const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
     root.render(<GraphicWalker themeKey="g2" />);
 } else {
-    ReactDOM.render(
-        <React.StrictMode>
-            <GraphicWalker themeKey="g2" />
-        </React.StrictMode>,
-        document.getElementById('root') as HTMLElement
-    );
+    const server = localStorage.getItem('server') || ('//' + window.location.host);
+    const transformer = new KanariesServerDataLoader({
+        server,
+    });
+    fetch(`${server}/api/data/v1/meta?datasetId=na`, {
+        method: 'GET',
+    }).then(async res => {
+        const { data } = await res.json() as { data: { fields: IMutField[] } };
+        const { fields } = data;
+        const mockData = Object.fromEntries(fields.map(f => [f.fid, '-']));
+        ReactDOM.render(
+            <React.StrictMode>
+                <GraphicWalker themeKey="g2" dataLoader={transformer} dataSource={[mockData]} rawFields={fields} fieldKeyGuard={false} />
+            </React.StrictMode>,
+            document.getElementById('root') as HTMLElement
+        );
+    }).catch(() => {
+        ReactDOM.render(
+            <React.StrictMode>
+                <GraphicWalker themeKey="g2" />
+            </React.StrictMode>,
+            document.getElementById('root') as HTMLElement
+        );
+    });
 }
