@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IKeepAlive, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -28,7 +28,16 @@ export interface IGWProps {
     hideDataSourceConfig?: boolean;
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
-    keepAlive?: boolean;
+    /**
+     * - `"single-instance"`: Keep-alive when only one instance of GraphicWalker is mounted.
+     * - `"always"`: Keep-alive all instances of GraphicWalker. An `id` prop must be provided.
+     * - `"never"`: Do not keep-alive.
+     * - `true` or `"true"`: Equals to `"single-instance"`.
+     * - `false` or `"false"`: Equals to `"never"`.
+     * @default "single-instance"
+     */
+    keepAlive?: IKeepAlive;
+    id?: string;
     /**
      * auto parse field key into a safe string. default is true
      */

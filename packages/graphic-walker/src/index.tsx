@@ -1,10 +1,11 @@
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheetManager } from "styled-components";
 import root from "react-shadow";
 import { DOM } from "@kanaries/react-beautiful-dnd";
 import { observer } from "mobx-react-lite";
 import App, { IGWProps } from "./App";
 import { StoreWrapper } from "./store/index";
+import type { IKeepAliveMode } from "./interfaces";
 import { FieldsContextWrapper } from "./fields/fieldsContext";
 
 import "./empty_sheet.css";
@@ -16,7 +17,7 @@ export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ roo
 export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
-    const { storeRef } = props;
+    const { storeRef, keepAlive: ka = 'single-instance', id } = props;
 
     useEffect(() => {
         if (rootRef.current) {
@@ -31,8 +32,23 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         }
     }, []);
 
+    const keepAlive = useMemo<IKeepAliveMode>(() => {
+        if (ka === 'true' || ka === true) {
+            return 'single-instance';
+        } else if (ka === 'false' || ka === false) {
+            return 'never';
+        }
+        if (ka === 'always' && !id) {
+            if (process.env.NODE_ENV === 'development') {
+                console.error(new Error('id must be provided when keepAlive is "always"'));
+            }
+            return 'single-instance';
+        }
+        return ka;
+    }, [ka, id]);
+
     return (
-        <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
+        <StoreWrapper keepAlive={keepAlive} storeRef={storeRef} id={id}>
             <root.div mode="open" ref={rootRef}>
                 <style>{tailwindStyle}</style>
                 <style>{style}</style>
@@ -49,3 +65,5 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         </StoreWrapper>
     );
 });
+
+export { clearStoreCache } from "./store";

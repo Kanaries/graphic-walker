@@ -218,3 +218,5 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IKeepAlive = boolean | `${boolean}` | 'always' | 'single-instance' | 'never';
+export type IKeepAliveMode = 'always' | 'single-instance' | 'never';
