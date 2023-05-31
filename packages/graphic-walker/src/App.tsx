@@ -125,21 +125,6 @@ const App = observer<IGWProps>(function App(props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
-    if (chartId) {
-        return (
-            <>
-                {datasets.length > 0 && (
-                    <ReactiveRenderer
-                        ref={rendererRef}
-                        themeKey={themeKey}
-                        dark={dark}
-                        chartId={chartId}
-                    />
-                )}
-            </>
-        );
-    }
-
     return (
         <div
             className={`${
@@ -190,6 +175,7 @@ const App = observer<IGWProps>(function App(props) {
                                             ref={rendererRef}
                                             themeKey={themeKey}
                                             dark={dark}
+                                            chartId={chartId}
                                         />
                                     )}
                                     {/* {vizEmbededMenu.show && (
