@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IKeepAlive, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IDisplayMode, IKeepAlive, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -38,6 +38,8 @@ export interface IGWProps {
      */
     keepAlive?: IKeepAlive;
     id?: string;
+    /** @default "editor" */
+    mode?: IDisplayMode;
     /**
      * auto parse field key into a safe string. default is true
      */
@@ -64,6 +66,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         toolbar,
+        mode = 'editor',
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -119,6 +122,26 @@ const App = observer<IGWProps>(function App(props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const renderer = (
+        <>
+            {datasets.length > 0 && (
+                <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
+            )}
+        </>
+    );
+
+    if (mode === 'editor') {
+        return (
+            <div
+                className={`${
+                    darkMode === 'dark' ? 'dark' : ''
+                } App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}
+            >
+                {renderer}
+            </div>
+        );
+    }
+
     return (
         <div
             className={`${
@@ -164,9 +187,7 @@ const App = observer<IGWProps>(function App(props) {
                                     //     vizEmbededMenu.show && commonStore.closeEmbededMenu();
                                     // }}
                                 >
-                                    {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
-                                    )}
+                                    {renderer}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
