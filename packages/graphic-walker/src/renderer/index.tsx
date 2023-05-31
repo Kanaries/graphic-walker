@@ -38,15 +38,17 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [viewFilters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
 
     // Dependencies that should not trigger effect
-    const latestFromRef = useRef({ vizStore, allFields });
-    latestFromRef.current = { vizStore, allFields };
+    const latestFromRef = useRef({ vizStore, allFields, currentDataset });
+    latestFromRef.current = { vizStore, allFields, currentDataset };
 
     useEffect(() => {
+        // If chartId is not provided, we will use the workflow to generate the chart
+        if (chartId) {
+            return;
+        }
         setWaiting(true);
         dataLoader.transform(
-            chartId ? {
-                chartId,
-            } : {
+            {
                 datasetId: currentDataset.id,
                 query: {
                     workflow,
@@ -75,6 +77,38 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             });
         });
     }, [chartId, dataLoader, workflow, currentDataset, vizStore]);
+
+    useEffect(() => {
+        // If chartId is provided, we will use only the chartId to generate the chart
+        if (!chartId) {
+            return;
+        }
+        setWaiting(true);
+        dataLoader.transform(
+            {
+                chartId,
+            },
+            {
+                dataset: latestFromRef.current.currentDataset,
+                columns: latestFromRef.current.allFields,
+            }
+        ).then(data => {
+            unstable_batchedUpdates(() => {
+                setViewData(data);
+                setWaiting(false);
+                setEncodings(toJS(latestFromRef.current.vizStore.draggableFieldState));
+                setViewConfig(toJS(latestFromRef.current.vizStore.visualConfig));
+            });
+        }).catch((err) => {
+            console.error(err);
+            unstable_batchedUpdates(() => {
+                setViewData([]);
+                setWaiting(false);
+                setEncodings(initEncoding);
+                setViewConfig(initVisualConfig);
+            });
+        });
+    }, [chartId, dataLoader]);
 
     if (viewConfig.geoms.includes('table')) {
         return (
