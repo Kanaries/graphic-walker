@@ -1,4 +1,5 @@
-import { IDataSet, IDataSource, IVisSpec } from "../interfaces";
+import produce from "immer";
+import { IDataSet, IDataSource, IFilterField, IVisSpec, IFilterRule } from "../interfaces";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 
 export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
@@ -14,15 +15,72 @@ export interface IStoInfo {
     specList: {
         [K in keyof IVisSpec]: K extends "config" ? Partial<IVisSpec[K]> : IVisSpec[K];
     }[];
+    visIndex?: number;
     dataSources: IDataSource[];
 }
 
+type SerializedFilter = Omit<IFilterField, 'rule'> & {
+    rule: Extract<IFilterRule, { type: 'range' | 'temporal range' }> | (
+        Omit<Extract<IFilterRule, { type: 'one of' }>, 'value'> & {
+            value: (string | number)[];
+        }
+    );
+};
+
+type SerializedSpec = {
+    [K in keyof IStoInfo]: K extends 'specList' ? {
+        [K in keyof IStoInfo['specList'][number]]: K extends 'encodings' ? {
+            [K in keyof IStoInfo['specList'][number]['encodings']]: K extends 'filters' ? SerializedFilter[] : IStoInfo['specList'][number]['encodings'][K];
+        } : IStoInfo['specList'][number][K];
+    }[] : IStoInfo[K];
+};
+
 export function stringifyGWContent(info: IStoInfo) {
-    return JSON.stringify(info);
+    // transform all Set objects from filters into arrays
+    const spec = produce(info, draft => {
+        for (const spec of draft.specList) {
+            const filtersSet = spec.encodings.filters;
+            const filtersArr = filtersSet.map<SerializedFilter>(f => {
+                if (f.rule?.type === 'one of') {
+                    return {
+                        ...f,
+                        rule: {
+                            type: 'one of',
+                            value: Array.from(f.rule.value),
+                        },
+                    };
+                }
+                return f as SerializedFilter;
+            });
+            // @ts-expect-error
+            spec.encodings.filters = filtersArr;
+        }
+    }) as unknown as SerializedSpec;
+    return JSON.stringify(spec);
 }
 
 export function parseGWContent(raw: string): IStoInfo {
-    return JSON.parse(raw);
+    // transform parsed filter value arrays into Set objects
+    const specRaw = JSON.parse(raw) as SerializedSpec;
+    return produce(specRaw, draft => {
+        for (const spec of draft.specList) {
+            const filtersArr = spec.encodings.filters;
+            const filtersSet = new Set(filtersArr.map<IFilterField>(f => {
+                if (f.rule?.type === 'one of') {
+                    return {
+                        ...f,
+                        rule: {
+                            type: 'one of',
+                            value: new Set(f.rule.value),
+                        },
+                    };
+                }
+                return f as IFilterField;
+            }));
+            // @ts-expect-error
+            spec.encodings.filters = filtersSet;
+        }
+    }) as unknown as IStoInfo;
 }
 
 export function download(data: string, filename: string, type: string) {
