@@ -65,7 +65,7 @@ export function parseGWContent(raw: string): IStoInfo {
     return produce(specRaw, draft => {
         for (const spec of draft.specList) {
             const filtersArr = spec.encodings.filters;
-            const filtersSet = new Set(filtersArr.map<IFilterField>(f => {
+            const filtersSet = filtersArr.map<IFilterField>(f => {
                 if (f.rule?.type === 'one of') {
                     return {
                         ...f,
@@ -76,7 +76,7 @@ export function parseGWContent(raw: string): IStoInfo {
                     };
                 }
                 return f as IFilterField;
-            }));
+            });
             // @ts-expect-error
             spec.encodings.filters = filtersSet;
         }
