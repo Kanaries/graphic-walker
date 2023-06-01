@@ -29,11 +29,13 @@ export const toWorkflow = (
         fid: f.fid,
         expression: f.expression!,
     }));
+    let transformStep: IDataQueryWorkflowStep | null = null;
     if (computedFields.length) {
-        steps.push({
+        transformStep = {
             type: 'transform',
             transform: computedFields,
-        });
+        };
+        steps.push(transformStep);
     }
 
     // Finally, to apply the aggregation
@@ -59,6 +61,20 @@ export const toWorkflow = (
                 fields: [...new Set([...viewDimensions, ...viewMeasures])].map(f => f.fid),
             }],
         });
+    }
+
+    // Optimization: to remove the computed fields which are not used in the view
+    if (transformStep) {
+        const fidInView = new Set([...viewDimensions, ...viewMeasures].map(f => f.fid));
+        const computedFieldsInView = transformStep.transform.filter(f => fidInView.has(f.fid));
+        if (computedFieldsInView.length < transformStep.transform.length) {
+            if (!computedFieldsInView.length) {
+                const idx = steps.indexOf(transformStep);
+                steps.splice(idx, 1);
+            } else {
+                transformStep.transform = computedFieldsInView;
+            }
+        }
     }
 
     return steps;
