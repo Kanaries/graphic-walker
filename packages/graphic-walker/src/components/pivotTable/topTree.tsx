@@ -24,7 +24,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
     }
     cellRows[depth].push(
         <td
-            key={`${depth}-${node.fieldKey}-${node.value}`}
+            key={`${depth}-${node.fieldKey}-${node.value}-${cellRows[depth].length}`}
             className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
             colSpan={childrenSize * Math.max(meaNumber, 1)}
         >
@@ -49,10 +49,10 @@ const TopTree: React.FC<TreeProps> = (props) => {
         renderTree(data, dimsInCol, 0, cellRows, measInCol.length);
         const totalChildrenSize = cellRows[cellRows.length - 1].length;
         cellRows.push(
-            new Array(totalChildrenSize).fill(0).flatMap(() =>
+            new Array(totalChildrenSize).fill(0).flatMap((ele, idx) =>
                 measInCol.map((m) => (
                     <td
-                        key={`${cellRows.length}-${m.fid}-${m.aggName}`}
+                        key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}`}
                         className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
                     >
                         {m.aggName}({m.name})
@@ -64,7 +64,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
         return cellRows;
     }, [data, dimsInCol, measInCol]);
     return (
-        <thead className="border border-gray-300 bg-gray-50 border border-gray-300">
+        <thead className="border border-gray-300 bg-gray-50">
             {nodeCells.map((row, rIndex) => (
                 <tr className="border border-gray-300" key={rIndex}>
                     {row}

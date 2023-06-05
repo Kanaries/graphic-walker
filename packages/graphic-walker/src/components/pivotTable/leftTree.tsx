@@ -79,7 +79,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
         return cellRows;
     }, [data, dimsInRow, measInRow]);
     return (
-        <thead className="bg-gray-50 border border-gray-300 border border-gray-300">
+        <thead className="bg-gray-50 border border-gray-300">
             {nodeCells.map((row, rIndex) => (
                 <tr className="border border-gray-300" key={rIndex}>
                     {row}
