@@ -3,12 +3,13 @@ import { INestNode } from "./inteface";
 
 const key_prefix = 'nk_';
 
-export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number) {
+export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number, tableCollapsedHeaderMap: Map<string, INestNode["path"]>) {
     if (depth >= layerKeys.length) {
         // tree.key = nodeData[layerKeys[depth]];
         return;   
     }
     const key = nodeData[layerKeys[depth]];
+    const uniqueKey = `${tree.uniqueKey}__${key}`;
     // console.log({
     //     key,
     //     nodeData,
@@ -23,25 +24,37 @@ export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow
         child = {
             key,
             value: key,
+            uniqueKey: uniqueKey, 
             fieldKey: layerKeys[depth],
             children: [],
+            path: [...tree.path, {key: layerKeys[depth], value: key}],
+            height: layerKeys.length - depth - 1,
+            isCollapsed: false,
+        }
+        if (tableCollapsedHeaderMap.has(tree.uniqueKey)) {
+            tree.isCollapsed = true;
         }
         tree.children.push(child);
+        tree.children.sort((a, b) => (a.key || '').localeCompare((b.key || '')));
     }
-    insertNode(child, layerKeys, nodeData, depth + 1);
+    insertNode(child, layerKeys, nodeData, depth + 1, tableCollapsedHeaderMap);
 
 }
 const ROOT_KEY = '__root';
 
-export function buildNestTree (layerKeys: string[], data: IRow[]): INestNode {
+export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsedHeaderMap: Map<string, INestNode["path"]>): INestNode {
     const tree: INestNode = {
         key: ROOT_KEY,
         value: 'root',
         fieldKey: 'root',
+        uniqueKey: ROOT_KEY,
         children: [],
+        path: [],
+        height: layerKeys.length,
+        isCollapsed: false,
     };
     for (let row of data) {
-        insertNode(tree, layerKeys, row, 0);
+        insertNode(tree, layerKeys, row, 0, tableCollapsedHeaderMap);
     }
     return tree;
 }
@@ -56,7 +69,7 @@ class NodeIterator {
     public first () {
         let node = this.tree
         this.nodeStack = [node];
-        while (node.children.length > 0) {
+        while (node.children.length > 0 && !node.isCollapsed) {
             this.nodeStack.push(node.children[0])
             node = node.children[0]
         }
@@ -75,7 +88,7 @@ class NodeIterator {
             if (nodeIndex === -1) break;
             // console.log(this.nodeStack.map(n => `${n.fieldKey}-${n.value}`))
             if (cursorMoved) {
-                if (node.children.length > 0) {
+                if (node.children.length > 0 && !node.isCollapsed) {
                     this.nodeStack.push(node.children[0]);
                     continue;
                 } else {
@@ -122,8 +135,13 @@ export function buildMetricTableFromNestTree (leftTree: INestNode, topTree: INes
         iteTop.first();
         while (iteTop.current !== null) {
             const predicates = iteLeft.predicates().concat(iteTop.predicates());
-            const row = data.find(r => predicates.every(pre => r[pre.key] === pre.value))
-            vec.push(row)
+            const matchedRows = data.filter(r => predicates.every(pre => r[pre.key] === pre.value));
+            if (matchedRows.length > 0) {
+                // If multiple rows are matched, then find the most matched one (the row with smallest number of keys)
+                vec.push(matchedRows.reduce((a, b) => Object.keys(a).length < Object.keys(b).length ? a : b));
+            } else {
+                vec.push(undefined);
+            }
             iteTop.next();
         }
         mat.push(vec)

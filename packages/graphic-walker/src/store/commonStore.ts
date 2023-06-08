@@ -1,6 +1,7 @@
 import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
+import { INestNode } from '../components/pivotTable/inteface';
 
 export class CommonStore {
     public datasets: IDataSet[] = [];
@@ -17,13 +18,15 @@ export class CommonStore {
     public showVisualConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
     constructor () {
         this.datasets = [];
         this.dataSources = [];
         makeAutoObservable(this, {
             dataSources: observable.ref,
             tmpDataSource: observable.ref,
-            filters: observable.ref
+            filters: observable.ref,
+            tableCollapsedHeaderMap: observable.ref,
         });
     }
     public get currentDataset (): DataSet {
@@ -67,6 +70,27 @@ export class CommonStore {
     }
     public setShowVisualConfigPanel (show: boolean) {
         this.showVisualConfigPanel = show;
+    }
+    public updateTableCollapsedHeader (node: INestNode) {
+        const {uniqueKey, height} = node;
+        if (height < 1) return;
+        const updatedMap = new Map(this.tableCollapsedHeaderMap)
+        // if some child nodes of the incoming node are collapsed, remove them first
+        updatedMap.forEach((existingPath, existingKey) => {
+            if (existingKey.startsWith(uniqueKey) && existingKey.length > uniqueKey.length) {
+                updatedMap.delete(existingKey)
+            }
+        })
+        if (!updatedMap.has(uniqueKey)) {
+            updatedMap.set(uniqueKey, node.path)
+        } else {
+            updatedMap.delete(uniqueKey)
+        }
+        this.tableCollapsedHeaderMap = updatedMap
+    }
+    public resetTableCollapsedHeader () {
+        const updatedMap: Map<string, INestNode["path"]> = new Map();
+        this.tableCollapsedHeaderMap = updatedMap;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;
