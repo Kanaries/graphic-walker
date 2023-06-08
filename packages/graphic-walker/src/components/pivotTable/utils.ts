@@ -8,7 +8,7 @@ export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow
         // tree.key = nodeData[layerKeys[depth]];
         return;   
     }
-    const key = nodeData[layerKeys[depth]];
+    const key = String(nodeData[layerKeys[depth]]);
     const uniqueKey = `${tree.uniqueKey}__${key}`;
     // console.log({
     //     key,
@@ -31,6 +31,7 @@ export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow
             height: layerKeys.length - depth - 1,
             isCollapsed: false,
         }
+        console.log(child)
         if (tableCollapsedHeaderMap.has(tree.uniqueKey)) {
             tree.isCollapsed = true;
         }
