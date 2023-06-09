@@ -3,12 +3,12 @@ import { INestNode } from "./inteface";
 
 const key_prefix = 'nk_';
 
-export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number, tableCollapsedHeaderMap: Map<string, INestNode["path"]>) {
+function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number, tableCollapsedHeaderMap: Map<string, INestNode["path"]>) {
     if (depth >= layerKeys.length) {
         // tree.key = nodeData[layerKeys[depth]];
         return;   
     }
-    const key = String(nodeData[layerKeys[depth]]);
+    const key = nodeData[layerKeys[depth]];
     const uniqueKey = `${tree.uniqueKey}__${key}`;
     // console.log({
     //     key,
@@ -31,16 +31,34 @@ export function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow
             height: layerKeys.length - depth - 1,
             isCollapsed: false,
         }
-        console.log(child)
         if (tableCollapsedHeaderMap.has(tree.uniqueKey)) {
             tree.isCollapsed = true;
         }
-        tree.children.push(child);
-        tree.children.sort((a, b) => (a.key || '').localeCompare((b.key || '')));
+        tree.children.splice(binarySearchIndex(tree.children, child.key), 0, child);
     }
     insertNode(child, layerKeys, nodeData, depth + 1, tableCollapsedHeaderMap);
 
 }
+
+// Custom binary search function to find appropriate index for insertion.
+function binarySearchIndex(arr: INestNode[], keyVal: string | number): number {
+    let start = 0, end = arr.length - 1;
+
+    while (start <= end) {
+        let middle = Math.floor((start + end) / 2);
+        let middleVal = arr[middle].key;
+        if (typeof middleVal === 'number' && typeof keyVal === 'number') {
+            if (middleVal < keyVal) start = middle + 1;
+            else end = middle - 1;
+        } else {
+            let cmp = String(middleVal).localeCompare(String(keyVal));
+            if (cmp < 0) start = middle + 1;
+            else end = middle - 1;
+        }
+    }
+    return start;
+}
+
 const ROOT_KEY = '__root';
 
 export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsedHeaderMap: Map<string, INestNode["path"]>): INestNode {
@@ -116,7 +134,7 @@ class NodeIterator {
         // console.log(this.current)
         return this.current;
     }
-    public predicates (): { key: string; value: any }[] {
+    public predicates (): { key: string; value: string | number }[] {
         return this.nodeStack.filter(node => node.key !== ROOT_KEY).map(node => ({
             key: node.fieldKey,
             value: node.value

@@ -1,8 +1,8 @@
 import { IAggregator } from "../../interfaces";
 
 export interface INestNode {
-    key: string;
-    value: string;
+    key: string | number;
+    value: string | number;
     uniqueKey: string;
     fieldKey: string;
     children: INestNode[];
