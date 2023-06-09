@@ -43,7 +43,7 @@ interface PivotTableProps {
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
 }
-const PivotTable: React.FC<PivotTableProps> = observer((props) => {
+const PivotTable: React.FC<PivotTableProps> = (props) => {
     const { data, draggableFieldState } = props;
     // const store = usePivotTableStore();
     // const { vizStore } = useGlobalStore();
@@ -96,7 +96,7 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
                 setMetricTable(metric);
             });
         }
-    }, [aggData, data]);
+    }, [dimsInColumn, dimsInRow, aggData, data]);
 
     useEffect(() => {
         if (tableCollapsedHeaderMap.size > 0) {
@@ -105,7 +105,7 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
     }, [dataSource, viewFilters, allFields, dimsInRow, dimsInColumn]);
 
     useEffect(() => {
-        if ((dimsInRow.length === 0 && dimsInColumn.length === 0)) return;
+        if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
 
         const collapsedDimList = Array.from(tableCollapsedHeaderMap).map(([key, path]) => {
             return path[path.length - 1].key;
@@ -193,9 +193,9 @@ const PivotTable: React.FC<PivotTableProps> = observer((props) => {
             </table>
         </div>
     );
-});
+};
 
-export default PivotTable;
+export default observer(PivotTable);
 
 // const PivotTableApp: React.FC<PivotTableProps> = (props) => {
 //     return (
