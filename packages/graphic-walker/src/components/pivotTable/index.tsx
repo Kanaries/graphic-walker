@@ -43,7 +43,7 @@ interface PivotTableProps {
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
 }
-const PivotTable: React.FC<PivotTableProps> = (props) => {
+const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
     const { data, draggableFieldState } = props;
     // const store = usePivotTableStore();
     // const { vizStore } = useGlobalStore();
@@ -193,9 +193,9 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
             </table>
         </div>
     );
-};
+});
 
-export default observer(PivotTable);
+export default PivotTable;
 
 // const PivotTableApp: React.FC<PivotTableProps> = (props) => {
 //     return (

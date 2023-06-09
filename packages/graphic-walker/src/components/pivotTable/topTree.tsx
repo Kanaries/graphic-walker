@@ -34,15 +34,10 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
             <div className="flex">
                 <div>{node.value}</div>
                 {node.height > 0 && (
-                    <div className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)}>
-                        {(() => {
-                            if (isCollapsed) {
-                                return <PlusCircleIcon />;
-                            } else {
-                                return <MinusCircleIcon />;
-                            }
-                        })()}
-                    </div>
+                    <>
+                        {isCollapsed && <PlusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
+                        {!isCollapsed && <MinusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
+                    </>
                 )}
             </div>
         </td>
