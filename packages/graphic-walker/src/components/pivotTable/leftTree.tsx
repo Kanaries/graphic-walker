@@ -27,13 +27,13 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     cellRows[cellRows.length - 1].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}`}
-            className={`whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300`}
+            className={`align-top whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300`}
             colSpan={isCollapsed ? node.height + 1 : 1}
             rowSpan={isCollapsed ? Math.max(meaNumber, 1) : childrenSize * Math.max(meaNumber, 1)}
         >
             <div className="flex">
                 <div>{node.value}</div>
-                {node.height > 0 && (
+                {node.height > 0 && node.key !== "__total" && (
                     <>
                         {isCollapsed && <PlusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
                         {!isCollapsed && <MinusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}

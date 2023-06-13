@@ -19,6 +19,7 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    TableCellsIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -72,7 +73,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
     const {
-        defaultAggregated, geoms: [markType], stack, interactiveScale, size: { mode: sizeMode, width, height },
+        defaultAggregated, geoms: [markType], showTableSummary, stack, interactiveScale, size: { mode: sizeMode, width, height },
         showActions,
     } = visualConfig;
 
@@ -206,6 +207,15 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 icon: BarsArrowDownIcon,
                 onClick: () => vizStore.applyDefaultSort('descending'),
             },
+            {
+                key: 'table:summary',
+                label: t('table.summary'),
+                icon: TableCellsIcon,
+                checked: showTableSummary,
+                onChange: checked => {
+                    vizStore.setVisualConfig('showTableSummary', checked);
+                },
+            },
             '-',
             {
                 key: 'axes_resize',
@@ -309,8 +319,13 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 ...extra,
             );
         }
-
-        return items;
+        
+        switch (vizStore.visualConfig.geoms[0]) {
+            case 'table':
+                return items;
+            default:
+                return items.filter(item => typeof item === 'string' || item.key !== 'table:summary');
+        }
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, extra, exclude]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>

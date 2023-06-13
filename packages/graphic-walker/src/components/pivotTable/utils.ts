@@ -60,8 +60,27 @@ function binarySearchIndex(arr: INestNode[], keyVal: string | number): number {
 }
 
 const ROOT_KEY = '__root';
+const TOTAL_KEY = '__total'
 
-export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsedHeaderMap: Map<string, INestNode["path"]>): INestNode {
+function insertSummaryNode (node: INestNode): void {
+    if (node.children.length > 0) {
+        node.children.push({
+            key: TOTAL_KEY,
+            value: 'total',
+            fieldKey: node.children[0].fieldKey,
+            uniqueKey: `${node.uniqueKey}${TOTAL_KEY}`,
+            children: [],
+            path: [],
+            height: node.children[0].height,
+            isCollapsed: true,
+        });
+        for (let i = 0; i < node.children.length - 1; i ++) {
+            insertSummaryNode(node.children[i]);
+        }
+    }
+};
+
+export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsedHeaderMap: Map<string, INestNode["path"]>, showSummary: boolean): INestNode {
     const tree: INestNode = {
         key: ROOT_KEY,
         value: 'root',
@@ -74,6 +93,9 @@ export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsed
     };
     for (let row of data) {
         insertNode(tree, layerKeys, row, 0, tableCollapsedHeaderMap);
+    }
+    if (showSummary) {
+        insertSummaryNode(tree);
     }
     return tree;
 }
@@ -153,7 +175,7 @@ export function buildMetricTableFromNestTree (leftTree: INestNode, topTree: INes
         const vec: any[] = [];
         iteTop.first();
         while (iteTop.current !== null) {
-            const predicates = iteLeft.predicates().concat(iteTop.predicates());
+            const predicates = iteLeft.predicates().concat(iteTop.predicates()).filter((ele) => ele.value !== "total");
             const matchedRows = data.filter(r => predicates.every(pre => r[pre.key] === pre.value));
             if (matchedRows.length > 0) {
                 // If multiple rows are matched, then find the most matched one (the row with smallest number of keys)

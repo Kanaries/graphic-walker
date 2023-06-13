@@ -188,6 +188,7 @@ export type IStackMode = 'none' | 'stack' | 'normalize';
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
+    showTableSummary: boolean;
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;

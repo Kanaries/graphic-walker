@@ -66,6 +66,7 @@ export function initVisualConfig(): IVisualConfig {
     return {
         defaultAggregated: true,
         geoms: [GEMO_TYPES[0]!],
+        showTableSummary: false,
         stack: "stack",
         showActions: false,
         interactiveScale: false,
@@ -369,6 +370,7 @@ export class VizSpecStore {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === "geoms" && Array.isArray(value):
+                case configKey === "showTableSummary":
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
                 case configKey === "stack": {

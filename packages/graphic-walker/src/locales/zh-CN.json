@@ -155,6 +155,9 @@
                 "size_setting": {
                     "width": "宽度",
                     "height": "高度"
+                },
+                "table": {
+                    "summary": "显示摘要"
                 }
             },
             "DatasetFields": {

@@ -155,6 +155,9 @@
                 "size_setting": {
                     "width": "Width",
                     "height": "Height"
+                },
+                "table": {
+                    "summary": "Show summary"
                 }
             },
             "DatasetFields": {
