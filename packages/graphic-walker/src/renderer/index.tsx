@@ -26,12 +26,13 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
+    const [transformedData, setTransformedData] = useState<IRow[]>([]);
     useEffect(() => {
         setWaiting(true);
         applyFilter(dataSource, viewFilters)
             .then((data) => transformDataService(data, allFields))
             .then((d) => {
-                // setViewData(d);
+                setTransformedData(d);
                 const dims = viewDimensions;
                 const meas = viewMeasures;
                 const config = toJS(vizStore.visualConfig);
@@ -59,6 +60,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         return (
             <PivotTable
                 data={viewData}
+                transformedData={transformedData}
                 draggableFieldState={encodings}
                 visualConfig={viewConfig}
                 loading={waiting}

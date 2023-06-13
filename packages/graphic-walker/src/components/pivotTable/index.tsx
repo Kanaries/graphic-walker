@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StoreWrapper, useGlobalStore } from '../../store';
 import { PivotTableDataProps, PivotTableStoreWrapper, usePivotTableStore } from './store';
-import { applyFilter, applyViewQuery, transformDataService } from '../../services';
+import { applyViewQuery } from '../../services';
 import { observer } from 'mobx-react-lite';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
@@ -39,12 +39,13 @@ interface PivotTableProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
+    transformedData: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
 }
 const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
-    const { data } = props;
+    const { data, transformedData } = props;
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
@@ -86,7 +87,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
             commonStore.resetTableCollapsedHeader();
         }
         aggregateGroupbyData();
-    }, [dataSource, viewFilters, allFields, dimsInRow, dimsInColumn, showTableSummary]);
+    }, [transformedData]);
 
     useEffect(() => {
         if (showTableSummary) {
@@ -140,24 +141,19 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         ).slice(0, -1);
 
         const groupbyPromises = groupbyCombList.map((dimComb) => {
-            return applyFilter(dataSource, viewFilters)
-                .then((data) => transformDataService(data, allFields))
-                .then((d) => {
-                    const dims = dimComb;
-                    const meas = viewMeasures;
-                    const config = toJS(vizStore.visualConfig);
-                    return applyViewQuery(d, dims.concat(meas), {
-                        op: config.defaultAggregated ? 'aggregate' : 'raw',
-                        groupBy: dims.map((f) => f.fid),
-                        measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
-                    });
-                })
-                .catch((err) => {
-                    console.error(err);
-                    return [];
-                });
+            const dims = dimComb;
+            const meas = viewMeasures;
+            const config = toJS(vizStore.visualConfig);
+            return applyViewQuery(transformedData, dims.concat(meas), {
+                op: config.defaultAggregated ? 'aggregate' : 'raw',
+                groupBy: dimComb.map((f) => f.fid),
+                measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
+            })
+            .catch((err) => {
+                console.error(err);
+                return [];
+            });
         });
-          
         Promise.all(groupbyPromises)
             .then((result) => {
                 const finalizedData = [...result.flat()];
