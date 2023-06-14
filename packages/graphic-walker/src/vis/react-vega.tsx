@@ -1,16 +1,14 @@
 import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef } from 'react';
-import embed, { vega } from 'vega-embed';
+import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { builtInThemes } from './theme';
-import { useCurrentMediaTheme } from '../utils/media';
-import { SingleViewProps, getSingleView } from './spec/view';
+import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
@@ -27,7 +25,6 @@ export interface IReactVegaHandler {
   downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface ReactVegaProps {
-  format: IVisualConfig['format'];
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
   dataSource: IRow[];
@@ -48,9 +45,7 @@ interface ReactVegaProps {
   width: number;
   height: number;
   onGeomClick?: (values: any, e: any) => void
-  /** @default "vega" */
-  themeKey?: IThemeKey;
-  dark?: IDarkMode;
+  vegaConfig: VegaGlobalConfig;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -98,30 +93,31 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     width,
     height,
     details = [],
-    themeKey = 'vega',
-    dark = 'media',
-    format
+    // themeKey = 'vega',
+    // dark = 'media',
+    vegaConfig,
+    // format
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const { i18n } = useTranslation();
-  const mediaTheme = useCurrentMediaTheme(dark);
-  const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
+  // const mediaTheme = useCurrentMediaTheme(dark);
+  // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
-  const vegaConfig = useMemo(() => {
-    const config: any = {
-      ...themeConfig,
-    }
-    if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
-      config.normalizedNumberFormat = format.normalizedNumberFormat;
-    }
-    if (format.numberFormat && format.numberFormat.length > 0) {
-      config.numberFormat = format.numberFormat;
-    }
-    if (format.timeFormat && format.timeFormat.length > 0) {
-      config.timeFormat = format.timeFormat;
-    }
-    return config;
-  }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+  // const vegaConfig = useMemo(() => {
+  //   const config: any = {
+  //     ...themeConfig,
+  //   }
+  //   if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
+  //     config.normalizedNumberFormat = format.normalizedNumberFormat;
+  //   }
+  //   if (format.numberFormat && format.numberFormat.length > 0) {
+  //     config.numberFormat = format.numberFormat;
+  //   }
+  //   if (format.timeFormat && format.timeFormat.length > 0) {
+  //     config.timeFormat = format.timeFormat;
+  //   }
+  //   return config;
+  // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {

@@ -6,6 +6,8 @@ import { IVisualConfig } from '../../interfaces';
 import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
 import { useTranslation } from 'react-i18next';
+import Toggle from '../toggle';
+import { runInAction } from 'mobx';
 
 const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -22,6 +24,7 @@ const VisualConfigPanel: React.FC = (props) => {
         timeFormat: visualConfig.format.timeFormat,
         normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
     });
+    const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
 
     return (
         <Modal
@@ -31,8 +34,17 @@ const VisualConfigPanel: React.FC = (props) => {
             }}
         >
             <div>
-                <h2 className='text-lg mb-4'>{t('config.format')}</h2>
-                <p className='text-xs'>Format guides docs: <a target="_blank" className='underline text-blue-500' href="https://github.com/d3/d3-format#locale_format">read here</a></p>
+                <h2 className="text-lg mb-4">{t('config.format')}</h2>
+                <p className="text-xs">
+                    Format guides docs:{' '}
+                    <a
+                        target="_blank"
+                        className="underline text-blue-500"
+                        href="https://github.com/d3/d3-format#locale_format"
+                    >
+                        read here
+                    </a>
+                </p>
                 {formatConfigList.map((fc) => (
                     <div className="my-2" key={fc}>
                         <label className="block text-xs font-medium leading-6 text-gray-900">{t(`config.${fc}`)}</label>
@@ -51,18 +63,30 @@ const VisualConfigPanel: React.FC = (props) => {
                         </div>
                     </div>
                 ))}
-                <div className='mt-4'>
+                <div className="my-2">
+                    <Toggle
+                        label="zero scale"
+                        enabled={zeroScale}
+                        onChange={(en) => {
+                            setZeroScale(en);
+                        }}
+                    />
+                </div>
+                <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}
-                        className='mr-2'
+                        className="mr-2"
                         onClick={() => {
-                            vizStore.setVisualConfig('format', format);
-                            commonStore.setShowVisualConfigPanel(false);
+                            runInAction(() => {
+                                vizStore.setVisualConfig('format', format);
+                                vizStore.setVisualConfig('zeroScale', zeroScale);
+                                commonStore.setShowVisualConfigPanel(false);
+                            })
                         }}
                     />
                     <DefaultButton
                         text={t('actions.cancel')}
-                        className='mr-2'
+                        className="mr-2"
                         onClick={() => {
                             commonStore.setShowVisualConfigPanel(false);
                         }}
