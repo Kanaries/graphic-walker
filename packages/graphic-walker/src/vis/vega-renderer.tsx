@@ -1,19 +1,19 @@
 import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef, createRef } from 'react';
-import embed, { vega } from 'vega-embed';
-import { Subject, Subscription } from 'rxjs'
+import embed from 'vega-embed';
+import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
+import { nanoid } from 'nanoid';
 
-import { IViewField, IRow, IStackMode, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
+import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
 import { useCurrentMediaTheme } from '../utils/media';
-import { SingleViewProps, getSingleView } from './spec/view';
+import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 import type { IVisEncodingChannel, IVisField, IVisSpec } from './protocol/interface';
-import { nanoid } from 'nanoid';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number; }>`
   display: grid;

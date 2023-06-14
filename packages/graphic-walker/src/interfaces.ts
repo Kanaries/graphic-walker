@@ -1,3 +1,6 @@
+import type { IViewQuery } from "./lib/viewQuery";
+import type { IVisField, IVisFilter } from "./vis/protocol/interface";
+
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
@@ -43,6 +46,11 @@ export interface IUncertainMutField {
     disable?: boolean;
     semanticType: ISemanticType | '?';
     analyticType: IAnalyticType | '?';
+}
+
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
 }
 
 export type IExpParamter =
@@ -218,3 +226,52 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: IVisFilter[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        [key in keyof Pick<IVisField, 'key' | 'expression'>]-?: NonNullable<IVisField[key]>;
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep;
+
+export interface IDataQueryPayload {
+    workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
+}
+
+export interface ILoadDataPayload {
+    pageSize: number;
+    pageIndex: number;
+}
+
+export interface IGWDatasetStat {
+    count: number;
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);

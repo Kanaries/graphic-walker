@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../store";
 import DataTable from "../components/dataTable";
@@ -13,14 +13,24 @@ const Table: React.FC<TableProps> = (props) => {
     const { commonStore } = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
 
+    const tempDataset = useMemo(() => {
+        return {
+            id: "tmp",
+            name: "tmp",
+            dataSource: tmpDataSource,
+            rawFields: toJS(tmpDSRawFields),
+        };
+    }, [tmpDataSource, tmpDSRawFields]);
+
     return (
         <DataTable
             size={size}
-            metas={toJS(tmpDSRawFields)}
-            data={tmpDataSource}
             onMetaChange={(fid, fIndex, diffMeta) => {
                 commonStore.updateTempDatasetMetas(fid, diffMeta);
             }}
+            dataset={tempDataset}
+            total={tmpDataSource.length}
+            inMemory
         />
     );
 };

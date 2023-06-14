@@ -1,5 +1,5 @@
 import { toJS } from 'mobx';
-import { IRow, IMutField, IFilterField, Specification } from './interfaces';
+import type { IRow, IMutField, Specification, IFilterField } from './interfaces';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -12,6 +12,8 @@ import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
 import { IViewQuery } from './lib/viewQuery';
+import type { IVisField } from './vis/protocol/interface';
+
 
 // interface WorkerState {
 //     eWorker: Worker | null;
@@ -106,7 +108,7 @@ interface PreAnalysisParams {
 let filterWorker: Worker | null = null;
 let filterWorkerAutoTerminator: NodeJS.Timeout | null = null;
 
-export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]): Promise<IRow[]> => {
+export const applyFilter = async (data: IRow[], filters: IFilterField[]): Promise<IRow[]> => {
     if (filters.length === 0) return data;
     if (filterWorkerAutoTerminator !== null) {
         clearTimeout(filterWorkerAutoTerminator);
@@ -140,7 +142,7 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]
     }
 };
 
-export const transformDataService = async (data: IRow[], columns: IMutField[]): Promise<IRow[]> => {
+export const transformDataService = async (data: IRow[], columns: IVisField[]): Promise<IRow[]> => {
     if (columns.length === 0 || data.length === 0) return data;
     const worker = new TransformDataWorker();
     try {
@@ -156,7 +158,7 @@ export const transformDataService = async (data: IRow[], columns: IMutField[]): 
     }
 }
 
-export const applyViewQuery = async (data: IRow[], metas: IMutField[], query: IViewQuery): Promise<IRow[]> => {
+export const applyViewQuery = async (data: IRow[], metas: IVisField[], query: IViewQuery): Promise<IRow[]> => {
     const worker = new ViewQueryWorker();
     try {
         const res: IRow[] = await workerService(worker, {

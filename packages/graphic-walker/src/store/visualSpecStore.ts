@@ -1,12 +1,14 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IDataQueryWorkflowStep, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import { IGWDataLoader } from "../dataLoader";
+import WebWorkerDataLoader from "../dataLoader/webWorkerDataLoader";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -142,6 +144,8 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    public dataLoader: IGWDataLoader = new WebWorkerDataLoader();
+    public workflow: IDataQueryWorkflowStep[] = [];
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -156,6 +160,8 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
+            dataLoader: observable.ref,
+            workflow: false,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -715,5 +721,11 @@ export class VizSpecStore {
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
+    }
+    public setDataLoader(loader: IGWDataLoader) {
+        this.dataLoader = loader;
+    }
+    public setWorkflow(workflow: IDataQueryWorkflowStep[]) {
+        this.workflow = workflow;
     }
 }

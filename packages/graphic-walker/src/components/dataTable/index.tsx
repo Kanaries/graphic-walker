@@ -1,15 +1,26 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { observer } from "mobx-react-lite";
 import styled from "styled-components";
-import { IMutField, IRow } from "../../interfaces";
+import { DataSet, IMutField, IRow } from "../../interfaces";
 import { useTranslation } from "react-i18next";
+import { useGlobalStore } from "../../store";
+import LoadingLayer from "../loadingLayer";
 import Pagination from "./pagination";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
 
 interface DataTableProps {
+    /** page limit */
     size?: number;
-    metas: IMutField[];
-    data: IRow[];
+    /** total count of rows */
+    total: number;
+    dataset: DataSet;
+    /**
+     * @default false
+     * Enable this option will extract data from `dataset.dataSource`.
+     * This is useful when you want to preview a temporary table.
+     */
+    inMemory?: boolean;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
 }
 const Container = styled.div`
@@ -61,9 +72,11 @@ function getSemanticColors(field: IMutField): string {
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, data, metas, onMetaChange } = props;
+    const { size = 10, onMetaChange, dataset, total, inMemory = false } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
+    const { vizStore } = useGlobalStore();
+    const { dataLoader } = vizStore;
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return ANALYTIC_TYPE_LIST.map((at) => ({
@@ -80,16 +93,54 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, []);
 
     const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size, data.length - 1);
+    const to = Math.min((pageIndex + 1) * size, total - 1);
+
+    const [rows, setRows] = useState<IRow[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    const columnsRef = useRef(dataset.rawFields);
+    columnsRef.current = dataset.rawFields;
+
+    useEffect(() => {
+        if (inMemory) {
+            setRows(dataset.dataSource.slice(from, to));
+            return;
+        }
+        // switch all
+        let isCurrent = true;
+        const task = dataLoader.loadData({
+            pageSize: size,
+            pageIndex,
+        });
+        setLoading(true);
+        task.then(d => {
+            if (isCurrent) {
+                setRows(d);
+            }
+        }).catch(reason => {
+            console.error(reason);
+            if (isCurrent) {
+                setRows([]);
+            }
+        }).finally(() => {
+            if (isCurrent) {
+                setLoading(false);
+            }
+        });
+        return () => {
+            isCurrent = false;
+            setLoading(false);
+        };
+    }, [dataset, dataLoader, size, pageIndex, inMemory]);
 
     return (
-        <Container className="rounded border-gray-200 dark:border-gray-700 border">
+        <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
             <Pagination
-                total={data.length}
+                total={total}
                 from={from + 1}
                 to={to + 1}
                 onNext={() => {
-                    setPageIndex(Math.min(Math.ceil(data.length / size) - 1, pageIndex + 1));
+                    setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
                 }}
                 onPrev={() => {
                     setPageIndex(Math.max(0, pageIndex - 1));
@@ -98,7 +149,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                     <tr className="divide-x divide-gray-200 dark:divide-gray-700">
-                        {metas.map((field, fIndex) => (
+                        {dataset.rawFields.map((field, fIndex) => (
                             <th key={field.fid} className={""}>
                                 <div
                                     className={
@@ -153,9 +204,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
-                    {data.slice(from, to + 1).map((row, index) => (
+                    {rows.map((row, index) => (
                         <tr className={"divide-x divide-gray-200 dark:divide-gray-700 " + (index % 2 ? "bg-gray-50 dark:bg-gray-900" : "")} key={index}>
-                            {metas.map((field) => (
+                            {dataset.rawFields.map((field) => (
                                 <td
                                     key={field.fid + index}
                                     className={
@@ -170,8 +221,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </tbody>
             </table>
+            {loading && <LoadingLayer />}
         </Container>
     );
 };
 
-export default DataTable;
+export default observer(DataTable);
