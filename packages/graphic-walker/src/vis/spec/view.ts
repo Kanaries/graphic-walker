@@ -64,10 +64,10 @@ export function getSingleView(props: SingleViewProps) {
         details,
         text
     });
-    addTooltipEncode(encoding, details)
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }
+    addTooltipEncode(encoding, details, defaultAggregated);
     channelStack(encoding, stack);
     const mark = {
         type: markType,
