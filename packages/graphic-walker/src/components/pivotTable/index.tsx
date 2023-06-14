@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StoreWrapper, useGlobalStore } from '../../store';
 import { PivotTableDataProps, PivotTableStoreWrapper, usePivotTableStore } from './store';
-import { applyViewQuery } from '../../services';
+import { applyViewQuery, buildPivotTableService } from '../../services';
 import { observer } from 'mobx-react-lite';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
@@ -20,6 +20,7 @@ import { getMeaAggKey } from '../../utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
 import { toJS } from 'mobx';
+import LoadingLayer from '../loadingLayer';
 
 // const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
 //     const store = usePivotTableStore();
@@ -49,6 +50,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewMeasures, visualConfig, draggableFieldState } = vizStore;
@@ -99,28 +101,27 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     }, [tableCollapsedHeaderMap]);
 
     const generateNewTable = () => {
-        const lt = buildNestTree(
-            dimsInRow.map((d) => d.fid),
+        setIsLoading(true);
+        buildPivotTableService(
+            dimsInRow,
+            dimsInColumn,
             data,
-            tableCollapsedHeaderMap,
+            aggData,
+            Array.from(tableCollapsedHeaderMap.keys()),
             showTableSummary
-        );
-        const tt = buildNestTree(
-            dimsInColumn.map((d) => d.fid),
-            data,
-            tableCollapsedHeaderMap,
-            showTableSummary
-        );
-        const metric = buildMetricTableFromNestTree(lt, tt, [...data, ...aggData]);
-        // debugger
-        unstable_batchedUpdates(() => {
-            setLeftTree(lt);
-            setTopTree(tt);
-            setMetricTable(metric);
-        });
-    };
-
+        )
+            .then((data) => {
+                const {lt, tt, metric} = data;
+                setIsLoading(false);
+                unstable_batchedUpdates(() => {
+                    setLeftTree(lt);
+                    setTopTree(tt);
+                    setMetricTable(metric);
+                });
+            })
+    }
     const aggregateGroupbyData = () => {
+        setIsLoading(true);
         if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
         let groupbyCombListInRow:IViewField[][]  = [];
         let groupbyCombListInCol:IViewField[][]  = [];
@@ -156,6 +157,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         });
         Promise.all(groupbyPromises)
             .then((result) => {
+                setIsLoading(false);
                 const finalizedData = [...result.flat()];
                 if (finalizedData.length === 0 && aggData.length === 0) return;
                 setAggData(finalizedData);
@@ -167,7 +169,9 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
 
     // const { leftTree, topTree, metricTable } = store;
     return (
-        <div className="flex">
+        <div>
+            {isLoading && <LoadingLayer />}
+            <div className="flex">
             <table className="border border-gray-300 border-collapse">
                 <thead className="border border-gray-300">
                     {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
@@ -201,6 +205,8 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                     />}
             </table>
         </div>
+        </div>
+
     );
 });
 

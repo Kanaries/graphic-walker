@@ -3,7 +3,7 @@ import { INestNode } from "./inteface";
 
 const key_prefix = 'nk_';
 
-function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number, tableCollapsedHeaderMap: Map<string, INestNode["path"]>) {
+function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth: number, collapsedKeyList: string[]) {
     if (depth >= layerKeys.length) {
         // tree.key = nodeData[layerKeys[depth]];
         return;   
@@ -31,12 +31,12 @@ function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth
             height: layerKeys.length - depth - 1,
             isCollapsed: false,
         }
-        if (tableCollapsedHeaderMap.has(tree.uniqueKey)) {
+        if (collapsedKeyList.includes(tree.uniqueKey)) {
             tree.isCollapsed = true;
         }
         tree.children.splice(binarySearchIndex(tree.children, child.key), 0, child);
     }
-    insertNode(child, layerKeys, nodeData, depth + 1, tableCollapsedHeaderMap);
+    insertNode(child, layerKeys, nodeData, depth + 1, collapsedKeyList);
 
 }
 
@@ -80,7 +80,7 @@ function insertSummaryNode (node: INestNode): void {
     }
 };
 
-export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsedHeaderMap: Map<string, INestNode["path"]>, showSummary: boolean): INestNode {
+export function buildNestTree (layerKeys: string[], data: IRow[], collapsedKeyList: string[], showSummary: boolean): INestNode {
     const tree: INestNode = {
         key: ROOT_KEY,
         value: 'root',
@@ -92,7 +92,7 @@ export function buildNestTree (layerKeys: string[], data: IRow[], tableCollapsed
         isCollapsed: false,
     };
     for (let row of data) {
-        insertNode(tree, layerKeys, row, 0, tableCollapsedHeaderMap);
+        insertNode(tree, layerKeys, row, 0, collapsedKeyList);
     }
     if (showSummary) {
         insertSummaryNode(tree);

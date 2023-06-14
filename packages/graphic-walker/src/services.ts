@@ -1,5 +1,6 @@
 import { toJS } from 'mobx';
-import { IRow, IMutField, IFilterField, Specification } from './interfaces';
+import { IRow, IViewField, IMutField, IFilterField, Specification } from './interfaces';
+import { INestNode } from "./components/pivotTable/inteface";
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -11,6 +12,7 @@ import { IRow, IMutField, IFilterField, Specification } from './interfaces';
 import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
+import BuildMetricTableWorker from './workers/buildMetricTable.worker?worker&inline';
 import { IViewQuery } from './lib/viewQuery';
 
 // interface WorkerState {
@@ -167,6 +169,31 @@ export const applyViewQuery = async (data: IRow[], metas: IMutField[], query: IV
         return res;
     } catch (err) {
         throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+    } finally {
+        worker.terminate();
+    }
+}
+
+export const buildPivotTableService = async (dimsInRow: IViewField[], 
+        dimsInColumn: IViewField[], 
+        allData: IRow[], 
+        aggData: IRow[], 
+        collapsedKeyList: string[], 
+        showTableSummary: boolean
+    ): Promise<{lt: INestNode, tt: INestNode, metric: (IRow | null)[][]}> => {
+    const worker = new BuildMetricTableWorker();
+    try {
+        const res: {lt: INestNode, tt: INestNode, metric: (IRow | null)[][]} = await workerService(worker, {
+            dimsInRow,
+            dimsInColumn, 
+            allData, 
+            aggData, 
+            collapsedKeyList, 
+            showTableSummary
+        });
+        return res;
+    } catch (error) {
+        throw new Error('Uncaught error in TableBuilderDataWorker', { cause: error });
     } finally {
         worker.terminate();
     }
