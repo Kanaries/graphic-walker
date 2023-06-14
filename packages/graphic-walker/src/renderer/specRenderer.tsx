@@ -6,6 +6,8 @@ import { useGlobalStore } from '../store';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
+import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
+import VegaRenderer from '../vis/vega-renderer';
 
 interface SpecRendererProps {
     themeKey?: IThemeKey;
@@ -22,26 +24,18 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = visualConfig;
+    const datasetId = commonStore.currentDataset.id;
 
-    const rows = draggableFieldState.rows;
-    const columns = draggableFieldState.columns;
-    const color = draggableFieldState.color;
-    const opacity = draggableFieldState.opacity;
-    const shape = draggableFieldState.shape;
-    const theta = draggableFieldState.theta;
-    const radius = draggableFieldState.radius;
-    const sizeChannel = draggableFieldState.size;
-    const details = draggableFieldState.details;
-    const text = draggableFieldState.text;
-    const format = toJS(_format)
+    const spec = useMemo(() => {
+        return transformGWSpec2VisSpec({
+            datasetId,
+            visualConfig,
+            draggableFieldState,
+        });
+    }, [datasetId, visualConfig, draggableFieldState]);
+    const format = toJS(_format);
 
-    const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
-    const colLeftFacetFields = useMemo(
-        () => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'),
-        [columns]
-    );
-
-    const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
+    const hasFacet = Boolean(spec.encodings.row || spec.encodings.column);
 
     const handleGeomClick = useCallback(
         (values: any, e: any) => {
@@ -86,7 +80,16 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             }}
         >
             {loading && <LoadingLayer />}
-            <ReactVega
+            <VegaRenderer
+                spec={spec}
+                ref={ref}
+                onGeomClick={handleGeomClick}
+                themeKey={themeKey}
+                dark={dark}
+                showActions={showActions}
+                format={format}
+            />
+            {/* <ReactVega
                 format={format}
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
@@ -111,7 +114,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
-            />
+            /> */}
         </Resizable>
     );
 });
