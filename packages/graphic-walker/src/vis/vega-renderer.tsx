@@ -4,9 +4,8 @@ import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
-import { nanoid } from 'nanoid';
 
-import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
+import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig, IStackMode } from '../interfaces';
 import type { IGWDataLoader } from '../dataLoader';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
@@ -57,35 +56,36 @@ const geomClick$ = selection$.pipe(
 );
 
 const resolveViewField = (
-    dimensions: readonly IVisField[],
-    measures: readonly IVisField[],
+    fields: readonly IVisField[],
     ref: IVisEncodingChannel | undefined,
 ): IViewField => {
     if (!ref) {
         return NULL_FIELD;
     }
     const fieldKey = typeof ref === 'string' ? ref : ref.field;
-    const dim = dimensions.find(d => d.key === fieldKey);
-    if (dim) {
-        return {
-            dragId: nanoid(),
-            fid: dim.key,
-            name: dim.name || fieldKey,
-            semanticType: dim.type,
-            analyticType: 'dimension',
-        };
+    const field = fields.find(m => m.key === fieldKey);
+    if (!field) {
+        return NULL_FIELD;
     }
-    const mea = measures.find(m => m.key === fieldKey);
-    if (mea) {
+    const isMeasure = typeof ref !== 'string' && Boolean(ref.aggregate);
+    if (isMeasure) {
+        const aggName = ref.aggregate;
         return {
-            dragId: nanoid(),
-            fid: mea.key,
-            name: mea.name || fieldKey,
-            semanticType: mea.type,
+            dragId: '',
+            fid: field.key,
+            name: field.name || fieldKey,
+            semanticType: field.type,
             analyticType: 'measure',
+            aggName,
         };
     }
-    return NULL_FIELD;
+    return {
+        dragId: '',
+        fid: field.key,
+        name: field.name || fieldKey,
+        semanticType: field.type,
+        analyticType: 'dimension',
+    };
 };
 
 
@@ -157,6 +157,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
     const vegaRefs = useRef<View[]>([]);
 
     const { dimensions, measures } = dataLoader.useMeta();
+    const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
 
     const allFieldIds = useMemo(() => {
         const { x, y, column, row, color, opacity, size } = encodings;
@@ -192,6 +193,23 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
             });
         }
         const { x, y, color, opacity, shape, size, theta, radius, text, row, column, details } = encodings;
+        const stack = [x, y, row, column, theta, radius].filter(Boolean).flat().map<IStackMode>(f => {
+            if (typeof f === 'string') {
+                return 'none';
+            }
+            if (f?.stack === 'normalize') {
+                return 'normalize';
+            } else if (f?.stack && f.stack !== 'none') {
+                return 'stack';
+            }
+            return 'none';
+        }).find(m => m !== 'none') || 'none';
+        const aggregated = Object.values(encodings).flat().some(f => {
+            if (typeof f === 'string') {
+                return false;
+            }
+            return Boolean(f?.aggregate);
+        });
         if (nRows <= 1 && nCols <= 1) {
             if (sizeConfig) {
                 if (!row && !column) {
@@ -201,27 +219,26 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                 vegaLiteSpec.height = sizeConfig.height;
             }
             const singleView = getSingleView({
-                x: resolveViewField(dimensions, measures, Array.isArray(x) ? x[0] : x),
-                y: resolveViewField(dimensions, measures, Array.isArray(y) ? y[0] : y),
-                color: resolveViewField(dimensions, measures, color),
-                opacity: resolveViewField(dimensions, measures, opacity),
-                size: resolveViewField(dimensions, measures, size),
-                shape: resolveViewField(dimensions, measures, shape),
-                theta: resolveViewField(dimensions, measures, theta),
-                radius: resolveViewField(dimensions, measures, radius),
-                text: resolveViewField(dimensions, measures, text),
-                row: resolveViewField(dimensions, measures, row),
-                column: resolveViewField(dimensions, measures, column),
+                x: resolveViewField(allFields, Array.isArray(x) ? x[0] : x),
+                y: resolveViewField(allFields, Array.isArray(y) ? y[0] : y),
+                color: resolveViewField(allFields, color),
+                opacity: resolveViewField(allFields, opacity),
+                size: resolveViewField(allFields, size),
+                shape: resolveViewField(allFields, shape),
+                theta: resolveViewField(allFields, theta),
+                radius: resolveViewField(allFields, radius),
+                text: resolveViewField(allFields, text),
+                row: resolveViewField(allFields, row),
+                column: resolveViewField(allFields, column),
                 xOffset: NULL_FIELD,
                 yOffset: NULL_FIELD,
-                details: (
+                details: details ? (
                     Array.isArray(details) ? details : [details]
-                ).map(f => resolveViewField(dimensions, measures, f)),
-                defaultAggregated: true,
-                stack: 'stack', // FIXME:
+                ).map(f => resolveViewField(allFields, f)) : [],
+                defaultAggregated: aggregated,
+                stack,
                 geomType: markType,
             });
-            console.log({encodings, dimensions, measures, singleView})
 
             vegaLiteSpec.mark = singleView.mark;
             if ('encoding' in singleView) {
@@ -256,24 +273,24 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                 for (let j = 0; j < colCount; j++, index++) {
                     const hasLegend = i === 0 && j === colCount - 1;
                     const singleView = getSingleView({
-                        x: resolveViewField(dimensions, measures, Array.isArray(x) ? x[j] : x),
-                        y: resolveViewField(dimensions, measures, Array.isArray(y) ? y[i] : y),
-                        color: resolveViewField(dimensions, measures, color),
-                        opacity: resolveViewField(dimensions, measures, opacity),
-                        size: resolveViewField(dimensions, measures, size),
-                        shape: resolveViewField(dimensions, measures, shape),
-                        theta: resolveViewField(dimensions, measures, theta),
-                        radius: resolveViewField(dimensions, measures, radius),
-                        row: resolveViewField(dimensions, measures, row),
-                        column: resolveViewField(dimensions, measures, column),
-                        text: resolveViewField(dimensions, measures, text),
+                        x: resolveViewField(allFields, Array.isArray(x) ? x[j] : x),
+                        y: resolveViewField(allFields, Array.isArray(y) ? y[i] : y),
+                        color: resolveViewField(allFields, color),
+                        opacity: resolveViewField(allFields, opacity),
+                        size: resolveViewField(allFields, size),
+                        shape: resolveViewField(allFields, shape),
+                        theta: resolveViewField(allFields, theta),
+                        radius: resolveViewField(allFields, radius),
+                        row: resolveViewField(allFields, row),
+                        column: resolveViewField(allFields, column),
+                        text: resolveViewField(allFields, text),
                         xOffset: NULL_FIELD,
                         yOffset: NULL_FIELD,
-                        details: (
+                        details: details ? (
                             Array.isArray(details) ? details : [details]
-                        ).map(f => resolveViewField(dimensions, measures, f)),
-                        defaultAggregated: true,
-                        stack: 'stack', // FIXME:
+                        ).map(f => resolveViewField(allFields, f)) : [],
+                        defaultAggregated: aggregated,
+                        stack,
                         geomType: markType,
                         hideLegend: !hasLegend,
                     });
@@ -304,8 +321,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
             return () => {};
         }
     }, [
-        dimensions,
-        measures,
+        allFields,
         encodings,
         markType,
         vegaConfig,

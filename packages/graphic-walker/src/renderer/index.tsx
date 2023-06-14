@@ -18,7 +18,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const { themeKey, dark } = props;
     const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader, draggableFieldState } = vizStore;
     const { defaultAggregated } = visualConfig;
     const { currentDataset } = commonStore;
     const { dataSource, id: datasetId } = currentDataset;
@@ -27,23 +27,26 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     const [viewData, setViewData] = useState<IRow[]>([]);
 
+    const dimensions = draggableFieldState.dimensions.map(d => d.fid);
+    const measures = draggableFieldState.measures.map(d => d.fid);
+
     useEffect(() => {
         dataLoader.syncMeta({
             datasetId,
-            dimensions: allFields.filter(f => f.analyticType === 'dimension').map(f => ({
+            dimensions: dimensions.map(key => allFields.find(f => f.fid === key)!).filter(Boolean).map(f => ({
                 key: f.fid,
                 name: f.name,
                 type: f.semanticType,
                 expression: f.computed && f.expression ? f.expression : undefined,
             })),
-            measures: allFields.filter(f => f.analyticType === 'measure').map(f => ({
+            measures: measures.map(key => allFields.find(f => f.fid === key)!).filter(Boolean).map(f => ({
                 key: f.fid,
                 name: f.name,
                 type: f.semanticType,
                 expression: f.computed && f.expression ? f.expression : undefined,
             })),
         });
-    }, [dataLoader, allFields, datasetId]);
+    }, [dataLoader, allFields, datasetId, dimensions, measures]);
 
     useEffect(() => {
         dataLoader.syncData(dataSource);
