@@ -28,7 +28,7 @@ const extractVisEncChannel = (
         // apply sort
         channel.sort = sort === 'ascending' ? 'asc' : 'desc';
     }
-    if (stack !== 'none') {
+    if (analyticType === 'measure' && stack !== 'none') {
         // apply stack
         channel.stack = stack === 'stack' ? 'zero' : 'normalize';
     }
@@ -131,6 +131,11 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSpec => {
         datasetId,
         markType,
         encodings: enc,
+        configs: {
+            format: visualConfig.format,
+            interactiveScale: visualConfig.interactiveScale,
+            showActions: visualConfig.showActions,
+        },
     };
 
     if (markType === 'auto') {

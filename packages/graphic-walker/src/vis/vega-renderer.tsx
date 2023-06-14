@@ -79,13 +79,17 @@ const resolveViewField = (
             aggName,
         };
     }
-    return {
+    const f: IViewField = {
         dragId: '',
         fid: field.key,
         name: field.name || fieldKey,
         semanticType: field.type,
         analyticType: 'dimension',
     };
+    if (typeof ref !== 'string' && ref.sort) {
+        f.sort = ref.sort === 'asc' ? 'ascending' : 'descending';
+    }
+    return f;
 };
 
 
