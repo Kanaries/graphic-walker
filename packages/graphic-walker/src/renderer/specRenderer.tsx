@@ -4,8 +4,10 @@ import React, { useCallback, forwardRef, useMemo } from 'react';
 
 import { useGlobalStore } from '../store';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
+import { useCurrentMediaTheme } from '../utils/media';
+import { builtInThemes } from '../vis/theme';
 
 interface SpecRendererProps {
     themeKey?: IThemeKey;
@@ -21,7 +23,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -54,6 +56,34 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         []
     );
     const enableResize = size.mode === 'fixed' && !hasFacet;
+    const mediaTheme = useCurrentMediaTheme(dark);
+    const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
+
+    const vegaConfig = useMemo<VegaGlobalConfig>(() => {
+        const config: VegaGlobalConfig = {
+          ...themeConfig,
+        }
+        if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
+            // @ts-ignore
+            config.normalizedNumberFormat = format.normalizedNumberFormat;
+        }
+        if (format.numberFormat && format.numberFormat.length > 0) {
+            // @ts-ignore
+            config.numberFormat = format.numberFormat;
+        }
+        if (format.timeFormat && format.timeFormat.length > 0) {
+            // @ts-ignore
+            config.timeFormat = format.timeFormat;
+        }
+        // @ts-ignore
+        if (!config.scale) {
+            // @ts-ignore
+            config.scale = {};
+        }
+        // @ts-ignore
+        config.scale.zero = Boolean(zeroScale)
+        return config;
+      }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
     return (
         <Resizable
@@ -87,7 +117,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         >
             {loading && <LoadingLayer />}
             <ReactVega
-                format={format}
+                vegaConfig={vegaConfig}
+                // format={format}
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
                 geomType={geoms[0]}
@@ -109,8 +140,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 height={size.height - 12 * 4}
                 ref={ref}
                 onGeomClick={handleGeomClick}
-                themeKey={themeKey}
-                dark={dark}
             />
         </Resizable>
     );
