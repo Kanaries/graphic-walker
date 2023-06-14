@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { nanoid } from 'nanoid';
 
 import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig } from '../interfaces';
+import type { IGWDataLoader } from '../dataLoader';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
@@ -30,6 +31,8 @@ export interface IVegaRendererHandler {
 }
 interface IVegaRendererProps {
     spec: IVisSpec;
+    data: readonly IRow[];
+    dataLoader: IGWDataLoader;
     format?: IVisualConfig['format'];
     onGeomClick?: (values: any, e: any) => void
     /** @default "vega" */
@@ -90,11 +93,13 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
     const {
         spec,
         format,
+        data,
         onGeomClick,
         themeKey = 'vega',
         dark = 'media',
         interactiveScale = false,
         showActions = false,
+        dataLoader,
     } = props;
     const { encodings, size: sizeConfig, markType } = spec;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
@@ -151,15 +156,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
 
     const vegaRefs = useRef<View[]>([]);
 
-    const dataSource = useMemo<IRow[]>(() => {
-        return [];
-    }, []);
-    const dimensions = useMemo<IVisField[]>(() => {
-        return [];
-    }, []);
-    const measures = useMemo<IVisField[]>(() => {
-        return [];
-    }, []);
+    const { dimensions, measures } = dataLoader.useMeta();
 
     const allFieldIds = useMemo(() => {
         const { x, y, column, row, color, opacity, size } = encodings;
@@ -177,7 +174,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
 
         const vegaLiteSpec: any = {
             data: {
-                values: dataSource,
+                values: data,
             },
             params: [{
                 name: SELECTION_NAME,
@@ -224,6 +221,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                 stack: 'stack', // FIXME:
                 geomType: markType,
             });
+            console.log({encodings, dimensions, measures, singleView})
 
             vegaLiteSpec.mark = singleView.mark;
             if ('encoding' in singleView) {
@@ -317,6 +315,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
         nCols,
         viewPlaceholders,
         i18n.language,
+        data,
     ]);
 
     useImperativeHandle(ref, () => ({

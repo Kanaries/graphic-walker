@@ -1,7 +1,13 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Subject } from 'rxjs';
 import type { IDataQueryPayload, IResponse, IRow } from '../interfaces';
-import type { IVisField } from '../vis/protocol/interface';
-import type { GWLoadDataFunction, GWLoadMetaFunction, GWSyncDataFunction, GWSyncMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, IGWDataLoader } from ".";
+import type { IVisDataset, IVisField } from '../vis/protocol/interface';
+import type { GWLoadDataFunction, GWLoadMetaFunction, GWSyncDataFunction, GWSyncMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, IGWDataLoader, GWUseDataFunction, GWUseMetaFunction } from ".";
 
+
+type BroadcastChannel = (
+    | 'init'
+);
 
 interface IGWTransformerOptions {
     server: string;
@@ -28,7 +34,19 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         meta: IDatasetMeta;
         dimensions: string[];
         measures: string[];
-    } | null = null;
+    } = {
+        meta: {
+            id: '',
+            name: '',
+            fieldsMeta: [],
+            meta: {
+                totalRows: 0,
+            },
+        },
+        dimensions: [],
+        measures: [],
+    };
+    protected readonly signal = new Subject<BroadcastChannel>();
     
     constructor(protected readonly options: IGWTransformerOptions) {}
 
@@ -83,6 +101,20 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return this.#postRequest<IServerDataQueryPayload, IRow[]>(`/api/ce/dataset/v2/query`, data);
     }
 
+    public async init() {
+        const meta = await this.#fetchDataset();
+        const fields = meta.fieldsMeta.map(f => ({
+            ...f,
+            analyticType: f.type === 'quantitative' ? 'measure' : 'dimension',
+        }))
+        this.dataset = {
+            meta,
+            measures: fields.filter(field => field.analyticType === 'measure').map(field => field.key),
+            dimensions: fields.filter(field => field.analyticType === 'dimension').map(field => field.key),
+        };
+        this.signal.next('init');
+    }
+
     syncMeta: GWSyncMetaFunction = async dataset => {
         // do nothing because this loader only support read-only mode
         return;
@@ -94,26 +126,27 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
     }
 
     loadMeta: GWLoadMetaFunction = async () => {
-        if (!this.dataset) {
-            const meta = await this.#fetchDataset();
-            const fields = meta.fieldsMeta.map(f => ({
-                ...f,
-                analyticType: f.type === 'quantitative' ? 'measure' : 'dimension',
-            }))
-            this.dataset = {
-                meta,
-                measures: fields.filter(field => field.analyticType === 'measure').map(field => field.key),
-                dimensions: fields.filter(field => field.analyticType === 'dimension').map(field => field.key),
-            };
-        }
-        if (!this.dataset) {
-            throw new Error('No dataset loaded');
-        }
         return {
             datasetId: this.dataset.meta.id,
-            dimensions: this.dataset.dimensions.map(key => this.dataset!.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
-            measures: this.dataset.measures.map(key => this.dataset!.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
+            dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
+            measures: this.dataset.measures.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
         };
+    }
+
+    useMeta: GWUseMetaFunction = () => {
+        const getDataset = useCallback(() => ({
+            datasetId: this.dataset.meta.id,
+            dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
+            measures: this.dataset.measures.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
+        }), []);
+        const [meta, setMeta] = useState<IVisDataset>(getDataset);
+        useEffect(() => {
+            const subscription = this.signal.subscribe(() => {
+                setMeta(getDataset);
+            });
+            return () => subscription.unsubscribe();
+        }, [getDataset]);
+        return meta;
     }
 
     loadData: GWLoadDataFunction = async payload => {
@@ -135,6 +168,21 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
                 offset: pageIndex * pageSize,
             },
         });
+    }
+
+    useData: GWUseDataFunction = payload => {
+        const { pageIndex, pageSize } = payload;
+        const [data, setData] = useState<IRow[]>([]);
+        const load = useCallback(async () => {
+            setData(await this.loadData(payload));
+        }, [pageIndex, pageSize]);
+        useEffect(() => {
+            const subscription = this.signal.subscribe(() => {
+                this.loadData(payload).then(res => setData(res));
+            });
+            return () => subscription.unsubscribe();
+        }, [load]);
+        return data;
     }
 
     stat: GWStatFunction = async () => {

@@ -18,6 +18,8 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
+import type { IGWDataLoader } from './dataLoader';
+import WebWorkerDataLoader from './dataLoader/webWorkerDataLoader';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
 
@@ -37,6 +39,8 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    /** @default WebWorkerDataLoader */
+    dataLoader?: IGWDataLoader;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -54,6 +58,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        dataLoader = new WebWorkerDataLoader(),
         toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
@@ -105,6 +110,10 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
+
+    useEffect(() => {
+        vizStore.setDataLoader(dataLoader);
+    }, [vizStore, dataLoader]);
 
     const darkMode = useCurrentMediaTheme(dark);
 

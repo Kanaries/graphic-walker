@@ -3,11 +3,12 @@ import { Resizable } from 're-resizable';
 import React, { useCallback, forwardRef, useMemo } from 'react';
 
 import { useGlobalStore } from '../store';
-import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
+import { IReactVegaHandler } from '../vis/react-vega';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
 import VegaRenderer from '../vis/vega-renderer';
+import type { IGWDataLoader } from '../dataLoader';
 
 interface SpecRendererProps {
     themeKey?: IThemeKey;
@@ -16,14 +17,15 @@ interface SpecRendererProps {
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
+    dataLoader: IGWDataLoader;
 }
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data, loading, draggableFieldState, visualConfig },
+    { themeKey, dark, data, loading, draggableFieldState, visualConfig, dataLoader },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format } = visualConfig;
+    const { interactiveScale, showActions, size, format: _format } = visualConfig;
     const datasetId = commonStore.currentDataset.id;
 
     const spec = useMemo(() => {
@@ -82,39 +84,16 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             {loading && <LoadingLayer />}
             <VegaRenderer
                 spec={spec}
+                data={data}
+                dataLoader={dataLoader}
                 ref={ref}
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
                 showActions={showActions}
                 format={format}
-            />
-            {/* <ReactVega
-                format={format}
-                layoutMode={size.mode}
                 interactiveScale={interactiveScale}
-                geomType={geoms[0]}
-                defaultAggregate={defaultAggregated}
-                stack={stack}
-                dataSource={data}
-                rows={rows}
-                columns={columns}
-                color={color[0]}
-                theta={theta[0]}
-                radius={radius[0]}
-                shape={shape[0]}
-                opacity={opacity[0]}
-                size={sizeChannel[0]}
-                details={details}
-                text={text[0]}
-                showActions={showActions}
-                width={size.width - 12 * 4}
-                height={size.height - 12 * 4}
-                ref={ref}
-                onGeomClick={handleGeomClick}
-                themeKey={themeKey}
-                dark={dark}
-            /> */}
+            />
         </Resizable>
     );
 });

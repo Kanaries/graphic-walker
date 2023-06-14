@@ -21,10 +21,33 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader } = vizStore;
     const { defaultAggregated } = visualConfig;
     const { currentDataset } = commonStore;
+    const { dataSource, id: datasetId } = currentDataset;
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
+
+    useEffect(() => {
+        dataLoader.syncMeta({
+            datasetId,
+            dimensions: allFields.filter(f => f.analyticType === 'dimension').map(f => ({
+                key: f.fid,
+                name: f.name,
+                type: f.semanticType,
+                expression: f.computed && f.expression ? f.expression : undefined,
+            })),
+            measures: allFields.filter(f => f.analyticType === 'measure').map(f => ({
+                key: f.fid,
+                name: f.name,
+                type: f.semanticType,
+                expression: f.computed && f.expression ? f.expression : undefined,
+            })),
+        });
+    }, [dataLoader, allFields, datasetId]);
+
+    useEffect(() => {
+        dataLoader.syncData(dataSource);
+    }, [dataLoader, dataSource]);
 
     const workflow = useMemo(() => {
         return toWorkflow(
@@ -81,6 +104,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             data={viewData}
             ref={ref}
             themeKey={themeKey}
+            dataLoader={dataLoader}
             dark={dark}
             draggableFieldState={encodings}
             visualConfig={viewConfig}

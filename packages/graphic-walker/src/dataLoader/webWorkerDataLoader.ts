@@ -1,27 +1,51 @@
+import { useCallback, useEffect, useState } from "react";
+import { Subject } from "rxjs";
 import { applyFilter, applyViewQuery, transformDataService } from "../services";
 import type { IVisDataset, IVisField } from "../vis/protocol/interface";
 import type { IFilterField, IRow } from "../interfaces";
-import type { GWLoadDataFunction, GWLoadMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, GWSyncDataFunction, GWSyncMetaFunction, IGWDataLoader } from ".";
+import type { GWLoadDataFunction, GWLoadMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, GWSyncDataFunction, GWSyncMetaFunction, IGWDataLoader, GWUseMetaFunction } from ".";
+import { GWUseDataFunction } from ".";
 
+
+type BroadcastChannel = (
+    | 'sync-meta' | 'sync-data'
+);
 
 export default class WebWorkerDataLoader implements IGWDataLoader {
 
-    protected dataset: IVisDataset | null = null;
+    protected dataset: IVisDataset = {
+        datasetId: '',
+        dimensions: [],
+        measures: [],
+    };
     protected data: IRow[] = [];
+    protected readonly signal = new Subject<BroadcastChannel>();
 
     syncMeta: GWSyncMetaFunction = async dataset => {
         this.dataset = dataset;
+        this.signal.next('sync-meta');
     }
 
     syncData: GWSyncDataFunction = async dataSource => {
         this.data = dataSource;
+        this.signal.next('sync-data');
     }
 
     loadMeta: GWLoadMetaFunction = async () => {
-        if (!this.dataset) {
-            throw new Error('No dataset loaded');
-        }
         return this.dataset;
+    }
+
+    useMeta: GWUseMetaFunction = () => {
+        const [meta, setMeta] = useState<IVisDataset>(this.dataset);
+        useEffect(() => {
+            const subscription = this.signal.subscribe(channel => {
+                if (channel === 'sync-meta') {
+                    setMeta(this.dataset);
+                }
+            });
+            return () => subscription.unsubscribe();
+        }, []);
+        return meta;
     }
 
     loadData: GWLoadDataFunction = async payload => {
@@ -35,6 +59,23 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         return res;
     }
 
+    useData: GWUseDataFunction = payload => {
+        const { pageIndex, pageSize } = payload;
+        const [data, setData] = useState<IRow[]>([]);
+        const load = useCallback(async () => {
+            setData(await this.loadData(payload));
+        }, [pageIndex, pageSize]);
+        useEffect(() => {
+            const subscription = this.signal.subscribe(channel => {
+                if (channel === 'sync-data') {
+                    this.loadData(payload).then(res => setData(res));
+                }
+            });
+            return () => subscription.unsubscribe();
+        }, [load]);
+        return data;
+    }
+
     stat: GWStatFunction = async () => {
         return {
             count: this.data.length,
@@ -42,9 +83,6 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
     }
 
     query: GWTransformFunction = async payload => {
-        if (!this.dataset) {
-            return [];
-        }
         const columns = this.dataset.dimensions.map<IVisField & { analyticType: 'dimension' | 'measure' }>(f => ({
             ...f,
             analyticType: 'dimension',
