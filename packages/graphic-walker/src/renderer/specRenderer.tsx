@@ -1,73 +1,34 @@
-import { runInAction, toJS } from 'mobx';
+import { runInAction } from 'mobx';
 import { Resizable } from 're-resizable';
-import React, { useCallback, forwardRef, useMemo } from 'react';
-
+import React, { useCallback, forwardRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
+import { IDarkMode, IRow, IThemeKey } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
-import { useCurrentMediaTheme } from '../utils/media';
-import { builtInThemes } from '../vis/theme';
-import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
+import { IVegaConfigSchema } from '../vis/protocol/adapter';
 import VegaRenderer from '../vis/vega-renderer';
-import type { IGWDataLoader } from '../dataLoader';
+import type { IVisField, IVisSchema } from '../vis/protocol/interface';
+import PivotTable from '../components/pivotTable';
 
 interface SpecRendererProps {
+    spec: IVisSchema<IVegaConfigSchema>;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
+    fields: readonly IVisField[];
     loading: boolean;
-    draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
-    dataLoader: IGWDataLoader;
 }
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data, loading, draggableFieldState, visualConfig, dataLoader },
+    { spec, themeKey, dark, data, loading, fields },
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
-    // const { draggableFieldState, visualConfig } = vizStore;
-    const { interactiveScale, showActions, size, format: _format, zeroScale } = visualConfig;
-    const datasetId = commonStore.currentDataset.id;
+    const { interactiveScale, showActions, size } = spec.configs;
 
-    const format = toJS(_format);
-    const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
+    const { i18n } = useTranslation();
 
-    const vegaConfig = useMemo<VegaGlobalConfig>(() => {
-        const config: VegaGlobalConfig = {
-          ...themeConfig,
-        }
-        if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
-            // @ts-ignore
-            config.normalizedNumberFormat = format.normalizedNumberFormat;
-        }
-        if (format.numberFormat && format.numberFormat.length > 0) {
-            // @ts-ignore
-            config.numberFormat = format.numberFormat;
-        }
-        if (format.timeFormat && format.timeFormat.length > 0) {
-            // @ts-ignore
-            config.timeFormat = format.timeFormat;
-        }
-        // @ts-ignore
-        if (!config.scale) {
-            // @ts-ignore
-            config.scale = {};
-        }
-        // @ts-ignore
-        config.scale.zero = Boolean(zeroScale)
-        return config;
-    }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
-
-    const spec = useMemo(() => {
-        return transformGWSpec2VisSpec({
-            datasetId,
-            visualConfig,
-            draggableFieldState,
-            vegaConfig: vegaConfig,
-        });
-    }, [datasetId, visualConfig, draggableFieldState, vegaConfig]);
+    const isPivotTable = spec.markType === 'table';
 
     const hasFacet = Boolean(spec.encodings.row || spec.encodings.column);
 
@@ -82,6 +43,19 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         []
     );
     const enableResize = size.mode === 'fixed' && !hasFacet;
+
+    if (isPivotTable) {
+        return (
+            <PivotTable
+                spec={spec}
+                data={data}
+                fields={fields}
+                loading={loading}
+                themeKey={themeKey}
+                dark={dark}
+            />
+        );
+    }
 
     return (
         <Resizable
@@ -117,14 +91,15 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             <VegaRenderer
                 spec={spec}
                 data={data}
-                dataLoader={dataLoader}
+                fields={fields}
                 ref={ref}
                 onGeomClick={handleGeomClick}
                 themeKey={themeKey}
                 dark={dark}
                 showActions={showActions}
-                format={format}
+                format={spec.configs?.format}
                 interactiveScale={interactiveScale}
+                locale={i18n.language}
             />
         </Resizable>
     );

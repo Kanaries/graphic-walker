@@ -1,7 +1,7 @@
-import type { DeepReadonly, DraggableFieldState, IVisualConfig, IViewField, IStackMode, ISemanticType } from "../../interfaces";
+import type { DeepReadonly, DraggableFieldState, IVisualConfig, IViewField, IStackMode, ISemanticType, VegaGlobalConfig } from "../../interfaces";
 import type { IAggregator } from "../../interfaces";
 import { autoMark } from "../spec/mark";
-import type { IVisEncodingChannel, IVisEncodings, IVisFilter, IVisSpec } from "./interface";
+import type { IVisEncodingChannel, IVisEncodings, IVisFilter, IVisSchema } from "./interface";
 
 
 interface IGWSpec {
@@ -9,6 +9,15 @@ interface IGWSpec {
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
     vegaConfig?: any;
+}
+
+export interface IVegaConfigSchema {
+    vegaConfig: VegaGlobalConfig;
+    size: IVisualConfig['size'];
+    format: IVisualConfig['format'];
+    interactiveScale: boolean;
+    showActions: boolean;
+    zeroScale: boolean;
 }
 
 const extractVisEncChannel = (
@@ -111,7 +120,7 @@ const transformGWPositionChannels = (
 
 const nonPositionChannels = ['color', 'opacity', 'size', 'shape', 'theta', 'radius', 'details', 'text'] as const;
 
-export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSpec => {
+export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSchema<IVegaConfigSchema> => {
     const { datasetId, draggableFieldState, visualConfig, vegaConfig } = spec;
     const { defaultAggregated, geoms, stack, size } = visualConfig;
     const [markType] = geoms;
@@ -128,11 +137,12 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSpec => {
         enc.details = draggableFieldState.details.map(f => extractVisEncChannel(f, defaultAggregated));
     }
 
-    const dsl: IVisSpec = {
+    const dsl: IVisSchema<IVegaConfigSchema> = {
         datasetId,
         markType,
         encodings: enc,
         configs: {
+            size,
             vegaConfig,
             format: visualConfig.format,
             interactiveScale: visualConfig.interactiveScale,

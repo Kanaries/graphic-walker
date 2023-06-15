@@ -7,13 +7,12 @@ import styled from 'styled-components';
 
 import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig, IStackMode } from '../interfaces';
 import type { IGWDataLoader } from '../dataLoader';
-import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { builtInThemes } from './theme';
 import { useCurrentMediaTheme } from '../utils/media';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
-import type { IVisEncodingChannel, IVisField, IVisSpec } from './protocol/interface';
+import type { IVisEncodingChannel, IVisField, IVisSchema } from './protocol/interface';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number; }>`
   display: grid;
@@ -29,9 +28,9 @@ export interface IVegaRendererHandler {
     downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface IVegaRendererProps {
-    spec: IVisSpec;
+    spec: IVisSchema;
     data: readonly IRow[];
-    dataLoader: IGWDataLoader;
+    fields: readonly IVisField[];
     format?: IVisualConfig['format'];
     onGeomClick?: (values: any, e: any) => void
     /** @default "vega" */
@@ -41,6 +40,8 @@ interface IVegaRendererProps {
     interactiveScale?: boolean;
     /** @default false */
     showActions?: boolean;
+    /** @default "en-US" */
+    locale?: string;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -103,11 +104,11 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
         dark = 'media',
         interactiveScale = false,
         showActions = false,
-        dataLoader,
+        locale = 'en-US',
+        fields,
     } = props;
     const { encodings, size: sizeConfig, markType } = spec;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-    const { i18n } = useTranslation();
     const mediaTheme = useCurrentMediaTheme(dark);
     const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
@@ -159,9 +160,6 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
     }, [nRows, nCols]);
 
     const vegaRefs = useRef<View[]>([]);
-
-    const { dimensions, measures } = dataLoader.useMeta();
-    const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
 
     const allFieldIds = useMemo(() => {
         const { x, y, column, row, color, opacity, size } = encodings;
@@ -223,22 +221,22 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                 vegaLiteSpec.height = sizeConfig.height;
             }
             const singleView = getSingleView({
-                x: resolveViewField(allFields, Array.isArray(x) ? x[0] : x),
-                y: resolveViewField(allFields, Array.isArray(y) ? y[0] : y),
-                color: resolveViewField(allFields, color),
-                opacity: resolveViewField(allFields, opacity),
-                size: resolveViewField(allFields, size),
-                shape: resolveViewField(allFields, shape),
-                theta: resolveViewField(allFields, theta),
-                radius: resolveViewField(allFields, radius),
-                text: resolveViewField(allFields, text),
-                row: resolveViewField(allFields, row),
-                column: resolveViewField(allFields, column),
+                x: resolveViewField(fields, Array.isArray(x) ? x[0] : x),
+                y: resolveViewField(fields, Array.isArray(y) ? y[0] : y),
+                color: resolveViewField(fields, color),
+                opacity: resolveViewField(fields, opacity),
+                size: resolveViewField(fields, size),
+                shape: resolveViewField(fields, shape),
+                theta: resolveViewField(fields, theta),
+                radius: resolveViewField(fields, radius),
+                text: resolveViewField(fields, text),
+                row: resolveViewField(fields, row),
+                column: resolveViewField(fields, column),
                 xOffset: NULL_FIELD,
                 yOffset: NULL_FIELD,
                 details: details ? (
                     Array.isArray(details) ? details : [details]
-                ).map(f => resolveViewField(allFields, f)) : [],
+                ).map(f => resolveViewField(fields, f)) : [],
                 defaultAggregated: aggregated,
                 stack,
                 geomType: markType,
@@ -250,7 +248,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
             }
 
             if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-                embed(viewPlaceholders[0].current, vegaLiteSpec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+                embed(viewPlaceholders[0].current, vegaLiteSpec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
                     vegaRefs.current = [res.view];
                     try {
                         res.view.addEventListener('click', (e) => {
@@ -277,22 +275,22 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                 for (let j = 0; j < colCount; j++, index++) {
                     const hasLegend = i === 0 && j === colCount - 1;
                     const singleView = getSingleView({
-                        x: resolveViewField(allFields, Array.isArray(x) ? x[j] : x),
-                        y: resolveViewField(allFields, Array.isArray(y) ? y[i] : y),
-                        color: resolveViewField(allFields, color),
-                        opacity: resolveViewField(allFields, opacity),
-                        size: resolveViewField(allFields, size),
-                        shape: resolveViewField(allFields, shape),
-                        theta: resolveViewField(allFields, theta),
-                        radius: resolveViewField(allFields, radius),
-                        row: resolveViewField(allFields, row),
-                        column: resolveViewField(allFields, column),
-                        text: resolveViewField(allFields, text),
+                        x: resolveViewField(fields, Array.isArray(x) ? x[j] : x),
+                        y: resolveViewField(fields, Array.isArray(y) ? y[i] : y),
+                        color: resolveViewField(fields, color),
+                        opacity: resolveViewField(fields, opacity),
+                        size: resolveViewField(fields, size),
+                        shape: resolveViewField(fields, shape),
+                        theta: resolveViewField(fields, theta),
+                        radius: resolveViewField(fields, radius),
+                        row: resolveViewField(fields, row),
+                        column: resolveViewField(fields, column),
+                        text: resolveViewField(fields, text),
                         xOffset: NULL_FIELD,
                         yOffset: NULL_FIELD,
                         details: details ? (
                             Array.isArray(details) ? details : [details]
-                        ).map(f => resolveViewField(allFields, f)) : [],
+                        ).map(f => resolveViewField(fields, f)) : [],
                         defaultAggregated: aggregated,
                         stack,
                         geomType: markType,
@@ -306,7 +304,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
                         ans.params = commonSpec.params;
                     }
                     if (node) {
-                        embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+                        embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
                             vegaRefs.current.push(res.view);
                             try {
                                 res.view.addEventListener('click', (e) => {
@@ -325,7 +323,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
             return () => {};
         }
     }, [
-        allFields,
+        fields,
         encodings,
         markType,
         vegaConfig,
@@ -334,7 +332,7 @@ const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(functi
         nRows,
         nCols,
         viewPlaceholders,
-        i18n.language,
+        locale,
         data,
     ]);
 

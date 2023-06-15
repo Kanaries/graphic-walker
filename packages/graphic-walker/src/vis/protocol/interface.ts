@@ -23,7 +23,7 @@ export interface IVisField {
 }
 
 export type IVisEncodingKey = (
-    'x' | 'y' | 'color' | 'size' | 'shape' | 'opacity' | 'text' | 'xFacet' | 'yFacet' | 'xOffset' | 'yOffset' | 'row' | 'column' | 'theta' | 'radius' | 'details'
+    'x' | 'y' | 'color' | 'size' | 'shape' | 'opacity' | 'text' | 'xOffset' | 'yOffset' | 'row' | 'column' | 'theta' | 'radius' | 'details'
 );
 
 export type IVisEncodings = {
@@ -64,12 +64,17 @@ export type IVisConfigSize = {
     height: number;
 }
 
-export interface IVisSpec {
+export type IVisSchema<T = undefined> = {
     schema?: string;
     datasetId: string;
     encodings: IVisEncodings;
     filters?: IVisFilter[];
     markType: string;
     size?: IVisConfigSize;
-    configs?: Record<string, any>;
-}
+} & (
+    T extends undefined ? {
+        config?: unknown;
+    } : {
+        configs: T;
+    }
+);

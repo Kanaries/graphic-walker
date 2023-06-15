@@ -45,7 +45,7 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
             });
             return () => subscription.unsubscribe();
         }, []);
-        return meta;
+        return [meta, false];
     }
 
     loadData: GWLoadDataFunction = async payload => {
@@ -62,18 +62,29 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
     useData: GWUseDataFunction = payload => {
         const { pageIndex, pageSize } = payload;
         const [data, setData] = useState<IRow[]>([]);
+        const [loading, setLoading] = useState(false);
         const load = useCallback(async () => {
             setData(await this.loadData(payload));
         }, [pageIndex, pageSize]);
         useEffect(() => {
-            const subscription = this.signal.subscribe(channel => {
+            let taskId = 0;
+            const subscription = this.signal.subscribe(async channel => {
                 if (channel === 'sync-data') {
-                    this.loadData(payload).then(res => setData(res));
+                    const curId = ++taskId;
+                    setLoading(true);
+                    const data = await this.loadData(payload);
+                    if (curId === taskId) {
+                        setData(data);
+                        setLoading(false);
+                    }
                 }
             });
-            return () => subscription.unsubscribe();
+            return () => {
+                subscription.unsubscribe();
+                taskId = -1;
+            };
         }, [load]);
-        return data;
+        return [data, loading];
     }
 
     stat: GWStatFunction = async () => {

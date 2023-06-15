@@ -1,14 +1,16 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import { IDarkMode, IRow, IThemeKey, VegaGlobalConfig } from '../interfaces';
 import SpecRenderer from './specRenderer';
 import { toJS } from 'mobx';
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
-import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
-import { toWorkflow } from '../utils/workflow';
-import PivotTable from '../components/pivotTable';
+import { IVegaConfigSchema, transformGWSpec2VisSpec } from '../vis/protocol/adapter';
+import type { IVisSchema } from '../vis/protocol/interface';
+import { useCurrentMediaTheme } from '../utils/media';
+import { builtInThemes } from '../vis/theme';
+import { useRenderer } from './hooks';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -16,15 +18,25 @@ interface RendererProps {
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const { themeKey, dark } = props;
-    const [waiting, setWaiting] = useState<boolean>(false);
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader, draggableFieldState } = vizStore;
-    const { defaultAggregated } = visualConfig;
+    const { format: _format, zeroScale, size, interactiveScale, showActions } = visualConfig;
     const { currentDataset } = commonStore;
     const { dataSource, id: datasetId } = currentDataset;
-    const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
-    const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
 
+    const [visSpec, setVisSpec] = useState<IVisSchema<IVegaConfigSchema>>({
+        datasetId,
+        markType: 'bar',
+        encodings: {},
+        configs: {
+            vegaConfig: {},
+            size,
+            format: _format,
+            interactiveScale,
+            showActions,
+            zeroScale,
+        },
+    });
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const dimensions = draggableFieldState.dimensions.map(d => d.fid);
@@ -52,65 +64,76 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         dataLoader.syncData(dataSource);
     }, [dataLoader, dataSource]);
 
-    const workflow = useMemo(() => {
-        return toWorkflow(
-            viewFilters,
-            allFields,
-            viewDimensions,
-            viewMeasures,
-            defaultAggregated,
-        );
-    }, [viewFilters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
+    const format = toJS(_format);
+    const mediaTheme = useCurrentMediaTheme(dark);
+    const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
 
-    // Dependencies that should not trigger effect
-    const latestFromRef = useRef({ vizStore, allFields, currentDataset });
-    latestFromRef.current = { vizStore, allFields, currentDataset };
+    const vegaConfig = useMemo<VegaGlobalConfig>(() => {
+        const config: VegaGlobalConfig = {
+          ...themeConfig,
+        }
+        if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
+            // @ts-ignore
+            config.normalizedNumberFormat = format.normalizedNumberFormat;
+        }
+        if (format.numberFormat && format.numberFormat.length > 0) {
+            // @ts-ignore
+            config.numberFormat = format.numberFormat;
+        }
+        if (format.timeFormat && format.timeFormat.length > 0) {
+            // @ts-ignore
+            config.timeFormat = format.timeFormat;
+        }
+        // @ts-ignore
+        if (!config.scale) {
+            // @ts-ignore
+            config.scale = {};
+        }
+        // @ts-ignore
+        config.scale.zero = Boolean(zeroScale)
+        return config;
+    }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
+
+    const spec = useMemo(() => {
+        return transformGWSpec2VisSpec({
+            datasetId,
+            visualConfig,
+            draggableFieldState,
+            vegaConfig: vegaConfig,
+        });
+    }, [datasetId, draggableFieldState, visualConfig, vegaConfig, viewFilters, viewDimensions, viewMeasures]);
+
+    const { viewData: data, parsed, loading: waiting } = useRenderer({
+        spec,
+        dataLoader,
+    });
+
+    // Dependencies that should not trigger effect individually
+    const latestFromRef = useRef({ spec, data, parsed });
+    latestFromRef.current = { spec, data, parsed };
 
     useEffect(() => {
-        setWaiting(true);
-        dataLoader.query({ workflow }).then(data => {
+        if (waiting === false) {
             unstable_batchedUpdates(() => {
-                setViewData(data);
-                setWaiting(false);
-                setEncodings(toJS(latestFromRef.current.vizStore.draggableFieldState));
-                setViewConfig(toJS(latestFromRef.current.vizStore.visualConfig));
-                vizStore.setWorkflow(workflow);
+                setVisSpec(latestFromRef.current.spec);
+                setViewData(latestFromRef.current.data);
+                vizStore.setWorkflow(latestFromRef.current.parsed.workflow);
             });
-        }).catch((err) => {
-            console.error(err);
-            unstable_batchedUpdates(() => {
-                setViewData([]);
-                setWaiting(false);
-                setEncodings(initEncoding);
-                setViewConfig(initVisualConfig);
-                vizStore.setWorkflow([]);
-            });
-        });
-    }, [dataLoader, workflow, currentDataset, vizStore]);
+        }
+    }, [waiting, vizStore]);
 
-    if (viewConfig.geoms.includes('table')) {
-        return (
-            <PivotTable
-                data={viewData}
-                draggableFieldState={encodings}
-                visualConfig={viewConfig}
-                loading={waiting}
-                themeKey={themeKey}
-                dark={dark}
-            />
-        );
-    }
+    const [{ dimensions: dims, measures: meas }, metaLoading] = dataLoader.useMeta();
+    const fields = useMemo(() => [...dims, ...meas], [dims, meas]);
 
     return (
         <SpecRenderer
-            loading={waiting}
+            spec={visSpec}
+            loading={waiting || metaLoading}
             data={viewData}
+            fields={fields}
             ref={ref}
             themeKey={themeKey}
-            dataLoader={dataLoader}
             dark={dark}
-            draggableFieldState={encodings}
-            visualConfig={viewConfig}
         />
     );
 });
