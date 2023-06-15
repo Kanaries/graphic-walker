@@ -19,6 +19,7 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    CodeBracketIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -33,6 +34,7 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
+import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
 
 
 const Invisible = styled.div`
@@ -298,6 +300,35 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 onClick: () => {
                     commonStore.setShowCodeExportPanel(true);
                 }
+            },
+            {
+                key: 'dsl_debug',
+                label: 'DSL',
+                icon: CodeBracketIcon,
+                onClick: () => {
+                    const { currentDataset } = commonStore;
+                    const { draggableFieldState, visualConfig } = vizStore;
+                    const fields = draggableFieldState.columns.concat(draggableFieldState.rows).map<Pick<typeof draggableFieldState['dimensions'][number], 'fid' | 'name' | 'semanticType' | 'analyticType'>>(f => ({
+                        fid: f.fid,
+                        name: f.name,
+                        semanticType: f.semanticType,
+                        analyticType: f.analyticType,
+                    }));
+                    const dsl = transformGWSpec2VisSpec({
+                        datasetId: currentDataset.id,
+                        draggableFieldState,
+                        visualConfig,
+                    });
+                    const text = prompt('text');
+                    const json = {
+                        encoding: dsl,
+                        schema: fields,
+                        text,
+                    };
+                    // output to a new tab
+                    const win = window.open();
+                    win!.document.write(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
+                },
             },
         ] as ToolbarItemProps[];
 
