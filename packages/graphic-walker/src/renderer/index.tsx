@@ -6,6 +6,7 @@ import { toJS } from 'mobx';
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
+import type { IGWDataLoader } from '../dataLoader';
 import { IVegaConfigSchema, transformGWSpec2VisSpec } from '../vis/protocol/adapter';
 import type { IVisSchema } from '../vis/protocol/interface';
 import { useCurrentMediaTheme } from '../utils/media';
@@ -15,11 +16,12 @@ import { useRenderer } from './hooks';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    dataLoader: IGWDataLoader;
 }
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { dataLoader, themeKey, dark } = props;
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, dataLoader, draggableFieldState } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState } = vizStore;
     const { format: _format, zeroScale, size, interactiveScale, showActions } = visualConfig;
     const { currentDataset } = commonStore;
     const { dataSource, id: datasetId } = currentDataset;
@@ -39,8 +41,12 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
     const [viewData, setViewData] = useState<IRow[]>([]);
 
-    const dimensions = draggableFieldState.dimensions.map(d => d.fid);
-    const measures = draggableFieldState.measures.map(d => d.fid);
+    const dimensions = useMemo(() => {
+        return draggableFieldState.dimensions.map(d => d.fid);
+    }, [draggableFieldState.dimensions]);
+    const measures = useMemo(() => {
+        return draggableFieldState.measures.map(d => d.fid);
+    }, [draggableFieldState.measures]);
 
     useEffect(() => {
         dataLoader.syncMeta({

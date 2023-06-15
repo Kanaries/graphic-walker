@@ -94,11 +94,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 fields={fields}
                 ref={ref}
                 onGeomClick={handleGeomClick}
-                themeKey={themeKey}
-                dark={dark}
-                showActions={showActions}
-                format={spec.configs?.format}
-                interactiveScale={interactiveScale}
                 locale={i18n.language}
             />
         </Resizable>

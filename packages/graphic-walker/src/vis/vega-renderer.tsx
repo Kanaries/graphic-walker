@@ -5,14 +5,12 @@ import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { IViewField, IRow, IDarkMode, IThemeKey, IVisualConfig, IStackMode } from '../interfaces';
-import type { IGWDataLoader } from '../dataLoader';
+import type { IViewField, IRow, IStackMode } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { builtInThemes } from './theme';
-import { useCurrentMediaTheme } from '../utils/media';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 import type { IVisEncodingChannel, IVisField, IVisSchema } from './protocol/interface';
+import type { IVegaConfigSchema } from './protocol/adapter';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number; }>`
   display: grid;
@@ -28,18 +26,10 @@ export interface IVegaRendererHandler {
     downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface IVegaRendererProps {
-    spec: IVisSchema;
+    spec: IVisSchema<IVegaConfigSchema>;
     data: readonly IRow[];
     fields: readonly IVisField[];
-    format?: IVisualConfig['format'];
-    onGeomClick?: (values: any, e: any) => void
-    /** @default "vega" */
-    themeKey?: IThemeKey;
-    dark?: IDarkMode;
-    /** @default false */
-    interactiveScale?: boolean;
-    /** @default false */
-    showActions?: boolean;
+    onGeomClick?: (values: any, e: any) => void;
     /** @default "en-US" */
     locale?: string;
 }
@@ -97,39 +87,16 @@ const resolveViewField = (
 const VegaRenderer = forwardRef<IVegaRendererHandler, IVegaRendererProps>(function VegaRenderer(props, ref) {
     const {
         spec,
-        format,
         data,
         onGeomClick,
-        themeKey = 'vega',
-        dark = 'media',
-        interactiveScale = false,
-        showActions = false,
         locale = 'en-US',
         fields,
     } = props;
     const { encodings, size: sizeConfig, markType } = spec;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-    const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
-    const vegaConfig = useMemo(() => {
-        const config: any = {
-            ...themeConfig,
-        }
-        if (!format) {
-            return config;
-        }
-        if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
-            config.normalizedNumberFormat = format.normalizedNumberFormat;
-        }
-        if (format.numberFormat && format.numberFormat.length > 0) {
-            config.numberFormat = format.numberFormat;
-        }
-        if (format.timeFormat && format.timeFormat.length > 0) {
-            config.timeFormat = format.timeFormat;
-        }
-        return config;
-    }, [themeConfig, format?.normalizedNumberFormat, format?.numberFormat, format?.timeFormat])
+    const vegaConfig = spec.configs.vegaConfig;
+    const { interactiveScale, showActions } = spec.configs;
 
     useEffect(() => {
         const clickSub = geomClick$.subscribe(([values, e]) => {
