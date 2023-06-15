@@ -3,11 +3,11 @@ import { observer } from "mobx-react-lite";
 import styled from "styled-components";
 import { DataSet, IMutField, IRow } from "../../interfaces";
 import { useTranslation } from "react-i18next";
-import { useGlobalStore } from "../../store";
 import LoadingLayer from "../loadingLayer";
 import Pagination from "./pagination";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
+import type { IGWDataLoader } from "../../dataLoader";
 
 interface DataTableProps {
     /** page limit */
@@ -22,6 +22,7 @@ interface DataTableProps {
      */
     inMemory?: boolean;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
+    dataLoader: IGWDataLoader;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -72,11 +73,9 @@ function getSemanticColors(field: IMutField): string {
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, dataset, total, inMemory = false } = props;
+    const { size = 10, onMetaChange, dataset, total, inMemory = false, dataLoader } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
-    const { vizStore } = useGlobalStore();
-    const { dataLoader } = vizStore;
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return ANALYTIC_TYPE_LIST.map((at) => ({

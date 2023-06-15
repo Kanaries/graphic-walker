@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import DatasetTable from "../../components/dataTable";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
+import type { IGWDataLoader } from "../../dataLoader";
 
-const DatasetConfig: React.FC = (props) => {
+const DatasetConfig: React.FC<{ dataLoader: IGWDataLoader }> = ({ dataLoader }) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { currentDataset } = commonStore;
-    const { dataLoader } = vizStore;
     const [count, setCount] = useState(0);
     useEffect(() => {
         let isCurrent = true;
@@ -22,7 +22,7 @@ const DatasetConfig: React.FC = (props) => {
             setCount(0);
             isCurrent = false;
         };
-    }, []);
+    }, [dataLoader]);
     return (
         <div className="relative">
             <DatasetTable size={100}
@@ -31,6 +31,7 @@ const DatasetConfig: React.FC = (props) => {
                     commonStore.updateCurrentDatasetMetas(fid, diffMeta)
                 }}
                 dataset={currentDataset}
+                dataLoader={dataLoader}
             />
         </div>
     );
