@@ -9,26 +9,27 @@ import { useGlobalStore } from "../../store";
 import Tabs, { RuleFormProps } from "./tabs";
 import DefaultButton from "../../components/button/default";
 import PrimaryButton from "../../components/button/primary";
+import type { IGWDataLoader } from "../../dataLoader";
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps & { dataLoader: IGWDataLoader }> = ({ field, onChange, dataLoader }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataLoader={dataLoader} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of"]} />;
+const NominalRuleForm: React.FC<RuleFormProps & { dataLoader: IGWDataLoader }> = ({ field, onChange, dataLoader }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataLoader={dataLoader} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const OrdinalRuleForm: React.FC<RuleFormProps & { dataLoader: IGWDataLoader }> = ({ field, onChange, dataLoader }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataLoader={dataLoader} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} />;
+const TemporalRuleForm: React.FC<RuleFormProps & { dataLoader: IGWDataLoader }> = ({ field, onChange, dataLoader }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} dataLoader={dataLoader} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
-const FilterEditDialog: React.FC = observer(() => {
+const FilterEditDialog: React.FC<{ dataLoader: IGWDataLoader }> = observer(({ dataLoader }) => {
     const { vizStore } = useGlobalStore();
     const { editingFilterIdx, draggableFieldState } = vizStore;
 
@@ -77,7 +78,7 @@ const FilterEditDialog: React.FC = observer(() => {
               nominal: NominalRuleForm,
               ordinal: OrdinalRuleForm,
               temporal: TemporalRuleForm,
-          }[field.semanticType] as React.FC<RuleFormProps>)
+          }[field.semanticType] as React.FC<RuleFormProps & { dataLoader: IGWDataLoader }>)
         : EmptyForm;
 
     return uncontrolledField ? (
@@ -88,7 +89,7 @@ const FilterEditDialog: React.FC = observer(() => {
                     {uncontrolledField.name}
                 </span>
                 <h3 className="text-base font-semibold py-2 outline-none">{t("form.rule")}</h3>
-                <Form field={uncontrolledField} onChange={handleChange} />
+                <Form field={uncontrolledField} onChange={handleChange} dataLoader={dataLoader} />
                 <div className="mt-4">
                     <PrimaryButton
                         onClick={handleSubmit}

@@ -9,21 +9,33 @@ import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
 import type { IGWDataLoader } from "../../dataLoader";
 
-interface DataTableProps {
+type DataTableProps = {
     /** page limit */
     size?: number;
     /** total count of rows */
     total: number;
     dataset: DataSet;
-    /**
-     * @default false
-     * Enable this option will extract data from `dataset.dataSource`.
-     * This is useful when you want to preview a temporary table.
-     */
-    inMemory?: boolean;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
-    dataLoader: IGWDataLoader;
-}
+} & (
+    | {
+        /**
+         * @default false
+         * Enable this option will extract data from `dataset.dataSource`.
+         * This is useful when you want to preview a temporary table.
+         */
+        inMemory: true;
+        dataLoader?: IGWDataLoader;
+    }
+    | {
+        /**
+         * @default false
+         * Enable this option will extract data from `dataset.dataSource`.
+         * This is useful when you want to preview a temporary table.
+         */
+        inMemory?: false;
+        dataLoader: IGWDataLoader;
+    }
+)
 const Container = styled.div`
     overflow-x: auto;
     max-height: 660px;
@@ -73,7 +85,7 @@ function getSemanticColors(field: IMutField): string {
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, dataset, total, inMemory = false, dataLoader } = props;
+    const { size = 10, onMetaChange, dataset, total } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
 
@@ -101,13 +113,13 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     columnsRef.current = dataset.rawFields;
 
     useEffect(() => {
-        if (inMemory) {
+        if (props.inMemory) {
             setRows(dataset.dataSource.slice(from, to));
             return;
         }
         // switch all
         let isCurrent = true;
-        const task = dataLoader.loadData({
+        const task = props.dataLoader.loadData({
             pageSize: size,
             pageIndex,
         });
@@ -130,7 +142,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             isCurrent = false;
             setLoading(false);
         };
-    }, [dataset, dataLoader, size, pageIndex, inMemory]);
+    }, [dataset, props.dataLoader, size, pageIndex, props.inMemory]);
 
     return (
         <Container className="rounded border-gray-200 dark:border-gray-700 border relative">

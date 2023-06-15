@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import type { IFieldStats, IFilterField, IFilterRule } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import PureTabs from '../../components/tabs/defaultTab';
+import type { IGWDataLoader } from '../../dataLoader';
 import Slider from './slider';
 
 
@@ -103,10 +104,8 @@ const TabPanel = styled.div({});
 
 const TabItem = styled.div({});
 
-const useFieldStats = (fid: string, attributes: { values: boolean; range: boolean }): IFieldStats | null => {
+const useFieldStats = (dataLoader: IGWDataLoader, fid: string, attributes: { values: boolean; range: boolean }): IFieldStats | null => {
     const { values, range } = attributes;
-    const { vizStore } = useGlobalStore();
-    const { dataLoader } = vizStore;
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<IFieldStats | null>(null);
 
@@ -135,14 +134,15 @@ const useFieldStats = (fid: string, attributes: { values: boolean; range: boolea
     return loading ? null : stats;
 };
 
-export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean; dataLoader: IGWDataLoader }> = observer(({
     active,
     field,
     onChange,
+    dataLoader,
 }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
-    const stats = useFieldStats(field.fid, { values: true, range: false });
+    const stats = useFieldStats(dataLoader, field.fid, { values: true, range: false });
     const count = stats?.values;
 
     React.useEffect(() => {
@@ -277,12 +277,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     ) : null;
 });
 
-export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean; dataLoader: IGWDataLoader }> = observer(({
     active,
     field,
     onChange,
+    dataLoader,
 }) => {
-    const stats = useFieldStats(field.fid, { values: false, range: true });
+    const stats = useFieldStats(dataLoader, field.fid, { values: false, range: true });
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -318,12 +319,13 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     ) : null;
 });
 
-export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean; dataLoader: IGWDataLoader }> = observer(({
     active,
     field,
     onChange,
+    dataLoader,
 }) => {
-    const stats = useFieldStats(field.fid, { values: false, range: true });
+    const stats = useFieldStats(dataLoader, field.fid, { values: false, range: true });
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -358,7 +360,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
     ) : null;
 });
 
-const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean }>> = {
+const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean; dataLoader: IGWDataLoader }>> = {
     'one of': FilterOneOfRule,
     'range': FilterRangeRule,
     'temporal range': FilterTemporalRangeRule,
@@ -366,9 +368,10 @@ const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active:
 
 export interface TabsProps extends RuleFormProps {
     tabs: IFilterRule['type'][];
+    dataLoader: IGWDataLoader;
 }
 
-const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
+const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs, dataLoader }) => {
     const { vizStore } = useGlobalStore();
     const { draggableFieldState } = vizStore;
 
@@ -406,6 +409,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                                     field={field}
                                     onChange={onChange}
                                     active={which === tab}
+                                    dataLoader={dataLoader}
                                 />
                             </TabItem>
                         );

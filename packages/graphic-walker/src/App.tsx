@@ -143,7 +143,7 @@ const App = observer<IGWProps>(function App(props) {
                                 <DatasetFields />
                             </div>
                             <div className="md:col-span-2 xl:col-span-1">
-                                <FilterField />
+                                <FilterField dataLoader={dataLoader} />
                                 <AestheticFields />
                             </div>
                             <div className="md:col-span-7 xl:col-span-4">
@@ -189,7 +189,7 @@ const App = observer<IGWProps>(function App(props) {
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                         style={{ marginTop: '0em', borderTop: 'none' }}
                     >
-                        <DatasetConfig />
+                        <DatasetConfig dataLoader={dataLoader} />
                     </div>
                 )}
             </div>
