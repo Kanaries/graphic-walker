@@ -1,3 +1,5 @@
+import {Config as VgConfig} from 'vega';
+import {Config as VlConfig} from 'vega-lite';
 import type { IViewQuery } from "./lib/viewQuery";
 import type { IVisField, IVisFilter } from "./vis/protocol/interface";
 
@@ -200,6 +202,7 @@ export interface IVisualConfig {
     showActions: boolean;
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
+    zeroScale: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;
@@ -275,3 +278,4 @@ export type IResponse<T> = (
         };
     }
 );
+export type VegaGlobalConfig = VgConfig | VlConfig;

@@ -4,8 +4,10 @@ import React, { useCallback, forwardRef, useMemo } from 'react';
 
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
+import { useCurrentMediaTheme } from '../utils/media';
+import { builtInThemes } from '../vis/theme';
 import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
 import VegaRenderer from '../vis/vega-renderer';
 import type { IGWDataLoader } from '../dataLoader';
@@ -37,17 +39,47 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 ) {
     const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { interactiveScale, showActions, size, format: _format } = visualConfig;
+    const { interactiveScale, showActions, size, format: _format, zeroScale } = visualConfig;
     const datasetId = commonStore.currentDataset.id;
+
+    const format = toJS(_format);
+    const mediaTheme = useCurrentMediaTheme(dark);
+    const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
+
+    const vegaConfig = useMemo<VegaGlobalConfig>(() => {
+        const config: VegaGlobalConfig = {
+          ...themeConfig,
+        }
+        if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
+            // @ts-ignore
+            config.normalizedNumberFormat = format.normalizedNumberFormat;
+        }
+        if (format.numberFormat && format.numberFormat.length > 0) {
+            // @ts-ignore
+            config.numberFormat = format.numberFormat;
+        }
+        if (format.timeFormat && format.timeFormat.length > 0) {
+            // @ts-ignore
+            config.timeFormat = format.timeFormat;
+        }
+        // @ts-ignore
+        if (!config.scale) {
+            // @ts-ignore
+            config.scale = {};
+        }
+        // @ts-ignore
+        config.scale.zero = Boolean(zeroScale)
+        return config;
+    }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     const spec = useMemo(() => {
         return transformGWSpec2VisSpec({
             datasetId,
             visualConfig,
             draggableFieldState,
+            vegaConfig: vegaConfig,
         });
-    }, [datasetId, visualConfig, draggableFieldState]);
-    const format = toJS(_format);
+    }, [datasetId, visualConfig, draggableFieldState, vegaConfig]);
     // TODO: remove me
     debouncedLog('====== spec', `[${new Date().toLocaleTimeString()}]`, spec);
 

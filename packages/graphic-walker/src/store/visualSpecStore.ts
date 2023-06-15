@@ -72,6 +72,7 @@ export function initVisualConfig(): IVisualConfig {
         showActions: false,
         interactiveScale: false,
         sorted: "none",
+        zeroScale: true,
         size: {
             mode: "auto",
             width: 320,
@@ -377,14 +378,16 @@ export class VizSpecStore {
                 case configKey === "geoms" && Array.isArray(value):
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
+                case configKey === "zeroScale":
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
                 case configKey === 'format' && typeof value === "object": {
                     return config[configKey] = value
                 }
+
                 default: {
-                    console.error("unknown key" + configKey);
+                    console.error("[unknown key] " + configKey + " You should registered visualConfig at setVisualConfig");
                 }
             }
         });

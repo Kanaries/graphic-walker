@@ -8,6 +8,7 @@ interface IGWSpec {
     datasetId: string;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfig;
+    vegaConfig?: any;
 }
 
 const extractVisEncChannel = (
@@ -111,7 +112,7 @@ const transformGWPositionChannels = (
 const nonPositionChannels = ['color', 'opacity', 'size', 'shape', 'theta', 'radius', 'details', 'text'] as const;
 
 export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSpec => {
-    const { datasetId, draggableFieldState, visualConfig } = spec;
+    const { datasetId, draggableFieldState, visualConfig, vegaConfig } = spec;
     const { defaultAggregated, geoms, stack, size } = visualConfig;
     const [markType] = geoms;
 
@@ -132,9 +133,11 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSpec => {
         markType,
         encodings: enc,
         configs: {
+            vegaConfig,
             format: visualConfig.format,
             interactiveScale: visualConfig.interactiveScale,
             showActions: visualConfig.showActions,
+            zeroScale: visualConfig.zeroScale,
         },
     };
 
