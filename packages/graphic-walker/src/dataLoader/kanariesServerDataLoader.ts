@@ -17,7 +17,9 @@ interface IGWTransformerOptions {
 interface IDatasetMeta {
     id: string;
     name: string;
-    fieldsMeta: IVisField[];
+    fieldsMeta: (Omit<IVisField, 'type'> & {
+        semanticType: IVisField['type'];
+    })[];
     meta: {
         totalRows: number;
     };
@@ -94,10 +96,15 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
     }
 
     async #fetchDataset(): Promise<IDatasetMeta> {
-        return this.#getRequest<void, IDatasetMeta>(`/api/ce/dataset/v2/${this.options.datasetId}`);
+        return this.#getRequest<{ datasetId: string }, IDatasetMeta>(`/api/ce/dataset/v2`, {
+            datasetId: this.options.datasetId,
+        });
     }
 
     async #fetchDataView(data: IServerDataQueryPayload): Promise<IRow[]> {
+        if (!data.datasetId) {
+            return [];
+        }
         return this.#postRequest<IServerDataQueryPayload, IRow[]>(`/api/ce/dataset/v2/query`, data);
     }
 
@@ -105,8 +112,8 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         const meta = await this.#fetchDataset();
         const fields = meta.fieldsMeta.map(f => ({
             ...f,
-            analyticType: f.type === 'quantitative' ? 'measure' : 'dimension',
-        }))
+            analyticType: f.semanticType === 'quantitative' ? 'measure' : 'dimension',
+        }));
         this.dataset = {
             meta,
             measures: fields.filter(field => field.analyticType === 'measure').map(field => field.key),
@@ -125,34 +132,36 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return;
     }
 
-    loadMeta: GWLoadMetaFunction = async () => {
+    #getMeta(): Awaited<ReturnType<GWLoadMetaFunction>> {
         return {
             datasetId: this.dataset.meta.id,
-            dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
-            measures: this.dataset.measures.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
+            dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean).map(f => ({
+                ...f,
+                type: f.semanticType,
+            })),
+            measures: this.dataset.measures.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean).map(f => ({
+                ...f,
+                type: f.semanticType,
+            })),
         };
     }
 
+    loadMeta: GWLoadMetaFunction = async () => {
+        return this.#getMeta();
+    }
+
     useMeta: GWUseMetaFunction = () => {
-        const getDataset = useCallback(() => ({
-            datasetId: this.dataset.meta.id,
-            dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
-            measures: this.dataset.measures.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean),
-        }), []);
-        const [meta, setMeta] = useState<IVisDataset>(getDataset);
+        const [meta, setMeta] = useState<IVisDataset>(this.#getMeta());
         useEffect(() => {
             const subscription = this.signal.subscribe(() => {
-                setMeta(getDataset);
+                setMeta(this.#getMeta());
             });
             return () => subscription.unsubscribe();
-        }, [getDataset]);
+        }, []);
         return meta;
     }
 
     loadData: GWLoadDataFunction = async payload => {
-        if (!this.dataset) {
-            return [];
-        }
         const { pageIndex, pageSize } = payload;
         return this.#fetchDataView({
             datasetId: this.dataset.meta.id,
@@ -214,6 +223,9 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
 
     query: GWTransformFunction = async payload => {
         if (!this.dataset) {
+            return [];
+        }
+        if (payload.workflow.length === 1 && payload.workflow[0].type === 'view' && payload.workflow[0].query.length === 1 && payload.workflow[0].query[0].op === 'raw' && payload.workflow[0].query[0].fields.length === 0) {
             return [];
         }
         return this.#fetchDataView({

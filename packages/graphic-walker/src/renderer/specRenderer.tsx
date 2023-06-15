@@ -19,6 +19,18 @@ interface SpecRendererProps {
     visualConfig: IVisualConfig;
     dataLoader: IGWDataLoader;
 }
+// TODO: remove me
+const debouncedLog = (function () {
+    let timer: any;
+    return function (...msg: any[]) {
+        if (timer) {
+            clearTimeout(timer);
+        }
+        timer = setTimeout(() => {
+            console.log(...msg);
+        }, 300);
+    };
+})();
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     { themeKey, dark, data, loading, draggableFieldState, visualConfig, dataLoader },
     ref
@@ -36,6 +48,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         });
     }, [datasetId, visualConfig, draggableFieldState]);
     const format = toJS(_format);
+    // TODO: remove me
+    debouncedLog('====== spec', `[${new Date().toLocaleTimeString()}]`, spec);
 
     const hasFacet = Boolean(spec.encodings.row || spec.encodings.column);
 
