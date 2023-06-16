@@ -23,14 +23,9 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const { spec, dataLoader } = props;
     const [computing, setComputing] = useState(false);
 
-    const [dataset, metaLoading] = dataLoader.useMeta();
-    const allFields = useMemo(() => {
-        return dataset.dimensions.concat(dataset.measures);
-    }, [dataset]);
-    
     const workflow = useMemo(() => {
-        return toWorkflow(spec, allFields);
-    }, [spec, allFields]);
+        return toWorkflow(spec);
+    }, [spec]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
     const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);
@@ -62,8 +57,8 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     return useMemo(() => {
         return {
             viewData,
-            loading: metaLoading || computing,
+            loading: computing,
             parsed: parseResult,
         };
-    }, [viewData, metaLoading, computing, parseResult]);
+    }, [viewData, computing, parseResult]);
 };

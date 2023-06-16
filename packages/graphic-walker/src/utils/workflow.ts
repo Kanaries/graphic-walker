@@ -1,9 +1,9 @@
 import type { IDataQueryWorkflowStep } from "../interfaces";
-import type { IVisEncodingChannelRef, IVisField, IVisSchema } from "../vis/protocol/interface";
+import type { IVisEncodingChannelRef, IVisSchema } from "../vis/protocol/interface";
 import { getMeaAggKey } from ".";
 
 
-export const toWorkflow = (spec: IVisSchema, fields: readonly IVisField[]): IDataQueryWorkflowStep[] => {
+export const toWorkflow = (spec: IVisSchema): IDataQueryWorkflowStep[] => {
     const viewDimensions: IVisEncodingChannelRef[] = [];
     const viewMeasures: IVisEncodingChannelRef[] = [];
     for (const channel of Object.values(spec.encodings).filter(Boolean).flat()) {
@@ -27,12 +27,9 @@ export const toWorkflow = (spec: IVisSchema, fields: readonly IVisField[]): IDat
     }
 
     // Second, to transform the data by rows 1 by 1
-    const computedFields = fields.filter(f => f.expression).map(f => ({
-        key: f.key,
-        expression: f.expression!,
-    }));
+    const computedFields = spec.computations;
     let transformStep: IDataQueryWorkflowStep | null = null;
-    if (computedFields.length) {
+    if (computedFields?.length) {
         transformStep = {
             type: 'transform',
             transform: computedFields,
@@ -64,20 +61,6 @@ export const toWorkflow = (spec: IVisSchema, fields: readonly IVisField[]): IDat
                 fields: [...new Set([...viewDimensions, ...viewMeasures].map(f => f.field))],
             }],
         });
-    }
-
-    // Optimization: to remove the computed fields which are not used in the view
-    if (transformStep) {
-        const fidInView = new Set([...viewDimensions, ...viewMeasures].map(f => f.field));
-        const computedFieldsInView = transformStep.transform.filter(f => fidInView.has(f.key));
-        if (computedFieldsInView.length < transformStep.transform.length) {
-            if (!computedFieldsInView.length) {
-                const idx = steps.indexOf(transformStep);
-                steps.splice(idx, 1);
-            } else {
-                transformStep.transform = computedFieldsInView;
-            }
-        }
     }
 
     return steps;

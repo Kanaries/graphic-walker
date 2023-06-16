@@ -1,7 +1,7 @@
 import {Config as VgConfig} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
 import type { IViewQuery } from "./lib/viewQuery";
-import type { IVisField, IVisFilter } from "./vis/protocol/interface";
+import type { IVisFieldComputation, IVisFilter } from "./vis/protocol/interface";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -237,9 +237,7 @@ export interface IFilterWorkflowStep {
 
 export interface ITransformWorkflowStep {
     type: 'transform';
-    transform: {
-        [key in keyof Pick<IVisField, 'key' | 'expression'>]-?: NonNullable<IVisField[key]>;
-    }[];
+    transform: IVisFieldComputation[];
 }
 
 export interface IViewWorkflowStep {

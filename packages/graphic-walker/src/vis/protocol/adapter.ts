@@ -1,7 +1,7 @@
 import type { DeepReadonly, DraggableFieldState, IVisualConfig, IViewField, IStackMode, ISemanticType, VegaGlobalConfig } from "../../interfaces";
 import type { IAggregator } from "../../interfaces";
 import { autoMark } from "../spec/mark";
-import type { IVisEncodingChannel, IVisEncodings, IVisFilter, IVisSchema } from "./interface";
+import type { IVisEncodingChannel, IVisEncodings, IVisFieldComputation, IVisFilter, IVisSchema } from "./interface";
 
 
 interface IGWSpec {
@@ -194,6 +194,22 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSchema<IVegaConfigSc
             width: size.width,
             height: size.height,
         };
+    }
+
+    const allComputedFields = draggableFieldState.dimensions.concat(draggableFieldState.measures).filter(f => f.computed && f.expression).map<IVisFieldComputation>(f => ({
+        key: f.fid,
+        expression: f.expression!,
+    }));
+    const allFieldsInUse = Object.values(dsl.encodings).flat().filter(Boolean).reduce<string[]>((acc, channel) => {
+        const fieldKey = typeof channel === 'string' ? channel : channel.field;
+        if (!acc.includes(fieldKey)) {
+            acc.push(fieldKey);
+        }
+        return acc;
+    }, []);
+    const computedFieldsInUse = allComputedFields.filter(f => allFieldsInUse.includes(f.key));
+    if (computedFieldsInUse.length) {
+        dsl.computations = computedFieldsInUse;
     }
     
     return dsl;

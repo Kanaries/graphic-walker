@@ -64,9 +64,14 @@ export type IVisConfigSize = {
     height: number;
 }
 
+export type IVisFieldComputation = {
+    [key in keyof Pick<IVisField, 'key' | 'expression'>]-?: NonNullable<IVisField[key]>;
+};
+
 export type IVisSchema<T = undefined> = {
     schema?: string;
     datasetId: string;
+    computations?: IVisFieldComputation[];
     encodings: IVisEncodings;
     filters?: IVisFilter[];
     markType: string;
