@@ -301,14 +301,21 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     commonStore.setShowCodeExportPanel(true);
                 }
             },
+            // TODO: remove me
             {
                 key: 'dsl_debug',
                 label: 'DSL',
                 icon: CodeBracketIcon,
                 onClick: () => {
                     const { currentDataset } = commonStore;
-                    const { draggableFieldState, visualConfig } = vizStore;
-                    const fields = draggableFieldState.columns.concat(draggableFieldState.rows).map<Pick<typeof draggableFieldState['dimensions'][number], 'fid' | 'name' | 'semanticType' | 'analyticType'>>(f => ({
+                    const { draggableFieldState, visualConfig, viewDimensions, viewMeasures } = vizStore;
+                    const allFields = draggableFieldState.dimensions.concat(draggableFieldState.measures).map<Pick<typeof draggableFieldState['dimensions'][number], 'fid' | 'name' | 'semanticType' | 'analyticType'>>(f => ({
+                        fid: f.fid,
+                        name: f.name,
+                        semanticType: f.semanticType,
+                        analyticType: f.analyticType,
+                    }));
+                    const viewFields = viewDimensions.concat(viewMeasures).map<Pick<typeof draggableFieldState['dimensions'][number], 'fid' | 'name' | 'semanticType' | 'analyticType'>>(f => ({
                         fid: f.fid,
                         name: f.name,
                         semanticType: f.semanticType,
@@ -320,14 +327,29 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                         visualConfig,
                     });
                     const text = prompt('text');
+                    if (text === null) {
+                        return;
+                    }
                     const json = {
                         encoding: dsl,
-                        schema: fields,
+                        allFields,
+                        schema: viewFields,
                         text,
                     };
-                    // output to a new tab
-                    const win = window.open();
-                    win!.document.write(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
+                    const apiHref = localStorage.getItem('debug_api');
+                    if (apiHref) {
+                        fetch(apiHref, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(json),
+                        });
+                    } else {
+                        // output to a new tab
+                        const win = window.open();
+                        win?.document.write(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
+                    }
                 },
             },
         ] as ToolbarItemProps[];
