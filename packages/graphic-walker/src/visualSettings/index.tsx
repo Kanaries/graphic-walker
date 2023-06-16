@@ -309,13 +309,17 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 onClick: () => {
                     const { currentDataset } = commonStore;
                     const { draggableFieldState, visualConfig, viewDimensions, viewMeasures } = vizStore;
-                    const allFields = draggableFieldState.dimensions.concat(draggableFieldState.measures).map<Pick<typeof draggableFieldState['dimensions'][number], 'name' | 'semanticType' | 'analyticType'> & { key: string }>(f => ({
+                    const allFields = draggableFieldState.dimensions.concat(draggableFieldState.measures).filter(
+                        f => !f.computed && !f.expression
+                    ).map<Pick<typeof draggableFieldState['dimensions'][number], 'name' | 'semanticType' | 'analyticType'> & { key: string }>(f => ({
                         key: f.fid,
                         name: f.name,
                         semanticType: f.semanticType,
                         analyticType: f.analyticType,
                     }));
-                    const viewFields = viewDimensions.concat(viewMeasures).map<Pick<typeof draggableFieldState['dimensions'][number], 'name' | 'semanticType' | 'analyticType'> & { key: string }>(f => ({
+                    const viewFields = viewDimensions.concat(viewMeasures).filter(
+                        f => !f.computed && !f.expression
+                    ).map<Pick<typeof draggableFieldState['dimensions'][number], 'name' | 'semanticType' | 'analyticType'> & { key: string }>(f => ({
                         key: f.fid,
                         name: f.name,
                         semanticType: f.semanticType,
