@@ -59,27 +59,20 @@ const resolveViewField = (
         return NULL_FIELD;
     }
     const isMeasure = typeof ref !== 'string' && Boolean(ref.aggregate);
-    if (isMeasure) {
-        const aggName = ref.aggregate;
-        return {
-            dragId: '',
-            fid: field.key,
-            name: field.name || fieldKey,
-            semanticType: field.type,
-            analyticType: 'measure',
-            aggName,
-        };
-    }
     const f: IViewField = {
         dragId: '',
         fid: field.key,
         name: field.name || fieldKey,
         semanticType: field.type,
-        analyticType: 'dimension',
+        analyticType: isMeasure ? 'measure' : 'dimension',
     };
-    if (typeof ref !== 'string' && ref.sort) {
-        const order = typeof ref === 'string' ? ref : ref.sort ?? 'asc';
-        f.sort = order === 'asc' ? 'ascending' : 'descending';
+    if (isMeasure) {
+        f.aggName = ref.aggregate;
+    } else {
+        if (typeof ref !== 'string' && ref.sort) {
+            const order = typeof ref.sort === 'string' ? ref.sort : ref.sort.order ?? 'asc';
+            f.sort = order === 'desc' ? 'descending' : 'ascending';
+        }
     }
     return f;
 };

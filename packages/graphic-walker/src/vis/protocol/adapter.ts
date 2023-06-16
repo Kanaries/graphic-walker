@@ -34,7 +34,7 @@ const extractVisEncChannel = (
         // apply aggregate
         channel.aggregate = aggName as IAggregator;
     }
-    if (sortByField?.sort && sortByField.sort !== 'none') {
+    if (sort && sort !== 'none' && sortByField) {
         // apply sort
         channel.sort = {
             field: sortByField.fid,
