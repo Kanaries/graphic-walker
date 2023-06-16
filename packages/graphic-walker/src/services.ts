@@ -1,5 +1,5 @@
 import { toJS } from 'mobx';
-import type { IRow, IMutField, Specification, IFilterField } from './interfaces';
+import type { IRow, IMutField, Specification, IFilterField, IField } from './interfaces';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -142,13 +142,21 @@ export const applyFilter = async (data: IRow[], filters: IFilterField[]): Promis
     }
 };
 
-export const transformDataService = async (data: IRow[], columns: IVisField[]): Promise<IRow[]> => {
+export const transformDataService = async (data: IRow[], columns: (IVisField & { analyticType: 'dimension' | 'measure' })[]): Promise<IRow[]> => {
     if (columns.length === 0 || data.length === 0) return data;
     const worker = new TransformDataWorker();
+    const fields = columns.map<IField>(col => ({
+        fid: col.key,
+        name: col.name || col.key,
+        analyticType: col.analyticType,
+        semanticType: col.type,
+        computed: Boolean(col.expression),
+        expression: col.expression,
+    }));
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
-            columns: toJS(columns),
+            columns: toJS(fields),
         });
         return res;
     } catch (error) {
