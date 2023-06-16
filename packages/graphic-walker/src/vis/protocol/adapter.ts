@@ -23,7 +23,7 @@ export interface IVegaConfigSchema {
 const extractVisEncChannel = (
     enc: DeepReadonly<IViewField>,
     defaultAggregate: boolean,
-    allowSort = false,
+    sortByField: DeepReadonly<IViewField> | null = null,
     stack: IStackMode = 'none',
 ): IVisEncodingChannel => {
     const { fid, aggName, analyticType, sort } = enc;
@@ -34,9 +34,12 @@ const extractVisEncChannel = (
         // apply aggregate
         channel.aggregate = aggName as IAggregator;
     }
-    if (allowSort && sort && sort !== 'none') {
+    if (sortByField?.sort && sortByField.sort !== 'none') {
         // apply sort
-        channel.sort = sort === 'ascending' ? 'asc' : 'desc';
+        channel.sort = {
+            field: sortByField.fid,
+            order: sort === 'ascending' ? 'asc' : 'desc',
+        };
     }
     if (analyticType === 'measure' && stack !== 'none') {
         // apply stack
@@ -97,10 +100,10 @@ const transformGWPositionChannels = (
     if (rowRepeatFields.length > 1 || colRepeatFields.length > 1) {
         // repeat
         if (rowRepeatFields.length) {
-            enc.y = rowRepeatFields.map(f => extractVisEncChannel(f, defaultAggregate, true, stack));
+            enc.y = rowRepeatFields.map(f => extractVisEncChannel(f, defaultAggregate, colRepeatFields[0] ?? null, stack));
         }
         if (colRepeatFields.length) {
-            enc.x = colRepeatFields.map(f => extractVisEncChannel(f, defaultAggregate, true, stack));
+            enc.x = colRepeatFields.map(f => extractVisEncChannel(f, defaultAggregate, rowRepeatFields[0] ?? null, stack));
         }
     } else {
         // no repeat
@@ -108,10 +111,10 @@ const transformGWPositionChannels = (
         const xField = columns.length > 0 ? columns[columns.length - 1] : null;
 
         if (yField) {
-            enc.y = extractVisEncChannel(yField, defaultAggregate, true, stack);
+            enc.y = extractVisEncChannel(yField, defaultAggregate, xField, stack);
         }
         if (xField) {
-            enc.x = extractVisEncChannel(xField, defaultAggregate, true, stack);
+            enc.x = extractVisEncChannel(xField, defaultAggregate, yField, stack);
         }
     }
 

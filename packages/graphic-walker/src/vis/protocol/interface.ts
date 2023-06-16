@@ -4,11 +4,24 @@ import type { IAggregator, IExpression, ISemanticType } from "../../interfaces"
 export type IStackMode = 'zero' | 'center' | 'normalize' | 'none';
 export type ISortType = 'asc' | 'desc';
 
+export type ISortConfigRef = (
+    | {
+        field: string;
+        aggregate?: IAggregator;
+        order?: ISortType;
+    }
+    | {
+        channel: string;
+        order?: ISortType;
+    }
+    | ISortType
+);
+
 export interface IVisEncodingChannelRef {
     field: string;
     aggregate?: IAggregator;
     stack?: IStackMode;
-    sort?: ISortType;
+    sort?: ISortConfigRef;
 }
 
 export type IVisEncodingChannel = IVisEncodingChannelRef | string;

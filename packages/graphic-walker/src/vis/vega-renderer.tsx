@@ -78,7 +78,8 @@ const resolveViewField = (
         analyticType: 'dimension',
     };
     if (typeof ref !== 'string' && ref.sort) {
-        f.sort = ref.sort === 'asc' ? 'ascending' : 'descending';
+        const order = typeof ref === 'string' ? ref : ref.sort ?? 'asc';
+        f.sort = order === 'asc' ? 'ascending' : 'descending';
     }
     return f;
 };
