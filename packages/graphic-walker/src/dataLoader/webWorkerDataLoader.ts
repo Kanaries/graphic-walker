@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Subject } from "rxjs";
 import { applyFilter, applyViewQuery, transformDataService } from "../services";
 import type { IVisDataset, IVisField } from "../vis/protocol/interface";
-import type { IFilterField, IRow } from "../interfaces";
-import type { GWLoadDataFunction, GWLoadMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, GWSyncDataFunction, GWSyncMetaFunction, IGWDataLoader, GWUseMetaFunction } from ".";
+import type { IFilterField, IGWDatasetStat, IRow } from "../interfaces";
+import type { GWStatFieldFunction, GWTransformFunction, GWSyncDataFunction, GWSyncMetaFunction, IGWDataLoader, GWUseMetaFunction, GWUseStatFunction } from ".";
 import { GWUseDataFunction } from ".";
 
 
@@ -31,10 +31,6 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         this.signal.next('sync-data');
     }
 
-    loadMeta: GWLoadMetaFunction = async () => {
-        return this.dataset;
-    }
-
     useMeta: GWUseMetaFunction = () => {
         const [meta, setMeta] = useState<IVisDataset>(this.dataset);
         useEffect(() => {
@@ -48,7 +44,7 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         return [meta, false];
     }
 
-    loadData: GWLoadDataFunction = async payload => {
+    async #loadData(payload: Parameters<GWUseDataFunction>[0]): Promise<IRow[]> {
         if (!this.dataset) {
             return [];
         }
@@ -64,7 +60,7 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         const [data, setData] = useState<IRow[]>([]);
         const [loading, setLoading] = useState(false);
         const load = useCallback(async () => {
-            setData(await this.loadData(payload));
+            setData(await this.#loadData(payload));
         }, [pageIndex, pageSize]);
         useEffect(() => {
             let taskId = 0;
@@ -72,7 +68,7 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
                 if (channel === 'sync-data') {
                     const curId = ++taskId;
                     setLoading(true);
-                    const data = await this.loadData(payload);
+                    const data = await this.#loadData(payload);
                     if (curId === taskId) {
                         setData(data);
                         setLoading(false);
@@ -87,10 +83,38 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
         return [data, loading];
     }
 
-    stat: GWStatFunction = async () => {
+    async #stat() {
         return {
             count: this.data.length,
         };
+    }
+
+    useStat: GWUseStatFunction = () => {
+        const [stat, setStat] = useState<IGWDatasetStat>({ count: 0 });
+        const [loading, setLoading] = useState(false);
+        useEffect(() => {
+            let taskId = 0;
+            const updateStat = async () => {
+                const curId = ++taskId;
+                setLoading(true);
+                const stat = await this.#stat();
+                if (curId === taskId) {
+                    setStat(stat);
+                    setLoading(false);
+                }
+            };
+            const subscription = this.signal.subscribe(async channel => {
+                if (channel === 'sync-data') {
+                    await updateStat();
+                }
+            });
+            updateStat();
+            return () => {
+                subscription.unsubscribe();
+                taskId = -1;
+            };
+        }, []);
+        return [stat, loading];
     }
 
     query: GWTransformFunction = async payload => {

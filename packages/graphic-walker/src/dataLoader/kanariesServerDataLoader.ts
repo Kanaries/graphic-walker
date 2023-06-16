@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Subject } from 'rxjs';
-import type { IDataQueryPayload, IResponse, IRow } from '../interfaces';
+import type { IDataQueryPayload, IGWDatasetStat, IResponse, IRow } from '../interfaces';
 import type { IVisDataset, IVisField } from '../vis/protocol/interface';
-import type { GWLoadDataFunction, GWLoadMetaFunction, GWSyncDataFunction, GWSyncMetaFunction, GWStatFieldFunction, GWStatFunction, GWTransformFunction, IGWDataLoader, GWUseDataFunction, GWUseMetaFunction } from ".";
+import type { GWSyncDataFunction, GWSyncMetaFunction, GWStatFieldFunction, GWTransformFunction, IGWDataLoader, GWUseDataFunction, GWUseMetaFunction, GWUseStatFunction } from ".";
 
 
 type BroadcastChannel = (
@@ -132,7 +132,7 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return;
     }
 
-    #getMeta(): Awaited<ReturnType<GWLoadMetaFunction>> {
+    #getMeta(): Awaited<ReturnType<GWUseMetaFunction>[0]> {
         return {
             datasetId: this.dataset.meta.id,
             dimensions: this.dataset.dimensions.map(key => this.dataset.meta.fieldsMeta.find(f => f.key === key)!).filter(Boolean).map(f => ({
@@ -146,10 +146,6 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         };
     }
 
-    loadMeta: GWLoadMetaFunction = async () => {
-        return this.#getMeta();
-    }
-
     useMeta: GWUseMetaFunction = () => {
         const [meta, setMeta] = useState<IVisDataset>(this.#getMeta());
         useEffect(() => {
@@ -161,7 +157,7 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return [meta, false];
     }
 
-    loadData: GWLoadDataFunction = async payload => {
+    async #loadData(payload: Parameters<GWUseDataFunction>[0]): Promise<IRow[]> {
         const { pageIndex, pageSize } = payload;
         return this.#fetchDataView({
             datasetId: this.dataset.meta.id,
@@ -184,14 +180,14 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         const [data, setData] = useState<IRow[]>([]);
         const [loading, setLoading] = useState(false);
         const load = useCallback(async () => {
-            setData(await this.loadData(payload));
+            setData(await this.#loadData(payload));
         }, [pageIndex, pageSize]);
         useEffect(() => {
             let taskId = 0;
             const subscription = this.signal.subscribe(async () => {
                 const curId = ++taskId;
                 setLoading(true);
-                const data = await this.loadData(payload);
+                const data = await this.#loadData(payload);
                 if (curId === taskId) {
                     setData(data);
                     setLoading(false);
@@ -205,7 +201,7 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
         return [data, loading];
     }
 
-    stat: GWStatFunction = async () => {
+    async #stat() {
         if (!this.dataset) {
             return {
                 count: 0,
@@ -230,6 +226,30 @@ export default class KanariesServerDataLoader implements IGWDataLoader {
                 },
             }))[0].count,
         };
+    }
+
+    useStat: GWUseStatFunction = () => {
+        const [stat, setStat] = useState<IGWDatasetStat>({ count: 0 });
+        const [loading, setLoading] = useState(false);
+        useEffect(() => {
+            let taskId = 0;
+            const updateStat = async () => {
+                const curId = ++taskId;
+                setLoading(true);
+                const stat = await this.#stat();
+                if (curId === taskId) {
+                    setStat(stat);
+                    setLoading(false);
+                }
+            };
+            const subscription = this.signal.subscribe(updateStat);
+            updateStat();
+            return () => {
+                subscription.unsubscribe();
+                taskId = -1;
+            };
+        }, []);
+        return [stat, loading];
     }
 
     query: GWTransformFunction = async payload => {

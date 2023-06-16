@@ -1,28 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import DatasetTable from "../../components/dataTable";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
 import type { IGWDataLoader } from "../../dataLoader";
 
 const DatasetConfig: React.FC<{ dataLoader: IGWDataLoader }> = ({ dataLoader }) => {
-    const { commonStore, vizStore } = useGlobalStore();
+    const { commonStore } = useGlobalStore();
     const { currentDataset } = commonStore;
-    const [count, setCount] = useState(0);
+    const { dataSource } = currentDataset;
+    const [{ count }] = dataLoader.useStat();
     useEffect(() => {
-        let isCurrent = true;
-        const task = dataLoader.stat();
-        task.then(d => {
-            if (isCurrent) {
-                setCount(d.count);
-            }
-        }).finally(() => {
-            isCurrent = false;
-        });
-        return () => {
-            setCount(0);
-            isCurrent = false;
-        };
-    }, [dataLoader]);
+        dataLoader.syncData(dataSource);
+    }, [dataLoader, dataSource]);
     return (
         <div className="relative">
             <DatasetTable size={100}

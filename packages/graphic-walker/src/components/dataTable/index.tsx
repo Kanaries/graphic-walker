@@ -1,13 +1,13 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import styled from "styled-components";
-import { DataSet, IMutField, IRow } from "../../interfaces";
 import { useTranslation } from "react-i18next";
+import type { DataSet, IMutField } from "../../interfaces";
 import LoadingLayer from "../loadingLayer";
 import Pagination from "./pagination";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
-import type { IGWDataLoader } from "../../dataLoader";
+import type { GWUseDataFunction, IGWDataLoader } from "../../dataLoader";
 
 type DataTableProps = {
     /** page limit */
@@ -22,18 +22,26 @@ type DataTableProps = {
          * @default false
          * Enable this option will extract data from `dataset.dataSource`.
          * This is useful when you want to preview a temporary table.
+         * For safety, this option is cached so any change to it will not be reflected.
          */
         inMemory: true;
-        dataLoader?: IGWDataLoader;
+        /**
+         * For safety, this option is cached so any change to it will not be reflected.
+         */
+        dataLoader?: IGWDataLoader | undefined;
     }
     | {
         /**
          * @default false
          * Enable this option will extract data from `dataset.dataSource`.
          * This is useful when you want to preview a temporary table.
+         * For safety, this option is cached so any change to it will not be reflected.
          */
         inMemory?: false;
-        dataLoader: IGWDataLoader;
+        /**
+         * For safety, this option is cached so any change to it will not be reflected.
+         */
+        dataLoader: IGWDataLoader | undefined;
     }
 )
 const Container = styled.div`
@@ -84,7 +92,18 @@ function getSemanticColors(field: IMutField): string {
     }
 }
 
-const DataTable: React.FC<DataTableProps> = (props) => {
+function useTableDataReader(props: Pick<DataTableProps, "inMemory" | "dataLoader">, dataset: DataSet): GWUseDataFunction {
+    // this is a conditional hook call, so we need to use a ref to store the initial props
+    const initialPropsRef = useRef(props);
+    if (initialPropsRef.current.inMemory) {
+        return useCallback<GWUseDataFunction>(({ pageIndex, pageSize }) => {
+            return [dataset.dataSource.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize), false];
+        }, [dataset]);
+    }
+    return initialPropsRef.current.dataLoader!.useData;
+}
+
+const DataTable: React.FC<DataTableProps> = ({ inMemory = false, dataLoader, ...props }) => {
     const { size = 10, onMetaChange, dataset, total } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
@@ -104,45 +123,17 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, []);
 
     const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size, total - 1);
-
-    const [rows, setRows] = useState<IRow[]>([]);
-    const [loading, setLoading] = useState(false);
+    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
 
     const columnsRef = useRef(dataset.rawFields);
     columnsRef.current = dataset.rawFields;
 
-    useEffect(() => {
-        if (props.inMemory) {
-            setRows(dataset.dataSource.slice(from, to));
-            return;
-        }
-        // switch all
-        let isCurrent = true;
-        const task = props.dataLoader.loadData({
-            pageSize: size,
-            pageIndex,
-        });
-        setLoading(true);
-        task.then(d => {
-            if (isCurrent) {
-                setRows(d);
-            }
-        }).catch(reason => {
-            console.error(reason);
-            if (isCurrent) {
-                setRows([]);
-            }
-        }).finally(() => {
-            if (isCurrent) {
-                setLoading(false);
-            }
-        });
-        return () => {
-            isCurrent = false;
-            setLoading(false);
-        };
-    }, [dataset, props.dataLoader, size, pageIndex, props.inMemory]);
+    const tableDataReader = useTableDataReader({ inMemory, dataLoader }, dataset);
+    
+    const [rows, loading] = tableDataReader({
+        pageSize: size,
+        pageIndex,
+    });
 
     return (
         <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
