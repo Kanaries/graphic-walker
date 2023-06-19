@@ -7,7 +7,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import type { IGWDataLoader } from '../dataLoader';
-import { IVegaConfigSchema, transformGWSpec2VisSpec } from '../vis/protocol/adapter';
+import { IVegaConfigSchema, transformGWSpec2VisSchema } from '../vis/protocol/adapter';
 import type { IVisSchema } from '../vis/protocol/interface';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -101,7 +101,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     const spec = useMemo(() => {
-        return transformGWSpec2VisSpec({
+        return transformGWSpec2VisSchema({
             datasetId,
             visualConfig,
             draggableFieldState,

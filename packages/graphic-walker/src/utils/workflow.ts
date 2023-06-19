@@ -32,7 +32,10 @@ export const toWorkflow = (spec: IVisSchema): IDataQueryWorkflowStep[] => {
     if (computedFields?.length) {
         transformStep = {
             type: 'transform',
-            transform: computedFields,
+            transform: computedFields.map(f => ({
+                key: f.field,
+                expression: f.expression,
+            })),
         };
         steps.push(transformStep);
     }

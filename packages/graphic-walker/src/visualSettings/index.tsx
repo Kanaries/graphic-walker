@@ -34,7 +34,7 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
-import { transformGWSpec2VisSpec } from '../vis/protocol/adapter';
+import { transformGWSpec2VisSchema } from '../vis/protocol/adapter';
 
 
 const Invisible = styled.div`
@@ -325,7 +325,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                         semanticType: f.semanticType,
                         analyticType: f.analyticType,
                     }));
-                    const dsl = transformGWSpec2VisSpec({
+                    const dsl = transformGWSpec2VisSchema({
                         datasetId: currentDataset.id,
                         draggableFieldState,
                         visualConfig,

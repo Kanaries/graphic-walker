@@ -237,7 +237,10 @@ export interface IFilterWorkflowStep {
 
 export interface ITransformWorkflowStep {
     type: 'transform';
-    transform: IVisFieldComputation[];
+    transform: {
+        key: IVisFieldComputation['field'];
+        expression: IVisFieldComputation['expression'];
+    }[];
 }
 
 export interface IViewWorkflowStep {

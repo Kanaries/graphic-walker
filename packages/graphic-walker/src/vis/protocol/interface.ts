@@ -78,7 +78,8 @@ export type IVisConfigSize = {
 }
 
 export type IVisFieldComputation = {
-    [key in keyof Pick<IVisField, 'key' | 'expression'>]-?: NonNullable<IVisField[key]>;
+    field: IVisField['key'];
+    expression: NonNullable<IVisField['expression']>;
 };
 
 export type IVisSchema<T = undefined> = {

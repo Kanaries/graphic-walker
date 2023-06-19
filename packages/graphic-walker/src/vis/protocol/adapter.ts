@@ -123,7 +123,7 @@ const transformGWPositionChannels = (
 
 const nonPositionChannels = ['color', 'opacity', 'size', 'shape', 'theta', 'radius', 'details', 'text'] as const;
 
-export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSchema<IVegaConfigSchema> => {
+export const transformGWSpec2VisSchema = (spec: IGWSpec): IVisSchema<IVegaConfigSchema> => {
     const { datasetId, draggableFieldState, visualConfig, vegaConfig } = spec;
     const { defaultAggregated, geoms, stack, size } = visualConfig;
     const [markType] = geoms;
@@ -200,7 +200,7 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSchema<IVegaConfigSc
     }
 
     const allComputedFields = draggableFieldState.dimensions.concat(draggableFieldState.measures).filter(f => f.computed && f.expression).map<IVisFieldComputation>(f => ({
-        key: f.fid,
+        field: f.fid,
         expression: f.expression!,
     }));
     const allFieldsInUse = Object.values(dsl.encodings).flat().filter(Boolean).reduce<string[]>((acc, channel) => {
@@ -210,10 +210,92 @@ export const transformGWSpec2VisSpec = (spec: IGWSpec): IVisSchema<IVegaConfigSc
         }
         return acc;
     }, []);
-    const computedFieldsInUse = allComputedFields.filter(f => allFieldsInUse.includes(f.key));
+    const computedFieldsInUse = allComputedFields.filter(f => allFieldsInUse.includes(f.field));
     if (computedFieldsInUse.length) {
         dsl.computations = computedFieldsInUse;
     }
     
     return dsl;
 };
+
+// export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>): IGWSpec => {
+//     const { datasetId, markType, encodings, configs, filters, computations } = dsl;
+//     const { size, vegaConfig, format, interactiveScale, showActions, zeroScale } = configs;
+
+//     const visualConfig: IVisualConfig = {
+//         geoms: [markType],
+//         defaultAggregated: false,
+//         stack: false,
+//         size,
+//         format,
+//         interactiveScale,
+//         showActions,
+//         zeroScale,
+//     };
+
+//     const draggableFieldState: IDraggableFieldState = {
+//         columns: [],
+//         rows: [],
+//         dimensions: [],
+//         measures: [],
+//         filters: [],
+//         color: [],
+//         opacity: [],
+//         size: [],
+//         shape: [],
+//         theta: [],
+//         radius: [],
+//         details: [],
+//         text: [],
+//     };
+
+//     for (const channel in encodings) {
+//         const field = encodings[channel as keyof IVisEncoding];
+//         if (!field) {
+//             continue;
+//         }
+//         if (Array.isArray(field)) {
+//             for (const f of field) {
+//                 draggableFieldState[channel as keyof IDraggableFieldState].push({
+//                     fid: f.field,
+//                     analyticType: f.aggregate ? 'measure' : 'dimension',
+//                     semanticType: f.type,
+//                 });
+//             }
+//         } else {
+//             draggableFieldState[channel as keyof IDraggableFieldState].push({
+//                 fid: field.field,
+//                 analyticType: field.aggregate ? 'measure' : 'dimension',
+//                 semanticType: field.type,
+//             });
+//         }
+//     }
+
+//     if (filters) {
+//         draggableFieldState.filters = filters.map(f => ({
+//             fid: f.field,
+//             rule: f.type === 'oneOf' ? {
+//                 type: 'one of',
+//                 value: new Set(f.value),
+//             } : {
+//                 type: 'range',
+//                 value: [f.min, f.max],
+//             },
+//         }));
+//     }
+
+//     if (computations) {
+//         draggableFieldState.dimensions = computations.map(f => ({
+//             fid: f.key,
+//             computed: true,
+//             expression: f.expression,
+//         }));
+//     }
+
+//     return {
+//         datasetId,
+//         draggableFieldState,
+//         visualConfig,
+//         vegaConfig,
+//     };
+// };
