@@ -34,7 +34,7 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
-import { transformGWSpec2VisSchema, transformVisSchema2GWSpec } from '../vis/protocol/adapter';
+import { transformGWSpec2VisSchema } from '../vis/protocol/adapter';
 
 
 const Invisible = styled.div`

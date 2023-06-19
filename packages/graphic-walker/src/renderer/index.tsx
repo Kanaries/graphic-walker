@@ -7,7 +7,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import type { IGWDataLoader } from '../dataLoader';
-import { IVegaConfigSchema, transformGWSpec2VisSchema } from '../vis/protocol/adapter';
+import { IVegaConfigSchema, transformGWSpec2VisSchema, transformVisSchema2GWSpec } from '../vis/protocol/adapter';
 import type { IVisSchema } from '../vis/protocol/interface';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -108,6 +108,28 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             vegaConfig: vegaConfig,
         });
     }, [datasetId, draggableFieldState, visualConfig, vegaConfig, viewFilters, viewDimensions, viewMeasures]);
+
+    // TODO: remove this
+    useEffect(() => {
+        const state = transformVisSchema2GWSpec(spec, allFields);
+        const enc_1 = spec.encodings;
+        const enc_2 = transformGWSpec2VisSchema(state).encodings;
+        // deep compare
+        if (JSON.stringify(enc_1) !== JSON.stringify(enc_2)) {
+            const win = window.open();
+            if (win) {
+                win.document.write(`
+                    <h1>encodings not equal after transform, contact author</h1>
+                    <p>before</p>
+                    <pre>${JSON.stringify(enc_1, null, 2)}</pre>
+                    <p>after</p>
+                    <pre>${JSON.stringify(enc_2, null, 2)}</pre>
+                `);
+            } else {
+                console.warn('spec not equal after transform', {enc_1, enc_2});
+            }
+        }
+    }, [spec, allFields]);
 
     const { viewData: data, parsed, loading: waiting } = useRenderer({
         spec,
