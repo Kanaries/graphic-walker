@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import type { DeepReadonly, DraggableFieldState, IVisualConfig, IViewField, IStackMode, ISemanticType, VegaGlobalConfig, IMutField, IFilterField } from "../../interfaces";
 import type { IAggregator } from "../../interfaces";
 import { autoMark } from "../spec/mark";
-import type { IVisEncodingChannel, IVisEncodings, IVisFieldComputation, IVisFilter, IVisSchema } from "./interface";
+import type { IVisEncodingChannel, IVisEncodingChannelRef, IVisEncodings, IVisFieldComputation, IVisFilter, IVisSchema } from "./interface";
 
 
 interface IGWSpec {
@@ -231,6 +231,7 @@ const extractDraggableField = (
     defaultAggregate: boolean,
     computations: IVisFieldComputation[] | undefined,
     fields: IMutField[],
+    allowSort: boolean,
 ): IViewField | null => {
     const fieldKey = typeof field === 'string' ? field : field.field;
     const _f = fields.find(f => f.fid === fieldKey);
@@ -240,6 +241,8 @@ const extractDraggableField = (
         return null;
     }
     const aggregation = typeof field === 'string' ? undefined : field.aggregate;
+    const sortConfig = typeof field === 'string' ? undefined : field.sort;
+    const order = typeof sortConfig === 'string' ? sortConfig : sortConfig?.order;
     const inferredAnalyticType = aggregation ? 'measure' : 'dimension';
     const semanticType = 'type' in f ? f.type : f.semanticType;
     const analyticType = 'type' in f ? inferredAnalyticType : f.analyticType;
@@ -252,6 +255,9 @@ const extractDraggableField = (
         computed: Boolean(computation),
         expression: computation?.expression,
         aggName: aggregation,
+        sort: allowSort && order ? (
+            order === 'asc' ? 'ascending' : 'descending'
+        ) : undefined,
     };
 };
 
@@ -260,11 +266,12 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
     const { size, vegaConfig, format, interactiveScale, showActions, zeroScale } = configs;
 
     const hasAggregated = Object.values(encodings).flat().some(f => typeof f !== 'string' && f.aggregate);
+    const stackMode = (Object.values(encodings).flat() as IVisEncodingChannelRef[]).find(f => typeof f !== 'string' && f.stack)?.stack ?? 'none';
 
     const visualConfig: IVisualConfig = {
         geoms: [markType],
         defaultAggregated: hasAggregated,
-        stack: 'none',
+        stack: stackMode === 'normalize' ? 'normalize' : stackMode === 'zero' ? 'stack' : 'none',
         size,
         format,
         interactiveScale,
@@ -305,7 +312,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
         if (!field) {
             continue;
         }
-        const res = extractDraggableField(field, hasAggregated, computations, fields);
+        const res = extractDraggableField(field, hasAggregated, computations, fields, false);
         if (res) {
             draggableFieldState[key] = [res];
             addField(res);
@@ -317,7 +324,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
         if (fieldArr.length === 0) {
             continue;
         }
-        draggableFieldState[key] = fieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields)!).filter(Boolean);
+        draggableFieldState[key] = fieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields, false)!).filter(Boolean);
         draggableFieldState[key].forEach(addField);
     }
 
@@ -327,7 +334,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
     const hasRepetition = hasMltXEnc || hasMltYEnc;
     if (hasRepetition) {
         const xFieldArr = Array.isArray(encodings.x) ? encodings.x : [encodings.x!].filter(Boolean);
-        const xFields = xFieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields)!).filter(Boolean);
+        const xFields = xFieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields, true)!).filter(Boolean);
         if (xFieldArr.length > 1) {
             draggableFieldState.columns = xFields.map(f => ({ ...f, analyticType: 'measure' }));
         } else {
@@ -335,7 +342,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
         }
         draggableFieldState.columns.forEach(addField);
         const yFieldArr = Array.isArray(encodings.y) ? encodings.y : [encodings.y!].filter(Boolean);
-        const yFields = yFieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields)!).filter(Boolean);
+        const yFields = yFieldArr.map(f => extractDraggableField(f, hasAggregated, computations, fields, true)!).filter(Boolean);
         if (yFieldArr.length > 1) {
             draggableFieldState.rows = yFields.map(f => ({ ...f, analyticType: 'measure' }));
         } else {
@@ -343,29 +350,29 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
         }
         draggableFieldState.rows.forEach(addField);
     } else {
-        const xField = encodings.x ? extractDraggableField(encodings.x as IVisEncodingChannel, hasAggregated, computations, fields) : null;
+        const xField = encodings.x ? extractDraggableField(encodings.x as IVisEncodingChannel, hasAggregated, computations, fields, true) : null;
         if (xField) {
             draggableFieldState.columns = [xField];
             draggableFieldState.columns.forEach(addField);
         }
-        const yField = encodings.y ? extractDraggableField(encodings.y as IVisEncodingChannel, hasAggregated, computations, fields) : null;
+        const yField = encodings.y ? extractDraggableField(encodings.y as IVisEncodingChannel, hasAggregated, computations, fields, true) : null;
         if (yField) {
             draggableFieldState.rows = [yField];
             draggableFieldState.rows.forEach(addField);
         }
     }
     if (encodings.column) {
-        const field = extractDraggableField(encodings.column, hasAggregated, computations, fields);
+        const field = extractDraggableField(encodings.column, hasAggregated, computations, fields, false);
         if (field) {
-            draggableFieldState.columns = [{ ...field, analyticType: 'dimension' }];
-            draggableFieldState.columns.forEach(addField);
+            draggableFieldState.columns.unshift({ ...field, analyticType: 'dimension' });
+            draggableFieldState.columns.slice(0, 1).forEach(addField);
         }
     }
     if (encodings.row) {
-        const field = extractDraggableField(encodings.row, hasAggregated, computations, fields);
+        const field = extractDraggableField(encodings.row, hasAggregated, computations, fields, false);
         if (field) {
-            draggableFieldState.rows = [{ ...field, analyticType: 'dimension' }];
-            draggableFieldState.rows.forEach(addField);
+            draggableFieldState.rows.unshift({ ...field, analyticType: 'dimension' });
+            draggableFieldState.rows.slice(0, 1).forEach(addField);
         }
     }
 
