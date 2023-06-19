@@ -7,6 +7,8 @@ import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGW
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import type { IVisSchema } from "../vis/protocol/interface";
+import { transformVisSchema2GWSpec } from "../vis/protocol/adapter";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -723,5 +725,14 @@ export class VizSpecStore {
     }
     public setWorkflow(workflow: IDataQueryWorkflowStep[]) {
         this.workflow = workflow;
+    }
+    public hydrate(schema: IVisSchema) {
+        const state = transformVisSchema2GWSpec(schema, this.commonStore.currentDataset.rawFields);
+        this.visList = parseGWPureSpec(forwardVisualConfigs([{
+            visId: uniqueId(),
+            name: 'vis',
+            encodings: state.draggableFieldState,
+            config: state.visualConfig,
+        }]));
     }
 }

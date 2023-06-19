@@ -261,8 +261,30 @@ const extractDraggableField = (
     };
 };
 
-export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fields: IMutField[]): IGWSpec => {
-    const { datasetId, markType, encodings, configs, filters, computations } = dsl;
+export const forwardVegaVisSchema = (baseSchema: IVisSchema): IVisSchema<IVegaConfigSchema> => {
+    const isVegaVisSchema = baseSchema.configs && 'vegaConfig' in (baseSchema.configs as any);
+    if (isVegaVisSchema) {
+        return baseSchema as IVisSchema<IVegaConfigSchema>;
+    }
+    return {
+        ...baseSchema,
+        configs: {
+            vegaConfig: {},
+            size: {
+                mode: baseSchema.size?.width === 320 && baseSchema.size.height === 200 ? 'auto' : 'fixed',
+                width: baseSchema.size?.width ?? 320,
+                height: baseSchema.size?.height ?? 200,
+            },
+            format: {},
+            interactiveScale: false,
+            showActions: false,
+            zeroScale: false,
+        },
+    };
+};
+
+export const transformVisSchema2GWSpec = (dsl: IVisSchema, fields: IMutField[]): IGWSpec => {
+    const { datasetId, markType, encodings, configs, filters, computations } = forwardVegaVisSchema(dsl);
     const { size, vegaConfig, format, interactiveScale, showActions, zeroScale } = configs;
 
     const hasAggregated = Object.values(encodings).flat().some(f => typeof f !== 'string' && f.aggregate);

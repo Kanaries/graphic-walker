@@ -1,18 +1,18 @@
 import { runInAction } from 'mobx';
 import { Resizable } from 're-resizable';
-import React, { useCallback, forwardRef } from 'react';
+import React, { useCallback, forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { IDarkMode, IRow, IThemeKey } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
-import { IVegaConfigSchema } from '../vis/protocol/adapter';
+import { forwardVegaVisSchema } from '../vis/protocol/adapter';
 import VegaRenderer from '../vis/vega-renderer';
 import type { IVisField, IVisSchema } from '../vis/protocol/interface';
 import PivotTable from '../components/pivotTable';
 
 interface SpecRendererProps {
-    spec: IVisSchema<IVegaConfigSchema>;
+    spec: IVisSchema;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
@@ -24,7 +24,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
-    const { size } = spec.configs;
+    const vegaSpec = useMemo(() => forwardVegaVisSchema(spec), [spec]);
+    const { size } = vegaSpec.configs;
 
     const { i18n } = useTranslation();
 
@@ -89,7 +90,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         >
             {loading && <LoadingLayer />}
             <VegaRenderer
-                spec={spec}
+                spec={vegaSpec}
                 data={data}
                 fields={fields}
                 ref={ref}

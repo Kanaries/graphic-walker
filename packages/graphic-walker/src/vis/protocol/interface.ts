@@ -84,7 +84,7 @@ export type IVisFieldComputation = {
     type: IVisField['type'];
 };
 
-export type IVisSchema<T = undefined> = {
+export type IVisSchema<T extends Record<keyof any, any> | undefined = undefined> = {
     schema?: string;
     datasetId: string;
     computations?: IVisFieldComputation[];
@@ -94,7 +94,7 @@ export type IVisSchema<T = undefined> = {
     size?: IVisConfigSize;
 } & (
     T extends undefined ? {
-        config?: unknown;
+        configs?: unknown;
     } : {
         configs: T;
     }
