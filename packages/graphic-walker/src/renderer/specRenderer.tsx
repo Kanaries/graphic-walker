@@ -24,7 +24,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     const { vizStore, commonStore } = useGlobalStore();
-    const { interactiveScale, showActions, size } = spec.configs;
+    const { size } = spec.configs;
 
     const { i18n } = useTranslation();
 

@@ -334,12 +334,6 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     if (text === null) {
                         return;
                     }
-                    const res = {
-                        first: dsl,
-                        second: transformGWSpec2VisSchema(
-                            transformVisSchema2GWSpec(dsl, currentDataset.rawFields),
-                        ),
-                    };
                     const json = {
                         encoding: dsl,
                         allFields,
@@ -358,7 +352,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     } else {
                         // output to a new tab
                         const win = window.open();
-                        win?.document.write(`<pre>${JSON.stringify(res, null, 2)}</pre>`);
+                        win?.document.write(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
                     }
                 },
             },

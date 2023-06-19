@@ -41,6 +41,9 @@ export default class WebWorkerDataLoader implements IGWDataLoader {
             });
             return () => subscription.unsubscribe();
         }, []);
+        useEffect(() => {
+            setMeta(this.dataset);
+        }, [this.dataset]);
         return [meta, false];
     }
 
