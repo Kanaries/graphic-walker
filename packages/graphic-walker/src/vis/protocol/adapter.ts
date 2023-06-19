@@ -233,21 +233,25 @@ const extractDraggableField = (
     fields: IMutField[],
 ): IViewField | null => {
     const fieldKey = typeof field === 'string' ? field : field.field;
-    const f = fields.find(f => f.fid === fieldKey);
+    const _f = fields.find(f => f.fid === fieldKey);
+    const computation = computations?.find(c => c.field === fieldKey);
+    const f = computation ?? _f;
     if (!f) {
         return null;
     }
     const aggregation = typeof field === 'string' ? undefined : field.aggregate;
     const inferredAnalyticType = aggregation ? 'measure' : 'dimension';
-    const computation = computations?.find(c => c.field === fieldKey);
+    const semanticType = 'type' in f ? f.type : f.semanticType;
+    const analyticType = 'type' in f ? inferredAnalyticType : f.analyticType;
     return {
         dragId: nanoid(),
         fid: fieldKey,
         name: f.name ?? fieldKey,
-        semanticType: f.semanticType,
-        analyticType: defaultAggregate ? inferredAnalyticType : f.analyticType,
+        semanticType: semanticType,
+        analyticType: defaultAggregate ? inferredAnalyticType : analyticType,
         computed: Boolean(computation),
         expression: computation?.expression,
+        aggName: aggregation,
     };
 };
 
@@ -292,7 +296,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
         }
         const f = { ...field, dragId: nanoid() };
         allFields.push(f);
-        draggableFieldState[field.analyticType].push(f);
+        draggableFieldState[`${field.analyticType}s`].push(f);
     };
 
     // extract non-positional channels
@@ -410,7 +414,7 @@ export const transformVisSchema2GWSpec = (dsl: IVisSchema<IVegaConfigSchema>, fi
             name: field.name ?? field.fid,
         });
     }
-
+    
     return {
         datasetId,
         draggableFieldState,

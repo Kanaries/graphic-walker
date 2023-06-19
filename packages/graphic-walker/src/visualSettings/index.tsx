@@ -34,7 +34,7 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
-import { transformGWSpec2VisSchema } from '../vis/protocol/adapter';
+import { transformGWSpec2VisSchema, transformVisSchema2GWSpec } from '../vis/protocol/adapter';
 
 
 const Invisible = styled.div`
@@ -334,6 +334,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     if (text === null) {
                         return;
                     }
+                    const res = {
+                        first: dsl,
+                        second: transformGWSpec2VisSchema(
+                            transformVisSchema2GWSpec(dsl, currentDataset.rawFields),
+                        ),
+                    };
                     const json = {
                         encoding: dsl,
                         allFields,
@@ -352,7 +358,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     } else {
                         // output to a new tab
                         const win = window.open();
-                        win?.document.write(`<pre>${JSON.stringify(json, null, 2)}</pre>`);
+                        win?.document.write(`<pre>${JSON.stringify(res, null, 2)}</pre>`);
                     }
                 },
             },
