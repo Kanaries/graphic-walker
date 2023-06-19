@@ -208,5 +208,7 @@ const App = observer<IGWProps>(function App(props) {
 
 export default App;
 export { default as PureRenderer } from './renderer/pureRenderer';
+export { WebWorkerDataLoader };
+export { default as KanariesServerDataLoader } from './dataLoader/kanariesServerDataLoader';
 
 export type { ToolbarItemProps };
