@@ -1,23 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StoreWrapper, useGlobalStore } from '../../store';
-import { PivotTableDataProps, PivotTableStoreWrapper, usePivotTableStore } from './store';
-import { observer } from 'mobx-react-lite';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
 import {
-    DeepReadonly,
-    DraggableFieldState,
+    IAggregator,
     IDarkMode,
+    IField,
     IRow,
     IThemeKey,
-    IViewField,
-    IVisualConfig,
 } from '../../interfaces';
+import { IVisEncodingChannel, IVisField, IVisSchema } from '../../vis/protocol/interface';
 import { INestNode } from './inteface';
 import { buildMetricTableFromNestTree, buildNestTree } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
-import { toJS } from 'mobx';
 
 // const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
 //     const store = usePivotTableStore();
@@ -37,16 +32,62 @@ interface PivotTableProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
+    spec: IVisSchema;
+    fields: readonly IVisField[];
     loading: boolean;
-    draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
 }
 const PivotTable: React.FC<PivotTableProps> = (props) => {
-    const { data, draggableFieldState } = props;
+    const { spec, data, fields } = props;
     // const store = usePivotTableStore();
     // const { vizStore } = useGlobalStore();
     // const { draggableFieldState } = vizStore;
-    const { rows, columns } = draggableFieldState;
+    const { x, y, column, row } = spec.encodings;
+    const rowRefs = useMemo(() => {
+        let res: IVisEncodingChannel[] = [];
+        if (y) {
+            res = res.concat(y);
+        }
+        if (row) {
+            res = res.concat(row);
+        }
+        return res;
+    }, [y, row]);
+    const colRefs = useMemo(() => {
+        let res: IVisEncodingChannel[] = [];
+        if (x) {
+            res = res.concat(x);
+        }
+        if (column) {
+            res = res.concat(column);
+        }
+        return res;
+    }, [x, column]);
+    const [rows, columns] = useMemo(() => {
+        return [rowRefs, colRefs].map((refs) => {
+            return refs.map<IField>(ref => {
+                let f: IVisField = null!;
+                let aggregate: IAggregator | null = null;
+                if (typeof ref === 'string') {
+                    f = fields.find(f => f.key === ref)!;
+                } else {
+                    f = fields.find(f => f.key === ref.field)!;
+                    aggregate = ref.aggregate || null;
+                }
+                if (!f) {
+                    return null!;
+                }
+                return {
+                    fid: f.key,
+                    name: f.name || f.key,
+                    analyticType: Boolean(aggregate) ? 'measure' : 'dimension',
+                    semanticType: f.type,
+                    aggName: aggregate ?? undefined,
+                    computed: Boolean(f.expression),
+                    expression: f.expression,
+                };
+            }).filter(Boolean);
+        });
+    }, [rowRefs, colRefs, fields]);
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);

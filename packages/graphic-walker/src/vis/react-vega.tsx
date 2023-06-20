@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef } from 'react';
 import embed from 'vega-embed';
-import { Subject, Subscription } from 'rxjs'
+import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
-import { useTranslation } from 'react-i18next';
+import type { IViewField, IRow, IStackMode } from '../interfaces';
+import type { IVisEncodingChannel, IVisField, IVisSchema } from './protocol/interface';
+import type { IVegaConfigSchema } from './protocol/adapter';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
@@ -25,27 +26,12 @@ export interface IReactVegaHandler {
   downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface ReactVegaProps {
-  rows: Readonly<IViewField[]>;
-  columns: Readonly<IViewField[]>;
-  dataSource: IRow[];
-  defaultAggregate?: boolean;
-  stack: IStackMode;
-  interactiveScale: boolean;
-  geomType: string;
-  color?: IViewField;
-  opacity?: IViewField;
-  size?: IViewField;
-  shape?: IViewField;
-  theta?: IViewField;
-  radius?: IViewField;
-  text?: IViewField;
-  details?: Readonly<IViewField[]>;
-  showActions: boolean;
-  layoutMode: string;
-  width: number;
-  height: number;
+  spec: IVisSchema<IVegaConfigSchema>;
+  data: readonly IRow[];
+  fields: readonly IVisField[];
   onGeomClick?: (values: any, e: any) => void
-  vegaConfig: VegaGlobalConfig;
+  /** @default "en-US" */
+  locale?: string;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -60,64 +46,51 @@ const geomClick$ = selection$.pipe(
   })
 );
 
-const BRUSH_SIGNAL_NAME = "__gw_brush__";
-const POINT_SIGNAL_NAME = "__gw_point__";
-
-interface ParamStoreEntry {
-  signal: typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME;
-  /** 这个标记用于防止循环 */
-  source: number;
-  data: any;
-}
+const resolveViewField = (
+  fields: readonly IVisField[],
+  ref: IVisEncodingChannel | undefined,
+): IViewField => {
+  if (!ref) {
+    return NULL_FIELD;
+  }
+  const fieldKey = typeof ref === 'string' ? ref : ref.field;
+  const field = fields.find(m => m.key === fieldKey);
+  if (!field) {
+    return NULL_FIELD;
+  }
+  const isMeasure = typeof ref !== 'string' && Boolean(ref.aggregate);
+  const f: IViewField = {
+    dragId: '',
+    fid: field.key,
+    name: field.name || fieldKey,
+    semanticType: field.type,
+    analyticType: isMeasure ? 'measure' : 'dimension',
+  };
+  if (isMeasure) {
+    f.aggName = ref.aggregate;
+  } else {
+    if (typeof ref !== 'string' && ref.sort) {
+      const order = typeof ref.sort === 'string' ? ref.sort : ref.sort.order ?? 'asc';
+      f.sort = order === 'desc' ? 'descending' : 'ascending';
+    }
+  }
+  return f;
+};
 
 
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
-    dataSource = [],
-    rows = [],
-    columns = [],
-    defaultAggregate = true,
-    stack = 'stack',
-    geomType,
-    color,
-    opacity,
-    size,
-    theta,
-    radius,
-    shape,
-    text,
+    spec,
+    data: dataSource,
     onGeomClick,
-    showActions,
-    interactiveScale,
-    layoutMode,
-    width,
-    height,
-    details = [],
-    // themeKey = 'vega',
-    // dark = 'media',
-    vegaConfig,
-    // format
+    locale = 'en-US',
+    fields,
   } = props;
+  const { encodings, size: sizeConfig, markType } = spec;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  const { i18n } = useTranslation();
-  // const mediaTheme = useCurrentMediaTheme(dark);
-  // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
-  // const vegaConfig = useMemo(() => {
-  //   const config: any = {
-  //     ...themeConfig,
-  //   }
-  //   if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
-  //     config.normalizedNumberFormat = format.normalizedNumberFormat;
-  //   }
-  //   if (format.numberFormat && format.numberFormat.length > 0) {
-  //     config.numberFormat = format.numberFormat;
-  //   }
-  //   if (format.timeFormat && format.timeFormat.length > 0) {
-  //     config.timeFormat = format.timeFormat;
-  //   }
-  //   return config;
-  // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+  const vegaConfig = spec.configs.vegaConfig;
+  const { interactiveScale, showActions } = spec.configs;
 
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
@@ -129,42 +102,41 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       clickSub.unsubscribe();
     }
   }, [onGeomClick]);
-  const rowDims = useMemo(() => rows.filter(f => f.analyticType === 'dimension'), [rows]);
-  const colDims = useMemo(() => columns.filter(f => f.analyticType === 'dimension'), [columns]);
-  const rowMeas = useMemo(() => rows.filter(f => f.analyticType === 'measure'), [rows]);
-  const colMeas = useMemo(() => columns.filter(f => f.analyticType === 'measure'), [columns]);
-  const rowFacetFields = useMemo(() => rowDims.slice(0, -1), [rowDims]);
-  const colFacetFields = useMemo(() => colDims.slice(0, -1), [colDims]);
-  const rowRepeatFields = useMemo(() => rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas, [rowDims, rowMeas]);//rowMeas.slice(0, -1);
-  const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
-  const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
 
-  const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
+  const nRows = useMemo(() => {
+    const fields = Array.isArray(encodings.y) ? encodings.y : [encodings.y];
+    return fields.length;
+  }, [encodings.y]);
+  const nCols = useMemo(() => {
+    const fields = Array.isArray(encodings.x) ? encodings.x : [encodings.x];
+    return fields.length;
+  }, [encodings.x]);
 
   useEffect(() => {
-    setCrossFilterTriggerIdx(-1);
     setViewPlaceholders(views => {
-      const viewNum = Math.max(1, rowRepeatFields.length * colRepeatFields.length)
+      const viewNum = Math.max(1, nRows * nCols)
       const nextViews = new Array(viewNum).fill(null).map((v, i) => views[i] || React.createRef())
       return nextViews;
     })
-  }, [rowRepeatFields, colRepeatFields])
+  }, [nRows, nCols])
 
   const vegaRefs = useRef<View[]>([]);
+
+  const allFieldIds = useMemo(() => {
+    const { x, y, column, row, color, opacity, size } = encodings;
+    return [x, y, column, row, color, opacity, size].filter(Boolean).flat().reduce<string[]>((acc, field) => {
+      const key = typeof field === 'string' ? field : field?.field;
+      if (key && !acc.includes(key)) {
+        acc.push(key);
+      }
+      return acc;
+    }, []);
+  }, [encodings]);
 
   useEffect(() => {
     vegaRefs.current = [];
 
-    const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
-    const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
-
-    const rowLeftFacetFields = rows.slice(0, -1).filter(f => f.analyticType === 'dimension');
-    const colLeftFacetFields = columns.slice(0, -1).filter(f => f.analyticType === 'dimension');
-
-    const rowFacetField = rowLeftFacetFields.length > 0 ? rowLeftFacetFields[rowLeftFacetFields.length - 1] : NULL_FIELD;
-    const colFacetField = colLeftFacetFields.length > 0 ? colLeftFacetFields[colLeftFacetFields.length - 1] : NULL_FIELD;
-
-    const spec: any = {
+    const vegaLiteSpec: any = {
       data: {
         values: dataSource,
       },
@@ -177,47 +149,67 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }]
     };
     if (interactiveScale) {
-      spec.params.push({
+      vegaLiteSpec.params.push({
         name: "grid",
         select: "interval",
         bind: "scales"
       })
     }
-    if (rowRepeatFields.length <= 1 && colRepeatFields.length <= 1) {
-      if (layoutMode === 'fixed') {
-        if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
-          spec.autosize = 'fit'
+    const { x, y, color, opacity, shape, size, theta, radius, text, row, column, details } = encodings;
+    const stack = [x, y, row, column, theta, radius].filter(Boolean).flat().map<IStackMode>(f => {
+      if (typeof f === 'string') {
+        return 'none';
+      }
+      if (f?.stack === 'normalize') {
+        return 'normalize';
+      } else if (f?.stack && f.stack !== 'none') {
+        return 'stack';
+      }
+      return 'none';
+    }).find(m => m !== 'none') || 'none';
+    const aggregated = Object.values(encodings).flat().some(f => {
+      if (typeof f === 'string') {
+        return false;
+      }
+      return Boolean(f?.aggregate);
+    });
+    if (nRows <= 1 && nCols <= 1) {
+      if (sizeConfig) {
+        if (!row && !column) {
+          vegaLiteSpec.autosize = 'fit';
         }
-        spec.width = width;
-        spec.height = height;
+        vegaLiteSpec.width = sizeConfig.width;
+        vegaLiteSpec.height = sizeConfig.height;
       }
       const singleView = getSingleView({
-        x: xField,
-        y: yField,
-        color: color ? color : NULL_FIELD,
-        opacity: opacity ? opacity : NULL_FIELD,
-        size: size ? size : NULL_FIELD,
-        shape: shape ? shape : NULL_FIELD,
-        theta: theta ? theta : NULL_FIELD,
-        radius: radius ? radius : NULL_FIELD,
-        text: text ? text : NULL_FIELD,
-        row: rowFacetField,
-        column: colFacetField,
+        x: resolveViewField(fields, Array.isArray(x) ? x[0] : x),
+        y: resolveViewField(fields, Array.isArray(y) ? y[0] : y),
+        color: resolveViewField(fields, color),
+        opacity: resolveViewField(fields, opacity),
+        size: resolveViewField(fields, size),
+        shape: resolveViewField(fields, shape),
+        theta: resolveViewField(fields, theta),
+        radius: resolveViewField(fields, radius),
+        text: resolveViewField(fields, text),
+        row: resolveViewField(fields, row),
+        column: resolveViewField(fields, column),
         xOffset: NULL_FIELD,
         yOffset: NULL_FIELD,
-        details,
-        defaultAggregated: defaultAggregate,
+        details: details ? (
+          Array.isArray(details) ? details : [details]
+        ).map(f => resolveViewField(fields, f)) : [],
+        defaultAggregated: aggregated,
         stack,
-        geomType,
+        geomType: markType,
       });
 
-      spec.mark = singleView.mark;
+      vegaLiteSpec.mark = singleView.mark;
       if ('encoding' in singleView) {
-        spec.encoding = singleView.encoding;
+        vegaLiteSpec.encoding = singleView.encoding;
       }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+        embed(viewPlaceholders[0].current, vegaLiteSpec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
@@ -232,103 +224,50 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         });
       }
     } else {
-      if (layoutMode === 'fixed') {
-        spec.width = Math.floor(width / colRepeatFields.length) - 5;
-        spec.height = Math.floor(height / rowRepeatFields.length) - 5;
-        spec.autosize = 'fit'
+      if (sizeConfig) {
+        vegaLiteSpec.width = Math.floor(Math.max(1, sizeConfig.width) / nCols) - 5;
+        vegaLiteSpec.height = Math.floor(Math.max(1, sizeConfig.height) / nRows) - 5;
+        vegaLiteSpec.autosize = 'fit';
       }
-      const combinedParamStore$ = new Subject<ParamStoreEntry>();
-      const throttledParamStore$ = combinedParamStore$.pipe(
-        op.throttleTime(
-          dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length,
-          undefined,
-          { leading: false, trailing: true }
-        )
-      );
-      const subscriptions: Subscription[] = [];
-      const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
-        subscriptions.push(throttledParamStore$.subscribe(cb));
-      };
       let index = 0;
-      for (let i = 0; i < rowRepeatFields.length; i++) {
-        for (let j = 0; j < colRepeatFields.length; j++, index++) {
-          const sourceId = index;
-          const hasLegend = i === 0 && j === colRepeatFields.length - 1;
+      const rowCount = Math.max(nRows, 1);
+      const colCount = Math.max(nCols, 1);
+      for (let i = 0; i < rowCount; i++) {
+        for (let j = 0; j < colCount; j++, index++) {
+          const hasLegend = i === 0 && j === colCount - 1;
           const singleView = getSingleView({
-            x: colRepeatFields[j] || NULL_FIELD,
-            y: rowRepeatFields[i] || NULL_FIELD,
-            color: color ? color : NULL_FIELD,
-            opacity: opacity ? opacity : NULL_FIELD,
-            size: size ? size : NULL_FIELD,
-            shape: shape ? shape : NULL_FIELD,
-            theta: theta ? theta : NULL_FIELD,
-            radius: radius ? radius : NULL_FIELD,
-            row: rowFacetField,
-            column: colFacetField,
-            text: text ? text : NULL_FIELD,
+            x: resolveViewField(fields, Array.isArray(x) ? x[j] : x),
+            y: resolveViewField(fields, Array.isArray(y) ? y[i] : y),
+            color: resolveViewField(fields, color),
+            opacity: resolveViewField(fields, opacity),
+            size: resolveViewField(fields, size),
+            shape: resolveViewField(fields, shape),
+            theta: resolveViewField(fields, theta),
+            radius: resolveViewField(fields, radius),
+            row: resolveViewField(fields, row),
+            column: resolveViewField(fields, column),
+            text: resolveViewField(fields, text),
             xOffset: NULL_FIELD,
             yOffset: NULL_FIELD,
-            details,
-            defaultAggregated: defaultAggregate,
+            details: details ? (
+              Array.isArray(details) ? details : [details]
+            ).map(f => resolveViewField(fields, f)) : [],
+            defaultAggregated: aggregated,
             stack,
-            geomType,
+            geomType: markType,
             hideLegend: !hasLegend,
           });
-          const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
-          let commonSpec = { ...spec };
+          const node = i * colCount + j < viewPlaceholders.length ? viewPlaceholders[i * colCount + j].current : null
+          let commonSpec = { ...vegaLiteSpec };
 
           const ans = { ...commonSpec, ...singleView }
           if ('params' in commonSpec) {
             ans.params = commonSpec.params;
           }
           if (node) {
-            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               vegaRefs.current.push(res.view);
-              const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
-                name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
-              ).map(name => name.replace(/_store$/, ''));
               try {
-                for (const param of paramStores) {
-                  let noBroadcasting = false;
-                  // 发出
-                  res.view.addSignalListener(param, name => {
-                    if (noBroadcasting) {
-                      noBroadcasting = false;
-                      return;
-                    }
-                    if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
-                      const data = res.view.getState().data?.[`${name}_store`];
-                      if (!data || (Array.isArray(data) && data.length === 0)) {
-                        setCrossFilterTriggerIdx(-1);
-                      }
-                      combinedParamStore$.next({
-                        signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
-                        source: sourceId,
-                        data: data ?? null,
-                      });
-                    }
-                  });
-                  subscribe(entry => {
-                    if (entry.source === sourceId || !entry.data) {
-                      return;
-                    }
-                    noBroadcasting = true;
-                    res.view.setState({
-                      data: {
-                        [`${entry.signal}_store`]: entry.data,
-                      },
-                    });
-                  });
-                }
-              } catch (error) {
-                console.warn('Crossing filter failed', error);
-              }
-              try {
-                res.view.addEventListener('mouseover', () => {
-                  if (sourceId !== crossFilterTriggerIdx) {
-                    setCrossFilterTriggerIdx(sourceId);
-                  }
-                });
                 res.view.addEventListener('click', (e) => {
                   click$.next(e);
                 })
@@ -342,36 +281,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
         }
       }
-      return () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      };
     }
   }, [
     dataSource,
     allFieldIds,
-    rows,
-    columns,
-    defaultAggregate,
-    geomType,
-    color,
-    opacity,
-    size,
-    shape,
-    theta, radius,
-    viewPlaceholders,
-    rowFacetFields,
-    colFacetFields,
-    rowRepeatFields,
-    colRepeatFields,
-    stack,
-    showActions,
-    interactiveScale,
-    layoutMode,
-    width,
-    height,
+    fields,
+    encodings,
+    markType,
     vegaConfig,
-    details,
-    text
+    showActions,
+    sizeConfig,
+    viewPlaceholders,
+    nRows,
+    nCols,
+    locale,
   ]);
 
   useImperativeHandle(ref, () => ({
@@ -414,7 +337,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     },
   }));
 
-  return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
+  return <CanvaContainer rowSize={Math.max(nRows, 1)} colSize={Math.max(nCols, 1)}>
     {/* <div ref={container}></div> */}
     {
       viewPlaceholders.map((view, i) => <div key={i} ref={view}></div>)

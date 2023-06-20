@@ -1,16 +1,21 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { IMutField, IRow } from "../../interfaces";
+import type { IMutField, IRow, DataSet } from "../../interfaces";
 import { useTranslation } from "react-i18next";
+import LoadingLayer from "../loadingLayer";
+import { dataReadRawClient } from "../../renderer/webWorkerComputation";
 import Pagination from "./pagination";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import DropdownContext from "../dropdownContext";
 
 interface DataTableProps {
+    /** page limit */
     size?: number;
-    metas: IMutField[];
-    data: IRow[];
+    /** total count of rows */
+    total: number;
+    dataset: DataSet;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
+    loading?: boolean;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -61,7 +66,8 @@ function getSemanticColors(field: IMutField): string {
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, data, metas, onMetaChange } = props;
+    const { size = 10, onMetaChange, dataset, total, loading: statLoading } = props;
+    const { dataSource } = dataset;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
 
@@ -80,16 +86,45 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, []);
 
     const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size, data.length - 1);
+    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
+
+    const [rows, setRows] = useState<IRow[]>([]);
+    const [dataLoading, setDataLoading] = useState(false);
+    const taskIdRef = useRef(0);
+
+    useEffect(() => {
+        if (statLoading) {
+            return;
+        }
+        setDataLoading(true);
+        const taskId = ++taskIdRef.current;
+        dataReadRawClient(dataSource, size, pageIndex).then(data => {
+            if (taskId === taskIdRef.current) {
+                setDataLoading(false);
+                setRows(data);
+            }
+        }).catch(err => {
+            if (taskId === taskIdRef.current) {
+                console.error(err);
+                setDataLoading(false);
+                setRows([]);
+            }
+        });
+        return () => {
+            taskIdRef.current++;
+        };
+    }, [statLoading, dataSource, pageIndex, size]);
+
+    const loading = statLoading || dataLoading;
 
     return (
-        <Container className="rounded border-gray-200 dark:border-gray-700 border">
+        <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
             <Pagination
-                total={data.length}
+                total={total}
                 from={from + 1}
                 to={to + 1}
                 onNext={() => {
-                    setPageIndex(Math.min(Math.ceil(data.length / size) - 1, pageIndex + 1));
+                    setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
                 }}
                 onPrev={() => {
                     setPageIndex(Math.max(0, pageIndex - 1));
@@ -98,7 +133,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                     <tr className="divide-x divide-gray-200 dark:divide-gray-700">
-                        {metas.map((field, fIndex) => (
+                        {dataset.rawFields.map((field, fIndex) => (
                             <th key={field.fid} className={""}>
                                 <div
                                     className={
@@ -153,9 +188,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
-                    {data.slice(from, to + 1).map((row, index) => (
+                    {rows.map((row, index) => (
                         <tr className={"divide-x divide-gray-200 dark:divide-gray-700 " + (index % 2 ? "bg-gray-50 dark:bg-gray-900" : "")} key={index}>
-                            {metas.map((field) => (
+                            {dataset.rawFields.map((field) => (
                                 <td
                                     key={field.fid + index}
                                     className={
@@ -170,6 +205,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </tbody>
             </table>
+            {loading && <LoadingLayer />}
         </Container>
     );
 };

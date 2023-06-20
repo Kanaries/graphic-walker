@@ -1,15 +1,45 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DatasetTable from "../../components/dataTable";
 import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../../store";
+import { datasetStatsClient } from "../../renderer/webWorkerComputation";
 
-const DatasetConfig: React.FC = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
+const DatasetConfig: React.FC = () => {
+    const { commonStore } = useGlobalStore();
     const { currentDataset } = commonStore;
-    const { dataSource, rawFields } = currentDataset;
+    const { dataSource, id: datasetId } = currentDataset;
+
+    const [count, setCount] = useState(0);
+    const taskIdRef = useRef(0);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const taskId = ++taskIdRef.current;
+        setLoading(true);
+        datasetStatsClient(dataSource).then(res => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            setCount(res.rowCount);
+            setLoading(false);
+        }).catch(err => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            console.error(err);
+            setLoading(false);
+        });
+        return () => {
+            taskIdRef.current++;
+        };
+    }, [dataSource]);
+
     return (
-        <div>
-            <DatasetTable size={100} data={dataSource} metas={rawFields}
+        <div className="relative">
+            <DatasetTable size={100}
+                total={count}
+                dataset={currentDataset}
+                loading={loading}
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     commonStore.updateCurrentDatasetMetas(fid, diffMeta)
                 }}

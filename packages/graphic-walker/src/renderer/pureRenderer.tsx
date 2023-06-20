@@ -1,8 +1,9 @@
 import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
+import { nanoid } from 'nanoid';
+import type { IDarkMode, IMutField, IRow, IThemeKey, IViewField } from '../interfaces';
+import type { IVisField, IVisSchema } from '../vis/protocol/interface';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -12,8 +13,10 @@ interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
-    draggableState: DraggableFieldState;
-    visualConfig: IVisualConfig;
+    spec: IVisSchema;
+    datasetId?: string;
+    fields: IMutField[];
+    locale?: string;
 }
 
 /**
@@ -25,64 +28,62 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         themeKey,
         dark,
         rawData,
-        draggableState,
-        visualConfig,
+        fields,
+        spec,
+        datasetId,
+        locale,
     } = props;
-    const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
+    const [visSpec, setVisSpec] = useState<IVisSchema>({
+        datasetId: datasetId ?? nanoid(),
+        markType: 'bar',
+        encodings: {},
+    });
     const [viewData, setViewData] = useState<IRow[]>([]);
-    
-    const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
-        const viewDimensions: IViewField[] = [];
-        const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(draggableState);
-        const allFields = [...dimensions, ...measures];
+    const columns = useMemo(() => {
+        return fields.map<Omit<IViewField, 'dragId'>>(f => ({ ...f, name: f.name ?? f.fid }));
+    }, [fields]);
 
-        const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
-        for (const dKey of dKeys) {
-            for (const f of state[dKey]) {
-                if (f.analyticType === 'dimension') {
-                    viewDimensions.push(f);
-                } else if (f.analyticType === 'measure') {
-                    viewMeasures.push(f);
-                }
-            }
-        }
-
-        return { allFields, viewDimensions, viewMeasures, filters };
-    }, [draggableState]);
-
-    const { viewData: data, loading: waiting } = useRenderer({
-        data: rawData ?? [],
-        allFields,
-        viewDimensions,
-        viewMeasures,
-        filters,
-        defaultAggregated,
+    const { viewData: data, parsed, loading: waiting } = useRenderer({
+        spec,
+        data: rawData,
+        fields: columns,
+        datasetId,
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data });
-    latestFromRef.current = { data };
+    const latestFromRef = useRef({ spec, data, parsed });
+    latestFromRef.current = { spec, data, parsed };
 
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
+                setVisSpec(latestFromRef.current.spec);
                 setViewData(latestFromRef.current.data);
             });
         }
     }, [waiting]);
 
+    const visFields = useMemo(() => {
+        return columns.map<IVisField>(col => ({
+            key: col.fid,
+            type: col.semanticType,
+            name: col.name,
+            expression: col.expression,
+        }));
+    }, [columns]);
+
     return (
         <SpecRenderer
             loading={waiting}
-            data={viewData}
+            fields={visFields}
             ref={ref}
             themeKey={themeKey}
             dark={dark}
-            draggableFieldState={draggableState}
-            visualConfig={visualConfig}
+            data={viewData}
+            spec={visSpec}
+            locale={locale ?? 'en-US'}
         />
     );
 });

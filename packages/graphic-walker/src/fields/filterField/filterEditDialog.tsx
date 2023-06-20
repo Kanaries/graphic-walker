@@ -10,27 +10,28 @@ import Tabs, { RuleFormProps } from "./tabs";
 import DefaultButton from "../../components/button/default";
 import PrimaryButton from "../../components/button/primary";
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of"]} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataset={dataset} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} dataset={dataset} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 const FilterEditDialog: React.FC = observer(() => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const { editingFilterIdx, draggableFieldState } = vizStore;
+    const { currentDataset } = commonStore;
 
     const { t } = useTranslation("translation", { keyPrefix: "filters" });
 
@@ -88,7 +89,7 @@ const FilterEditDialog: React.FC = observer(() => {
                     {uncontrolledField.name}
                 </span>
                 <h3 className="text-base font-semibold py-2 outline-none">{t("form.rule")}</h3>
-                <Form field={uncontrolledField} onChange={handleChange} />
+                <Form dataset={currentDataset} field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
                     <PrimaryButton
                         onClick={handleSubmit}

@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
+import type { IVisSchema } from './vis/protocol/interface';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -37,6 +38,7 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    schema?: IVisSchema;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -55,6 +57,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         toolbar,
+        schema,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -105,6 +108,12 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
+
+    useEffect(() => {
+        if (schema) {
+            vizStore.hydrate(schema);
+        }
+    }, [schema, vizStore]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
