@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useMemo, useCallback, useRef } from 'react';
-import { IDarkMode, IRow, IThemeKey, VegaGlobalConfig } from '../interfaces';
+import { IDarkMode, IRow, IThemeKey, VegaGlobalConfig, IComputationConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
@@ -16,13 +16,14 @@ import { useRenderer } from './hooks';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    computationConfig: IComputationConfig;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { computationConfig, themeKey, dark } = props;
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState } = vizStore;
     const { format: _format, zeroScale, size, interactiveScale, showActions } = visualConfig;
@@ -87,6 +88,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     const { viewData: data, parsed, loading: waiting } = useRenderer({
         spec,
+        computationConfig,
         datasetId,
         data: dataSource,
         fields: allFields,

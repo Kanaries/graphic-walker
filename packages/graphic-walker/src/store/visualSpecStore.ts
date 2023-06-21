@@ -1,6 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification, IDataQueryWorkflowStep } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification, IDataQueryWorkflowStep, IComputationConfig } from "../interfaces";
 import type { IVisSchema } from "../vis/protocol/interface";
 import { transformVisSchema2GWSpec } from "../vis/protocol/adapter";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
@@ -147,6 +147,7 @@ export class VizSpecStore {
     public editingFilterIdx: number | null = null;
     public workflow: IDataQueryWorkflowStep[] = [];
     public visSchema: IVisSchema | null = null;
+    public computationConfig: IComputationConfig = 'client';
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -163,6 +164,7 @@ export class VizSpecStore {
             visList: observable.shallow,
             workflow: observable.ref,
             visSchema: observable.ref,
+            computationConfig: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -728,6 +730,9 @@ export class VizSpecStore {
     public setParsedResult(workflow: IDataQueryWorkflowStep[], visSchema: IVisSchema) {
         this.workflow = workflow;
         this.visSchema = visSchema;
+    }
+    public setComputationConfig(mode: IComputationConfig) {
+        this.computationConfig = mode;
     }
     public hydrate(schema: IVisSchema) {
         const state = transformVisSchema2GWSpec(schema, this.commonStore.currentDataset.rawFields);

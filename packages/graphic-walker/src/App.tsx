@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IDataQueryWorkflowStep } from './interfaces';
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IDataQueryWorkflowStep, IComputationConfig } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -38,6 +38,7 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    computation?: IComputationConfig;
     schema?: IVisSchema;
     onCompile?: (data: { workflow: IDataQueryWorkflowStep[]; schema: IVisSchema }) => void;
     toolbar?: {
@@ -57,6 +58,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        computation = 'client',
         toolbar,
         schema,
         onCompile,
@@ -128,6 +130,10 @@ const App = observer<IGWProps>(function App(props) {
             });
         }
     }, [workflow, visSchema]);
+    
+    useEffect(() => {
+        vizStore.setComputationConfig(computation);
+    }, [vizStore, computation]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -179,7 +185,7 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationConfig={vizStore.computationConfig} />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
@@ -219,4 +225,4 @@ export default App;
 export { default as PureRenderer, type IPureRendererProps } from './renderer/pureRenderer';
 
 export type { ISortConfigRef, IVisEncodingChannel, IVisField, IVisEncodings, IVisFilter, IVisFieldComputation, IVisSchema } from './vis/protocol/interface';
-export type { ToolbarItemProps };
+export type { ToolbarItemProps, IComputationConfig };

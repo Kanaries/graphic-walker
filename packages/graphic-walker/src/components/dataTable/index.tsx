@@ -1,8 +1,11 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import styled from "styled-components";
+import { observer } from "mobx-react-lite";
 import type { IMutField, IRow, DataSet } from "../../interfaces";
 import { useTranslation } from "react-i18next";
 import LoadingLayer from "../loadingLayer";
+import { useComputationConfig } from "../../renderer/hooks";
+import { dataReadRawHttp } from "../../renderer/httpComputation";
 import { dataReadRawClient } from "../../renderer/webWorkerComputation";
 import Pagination from "./pagination";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
@@ -67,9 +70,12 @@ function getSemanticColors(field: IMutField): string {
 
 const DataTable: React.FC<DataTableProps> = (props) => {
     const { size = 10, onMetaChange, dataset, total, loading: statLoading } = props;
-    const { dataSource } = dataset;
+    const { dataSource, id: datasetId } = dataset;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
+    const computationConfig = useComputationConfig();
+    const computationMode = computationConfig.mode;
+    const host = computationConfig.mode === 'server' ? computationConfig.host : undefined;
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return ANALYTIC_TYPE_LIST.map((at) => ({
@@ -93,7 +99,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const taskIdRef = useRef(0);
 
     useEffect(() => {
-        if (statLoading) {
+        if (statLoading || computationMode !== 'client') {
             return;
         }
         setDataLoading(true);
@@ -113,7 +119,30 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         return () => {
             taskIdRef.current++;
         };
-    }, [statLoading, dataSource, pageIndex, size]);
+    }, [computationMode, statLoading, dataSource, pageIndex, size]);
+
+    useEffect(() => {
+        if (statLoading || computationMode !== 'server') {
+            return;
+        }
+        setDataLoading(true);
+        const taskId = ++taskIdRef.current;
+        dataReadRawHttp(host, datasetId, size, pageIndex).then(data => {
+            if (taskId === taskIdRef.current) {
+                setDataLoading(false);
+                setRows(data);
+            }
+        }).catch(err => {
+            if (taskId === taskIdRef.current) {
+                console.error(err);
+                setDataLoading(false);
+                setRows([]);
+            }
+        });
+        return () => {
+            taskIdRef.current++;
+        };
+    }, [computationMode, host, datasetId, pageIndex, size]);
 
     const loading = statLoading || dataLoading;
 
@@ -210,4 +239,4 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     );
 };
 
-export default DataTable;
+export default observer(DataTable);

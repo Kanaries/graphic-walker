@@ -2,7 +2,7 @@ import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { observer } from 'mobx-react-lite';
 import { nanoid } from 'nanoid';
-import type { IDarkMode, IMutField, IRow, IThemeKey, IViewField } from '../interfaces';
+import type { IDarkMode, IMutField, IRow, IThemeKey, IViewField, IComputationConfig } from '../interfaces';
 import type { IVisField, IVisSchema } from '../vis/protocol/interface';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -15,6 +15,8 @@ export interface IPureRendererProps {
     rawData?: IRow[];
     spec: IVisSchema;
     datasetId?: string;
+    /** @default "client" */
+    computation?: IComputationConfig;
     fields: IMutField[];
     locale?: string;
 }
@@ -25,6 +27,7 @@ export interface IPureRendererProps {
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
     const {
+        computation = 'client',
         themeKey,
         dark,
         rawData,
@@ -47,6 +50,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
 
     const { viewData: data, parsed, loading: waiting } = useRenderer({
         spec,
+        computationConfig: computation,
         data: rawData,
         fields: columns,
         datasetId,

@@ -233,6 +233,11 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IComputationMode = 'client' | 'server';
+export type IComputationConfig = IComputationMode | (
+    | { mode: Extract<IComputationMode, 'client'> }
+    | { mode: Extract<IComputationMode, 'server'>; host?: string }
+);
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 

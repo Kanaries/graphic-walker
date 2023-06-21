@@ -7,7 +7,9 @@ import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats } from '../.
 import { useGlobalStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import PureTabs from '../../components/tabs/defaultTab';
+import { useComputationConfig } from '../../renderer/hooks';
 import { fieldStatClient } from '../../renderer/webWorkerComputation';
+import { fieldStatHttp } from '../../renderer/httpComputation';
 import Slider from './slider';
 
 
@@ -110,8 +112,14 @@ const useFieldStats = (datasetId: string, data: IRow[], fid: string, attributes:
     const { values, range } = attributes;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
+    const computationConfig = useComputationConfig();
+    const computationMode = computationConfig.mode;
+    const host = computationConfig.mode === 'server' ? computationConfig.host : undefined;
 
     React.useEffect(() => {
+        if (computationMode !== 'client') {
+            return;
+        }
         setLoading(true);
         let isCancelled = false;
         fieldStatClient(data, fid).then(stats => {
@@ -131,7 +139,32 @@ const useFieldStats = (datasetId: string, data: IRow[], fid: string, attributes:
         return () => {
             isCancelled = true;
         };
-    }, [fid, data]);
+    }, [fid, computationMode, data]);
+
+    React.useEffect(() => {
+        if (computationMode !== 'server') {
+            return;
+        }
+        setLoading(true);
+        let isCancelled = false;
+        fieldStatHttp(host, datasetId, fid, { values, range }).then(stats => {
+            if (isCancelled) {
+                return;
+            }
+            setStats(stats);
+            setLoading(false);
+        }).catch(reason => {
+            console.warn(reason);
+            if (isCancelled) {
+                return;
+            }
+            setStats(null);
+            setLoading(false);
+        });
+        return () => {
+            isCancelled = true;
+        };
+    }, [fid, computationMode, host, datasetId, values, range]);
 
     return loading ? null : stats;
 };
