@@ -6,6 +6,7 @@ import type { IDarkMode, IMutField, IRow, IThemeKey, IViewField } from '../inter
 import type { IVisField, IVisSchema } from '../vis/protocol/interface';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
+import { ShadowDom } from '../shadow-dom';
 import { useRenderer } from './hooks';
 
 
@@ -68,18 +69,20 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     }, [waiting]);
 
     return (
-        <div className="relative">
-            <SpecRenderer
-                loading={waiting}
-                fields={viewFields}
-                ref={ref}
-                themeKey={themeKey}
-                dark={dark}
-                data={viewData}
-                schema={visSpec}
-                locale={locale ?? 'en-US'}
-            />
-        </div>
+        <ShadowDom>
+            <div className="relative">
+                <SpecRenderer
+                    loading={waiting}
+                    fields={viewFields}
+                    ref={ref}
+                    themeKey={themeKey}
+                    dark={dark}
+                    data={viewData}
+                    schema={visSpec}
+                    locale={locale ?? 'en-US'}
+                />
+            </div>
+        </ShadowDom>
     );
 });
 

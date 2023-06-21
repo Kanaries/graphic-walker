@@ -2,7 +2,7 @@ import React, { memo, ReactNode, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 import type { IDarkMode } from "../interfaces";
-import { ShadowDomContext } from "..";
+import { ShadowDomContext } from "../shadow-dom";
 import { useCurrentMediaTheme } from "../utils/media";
 
 export interface CalloutProps {
