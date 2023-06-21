@@ -9,11 +9,11 @@ import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
 
-interface IPureRendererProps {
+export interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
-    spec: IVisSchema;
+    schema: IVisSchema;
     datasetId?: string;
     fields: IMutField[];
     locale?: string;
@@ -29,7 +29,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         dark,
         rawData,
         fields,
-        spec,
+        schema,
         datasetId,
         locale,
     } = props;
@@ -39,6 +39,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         markType: 'bar',
         encodings: {},
     });
+    const [viewFields, setViewFields] = useState<IVisField[]>([]);
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const columns = useMemo(() => {
@@ -46,45 +47,39 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     }, [fields]);
 
     const { viewData: data, parsed, loading: waiting } = useRenderer({
-        spec,
+        spec: schema,
         data: rawData,
         fields: columns,
         datasetId,
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ spec, data, parsed });
-    latestFromRef.current = { spec, data, parsed };
+    const latestFromRef = useRef({ spec: schema, data, parsed });
+    latestFromRef.current = { spec: schema, data, parsed };
 
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setVisSpec(latestFromRef.current.spec);
+                setViewFields(latestFromRef.current.parsed.fields);
                 setViewData(latestFromRef.current.data);
             });
         }
     }, [waiting]);
 
-    const visFields = useMemo(() => {
-        return columns.map<IVisField>(col => ({
-            key: col.fid,
-            type: col.semanticType,
-            name: col.name,
-            expression: col.expression,
-        }));
-    }, [columns]);
-
     return (
-        <SpecRenderer
-            loading={waiting}
-            fields={visFields}
-            ref={ref}
-            themeKey={themeKey}
-            dark={dark}
-            data={viewData}
-            spec={visSpec}
-            locale={locale ?? 'en-US'}
-        />
+        <div className="relative">
+            <SpecRenderer
+                loading={waiting}
+                fields={viewFields}
+                ref={ref}
+                themeKey={themeKey}
+                dark={dark}
+                data={viewData}
+                schema={visSpec}
+                locale={locale ?? 'en-US'}
+            />
+        </div>
     );
 });
 

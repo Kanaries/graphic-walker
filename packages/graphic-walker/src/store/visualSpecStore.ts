@@ -146,6 +146,7 @@ export class VizSpecStore {
     public canRedo = false;
     public editingFilterIdx: number | null = null;
     public workflow: IDataQueryWorkflowStep[] = [];
+    public visSchema: IVisSchema | null = null;
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -160,7 +161,8 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
-            workflow: false,
+            workflow: observable.ref,
+            visSchema: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -723,8 +725,9 @@ export class VizSpecStore {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
     }
-    public setWorkflow(workflow: IDataQueryWorkflowStep[]) {
+    public setParsedResult(workflow: IDataQueryWorkflowStep[], visSchema: IVisSchema) {
         this.workflow = workflow;
+        this.visSchema = visSchema;
     }
     public hydrate(schema: IVisSchema) {
         const state = transformVisSchema2GWSpec(schema, this.commonStore.currentDataset.rawFields);

@@ -13,7 +13,7 @@ interface SpecRendererProps {
     dark?: IDarkMode;
     data: IRow[];
     loading: boolean;
-    spec: IVisSchema;
+    schema: IVisSchema;
     fields: readonly IVisField[];
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
@@ -24,15 +24,15 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { spec, themeKey, dark, data, loading, fields, onGeomClick, onChartResize, locale },
+    { schema, themeKey, dark, data, loading, fields, onGeomClick, onChartResize, locale },
     ref
 ) {
-    const vegaSpec = useMemo(() => forwardVegaVisSchema(spec), [spec]);
+    const vegaSpec = useMemo(() => forwardVegaVisSchema(schema), [schema]);
     const { size } = vegaSpec.configs;
 
-    const isPivotTable = spec.markType === 'table';
+    const isPivotTable = schema.markType === 'table';
 
-    const hasFacet = Boolean(spec.encodings.row || spec.encodings.column);
+    const hasFacet = Boolean(schema.encodings.row || schema.encodings.column);
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
 
@@ -41,7 +41,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             <PivotTable
                 data={data}
                 fields={fields}
-                spec={spec}
+                spec={schema}
                 loading={loading}
                 themeKey={themeKey}
                 dark={dark}

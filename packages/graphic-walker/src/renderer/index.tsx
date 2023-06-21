@@ -31,7 +31,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     const { i18n } = useTranslation();
 
-    const [visSpec, setVisSpec] = useState<IVisSchema<IVegaConfigSchema>>({
+    const [visSchema, setVisSchema] = useState<IVisSchema<IVegaConfigSchema>>({
         datasetId,
         markType: 'bar',
         encodings: {},
@@ -44,6 +44,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             zeroScale,
         },
     });
+    const [viewFields, setViewFields] = useState<IVisField[]>([]);
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const format = toJS(_format);
@@ -79,8 +80,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const spec = useMemo(() => {
         return transformGWSpec2VisSchema({
             datasetId,
-            visualConfig,
-            draggableFieldState,
+            visualConfig: toJS(visualConfig),
+            draggableFieldState: toJS(draggableFieldState),
             vegaConfig: vegaConfig,
         });
     }, [datasetId, draggableFieldState, visualConfig, vegaConfig, viewFilters, viewDimensions, viewMeasures]);
@@ -99,9 +100,13 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
+                setVisSchema(latestFromRef.current.spec);
+                setViewFields(latestFromRef.current.parsed.fields);
+                vizStore.setParsedResult(
+                    latestFromRef.current.parsed.workflow,
+                    latestFromRef.current.spec,
+                );
                 setViewData(latestFromRef.current.data);
-                setVisSpec(latestFromRef.current.spec);
-                vizStore.setWorkflow(latestFromRef.current.parsed.workflow);
             });
         }
     }, [waiting, vizStore]);
@@ -127,14 +132,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         },
         [vizStore]
     );
-    const fields = useMemo(() => {
-        return allFields.map<IVisField>(f => ({
-            key: f.fid,
-            type: f.semanticType,
-            name: f.name,
-            expression: f.expression,
-        }));
-    }, [allFields]);
 
     return (
         <SpecRenderer
@@ -143,8 +140,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             ref={ref}
             themeKey={themeKey}
             dark={dark}
-            spec={visSpec}
-            fields={fields}
+            schema={visSchema}
+            fields={viewFields}
             locale={i18n.language}
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
