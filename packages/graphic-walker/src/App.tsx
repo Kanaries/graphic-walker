@@ -216,7 +216,5 @@ const App = observer<IGWProps>(function App(props) {
 });
 
 export default App;
-export { default as PureRenderer, type IPureRendererProps } from './renderer/pureRenderer';
 
-export type { ISortConfigRef, IVisEncodingChannel, IVisField, IVisEncodings, IVisFilter, IVisFieldComputation, IVisSchema } from './vis/protocol/interface';
 export type { ToolbarItemProps };

@@ -30,3 +30,9 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         </StoreWrapper>
     );
 });
+
+export { default as PureRenderer, type IPureRendererProps } from './renderer/pureRenderer';
+
+export type { ISortConfigRef, IVisEncodingChannel, IVisField, IVisEncodings, IVisFilter, IVisFieldComputation, IVisSchema } from './vis/protocol/interface';
+export type { ToolbarItemProps } from './components/toolbar';
+export * from './interfaces';
