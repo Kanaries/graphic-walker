@@ -101,7 +101,10 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
                 setVisSpec(latestFromRef.current.spec);
-                vizStore.setWorkflow(latestFromRef.current.parsed.workflow);
+                vizStore.setParsedResult(
+                    latestFromRef.current.parsed.workflow,
+                    latestFromRef.current.spec,
+                );
             });
         }
     }, [waiting, vizStore]);

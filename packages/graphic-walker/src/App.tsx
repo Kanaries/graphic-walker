@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IDataQueryWorkflowStep } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -39,6 +39,7 @@ export interface IGWProps {
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     schema?: IVisSchema;
+    onCompile?: (data: { workflow: IDataQueryWorkflowStep[]; schema: IVisSchema }) => void;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -58,6 +59,7 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         toolbar,
         schema,
+        onCompile,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -114,6 +116,18 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.hydrate(schema);
         }
     }, [schema, vizStore]);
+
+    const { workflow, visSchema } = vizStore;
+    const onCompileRef = useRef(onCompile);
+    onCompileRef.current = onCompile;
+    useEffect(() => {
+        if (visSchema) {
+            onCompileRef.current?.({
+                workflow,
+                schema: visSchema,
+            });
+        }
+    }, [workflow, visSchema]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -202,6 +216,7 @@ const App = observer<IGWProps>(function App(props) {
 });
 
 export default App;
-export { default as PureRenderer } from './renderer/pureRenderer';
+export { default as PureRenderer, type IPureRendererProps } from './renderer/pureRenderer';
 
+export type { ISortConfigRef, IVisEncodingChannel, IVisField, IVisEncodings, IVisFilter, IVisFieldComputation, IVisSchema } from './vis/protocol/interface';
 export type { ToolbarItemProps };

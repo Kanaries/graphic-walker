@@ -9,7 +9,7 @@ import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
 
-interface IPureRendererProps {
+export interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
