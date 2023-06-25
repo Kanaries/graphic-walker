@@ -7,7 +7,7 @@ import { ISemanticType } from "../../interfaces";
  */
 export function autoMark(semanticTypeList: ISemanticType[]): string {
     if (semanticTypeList.length < 2) {
-        if (semanticTypeList[0] === "temporal") return "tick";
+        if (semanticTypeList[0] === "temporal" || semanticTypeList[0] === 'quantitative') return "tick";
         return "bar";
     }
     const couter: Map<ISemanticType, number> = new Map();
