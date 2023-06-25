@@ -38,15 +38,23 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data, draggableFieldState, visualConfig });
-    latestFromRef.current = { data, draggableFieldState, visualConfig };
+    const latestFromRef = useRef({
+        data,
+        draggableFieldState: toJS(draggableFieldState),
+        visualConfig: toJS(visualConfig),
+    });
+    latestFromRef.current = {
+        data,
+        draggableFieldState: toJS(draggableFieldState),
+        visualConfig: toJS(visualConfig),
+    };
 
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
-                setEncodings(toJS(latestFromRef.current.draggableFieldState));
-                setViewConfig(toJS(latestFromRef.current.visualConfig));
+                setEncodings(latestFromRef.current.draggableFieldState);
+                setViewConfig(latestFromRef.current.visualConfig);
             });
         }
     }, [waiting, vizStore]);

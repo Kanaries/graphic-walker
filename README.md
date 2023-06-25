@@ -103,7 +103,7 @@ In your app:
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
-const YourEmbeddingTableauStyleApp: React.FC = props => {
+const YourEmbeddingApp: React.FC = props => {
     const { dataSource, fields } = props;
     return <GraphicWalker
         dataSource={dataSource}
@@ -113,7 +113,24 @@ const YourEmbeddingTableauStyleApp: React.FC = props => {
     />
 }
 
-export default YourEmbeddingTableauStyleApp;
+export default YourEmbeddingApp;
+```
+
+If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` component to make a single chart without controls UI.
+
+```typescript
+import { PureRenderer } from '@kanaries/graphic-walker';
+
+const YourChart: React.FC = props => {
+    const { rawData, draggableState, visualConfig } = props;
+    return <GraphicWalker
+        rawData={rawData}
+        draggableState={draggableState}
+        visualConfig={visualConfig}
+    />
+}
+
+export default YourChart;
 ```
 
 ### try local (dev mode)
