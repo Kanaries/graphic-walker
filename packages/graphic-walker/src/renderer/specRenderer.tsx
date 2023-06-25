@@ -1,8 +1,8 @@
-import { runInAction, toJS } from 'mobx';
+import { toJS } from 'mobx';
 import { Resizable } from 're-resizable';
-import React, { useCallback, forwardRef, useMemo } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 
-import { useGlobalStore } from '../store';
+import PivotTable from '../components/pivotTable';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
@@ -15,13 +15,18 @@ interface SpecRendererProps {
     data: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
+    visualConfig: DeepReadonly<IVisualConfig>;
+    onGeomClick?: ((values: any, e: any) => void) | undefined;
+    onChartResize?: ((width: number, height: number) => void) | undefined;
 }
+/**
+ * Sans-store renderer of GraphicWalker.
+ * This is a pure component, which means it will not depend on any global state.
+ */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data, loading, draggableFieldState, visualConfig },
+    { themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize },
     ref
 ) {
-    const { vizStore, commonStore } = useGlobalStore();
     // const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
 
@@ -43,19 +48,11 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         [columns]
     );
 
+    const isPivotTable = geoms[0] === 'table';
+
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
-    const handleGeomClick = useCallback(
-        (values: any, e: any) => {
-            e.stopPropagation();
-            runInAction(() => {
-                commonStore.showEmbededMenu([e.pageX, e.pageY]);
-                commonStore.setFilters(values);
-            });
-        },
-        []
-    );
-    const enableResize = size.mode === 'fixed' && !hasFacet;
+    const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
     const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
 
@@ -85,16 +82,25 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         return config;
       }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
+    if (isPivotTable) {
+        return (
+            <PivotTable
+                data={data}
+                draggableFieldState={draggableFieldState}
+                visualConfig={visualConfig}
+                loading={loading}
+                themeKey={themeKey}
+                dark={dark}
+            />
+        );
+    }
+
     return (
         <Resizable
             className={enableResize ? 'border-blue-400 border-2 overflow-hidden' : ''}
             style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
-                vizStore.setChartLayout({
-                    mode: 'fixed',
-                    width: size.width + d.width,
-                    height: size.height + d.height,
-                });
+                onChartResize?.(size.width + d.width, size.height + d.height);
             }}
             enable={
                 enableResize
@@ -139,7 +145,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 width={size.width - 12 * 4}
                 height={size.height - 12 * 4}
                 ref={ref}
-                onGeomClick={handleGeomClick}
+                onGeomClick={onGeomClick}
             />
         </Resizable>
     );

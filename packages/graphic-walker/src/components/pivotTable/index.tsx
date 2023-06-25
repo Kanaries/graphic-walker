@@ -39,7 +39,7 @@ interface PivotTableProps {
     data: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
+    visualConfig: DeepReadonly<IVisualConfig>;
 }
 const PivotTable: React.FC<PivotTableProps> = (props) => {
     const { data, draggableFieldState } = props;

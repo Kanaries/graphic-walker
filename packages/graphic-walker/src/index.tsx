@@ -49,3 +49,5 @@ export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
         </StoreWrapper>
     );
 });
+
+export { default as PureRenderer } from './renderer/pureRenderer';
