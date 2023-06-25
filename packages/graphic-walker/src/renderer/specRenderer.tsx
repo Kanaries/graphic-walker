@@ -15,7 +15,7 @@ interface SpecRendererProps {
     data: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
+    visualConfig: DeepReadonly<IVisualConfig>;
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
 }
