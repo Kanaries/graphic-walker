@@ -96,7 +96,7 @@ npm i --save @kanaries/graphic-walker
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
-const YourEmbeddingTableauStyleApp: React.FC = props => {
+const YourEmbeddingApp: React.FC = props => {
     const { dataSource, fields } = props;
     return <GraphicWalker
         dataSource={dataSource}
@@ -106,7 +106,24 @@ const YourEmbeddingTableauStyleApp: React.FC = props => {
     />
 }
 
-export default YourEmbeddingTableauStyleApp;
+export default YourEmbeddingApp;
+```
+
+もし Graphic Walker のコンフィグがある場合、`PureRenderer` コンポーネントを使ってコントロール UI なしのチャートを表示できます。
+
+```typescript
+import { PureRenderer } from '@kanaries/graphic-walker';
+
+const YourChart: React.FC = props => {
+    const { rawData, draggableState, visualConfig } = props;
+    return <GraphicWalker
+        rawData={rawData}
+        draggableState={draggableState}
+        visualConfig={visualConfig}
+    />
+}
+
+export default YourChart;
 ```
 
 ### ローカルに試す (dev mode)
