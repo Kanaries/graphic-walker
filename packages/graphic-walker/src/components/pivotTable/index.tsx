@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { StoreWrapper, useGlobalStore } from '../../store';
 import { PivotTableDataProps, PivotTableStoreWrapper, usePivotTableStore } from './store';
 import { applyViewQuery, buildPivotTableService } from '../../services';
@@ -58,7 +58,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const { showTableSummary } = visualConfig;
     const { currentDataset, tableCollapsedHeaderMap } = commonStore;
     const { dataSource } = currentDataset;
-    const [ aggData, setAggData ] = useState<IRow[]>([]);
+    const aggData = useRef<IRow[]>([]);
     const [ topTreeHeaderRowNum, setTopTreeHeaderRowNum ] = useState<number>(0);
 
     const dimsInRow = useMemo(() => {
@@ -80,12 +80,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     useEffect(() => {
         setIsLoading(loading);
     }, [loading])
-
-    useEffect(() => {
-        if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
-            generateNewTable();
-        }
-    }, [aggData, data]);
 
     // If some visual configs change, clear the collapse state, then regroup the data
     useEffect(() => {
@@ -110,7 +104,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
             dimsInRow,
             dimsInColumn,
             data,
-            aggData,
+            aggData.current,
             Array.from(tableCollapsedHeaderMap.keys()),
             showTableSummary
         )
@@ -127,10 +121,11 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                 console.log(err);
                 setIsLoading(false);
             })
-    }
+    };
+
     const aggregateGroupbyData = () => {
-        setIsLoading(true);
         if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
+        if (data.length === 0) return;
         let groupbyCombListInRow:IViewField[][]  = [];
         let groupbyCombListInCol:IViewField[][]  = [];
         if (showTableSummary) {
@@ -149,6 +144,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
             groupbyCombListInRow.map(combInRow => [...combInCol, ...combInRow])
         ).slice(0, -1);
 
+        setIsLoading(true);
         const groupbyPromises = groupbyCombList.map((dimComb) => {
             const dims = dimComb;
             const meas = viewMeasures;
@@ -166,9 +162,8 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         Promise.all(groupbyPromises)
             .then((result) => {
                 const finalizedData = [...result.flat()];
-                if (finalizedData.length === 0 && aggData.length === 0) return;
-                setAggData(finalizedData);
-                setIsLoading(false);
+                aggData.current = finalizedData;
+                generateNewTable();
             })
             .catch((err) => {
                 console.error(err);
