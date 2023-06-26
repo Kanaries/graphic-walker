@@ -15,9 +15,8 @@ function getCellData (cell: IRow, measure: IField) {
     }
     return cell[meaKey];
 }
-const MetricTable: React.FC<MetricTableProps> = (props) => {
+const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
     const { matrix, meaInRows, meaInColumns } = props;
-
     return (
         <tbody className="bg-white border-r border-b border-gray-300">
             {matrix.map((row, rIndex) => {
@@ -102,6 +101,12 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
             })}
         </tbody>
     );
-};
+}, function areEqual(prevProps, nextProps) {
+    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix)) {
+        return true;
+    }
+    
+    return false;
+});
 
 export default MetricTable;
