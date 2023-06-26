@@ -12,7 +12,7 @@ interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
-    draggableState: DraggableFieldState;
+    visualState: DraggableFieldState;
     visualConfig: IVisualConfig;
 }
 
@@ -25,7 +25,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         themeKey,
         dark,
         rawData,
-        draggableState,
+        visualState,
         visualConfig,
     } = props;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
@@ -36,7 +36,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(draggableState);
+        const { dimensions, measures, filters, ...state } = toJS(visualState);
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -51,7 +51,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         }
 
         return { allFields, viewDimensions, viewMeasures, filters };
-    }, [draggableState]);
+    }, [visualState]);
 
     const { viewData: data, loading: waiting } = useRenderer({
         data: rawData ?? [],
@@ -81,7 +81,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             ref={ref}
             themeKey={themeKey}
             dark={dark}
-            draggableFieldState={draggableState}
+            draggableFieldState={visualState}
             visualConfig={visualConfig}
         />
     );
