@@ -46,7 +46,7 @@ interface PivotTableProps {
     visualConfig: IVisualConfig;
 }
 const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
-    const { data, transformedData } = props;
+    const { data, transformedData, loading } = props;
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
@@ -76,6 +76,10 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const measInColumn = useMemo(() => {
         return columns.filter((f) => f.analyticType === 'measure');
     }, [columns]);
+
+    useEffect(() => {
+        setIsLoading(loading);
+    }, [loading])
 
     useEffect(() => {
         if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
@@ -112,12 +116,16 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         )
             .then((data) => {
                 const {lt, tt, metric} = data;
-                setIsLoading(false);
                 unstable_batchedUpdates(() => {
                     setLeftTree(lt);
                     setTopTree(tt);
                     setMetricTable(metric);
                 });
+                setIsLoading(false);
+            })
+            .catch((err) => {
+                console.log(err);
+                setIsLoading(false);
             })
     }
     const aggregateGroupbyData = () => {
@@ -157,54 +165,55 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         });
         Promise.all(groupbyPromises)
             .then((result) => {
-                setIsLoading(false);
                 const finalizedData = [...result.flat()];
                 if (finalizedData.length === 0 && aggData.length === 0) return;
                 setAggData(finalizedData);
+                setIsLoading(false);
             })
             .catch((err) => {
                 console.error(err);
+                setIsLoading(false);
             });
     };
 
     // const { leftTree, topTree, metricTable } = store;
     return (
-        <div>
+        <div className="relative">
             {isLoading && <LoadingLayer />}
             <div className="flex">
-            <table className="border border-gray-300 border-collapse">
-                <thead className="border border-gray-300">
-                    {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
-                        <tr className="" key={i}>
-                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
-                        </tr>
-                    ))}
-                </thead>
-                {leftTree && 
-                    <LeftTree 
-                        data={leftTree} 
-                        dimsInRow={dimsInRow} 
-                        measInRow={measInRow} 
-                        onHeaderCollapse={commonStore.updateTableCollapsedHeader.bind(commonStore)}
-                    />}
-            </table>
-            <table className="border border-gray-300 border-collapse">
-                {topTree && 
-                    <TopTree 
-                        data={topTree} 
-                        dimsInCol={dimsInColumn} 
-                        measInCol={measInColumn} 
-                        onHeaderCollapse={commonStore.updateTableCollapsedHeader.bind(commonStore)}
-                        onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
-                    />}
-                {metricTable && 
-                    <MetricTable 
-                        matrix={metricTable} 
-                        meaInColumns={measInColumn} 
-                        meaInRows={measInRow} 
-                    />}
-            </table>
-        </div>
+                <table className="border border-gray-300 border-collapse">
+                    <thead className="border border-gray-300">
+                        {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
+                            <tr className="" key={i}>
+                                <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                            </tr>
+                        ))}
+                    </thead>
+                    {leftTree && 
+                        <LeftTree 
+                            data={leftTree} 
+                            dimsInRow={dimsInRow} 
+                            measInRow={measInRow} 
+                            onHeaderCollapse={commonStore.updateTableCollapsedHeader.bind(commonStore)}
+                        />}
+                </table>
+                <table className="border border-gray-300 border-collapse">
+                    {topTree && 
+                        <TopTree 
+                            data={topTree} 
+                            dimsInCol={dimsInColumn} 
+                            measInCol={measInColumn} 
+                            onHeaderCollapse={commonStore.updateTableCollapsedHeader.bind(commonStore)}
+                            onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
+                        />}
+                    {metricTable && 
+                        <MetricTable 
+                            matrix={metricTable} 
+                            meaInColumns={measInColumn} 
+                            meaInRows={measInRow} 
+                        />}
+                </table>
+            </div>
         </div>
 
     );
