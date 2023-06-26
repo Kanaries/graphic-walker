@@ -115,10 +115,10 @@ export default YourEmbeddingApp;
 import { PureRenderer } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC = props => {
-    const { rawData, draggableState, visualConfig } = props;
+    const { rawData, visualState, visualConfig } = props;
     return <GraphicWalker
         rawData={rawData}
-        draggableState={draggableState}
+        visualState={visualState}
         visualConfig={visualConfig}
     />
 }
