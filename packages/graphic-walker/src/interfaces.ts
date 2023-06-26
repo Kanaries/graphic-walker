@@ -1,3 +1,6 @@
+import {Config as VgConfig} from 'vega';
+import {Config as VlConfig} from 'vega-lite';
+
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
@@ -193,6 +196,7 @@ export interface IVisualConfig {
     showActions: boolean;
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
+    zeroScale: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;
@@ -219,3 +223,5 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+
+export type VegaGlobalConfig = VgConfig | VlConfig;

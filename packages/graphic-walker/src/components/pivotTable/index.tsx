@@ -43,7 +43,7 @@ interface PivotTableProps {
     transformedData: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: IVisualConfig;
+    visualConfig: DeepReadonly<IVisualConfig>;
 }
 const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
     const { data, transformedData, loading } = props;
