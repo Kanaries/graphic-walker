@@ -13,6 +13,7 @@ interface SpecRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     data: IRow[];
+    transformedData: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: DeepReadonly<IVisualConfig>;
@@ -24,7 +25,7 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize },
+    { themeKey, dark, data, transformedData, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -86,6 +87,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         return (
             <PivotTable
                 data={data}
+                transformedData={transformedData}
                 draggableFieldState={draggableFieldState}
                 visualConfig={visualConfig}
                 loading={loading}

@@ -27,8 +27,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
     const [viewData, setViewData] = useState<IRow[]>([]);
+    const [transformedData, setTransformedData] = useState<IRow[]>([]);
 
-    const { viewData: data, loading: waiting } = useRenderer({
+    const { viewData: data, transformedData: transData, loading: waiting } = useRenderer({
         data: dataSource,
         allFields,
         viewDimensions,
@@ -40,11 +41,13 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
         data,
+        transData,
         draggableFieldState: toJS(draggableFieldState),
         visualConfig: toJS(visualConfig),
     });
     latestFromRef.current = {
         data,
+        transData,
         draggableFieldState: toJS(draggableFieldState),
         visualConfig: toJS(visualConfig),
     };
@@ -53,6 +56,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
+                setTransformedData(latestFromRef.current.transData);
                 setEncodings(latestFromRef.current.draggableFieldState);
                 setViewConfig(latestFromRef.current.visualConfig);
             });
@@ -85,6 +89,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         <SpecRenderer
             loading={waiting}
             data={viewData}
+            transformedData={transformedData}
             ref={ref}
             themeKey={themeKey}
             dark={dark}

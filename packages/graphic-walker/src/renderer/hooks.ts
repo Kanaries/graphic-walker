@@ -16,6 +16,7 @@ interface UseRendererProps {
 
 interface UseRendererResult {
     viewData: IRow[];
+    transformedData: IRow[];
     loading: boolean;
 }
 
@@ -25,6 +26,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const taskIdRef = useRef(0);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
+    const [transformedData, setTransformedData] = useState<IRow[]>([]);
 
     useEffect(() => {
         const taskId = ++taskIdRef.current;
@@ -33,6 +35,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             .then((data) => transformDataService(data, allFields))
             .then((d) => {
                 // setViewData(d);
+                setTransformedData(d);
                 const dims = viewDimensions;
                 const meas = viewMeasures;
                 return applyViewQuery(d, dims.concat(meas), {
@@ -67,6 +70,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     return useMemo(() => {
         return {
             viewData,
+            transformedData,
             loading: computing,
         };
     }, [viewData, computing]);

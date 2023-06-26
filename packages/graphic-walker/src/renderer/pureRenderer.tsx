@@ -31,6 +31,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
+    const [transformedData, setTransformedData] = useState<IRow[]>([]);
     
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
@@ -53,7 +54,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [draggableState]);
 
-    const { viewData: data, loading: waiting } = useRenderer({
+    const { viewData: data, transformedData: transData, loading: waiting } = useRenderer({
         data: rawData ?? [],
         allFields,
         viewDimensions,
@@ -63,13 +64,14 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data });
-    latestFromRef.current = { data };
+    const latestFromRef = useRef({ data, transData });
+    latestFromRef.current = { data, transData };
 
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
+                setTransformedData(latestFromRef.current.transData);
             });
         }
     }, [waiting]);
@@ -78,6 +80,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         <SpecRenderer
             loading={waiting}
             data={viewData}
+            transformedData={transformedData}
             ref={ref}
             themeKey={themeKey}
             dark={dark}
