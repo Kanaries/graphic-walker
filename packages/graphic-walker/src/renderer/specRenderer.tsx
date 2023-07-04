@@ -29,7 +29,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
+    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -96,7 +96,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         );
     }
 
-    const isSpatial = geoms[0] === 'map';
+    const isSpatial = coordSystem === 'geographic';
 
     return (
         <Resizable

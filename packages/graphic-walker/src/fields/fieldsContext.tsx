@@ -50,6 +50,7 @@ export const DRAGGABLE_STATE_KEYS: Readonly<IDraggableStateKey[]> = [
     { id: 'radius', mode: 1 },
     { id: 'longitude', mode: 1 },
     { id: 'latitude', mode: 1 },
+    { id: 'geoId', mode: 1 },
     { id: 'filters', mode: 1 },
     { id: 'details', mode: 1 },
     { id: 'text', mode: 1 },

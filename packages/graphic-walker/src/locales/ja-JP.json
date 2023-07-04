@@ -32,7 +32,13 @@
             "boxplot": "ボックスプロット",
             "table": "表",
             "text": "テキスト",
-            "map": "地図"
+            "poi": "POI",
+            "geoshape": "形状"
+        },
+        "coord_system": {
+            "__enum__": "座標系",
+            "generic": "ジェネリック",
+            "geographic": "地理"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -70,7 +76,8 @@
             "filters": "フィルター",
             "text": "本文",
             "longitude": "経度",
-            "latitude": "緯度"
+            "latitude": "緯度",
+            "geoId": "地理ID"
         },
         "aggregator": {
             "sum": "合計",

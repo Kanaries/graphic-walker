@@ -7,7 +7,7 @@ import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 
 
 export interface ILeafletRendererProps {
-    vegaConfig: VegaGlobalConfig;
+    vegaConfig?: VegaGlobalConfig;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: DeepReadonly<IVisualConfig>;
     data: IRow[];
@@ -32,7 +32,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
-    const { draggableFieldState, data, visualConfig, vegaConfig } = props;
+    const { draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], details, dimensions, measures, size, color, shape, opacity, text } = draggableFieldState;
     const { defaultAggregated } = visualConfig;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
@@ -111,7 +111,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     };
     
     return (
-        <MapContainer center={center} ref={mapRef} zoom={8} bounds={bounds} style={{ height: '100%', zIndex: 1 }}>
+        <MapContainer center={center} ref={mapRef} zoom={8} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -9,16 +9,20 @@ import OBFieldContainer from '../obComponents/obFContainer';
 const PosFields: React.FC = props => {
     const { vizStore } = useGlobalStore();
     const { visualConfig } = vizStore;
-    const { geoms } = visualConfig;
+    const { geoms, coordSystem = 'generic' } = visualConfig;
 
     const channels = useMemo(() => {
-        if (geoms[0] === 'arc') {
-            return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'radius' || f.id === 'theta');
-        } else if (geoms[0] === 'map') {
+        if (coordSystem === 'geographic') {
+            if (geoms[0] === 'geoshape') {
+                return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'geoId');
+            }
             return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'longitude' || f.id === 'latitude');
         }
+        if (geoms[0] === 'arc') {
+            return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'radius' || f.id === 'theta');
+        }
         return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'columns' || f.id === 'rows');
-    }, [geoms[0]])
+    }, [geoms[0], coordSystem])
     return <div>
         {
             channels.map(dkey => <FieldListContainer name={dkey.id} key={dkey.id}>

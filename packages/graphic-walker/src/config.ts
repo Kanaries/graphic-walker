@@ -1,21 +1,31 @@
-import { DraggableFieldState, IStackMode } from "./interfaces";
+import { DraggableFieldState, ICoordMode, IStackMode } from "./interfaces";
 
-export const GEMO_TYPES: Readonly<string[]> = [
-    'auto',
-    'bar',
-    'line',
-    'area',
-    'trail',
-    'point',
-    'circle',
-    'tick',
-    'rect',
-    'arc',
-    'text',
-    'boxplot',
-    'table',
-    'map',
-] as const;
+export const GEMO_TYPES: Record<ICoordMode, Readonly<string[]>> = {
+    generic: [
+        'auto',
+        'bar',
+        'line',
+        'area',
+        'trail',
+        'point',
+        'circle',
+        'tick',
+        'rect',
+        'arc',
+        'text',
+        'boxplot',
+        'table',
+    ],
+    geographic: [
+        'poi',
+        'geoshape',
+    ],
+} as const;
+
+export const COORD_TYPES: Readonly<ICoordMode[]> = [
+    'generic',
+    'geographic',
+];
 
 export const STACK_MODE: Readonly<IStackMode[]> = [
     'none',

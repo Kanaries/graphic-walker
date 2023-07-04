@@ -19,14 +19,16 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
-    MapIcon,
+    MapPinIcon,
+    GlobeAltIcon,
+    RectangleGroupIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
-import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
+import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE, COORD_TYPES } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
@@ -73,7 +75,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
     const {
-        defaultAggregated, geoms: [markType], stack, interactiveScale, size: { mode: sizeMode, width, height },
+        defaultAggregated, geoms: [markType], coordSystem = 'generic', stack, interactiveScale, size: { mode: sizeMode, width, height },
         showActions,
     } = visualConfig;
 
@@ -146,7 +148,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                         color: 'rgb(294,115,22)',
                     },
                 },
-                options: GEMO_TYPES.map(g => ({
+                options: GEMO_TYPES[coordSystem].map(g => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
                     icon: {
@@ -163,7 +165,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                         arc: (props: SVGProps<SVGSVGElement>) => <svg stroke="none" fill="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12,21l-9,-15a12,12,0,0,1,18,0Z" /></svg>,
                         boxplot: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M7,7v9h10v-9Zm0,4h8M12,7v-6m-3,0h6M12,16v7m-3,0h6" /></svg>,
                         table: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" /></svg>,
-                        map: MapIcon,
+                        poi: MapPinIcon,
+                        geoshape: RectangleGroupIcon,
                     }[g],
                 })),
                 value: markType,
@@ -254,6 +257,26 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             '-',
             {
+                key: 'coord_system',
+                label: tGlobal('constant.coord_system.__enum__'),
+                icon: StopIcon,
+                options: COORD_TYPES.map(c => ({
+                    key: c,
+                    label: tGlobal(`constant.coord_system.${c}`),
+                    icon: {
+                        generic: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2v20" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7h2M12 16h2M7 12v-2M16 12v-2"/></svg>,
+                        geographic: GlobeAltIcon,
+                    }[c],
+                })),
+                value: coordSystem,
+                onSelect: value => {
+                    const coord = value as typeof COORD_TYPES[number];
+                    vizStore.setVisualConfig('coordSystem', coord);
+                    vizStore.setVisualConfig('geoms', [GEMO_TYPES[coord][0]]);
+                },
+            },
+            '-',
+            {
                 key: 'debug',
                 label: t('toggle.debug'),
                 icon: WrenchIcon,
@@ -313,7 +336,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         }
 
         return items;
-    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, extra, exclude]);
+    }, [vizStore, canUndo, canRedo, defaultAggregated, markType, coordSystem, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, extra, exclude]);
 
     return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
         <Toolbar

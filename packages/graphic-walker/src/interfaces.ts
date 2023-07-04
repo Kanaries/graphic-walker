@@ -167,6 +167,7 @@ export interface DraggableFieldState {
     radius: IViewField[];
     longitude: IViewField[];
     latitude: IViewField[];
+    geoId: IViewField[];
     details: IViewField[];
     filters: IFilterField[];
     text: IViewField[];
@@ -193,9 +194,13 @@ export type IFilterRule =
 
 export type IStackMode = 'none' | 'stack' | 'normalize';
 
+export type ICoordMode = 'generic' | 'geographic';
+
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
+    /** @default "generic" */
+    coordSystem?: ICoordMode;
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;

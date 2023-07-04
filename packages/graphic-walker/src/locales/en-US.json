@@ -32,7 +32,13 @@
             "boxplot": "Box (Box Plot)",
             "table": "Table",
             "text": "Text",
-            "map": "Map"
+            "poi": "POI",
+            "geoshape": "Geo Shape"
+        },
+        "coord_system": {
+            "__enum__": "Coordinate System",
+            "generic": "Generic",
+            "geographic": "Geographic"
         },
         "stack_mode": {
             "__enum__": "Stack Mode",
@@ -71,7 +77,8 @@
             "details": "Details",
             "text": "Text",
             "longitude": "Longitude",
-            "latitude": "Latitude"
+            "latitude": "Latitude",
+            "geoId": "Geometry ID"
         },
         "aggregator": {
             "sum": "Sum",
