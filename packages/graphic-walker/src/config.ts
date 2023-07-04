@@ -13,7 +13,8 @@ export const GEMO_TYPES: Readonly<string[]> = [
     'arc',
     'text',
     'boxplot',
-    'table'
+    'table',
+    'map',
 ] as const;
 
 export const STACK_MODE: Readonly<IStackMode[]> = [

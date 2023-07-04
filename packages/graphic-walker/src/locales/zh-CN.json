@@ -31,7 +31,8 @@
             "arc": "弧形",
             "boxplot": "统计箱",
             "table": "表格",
-            "text": "文本"
+            "text": "文本",
+            "map": "地图"
         },
         "layout_type": {
             "__enum__": "尺寸模式",
@@ -68,7 +69,9 @@
             "radius": "半径",
             "filters": "筛选器",
             "details": "信息",
-            "text": "文本"
+            "text": "文本",
+            "longitude": "经度",
+            "latitude": "纬度"
         },
         "aggregator": {
             "sum": "求和",

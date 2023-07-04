@@ -72,6 +72,8 @@ export interface IExpression {
     as: string;
 }
 
+export type IGeoRole = 'longitude' | 'latitude' | 'none';
+
 export interface IField {
     /**
      * fid: key in data record
@@ -87,6 +89,7 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    geoRole?: IGeoRole;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
@@ -162,6 +165,8 @@ export interface DraggableFieldState {
     shape: IViewField[];
     theta: IViewField[];
     radius: IViewField[];
+    longitude: IViewField[];
+    latitude: IViewField[];
     details: IViewField[];
     filters: IFilterField[];
     text: IViewField[];

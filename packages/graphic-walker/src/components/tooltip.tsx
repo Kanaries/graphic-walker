@@ -2,7 +2,7 @@ import React, { memo, useContext, useEffect, useMemo, useRef, useState } from "r
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 import type { IDarkMode } from "../interfaces";
-import { ShadowDomContext } from "..";
+import { ShadowDomContext } from "../shadow-dom";
 import { useCurrentMediaTheme } from "../utils/media";
 
 export interface TooltipProps {

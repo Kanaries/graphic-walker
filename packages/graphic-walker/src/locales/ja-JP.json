@@ -31,7 +31,8 @@
             "arc": "アーク",
             "boxplot": "ボックスプロット",
             "table": "表",
-            "text": "本文"
+            "text": "テキスト",
+            "map": "地図"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -67,7 +68,9 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文"
+            "text": "本文",
+            "longitude": "経度",
+            "latitude": "緯度"
         },
         "aggregator": {
             "sum": "合計",

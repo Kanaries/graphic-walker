@@ -31,7 +31,8 @@
             "arc": "Arc",
             "boxplot": "Box (Box Plot)",
             "table": "Table",
-            "text": "Text"
+            "text": "Text",
+            "map": "Map"
         },
         "stack_mode": {
             "__enum__": "Stack Mode",
@@ -68,7 +69,9 @@
             "radius": "Radius",
             "filters": "Filters",
             "details": "Details",
-            "text": "Text"
+            "text": "Text",
+            "longitude": "Longitude",
+            "latitude": "Latitude"
         },
         "aggregator": {
             "sum": "Sum",

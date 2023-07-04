@@ -14,6 +14,8 @@ const PosFields: React.FC = props => {
     const channels = useMemo(() => {
         if (geoms[0] === 'arc') {
             return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'radius' || f.id === 'theta');
+        } else if (geoms[0] === 'map') {
+            return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'longitude' || f.id === 'latitude');
         }
         return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'columns' || f.id === 'rows');
     }, [geoms[0]])

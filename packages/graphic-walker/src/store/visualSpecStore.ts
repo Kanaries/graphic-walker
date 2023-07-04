@@ -56,6 +56,8 @@ export function initEncoding(): DraggableFieldState {
         shape: [],
         radius: [],
         theta: [],
+        longitude: [],
+        latitude: [],
         details: [],
         filters: [],
         text: [],
