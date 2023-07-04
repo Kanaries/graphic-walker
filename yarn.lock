@@ -443,6 +443,34 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
+"@kanaries/graphic-walker@0.3.6":
+  version "0.3.6"
+  resolved "https://registry.npmmirror.com/@kanaries/graphic-walker/-/graphic-walker-0.3.6.tgz#f80779a01a72f86690f13cab5807eaa868eb62ea"
+  integrity sha512-kBgKA5NKQbQKhg2KFDUqjnzMVW9ePP1c5tWn9nkvTj4ffWHfe1ci3UrIqErX7bN7n7IEfqYoJk30b1HCQZXruw==
+  dependencies:
+    "@headlessui/react" "^1.7.12"
+    "@heroicons/react" "^2.0.8"
+    "@kanaries/react-beautiful-dnd" "0.0.1"
+    "@kanaries/web-data-loader" "^0.1.7"
+    autoprefixer "^10.3.5"
+    i18next "^21.9.1"
+    i18next-browser-languagedetector "^6.1.5"
+    immer "^9.0.15"
+    mobx "^6.3.3"
+    mobx-react-lite "^3.2.1"
+    nanoid "^4.0.2"
+    postcss "^8.3.7"
+    postinstall-postinstall "^2.1.0"
+    re-resizable "^6.9.8"
+    react-i18next "^11.18.6"
+    react-shadow "^20.0.0"
+    rxjs "^7.3.0"
+    tailwindcss "^3.2.4"
+    uuid "^8.3.2"
+    vega "^5.22.1"
+    vega-embed "^6.21.0"
+    vega-lite "^5.6.0"
+
 "@kanaries/react-beautiful-dnd@0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@kanaries/react-beautiful-dnd/-/react-beautiful-dnd-0.0.1.tgz#18369ecd87649ff3d939ef0559e0e38f848de0b3"
@@ -484,6 +512,11 @@
   dependencies:
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
+
+"@react-leaflet/core@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.npmmirror.com/@react-leaflet/core/-/core-2.1.0.tgz#383acd31259d7c9ae8fb1b02d5e18fe613c2a13d"
+  integrity sha512-Qk7Pfu8BSarKGqILj4x7bCSZ1pjuAPZ+qmRwH5S7mDS91VSbVVsJSrW4qA+GPrro8t69gFYVMWb1Zc4yFmPiVg==
 
 "@rollup/plugin-typescript@^8.2.5":
   version "8.5.0"
@@ -572,6 +605,18 @@
   resolved "https://registry.yarnpkg.com/@types/clone/-/clone-2.1.1.tgz#9b880d0ce9b1f209b5e0bd6d9caa38209db34024"
   integrity sha512-BZIU34bSYye0j/BFcPraiDZ5ka6MJADjcDVELGf7glr9K+iE8NYVjFslJFVWzskSxkLLyCrSPScE82/UUoBSvg==
 
+"@types/d3-scale@^4.0.3":
+  version "4.0.3"
+  resolved "https://registry.npmmirror.com/@types/d3-scale/-/d3-scale-4.0.3.tgz#7a5780e934e52b6f63ad9c24b105e33dd58102b5"
+  integrity sha512-PATBiMCpvHJSMtZAMEhc2WyL+hnzarKzI6wAHYjhsonjWJYGq5BXTzQjv4l8m2jO183/4wZ90rKvSeT7o72xNQ==
+  dependencies:
+    "@types/d3-time" "*"
+
+"@types/d3-time@*":
+  version "3.0.0"
+  resolved "https://registry.npmmirror.com/@types/d3-time/-/d3-time-3.0.0.tgz#e1ac0f3e9e195135361fa1a1d62f795d87e6e819"
+  integrity sha512-sZLCdHvBUcNby1cB6Fd3ZBrABbjz3v1Vm90nysCQ6Vt7vd6e/h9Lt7SiJUoEX0l4Dzc7P5llKyhqSi1ycSf1Hg==
+
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
@@ -581,6 +626,11 @@
   version "0.0.50"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.50.tgz#1e0caa9364d3fccd2931c3ed96fdbeaa5d4cca83"
   integrity sha512-C6N5s2ZFtuZRj54k2/zyRhNDjJwwcViAM3Nbm8zjBpbqAdZ00mr0CFxvSKeO8Y/e03WVFLpQMdHYVfUd6SB+Hw==
+
+"@types/geojson@*":
+  version "7946.0.10"
+  resolved "https://registry.npmmirror.com/@types/geojson/-/geojson-7946.0.10.tgz#6dfbf5ea17142f7f9a043809f1cd4c448cb68249"
+  integrity sha512-Nmh0K3iWQJzniTuPRcJn5hxXkfB1T1pgB89SBig5PlJQU5yocazeu4jATJlaA0GYFKWMqDdvYemoSnF2pXgLVA==
 
 "@types/hoist-non-react-statics@*", "@types/hoist-non-react-statics@^3.3.0":
   version "3.3.1"
@@ -594,6 +644,13 @@
   version "2.2.7"
   resolved "https://registry.yarnpkg.com/@types/js-cookie/-/js-cookie-2.2.7.tgz#226a9e31680835a6188e887f3988e60c04d3f6a3"
   integrity sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==
+
+"@types/leaflet@^1.9.3":
+  version "1.9.3"
+  resolved "https://registry.npmmirror.com/@types/leaflet/-/leaflet-1.9.3.tgz#7aac302189eb3aa283f444316167995df42a5467"
+  integrity sha512-Caa1lYOgKVqDkDZVWkto2Z5JtVo09spEaUt2S69LiugbBpoqQu92HYFMGUbYezZbnBkyOxMNPXHSgRrRY5UyIA==
+  dependencies:
+    "@types/geojson" "*"
 
 "@types/node@*", "@types/node@^18.7.10":
   version "18.14.1"
@@ -1043,7 +1100,7 @@ d3-path@^3.0.1, d3-path@^3.1.0:
 
 d3-scale@^4.0.2:
   version "4.0.2"
-  resolved "https://registry.yarnpkg.com/d3-scale/-/d3-scale-4.0.2.tgz#82b38e8e8ff7080764f8dcec77bd4be393689396"
+  resolved "https://registry.npmmirror.com/d3-scale/-/d3-scale-4.0.2.tgz#82b38e8e8ff7080764f8dcec77bd4be393689396"
   integrity sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==
   dependencies:
     d3-array "2.10.0 - 3"
@@ -1539,6 +1596,11 @@ json5@^2.2.2:
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
   integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
 
+leaflet@^1.9.4:
+  version "1.9.4"
+  resolved "https://registry.npmmirror.com/leaflet/-/leaflet-1.9.4.tgz#23fae724e282fa25745aff82ca4d394748db7d8d"
+  integrity sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==
+
 lilconfig@^2.0.5, lilconfig@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/lilconfig/-/lilconfig-2.0.6.tgz#32a384558bd58af3d4c6e077dd1ad1d397bc69d4"
@@ -1821,6 +1883,13 @@ react-is@^17.0.2:
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
+
+react-leaflet@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.npmmirror.com/react-leaflet/-/react-leaflet-4.2.1.tgz#c300e9eccaf15cb40757552e181200aa10b94780"
+  integrity sha512-p9chkvhcKrWn/H/1FFeVSqLdReGwn2qmiobOQGO3BifX+/vV/39qhY8dGqbdcPh1e6jxh/QHriLXr7a4eLFK4Q==
+  dependencies:
+    "@react-leaflet/core" "^2.1.0"
 
 react-redux@^7.2.0:
   version "7.2.9"

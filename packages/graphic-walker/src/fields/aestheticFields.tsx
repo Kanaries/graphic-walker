@@ -27,7 +27,7 @@ const AestheticFields: React.FC = props => {
             case 'table':
                 return []
             case 'map':
-                return aestheticFields;
+                return aestheticFields.filter(f => f.id === 'color' || f.id === 'opacity' || f.id === 'size' || f.id === 'details');
             default:
                 return aestheticFields.filter(f => f.id !== 'text');
         }

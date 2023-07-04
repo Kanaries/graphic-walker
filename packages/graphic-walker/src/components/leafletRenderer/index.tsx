@@ -2,7 +2,8 @@ import React, { forwardRef, useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Tooltip, CircleMarker } from "react-leaflet";
 import type { Map } from "leaflet";
 import type { DeepReadonly, DraggableFieldState, IRow, IVisualConfig, VegaGlobalConfig } from "../../interfaces";
-import { useSizeScale } from "./encodings";
+import { getMeaAggKey } from "../../utils";
+import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 
 
 export interface ILeafletRendererProps {
@@ -31,7 +32,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
-    const { draggableFieldState, data, visualConfig } = props;
+    const { draggableFieldState, data, visualConfig, vegaConfig } = props;
     const { latitude: [lat], longitude: [lng], details, dimensions, measures, size, color, shape, opacity, text } = draggableFieldState;
     const { defaultAggregated } = visualConfig;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
@@ -92,17 +93,25 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
     const sizeScale = useSizeScale(data, size[0], defaultAggregated);
+    const opacityScale = useOpacityScale(data, opacity[0], defaultAggregated);
+    const colorScale = useColorScale(data, color[0], defaultAggregated, vegaConfig);
 
     const tooltipFields = useMemo(() => {
-        return details.map((det) => det.fid).concat(
-            [size, color, shape, opacity, text].map((enc) => enc[0]).filter(Boolean).map((enc) => enc.fid)
-        );
-    }, [details, size, color, shape, opacity, text]);
+        return details.concat(
+            [size, color, shape, opacity, text].map((enc) => enc[0]).filter(Boolean)
+        ).map(f => ({
+            ...f,
+            key: defaultAggregated && f.analyticType === 'measure' && f.aggName ? getMeaAggKey(f.fid, f.aggName) : f.fid,
+        }));
+    }, [defaultAggregated, details, size, color, shape, opacity, text]);
 
-    const getFieldName = (fid: string) => allFields.find((f) => f.fid === fid)?.name ?? fid;
+    const getFieldName = (fid: string, aggName: string | undefined) => {
+        const name = allFields.find((f) => f.fid === fid)?.name ?? fid;
+        return aggName ? `${aggName}(${name})` : name;
+    };
     
     return (
-        <MapContainer center={center} ref={mapRef} zoom={11} bounds={bounds} style={{ height: '100%' }}>
+        <MapContainer center={center} ref={mapRef} zoom={8} bounds={bounds} style={{ height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -114,12 +123,26 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                     failedLatLngListRef.current.push([i, lat, lng]);
                     return null;
                 }
+                const radius = sizeScale(row);
+                const opacity = opacityScale(row);
+                const color = colorScale(row);
                 return (
-                    <CircleMarker center={[Number(lat), Number(lng)]} key={i} radius={sizeScale(row)}>
+                    <CircleMarker
+                        key={`${i}-${radius}-${opacity}-${color}`}
+                        center={[Number(lat), Number(lng)]}
+                        radius={radius}
+                        opacity={0.8}
+                        fillOpacity={opacity}
+                        fillColor={color}
+                        color="#0004"
+                        weight={1}
+                        stroke
+                        fill
+                    >
                         {tooltipFields.length > 0 && (
                             <Tooltip>
-                                {tooltipFields.map((fid, j) => (
-                                    <p key={j}>{getFieldName(fid)}: {row[fid]}</p>
+                                {tooltipFields.map(({ fid, aggName, key }, j) => (
+                                    <p key={j}>{getFieldName(fid, aggName)}: {row[key]}</p>
                                 ))}
                             </Tooltip>
                         )}

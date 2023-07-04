@@ -497,6 +497,10 @@ export class VizSpecStore {
 
             encodings.columns = encodings.rows;
             encodings.rows = fieldsInCup as typeof encodings.rows; // assume this as writable
+
+            const fieldsInCup2 = encodings.longitude;
+            encodings.longitude = encodings.latitude;
+            encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
