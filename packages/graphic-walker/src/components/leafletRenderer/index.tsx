@@ -89,6 +89,19 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     const mapRef = useRef<Map>(null);
 
     useEffect(() => {
+        const container = mapRef.current?.getContainer();
+        if (container) {
+            const ro = new ResizeObserver(() => {
+                mapRef.current?.invalidateSize();
+            });
+            ro.observe(container);
+            return () => {
+                ro.unobserve(container);
+            };
+        }
+    });
+
+    useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
