@@ -33,7 +33,7 @@ export default function Toggle(props: ToggleProps) {
                 />
             </Switch>
             <Switch.Label as="span" className="ml-3 text-sm">
-                <span className="font-medium text-gray-900">{label}</span>
+                <span className="font-medium">{label}</span>
             </Switch.Label>
         </Switch.Group>
     );

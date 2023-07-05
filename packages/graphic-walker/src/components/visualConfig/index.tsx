@@ -47,7 +47,7 @@ const VisualConfigPanel: React.FC = (props) => {
                 </p>
                 {formatConfigList.map((fc) => (
                     <div className="my-2" key={fc}>
-                        <label className="block text-xs font-medium leading-6 text-gray-900">{t(`config.${fc}`)}</label>
+                        <label className="block text-xs font-medium leading-6">{t(`config.${fc}`)}</label>
                         <div className="mt-1">
                             <input
                                 type="text"
