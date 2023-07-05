@@ -28,7 +28,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background,zeroScale } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -59,6 +59,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
           ...themeConfig,
+          background:mediaTheme === "dark"?"#18181f":"#ffffff",
         }
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
@@ -79,8 +80,13 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
         // @ts-ignore
         config.scale.zero = Boolean(zeroScale)
+
+        if(background){
+            config.background = background
+        }
+
         return config;
-      }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+      }, [themeConfig, zeroScale, background,format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
     if (isPivotTable) {
         return (

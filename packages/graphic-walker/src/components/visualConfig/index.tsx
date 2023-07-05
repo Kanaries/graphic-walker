@@ -25,6 +25,7 @@ const VisualConfigPanel: React.FC = (props) => {
         normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
+    const [background,setBackground] = useState<string|undefined>(visualConfig.background);
 
     return (
         <Modal
@@ -63,6 +64,20 @@ const VisualConfigPanel: React.FC = (props) => {
                         </div>
                     </div>
                 ))}
+             <h2 className="text-lg">{t('config.background')}</h2>
+                <div className="my-2">
+                        <label className="block text-xs font-medium leading-6">{t(`config.color`)}</label>
+                        <div className="mt-1">
+                            <input
+                                type="text"
+                                className="block w-full text-gray-700 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                value={background ?? ''}
+                                onChange={(e) => {
+                                    setBackground(e.target.value)
+                                }}
+                            />
+                        </div>
+                    </div>
                 <div className="my-2">
                     <Toggle
                         label="zero scale"
@@ -80,6 +95,7 @@ const VisualConfigPanel: React.FC = (props) => {
                             runInAction(() => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
+                                vizStore.setVisualConfig('background',background);
                                 commonStore.setShowVisualConfigPanel(false);
                             })
                         }}
