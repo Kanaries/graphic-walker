@@ -72,6 +72,7 @@ export function initVisualConfig(): IVisualConfig {
         sorted: "none",
         zeroScale: true,
         background: undefined,
+        independentScale:false,
         size: {
             mode: "auto",
             width: 320,
@@ -374,6 +375,7 @@ export class VizSpecStore {
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
                 case configKey === "zeroScale":
+                case configKey === "independentScale":
                 case configKey === "background":
                 case configKey === "stack": {
                     return (config[configKey] = value);

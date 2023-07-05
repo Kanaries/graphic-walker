@@ -196,6 +196,7 @@ export interface IVisualConfig {
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
     zeroScale: boolean;
+    independentScale: boolean;
     background?:string;
     format: {
         numberFormat?: string;

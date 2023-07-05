@@ -46,6 +46,7 @@ interface ReactVegaProps {
   height: number;
   onGeomClick?: (values: any, e: any) => void
   vegaConfig: VegaGlobalConfig;
+  independentScale?: boolean;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -96,6 +97,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     // themeKey = 'vega',
     // dark = 'media',
     vegaConfig,
+    independentScale
     // format
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
@@ -215,6 +217,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       if ('encoding' in singleView) {
         spec.encoding = singleView.encoding;
       }
+
+    if(independentScale){
+      spec.resolve = {  "scale": {
+        "x": "independent",
+        "y": "independent"
+      }}
+    }else{
+      spec.resolve  = {}
+    }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {

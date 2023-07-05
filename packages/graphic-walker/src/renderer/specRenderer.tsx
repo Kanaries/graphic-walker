@@ -28,7 +28,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background,zeroScale } = visualConfig;
+    const { geoms, interactiveScale, independentScale, defaultAggregated, stack, showActions, size, format: _format, background,zeroScale } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -79,7 +79,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             config.scale = {};
         }
         // @ts-ignore
-        config.scale.zero = Boolean(zeroScale)
+        config.scale.zero = Boolean(zeroScale);
 
         if(background){
             config.background = background
@@ -130,6 +130,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             {loading && <LoadingLayer />}
             <ReactVega
                 vegaConfig={vegaConfig}
+                independentScale={independentScale}
                 // format={format}
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
