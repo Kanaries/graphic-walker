@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useGlobalStore } from '../../store';
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
@@ -7,7 +7,7 @@ import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
 import { useTranslation } from 'react-i18next';
 import Toggle from '../toggle';
-import { runInAction } from 'mobx';
+import { runInAction, toJS } from 'mobx';
 
 const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -36,6 +36,19 @@ const VisualConfigPanel: React.FC = (props) => {
     });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
+
+    const visualConfigRef = useRef(visualConfig);
+    visualConfigRef.current = toJS(visualConfig);
+    useEffect(() => {
+        setZeroScale(visualConfigRef.current.zeroScale);
+        setBackground(visualConfigRef.current.background);
+        setResolve(visualConfigRef.current.resolve);
+        setFormat({
+            numberFormat: visualConfigRef.current.format.numberFormat,
+            timeFormat: visualConfigRef.current.format.timeFormat,
+            normalizedNumberFormat: visualConfigRef.current.format.normalizedNumberFormat,
+        });
+    }, [showVisualConfigPanel]);
 
     return (
         <Modal
