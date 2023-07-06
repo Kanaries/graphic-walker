@@ -226,15 +226,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             // @ts-ignore
             let resolve = vegaConfig.resolve;
             for (let v in resolve) {
-                let xxx = resolve[v] ? 'independent' : 'shared';
+                let value = resolve[v] ? 'independent' : 'shared';
                 // @ts-ignore
                 if (!spec.resolve.scale) spec.resolve.scale = {};
-                spec.resolve.scale = { ...spec.resolve.scale, [v]: xxx };
+                spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
                 if (v == 'x' || 'y') {
-                    spec.resolve.axis = { ...spec.resolve.axis, [v]: xxx };
+                    spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
                 }
                 if (v == 'color' || 'opacity' || 'shape' || 'size') {
-                    spec.resolve.legend = { ...spec.resolve.legend, [v]: xxx };
+                    spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
                 }
             }
 
