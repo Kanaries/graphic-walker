@@ -5,7 +5,7 @@ import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, DeepReadonly } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
@@ -46,7 +46,6 @@ interface ReactVegaProps {
     height: number;
     onGeomClick?: (values: any, e: any) => void;
     vegaConfig: VegaGlobalConfig;
-    independentScale?: boolean;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -96,7 +95,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         // themeKey = 'vega',
         // dark = 'media',
         vegaConfig,
-        independentScale,
         // format
     } = props;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
@@ -224,15 +222,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 spec.encoding = singleView.encoding;
             }
 
-            if (independentScale) {
-                spec.resolve = {
-                    scale: {
-                        x: 'independent',
-                        y: 'independent',
-                    },
-                };
-            } else {
-                spec.resolve = {};
+            if (!spec.resolve) spec.resolve = {};
+            // @ts-ignore
+            let resolve = vegaConfig.resolve;
+            for (let v in resolve) {
+                let xxx = resolve[v] ? 'independent' : 'shared';
+                // @ts-ignore
+                if (!spec.resolve.scale) spec.resolve.scale = {};
+                spec.resolve.scale = { ...spec.resolve.scale, [v]: xxx };
+                if (v == 'x' || 'y') {
+                    spec.resolve.axis = { ...spec.resolve.axis, [v]: xxx };
+                }
+                if (v == 'color' || 'opacity' || 'shape' || 'size') {
+                    spec.resolve.legend = { ...spec.resolve.legend, [v]: xxx };
+                }
             }
 
             if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {

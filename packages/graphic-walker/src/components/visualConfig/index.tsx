@@ -19,14 +19,23 @@ const VisualConfigPanel: React.FC = (props) => {
         'timeFormat',
         'normalizedNumberFormat',
     ];
+    const positionChannelConfigList: (keyof IVisualConfig['resolve'])[] = ['x', 'y'];
+    const nonPositionChannelConfigList: (keyof IVisualConfig['resolve'])[] = ['color', 'opacity', 'shape', 'size'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
         numberFormat: visualConfig.format.numberFormat,
         timeFormat: visualConfig.format.timeFormat,
         normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
     });
+    const [resolve, setResolve] = useState<IVisualConfig['resolve']>({
+        x: visualConfig.resolve.x,
+        y: visualConfig.resolve.y,
+        color: visualConfig.resolve.color,
+        opacity: visualConfig.resolve.opacity,
+        shape: visualConfig.resolve.shape,
+        size: visualConfig.resolve.size,
+    });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
-    const [independentScale, setIndependentScale] = useState<boolean>(visualConfig.independentScale);
 
     return (
         <Modal
@@ -38,13 +47,13 @@ const VisualConfigPanel: React.FC = (props) => {
             <div>
                 <h2 className="text-lg mb-4">{t('config.format')}</h2>
                 <p className="text-xs">
-                    Format guides docs:{' '}
+                    {t(`config.formatGuidesDocs`)}:{' '}
                     <a
                         target="_blank"
                         className="underline text-blue-500"
                         href="https://github.com/d3/d3-format#locale_format"
                     >
-                        read here
+                        {t(`config.readHere`)}
                     </a>
                 </p>
                 {formatConfigList.map((fc) => (
@@ -79,21 +88,45 @@ const VisualConfigPanel: React.FC = (props) => {
                         />
                     </div>
                 </div>
+                <h2 className="text-lg">{t('config.independence')}</h2>
+                <div className="my-2">
+                    <div className="flex space-x-6">
+                        {positionChannelConfigList.map((pc) => (
+                            <Toggle
+                                label={t(`config.${pc}`)}
+                                key={pc}
+                                enabled={resolve[pc] ?? false}
+                                onChange={(e) => {
+                                    setResolve((r) => ({
+                                        ...r,
+                                        [pc]: e,
+                                    }));
+                                    console.log(resolve);
+                                }}
+                            />
+                        ))}
+                        {nonPositionChannelConfigList.map((npc) => (
+                            <Toggle
+                                label={t(`config.${npc}`)}
+                                key={npc}
+                                enabled={resolve[npc] ?? false}
+                                onChange={(e) => {
+                                    setResolve((r) => ({
+                                        ...r,
+                                        [npc]: e,
+                                    }));
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <h2 className="text-lg">{t('config.zeroScale')}</h2>{' '}
                 <div className="my-2">
                     <Toggle
-                        label="zero scale"
+                        label={t(`config.zeroScale`)}
                         enabled={zeroScale}
                         onChange={(en) => {
                             setZeroScale(en);
-                        }}
-                    />
-                </div>
-                <div className="my-2">
-                    <Toggle
-                        label="independent scale"
-                        enabled={independentScale}
-                        onChange={(en) => {
-                            setIndependentScale(en);
                         }}
                     />
                 </div>
@@ -106,7 +139,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
                                 vizStore.setVisualConfig('background', background);
-                                vizStore.setVisualConfig('independentScale', independentScale);
+                                vizStore.setVisualConfig('resolve', resolve);
                                 commonStore.setShowVisualConfigPanel(false);
                             });
                         }}

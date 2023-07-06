@@ -5,7 +5,16 @@
         "timeFormat": "Time format",
         "normalizedNumberFormat": "Normalized number format",
         "background": "Background",
-        "color": "Color"
+        "color": "Color",
+        "independence": "Independence",
+        "x": "x-Axis",
+        "y": "y-Axis",
+        "opacity": "Opacity",
+        "shape": "Shape",
+        "size": "Size",
+        "zeroScale": "Zero Scale",
+        "formatGuidesDocs": "Format guides docs",
+        "readHere": "read here"
     },
     "constant": {
         "row_count": "Row count",

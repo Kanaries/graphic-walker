@@ -196,12 +196,19 @@ export interface IVisualConfig {
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
     zeroScale: boolean;
-    independentScale: boolean;
     background?: string;
     format: {
         numberFormat?: string;
         timeFormat?: string;
         normalizedNumberFormat?: string;
+    };
+    resolve: {
+        x?: boolean;
+        y?: boolean;
+        color?: boolean;
+        opacity?: boolean;
+        shape?: boolean;
+        size?: boolean;
     };
     size: {
         mode: 'auto' | 'fixed';

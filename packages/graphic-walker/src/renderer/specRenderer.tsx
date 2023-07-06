@@ -39,7 +39,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const {
         geoms,
         interactiveScale,
-        independentScale,
         defaultAggregated,
         stack,
         showActions,
@@ -47,6 +46,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         format: _format,
         background,
         zeroScale,
+        resolve,
     } = visualConfig;
 
     const rows = draggableFieldState.rows;
@@ -99,13 +99,22 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
         // @ts-ignore
         config.scale.zero = Boolean(zeroScale);
-
+        // @ts-ignore
+        config.resolve = resolve;
         if (background) {
             config.background = background;
         }
 
         return config;
-    }, [themeConfig, zeroScale, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
+    }, [
+        themeConfig,
+        zeroScale,
+        resolve,
+        background,
+        format.normalizedNumberFormat,
+        format.numberFormat,
+        format.timeFormat,
+    ]);
 
     if (isPivotTable) {
         return (
@@ -149,7 +158,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             {loading && <LoadingLayer />}
             <ReactVega
                 vegaConfig={vegaConfig}
-                independentScale={independentScale}
                 // format={format}
                 layoutMode={size.mode}
                 interactiveScale={interactiveScale}
