@@ -7,7 +7,6 @@ import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
-
 interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
@@ -20,18 +19,12 @@ interface IPureRendererProps {
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
-const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
-    const {
-        themeKey,
-        dark,
-        rawData,
-        visualState,
-        visualConfig,
-    } = props;
+const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
+    const { themeKey, dark, rawData, visualState, visualConfig } = props;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-    
+
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];

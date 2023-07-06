@@ -106,7 +106,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
                                 vizStore.setVisualConfig('background', background);
-                                vizStore.setVisualConfig('independentScale',independentScale);
+                                vizStore.setVisualConfig('independentScale', independentScale);
                                 commonStore.setShowVisualConfigPanel(false);
                             });
                         }}

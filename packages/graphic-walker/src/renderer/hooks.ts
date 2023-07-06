@@ -4,7 +4,6 @@ import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces
 import { applyFilter, applyViewQuery, transformDataService } from '../services';
 import { getMeaAggKey } from '../utils';
 
-
 interface UseRendererProps {
     data: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
@@ -38,10 +37,14 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                 return applyViewQuery(d, dims.concat(meas), {
                     op: defaultAggregated ? 'aggregate' : 'raw',
                     groupBy: dims.map((f) => f.fid),
-                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
+                    measures: meas.map((f) => ({
+                        field: f.fid,
+                        agg: f.aggName as any,
+                        asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                    })),
                 });
             })
-            .then(data => {
+            .then((data) => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }
@@ -49,7 +52,8 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                     setComputing(false);
                     setViewData(data);
                 });
-            }).catch((err) => {
+            })
+            .catch((err) => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }

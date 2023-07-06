@@ -4,8 +4,8 @@
         "numberFormat": "数字格式",
         "timeFormat": "时间格式",
         "normalizedNumberFormat": "标准化数字格式",
-        "background":"背景色",
-        "color":"颜色"
+        "background": "背景色",
+        "color": "颜色"
     },
     "constant": {
         "row_count": "行数",

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
-import { CommonStore } from './commonStore'
-import { VizSpecStore } from './visualSpecStore'
+import { CommonStore } from './commonStore';
+import { VizSpecStore } from './visualSpecStore';
 
 export interface IGlobalStore {
     commonStore: CommonStore;
@@ -12,8 +12,8 @@ const vizStore = new VizSpecStore(commonStore);
 
 const initStore: IGlobalStore = {
     commonStore,
-    vizStore
-}
+    vizStore,
+};
 
 const StoreContext = React.createContext<IGlobalStore>(null!);
 
@@ -35,7 +35,7 @@ interface StoreWrapperProps {
 }
 export class StoreWrapper extends React.Component<StoreWrapperProps> {
     constructor(props: StoreWrapperProps) {
-        super(props)
+        super(props);
         if (props.storeRef) {
             props.storeRef.current = initStore;
         }
@@ -52,9 +52,7 @@ export class StoreWrapper extends React.Component<StoreWrapperProps> {
         }
     }
     render() {
-        return <StoreContext.Provider value={initStore}>
-            { this.props.children }
-        </StoreContext.Provider>
+        return <StoreContext.Provider value={initStore}>{this.props.children}</StoreContext.Provider>;
     }
 }
 

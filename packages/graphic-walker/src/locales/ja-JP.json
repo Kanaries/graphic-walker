@@ -4,8 +4,8 @@
         "numberFormat": "数字の形式",
         "timeFormat": "時間の形式",
         "normalizedNumberFormat": "正規化された数字の形式",
-        "background":"背景",
-        "color":"カラー"
+        "background": "背景",
+        "color": "カラー"
     },
     "constant": {
         "row_count": "行数",

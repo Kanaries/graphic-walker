@@ -4,7 +4,15 @@ import React, { forwardRef, useMemo } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
+import {
+    DeepReadonly,
+    DraggableFieldState,
+    IDarkMode,
+    IRow,
+    IThemeKey,
+    IVisualConfig,
+    VegaGlobalConfig,
+} from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -28,7 +36,18 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, independentScale, defaultAggregated, stack, showActions, size, format: _format, background,zeroScale } = visualConfig;
+    const {
+        geoms,
+        interactiveScale,
+        independentScale,
+        defaultAggregated,
+        stack,
+        showActions,
+        size,
+        format: _format,
+        background,
+        zeroScale,
+    } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -40,7 +59,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const sizeChannel = draggableFieldState.size;
     const details = draggableFieldState.details;
     const text = draggableFieldState.text;
-    const format = toJS(_format)
+    const format = toJS(_format);
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
     const colLeftFacetFields = useMemo(
@@ -58,9 +77,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
-          ...themeConfig,
-          background:mediaTheme === "dark"?"#18181f":"#ffffff",
-        }
+            ...themeConfig,
+            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+        };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
             config.normalizedNumberFormat = format.normalizedNumberFormat;
@@ -81,12 +100,12 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         // @ts-ignore
         config.scale.zero = Boolean(zeroScale);
 
-        if(background){
-            config.background = background
+        if (background) {
+            config.background = background;
         }
 
         return config;
-      }, [themeConfig, zeroScale, background,format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+    }, [themeConfig, zeroScale, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
         return (

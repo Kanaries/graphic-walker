@@ -1,5 +1,5 @@
-import {Config as VgConfig} from 'vega';
-import {Config as VlConfig} from 'vega-lite';
+import { Config as VgConfig } from 'vega';
+import { Config as VlConfig } from 'vega-lite';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -116,7 +116,7 @@ export interface IMeasure {
 
 export interface IPredicate {
     key: string;
-    type: "discrete" | "continuous";
+    type: 'discrete' | 'continuous';
     range: Set<any> | [number, number];
 }
 
@@ -197,7 +197,7 @@ export interface IVisualConfig {
     sorted: 'none' | 'ascending' | 'descending';
     zeroScale: boolean;
     independentScale: boolean;
-    background?:string;
+    background?: string;
     format: {
         numberFormat?: string;
         timeFormat?: string;

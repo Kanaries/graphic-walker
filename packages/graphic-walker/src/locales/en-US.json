@@ -4,8 +4,8 @@
         "numberFormat": "Number format",
         "timeFormat": "Time format",
         "normalizedNumberFormat": "Normalized number format",
-        "background":"Background",
-        "color":"Color"
+        "background": "Background",
+        "color": "Color"
     },
     "constant": {
         "row_count": "Row count",
