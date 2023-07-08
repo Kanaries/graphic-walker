@@ -19,6 +19,7 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 
 export interface IGWProps {
@@ -133,6 +134,7 @@ const App = observer<IGWProps>(function App(props) {
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
+                        <GeoConfigPanel />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />

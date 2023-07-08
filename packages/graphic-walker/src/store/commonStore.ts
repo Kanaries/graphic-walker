@@ -15,6 +15,7 @@ export class CommonStore {
     public showDataConfig: boolean = false;
     public showCodeExportPanel: boolean = false;
     public showVisualConfigPanel: boolean = false;
+    public showGeoJSONConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     constructor () {
@@ -67,6 +68,9 @@ export class CommonStore {
     }
     public setShowVisualConfigPanel (show: boolean) {
         this.showVisualConfigPanel = show;
+    }
+    public setShowGeoJSONConfigPanel (show: boolean) {
+        this.showGeoJSONConfigPanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;

@@ -22,6 +22,7 @@ import {
     MapPinIcon,
     GlobeAltIcon,
     RectangleGroupIcon,
+    GlobeAmericasIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -275,6 +276,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     vizStore.setVisualConfig('geoms', [GEMO_TYPES[coord][0]]);
                 },
             },
+            coordSystem === 'geographic' && markType === 'choropleth' && {
+                key: 'geojson',
+                label: t('button.geojson'),
+                icon: GlobeAmericasIcon,
+                onClick: () => {
+                    commonStore.setShowGeoJSONConfigPanel(true);
+                },
+            },
             '-',
             {
                 key: 'debug',
@@ -324,7 +333,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     commonStore.setShowCodeExportPanel(true);
                 }
             },
-        ] as ToolbarItemProps[];
+        ].filter(Boolean) as ToolbarItemProps[];
 
         const items = builtInItems.filter(item => typeof item === 'string' || !exclude.includes(item.key));
 

@@ -165,6 +165,15 @@
                 "size_setting": {
                     "width": "宽度",
                     "height": "高度"
+                },
+                "geojson": "GeoJSON 配置",
+                "geojson_settings": {
+                    "geoKey": "地理 ID",
+                    "jsonInput": "GeoJSON",
+                    "jsonInputPlaceholder": "在此粘贴 GeoJSON",
+                    "href": "GeoJSON URL",
+                    "hrefPlaceholder": "输入 GeoJSON URL",
+                    "load": "加载"
                 }
             },
             "DatasetFields": {

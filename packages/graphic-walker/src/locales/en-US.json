@@ -165,6 +165,15 @@
                 "size_setting": {
                     "width": "Width",
                     "height": "Height"
+                },
+                "geojson": "GeoJSON Configuration",
+                "geojson_settings": {
+                    "geoKey": "Feature ID",
+                    "jsonInput": "GeoJSON",
+                    "jsonInputPlaceholder": "Paste GeoJSON here",
+                    "href": "GeoJSON URL",
+                    "hrefPlaceholder": "Enter GeoJSON URL",
+                    "load": "Load"
                 }
             },
             "DatasetFields": {

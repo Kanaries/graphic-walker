@@ -164,6 +164,15 @@
                 "size_setting": {
                     "width": "幅",
                     "height": "高さ"
+                },
+                "geojson": "GeoJSON設定",
+                "geojson_settings": {
+                    "geoKey": "フィーチャーID",
+                    "jsonInput": "GeoJSON",
+                    "jsonInputPlaceholder": "ここにGeoJSONを貼り付けてください",
+                    "href": "GeoJSON URL",
+                    "hrefPlaceholder": "GeoJSON URLを入力してください",
+                    "load": "ロード"
                 }
             },
             "DatasetFields": {
