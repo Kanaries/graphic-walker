@@ -33,7 +33,7 @@
             "table": "表格",
             "text": "文本",
             "poi": "兴趣点",
-            "geoshape": "地理形状"
+            "choropleth": "区域图"
         },
         "coord_system": {
             "__enum__": "坐标系统",

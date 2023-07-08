@@ -64,6 +64,7 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.5",
     "@types/d3-scale": "^4.0.3",
+    "@types/geojson": "^7946.0.10",
     "@types/leaflet": "^1.9.3",
     "@types/react": "^17.x",
     "@types/react-beautiful-dnd": "^13.1.2",

@@ -13,7 +13,7 @@ const PosFields: React.FC = props => {
 
     const channels = useMemo(() => {
         if (coordSystem === 'geographic') {
-            if (geoms[0] === 'geoshape') {
+            if (geoms[0] === 'choropleth') {
                 return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'geoId');
             }
             return DRAGGABLE_STATE_KEYS.filter(f => f.id === 'longitude' || f.id === 'latitude');

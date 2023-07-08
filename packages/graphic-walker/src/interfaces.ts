@@ -1,5 +1,6 @@
 import {Config as VgConfig} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type { FeatureCollection } from 'geojson';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -216,6 +217,8 @@ export interface IVisualConfig {
         width: number;
         height: number;
     };
+    geojson?: FeatureCollection;
+    geoKey?: string;
 }
 
 export interface IVisSpec {

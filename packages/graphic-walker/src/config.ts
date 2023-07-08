@@ -18,7 +18,7 @@ export const GEMO_TYPES: Record<ICoordMode, Readonly<string[]>> = {
     ],
     geographic: [
         'poi',
-        'geoshape',
+        'choropleth',
     ],
 } as const;
 

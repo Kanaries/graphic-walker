@@ -33,7 +33,7 @@
             "table": "Table",
             "text": "Text",
             "poi": "POI",
-            "geoshape": "Geo Shape"
+            "choropleth": "Choropleth"
         },
         "coord_system": {
             "__enum__": "Coordinate System",

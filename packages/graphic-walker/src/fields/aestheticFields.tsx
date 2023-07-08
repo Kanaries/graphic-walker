@@ -27,8 +27,9 @@ const AestheticFields: React.FC = props => {
             case 'table':
                 return []
             case 'poi':
-            case 'geoshape':
                 return aestheticFields.filter(f => f.id === 'color' || f.id === 'opacity' || f.id === 'size' || f.id === 'details');
+            case 'choropleth':
+                return aestheticFields.filter(f => f.id === 'color' || f.id === 'opacity' || f.id === 'text' || f.id === 'details');
             default:
                 return aestheticFields.filter(f => f.id !== 'text');
         }

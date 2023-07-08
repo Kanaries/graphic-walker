@@ -1,5 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
+import type { FeatureCollection } from "geojson";
 import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
@@ -84,7 +85,8 @@ export function initVisualConfig(): IVisualConfig {
             numberFormat: undefined,
             timeFormat: undefined,
             normalizedNumberFormat: undefined
-        }
+        },
+        geoKey: 'name',
     };
 }
 
@@ -727,5 +729,15 @@ export class VizSpecStore {
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
+    }
+    public setGeoJSON(geoJSON: FeatureCollection) {
+        this.useMutable(({ config }) => {
+            config.geojson = geoJSON;
+        });
+    }
+    public setGeoKey(key: string) {
+        this.useMutable(({ config }) => {
+            config.geoKey = key;
+        });
     }
 }

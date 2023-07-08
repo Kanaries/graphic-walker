@@ -33,7 +33,7 @@
             "table": "表",
             "text": "テキスト",
             "poi": "POI",
-            "geoshape": "形状"
+            "choropleth": "コロプレス"
         },
         "coord_system": {
             "__enum__": "座標系",
