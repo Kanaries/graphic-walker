@@ -7,6 +7,8 @@ import { FieldsContextWrapper } from "./fields/fieldsContext";
 import { ShadowDom } from "./shadow-dom";
 
 import "./empty_sheet.css";
+export type { IGWProps }
+export { embedGraphicWalker } from './vanilla';
 
 export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
     const { storeRef } = props;

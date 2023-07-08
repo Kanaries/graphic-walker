@@ -2,7 +2,6 @@ import React, { HTMLAttributes, createContext, useEffect, useRef, useState } fro
 import { StyleSheetManager } from "styled-components";
 import root from "react-shadow";
 
-import "./empty_sheet.css";
 import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from "./index.css?inline";
 
