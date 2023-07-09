@@ -1,13 +1,14 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import type { FeatureCollection } from "geojson";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
+import { feature } from 'topojson-client';
+import { DataSet, DraggableFieldState, IFilterRule, IGeographicData, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import { FeatureCollection } from "geojson";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -730,12 +731,18 @@ export class VizSpecStore {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
     }
-    public setGeoJSON(geoJSON: FeatureCollection) {
+    public setGeographicData(data: IGeographicData, geoKey: string) {
+        const geoJSON = data.type === 'GeoJSON' ? data.data : feature(data.data, Object.keys(data.data.objects)[0]) as unknown as FeatureCollection;
+        if (!('features' in geoJSON)) {
+            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
+            return;
+        }
         this.useMutable(({ config }) => {
             config.geojson = geoJSON;
+            config.geoKey = geoKey;
         });
     }
-    public setGeoKey(key: string) {
+    public updateGeoKey(key: string) {
         this.useMutable(({ config }) => {
             config.geoKey = key;
         });

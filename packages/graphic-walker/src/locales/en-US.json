@@ -166,13 +166,15 @@
                     "width": "Width",
                     "height": "Height"
                 },
-                "geojson": "GeoJSON Configuration",
-                "geojson_settings": {
+                "geography": "Geography Configuration",
+                "geography_settings": {
                     "geoKey": "Feature ID",
-                    "jsonInput": "GeoJSON",
-                    "jsonInputPlaceholder": "Paste GeoJSON here",
-                    "href": "GeoJSON URL",
-                    "hrefPlaceholder": "Enter GeoJSON URL",
+                    "format": "Format",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "jsonInputPlaceholder": "Paste {{format}} here",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "Enter {{format}} URL",
                     "load": "Load"
                 }
             },

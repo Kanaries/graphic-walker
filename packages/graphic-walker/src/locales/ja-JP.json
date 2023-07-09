@@ -165,13 +165,15 @@
                     "width": "幅",
                     "height": "高さ"
                 },
-                "geojson": "GeoJSON設定",
-                "geojson_settings": {
+                "geography": "地理情報設定",
+                "geography_settings": {
                     "geoKey": "フィーチャーID",
-                    "jsonInput": "GeoJSON",
-                    "jsonInputPlaceholder": "ここにGeoJSONを貼り付けてください",
-                    "href": "GeoJSON URL",
-                    "hrefPlaceholder": "GeoJSON URLを入力してください",
+                    "format": "データ形式",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "{{format}} URLを入力",
                     "load": "ロード"
                 }
             },

@@ -166,13 +166,15 @@
                     "width": "宽度",
                     "height": "高度"
                 },
-                "geojson": "GeoJSON 配置",
-                "geojson_settings": {
+                "geography": "地理信息配置",
+                "geography_settings": {
                     "geoKey": "地理 ID",
-                    "jsonInput": "GeoJSON",
-                    "jsonInputPlaceholder": "在此粘贴 GeoJSON",
-                    "href": "GeoJSON URL",
-                    "hrefPlaceholder": "输入 GeoJSON URL",
+                    "format": "数据格式",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "jsonInputPlaceholder": "在此粘贴 {{format}}",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "输入在线资源地址",
                     "load": "加载"
                 }
             },

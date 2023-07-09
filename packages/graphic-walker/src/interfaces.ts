@@ -1,6 +1,7 @@
 import {Config as VgConfig} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
+import type { feature } from 'topojson-client';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -237,3 +238,16 @@ export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
+
+export type Topology = Parameters<typeof feature>[0];
+
+export type IGeographicData = (
+    | {
+        type: 'GeoJSON';
+        data: FeatureCollection;
+    }
+    | {
+        type: 'TopoJSON';
+        data: Topology;
+    }
+);

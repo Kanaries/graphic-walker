@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import type { FeatureCollection } from 'geojson';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IGeographicData, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -43,8 +42,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
-    geojson?: {
-        features: FeatureCollection;
+    geographicData?: IGeographicData & {
         key: string;
     };
 }
@@ -61,7 +59,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         toolbar,
-        geojson,
+        geographicData,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -114,11 +112,10 @@ const App = observer<IGWProps>(function App(props) {
     }, [spec, safeDataset]);
 
     useEffect(() => {
-        if (geojson) {
-            vizStore.setGeoJSON(geojson.features);
-            vizStore.setGeoKey(geojson.key);
+        if (geographicData) {
+            vizStore.setGeographicData(geographicData, geographicData.key);
         }
-    }, [geojson]);
+    }, [geographicData]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
