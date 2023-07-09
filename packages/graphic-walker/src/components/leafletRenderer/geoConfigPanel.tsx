@@ -1,11 +1,12 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { runInAction } from 'mobx';
 import { useGlobalStore } from '../../store';
 import Modal from '../modal';
 import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
+import type { Topology } from '../../interfaces';
 
 const GeoConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -20,6 +21,16 @@ const GeoConfigPanel: React.FC = (props) => {
     const [url, setUrl] = useState('');
     const [geoJSON, setGeoJSON] = useState('');
     const [topoJSON, setTopoJSON] = useState('');
+    const [topoJSONKey, setTopoJSONKey] = useState('');
+
+    const defaultTopoJSONKey = useMemo(() => {
+        try {
+            const value = JSON.parse(topoJSON) as Topology;
+            return Object.keys(value.objects)[0] || '';
+        } catch (error) {
+            return '';
+        }
+    }, [topoJSON]);
 
     useEffect(() => {
         setFeatureId(geoKey || '');
@@ -122,6 +133,22 @@ const GeoConfigPanel: React.FC = (props) => {
                                     (dataMode === 'GeoJSON' ? setGeoJSON : setTopoJSON)(e.target.value);
                                 }}
                             />
+                            {dataMode === 'TopoJSON' && (
+                                <div className="flex items-center space-x-2">
+                                    <label className="text-xs whitespace-nowrap capitalize">
+                                        {t('geography_settings.objectKey')}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        value={topoJSONKey}
+                                        placeholder={defaultTopoJSONKey}
+                                        onChange={(e) => {
+                                            setTopoJSONKey(e.target.value);
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -132,14 +159,26 @@ const GeoConfigPanel: React.FC = (props) => {
                         onClick={() => {
                             try {
                                 const json = JSON.parse(dataMode === 'GeoJSON' ? geoJSON : topoJSON);
-                                runInAction(() => {
-                                    vizStore.setGeographicData({
-                                        type: dataMode,
-                                        data: json,
-                                    }, featureId);
-                                    commonStore.setShowGeoJSONConfigPanel(false);
-                                });
-                            } catch {}
+                                if (dataMode === 'TopoJSON') {
+                                    runInAction(() => {
+                                        vizStore.setGeographicData({
+                                            type: 'TopoJSON',
+                                            data: json,
+                                            objectKey: topoJSONKey || defaultTopoJSONKey,
+                                        }, featureId);
+                                    });
+                                } else {
+                                    runInAction(() => {
+                                        vizStore.setGeographicData({
+                                            type: 'GeoJSON',
+                                            data: json,
+                                        }, featureId);
+                                    });
+                                }
+                                commonStore.setShowGeoJSONConfigPanel(false);
+                            } catch (err) {
+                                console.error(err);
+                            }
                         }}
                     />
                     <DefaultButton

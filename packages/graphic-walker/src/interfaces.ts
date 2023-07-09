@@ -249,5 +249,9 @@ export type IGeographicData = (
     | {
         type: 'TopoJSON';
         data: Topology;
+        /**
+         * default to the first key of `objects` in Topology
+         */
+        objectKey?: string;
     }
 );

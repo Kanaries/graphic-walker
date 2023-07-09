@@ -172,6 +172,7 @@
                     "format": "Format",
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
+                    "objectKey": "Extract Feature Key",
                     "jsonInputPlaceholder": "Paste {{format}} here",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "Enter {{format}} URL",

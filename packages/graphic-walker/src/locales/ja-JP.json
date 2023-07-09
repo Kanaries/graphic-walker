@@ -171,6 +171,7 @@
                     "format": "データ形式",
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
+                    "objectKey": "Feature のキー",
                     "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "{{format}} URLを入力",
