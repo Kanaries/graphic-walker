@@ -2,16 +2,20 @@ import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
+import { ShadowDom } from '../shadow-dom';
+import AppRoot from '../components/appRoot';
 import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
+
 interface IPureRendererProps {
+    name?: string;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
-    draggableState: DraggableFieldState;
+    visualState: DraggableFieldState;
     visualConfig: IVisualConfig;
 }
 
@@ -21,22 +25,22 @@ interface IPureRendererProps {
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
     const {
+        name,
         themeKey,
         dark,
         rawData,
-        draggableState,
+        visualState,
         visualConfig,
     } = props;
-    
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-
+    
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(draggableState);
+        const { dimensions, measures, filters, ...state } = toJS(visualState);
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -51,7 +55,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         }
 
         return { allFields, viewDimensions, viewMeasures, filters };
-    }, [draggableState]);
+    }, [visualState]);
 
     const { viewData: data, loading: waiting } = useRenderer({
         data: rawData ?? [],
@@ -75,15 +79,22 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     }, [waiting]);
 
     return (
-        <SpecRenderer
-            loading={waiting}
-            data={viewData}
-            ref={ref}
-            themeKey={themeKey}
-            dark={dark}
-            draggableFieldState={draggableState}
-            visualConfig={visualConfig}
-        />
+        <AppRoot>
+            <ShadowDom>
+                <div className="relative">
+                    <SpecRenderer
+                        name={name}
+                        loading={waiting}
+                        data={viewData}
+                        ref={ref}
+                        themeKey={themeKey}
+                        dark={dark}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                    />
+                </div>
+            </ShadowDom>
+        </AppRoot>
     );
 });
 
