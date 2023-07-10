@@ -12,6 +12,8 @@ import tailwindStyle from "tailwindcss/tailwind.css?inline";
 import style from "./index.css?inline";
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
+export type { IGWProps }
+export { embedGraphicWalker } from './vanilla';
 
 export const GraphicWalker: React.FC<IGWProps> = observer((props) => {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);

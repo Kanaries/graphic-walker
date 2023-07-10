@@ -71,6 +71,7 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: "none",
         zeroScale: true,
+        background: undefined,
         size: {
             mode: "auto",
             width: 320,
@@ -79,8 +80,16 @@ export function initVisualConfig(): IVisualConfig {
         format: {
             numberFormat: undefined,
             timeFormat: undefined,
-            normalizedNumberFormat: undefined
-        }
+            normalizedNumberFormat: undefined,
+        },
+        resolve: {
+            x: false,
+            y: false,
+            color: false,
+            opacity: false,
+            shape: false,
+            size: false,
+        },
     };
 }
 
@@ -116,7 +125,7 @@ export class VizSpecStore {
      * is strictly FORBIDDEN.
      * Members of it can only be got as READONLY objects.
      *
-     * If you're trying to change the value of it and let mobx catch the action to trigger an update,
+     * If you"re trying to change the value of it and let mobx catch the action to trigger an update,
      * please use `this.useMutable()` to access to a writable reference
      * (an `immer` draft) of `this.visList[this.visIndex]`.
      */
@@ -133,7 +142,7 @@ export class VizSpecStore {
      * is strictly FORBIDDEN.
      * Members of it can only be got as READONLY objects.
      *
-     * If you're trying to change the value of it and let mobx catch the action to trigger an update,
+     * If you"re trying to change the value of it and let mobx catch the action to trigger an update,
      * please use `this.useMutable()` to access to a writable reference
      * (an `immer` draft) of `this.visList[this.visIndex]`.
      */
@@ -149,7 +158,7 @@ export class VizSpecStore {
         this.visualConfig = initVisualConfig();
         this.visList.push(
             new VisSpecWithHistory({
-                name: 'Chart 1',
+                name: "Chart 1",
                 visId: uniqueId(),
                 config: this.visualConfig,
                 encodings: this.draggableFieldState,
@@ -205,7 +214,7 @@ export class VizSpecStore {
         if (this.__dangerous_is_inside_useMutable__) {
             throw new Error(
                 "A recursive call of useMutable() is detected, " +
-                    "this is prevented because update will be overwritten by parent execution context."
+                "this is prevented because update will be overwritten by parent execution context."
             );
         }
 
@@ -299,9 +308,8 @@ export class VizSpecStore {
         return state.filters;
     }
 
-
     public addVisualization(defaultName?: string) {
-        const name = defaultName || 'Chart ' + (this.visList.length + 1);
+        const name = defaultName || "Chart " + (this.visList.length + 1);
         this.visList.push(
             new VisSpecWithHistory({
                 name,
@@ -373,15 +381,19 @@ export class VizSpecStore {
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
                 case configKey === "zeroScale":
+                case configKey === "background":
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
-                case configKey === 'format' && typeof value === "object": {
-                    return config[configKey] = value
+                case configKey === "format" && typeof value === "object":
+                case configKey === "resolve" && typeof value === "object": {
+                    return (config[configKey] = value);
                 }
 
                 default: {
-                    console.error("[unknown key] " + configKey + " You should registered visualConfig at setVisualConfig");
+                    console.error(
+                        "[unknown key] " + configKey + " You should registered visualConfig at setVisualConfig"
+                    );
                 }
             }
         });
@@ -497,7 +509,7 @@ export class VizSpecStore {
             encodings.rows = fieldsInCup as typeof encodings.rows; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: "bin" | "binCount") {
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
             const newVarKey = uniqueId();
@@ -513,16 +525,16 @@ export class VizSpecStore {
                     as: newVarKey,
                     params: [
                         {
-                            type: 'field',
-                            value: originField.fid
-                        }
-                    ]
-                }
+                            type: "field",
+                            value: originField.fid,
+                        },
+                    ],
+                },
             };
             encodings.dimensions.push(binField);
         });
     }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
+    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: "log10" | "log2") {
         if (stateKey === "filters") {
             return;
         }
@@ -536,14 +548,14 @@ export class VizSpecStore {
                 name: `${scaleType}(${originField.name})`,
                 semanticType: "quantitative",
                 analyticType: originField.analyticType,
-                aggName: 'sum',
+                aggName: "sum",
                 computed: true,
                 expression: {
                     op: scaleType,
                     as: newVarKey,
                     params: [
                         {
-                            type: 'field',
+                            type: "field",
                             value: originField.fid
                         }
                     ]
@@ -631,8 +643,8 @@ export class VizSpecStore {
             encodings[destinationKey].push(cloneField);
         });
     }
-    public setVizFormatConfig (formatKey: keyof IVisualConfig['format'], value?: string) {
-        this.visualConfig[formatKey] = value
+    public setVizFormatConfig(formatKey: keyof IVisualConfig["format"], value?: string) {
+        this.visualConfig[formatKey] = value;
     }
     public renderSpec(spec: Specification) {
         const tab = this.visList[this.visIndex];
@@ -642,7 +654,7 @@ export class VizSpecStore {
             // thi
             // const [xField, yField, ] = spec.position;
             this.clearState();
-            this.setVisualConfig('defaultAggregated', Boolean(spec.aggregate));
+            this.setVisualConfig("defaultAggregated", Boolean(spec.aggregate));
             if ((spec.geomType?.length ?? 0) > 0) {
                 this.setVisualConfig(
                     "geoms",
@@ -708,7 +720,7 @@ export class VizSpecStore {
         const pureVisList = dumpsGWPureSpec(this.visList);
         return pureVisList
     }
-    public importStoInfo (stoInfo: IStoInfo) {
+    public importStoInfo(stoInfo: IStoInfo) {
         this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
         this.visIndex = 0;
         this.commonStore.datasets = stoInfo.datasets;

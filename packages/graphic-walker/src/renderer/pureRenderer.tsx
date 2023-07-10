@@ -7,12 +7,11 @@ import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
-
 interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
-    visualState: DraggableFieldState;
+    draggableState: DraggableFieldState;
     visualConfig: IVisualConfig;
 }
 
@@ -25,18 +24,19 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         themeKey,
         dark,
         rawData,
-        visualState,
+        draggableState,
         visualConfig,
     } = props;
+    
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-    
+
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(visualState);
+        const { dimensions, measures, filters, ...state } = toJS(draggableState);
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -51,7 +51,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         }
 
         return { allFields, viewDimensions, viewMeasures, filters };
-    }, [visualState]);
+    }, [draggableState]);
 
     const { viewData: data, loading: waiting } = useRenderer({
         data: rawData ?? [],
@@ -81,7 +81,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             ref={ref}
             themeKey={themeKey}
             dark={dark}
-            draggableFieldState={visualState}
+            draggableFieldState={draggableState}
             visualConfig={visualConfig}
         />
     );

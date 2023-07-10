@@ -15,8 +15,6 @@ const AestheticFields: React.FC = props => {
 
     const channels = useMemo(() => {
         switch (geoms[0]) {
-            case 'bar':
-            case 'tick':
             case 'arc':
             case 'line':
             case 'area':
