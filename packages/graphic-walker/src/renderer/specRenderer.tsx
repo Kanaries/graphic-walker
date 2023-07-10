@@ -4,15 +4,7 @@ import React, { forwardRef, useMemo } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import {
-    DeepReadonly,
-    DraggableFieldState,
-    IDarkMode,
-    IRow,
-    IThemeKey,
-    IVisualConfig,
-    VegaGlobalConfig,
-} from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -36,18 +28,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const {
-        geoms,
-        interactiveScale,
-        defaultAggregated,
-        stack,
-        showActions,
-        size,
-        format: _format,
-        background,
-        zeroScale,
-        resolve,
-    } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;

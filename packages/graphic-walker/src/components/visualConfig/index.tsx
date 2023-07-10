@@ -114,7 +114,6 @@ const VisualConfigPanel: React.FC = (props) => {
                                         ...r,
                                         [pc]: e,
                                     }));
-                                    console.log(resolve);
                                 }}
                             />
                         ))}

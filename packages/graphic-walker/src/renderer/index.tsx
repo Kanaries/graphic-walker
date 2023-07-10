@@ -59,13 +59,16 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         }
     }, [waiting, vizStore]);
 
-    const handleGeomClick = useCallback((values: any, e: any) => {
-        e.stopPropagation();
-        runInAction(() => {
-            commonStore.showEmbededMenu([e.pageX, e.pageY]);
-            commonStore.setFilters(values);
-        });
-    }, []);
+    const handleGeomClick = useCallback(
+        (values: any, e: any) => {
+            e.stopPropagation();
+            runInAction(() => {
+                commonStore.showEmbededMenu([e.pageX, e.pageY]);
+                commonStore.setFilters(values);
+            });
+        },
+        []
+    );
 
     const handleChartResize = useCallback(
         (width: number, height: number) => {
