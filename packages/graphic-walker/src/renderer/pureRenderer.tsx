@@ -9,7 +9,6 @@ import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
-
 interface IPureRendererProps {
     name?: string;
     themeKey?: IThemeKey;
@@ -32,10 +31,11 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         visualState,
         visualConfig,
     } = props;
+    
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-    
+
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];

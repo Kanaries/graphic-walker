@@ -219,6 +219,22 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
+      if (!spec.resolve) spec.resolve = {};
+      // @ts-ignore
+      let resolve = vegaConfig.resolve;
+      for (let v in resolve) {
+          let value = resolve[v] ? 'independent' : 'shared';
+          // @ts-ignore
+          if (!spec.resolve.scale) spec.resolve.scale = {};
+          spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
+          if (v == 'x' || 'y') {
+              spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
+          }
+          if (v == 'color' || 'opacity' || 'shape' || 'size') {
+              spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
+          }
+      }
+      
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
           vegaRefs.current = [{

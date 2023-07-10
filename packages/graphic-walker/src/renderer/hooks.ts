@@ -4,7 +4,6 @@ import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces
 import { applyFilter, applyViewQuery, transformDataService } from '../services';
 import { getMeaAggKey } from '../utils';
 
-
 interface UseRendererProps {
     data: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
