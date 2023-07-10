@@ -13,7 +13,7 @@ const vizStore = new VizSpecStore(commonStore);
 const initStore: IGlobalStore = {
     commonStore,
     vizStore
-}
+};
 
 const StoreContext = React.createContext<IGlobalStore>(null!);
 

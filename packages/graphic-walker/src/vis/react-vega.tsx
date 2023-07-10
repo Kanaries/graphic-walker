@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useMemo, forwardRef, useRef } from 'react';
+import React, { useEffect, useState, useMemo, forwardRef, useImperativeHandle, useRef } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
 
-import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
@@ -26,7 +25,6 @@ export interface IReactVegaHandler {
   downloadPNG: (filename?: string) => Promise<string[]>;
 }
 interface ReactVegaProps {
-  name?: string;
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
   dataSource: IRow[];
@@ -75,7 +73,6 @@ interface ParamStoreEntry {
 
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
-    name,
     dataSource = [],
     rows = [],
     columns = [],
@@ -153,7 +150,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     })
   }, [rowRepeatFields, colRepeatFields])
 
-  const vegaRefs = useRef<{ x: number; y: number; w: number; h: number; view: View }[]>([]);
+  const vegaRefs = useRef<View[]>([]);
 
   useEffect(() => {
     vegaRefs.current = [];
@@ -219,15 +216,25 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
+      if (!spec.resolve) spec.resolve = {};
+      // @ts-ignore
+      let resolve = vegaConfig.resolve;
+      for (let v in resolve) {
+          let value = resolve[v] ? 'independent' : 'shared';
+          // @ts-ignore
+          if (!spec.resolve.scale) spec.resolve.scale = {};
+          spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
+          if (v == 'x' || 'y') {
+              spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
+          }
+          if (v == 'color' || 'opacity' || 'shape' || 'size') {
+              spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
+          }
+      }
+      
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
-          vegaRefs.current = [{
-            w: res.view.container()?.clientWidth ?? res.view.width(),
-            h: res.view.container()?.clientHeight ?? res.view.height(),
-            x: 0,
-            y: 0,
-            view: res.view,
-          }];
+          vegaRefs.current = [res.view];
           try {
             res.view.addEventListener('click', (e) => {
               click$.next(e);
@@ -259,7 +266,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         subscriptions.push(throttledParamStore$.subscribe(cb));
       };
       let index = 0;
-      vegaRefs.current = new Array(rowRepeatFields.length * colRepeatFields.length);
       for (let i = 0; i < rowRepeatFields.length; i++) {
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
@@ -292,15 +298,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             ans.params = commonSpec.params;
           }
           if (node) {
-            const id = index;
             embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
-              vegaRefs.current[id] = {
-                w: res.view.container()?.clientWidth ?? res.view.width(),
-                h: res.view.container()?.clientHeight ?? res.view.height(),
-                x: j,
-                y: i,
-                view: res.view,
-              };
+              vegaRefs.current.push(res.view);
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
               ).map(name => name.replace(/_store$/, ''));
@@ -391,7 +390,45 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     text
   ]);
 
-  useVegaExportApi(name, vegaRefs, ref);
+  useImperativeHandle(ref, () => ({
+    getSVGData() {
+      return Promise.all(vegaRefs.current.map(view => view.toSVG()));
+    },
+    async getCanvasData() {
+      const canvases = await Promise.all(vegaRefs.current.map(view => view.toCanvas()));
+      return canvases.map(canvas => canvas.toDataURL('image/png'));
+    },
+    async downloadSVG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
+      const data = await Promise.all(vegaRefs.current.map(view => view.toSVG()));
+      const files: string[] = [];
+      for (let i = 0; i < data.length; i += 1) {
+        const d = data[i];
+        const file = new File([d], `${filename}${data.length > 1 ? `_${i + 1}` : ''}.svg`);
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.download = file.name;
+        a.href = url;
+        a.click();
+        requestAnimationFrame(() => {
+          URL.revokeObjectURL(url);
+        });
+      }
+      return files;
+    },
+    async downloadPNG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
+      const canvases = await Promise.all(vegaRefs.current.map(view => view.toCanvas(2)));
+      const data = canvases.map(canvas => canvas.toDataURL('image/png', 1));
+      const files: string[] = [];
+      for (let i = 0; i < data.length; i += 1) {
+        const d = data[i];
+        const a = document.createElement('a');
+        a.download = `${filename}${data.length > 1 ? `_${i + 1}` : ''}.png`;
+        a.href = d.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+        a.click();
+      }
+      return files;
+    },
+  }));
 
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
     {/* <div ref={container}></div> */}
