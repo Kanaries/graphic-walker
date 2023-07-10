@@ -233,3 +233,26 @@ export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
+
+export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
+    mode: T;
+    title: string;
+    nCols: number;
+    nRows: number;
+    charts: {
+        colIndex: number;
+        rowIndex: number;
+        width: number;
+        height: number;
+        data: string;
+    }[];
+}
+
+interface IExportChart {
+    <T extends Extract<IChartExportResult['mode'], 'svg'>>(mode?: T): Promise<IChartExportResult<T>>;
+    <T extends IChartExportResult['mode']>(mode: T): Promise<IChartExportResult<T>>;
+}
+
+export interface IGWHandler {
+    exportChart: IExportChart;
+}

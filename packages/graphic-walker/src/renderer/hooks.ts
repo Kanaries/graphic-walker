@@ -29,8 +29,16 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         setComputing(true);
         applyFilter(data, filters)
-            .then((data) => transformDataService(data, allFields))
+            .then((data) => {
+                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
+                    return data;
+                }
+                return transformDataService(data, allFields);
+            })
             .then((d) => {
+                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
+                    return data;
+                }
                 // setViewData(d);
                 const dims = viewDimensions;
                 const meas = viewMeasures;
