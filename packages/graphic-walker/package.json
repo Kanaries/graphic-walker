@@ -37,7 +37,7 @@
     "@headlessui/react": "^1.7.12",
     "@heroicons/react": "^2.0.8",
     "@kanaries/graphic-walker": "0.3.9",
-    "@kanaries/react-beautiful-dnd": "0.0.1",
+    "@kanaries/react-beautiful-dnd": "0.0.2",
     "@kanaries/web-data-loader": "^0.1.7",
     "autoprefixer": "^10.3.5",
     "i18next": "^21.9.1",
