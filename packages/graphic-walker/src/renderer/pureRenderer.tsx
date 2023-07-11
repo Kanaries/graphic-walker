@@ -4,6 +4,7 @@ import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer from '../components/leafletRenderer';
+import AppRoot from '../components/appRoot';
 import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -11,6 +12,7 @@ import { useRenderer } from './hooks';
 
 
 interface IPureRendererProps {
+    name?: string;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
@@ -24,6 +26,7 @@ interface IPureRendererProps {
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
     const {
+        name,
         themeKey,
         dark,
         rawData,
@@ -80,28 +83,31 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom>
-            <div className="relative">
-                {isSpatial && (
-                    <LeafletRenderer
-                        data={data}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                    />
-                )}
-                {isSpatial || (
-                    <SpecRenderer
-                        loading={waiting}
-                        data={viewData}
-                        ref={ref}
-                        themeKey={themeKey}
-                        dark={dark}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                    />
-                )}
-            </div>
-        </ShadowDom>
+        <AppRoot>
+            <ShadowDom>
+                <div className="relative">
+                    {isSpatial && (
+                        <LeafletRenderer
+                            data={data}
+                            draggableFieldState={visualState}
+                            visualConfig={visualConfig}
+                        />
+                    )}
+                    {isSpatial || (
+                        <SpecRenderer
+                            name={name}
+                            loading={waiting}
+                            data={viewData}
+                            ref={ref}
+                            themeKey={themeKey}
+                            dark={dark}
+                            draggableFieldState={visualState}
+                            visualConfig={visualConfig}
+                        />
+                    )}
+                </div>
+            </ShadowDom>
+        </AppRoot>
     );
 });
 

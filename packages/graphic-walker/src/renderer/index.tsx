@@ -20,7 +20,8 @@ interface RendererProps {
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const { themeKey, dark } = props;
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState } = vizStore;
+    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState, visList, visIndex } = vizStore;
+    const chart = visList[visIndex];
     const { currentDataset } = commonStore;
     const { dataSource } = currentDataset;
 
@@ -83,6 +84,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     return (
         <SpecRenderer
+            name={chart?.name}
             loading={waiting}
             data={viewData}
             ref={ref}
