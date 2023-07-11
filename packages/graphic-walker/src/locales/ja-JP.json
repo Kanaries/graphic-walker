@@ -6,12 +6,8 @@
         "normalizedNumberFormat": "正規化された数字の形式",
         "background": "背景",
         "independence": "独立性",
-        "color": "カラー",
         "x": "x軸",
         "y": "y軸",
-        "opacity": "不透明度",
-        "size": "大きさ",
-        "shape": "形状",
         "zeroScale": "ゼロ目盛",
         "formatGuidesDocs": "フォーマットガイド",
         "readHere": "ここを読む"

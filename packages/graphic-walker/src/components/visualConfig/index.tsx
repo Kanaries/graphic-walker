@@ -1,6 +1,8 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
 import { useGlobalStore } from '../../store';
+import { NonPositionChannelConfigList,PositionChannelConfigList } from '../../config'; 
+
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
 import PrimaryButton from '../button/primary';
@@ -19,8 +21,8 @@ const VisualConfigPanel: React.FC = (props) => {
         'timeFormat',
         'normalizedNumberFormat',
     ];
-    const positionChannelConfigList: (keyof IVisualConfig['resolve'])[] = ['x', 'y'];
-    const nonPositionChannelConfigList: (keyof IVisualConfig['resolve'])[] = ['color', 'opacity', 'shape', 'size'];
+    const positionChannelConfigList: (keyof IVisualConfig['resolve'])[] = PositionChannelConfigList;
+    const nonPositionChannelConfigList: (keyof IVisualConfig['resolve'])[] = NonPositionChannelConfigList;
     const [format, setFormat] = useState<IVisualConfig['format']>({
         numberFormat: visualConfig.format.numberFormat,
         timeFormat: visualConfig.format.timeFormat,
@@ -89,7 +91,7 @@ const VisualConfigPanel: React.FC = (props) => {
                 ))}
                 <h2 className="text-lg">{t('config.background')}</h2>
                 <div className="my-2">
-                    <label className="block text-xs font-medium leading-6">{t(`config.color`)}</label>
+                    <label className="block text-xs font-medium leading-6">{t(`constant.draggable_key.color`)}</label>
                     <div className="mt-1">
                         <input
                             type="text"
@@ -119,7 +121,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         ))}
                         {nonPositionChannelConfigList.map((npc) => (
                             <Toggle
-                                label={t(`config.${npc}`)}
+                                label={t(`constant.draggable_key.${npc}`)}
                                 key={npc}
                                 enabled={resolve[npc] ?? false}
                                 onChange={(e) => {
@@ -132,7 +134,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         ))}
                     </div>
                 </div>
-                <h2 className="text-lg">{t('config.zeroScale')}</h2>{' '}
+                <h2 className="text-lg">{t('config.zeroScale')}</h2>
                 <div className="my-2">
                     <Toggle
                         label={t(`config.zeroScale`)}

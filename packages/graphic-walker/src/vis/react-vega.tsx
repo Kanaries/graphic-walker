@@ -4,7 +4,7 @@ import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
-
+import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
@@ -219,18 +219,16 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
-      if (!spec.resolve) spec.resolve = {};
+      spec.resolve ||= {};
       // @ts-ignore
       let resolve = vegaConfig.resolve;
       for (let v in resolve) {
           let value = resolve[v] ? 'independent' : 'shared';
           // @ts-ignore
-          if (!spec.resolve.scale) spec.resolve.scale = {};
           spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
-          if (v == 'x' || 'y') {
+          if((PositionChannelConfigList as string[]).includes(v)) {
               spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
-          }
-          if (v == 'color' || 'opacity' || 'shape' || 'size') {
+          }else if((NonPositionChannelConfigList as string[]).includes(v)){
               spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
           }
       }
