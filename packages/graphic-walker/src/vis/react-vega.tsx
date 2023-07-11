@@ -4,7 +4,7 @@ import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent, View } from 'vega';
 import styled from 'styled-components';
-
+import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
 import { useTranslation } from 'react-i18next';
@@ -219,6 +219,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
+      spec.resolve ||= {};
+      // @ts-ignore
+      let resolve = vegaConfig.resolve;
+      for (let v in resolve) {
+          let value = resolve[v] ? 'independent' : 'shared';
+          // @ts-ignore
+          spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
+          if((PositionChannelConfigList as string[]).includes(v)) {
+              spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
+          }else if((NonPositionChannelConfigList as string[]).includes(v)){
+              spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
+          }
+      }
+      
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
           vegaRefs.current = [{
