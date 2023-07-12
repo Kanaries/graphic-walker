@@ -4,6 +4,7 @@ import type { Map } from "leaflet";
 import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
+import { TooltipContent } from "./tooltip";
 
 
 export interface IPOIRendererProps {
@@ -115,11 +116,6 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
             key: defaultAggregated && f.analyticType === 'measure' && f.aggName ? getMeaAggKey(f.fid, f.aggName) : f.fid,
         }));
     }, [defaultAggregated, details, size, color, opacity]);
-
-    const getFieldName = ({ fid, aggName, analyticType }: typeof tooltipFields[number]) => {
-        const name = allFields.find((f) => f.fid === fid)?.name ?? fid;
-        return analyticType === 'measure' && aggName ? `${aggName}(${name})` : name;
-    };
     
     return (
         <MapContainer center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
@@ -153,7 +149,13 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                         {tooltipFields.length > 0 && (
                             <Tooltip>
                                 {tooltipFields.map((f, j) => (
-                                    <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
+                                    <TooltipContent
+                                        key={j}
+                                        allFields={allFields}
+                                        vegaConfig={vegaConfig}
+                                        field={f}
+                                        value={row[f.key]}
+                                    />
                                 ))}
                             </Tooltip>
                         )}

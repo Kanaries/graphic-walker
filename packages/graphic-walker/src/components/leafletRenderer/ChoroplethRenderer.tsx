@@ -6,6 +6,7 @@ import type { FeatureCollection, Geometry } from "geojson";
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale } from "./encodings";
 import { isValidLatLng } from "./POIRenderer";
+import { TooltipContent } from "./tooltip";
 
 
 export interface IChoroplethRendererProps {
@@ -160,11 +161,6 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         }));
     }, [defaultAggregated, details, color, opacity]);
 
-    const getFieldName = ({ fid, aggName, analyticType }: typeof tooltipFields[number]) => {
-        const name = allFields.find((f) => f.fid === fid)?.name ?? fid;
-        return analyticType === 'measure' && aggName ? `${aggName}(${name})` : name;
-    };
-
     const mapRef = useRef<Map>(null);
 
     useEffect(() => {
@@ -218,7 +214,13 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                             <Tooltip>
                                                 <header>{data[i][geoId.fid]}</header>
                                                 {tooltipFields.map((f, j) => (
-                                                    <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
+                                                    <TooltipContent
+                                                        key={j}
+                                                        allFields={allFields}
+                                                        vegaConfig={vegaConfig}
+                                                        field={f}
+                                                        value={row[f.key]}
+                                                    />
                                                 ))}
                                             </Tooltip>
                                         )}
@@ -242,7 +244,13 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         <Tooltip>
                                             <header>{data[i][geoId.fid]}</header>
                                             {tooltipFields.map((f, j) => (
-                                                <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
+                                                <TooltipContent
+                                                    key={j}
+                                                    allFields={allFields}
+                                                    vegaConfig={vegaConfig}
+                                                    field={f}
+                                                    value={row[f.key]}
+                                                />
                                             ))}
                                         </Tooltip>
                                     </Polygon>
