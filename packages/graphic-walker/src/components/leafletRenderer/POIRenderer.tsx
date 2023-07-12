@@ -116,9 +116,9 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         }));
     }, [defaultAggregated, details, size, color, opacity]);
 
-    const getFieldName = (fid: string, aggName: string | undefined) => {
+    const getFieldName = ({ fid, aggName, analyticType }: typeof tooltipFields[number]) => {
         const name = allFields.find((f) => f.fid === fid)?.name ?? fid;
-        return aggName ? `${aggName}(${name})` : name;
+        return analyticType === 'measure' && aggName ? `${aggName}(${name})` : name;
     };
     
     return (
@@ -152,8 +152,8 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                     >
                         {tooltipFields.length > 0 && (
                             <Tooltip>
-                                {tooltipFields.map(({ fid, aggName, key }, j) => (
-                                    <p key={j}>{getFieldName(fid, aggName)}: {row[key]}</p>
+                                {tooltipFields.map((f, j) => (
+                                    <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
                                 ))}
                             </Tooltip>
                         )}

@@ -160,9 +160,9 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         }));
     }, [defaultAggregated, details, color, opacity]);
 
-    const getFieldName = (fid: string, aggName: string | undefined) => {
+    const getFieldName = ({ fid, aggName, analyticType }: typeof tooltipFields[number]) => {
         const name = allFields.find((f) => f.fid === fid)?.name ?? fid;
-        return aggName ? `${aggName}(${name})` : name;
+        return analyticType === 'measure' && aggName ? `${aggName}(${name})` : name;
     };
 
     const mapRef = useRef<Map>(null);
@@ -217,8 +217,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         {tooltipFields.length > 0 && (
                                             <Tooltip>
                                                 <header>{data[i][geoId.fid]}</header>
-                                                {tooltipFields.map(({ fid, aggName, key }, j) => (
-                                                    <p key={j}>{getFieldName(fid, aggName)}: {row[key]}</p>
+                                                {tooltipFields.map((f, j) => (
+                                                    <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
                                                 ))}
                                             </Tooltip>
                                         )}
@@ -241,8 +241,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                     >
                                         <Tooltip>
                                             <header>{data[i][geoId.fid]}</header>
-                                            {tooltipFields.map(({ fid, aggName, key }, j) => (
-                                                <p key={j}>{getFieldName(fid, aggName)}: {row[key]}</p>
+                                            {tooltipFields.map((f, j) => (
+                                                <p key={j}>{getFieldName(f)}: {row[f.key]}</p>
                                             ))}
                                         </Tooltip>
                                     </Polygon>
