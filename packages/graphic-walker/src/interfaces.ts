@@ -256,9 +256,17 @@ interface IExportChart {
     <T extends IChartExportResult['mode']>(mode: T): Promise<IChartExportResult<T>>;
 }
 
+export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
+
 export interface IGWHandler {
     chartCount: number;
     chartIndex: number;
     openChart: (index: number) => void;
+    get renderStatus(): IRenderStatus;
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
     exportChart: IExportChart;
+}
+
+export interface IGWHandlerInsider extends IGWHandler {
+    updateRenderStatus: (renderStatus: IRenderStatus) => void;
 }

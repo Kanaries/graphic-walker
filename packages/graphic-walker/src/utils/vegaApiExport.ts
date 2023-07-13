@@ -4,7 +4,12 @@ import type { IReactVegaHandler } from "../vis/react-vega";
 import type { IChartExportResult, IVegaChartRef } from "../interfaces";
 
 
-export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefObject<IVegaChartRef[]>, ref: ForwardedRef<IReactVegaHandler>) => {
+export const useVegaExportApi = (
+    name: string | undefined,
+    viewsRef: MutableRefObject<IVegaChartRef[]>,
+    ref: ForwardedRef<IReactVegaHandler>,
+    renderTaskRefs: MutableRefObject<Promise<unknown>[]>,
+) => {
     const renderHandle = {
         getSVGData() {
             return Promise.all(viewsRef.current.map(item => item.view.toSVG()));
@@ -50,8 +55,69 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
     const appRef = useAppRootContext();
     
     useEffect(() => {
-        if (appRef && 'current' in appRef && appRef.current) {
-            appRef.current.exportChart = (async (mode: IChartExportResult['mode'] = 'svg') => {
+        const ctx = appRef.current;
+        if (ctx) {
+            Promise.all(renderTaskRefs.current).then(() => {
+                if (appRef.current) {
+                    const appCtx = appRef.current;
+                    if (appCtx.renderStatus !== 'rendering') {
+                        return;
+                    }
+                    // add a short delay to wait for the canvas to be ready
+                    setTimeout(() => {
+                        if (appCtx.renderStatus !== 'rendering') {
+                            return;
+                        }
+                        appCtx.updateRenderStatus('idle');
+                    }, 0);
+                }
+            }).catch(() => {
+                if (appRef.current) {
+                    if (appRef.current.renderStatus !== 'rendering') {
+                        return;
+                    }
+                    appRef.current.updateRenderStatus('error');
+                }
+            });
+            ctx.exportChart = (async (mode: IChartExportResult['mode'] = 'svg') => {
+                if (ctx.renderStatus === 'error') {
+                    console.error('exportChart failed because error occurred when rendering chart.');
+                    return {
+                        mode,
+                        title: '',
+                        nCols: 0,
+                        nRows: 0,
+                        charts: [],
+                    };
+                }
+                if (ctx.renderStatus !== 'idle') {
+                    let dispose = null as (() => void) | null;
+                    // try to wait for a while
+                    const waitForChartReady = new Promise<void>((resolve, reject) => {
+                        dispose = ctx.onRenderStatusChange(status => {
+                            if (status === 'error') {
+                                reject(new Error('Error occurred when rendering chart'));
+                            } else if (status === 'idle') {
+                                resolve();
+                            }
+                        });
+                        setTimeout(() => reject(new Error('Timeout')), 10_000);
+                    });
+                    try {
+                        await waitForChartReady;
+                    } catch (error) {
+                        console.error('exportChart failed:', `${error}`);
+                        return {
+                            mode,
+                            title: '',
+                            nCols: 0,
+                            nRows: 0,
+                            charts: [],
+                        };
+                    } finally {
+                        dispose?.();
+                    }
+                }
                 const res: IChartExportResult = {
                     mode,
                     title: name || 'untitled',
@@ -83,13 +149,14 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
                     }
                 }
                 return res;
-            }) as typeof appRef.current.exportChart;
+            }) as typeof ctx.exportChart;
         }
     });
 
     useEffect(() => {
         return () => {
-            if (appRef && 'current' in appRef && appRef.current) {
+            if (appRef.current) {
+                appRef.current.updateRenderStatus('idle');
                 appRef.current.exportChart = async (mode: IChartExportResult['mode'] = 'svg') => ({
                     mode,
                     title: '',

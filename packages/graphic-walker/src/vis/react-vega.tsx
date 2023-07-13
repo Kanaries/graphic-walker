@@ -154,9 +154,11 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   }, [rowRepeatFields, colRepeatFields])
 
   const vegaRefs = useRef<IVegaChartRef[]>([]);
+  const renderTaskRefs = useRef<Promise<unknown>[]>([]);
 
   useEffect(() => {
     vegaRefs.current = [];
+    renderTaskRefs.current = [];
 
     const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
     const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
@@ -220,7 +222,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas');
           vegaRefs.current = [{
@@ -243,6 +245,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             console.warn(error)
           }
         });
+        renderTaskRefs.current = [task];
       }
     } else {
       if (layoutMode === 'fixed') {
@@ -297,7 +300,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas');
               vegaRefs.current[id] = {
@@ -364,6 +367,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 console.warn(error);
               }
             })
+            renderTaskRefs.current.push(task);
           }
         }
       }
@@ -371,6 +375,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         subscriptions.forEach(sub => sub.unsubscribe());
       };
     }
+    return () => {
+      vegaRefs.current = [];
+      renderTaskRefs.current = [];
+    };
   }, [
     dataSource,
     allFieldIds,
@@ -399,7 +407,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     text
   ]);
 
-  useVegaExportApi(name, vegaRefs, ref);
+  useVegaExportApi(name, vegaRefs, ref, renderTaskRefs);
 
   return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
     {/* <div ref={container}></div> */}

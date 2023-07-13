@@ -12,7 +12,7 @@ export const useChartIndexControl = (options: IUseChartIndexControlOptions): voi
     const appRef = useAppRootContext();
     
     useEffect(() => {
-        if (appRef && 'current' in appRef && appRef.current) {
+        if (appRef.current) {
             appRef.current.chartCount = options.count;
             appRef.current.chartIndex = options.index;
             appRef.current.openChart = function (index: number) {
@@ -29,7 +29,7 @@ export const useChartIndexControl = (options: IUseChartIndexControlOptions): voi
 
     useEffect(() => {
         return () => {
-            if (appRef && 'current' in appRef && appRef.current) {
+            if (appRef.current) {
                 appRef.current.chartCount = 1;
                 appRef.current.chartIndex = 0;
                 appRef.current.openChart = () => {};
