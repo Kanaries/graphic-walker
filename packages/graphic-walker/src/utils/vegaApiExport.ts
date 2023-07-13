@@ -51,7 +51,7 @@ export const useVegaExportApi = (
     };
     
     useImperativeHandle(ref, () => renderHandle);
-    
+
     const appRef = useAppRootContext();
     
     useEffect(() => {
@@ -150,10 +150,30 @@ export const useVegaExportApi = (
                 }
                 return res;
             }) as typeof ctx.exportChart;
+            ctx.exportChartList = async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
+                const total = ctx.chartCount;
+                const indices = new Array(total).fill(0).map((_, i) => i);
+                const currentIdx = ctx.chartIndex;
+                for await (const index of indices) {
+                    ctx.openChart(index);
+                    // wait for a while to make sure the correct chart is rendered
+                    await new Promise<void>(resolve => setTimeout(resolve, 0));
+                    const chart = await ctx.exportChart(mode);
+                    yield {
+                        mode,
+                        total,
+                        index,
+                        data: chart,
+                        hasNext: index < total - 1,
+                    };
+                }
+                ctx.openChart(currentIdx);
+            };
         }
     });
 
     useEffect(() => {
+        // NOTE: this is totally a cleanup function
         return () => {
             if (appRef.current) {
                 appRef.current.updateRenderStatus('idle');
@@ -164,6 +184,22 @@ export const useVegaExportApi = (
                     nRows: 0,
                     charts: [],
                 });
+                appRef.current.exportChartList = async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
+                    yield {
+                        mode,
+                        total: 1,
+                        completed: 0,
+                        index: 0,
+                        data: {
+                            mode,
+                            title: '',
+                            nCols: 0,
+                            nRows: 0,
+                            charts: [],
+                        },
+                        hasNext: false,
+                    };
+                };
             }
         };
     }, []);

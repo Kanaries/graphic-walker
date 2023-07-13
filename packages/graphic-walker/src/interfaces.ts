@@ -256,6 +256,19 @@ interface IExportChart {
     <T extends IChartExportResult['mode']>(mode: T): Promise<IChartExportResult<T>>;
 }
 
+export interface IChartListExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
+    mode: T;
+    total: number;
+    index: number;
+    data: IChartExportResult<T>;
+    hasNext: boolean;
+}
+
+interface IExportChartList {
+    <T extends Extract<IChartExportResult['mode'], 'svg'>>(mode?: T): AsyncGenerator<IChartListExportResult<T>, void, unknown>;
+    <T extends IChartExportResult['mode']>(mode: T): AsyncGenerator<IChartListExportResult<T>, void, unknown>;
+}
+
 export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
 
 export interface IGWHandler {
@@ -265,6 +278,7 @@ export interface IGWHandler {
     get renderStatus(): IRenderStatus;
     onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
     exportChart: IExportChart;
+    exportChartList: IExportChartList;
 }
 
 export interface IGWHandlerInsider extends IGWHandler {
