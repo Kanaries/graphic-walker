@@ -1,11 +1,10 @@
 import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect } from "react";
-import type { View } from "vega";
 import { useAppRootContext } from "../components/appRoot";
 import type { IReactVegaHandler } from "../vis/react-vega";
-import type { IChartExportResult } from "../interfaces";
+import type { IChartExportResult, IVegaChartRef } from "../interfaces";
 
 
-export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefObject<{ x: number; y: number; w: number; h: number; view: View }[]>, ref: ForwardedRef<IReactVegaHandler>) => {
+export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefObject<IVegaChartRef[]>, ref: ForwardedRef<IReactVegaHandler>) => {
     const renderHandle = {
         getSVGData() {
             return Promise.all(viewsRef.current.map(item => item.view.toSVG()));
@@ -63,6 +62,8 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
                         colIndex: item.x,
                         width: item.w,
                         height: item.h,
+                        canvasWidth: item.innerWidth,
+                        canvasHeight: item.innerHeight,
                         data: '',
                     })),
                 };

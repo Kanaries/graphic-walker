@@ -1,5 +1,5 @@
 import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext } from "react";
-import type { IGWHandler } from "../interfaces";
+import type { IChartExportResult, IGWHandler } from "../interfaces";
 
 const AppRootContext = createContext<ForwardedRef<IGWHandler>>(null!);
 
@@ -10,7 +10,7 @@ export const useAppRootContext = () => {
 const AppRoot = forwardRef<IGWHandler, { children: any }>(({ children }, ref) => {
     useImperativeHandle(ref, () => {
         return {
-            exportChart: (async mode => {
+            exportChart: (async (mode: IChartExportResult['mode']) => {
                 return {
                     mode,
                     title: '',

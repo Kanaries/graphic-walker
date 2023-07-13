@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo, forwardRef, useRef } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
-import type { ScenegraphEvent, View } from 'vega';
+import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
@@ -153,7 +153,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     })
   }, [rowRepeatFields, colRepeatFields])
 
-  const vegaRefs = useRef<{ x: number; y: number; w: number; h: number; view: View }[]>([]);
+  const vegaRefs = useRef<IVegaChartRef[]>([]);
 
   useEffect(() => {
     vegaRefs.current = [];
@@ -221,9 +221,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+          const container = res.view.container();
+          const canvas = container?.querySelector('canvas');
           vegaRefs.current = [{
-            w: res.view.container()?.clientWidth ?? res.view.width(),
-            h: res.view.container()?.clientHeight ?? res.view.height(),
+            w: container?.clientWidth ?? res.view.width(),
+            h: container?.clientHeight ?? res.view.height(),
+            innerWidth: canvas?.clientWidth ?? res.view.width(),
+            innerHeight: canvas?.clientHeight ?? res.view.height(),
             x: 0,
             y: 0,
             view: res.view,
@@ -294,9 +298,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           if (node) {
             const id = index;
             embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+              const container = res.view.container();
+              const canvas = container?.querySelector('canvas');
               vegaRefs.current[id] = {
-                w: res.view.container()?.clientWidth ?? res.view.width(),
-                h: res.view.container()?.clientHeight ?? res.view.height(),
+                w: container?.clientWidth ?? res.view.width(),
+                h: container?.clientHeight ?? res.view.height(),
+                innerWidth: canvas?.clientWidth ?? res.view.width(),
+                innerHeight: canvas?.clientHeight ?? res.view.height(),
                 x: j,
                 y: i,
                 view: res.view,

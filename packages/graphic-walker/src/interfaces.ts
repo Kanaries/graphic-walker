@@ -1,4 +1,4 @@
-import {Config as VgConfig} from 'vega';
+import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
@@ -225,6 +225,16 @@ export type IDarkMode = 'media' | 'light' | 'dark';
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
+export interface IVegaChartRef {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    innerWidth: number;
+    innerHeight: number;
+    view: View;
+}
+
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
     mode: T;
     title: string;
@@ -235,6 +245,8 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         rowIndex: number;
         width: number;
         height: number;
+        canvasWidth: number;
+        canvasHeight: number;
         data: string;
     }[];
 }
