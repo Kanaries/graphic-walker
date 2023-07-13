@@ -10,6 +10,9 @@ export const useAppRootContext = () => {
 const AppRoot = forwardRef<IGWHandler, { children: any }>(({ children }, ref) => {
     useImperativeHandle(ref, () => {
         return {
+            chartCount: 1,
+            chartIndex: 0,
+            openChart() {},
             exportChart: (async (mode: IChartExportResult['mode']) => {
                 return {
                     mode,

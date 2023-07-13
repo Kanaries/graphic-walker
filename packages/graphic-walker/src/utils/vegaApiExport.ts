@@ -90,7 +90,7 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
     useEffect(() => {
         return () => {
             if (appRef && 'current' in appRef && appRef.current) {
-                appRef.current.exportChart = async mode => ({
+                appRef.current.exportChart = async (mode: IChartExportResult['mode'] = 'svg') => ({
                     mode,
                     title: '',
                     nCols: 0,

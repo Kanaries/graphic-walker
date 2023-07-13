@@ -257,5 +257,8 @@ interface IExportChart {
 }
 
 export interface IGWHandler {
+    chartCount: number;
+    chartIndex: number;
+    openChart: (index: number) => void;
     exportChart: IExportChart;
 }
