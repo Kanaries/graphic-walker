@@ -2,6 +2,8 @@ import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
+import { ShadowDom } from '../shadow-dom';
+import AppRoot from '../components/appRoot';
 import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -9,6 +11,7 @@ import { useRenderer } from './hooks';
 
 
 interface IPureRendererProps {
+    name?: string;
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
@@ -22,6 +25,7 @@ interface IPureRendererProps {
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
     const {
+        name,
         themeKey,
         dark,
         rawData,
@@ -77,16 +81,23 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     }, [waiting]);
 
     return (
-        <SpecRenderer
-            loading={waiting}
-            data={viewData}
-            transformedData={transformedData}
-            ref={ref}
-            themeKey={themeKey}
-            dark={dark}
-            draggableFieldState={visualState}
-            visualConfig={visualConfig}
-        />
+        <AppRoot>
+            <ShadowDom>
+                <div className="relative">
+                    <SpecRenderer
+                        name={name}
+                        loading={waiting}
+                        data={viewData}
+                        transformedData={transformedData}
+                        ref={ref}
+                        themeKey={themeKey}
+                        dark={dark}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                    />
+                </div>
+            </ShadowDom>
+        </AppRoot>
     );
 });
 
