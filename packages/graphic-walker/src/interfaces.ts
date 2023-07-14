@@ -233,6 +233,7 @@ export interface IVegaChartRef {
     innerWidth: number;
     innerHeight: number;
     view: View;
+    canvas: HTMLCanvasElement | null;
 }
 
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
@@ -248,7 +249,9 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         canvasWidth: number;
         canvasHeight: number;
         data: string;
+        canvas(): HTMLCanvasElement | null;
     }[];
+    container(): HTMLDivElement | null;
 }
 
 interface IExportChart {

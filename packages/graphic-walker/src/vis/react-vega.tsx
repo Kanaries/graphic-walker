@@ -224,7 +224,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
         const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
           const container = res.view.container();
-          const canvas = container?.querySelector('canvas');
+          const canvas = container?.querySelector('canvas') ?? null;
           vegaRefs.current = [{
             w: container?.clientWidth ?? res.view.width(),
             h: container?.clientHeight ?? res.view.height(),
@@ -233,6 +233,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             x: 0,
             y: 0,
             view: res.view,
+            canvas,
           }];
           try {
             res.view.addEventListener('click', (e) => {
@@ -302,7 +303,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             const id = index;
             const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
               const container = res.view.container();
-              const canvas = container?.querySelector('canvas');
+              const canvas = container?.querySelector('canvas') ?? null;
               vegaRefs.current[id] = {
                 w: container?.clientWidth ?? res.view.width(),
                 h: container?.clientHeight ?? res.view.height(),
@@ -311,6 +312,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 x: j,
                 y: i,
                 view: res.view,
+                canvas,
               };
               const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
                 name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
@@ -407,9 +409,11 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     text
   ]);
 
-  useVegaExportApi(name, vegaRefs, ref, renderTaskRefs);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)}>
+  useVegaExportApi(name, vegaRefs, ref, renderTaskRefs, containerRef);
+
+  return <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)} ref={containerRef}>
     {/* <div ref={container}></div> */}
     {
       viewPlaceholders.map((view, i) => <div key={i} ref={view}></div>)

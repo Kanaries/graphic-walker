@@ -47,6 +47,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                     nCols: 0,
                     nRows: 0,
                     charts: [],
+                    container: () => null,
                 };
             }) as IGWHandler['exportChart'],
             exportChartList: (async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
@@ -61,6 +62,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                         nCols: 0,
                         nRows: 0,
                         charts: [],
+                        container: () => null,
                     },
                     hasNext: false,
                 };

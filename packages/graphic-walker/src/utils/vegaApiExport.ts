@@ -1,4 +1,4 @@
-import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect } from "react";
+import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect, RefObject } from "react";
 import { useAppRootContext } from "../components/appRoot";
 import type { IReactVegaHandler } from "../vis/react-vega";
 import type { IChartExportResult, IVegaChartRef } from "../interfaces";
@@ -9,6 +9,7 @@ export const useVegaExportApi = (
     viewsRef: MutableRefObject<IVegaChartRef[]>,
     ref: ForwardedRef<IReactVegaHandler>,
     renderTaskRefs: MutableRefObject<Promise<unknown>[]>,
+    containerRef: RefObject<HTMLDivElement>,
 ) => {
     const renderHandle = {
         getSVGData() {
@@ -131,7 +132,13 @@ export const useVegaExportApi = (
                         canvasWidth: item.innerWidth,
                         canvasHeight: item.innerHeight,
                         data: '',
+                        canvas() {
+                            return item.canvas;
+                        },
                     })),
+                    container() {
+                        return containerRef.current;
+                    },
                 };
                 if (mode === 'data-url') {
                     const imgData = await renderHandle.getCanvasData();
@@ -183,6 +190,9 @@ export const useVegaExportApi = (
                     nCols: 0,
                     nRows: 0,
                     charts: [],
+                    container() {
+                        return null;
+                    },
                 });
                 appRef.current.exportChartList = async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
                     yield {
@@ -196,6 +206,9 @@ export const useVegaExportApi = (
                             nCols: 0,
                             nRows: 0,
                             charts: [],
+                            container() {
+                                return null;
+                            },
                         },
                         hasNext: false,
                     };
