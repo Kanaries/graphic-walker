@@ -1,11 +1,16 @@
-import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect } from "react";
-import type { View } from "vega";
+import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect, RefObject } from "react";
 import { useAppRootContext } from "../components/appRoot";
 import type { IReactVegaHandler } from "../vis/react-vega";
-import type { IChartExportResult } from "../interfaces";
+import type { IChartExportResult, IVegaChartRef } from "../interfaces";
 
 
-export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefObject<{ x: number; y: number; w: number; h: number; view: View }[]>, ref: ForwardedRef<IReactVegaHandler>) => {
+export const useVegaExportApi = (
+    name: string | undefined,
+    viewsRef: MutableRefObject<IVegaChartRef[]>,
+    ref: ForwardedRef<IReactVegaHandler>,
+    renderTaskRefs: MutableRefObject<Promise<unknown>[]>,
+    containerRef: RefObject<HTMLDivElement>,
+) => {
     const renderHandle = {
         getSVGData() {
             return Promise.all(viewsRef.current.map(item => item.view.toSVG()));
@@ -47,12 +52,73 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
     };
     
     useImperativeHandle(ref, () => renderHandle);
-    
+
     const appRef = useAppRootContext();
     
     useEffect(() => {
-        if (appRef && 'current' in appRef && appRef.current) {
-            appRef.current.exportChart = (async (mode: IChartExportResult['mode'] = 'svg') => {
+        const ctx = appRef.current;
+        if (ctx) {
+            Promise.all(renderTaskRefs.current).then(() => {
+                if (appRef.current) {
+                    const appCtx = appRef.current;
+                    if (appCtx.renderStatus !== 'rendering') {
+                        return;
+                    }
+                    // add a short delay to wait for the canvas to be ready
+                    setTimeout(() => {
+                        if (appCtx.renderStatus !== 'rendering') {
+                            return;
+                        }
+                        appCtx.updateRenderStatus('idle');
+                    }, 0);
+                }
+            }).catch(() => {
+                if (appRef.current) {
+                    if (appRef.current.renderStatus !== 'rendering') {
+                        return;
+                    }
+                    appRef.current.updateRenderStatus('error');
+                }
+            });
+            ctx.exportChart = (async (mode: IChartExportResult['mode'] = 'svg') => {
+                if (ctx.renderStatus === 'error') {
+                    console.error('exportChart failed because error occurred when rendering chart.');
+                    return {
+                        mode,
+                        title: '',
+                        nCols: 0,
+                        nRows: 0,
+                        charts: [],
+                    };
+                }
+                if (ctx.renderStatus !== 'idle') {
+                    let dispose = null as (() => void) | null;
+                    // try to wait for a while
+                    const waitForChartReady = new Promise<void>((resolve, reject) => {
+                        dispose = ctx.onRenderStatusChange(status => {
+                            if (status === 'error') {
+                                reject(new Error('Error occurred when rendering chart'));
+                            } else if (status === 'idle') {
+                                resolve();
+                            }
+                        });
+                        setTimeout(() => reject(new Error('Timeout')), 10_000);
+                    });
+                    try {
+                        await waitForChartReady;
+                    } catch (error) {
+                        console.error('exportChart failed:', `${error}`);
+                        return {
+                            mode,
+                            title: '',
+                            nCols: 0,
+                            nRows: 0,
+                            charts: [],
+                        };
+                    } finally {
+                        dispose?.();
+                    }
+                }
                 const res: IChartExportResult = {
                     mode,
                     title: name || 'untitled',
@@ -63,8 +129,16 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
                         colIndex: item.x,
                         width: item.w,
                         height: item.h,
+                        canvasWidth: item.innerWidth,
+                        canvasHeight: item.innerHeight,
                         data: '',
+                        canvas() {
+                            return item.canvas;
+                        },
                     })),
+                    container() {
+                        return containerRef.current;
+                    },
                 };
                 if (mode === 'data-url') {
                     const imgData = await renderHandle.getCanvasData();
@@ -82,20 +156,63 @@ export const useVegaExportApi = (name: string | undefined, viewsRef: MutableRefO
                     }
                 }
                 return res;
-            }) as typeof appRef.current.exportChart;
+            }) as typeof ctx.exportChart;
+            ctx.exportChartList = async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
+                const total = ctx.chartCount;
+                const indices = new Array(total).fill(0).map((_, i) => i);
+                const currentIdx = ctx.chartIndex;
+                for await (const index of indices) {
+                    ctx.openChart(index);
+                    // wait for a while to make sure the correct chart is rendered
+                    await new Promise<void>(resolve => setTimeout(resolve, 0));
+                    const chart = await ctx.exportChart(mode);
+                    yield {
+                        mode,
+                        total,
+                        index,
+                        data: chart,
+                        hasNext: index < total - 1,
+                    };
+                }
+                ctx.openChart(currentIdx);
+            };
         }
     });
 
     useEffect(() => {
+        // NOTE: this is totally a cleanup function
         return () => {
-            if (appRef && 'current' in appRef && appRef.current) {
-                appRef.current.exportChart = async mode => ({
+            if (appRef.current) {
+                appRef.current.updateRenderStatus('idle');
+                appRef.current.exportChart = async (mode: IChartExportResult['mode'] = 'svg') => ({
                     mode,
                     title: '',
                     nCols: 0,
                     nRows: 0,
                     charts: [],
+                    container() {
+                        return null;
+                    },
                 });
+                appRef.current.exportChartList = async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
+                    yield {
+                        mode,
+                        total: 1,
+                        completed: 0,
+                        index: 0,
+                        data: {
+                            mode,
+                            title: '',
+                            nCols: 0,
+                            nRows: 0,
+                            charts: [],
+                            container() {
+                                return null;
+                            },
+                        },
+                        hasNext: false,
+                    };
+                };
             }
         };
     }, []);
