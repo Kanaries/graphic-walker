@@ -272,15 +272,57 @@ interface IExportChartList {
     <T extends IChartExportResult['mode']>(mode: T): AsyncGenerator<IChartListExportResult<T>, void, unknown>;
 }
 
+/**
+ * The status of the current chart.
+ * * `computing`: _GraphicWalker_ is computing the data view.
+ * * `rendering`: _GraphicWalker_ is rendering the chart.
+ * * `idle`: rendering is finished.
+ * * `error`: an error occurs during the process above.
+ */
 export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
 
 export interface IGWHandler {
+    /** length of the "chart" tab list */
     chartCount: number;
+    /** current selected chart index */
     chartIndex: number;
+    /** Switches to the specified chart */
     openChart: (index: number) => void;
+    /**
+     * Returns the status of the current chart.
+     * 
+     * It is computed by the following rules:
+     * - If _GraphicWalker_ is computing the data view, it returns `computing`.
+     * - If _GraphicWalker_ is rendering the chart, it returns `rendering`.
+     * - If rendering is finished, it returns `idle`.
+     * - If an error occurs during the process above, it returns `error`.
+     */
     get renderStatus(): IRenderStatus;
+    /**
+     * Registers a callback function to listen to the status change of the current chart.
+     * 
+     * @param {(renderStatus: IRenderStatus) => void} cb - the callback function
+     * @returns {() => void} a dispose function to remove this callback
+     */
     onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    /**
+     * Exports the current chart.
+     * 
+     * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
+     */
     exportChart: IExportChart;
+    /**
+     * Exports all charts.
+     * 
+     * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
+     * @returns {AsyncGenerator<IChartListExportResult, void, unknown>} an async generator to iterate over all charts
+     * @example
+     * ```ts
+     * for await (const chart of gwRef.current.exportChartList()) {
+     *     console.log(chart);
+     * }
+     * ```
+     */
     exportChartList: IExportChartList;
 }
 
