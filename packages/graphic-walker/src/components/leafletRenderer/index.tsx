@@ -13,6 +13,9 @@ export interface ILeafletRendererProps {
 
 export interface ILeafletRendererRef {}
 
+export const LEAFLET_DEFAULT_WIDTH = 800;
+export const LEAFLET_DEFAULT_HEIGHT = 600;
+
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
     const { draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
