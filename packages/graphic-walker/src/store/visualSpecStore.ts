@@ -77,6 +77,7 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: "none",
         zeroScale: true,
+        scaleIncludeUnmatchedChoropleth: false,
         size: {
             mode: "auto",
             width: 320,
@@ -373,7 +374,7 @@ export class VizSpecStore {
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
         this.useMutable(({ config }) => {
             switch (true) {
-                case ["defaultAggregated", "defaultStack", "showActions", "interactiveScale"].includes(configKey): {
+                case ["defaultAggregated", "defaultStack", "showActions", "interactiveScale", "scaleIncludeUnmatchedChoropleth"].includes(configKey): {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === "geoms" && Array.isArray(value):

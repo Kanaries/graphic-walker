@@ -19,7 +19,7 @@ export const LEAFLET_DEFAULT_HEIGHT = 600;
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
     const { draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
-    const { defaultAggregated, geoms: [markType], geojson, geoKey = '' } = visualConfig;
+    const { defaultAggregated, geoms: [markType], geojson, geoKey = '', scaleIncludeUnmatchedChoropleth = false } = visualConfig;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);
@@ -55,6 +55,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 text={text}
                 details={details}
                 vegaConfig={vegaConfig}
+                scaleIncludeUnmatchedChoropleth={scaleIncludeUnmatchedChoropleth}
             />
         );
     }

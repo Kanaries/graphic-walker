@@ -1,4 +1,4 @@
-import React, { Fragment, forwardRef, useEffect, useMemo, useRef } from "react";
+import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip } from "react-leaflet";
 import { type Map, divIcon } from "leaflet";
 import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
@@ -21,6 +21,7 @@ export interface IChoroplethRendererProps {
     text: DeepReadonly<IViewField> | undefined;
     details: readonly DeepReadonly<IViewField>[];
     vegaConfig: VegaGlobalConfig;
+    scaleIncludeUnmatchedChoropleth: boolean;
 }
 
 export interface IChoroplethRendererRef {}
@@ -85,7 +86,9 @@ const resolveCenter = (coordinates: [lat: number, lng: number][]): [lng: number,
 };
 
 const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendererProps>(function ChoroplethRenderer (props, ref) {
-    const { data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig } = props;
+    const { data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
+
+    useImperativeHandle(ref, () => ({}));
 
     const geoIndices = useMemo(() => {
         if (geoId) {
@@ -94,14 +97,19 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return [];
     }, [geoId, data]);
 
-    const geoShapes = useMemo(() => {
+    const [indices, geoShapes] = useMemo<[indices: number[], geoShapes: (FeatureCollection['features'][number] | undefined)[]]>(() => {
         if (geoIndices.length && geoKey && features) {
-            return geoIndices.map(id => {
+            const indices: number[] = [];
+            const shapes = geoIndices.map((id, i) => {
                 const feature = id ? features.features.find(f => f.properties?.[geoKey] === id) : undefined;
+                if (feature) {
+                    indices.push(i);
+                }
                 return feature;
             });
+            return [indices, shapes];
         }
-        return [];
+        return [[], []];
     }, [geoIndices, features, geoKey]);
 
     useEffect(() => {
@@ -149,8 +157,15 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return [[[-180, -90], [180, 90]], [0, 0]];
     }, [lngLat]);
 
-    const opacityScale = useOpacityScale(data, opacity, defaultAggregated);
-    const colorScale = useColorScale(data, color, defaultAggregated, vegaConfig);
+    const distribution = useMemo(() => {
+        if (scaleIncludeUnmatchedChoropleth) {
+            return data;
+        }
+        return indices.map(i => data[i]);
+    }, [data, indices, scaleIncludeUnmatchedChoropleth]);
+
+    const opacityScale = useOpacityScale(distribution, opacity, defaultAggregated);
+    const colorScale = useColorScale(distribution, color, defaultAggregated, vegaConfig);
 
     const tooltipFields = useMemo(() => {
         return details.concat(

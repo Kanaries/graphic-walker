@@ -13,6 +13,8 @@ const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showVisualConfigPanel } = commonStore;
     const { visualConfig } = vizStore;
+    const { coordSystem, geoms: [markType] } = visualConfig;
+    const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = [
         'numberFormat',
@@ -25,6 +27,7 @@ const VisualConfigPanel: React.FC = (props) => {
         normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
+    const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
 
     return (
         <Modal
@@ -72,6 +75,17 @@ const VisualConfigPanel: React.FC = (props) => {
                         }}
                     />
                 </div>
+                {isChoropleth && (
+                    <div className="my-2">
+                        <Toggle
+                            label="include unmatched choropleth in scale"
+                            enabled={scaleIncludeUnmatchedChoropleth}
+                            onChange={(en) => {
+                                setScaleIncludeUnmatchedChoropleth(en);
+                            }}
+                        />
+                    </div>
+                )}
                 <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}
@@ -80,6 +94,7 @@ const VisualConfigPanel: React.FC = (props) => {
                             runInAction(() => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
+                                vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
                                 commonStore.setShowVisualConfigPanel(false);
                             })
                         }}

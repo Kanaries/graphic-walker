@@ -208,6 +208,8 @@ export interface IVisualConfig {
     interactiveScale: boolean;
     sorted: 'none' | 'ascending' | 'descending';
     zeroScale: boolean;
+    /** @default false */
+    scaleIncludeUnmatchedChoropleth?: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;
