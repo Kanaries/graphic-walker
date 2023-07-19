@@ -1,5 +1,6 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type {IGlobalStore} from './store';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -329,3 +330,12 @@ export interface IGWHandler {
 export interface IGWHandlerInsider extends IGWHandler {
     updateRenderStatus: (renderStatus: IRenderStatus) => void;
 }
+
+export type IGWSearchFunction = (
+    query: string,
+    chart: IVisSpec & {
+        readonly fields: readonly IMutField[];
+    },
+    graphicWalker: IGWHandler,
+    rawStore: IGlobalStore,
+) => void | Promise<void>;

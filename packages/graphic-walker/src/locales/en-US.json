@@ -204,5 +204,14 @@
         "drop_field": "Drop Field Here",
         "confirm": "Confirm",
         "cancel": "Cancel"
+    },
+    "search": {
+        "label": "Chat Interface",
+        "placeholder": "What visualization you want to draw from the dataset?",
+        "action": "Ask",
+        "error": {
+            "network": "Network error",
+            "unknown": "Unknown error"
+        }
     }
 }

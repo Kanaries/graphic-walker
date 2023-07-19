@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
+import SearchBox from './components/searchBox';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -130,6 +131,7 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
+                        <SearchBox />
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />

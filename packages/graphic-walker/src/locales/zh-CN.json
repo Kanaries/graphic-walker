@@ -204,5 +204,14 @@
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
         "cencel": "取消"
+    },
+    "search": {
+        "label": "自然语言对话",
+        "placeholder": "你想从数据集中绘制什么可视化图表？",
+        "action": "提问",
+        "error": {
+            "network": "请求失败",
+            "unknown": "未知错误"
+        }
     }
 }

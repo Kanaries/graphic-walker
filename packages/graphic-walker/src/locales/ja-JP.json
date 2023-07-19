@@ -203,5 +203,14 @@
         "drop_field": "ここにフィールドをドロップ",
         "confirm": "確認",
         "cancel": "キャンセル"
+    },
+    "search": {
+        "label": "チャットインターフェース",
+        "placeholder": "あなたはどんな可視化が見たいのか教えてください",
+        "action": "送信",
+        "error": {
+            "network": "接続エラー",
+            "unknown": "Unknown error"
+        }
     }
 }

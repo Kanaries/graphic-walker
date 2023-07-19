@@ -313,7 +313,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         return items;
     }, [vizStore, canUndo, canRedo, defaultAggregated, markType, stack, interactiveScale, sizeMode, width, height, showActions, downloadPNG, downloadSVG, dark, extra, exclude]);
 
-    return <div style={{ margin: '0.38em 0.28em 0.2em 0.18em' }}>
+    return <div style={{ margin: '0.38em 0.11em 0.2em' }}>
         <Toolbar
             darkModePreference={darkModePreference}
             items={items}

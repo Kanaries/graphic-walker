@@ -1,4 +1,4 @@
-import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject } from "react";
+import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject, type ForwardRefExoticComponent, type PropsWithoutRef, type RefAttributes, useRef } from "react";
 import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
@@ -13,7 +13,16 @@ export const useAppRootContext = (): RefObject<IGWHandlerInsider> => {
     };
 };
 
-const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, ref) => {
+const WithNonNullableRef = <P extends {}, T>(Component: ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<T>>): ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<T>> => {
+    return forwardRef<T, P>((props, propsRef) => {
+        const selfRef = useRef<T>(null);
+
+        // @ts-ignore
+        return <Component {...props} ref={propsRef ?? selfRef} />;
+    });
+};
+
+const AppRoot = WithNonNullableRef(forwardRef<IGWHandlerInsider, { children: any }>(({ children }, ref) => {
     useImperativeHandle(ref, () => {
         let renderStatus: IRenderStatus = 'idle';
         let onRenderStatusChangeHandlers: ((status: IRenderStatus) => void)[] = [];
@@ -75,7 +84,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
             {children}
         </AppRootContext.Provider>
     );
-});
+}));
 
 export const withAppRoot = <P extends object>(Component: ComponentType<any>) => {
     return (props: P) => {
