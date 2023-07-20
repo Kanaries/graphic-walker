@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
+import AskViz from './components/askViz';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -41,6 +42,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    enableAsking: boolean;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -55,6 +57,7 @@ const App = observer<IGWProps>(function App(props) {
         themeKey = 'vega',
         dark = 'media',
         toolbar,
+        enableAsking = false
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -130,6 +133,7 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
+                        { enableAsking && <AskViz />}
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
