@@ -42,7 +42,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
-    enableAsking: boolean;
+    enableAsking?: boolean;
 }
 
 const App = observer<IGWProps>(function App(props) {
