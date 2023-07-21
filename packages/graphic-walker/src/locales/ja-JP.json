@@ -37,7 +37,8 @@
             "__enum__": "スタックモード",
             "none": "なし",
             "stack": "スタック",
-            "normalize": "正規化"
+            "normalize": "正規化",
+            "center": "中央"
         },
         "layout_type": {
             "__enum__": "レイアウトタイプ",

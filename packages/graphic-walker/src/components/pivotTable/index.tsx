@@ -78,7 +78,6 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
                 data
             );
             const metric = buildMetricTableFromNestTree(lt, tt, data);
-            // debugger
             unstable_batchedUpdates(() => {
                 setLeftTree(lt);
                 setTopTree(tt);
