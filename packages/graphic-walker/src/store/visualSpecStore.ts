@@ -652,7 +652,7 @@ export class VizSpecStore {
                 );
             }
 
-            (['color', 'opacity', 'shape', 'size'] as (keyof DraggableFieldState)[]).forEach((ch) => {
+            (['color', 'opacity', 'shape', 'size', 'details', 'theta', 'text', 'radius'] as (keyof DraggableFieldState)[]).forEach((ch) => {
                 if (vlSpec.encoding[ch]) {
                     this.appendField(ch, fields.find((f) => f.fid === vlSpec.encoding[ch].field) || fields.find((f) => f.fid === COUNT_FIELD_ID));
                     if (vlSpec.encoding[ch].aggregate) {
