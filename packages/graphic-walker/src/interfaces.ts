@@ -107,10 +107,10 @@ export interface IField {
     basename?: string;
     path?: string[],
 }
-
+export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
     dragId: string;
-    sort?: 'none' | 'ascending' | 'descending';
+    sort?: ISortMode;
 }
 
 export interface DataSet {
@@ -207,7 +207,7 @@ export type IFilterRule =
           value: Set<string | number>;
       };
 
-export type IStackMode = 'none' | 'stack' | 'normalize';
+export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
@@ -215,7 +215,7 @@ export interface IVisualConfig {
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
-    sorted: 'none' | 'ascending' | 'descending';
+    sorted: ISortMode;
     zeroScale: boolean;
     background?: string;
     format: {

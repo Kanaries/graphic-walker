@@ -4,6 +4,8 @@ import {
     DataSet,
     DraggableFieldState,
     IFilterRule,
+    ISortMode,
+    IStackMode,
     IViewField,
     IVisSpec,
     IVisSpecForExport,
@@ -82,6 +84,29 @@ export function initEncoding(): DraggableFieldState {
         filters: [],
         text: [],
     };
+}
+
+function stackValueTransform(vlValue: string | undefined | null): IStackMode {
+    if (vlValue === 'center') return 'center';
+    if (vlValue === 'normalize') return 'normalize';
+    if (vlValue === 'zero') return 'zero';
+    return 'none';
+}
+
+function sortValueTransform(vlValue: object | string | null): ISortMode {
+    let order: string = 'none';
+    if (typeof vlValue === 'string') {
+        order = vlValue;
+    } else if (vlValue && vlValue instanceof Object) {
+        order = vlValue['order'] ?? 'ascending';
+    }
+    if (order !== 'none') {
+        const channels: string[] = ['x', 'y', 'color', 'size', 'opacity'];
+        // TODO: support all sorting config in vl
+        if (order.startsWith('-') || order === 'descending') return 'descending';
+        if (channels.indexOf(order) > -1 || order === 'ascending') return 'ascending';
+    }
+    return 'none';
 }
 
 type DeepReadonly<T extends Record<keyof any, any>> = {
@@ -571,12 +596,12 @@ export class VizSpecStore {
         }
         return false;
     }
-    public setFieldSort(stateKey: keyof DraggableFieldState, index: number, sortType: 'none' | 'ascending' | 'descending') {
+    public setFieldSort(stateKey: keyof DraggableFieldState, index: number, sortType: ISortMode) {
         this.useMutable(({ encodings }) => {
             encodings[stateKey][index].sort = sortType;
         });
     }
-    public applyDefaultSort(sortType: 'none' | 'ascending' | 'descending' = 'ascending') {
+    public applyDefaultSort(sortType: ISortMode = 'ascending') {
         this.useMutable(({ encodings }) => {
             const { rows, columns } = encodings;
             const yField = rows.length > 0 ? rows[rows.length - 1] : null;
@@ -612,6 +637,9 @@ export class VizSpecStore {
         const tab = this.visList[this.visIndex];
         this.clearState();
         this.setVisualConfig('defaultAggregated', false);
+        this.setVisualConfig('stack', 'none');
+        // this.setVisualConfig('sorted', 'none')
+        this.applyDefaultSort('none');
 
         if (!tab) return;
         const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
@@ -627,6 +655,9 @@ export class VizSpecStore {
                     const binFid = this.createBinField('columns', this.draggableFieldState.columns.length - 1, 'bin');
                     this.replaceField('columns', this.draggableFieldState.columns.length - 1, binFid);
                 }
+                if (vlSpec.encoding.x.stack) {
+                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.x.stack));
+                }
             }
             if (vlSpec.encoding.y) {
                 this.appendField('rows', fields.find((f) => f.fid === vlSpec.encoding.y.field) || fields.find((f) => f.fid === COUNT_FIELD_ID));
@@ -637,6 +668,9 @@ export class VizSpecStore {
                 if (vlSpec.encoding.y.bin) {
                     const binFid = this.createBinField('rows', this.draggableFieldState.rows.length - 1, 'bin');
                     this.replaceField('rows', this.draggableFieldState.rows.length - 1, binFid);
+                }
+                if (vlSpec.encoding.y.stack) {
+                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.y.stack));
                 }
             }
             if (vlSpec.encoding.row && vlSpec.encoding.row) {
@@ -661,6 +695,11 @@ export class VizSpecStore {
                             this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
                         }
                     }
+                }
+            });
+            ['x', 'y'].forEach((ch) => {
+                if (vlSpec.encoding[ch] && vlSpec.encoding[ch].sort) {
+                    this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort));
                 }
             });
         }
