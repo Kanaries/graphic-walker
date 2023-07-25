@@ -85,14 +85,14 @@ export function initVisualConfig(): IVisualConfig {
     };
 }
 
-function stackValueTransform (vlValue: string | undefined | null): IStackMode {
+function stackValueTransform(vlValue: string | undefined | null): IStackMode {
     if (vlValue === 'center') return 'center';
     if (vlValue === 'normalize') return 'normalize';
     if (vlValue === 'zero') return 'zero'
     return 'none';
 }
 
-function sortValueTransform (vlValue: object | string | null): ISortMode {
+function sortValueTransform(vlValue: object | string | null): ISortMode {
     let order: string = 'none';
     if (typeof vlValue === 'string') {
         order = vlValue
@@ -617,7 +617,7 @@ export class VizSpecStore {
             }
         });
     }
-    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined) {
+    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
         if (MetaFieldKeys.includes(destinationKey)) return;
         if (typeof field === 'undefined') return;
         if (destinationKey === 'filters') {
@@ -625,7 +625,7 @@ export class VizSpecStore {
         }
 
         this.useMutable(({ encodings }) => {
-            const cloneField = { ...toJS(field) };
+            const cloneField = { ...toJS(field), ...overrideAttr };
             cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
         });
@@ -637,7 +637,7 @@ export class VizSpecStore {
         const tab = this.visList[this.visIndex];
         this.clearState();
         this.setVisualConfig('defaultAggregated', false)
-        this.setVisualConfig('stack', 'none')
+        this.setVisualConfig('stack', 'stack')
         // this.setVisualConfig('sorted', 'none')
         this.applyDefaultSort('none');
 
@@ -648,12 +648,29 @@ export class VizSpecStore {
                 'geoms',
                 [geomAdapter(vlSpec.mark)]
             );
-            if (vlSpec.encoding.x) {
+            if (vlSpec.encoding.row) {
+                this.appendField(
+                    'rows',
+                    fields.find((f) => f.fid === vlSpec.encoding.row.field),
+                    { "analyticType": "dimension" }
+                );
+            }
+            if (vlSpec.encoding.column) {
                 this.appendField(
                     'columns',
-                    fields.find((f) => f.fid === vlSpec.encoding.x.field) || fields.find((f) => f.fid === COUNT_FIELD_ID)
+                    fields.find((f) => f.fid === vlSpec.encoding.column.field),
+                    { "analyticType": "dimension" }
                 );
-                if (vlSpec.encoding.x.aggregate) {
+            }
+            const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
+            if (vlSpec.encoding.x) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
+                this.appendField(
+                    'columns',
+                    field,
+                    { "analyticType": "dimension" }
+                );
+                if (vlSpec.encoding.x.aggregate || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('columns', this.draggableFieldState.columns.length - 1, vlSpec.encoding.x.aggregate);
                 }
@@ -666,11 +683,13 @@ export class VizSpecStore {
                 }
             }
             if (vlSpec.encoding.y) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.y.field) || countField;
                 this.appendField(
                     'rows',
-                    fields.find((f) => f.fid === vlSpec.encoding.y.field) || fields.find((f) => f.fid === COUNT_FIELD_ID)
+                    field,
+                    { "analyticType": "measure" }
                 );
-                if (vlSpec.encoding.y.aggregate) {
+                if (vlSpec.encoding.y.aggregate || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('rows', this.draggableFieldState.rows.length - 1, vlSpec.encoding.y.aggregate);
                 }
@@ -682,26 +701,18 @@ export class VizSpecStore {
                     this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.y.stack))
                 }
             }
-            if (vlSpec.encoding.row && vlSpec.encoding.row) {
-                this.appendField(
-                    'rows',
-                    fields.find((f) => f.fid === vlSpec.encoding.row.field)
-                );
-            }
-            if (vlSpec.encoding.column && vlSpec.encoding.column) {
-                this.appendField(
-                    'columns',
-                    fields.find((f) => f.fid === vlSpec.encoding.column.field)
-                );
-            }
 
             (['color', 'opacity', 'shape', 'size', 'details', 'theta', 'text', 'radius'] as (keyof DraggableFieldState)[]).forEach((ch) => {
                 if (vlSpec.encoding[ch]) {
+                    const field = fields.find((f) => f.fid === vlSpec.encoding[ch].field) || countField;
                     this.appendField(
                         ch,
-                        fields.find((f) => f.fid === vlSpec.encoding[ch].field) || fields.find((f) => f.fid === COUNT_FIELD_ID)
+                        field,
+                        field !== countField && ['color', 'opacity', 'size'].includes(ch) ? { "analyticType": "dimension" } :
+                            field === countField && ['theta', 'radius'].includes(ch) ? { "analyticType": "measure" } :
+                                {}
                     );
-                    if (vlSpec.encoding[ch].aggregate) {
+                    if (vlSpec.encoding[ch].aggregate || field === countField) {
                         if (vlSpec.encoding[ch].aggregate) {
                             this.setVisualConfig('defaultAggregated', true);
                             this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
@@ -713,7 +724,10 @@ export class VizSpecStore {
                 if (vlSpec.encoding[ch] && vlSpec.encoding[ch].sort) {
                     this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort))
                 }
-            })
+            });
+            if (vlSpec.encoding.order && vlSpec.encoding.order.sort) {
+                this.applyDefaultSort(sortValueTransform(vlSpec.encoding.order.sort))
+            }
         }
     }
     public renderSpec(spec: Specification) {
