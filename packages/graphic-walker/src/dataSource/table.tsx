@@ -13,11 +13,20 @@ const Table: React.FC<TableProps> = (props) => {
     const { commonStore } = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
 
+    const tempDataset = React.useMemo(() => {
+        return {
+            id: "tmp",
+            name: "tmp",
+            dataSource: tmpDataSource,
+            rawFields: toJS(tmpDSRawFields),
+        };
+    }, [tmpDataSource, tmpDSRawFields]);
+
     return (
         <DataTable
             size={size}
-            metas={toJS(tmpDSRawFields)}
-            data={tmpDataSource}
+            dataset={tempDataset}
+            total={tmpDataSource.length}
             onMetaChange={(fid, fIndex, diffMeta) => {
                 commonStore.updateTempDatasetMetas(fid, diffMeta);
             }}

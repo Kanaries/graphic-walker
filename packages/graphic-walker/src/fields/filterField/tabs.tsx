@@ -3,13 +3,18 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import type { IFilterField, IFilterRule } from '../../interfaces';
+import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats } from '../../interfaces';
 import { useGlobalStore } from '../../store';
+import LoadingLayer from '../../components/loadingLayer';
 import PureTabs from '../../components/tabs/defaultTab';
+import { useComputationConfig } from '../../renderer/hooks';
+import { fieldStatClient } from '../../computation/clientComputation';
+import { fieldStatServer } from '../../computation/serverComputation';
 import Slider from './slider';
 
 
 export type RuleFormProps = {
+    dataset: DataSet;
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
 };
@@ -103,34 +108,93 @@ const TabPanel = styled.div({});
 
 const TabItem = styled.div({});
 
+const useFieldStats = (datasetId: string, data: IRow[], fid: string, attributes: { values: boolean; range: boolean }): IFieldStats | null => {
+    const { values, range } = attributes;
+    const [loading, setLoading] = React.useState(true);
+    const [stats, setStats] = React.useState<IFieldStats | null>(null);
+    const computationConfig = useComputationConfig();
+    const computationMode = computationConfig.mode;
+
+    React.useEffect(() => {
+        if (computationMode !== 'client') {
+            return;
+        }
+        setLoading(true);
+        let isCancelled = false;
+        fieldStatClient(data, fid).then(stats => {
+            if (isCancelled) {
+                return;
+            }
+            setStats(stats);
+            setLoading(false);
+        }).catch(reason => {
+            console.warn(reason);
+            if (isCancelled) {
+                return;
+            }
+            setStats(null);
+            setLoading(false);
+        });
+        return () => {
+            isCancelled = true;
+        };
+    }, [fid, computationMode, data]);
+
+    React.useEffect(() => {
+        if (computationMode !== 'server') {
+            return;
+        }
+        setLoading(true);
+        let isCancelled = false;
+        fieldStatServer(computationConfig, datasetId, fid, { values, range }).then(stats => {
+            if (isCancelled) {
+                return;
+            }
+            setStats(stats);
+            setLoading(false);
+        }).catch(reason => {
+            console.warn(reason);
+            if (isCancelled) {
+                return;
+            }
+            setStats(null);
+            setLoading(false);
+        });
+        return () => {
+            isCancelled = true;
+        };
+    }, [fid, computationMode, computationConfig, datasetId, values, range]);
+
+    return loading ? null : stats;
+};
+
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
-
-    const count = React.useMemo(() => {
-        return dataSource.reduce<Map<string | number, number>>((tmp, d) => {
-            const val = d[field.fid];
-
-            tmp.set(val, (tmp.get(val) ?? 0) + 1);
-            
-            return tmp;
-        }, new Map<string | number, number>());
-    }, [dataSource, field]);
-
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
+    const stats = useFieldStats(dataset.id, dataset.dataSource, field.fid, { values: true, range: false });
+    const count = stats?.values;
+
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'one of') {
+        if (count && active && field.rule?.type !== 'one of') {
             onChange({
                 type: 'one of',
-                value: new Set<string | number>(count.keys()),
+                value: new Set<string | number>(count.map(item => item.value)),
             });
         }
     }, [active, onChange, field, count]);
+
+    if (!stats) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
 
     return field.rule?.type === 'one of' ? (
         <Container>
@@ -147,7 +211,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             </Table>
             <Table>
                 {
-                    [...count.entries()].map(([value, count], idx) => {
+                    count?.map(({ value, count }, idx) => {
                         const id = `rule_checkbox_${idx}`;
 
                         return (
@@ -201,7 +265,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                 </label>
                 <label>
                     {[...field.rule.value].reduce<number>((sum, key) => {
-                        const s = dataSource.filter(which => which[field.fid] === key).length;
+                        const s = count?.find(which => which.value === key)?.count ?? 0;
 
                         return sum + s;
                     }, 0)}
@@ -210,35 +274,35 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             <div className="btn-grp">
                 <Button
                     onClick={() => {
-                        if (field.rule?.type === 'one of') {
+                        if (count && field.rule?.type === 'one of') {
                             const curSet = field.rule.value;
 
                             onChange({
                                 type: 'one of',
                                 value: new Set<number | string>(
-                                    curSet.size === count.size
+                                    curSet.size === count.length
                                         ? []
-                                        : count.keys()
+                                        : count.map(item => item.value)
                                 ),
                             });
                         }
                     }}
                 >
                     {
-                        field.rule.value.size === count.size
+                        field.rule.value.size === count?.length
                             ? t('btn.unselect_all')
                             : t('btn.select_all')
                     }
                 </Button>
                 <Button
                     onClick={() => {
-                        if (field.rule?.type === 'one of') {
+                        if (count && field.rule?.type === 'one of') {
                             const curSet = field.rule.value;
 
                             onChange({
                                 type: 'one of',
                                 value: new Set<number | string>(
-                                    [...count.keys()].filter(key => !curSet.has(key))
+                                    count.map(item => item.value).filter(key => !curSet.has(key))
                                 ),
                             });
                         }
@@ -252,38 +316,22 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 });
 
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
-
-    const sorted = React.useMemo(() => {
-        return dataSource.reduce<number[]>((list, d) => {
-            try {
-                const time = new Date(d[field.fid]).getTime();
-
-                list.push(time);
-            } catch (error) {
-                
-            }
-            return list;
-        }, []).sort((a, b) => a - b);
-    }, [dataSource, field]);
-
-    const [min, max] = React.useMemo(() => {
-        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)];
-    }, [sorted]);
+    const stats = useFieldStats(dataset.id, dataset.dataSource, field.fid, { values: false, range: true });
+    const range = stats?.range;
 
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'temporal range') {
+        if (range && active && field.rule?.type !== 'temporal range') {
             onChange({
                 type: 'temporal range',
-                value: [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)],
+                value: range,
             });
         }
-    }, [onChange, field, sorted, active]);
+    }, [onChange, field, range, active]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -292,11 +340,19 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         });
     }, []);
 
+    if (!range) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
+
     return field.rule?.type === 'temporal range' ? (
         <Container>
             <Slider
-                min={min}
-                max={max}
+                min={range[0]}
+                max={range[1]}
                 value={field.rule.value}
                 onChange={handleChange}
                 isDateTime
@@ -306,29 +362,22 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 });
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
-
-    const sorted = React.useMemo(() => {
-        return dataSource.map(d => d[field.fid]).sort((a, b) => a - b);
-    }, [dataSource, field]);
-
-    const [min, max] = React.useMemo(() => {
-        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)];
-    }, [sorted]);
+    const stats = useFieldStats(dataset.id, dataset.dataSource, field.fid, { values: false, range: true });
+    const range = stats?.range;
 
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'range') {
+        if (range && active && field.rule?.type !== 'range') {
             onChange({
                 type: 'range',
-                value: [min, max],
+                value: range,
             });
         }
-    }, [onChange, field, min, max, active]);
+    }, [onChange, field, range, active]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -337,11 +386,19 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
         });
     }, []);
 
+    if (!range) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
+
     return field.rule?.type === 'range' ? (
         <Container>
             <Slider
-                min={min}
-                max={max}
+                min={range[0]}
+                max={range[1]}
                 value={field.rule.value}
                 onChange={handleChange}
             />
@@ -360,8 +417,9 @@ export interface TabsProps extends RuleFormProps {
 }
 
 const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState } = vizStore;
+    const { currentDataset } = commonStore;
 
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
@@ -397,6 +455,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                                     field={field}
                                     onChange={onChange}
                                     active={which === tab}
+                                    dataset={currentDataset}
                                 />
                             </TabItem>
                         );
