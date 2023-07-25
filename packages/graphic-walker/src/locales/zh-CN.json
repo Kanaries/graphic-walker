@@ -182,6 +182,10 @@
             "reverse": "选择反向",
             "confirm": "确认",
             "cancel": "取消"
+        },
+        "range": {
+            "start_value": "起始值",
+            "end_value": "终止值"
         }
     },
     "explain": {

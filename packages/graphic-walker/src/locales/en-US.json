@@ -83,9 +83,12 @@
             "variance": "Variance"
         },
         "filter_type": {
-            "one_of": "One-Of",
+            "one_of": "Value set",
+            "one_of_desc": "Select values specified",
             "range": "Range",
-            "temporal_range": "Date Range"
+            "range_desc": "Select values in a range [start, end]",
+            "temporal_range": "Date Range",
+            "temporal_range_desc": "Select values in a date range [start, end]"
         }
     },
     "App": {
@@ -182,6 +185,10 @@
             "reverse": "Reverse Selection",
             "confirm": "Confirm",
             "cancel": "Cancel"
+        },
+        "range": {
+            "start_value": "Start Value",
+            "end_value": "End Value"
         }
     },
     "explain": {

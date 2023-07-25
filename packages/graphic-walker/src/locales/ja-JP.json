@@ -181,6 +181,10 @@
             "reverse": "選択を反転する",
             "confirm": "確認",
             "cancel": "キャンセル"
+        },
+        "range": {
+            "start_value": "開始値",
+            "end_value": "終了値"
         }
     },
     "explain": {

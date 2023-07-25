@@ -9,6 +9,7 @@ import { useGlobalStore } from "../../store";
 import Tabs, { RuleFormProps } from "./tabs";
 import DefaultButton from "../../components/button/default";
 import PrimaryButton from "../../components/button/primary";
+import DropdownSelect from "../../components/dropdownSelect";
 
 const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
     return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
@@ -23,7 +24,7 @@ const OrdinalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
 };
 
 const TemporalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} />;
+    return <Tabs field={field} onChange={onChange} tabs={["temporal range", "one of"]} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
@@ -71,6 +72,25 @@ const FilterEditDialog: React.FC = observer(() => {
         vizStore.closeFilterEditing();
     }, [editingFilterIdx, uncontrolledField]);
 
+    const allFields = React.useMemo(() => {
+        return [...draggableFieldState.dimensions, ...draggableFieldState.measures];
+    }, [draggableFieldState]);
+
+    const handleSelectFilterField = (fieldKey) => {
+        const existingFilterIdx = draggableFieldState.filters.findIndex((field) => field.fid === fieldKey)
+        if (existingFilterIdx >= 0) {
+            vizStore.setFilterEditing(existingFilterIdx);
+        } else {
+            const sourceKey = draggableFieldState.dimensions.find((field) => field.fid === fieldKey) 
+                ? "dimensions" 
+                : "measures"
+            const sourceIndex = sourceKey === "dimensions"
+                ? draggableFieldState.dimensions.findIndex((field) => field.fid === fieldKey)
+                : draggableFieldState.measures.findIndex((field) => field.fid === fieldKey);
+            vizStore.moveField(sourceKey, sourceIndex, "filters", 0);
+        }
+    };
+
     const Form = field
         ? ({
               quantitative: QuantitativeRuleForm,
@@ -82,12 +102,14 @@ const FilterEditDialog: React.FC = observer(() => {
 
     return uncontrolledField ? (
         <Modal show={Boolean(uncontrolledField)} title={t("editing")} onClose={() => vizStore.closeFilterEditing()}>
-            <div className="p-4">
-                <h2 className="text-base font-semibold py-2 outline-none">{t("form.name")}</h2>
-                <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-0.5 text-sm font-medium text-indigo-800">
-                    {uncontrolledField.name}
-                </span>
-                <h3 className="text-base font-semibold py-2 outline-none">{t("form.rule")}</h3>
+            <div className="px-4 py-1">
+                <div className="py-1">{t("form.name")}</div>
+                <DropdownSelect
+                    buttonClassName="w-96"
+                    options={allFields.map((d) => ({ label: d.name, value: d.fid }))}
+                    selectedKey={uncontrolledField.fid}
+                    onSelect={(fieldKey) => handleSelectFilterField(fieldKey)}
+                />
                 <Form field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
                     <PrimaryButton
