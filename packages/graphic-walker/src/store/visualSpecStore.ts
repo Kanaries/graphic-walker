@@ -617,7 +617,7 @@ export class VizSpecStore {
             }
         });
     }
-    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined) {
+    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
         if (MetaFieldKeys.includes(destinationKey)) return;
         if (typeof field === 'undefined') return;
         if (destinationKey === 'filters') {
@@ -625,7 +625,7 @@ export class VizSpecStore {
         }
 
         this.useMutable(({ encodings }) => {
-            const cloneField = { ...toJS(field) };
+            const cloneField = { ...toJS(field), ...overrideAttr };
             cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
         });
@@ -637,7 +637,7 @@ export class VizSpecStore {
         const tab = this.visList[this.visIndex];
         this.clearState();
         this.setVisualConfig('defaultAggregated', false);
-        this.setVisualConfig('stack', 'none');
+        this.setVisualConfig('stack', 'stack');
         // this.setVisualConfig('sorted', 'none')
         this.applyDefaultSort('none');
 
@@ -645,9 +645,25 @@ export class VizSpecStore {
         const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
         if (vlSpec.encoding && vlSpec.mark) {
             this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark)]);
+            if (vlSpec.encoding.row) {
+                this.appendField(
+                    'rows',
+                    fields.find((f) => f.fid === vlSpec.encoding.row.field),
+                    { analyticType: 'dimension' }
+                );
+            }
+            if (vlSpec.encoding.column) {
+                this.appendField(
+                    'columns',
+                    fields.find((f) => f.fid === vlSpec.encoding.column.field),
+                    { analyticType: 'dimension' }
+                );
+            }
+            const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
             if (vlSpec.encoding.x) {
-                this.appendField('columns', fields.find((f) => f.fid === vlSpec.encoding.x.field) || fields.find((f) => f.fid === COUNT_FIELD_ID));
-                if (vlSpec.encoding.x.aggregate) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
+                this.appendField('columns', field, { analyticType: 'dimension' });
+                if (vlSpec.encoding.x.aggregate || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('columns', this.draggableFieldState.columns.length - 1, vlSpec.encoding.x.aggregate);
                 }
@@ -660,8 +676,9 @@ export class VizSpecStore {
                 }
             }
             if (vlSpec.encoding.y) {
-                this.appendField('rows', fields.find((f) => f.fid === vlSpec.encoding.y.field) || fields.find((f) => f.fid === COUNT_FIELD_ID));
-                if (vlSpec.encoding.y.aggregate) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.y.field) || countField;
+                this.appendField('rows', field, { analyticType: 'measure' });
+                if (vlSpec.encoding.y.aggregate || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('rows', this.draggableFieldState.rows.length - 1, vlSpec.encoding.y.aggregate);
                 }
@@ -673,23 +690,20 @@ export class VizSpecStore {
                     this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.y.stack));
                 }
             }
-            if (vlSpec.encoding.row && vlSpec.encoding.row) {
-                this.appendField(
-                    'rows',
-                    fields.find((f) => f.fid === vlSpec.encoding.row.field)
-                );
-            }
-            if (vlSpec.encoding.column && vlSpec.encoding.column) {
-                this.appendField(
-                    'columns',
-                    fields.find((f) => f.fid === vlSpec.encoding.column.field)
-                );
-            }
 
             (['color', 'opacity', 'shape', 'size', 'details', 'theta', 'text', 'radius'] as (keyof DraggableFieldState)[]).forEach((ch) => {
                 if (vlSpec.encoding[ch]) {
-                    this.appendField(ch, fields.find((f) => f.fid === vlSpec.encoding[ch].field) || fields.find((f) => f.fid === COUNT_FIELD_ID));
-                    if (vlSpec.encoding[ch].aggregate) {
+                    const field = fields.find((f) => f.fid === vlSpec.encoding[ch].field) || countField;
+                    this.appendField(
+                        ch,
+                        field,
+                        field !== countField && ['color', 'opacity', 'size'].includes(ch)
+                            ? { analyticType: 'dimension' }
+                            : field === countField && ['theta', 'radius'].includes(ch)
+                            ? { analyticType: 'measure' }
+                            : {}
+                    );
+                    if (vlSpec.encoding[ch].aggregate || field === countField) {
                         if (vlSpec.encoding[ch].aggregate) {
                             this.setVisualConfig('defaultAggregated', true);
                             this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
@@ -702,6 +716,9 @@ export class VizSpecStore {
                     this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort));
                 }
             });
+            if (vlSpec.encoding.order && vlSpec.encoding.order.sort) {
+                this.applyDefaultSort(sortValueTransform(vlSpec.encoding.order.sort));
+            }
         }
     }
     public renderSpec(spec: Specification) {
