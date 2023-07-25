@@ -1,5 +1,6 @@
 import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter, ISortWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
+import type { IFoldQuery } from "../lib/interfaces";
 import { getMeaAggKey } from ".";
 
 
@@ -41,12 +42,27 @@ export const toWorkflow = (
 ): IDataQueryWorkflowStep[] => {
     const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures].map(f => f.fid));
 
+    let foldWorkflow: IViewWorkflowStep | null = null;
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;
     let viewQueryWorkflow: IViewWorkflowStep | null = null;
     let sortWorkflow: ISortWorkflowStep | null = null;
 
-    // TODO: apply **fold** before filter
+    // First, to apply before filter
+    const foldQueries = [...viewDimensions, ...viewMeasures].filter(f => f.viewQuery?.op === 'fold').map(f => f.viewQuery as IFoldQuery);
+    if (foldQueries.length > 0) {
+        const foldQuery = foldQueries[0];
+        for (const q of foldQueries) {
+            q.foldBy.forEach(f => viewKeys.add(f));
+        }
+        foldQuery.foldBy = [...viewKeys];
+        foldWorkflow = {
+            type: 'view',
+            query: [foldQuery],
+        };
+        viewKeys.add(foldQuery.newFoldKeyCol);
+        viewKeys.add(foldQuery.newFoldValueCol);
+    }
     
     // First, to apply filters on the detailed data
     const filters = viewFilters.filter(f => f.rule).map<IVisFilter>(f => {
@@ -104,8 +120,8 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
-    const aggergated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
-    if (aggergated) {
+    const aggregated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
+    if (aggregated) {
         viewQueryWorkflow = {
             type: 'view',
             query: [{
@@ -131,13 +147,14 @@ export const toWorkflow = (
     if (sort !== "none" && limit) {
         sortWorkflow = {
             type: 'sort',
-            by: viewMeasures.map(f => aggergated ? getMeaAggKey(f.fid, f.aggName) : f.fid),
+            by: viewMeasures.map(f => aggregated ? getMeaAggKey(f.fid, f.aggName) : f.fid),
             sort,
         };
     }
 
 
     const steps: IDataQueryWorkflowStep[] = [
+        foldWorkflow!,
         filterWorkflow!,
         transformWorkflow!,
         viewQueryWorkflow!,

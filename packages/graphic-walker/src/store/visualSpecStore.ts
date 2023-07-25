@@ -31,7 +31,7 @@ import {
     initEncoding,
 } from '../utils/save';
 import { CommonStore } from './commonStore';
-import { createCountField } from '../utils';
+import { createCountField, createVirtualFields } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
@@ -337,6 +337,7 @@ export class VizSpecStore {
     }
     public initMetaState(dataset: DataSet) {
         const countField = createCountField();
+        const virtualFields = createVirtualFields();
         this.useMutable(({ encodings }) => {
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === 'dimension')
@@ -360,6 +361,9 @@ export class VizSpecStore {
                     aggName: 'sum',
                 }));
             encodings.measures.push(countField);
+            for (const vf of virtualFields) {
+                encodings[`${vf.analyticType}s`].push(vf);
+            }
         });
 
         this.freezeHistory();
@@ -433,6 +437,15 @@ export class VizSpecStore {
         } else if (destinationKey === 'filters') {
             return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
         }
+        if (MetaFieldKeys.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
+            // Cannot change the analytic type of a view level field
+            if (!MetaFieldKeys.includes(sourceKey)) {
+                this.useMutable(({ encodings }) => {
+                    encodings[sourceKey].splice(sourceIndex, 1);
+                });
+            }
+            return;
+        }
 
         this.useMutable(({ encodings }) => {
             let movingField: IViewField;
@@ -449,6 +462,7 @@ export class VizSpecStore {
             // 目的地是metafields的情况，只有在来源也是metafields时，会执行字段类型转化操作
             if (MetaFieldKeys.includes(destinationKey)) {
                 if (!MetaFieldKeys.includes(sourceKey)) return;
+                if (movingField.viewLevel) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
                 movingField.analyticType = destinationKey === 'dimensions' ? 'dimension' : 'measure';
             }

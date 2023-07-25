@@ -64,7 +64,7 @@ export interface IFieldStats {
     range: [number, number];
 }
 
-export type IExpParamter =
+export type IExpParameter =
     | {
           type: 'field';
           value: string;
@@ -84,7 +84,7 @@ export type IExpParamter =
 
 export interface IExpression {
     op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
-    params: IExpParamter[];
+    params: IExpParameter[];
     as: string;
 }
 
@@ -109,6 +109,11 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    /**
+     * if `true`, the field is a virtual field that requires a `viewQuery` to compute a fold operation.
+     */
+    viewLevel?: boolean;
+    viewQuery?: IViewQuery;
     basename?: string;
     path?: string[],
 }

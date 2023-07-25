@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { COUNT_FIELD_ID } from "../constants";
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from "../constants";
 import { IRow, Filters, IMutField, IViewField } from "../interfaces";
 interface NRReturns {
     normalizedData: IRow[];
@@ -252,6 +252,28 @@ export function createCountField(): IViewField {
             as: COUNT_FIELD_ID,
         }
     };
+}
+
+export function createVirtualFields(): IViewField[] {
+    return [
+        {
+            dragId: MEA_KEY_ID,
+            fid: MEA_KEY_ID,
+            name: i18next.t("constant.mea_key"),
+            analyticType: "dimension",
+            semanticType: "nominal",
+            viewLevel: true,
+        },
+        {
+            dragId: MEA_VAL_ID,
+            fid: MEA_VAL_ID,
+            name: i18next.t("constant.mea_val"),
+            analyticType: "measure",
+            semanticType: "quantitative",
+            aggName: 'sum',
+            viewLevel: true,
+        },
+    ];
 }
 
 export function getRange (nums: number[]): [number, number] {
