@@ -633,7 +633,7 @@ export class VizSpecStore {
     public setVizFormatConfig(formatKey: keyof IVisualConfig['format'], value?: string) {
         this.visualConfig[formatKey] = value;
     }
-    public renderVLSubset(vlSpec: any) {
+    public renderVLSubset(vlStruct: any) {
         const tab = this.visList[this.visIndex];
         this.clearState();
         this.setVisualConfig('defaultAggregated', false)
@@ -643,26 +643,35 @@ export class VizSpecStore {
 
         if (!tab) return;
         const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
-        if (vlSpec.encoding && vlSpec.mark) {
+        const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
+        const renderVLFacet = (vlFacet) => {
+            if (vlFacet.facet) {
+                this.appendField(
+                    'rows',
+                    fields.find((f) => f.fid === vlFacet.facet.field) || countField,
+                    { "analyticType": "dimension" }
+                );
+            }
+            if (vlFacet.row) {
+                this.appendField(
+                    'rows',
+                    fields.find((f) => f.fid === vlFacet.row.field) || countField,
+                    { "analyticType": "dimension" }
+                );
+            }
+            if (vlFacet.column) {
+                this.appendField(
+                    'columns',
+                    fields.find((f) => f.fid === vlFacet.column.field) || countField,
+                    { "analyticType": "dimension" }
+                );
+            }
+        }
+        const renderVLSpec = (vlSpec) => {
             this.setVisualConfig(
                 'geoms',
                 [geomAdapter(vlSpec.mark)]
             );
-            if (vlSpec.encoding.row) {
-                this.appendField(
-                    'rows',
-                    fields.find((f) => f.fid === vlSpec.encoding.row.field),
-                    { "analyticType": "dimension" }
-                );
-            }
-            if (vlSpec.encoding.column) {
-                this.appendField(
-                    'columns',
-                    fields.find((f) => f.fid === vlSpec.encoding.column.field),
-                    { "analyticType": "dimension" }
-                );
-            }
-            const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
             if (vlSpec.encoding.x) {
                 const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
                 this.appendField(
@@ -720,7 +729,7 @@ export class VizSpecStore {
                     }
                 }
             });
-            (['x', 'y']).forEach((ch) => {
+            (['x', 'y', 'facet']).forEach((ch) => {
                 if (vlSpec.encoding[ch] && vlSpec.encoding[ch].sort) {
                     this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort))
                 }
@@ -729,6 +738,16 @@ export class VizSpecStore {
                 this.applyDefaultSort(sortValueTransform(vlSpec.encoding.order.sort))
             }
         }
+        if (vlStruct.encoding && vlStruct.mark) {
+            renderVLFacet(vlStruct.encoding);
+            renderVLSpec(vlStruct);
+        } else if (vlStruct.spec) {
+            if (vlStruct.facet) {
+                renderVLFacet(vlStruct.facet);
+            }
+            renderVLSpec(vlStruct.spec);
+        }
+
     }
     public renderSpec(spec: Specification) {
         const tab = this.visList[this.visIndex];
