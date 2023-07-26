@@ -1,4 +1,4 @@
-import { ISemanticType, IStackMode, IViewField } from '../../interfaces';
+import { ISemanticType, IStackMode } from '../../interfaces';
 import { autoMark } from './mark';
 import { NULL_FIELD } from './field';
 import { channelAggregate } from './aggregate';
@@ -32,7 +32,6 @@ export function getSingleView(props: SingleViewProps) {
         geomType,
         hideLegend = false,
     } = props;
-    const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
     let config: any = {};
     if (hideLegend) {
@@ -47,7 +46,7 @@ export function getSingleView(props: SingleViewProps) {
         markType = autoMark(types);
     }
 
-    let encoding = channelEncode({
+    let [encoding, mapping] = channelEncode({
         geomType: markType,
         x,
         y,
@@ -65,7 +64,7 @@ export function getSingleView(props: SingleViewProps) {
         text
     });
     if (defaultAggregated) {
-        channelAggregate(encoding, fields);
+        channelAggregate(encoding, mapping);
     }
     addTooltipEncode(encoding, details, defaultAggregated);
     channelStack(encoding, stack);

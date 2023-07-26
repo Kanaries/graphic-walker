@@ -26,7 +26,8 @@ export function availableChannels(geomType: string): Set<string> {
     }
     return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
 }
-export function channelEncode(props: IEncodeProps) {
+export function channelEncode(props: IEncodeProps): [{ [key: string]: any }, WeakMap<object, IViewField>] {
+    const channels = new WeakMap<object, IViewField>();
     const avcs = availableChannels(props.geomType);
     const encoding: { [key: string]: any } = {};
     Object.keys(props)
@@ -46,6 +47,7 @@ export function channelEncode(props: IEncodeProps) {
                 if (props[c].analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
                 }
+                channels.set(encoding[c], props[c]);
             }
         });
     // FIXME: temporal fix, only for x and y relative order
@@ -70,5 +72,5 @@ export function channelEncode(props: IEncodeProps) {
             }
         }
     }
-    return encoding;
+    return [encoding, channels];
 }
