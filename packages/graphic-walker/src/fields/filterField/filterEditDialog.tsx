@@ -106,6 +106,7 @@ const FilterEditDialog: React.FC = observer(() => {
                 <div className="py-1">{t("form.name")}</div>
                 <DropdownSelect
                     buttonClassName="w-96"
+                    className="mb-2"
                     options={allFields.map((d) => ({ label: d.name, value: d.fid }))}
                     selectedKey={uncontrolledField.fid}
                     onSelect={(fieldKey) => handleSelectFilterField(fieldKey)}
