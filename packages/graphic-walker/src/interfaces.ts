@@ -329,10 +329,10 @@ export interface IGWHandler {
     /**
      * Registers a callback function to listen to the status change of the current chart.
      * 
-     * @param {(renderStatus: IRenderStatus, entry: IRenderStatusChangeEntry) => void} cb - the callback function
+     * @param {(renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void} cb - the callback function
      * @returns {() => void} a dispose function to remove this callback
      */
-    onRenderStatusChange: (cb: (renderStatus: IRenderStatus, entry: IRenderStatusChangeEntry) => void) => (() => void);
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void) => (() => void);
     /**
      * Exports the current chart.
      * 
@@ -355,7 +355,7 @@ export interface IGWHandler {
 }
 
 export interface IGWHandlerInsider extends IGWHandler {
-    updateRenderStatus: (renderStatus: IRenderStatus, entry: IRenderStatusChangeEntry) => void;
+    updateRenderStatus: (renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void;
 }
 
 export interface IVisField {

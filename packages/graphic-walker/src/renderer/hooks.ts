@@ -58,14 +58,10 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
 
     const appRef = useAppRootContext();
 
-    const renderStatusChangeEntryRef = useRef<IRenderStatusChangeEntry>({
+    const renderStatusChangeEntryRef = useRef<Omit<IRenderStatusChangeEntry, 'workflow'>>({
         datasetId: datasetId ?? null,
-        workflow,
     });
-    renderStatusChangeEntryRef.current = {
-        datasetId: datasetId ?? null,
-        workflow,
-    };
+    renderStatusChangeEntryRef.current.datasetId = datasetId ?? null;
 
     useEffect(() => {
         if (computationMode !== 'client') {
@@ -80,13 +76,19 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             return;
         }
         const taskId = ++taskIdRef.current;
-        appRef.current?.updateRenderStatus('computing', renderStatusChangeEntryRef.current);
+        appRef.current?.updateRenderStatus('computing', {
+            datasetId: renderStatusChangeEntryRef.current.datasetId,
+            workflow,
+        });
         setComputing(true);
         dataQueryClient(data, allFields, workflow).then(data => {
             if (taskId !== taskIdRef.current) {
                 return;
             }
-            appRef.current?.updateRenderStatus('rendering', renderStatusChangeEntryRef.current);
+            appRef.current?.updateRenderStatus('rendering', {
+                datasetId: renderStatusChangeEntryRef.current.datasetId,
+                workflow,
+            });
             unstable_batchedUpdates(() => {
                 setComputing(false);
                 setViewData(data);
@@ -96,7 +98,10 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             if (taskId !== taskIdRef.current) {
                 return;
             }
-            appRef.current?.updateRenderStatus('error', renderStatusChangeEntryRef.current);
+            appRef.current?.updateRenderStatus('error', {
+                datasetId: renderStatusChangeEntryRef.current.datasetId,
+                workflow,
+            });
             console.error(err);
             unstable_batchedUpdates(() => {
                 setComputing(false);
@@ -118,13 +123,19 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             return;
         }
         const taskId = ++taskIdRef.current;
-        appRef.current?.updateRenderStatus('computing', renderStatusChangeEntryRef.current);
+        appRef.current?.updateRenderStatus('computing', {
+            datasetId,
+            workflow,
+        });
         setComputing(true);
         dataQueryServer(computationConfig, datasetId, workflow).then(data => {
             if (taskId !== taskIdRef.current) {
                 return;
             }
-            appRef.current?.updateRenderStatus('rendering', renderStatusChangeEntryRef.current);
+            appRef.current?.updateRenderStatus('rendering', {
+                datasetId,
+                workflow,
+            });
             unstable_batchedUpdates(() => {
                 setComputing(false);
                 setViewData(data);
@@ -134,7 +145,10 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             if (taskId !== taskIdRef.current) {
                 return;
             }
-            appRef.current?.updateRenderStatus('error', renderStatusChangeEntryRef.current);
+            appRef.current?.updateRenderStatus('error', {
+                datasetId,
+                workflow,
+            });
             console.error(err);
             unstable_batchedUpdates(() => {
                 setComputing(false);

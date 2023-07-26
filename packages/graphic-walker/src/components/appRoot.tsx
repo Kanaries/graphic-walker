@@ -16,7 +16,7 @@ export const useAppRootContext = (): RefObject<IGWHandlerInsider> => {
 const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, ref) => {
     useImperativeHandle(ref, () => {
         let renderStatus: IRenderStatus = 'idle';
-        let onRenderStatusChangeHandlers: ((status: IRenderStatus, entry: IRenderStatusChangeEntry) => void)[] = [];
+        let onRenderStatusChangeHandlers: ((status: IRenderStatus, entry?: IRenderStatusChangeEntry) => void)[] = [];
         const addRenderStatusChangeListener = (cb: typeof onRenderStatusChangeHandlers[number]): (() => void) => {
             onRenderStatusChangeHandlers.push(cb);
             const dispose = () => {
@@ -24,7 +24,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
             };
             return dispose;
         };
-        const updateRenderStatus = (status: IRenderStatus, entry: IRenderStatusChangeEntry) => {
+        const updateRenderStatus = (status: IRenderStatus, entry?: IRenderStatusChangeEntry) => {
             if (renderStatus === status) {
                 return;
             }
