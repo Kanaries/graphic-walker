@@ -84,8 +84,11 @@ export const toWorkflow = (
     }
 
     // Finally, to apply the aggregation
+    // When aggregation is enabled, there're 2 cases:
+    // 1. If any of the measures is aggregated, then we apply the aggregation
+    // 2. If there's no measure in the view, then we apply the aggregation
     const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
-    if (defaultAggregated && aggregateOn.length) {
+    if (defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0))) {
         viewQueryWorkflow = {
             type: 'view',
             query: [{

@@ -8,7 +8,6 @@ import PosFields from './fields/posFields';
 import AestheticFields from './fields/aestheticFields';
 import DatasetFields from './fields/datasetFields/index';
 import ReactiveRenderer from './renderer/index';
-import { getComputationConfig } from './renderer/hooks';
 import DataSourceSegment from './dataSource/index';
 import { IGlobalStore, useGlobalStore } from './store';
 import VisNav from './segments/visNav';
@@ -64,7 +63,6 @@ const App = observer<IGWProps>(function App(props) {
         onCompile,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
-    const { mode: computationMode } = getComputationConfig(computation);
 
     const { datasets, segmentKey } = commonStore;
 
