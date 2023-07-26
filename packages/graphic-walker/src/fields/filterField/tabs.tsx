@@ -114,8 +114,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         }, new Map<string | number, number>());
     }, [dataSource, field]);
 
-    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
-    const { t: t_filter_type } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
+    const { t } = useTranslation('translation');
 
     const headerCheckboxRef = useRef(null);
 
@@ -144,8 +143,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     return field.rule?.type === 'one of' ? (
         <Container>
-            <div>{t_filter_type('one_of')}</div>
-            <div className="text-gray-500">{t_filter_type('one_of_desc')}</div>
+            <div>{t('constant.filter_type.one_of')}</div>
+            <div className="text-gray-500">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
                 <Button
                     onClick={() => {
@@ -165,8 +164,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                 >
                     {
                         field.rule.value.size === count.size
-                            ? t('btn.unselect_all')
-                            : t('btn.select_all')
+                            ? t('filters.btn.unselect_all')
+                            : t('filters.btn.select_all')
                     }
                 </Button>
                 <Button
@@ -183,7 +182,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                         }
                     }}
                 >
-                    {t('btn.reverse')}
+                    {t('filters.btn.reverse')}
                 </Button>
             </div>
             <Table className="bg-slate-50">
@@ -208,10 +207,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                     />
                 </div>
                 <label className="header text-gray-500">
-                    {t('header.value')}
+                    {t('filters.header.value')}
                 </label>
                 <label className="header text-gray-500">
-                    {t('header.count')}
+                    {t('filters.header.count')}
                 </label>
             </Table>
             {/* <hr /> */}
@@ -270,7 +269,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             <Table className="text-gray-600">
                 <label></label>
                 <label>
-                    {t('selected_keys', { count: field.rule.value.size })}
+                    {t('filters.selected_keys', { count: field.rule.value.size })}
                 </label>
                 <label>
                     {[...field.rule.value].reduce<number>((sum, key) => {
@@ -292,8 +291,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     const { commonStore } = useGlobalStore();
     const { currentDataset: { dataSource } } = commonStore;
 
-    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
-    const { t: t_filter_type } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
+    const { t } = useTranslation('translation');
 
     const sorted = React.useMemo(() => {
         return dataSource.reduce<number[]>((list, d) => {
@@ -334,11 +332,11 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
     return field.rule?.type === 'temporal range' ? (
         <Container className="overflow-visible">
-            <div>{t_filter_type('temporal_range')}</div>
-            <div className="text-gray-500">{t_filter_type('temporal_range_desc')}</div>
+            <div>{t('constant.filter_type.temporal_range')}</div>
+            <div className="text-gray-500">{t('constant.filter_type.temporal_range_desc')}</div>
             <CalendarInputContainer>
                 <div className="calendar-input">
-                    <div className="my-1">{t('range.start_value')}</div>
+                    <div className="my-1">{t('filters.range.start_value')}</div>
                     <input
                         className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         type="datetime-local" 
@@ -355,7 +353,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                     />
                 </div>
                 <div className="calendar-input">
-                    <div className="my-1">{t('range.end_value')}</div>
+                    <div className="my-1">{t('filters.range.end_value')}</div>
                     <input
                         className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         type="datetime-local" 
