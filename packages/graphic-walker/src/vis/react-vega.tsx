@@ -7,8 +7,9 @@ import styled from 'styled-components';
 import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, ISemanticType } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
+import { autoMark } from './spec/mark';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 
@@ -168,9 +169,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
     const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
 
+    let markType = geomType;
+    if (geomType === 'auto') {
+      const types: ISemanticType[] = [];
+      if (xField !== NULL_FIELD) types.push(xField.semanticType);
+      if (yField !== NULL_FIELD) types.push(yField.semanticType);
+      markType = autoMark(types);
+    }
+
     const nonPosFields = [color, opacity, size, shape, theta, radius].filter(f => Boolean(f)) as IViewField[];
     const alreadyFolded = nonPosFields.find(f => f.fid === MEA_KEY_ID);
-    const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(geomType) && [xField, yField].some(f => f.fid === MEA_VAL_ID);
+    const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(markType) && [xField, yField].some(f => f.fid === MEA_VAL_ID);
 
     let xOffsetField: IViewField = NULL_FIELD;
     let yOffsetField: IViewField = NULL_FIELD;
@@ -234,7 +243,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         details,
         defaultAggregated: defaultAggregate,
         stack,
-        geomType,
+        markType,
       });
 
       spec.mark = singleView.mark;
@@ -311,7 +320,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           const localYField = rowRepeatFields[i] || NULL_FIELD;
           let localXOffsetField: IViewField = NULL_FIELD;
           let localYOffsetField: IViewField = NULL_FIELD;
-          const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(geomType) && [localXField, localYField].some(f => f.fid === MEA_VAL_ID);
+          const shouldOffset = alreadyFolded && stack === 'none' && marksNeedToOffsetWhenFold.includes(markType) && [localXField, localYField].some(f => f.fid === MEA_VAL_ID);
           if (shouldOffset) {
             if (localXField.fid !== MEA_VAL_ID) {
               localXOffsetField = { ...alreadyFolded };
@@ -337,7 +346,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             details,
             defaultAggregated: defaultAggregate,
             stack,
-            geomType,
+            markType,
             hideLegend: !hasLegend,
           });
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null

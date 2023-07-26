@@ -1,7 +1,7 @@
 import { IViewField } from '../../interfaces';
 import { NULL_FIELD } from './field';
 export interface IEncodeProps {
-    geomType: string;
+    markType: string
     x: IViewField;
     y: IViewField;
     color: IViewField;
@@ -27,7 +27,7 @@ export function availableChannels(geomType: string): Set<string> {
     return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
 }
 export function channelEncode(props: IEncodeProps) {
-    const avcs = availableChannels(props.geomType);
+    const avcs = availableChannels(props.markType);
     const encoding: { [key: string]: any } = {};
     Object.keys(props)
         .filter((c) => avcs.has(c))

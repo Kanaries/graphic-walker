@@ -1,6 +1,4 @@
-import { ISemanticType, IStackMode, IViewField } from '../../interfaces';
-import { autoMark } from './mark';
-import { NULL_FIELD } from './field';
+import { IStackMode, IViewField } from '../../interfaces';
 import { channelAggregate } from './aggregate';
 import { IEncodeProps, channelEncode } from './encode';
 import { channelStack } from './stack';
@@ -29,26 +27,19 @@ export function getSingleView(props: SingleViewProps) {
         details,
         defaultAggregated,
         stack,
-        geomType,
+        markType,
         hideLegend = false,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
-    let markType = geomType;
     let config: any = {};
     if (hideLegend) {
         config.legend = {
             disable: true,
         };
     }
-    if (geomType === 'auto') {
-        const types: ISemanticType[] = [];
-        if (x !== NULL_FIELD) types.push(x.semanticType); //types.push(getFieldType(x));
-        if (y !== NULL_FIELD) types.push(y.semanticType); //types.push(getFieldType(yField));
-        markType = autoMark(types);
-    }
 
     let encoding = channelEncode({
-        geomType: markType,
+        markType,
         x,
         y,
         color,
