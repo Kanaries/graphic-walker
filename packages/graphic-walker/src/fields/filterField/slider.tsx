@@ -3,70 +3,73 @@ import styled from 'styled-components';
 import { filter, fromEvent, map, throttleTime } from 'rxjs';
 import { useTranslation } from 'react-i18next';
 
-const SliderContainer = styled.div({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'stretch',
-    overflow: 'hidden',
-    paddingBlock: '1em',
+const SliderContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+    overflow: hidden;
+    padding-block: 1em;
 
-    '> .output': {
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginTop: "1em",
-        '> output': {
-            width: '100%'
-        },
-        '> output:first-child': {
-            marginRight: '0.5em'
-        },
-        '> output:last-child': {
-            marginLeft: '0.5em'
+    > .output {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1em;
+
+        > output {
+            width: 100%;
+        }
+
+        > output:first-child {
+            margin-right: 0.5em;
+        }
+
+        > output:last-child {
+            margin-left: 0.5em;
         }
     }
-});
+`;
 
-const SliderElement = styled.div({
-    marginInline: '0.5em',
-    padding: '1em',
-    flexGrow: 1,
-    flexShrink: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'stretch',
-});
+const SliderElement = styled.div`
+    margin-inline: 0.5em;
+    padding: 1em;
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: stretch;
+`;
 
-const SliderTrack = styled.div({
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: '#ccc',
-    height: '5px',
-    borderRadius: '3px',
-    position: 'relative',
-});
+const SliderTrack = styled.div`
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: #ccc;
+    height: 5px;
+    border-radius: 3px;
+    position: relative;
+`;
 
-const SliderThumb = styled.div({
-    position: 'absolute',
-    top: '50%',
-    cursor: 'ew-resize',
-    backgroundColor: '#fff',
-    width: '2em',
-    height: '2em',
-    borderRadius: '1em',
-    outline: 'none',
-    boxShadow: '0 4px 6px 2px rgb(0 0 0 / 0.1)',
+const SliderThumb = styled.div`
+    position: absolute;
+    top: 50%;
+    cursor: ew-resize;
+    background-color: #fff;
+    width: 2em;
+    height: 2em;
+    border-radius: 1em;
+    outline: none;
+    box-shadow: 0 4px 6px 2px rgba(0, 0, 0, 0.1);
 
-    ':hover': {
-        backgroundColor: '#fff',
-    },
-});
+    &:hover {
+        background-color: #fff;
+    }
+`;
 
-const SliderSlice = styled.div({
-    position: 'absolute',
-    height: '100%'
-});
+const SliderSlice = styled.div`
+    position: absolute;
+    height: 100%;
+`;
 
 
 const nicer = (range: readonly [number, number], value: number): string => {

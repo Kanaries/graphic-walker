@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 
 import type { IFilterField, IFilterRule } from '../../interfaces';
 import { useGlobalStore } from '../../store';
@@ -13,84 +13,88 @@ export type RuleFormProps = {
     onChange: (rule: IFilterRule) => void;
 };
 
-const Container = styled.div({
-    marginBlock: '1em',
+const Container = styled.div`
+    margin-block: 1em;
 
-    '> .btn-grp': {
-        display: 'flex',
-        flexDirection: 'row',
-        marginBlock: '1em',
+    > .btn-grp {
+        display: flex;
+        flex-direction: row;
+        margin-block: 1em;
 
-        '> *': {
-            marginInlineStart: '0.6em',
+        > * {
+            margin-inline-start: 0.6em;
 
-            '&:first-child': {
-                marginInlineStart: 0,
+            &:first-child: {
+                margin-inline-start: 0;
             },
         },
     },
-});
+`;
 
-export const Button = styled.button({
-    '&:hover': {
-        backgroundColor: 'rgba(243, 244, 246, 0.5)',
-    },
-    color: 'rgb(55, 65, 81)',
-    // boxShadow: '1px 1px 2px #0002, inset 2px 2px 4px #0001',
-    border: '1px solid rgb(226 232 240)',
-    borderRadius: '0.5em',
-    paddingBlock: '0.4em',
-    paddingInline: '1em',
-    userSelect: 'none',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-});
+export const Button = styled.button`
+    :hover: {
+        background-color: rgba(243, 244, 246, 0.5);
+    };
+    color: rgb(55, 65, 81);
+    border: 1px solid rgb(226 232 240);
+    border-radius: 0.5em;
+    padding-block: 0.4em;
+    padding-inline: 1em;
+    user-select: none;
+    font-weight: bold;
+    cursor: pointer;
+`;
 
-const Table = styled.div({
-    display: 'grid',
-    gridTemplateColumns: '4em auto max-content',
-    maxHeight: '30vh',
-    overflowY: 'scroll',
-    '& > *': {
-        paddingBlock: '0.6em',
-        paddingInline: '0.2em',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        userSelect: 'none',
-        borderBottom: '0.8px solid rgb(226 232 240)',
-    },
-    '& > input, & > *[for]': {
-        cursor: 'pointer',
-    },
-});
-
-const TabsContainer = styled.div({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'stretch',
-});
-
-const CalendarInputContainer = styled.div({
-    display: 'flex',
-    paddingBlock: '1em',
-    width: '100%',
-
-    '> .calendar-input': {
-        width: '100%'
-    },
-    '> .calendar-input:first-child': {
-        marginRight: '0.5em'
-    },
-    '> .calendar-input:last-child': {
-        marginLeft: '0.5em'
+const Table = styled.div`
+    display: grid;
+    grid-template-columns: 4em auto max-content;
+    max-height: 30vh;
+    overflow-y: scroll;
+    
+    & > * {
+        padding-block: 0.6em;
+        padding-inline: 0.2em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        user-select: none;
+        border-bottom: 0.8px solid rgb(226 232 240);
     }
-});
 
-const TabPanel = styled.div({});
+    & > input,
+    & > *[for] {
+        cursor: pointer;
+    }
+`;
 
-const TabItem = styled.div({});
+const TabsContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+`;
+
+const CalendarInputContainer = styled.div`
+    display: flex;
+    padding-block: 1em;
+    width: 100%;
+
+    > .calendar-input {
+        width: 100%;
+    }
+
+    > .calendar-input:first-child {
+        margin-right: 0.5em;
+    }
+
+    > .calendar-input:last-child {
+        margin-left: 0.5em;
+    }
+`;
+
+const TabPanel = styled.div``;
+
+const TabItem = styled.div``;
 
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     active,
