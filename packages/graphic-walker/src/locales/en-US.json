@@ -168,7 +168,7 @@
     "filters": {
         "to_edit": "Edit This Rule",
         "empty_rule": "! (empty rule)",
-        "editing": "Edit Rule",
+        "editing": "Filter Rule Settings",
         "form": {
             "name": "Field",
             "rule": "Rule"
