@@ -37,16 +37,14 @@ const VisualConfigPanel: React.FC = (props) => {
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
 
-    const visualConfigRef = useRef(visualConfig);
-    visualConfigRef.current = toJS(visualConfig);
     useEffect(() => {
-        setZeroScale(visualConfigRef.current.zeroScale);
-        setBackground(visualConfigRef.current.background);
-        setResolve(visualConfigRef.current.resolve);
+        setZeroScale(visualConfig.zeroScale);
+        setBackground(visualConfig.background);
+        setResolve(visualConfig.resolve);
         setFormat({
-            numberFormat: visualConfigRef.current.format.numberFormat,
-            timeFormat: visualConfigRef.current.format.timeFormat,
-            normalizedNumberFormat: visualConfigRef.current.format.normalizedNumberFormat,
+            numberFormat: visualConfig.format.numberFormat,
+            timeFormat: visualConfig.format.timeFormat,
+            normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
         });
     }, [showVisualConfigPanel]);
 
