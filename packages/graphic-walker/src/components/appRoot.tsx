@@ -1,5 +1,5 @@
 import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject } from "react";
-import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
+import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus, IRenderStatusChangeEntry } from "../interfaces";
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
 
@@ -16,7 +16,7 @@ export const useAppRootContext = (): RefObject<IGWHandlerInsider> => {
 const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, ref) => {
     useImperativeHandle(ref, () => {
         let renderStatus: IRenderStatus = 'idle';
-        let onRenderStatusChangeHandlers: ((status: IRenderStatus) => void)[] = [];
+        let onRenderStatusChangeHandlers: ((status: IRenderStatus, entry: IRenderStatusChangeEntry) => void)[] = [];
         const addRenderStatusChangeListener = (cb: typeof onRenderStatusChangeHandlers[number]): (() => void) => {
             onRenderStatusChangeHandlers.push(cb);
             const dispose = () => {
@@ -24,12 +24,12 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
             };
             return dispose;
         };
-        const updateRenderStatus = (status: IRenderStatus) => {
+        const updateRenderStatus = (status: IRenderStatus, entry: IRenderStatusChangeEntry) => {
             if (renderStatus === status) {
                 return;
             }
             renderStatus = status;
-            onRenderStatusChangeHandlers.forEach(cb => cb(renderStatus));
+            onRenderStatusChangeHandlers.forEach(cb => cb(renderStatus, entry));
         };
         return {
             get renderStatus() {

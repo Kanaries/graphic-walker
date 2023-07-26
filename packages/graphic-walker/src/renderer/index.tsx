@@ -63,7 +63,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
-                vizStore.setParsedResult(latestFromRef.current.parsed.workflow);
                 setEncodings(latestFromRef.current.draggableFieldState);
                 setViewConfig(latestFromRef.current.visualConfig);
             });

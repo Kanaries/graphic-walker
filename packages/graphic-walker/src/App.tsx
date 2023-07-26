@@ -39,7 +39,6 @@ export interface IGWProps {
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationConfig;
     datasetId?: string;
-    onCompile?: (data: { workflow: IDataQueryWorkflowStep[] }) => void;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -60,7 +59,6 @@ const App = observer<IGWProps>(function App(props) {
         computation = 'client',
         datasetId,
         toolbar,
-        onCompile,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -111,15 +109,6 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
-
-    const { workflow } = vizStore;
-    const onCompileRef = useRef(onCompile);
-    onCompileRef.current = onCompile;
-    useEffect(() => {
-        onCompileRef.current?.({
-            workflow,
-        });
-    }, [workflow]);
 
     useEffect(() => {
         vizStore.setComputationConfig(computation);
