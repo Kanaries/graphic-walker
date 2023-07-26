@@ -8,8 +8,6 @@ import { useGlobalStore } from '../../store';
 import PureTabs from '../../components/tabs/defaultTab';
 import Slider from './slider';
 
-import { format } from 'date-fns';
-
 export type RuleFormProps = {
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
@@ -327,7 +325,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     }, []);
 
     const dateStringFormatter = (timestamp: number) => {
-        return format(new Date(timestamp), "yyyy-MM-dd'T'HH:mm:ss")
+        return new Date(timestamp).toISOString().slice(0, 19);
     }
 
     return field.rule?.type === 'temporal range' ? (
