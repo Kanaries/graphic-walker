@@ -10,28 +10,30 @@ import DefaultButton from "../../components/button/default";
 import PrimaryButton from "../../components/button/primary";
 import DropdownSelect from "../../components/dropdownSelect";
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ dataset, allFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} allFields={allFields} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataset={dataset} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ dataset, allFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataset={dataset} allFields={allFields} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ dataset, allFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} allFields={allFields} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["temporal range", "one of"]} dataset={dataset} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ dataset, allFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["temporal range", "one of"]} dataset={dataset} allFields={allFields} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 const FilterEditDialog: React.FC = observer(() => {
     const { vizStore, commonStore } = useGlobalStore();
-    const { editingFilterIdx, draggableFieldState } = vizStore;
+    const { editingFilterIdx, draggableFieldState, viewDimensions, viewMeasures } = vizStore;
     const { currentDataset } = commonStore;
+
+    const allFields = React.useMemo(() => [...viewDimensions, ...viewMeasures], [viewDimensions, viewMeasures]);
 
     const { t } = useTranslation("translation", { keyPrefix: "filters" });
 
@@ -114,7 +116,7 @@ const FilterEditDialog: React.FC = observer(() => {
                     selectedKey={uncontrolledField.fid}
                     onSelect={handleSelectFilterField}
                 />
-                <Form dataset={currentDataset} field={uncontrolledField} onChange={handleChange} />
+                <Form dataset={currentDataset} allFields={allFields} field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
                     <PrimaryButton
                         onClick={handleSubmit}

@@ -80,7 +80,8 @@ export const dataQueryServer = async (
 export const fieldStatServer = async (
     service: IComputationFunction,
     field: string,
-    options: { values?: boolean; range?: boolean }
+    options: { values?: boolean; range?: boolean },
+    preparationWorkflow: IDataQueryWorkflowStep[] = [],
 ): Promise<IFieldStats> => {
     const { values = true, range = true } = options;
     const COUNT_ID = `count_${field}`;
@@ -88,6 +89,7 @@ export const fieldStatServer = async (
     const MAX_ID = `max_${field}`;
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...preparationWorkflow,
             {
                 type: 'view',
                 query: [
@@ -109,6 +111,7 @@ export const fieldStatServer = async (
     const valuesRes = values ? await service(valuesQueryPayload) : [];
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...preparationWorkflow,
             {
                 type: 'view',
                 query: [

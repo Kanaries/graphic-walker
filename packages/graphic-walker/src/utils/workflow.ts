@@ -64,7 +64,7 @@ export const toWorkflow = (
         viewKeys.add(foldQuery.newFoldValueCol);
     }
     
-    // First, to apply filters on the detailed data
+    // Second, to apply filters on the detailed data
     const filters = viewFilters.filter(f => f.rule).map<IVisFilter>(f => {
         viewKeys.add(f.fid);
         const rule = f.rule!;
@@ -103,7 +103,7 @@ export const toWorkflow = (
         };
     }
 
-    // Second, to transform the data by rows 1 by 1
+    // Third, to transform the data by rows 1 by 1
     const computedFields = treeShake(allFields.filter(f => f.computed && f.expression).map(f => ({
         key: f.fid,
         expression: f.expression!,

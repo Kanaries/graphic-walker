@@ -3,11 +3,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField } from '../../interfaces';
+import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField, IDataQueryWorkflowStep } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { useComputationFunc, useRenderer } from '../../renderer/hooks';
 import { fieldStatServer } from '../../computation/serverComputation';
+import { toWorkflow } from '../../utils/workflow';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import Slider from './slider';
 import {
     ChevronDownIcon,
@@ -16,6 +18,7 @@ import {
 
 export type RuleFormProps = {
     dataset: DataSet;
+    allFields: IViewField[];
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
 };
@@ -146,6 +149,7 @@ const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
 };
 
 const useFieldStats = (
+    allFields: IViewField[],
     field: IField,
     attributes: { values: boolean; range: boolean },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none'
@@ -161,10 +165,27 @@ const useFieldStats = (
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
     const computationFunction = useComputationFunc();
 
+    const foldBases = React.useMemo<IViewField[]>(() => {
+        if (field?.fid !== MEA_VAL_ID) {
+            return [];
+        }
+        return allFields.filter(f => f.fid === MEA_KEY_ID && f.viewQuery?.op === 'fold' && f.viewQuery.foldBy.length);
+    }, [allFields, field]);
+
+    const preparationWorkflow = React.useMemo<IDataQueryWorkflowStep[]>(() => {
+        if (!field) {
+            return [];
+        } else if (field.computed || field.viewLevel) {
+            // remove the last view query
+            return toWorkflow([], allFields, foldBases, [field], false, 'none').slice(0, -1);
+        }
+        return [];
+    }, [allFields, field, foldBases]);
+
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStatServer(computationFunction, fid, { values, range }).then(stats => {
+        fieldStatServer(computationFunction, fid, { values, range }, preparationWorkflow).then(stats => {
             if (isCancelled) {
                 return;
             }
@@ -181,7 +202,7 @@ const useFieldStats = (
         return () => {
             isCancelled = true;
         };
-    }, [fid, computationFunction, values, range]);
+    }, [fid, computationFunction, values, range, preparationWorkflow]);
 
     const sortedStats = React.useMemo<typeof stats>(() => {
         if (!stats || !comparator) {
@@ -199,6 +220,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     active,
     field,
     onChange,
+    allFields,
 }) => {
 
     interface SortConfig {
@@ -212,7 +234,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const { t } = useTranslation('translation');
 
-    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
+    const stats = useFieldStats(allFields, field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
     const count = stats?.values;
 
     React.useEffect(() => {
@@ -532,10 +554,11 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
     active,
     field,
     onChange,
+    allFields,
 }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
-    const stats = useFieldStats(field, { values: false, range: true }, 'none');
+    const stats = useFieldStats(allFields, field, { values: false, range: true }, 'none');
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -601,7 +624,7 @@ export interface TabsProps extends RuleFormProps {
     tabs: IFilterRule['type'][];
 }
 
-const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
+const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs, allFields }) => {
     const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState } = vizStore;
     const { currentDataset } = commonStore;
@@ -664,6 +687,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                                     onChange={onChange}
                                     active={which === tab}
                                     dataset={currentDataset}
+                                    allFields={allFields}
                                 />
                             </TabItem>
                         );
