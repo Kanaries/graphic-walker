@@ -1,11 +1,10 @@
 import { observer } from 'mobx-react-lite';
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import type { IFilterField, IFilterRule } from '../../interfaces';
 import { useGlobalStore } from '../../store';
-import PureTabs from '../../components/tabs/defaultTab';
 import Slider from './slider';
 
 export type RuleFormProps = {
@@ -96,6 +95,34 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
+const StatusCheckbox: React.FC<{currentNum: number; totalNum: number; onChange: () => void}> = props => {
+    const { currentNum, totalNum, onChange } = props;
+    const checkboxRef = useRef(null);
+
+    React.useEffect(() => {
+        if (!checkboxRef.current) return;
+        const checkboxRefDOM = (checkboxRef.current as HTMLInputElement)
+        if (currentNum === totalNum) {
+            checkboxRefDOM.checked = true;
+            checkboxRefDOM.indeterminate = false;
+        } else if (currentNum < totalNum && currentNum > 0) {
+            checkboxRefDOM.indeterminate = true;
+        } else if (currentNum === 0) {
+            checkboxRefDOM.checked = false;
+            checkboxRefDOM.indeterminate = false;
+        }
+    }, [currentNum, totalNum])
+
+    return (
+        <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+            ref={checkboxRef}
+            onChange={() => onChange()}
+        />
+    )
+}
+
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     active,
     field,
@@ -116,8 +143,6 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const { t } = useTranslation('translation');
 
-    const headerCheckboxRef = useRef(null);
-
     React.useEffect(() => {
         if (active && field.rule?.type !== 'one of') {
             onChange({
@@ -127,19 +152,49 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         }
     }, [active, onChange, field, count]);
 
-    React.useEffect(() => {
-        if (!headerCheckboxRef.current || field.rule?.type !== 'one of') return;
-        const headerCheckboxRefDOM = (headerCheckboxRef.current as HTMLInputElement)
-        if (field?.rule?.value.size === count.size) {
-            headerCheckboxRefDOM.checked = true;
-            headerCheckboxRefDOM.indeterminate = false;
-        } else if (field?.rule?.value.size < count.size && field?.rule?.value.size > 0) {
-            headerCheckboxRefDOM.indeterminate = true;
-        } else if (field?.rule?.value.size === 0) {
-            headerCheckboxRefDOM.checked = false;
-            headerCheckboxRefDOM.indeterminate = false;
+    const handleToggleFullOrEmptySet = () => {
+        if (!field.rule || field.rule.type !== 'one of') return;
+        const curSet = field.rule.value;
+        onChange({
+            type: 'one of',
+            value: new Set<number | string>(
+                curSet.size === count.size
+                    ? []
+                    : count.keys()
+            ),
+        });
+    }
+    const handleToggleReverseSet = () => {
+        if (!field.rule || field.rule.type !== 'one of') return;
+        const curSet = field.rule.value;
+        onChange({
+            type: 'one of',
+            value: new Set<number | string>(
+                [...count.keys()].filter(key => !curSet.has(key))
+            ),
+        });    
+    }
+    const handleSelectValue = (value, checked) => {
+        if (!field.rule || field.rule?.type !== 'one of') return;
+        const rule: IFilterRule = {
+            type: 'one of',
+            value: new Set(field.rule.value)
+        };
+        if (checked) {
+            rule.value.add(value);
+        } else {
+            rule.value.delete(value);
         }
-    }, [field?.rule?.value])
+        onChange(rule);
+    }
+    
+    const selectedValueSum = useMemo(() => {
+        if (!field.rule) return 0;
+        return [...field.rule.value].reduce<number>((sum, key) => {
+            const s = dataSource.filter(which => which[field.fid] === key).length;
+            return sum + s;
+        }, 0)
+    }, [field.rule?.value])
 
     return field.rule?.type === 'one of' ? (
         <Container>
@@ -147,20 +202,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             <div className="text-gray-500">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
                 <Button
-                    onClick={() => {
-                        if (field.rule?.type === 'one of') {
-                            const curSet = field.rule.value;
-
-                            onChange({
-                                type: 'one of',
-                                value: new Set<number | string>(
-                                    curSet.size === count.size
-                                        ? []
-                                        : count.keys()
-                                ),
-                            });
-                        }
-                    }}
+                    onClick={() => handleToggleFullOrEmptySet()}
                 >
                     {
                         field.rule.value.size === count.size
@@ -169,41 +211,17 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                     }
                 </Button>
                 <Button
-                    onClick={() => {
-                        if (field.rule?.type === 'one of') {
-                            const curSet = field.rule.value;
-
-                            onChange({
-                                type: 'one of',
-                                value: new Set<number | string>(
-                                    [...count.keys()].filter(key => !curSet.has(key))
-                                ),
-                            });
-                        }
-                    }}
+                    onClick={() => handleToggleReverseSet()}
                 >
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
             <Table className="bg-slate-50">
                 <div className="flex justify-center items-center">
-                    <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                        ref={headerCheckboxRef}
-                        onChange={(e) => {
-                            if (field.rule?.type === 'one of') {
-                                const curSet = field.rule.value;
-                                onChange({
-                                    type: 'one of',
-                                    value: new Set<number | string>(
-                                        !e.target.checked
-                                            ? []
-                                            : count.keys()
-                                    ),
-                                });
-                            }
-                        }}
+                    <StatusCheckbox
+                        currentNum={field.rule.value.size}
+                        totalNum={count.size}
+                        onChange={handleToggleFullOrEmptySet}
                     />
                 </div>
                 <label className="header text-gray-500">
@@ -229,24 +247,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                                         id={id}
                                         aria-describedby={`${id}_label`}
                                         title={String(value)}
-                                        onChange={({ target: { checked } }) => {
-                                            if (field.rule?.type !== 'one of') {
-                                                return;
-                                            }
-                                            
-                                            const rule: IFilterRule = {
-                                                type: 'one of',
-                                                value: new Set(field.rule.value)
-                                            };
-
-                                            if (checked) {
-                                                rule.value.add(value);
-                                            } else {
-                                                rule.value.delete(value);
-                                            }
-
-                                            onChange(rule);
-                                        }}
+                                        onChange={({ target: { checked } }) => handleSelectValue(value, checked)}
                                     />
                                 </div>
                                 <label
@@ -272,16 +273,41 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                     {t('filters.selected_keys', { count: field.rule.value.size })}
                 </label>
                 <label>
-                    {[...field.rule.value].reduce<number>((sum, key) => {
-                        const s = dataSource.filter(which => which[field.fid] === key).length;
-
-                        return sum + s;
-                    }, 0)}
+                    {selectedValueSum}
                 </label>
             </Table>
         </Container>
     ) : null;
 });
+
+interface CalendarInputProps {
+    min: number;
+    max: number;
+    value: number;
+    onChange: (value: number) => void;
+}
+
+const CalendarInput: React.FC<CalendarInputProps> = props => {
+    const { min, max, value, onChange } = props;
+    const dateStringFormatter = (timestamp: number) => {
+        return new Date(timestamp).toISOString().slice(0, 19);
+    }
+    const handleSubmitDate = (value) => {
+        if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
+            onChange(new Date(value).getTime())
+        }
+    }
+    return (
+        <input
+            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            type="datetime-local" 
+            min={dateStringFormatter(min)}
+            max={dateStringFormatter(max)}
+            defaultValue={dateStringFormatter(value)}
+            onChange={(e) => handleSubmitDate(e.target.value)}
+        />
+    )
+}
 
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     active,
@@ -326,10 +352,6 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         });
     }, []);
 
-    const dateStringFormatter = (timestamp: number) => {
-        return new Date(timestamp).toISOString().slice(0, 19);
-    }
-
     return field.rule?.type === 'temporal range' ? (
         <Container className="overflow-visible">
             <div>{t('constant.filter_type.temporal_range')}</div>
@@ -337,60 +359,26 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
             <CalendarInputContainer>
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
-                    <input
-                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        type="datetime-local" 
-                        id="birthdaytime" 
-                        name="birthdaytime"
-                        min={dateStringFormatter(min)}
-                        max={dateStringFormatter(max)}
-                        defaultValue={field.rule.value[0] ? dateStringFormatter(field.rule.value[0]) : dateStringFormatter(min)}
-                        onChange={(e) => {
-                            if (new Date(e.target.value).getTime() <= max && new Date(e.target.value).getTime() >= min) {
-                                handleChange([new Date(e.target.value).getTime(), field.rule?.value[1]])
-                            }
-                        }}
+                    <CalendarInput
+                        min={min}
+                        max={field.rule.value[1]}
+                        value={field.rule.value[0]}
+                        onChange={(value) => handleChange([value, field.rule?.value[1]])}
                     />
                 </div>
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.end_value')}</div>
-                    <input
-                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        type="datetime-local" 
-                        id="birthdaytime" 
-                        name="birthdaytime"
-                        min={dateStringFormatter(min)}
-                        max={dateStringFormatter(max)}
-                        defaultValue={field.rule.value[1] ? dateStringFormatter(field.rule.value[1]) : dateStringFormatter(max)}
-                        onChange={(e) => {
-                            if (new Date(e.target.value).getTime() <= max && new Date(e.target.value).getTime() >= min) {
-                                handleChange([field.rule?.value[0], new Date(e.target.value).getTime()])
-                            }
-                        }}
+                    <CalendarInput
+                        min={field.rule.value[0]}
+                        max={max}
+                        value={field.rule.value[1]}
+                        onChange={(value) => handleChange([field.rule?.value[0], value])}
                     />
                 </div>
             </CalendarInputContainer>
-
-                {/* <CalendarSelect 
-                    mode="single"
-                    max={max}
-                    min={min}
-                    today={min}
-                    value={field.rule.value[0]}
-                    onChange={(value) => handleChange([value, field?.rule?.value[1]])}
-                />
-                <CalendarSelect 
-                    mode="single"
-                    max={max}
-                    min={min}
-                    today={max}
-                    value={field.rule.value[1]}
-                    onChange={(value) => handleChange([field?.rule?.value[0], value])}
-                /> */}
         </Container>
     ) : null;
 });
-
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     active,
@@ -446,6 +434,21 @@ const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active:
     'temporal range': FilterTemporalRangeRule,
 };
 
+const tabOptionDict = {
+    "one of": {
+        key: "one_of",
+        descKey: "one_of_desc"
+    },
+    "range": {
+        key: "range",
+        descKey: "range_desc"
+    },
+    "temporal range": {
+        key: "temporal_range",
+        descKey: "temporal_range_desc"
+    }
+};
+
 export interface TabsProps extends RuleFormProps {
     tabs: IFilterRule['type'][];
 }
@@ -458,8 +461,8 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
 
     const [which, setWhich] = React.useState(field.rule?.type ?? tabs[0]!);
     React.useEffect(() => {
-        setWhich(field.rule?.type ?? tabs[0]!);
-    }, [field.fid])
+        if (!tabs.includes(which)) setWhich(tabs[0]);
+    }, [tabs])
     
     return (
         <TabsContainer>
@@ -481,10 +484,10 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                                 </div>
                                 <div className="ml-3">
                                     <label htmlFor={option}>
-                                        {t(option.replaceAll(/ /g, '_'))}
+                                        {t(tabOptionDict[option].key)}
                                     </label>
                                     <div className="text-gray-500">
-                                        {t(`${option.replaceAll(/ /g, '_')}_desc`)}
+                                        {t(tabOptionDict[option].descKey)}
                                     </div>
                                 </div>
                             </div>
@@ -501,8 +504,8 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                         return draggableFieldState === null ? null : (
                             <TabItem
                                 key={i}
-                                id={`filter-panel-${tab.replaceAll(/ /g, '_')}`}
-                                aria-labelledby={`filter-tab-${tab.replaceAll(/ /g, '_')}`}
+                                id={`filter-panel-${tabOptionDict[tab]}`}
+                                aria-labelledby={`filter-tab-${tabOptionDict[tab]}`}
                                 role="tabpanel"
                                 hidden={which !== tab}
                                 tabIndex={0}

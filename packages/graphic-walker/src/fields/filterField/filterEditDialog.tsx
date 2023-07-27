@@ -1,4 +1,3 @@
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { observer } from "mobx-react-lite";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -72,8 +71,11 @@ const FilterEditDialog: React.FC = observer(() => {
         vizStore.closeFilterEditing();
     }, [editingFilterIdx, uncontrolledField]);
 
-    const allFields = React.useMemo(() => {
-        return [...draggableFieldState.dimensions, ...draggableFieldState.measures];
+    const allFieldOptions = React.useMemo(() => {
+        return [...draggableFieldState.dimensions, ...draggableFieldState.measures].map((d) => ({
+            label: d.name, 
+            value: d.fid,
+        }));
     }, [draggableFieldState]);
 
     const handleSelectFilterField = (fieldKey) => {
@@ -107,9 +109,9 @@ const FilterEditDialog: React.FC = observer(() => {
                 <DropdownSelect
                     buttonClassName="w-96"
                     className="mb-2"
-                    options={allFields.map((d) => ({ label: d.name, value: d.fid }))}
+                    options={allFieldOptions}
                     selectedKey={uncontrolledField.fid}
-                    onSelect={(fieldKey) => handleSelectFilterField(fieldKey)}
+                    onSelect={handleSelectFilterField}
                 />
                 <Form field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { filter, fromEvent, map, throttleTime } from 'rxjs';
 import { useTranslation } from 'react-i18next';
@@ -78,12 +78,40 @@ const nicer = (range: readonly [number, number], value: number): string => {
     return precision === undefined ? `${value}` : value.toFixed(precision).replace(/\.?0+$/, '');
 };
 
+interface ValueInputProps {
+    min: number;
+    max: number;
+    value: number;
+    resetValue: number;
+    onChange: (value: number) => void;
+}
+
+const ValueInput: React.FC<ValueInputProps> = props => {
+    const { min, max, value, resetValue, onChange } = props;
+    const handleSubmitValue = (value) => {
+        if (!isNaN(value) && value <= max && value >= min) {
+            onChange(value);
+        } else {
+            onChange(resetValue);
+        }
+    }
+    return (
+        <input
+            type="number"
+            min={min}
+            max={max}
+            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            value={value}
+            onChange={(e) => handleSubmitValue(Number(e.target.value))}
+        />
+    )
+}
+
 interface SliderProps {
     min: number;
     max: number;
     value: readonly [number, number];
     onChange: (value: readonly [number, number]) => void;
-    isDateTime?: boolean;
 }
 
 const Slider: React.FC<SliderProps> = React.memo(function Slider ({
@@ -91,12 +119,10 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
     max,
     value,
     onChange,
-    isDateTime = false,
 }) {
     const [dragging, setDragging] = React.useState<'left' | 'right' | null>(null);
     const trackRef = React.useRef<HTMLDivElement | null>(null);
     const sliceRef = React.useRef<HTMLDivElement | null>(null);
-    const [inputValue, setInputValue] = useState(['', '']);
 
     const range: typeof value = [
         (value[0] - min) / ((max - min) || 1),
@@ -161,10 +187,6 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
         }
     }, [dragging, range, onChange, min, max]);
 
-    useEffect(() => {
-        setInputValue([String(nicer([min, max], value[0])), String(nicer([min, max], value[1]))])
-    }, [value])
-
     return (
         <SliderContainer>
             <SliderElement>
@@ -187,7 +209,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                         aria-valuemin={min}
                         aria-valuemax={max}
                         aria-valuenow={value[0]}
-                        aria-valuetext={isDateTime ? `${new Date(value[0])}` : nicer([min, max], value[0])}
+                        aria-valuetext={nicer([min, max], value[0])}
                         tabIndex={-1}
                         onMouseDown={ev => {
                             if (ev.buttons === 1) {
@@ -207,7 +229,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                         aria-valuemin={min}
                         aria-valuemax={max}
                         aria-valuenow={value[1]}
-                        aria-valuetext={isDateTime ? `${new Date(value[1])}` : nicer([min, max], value[1])}
+                        aria-valuetext={nicer([min, max], value[1])}
                         tabIndex={-1}
                         onMouseDown={ev => {
                             if (ev.buttons === 1) {
@@ -226,42 +248,24 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                 <output htmlFor="slider:min">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     {
-                        <input
-                            type="text"
-                            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            value={inputValue[0]}
-                            onChange={(e) => {
-                                setInputValue([e.target.value, inputValue[0]])
-                            }}
-                            onBlur={() => {
-                                let newNumVal = Number(inputValue[0]);
-                                if (!isNaN(newNumVal) && newNumVal <= value[1] && newNumVal >= min) {
-                                    onChange([newNumVal, value[1]]);
-                                } else {
-                                    onChange([min, value[1]]);
-                                }
-                            }}
+                        <ValueInput
+                            min={min}
+                            max={value[1]}
+                            value={value[0]}
+                            resetValue={min}
+                            onChange={(newValue) => onChange([newValue, value[1]])} 
                         />
                     }
                 </output>
                 <output htmlFor="slider:max">
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     {
-                        <input
-                            type="text"
-                            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            value={inputValue[1]}
-                            onChange={(e) => {
-                                setInputValue([inputValue[0], e.target.value])
-                            }}
-                            onBlur={() => {
-                                let newNumVal = Number(inputValue[1]);
-                                if (!isNaN(newNumVal) && newNumVal >= value[0] && newNumVal <= max) {
-                                    onChange([value[0], newNumVal]);
-                                } else {
-                                    onChange([value[0], max]);
-                                }
-                            }}
+                        <ValueInput
+                            min={value[0]}
+                            max={max}
+                            value={value[1]}
+                            resetValue={max}
+                            onChange={(newValue) => onChange([value[0], newValue])} 
                         />
                     }
                 </output>
