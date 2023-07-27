@@ -273,7 +273,7 @@ export class VizSpecStore {
      */
     public get viewDimensions(): IViewField[] {
         const { draggableFieldState } = this;
-        const { filters, ...state } = toJS(draggableFieldState);
+        const { filters: _, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
@@ -287,7 +287,7 @@ export class VizSpecStore {
      */
     public get viewMeasures(): IViewField[] {
         const { draggableFieldState } = this;
-        const { filters, ...state } = toJS(draggableFieldState);
+        const { filters: _, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
@@ -461,6 +461,12 @@ export class VizSpecStore {
                     ...toJS(encodings[sourceKey][sourceIndex]), // toJS will NOT shallow copy a object here
                     dragId: uniqueId(),
                 };
+                // if the field is "Measure Names", use the existing config
+                if (encodings[sourceKey][sourceIndex].fid === MEA_KEY_ID) {
+                    const { dimensions: _d, measures: _m, filters: _f, ...visChannels } = encodings;
+                    const foldConfig = Object.values(visChannels).flat().find(f => f.fid === MEA_KEY_ID)?.viewQuery;
+                    movingField.viewQuery = foldConfig;
+                }
             } else {
                 [movingField] = encodings[sourceKey].splice(sourceIndex, 1);
             }
@@ -608,11 +614,13 @@ export class VizSpecStore {
             }
         });
     }
-    public setFieldFoldBy(stateKey: keyof DraggableFieldState, index: number, foldBy: readonly string[]) {
-        this.useMutable(({ encodings }) => {
-            const field = encodings[stateKey]?.[index];
-            if (field?.viewQuery?.op === 'fold') {
-                field.viewQuery.foldBy = foldBy.slice();
+    public setViewFoldBy(foldBy: readonly string[]) {
+        this.useMutable(({ encodings: { filters: _, ...state } }) => {
+            const fields = Object.values(state).flat();
+            for (const field of fields) {
+                if (field?.viewQuery?.op === 'fold' && field.fid === MEA_KEY_ID) {
+                    field.viewQuery.foldBy = foldBy.slice();
+                }
             }
         });
     }

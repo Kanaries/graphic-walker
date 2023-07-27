@@ -16,11 +16,11 @@ export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProper
   );
 };
 
-export const AestheticFieldContainer: React.FC<{ name: string }> = props => {
+export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProperties }> = props => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
   return (
-    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700">
+    <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700" style={props.style}>
       <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
         <h4 className="font-normal">{t(props.name)}</h4>
       </div>

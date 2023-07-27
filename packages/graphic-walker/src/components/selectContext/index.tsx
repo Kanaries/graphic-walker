@@ -14,9 +14,10 @@ interface ISelectContextProps {
     selectedKeys?: string[];
     onSelect?: (selectedKeys: string[]) => void;
     className?: string;
+    required?: boolean;
 }
 const SelectContext: React.FC<ISelectContextProps> = (props) => {
-    const { options = [], disable = false, selectedKeys = [], onSelect, className = '' } = props;
+    const { options = [], disable = false, selectedKeys = [], onSelect, className = '', required } = props;
 
     const [selected, setSelected] = useState<ISelectContextOption[]>(options.filter(opt => selectedKeys.includes(opt.key)));
 
@@ -48,11 +49,19 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
                     <span className="flex-1 block truncate text-start">
                         {props.children}
                     </span>
-                    <Listbox.Button className="grow-0 shrink-0 flex items-center">
+                    <Listbox.Button className="grow-0 shrink-0 flex items-center relative">
                         <Cog6ToothIcon
-                            className="h-5 w-5 text-gray-400"
+                            className="h-4 w-4 text-gray-400"
                             aria-hidden="true"
                         />
+                        {required && selected.length === 0 && (
+                            <span className="absolute top-0 right-0 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500 pointer-events-none" aria-hidden />
+                        )}
+                        {selected.length > 0 && (
+                            <span className="absolute top-0 right-0 h-4 px-1 translate-x-1/2 -translate-y-1/2 scale-[67%] flex items-center justify-center rounded-full bg-indigo-400/75 text-white text-xs font-normal pointer-events-none">
+                                {selected.length > 10 ? '10+' : selected.length}
+                            </span>
+                        )}
                     </Listbox.Button>
                 </div>
                 <Transition

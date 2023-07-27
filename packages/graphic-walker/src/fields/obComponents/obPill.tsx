@@ -52,7 +52,7 @@ const OBPill: React.FC<PillProps> = (props) => {
                     options={foldOptions}
                     selectedKeys={foldQuery.foldBy}
                     onSelect={keys => {
-                        vizStore.setFieldFoldBy(dkey.id, fIndex, keys);
+                        vizStore.setViewFoldBy(keys);
                     }}
                 >
                     <span className="flex-1 truncate">{field.name}</span>

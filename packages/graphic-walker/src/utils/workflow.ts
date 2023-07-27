@@ -1,6 +1,6 @@
 import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter, ISortWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
-import type { IFoldQuery } from "../lib/interfaces";
+import type { IAggQuery, IFoldQuery } from "../lib/interfaces";
 import { getMeaAggKey } from ".";
 
 
@@ -126,12 +126,17 @@ export const toWorkflow = (
             type: 'view',
             query: [{
                 op: 'aggregate',
-                groupBy: viewDimensions.map(f => f.fid),
+                groupBy: [...new Set(viewDimensions.map(f => f.fid))],
                 measures: viewMeasures.map((f) => ({
                     field: f.fid,
                     agg: f.aggName as any,
                     asFieldKey: getMeaAggKey(f.fid, f.aggName!),
-                })),
+                })).reduce((acc, cur) => {
+                    if (!acc.some(f => f.asFieldKey === cur.asFieldKey)) {
+                        acc.push(cur);
+                    }
+                    return acc;
+                }, [] as IAggQuery['measures']),
             }],
         };
     } else {
