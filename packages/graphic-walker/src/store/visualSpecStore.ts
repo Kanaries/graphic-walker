@@ -667,11 +667,19 @@ export class VizSpecStore {
                 );
             }
         }
+        const isValidAggregate = (aggName) => aggName && ['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev'].includes(aggName)
         const renderVLSpec = (vlSpec) => {
-            this.setVisualConfig(
-                'geoms',
-                [geomAdapter(vlSpec.mark)]
-            );
+            if (typeof vlSpec.mark === "string") {
+                this.setVisualConfig(
+                    'geoms',
+                    [geomAdapter(vlSpec.mark)]
+                );
+            } else {
+                this.setVisualConfig(
+                    'geoms',
+                    [geomAdapter(vlSpec.mark.type)]
+                );
+            }
             if (vlSpec.encoding.x) {
                 const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
                 this.appendField(
@@ -679,7 +687,7 @@ export class VizSpecStore {
                     field,
                     { "analyticType": "dimension" }
                 );
-                if (vlSpec.encoding.x.aggregate || field === countField) {
+                if (isValidAggregate(vlSpec.encoding.x.aggregate) || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('columns', this.draggableFieldState.columns.length - 1, vlSpec.encoding.x.aggregate);
                 }
@@ -698,7 +706,7 @@ export class VizSpecStore {
                     field,
                     { "analyticType": "measure" }
                 );
-                if (vlSpec.encoding.y.aggregate || field === countField) {
+                if (isValidAggregate(vlSpec.encoding.y.aggregate) || field === countField) {
                     this.setVisualConfig('defaultAggregated', true);
                     this.setFieldAggregator('rows', this.draggableFieldState.rows.length - 1, vlSpec.encoding.y.aggregate);
                 }
@@ -721,7 +729,7 @@ export class VizSpecStore {
                             field === countField && ['theta', 'radius'].includes(ch) ? { "analyticType": "measure" } :
                                 {}
                     );
-                    if (vlSpec.encoding[ch].aggregate || field === countField) {
+                    if ((['theta', 'radius'].includes(ch) && vlSpec.encoding[ch].aggregate) || field === countField) {
                         if (vlSpec.encoding[ch].aggregate) {
                             this.setVisualConfig('defaultAggregated', true);
                             this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
