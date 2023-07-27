@@ -64,7 +64,7 @@ export const toWorkflow = (
             };
         }
     });
-    if (filterWorkflow) {
+    if (filters.length) {
         filterWorkflow = {
             type: 'filter',
             filters,
