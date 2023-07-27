@@ -203,6 +203,6 @@
         "next": "向后",
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
-        "cencel": "取消"
+        "cancel": "取消"
     }
 }
