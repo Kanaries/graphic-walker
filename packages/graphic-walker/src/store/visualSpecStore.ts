@@ -699,15 +699,16 @@ export class VizSpecStore {
                     this.appendField(
                         ch,
                         field,
-                        field !== countField && ['color', 'opacity', 'size'].includes(ch)
+                        field !== countField && ['color', 'opacity', 'size', 'radius'].includes(ch)
                             ? { analyticType: 'dimension' }
-                            : field === countField && ['theta', 'radius'].includes(ch)
+                            : field === countField || ['theta'].includes(ch)
                             ? { analyticType: 'measure' }
                             : {}
                     );
-                    if ((['theta', 'radius'].includes(ch) && vlSpec.encoding[ch].aggregate) || field === countField) {
-                        if (vlSpec.encoding[ch].aggregate) {
-                            this.setVisualConfig('defaultAggregated', true);
+                    const aggregate = isValidAggregate(vlSpec.encoding[ch].aggregate);
+                    if ((['theta', 'radius'].includes(ch) && aggregate) || field === countField) {
+                        this.setVisualConfig('defaultAggregated', true);
+                        if (aggregate) {
                             this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
                         }
                     }
