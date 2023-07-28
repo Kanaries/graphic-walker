@@ -10,7 +10,7 @@ import { VisSpecWithHistory } from '../../models/visSpecHistory';
 type VEGALite = any;
 
 async function vizQuery(metas: IViewField[], query: string) {
-    const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw'
+    const api = 'https://k6s-openai-enhance-24etwhmoa-kanaries.vercel.app/api/vis/text2gw';
     const res = await fetch(api, {
         headers: {
             'Content-Type': 'application/json',
