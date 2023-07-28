@@ -5,9 +5,12 @@ import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
 import { parseGW } from './schemaTransform';
 import { IViewField } from '../../interfaces';
+import { VisSpecWithHistory } from '../../models/visSpecHistory';
+
+type VEGALite = any;
 
 async function vizQuery(metas: IViewField[], query: string) {
-    const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2vl' : 'https://enhanceai.kanaries.net/api/vis/text2vl'
+    const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw'
     const res = await fetch(api, {
         headers: {
             'Content-Type': 'application/json',
@@ -23,7 +26,11 @@ async function vizQuery(metas: IViewField[], query: string) {
             ],
         }),
     });
-    const result = await res.json();
+    const result: {
+        success: boolean;
+        data: VEGALite;
+        message?: string;
+    } = await res.json();
     if (result.success) {
         return result.data;
     } else {
@@ -41,8 +48,9 @@ const AskViz: React.FC = (props) => {
     const startQuery = useCallback(() => {
         setLoading(true);
         vizQuery(allFields, query)
-            .then((spec) => {
-                vizStore.renderVLSubset(spec);
+            .then((data) => {
+                vizStore.visList.push(new VisSpecWithHistory(data));
+                vizStore.selectVisualization(vizStore.visList.length - 1);
                 // const liteGW = parseGW(spec);
                 // vizStore.renderSpec(liteGW);
             })
