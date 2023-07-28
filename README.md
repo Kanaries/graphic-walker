@@ -25,6 +25,9 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
 + Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
 + Graphic Walker now supports Dark Theme! 🤩
++ Natural language / Chat interface. Ask question about your data!
+
+https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
@@ -232,4 +235,4 @@ Graphic Walker is basically manual data exploration software. When facing more c
 
 ## LICENSE
 
-Please refer to [LICENSE](./LICENSE) file.
+Please refer to [LICENSE](./LICENSE) and [LICENSE2](./LICENSE2) file.

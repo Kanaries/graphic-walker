@@ -187,4 +187,4 @@ GraphicWalker uses `react-i18next` to support i18n, which is based on `i18next`,
 
 ## LICENSE
 
-请参考 [LICENSE](./LICENSE) 文件.
+请参考 [LICENSE](./LICENSE) 和 [LICENSE2](./LICENSE2) 文件.

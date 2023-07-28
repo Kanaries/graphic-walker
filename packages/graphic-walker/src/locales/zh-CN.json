@@ -94,8 +94,11 @@
         },
         "filter_type": {
             "one_of": "按值筛选",
+            "one_of_desc": "选择指定的值",
             "range": "按范围筛选",
-            "temporal_range": "按日期范围筛选"
+            "range_desc": "选择范围内的值 [开始, 结束]",
+            "temporal_range": "按日期范围筛选",
+            "temporal_range_desc": "选择日期范围内的值 [开始, 结束]"
         }
     },
     "App": {
@@ -187,7 +190,7 @@
     "filters": {
         "to_edit": "编辑这条规则",
         "empty_rule": "! (空的规则)",
-        "editing": "编辑规则",
+        "editing": "筛选器规则设定",
         "form": {
             "name": "字段",
             "rule": "规则"
@@ -204,6 +207,10 @@
             "reverse": "选择反向",
             "confirm": "确认",
             "cancel": "取消"
+        },
+        "range": {
+            "start_value": "起始值",
+            "end_value": "终止值"
         }
     },
     "explain": {
@@ -225,6 +232,6 @@
         "next": "向后",
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
-        "cencel": "取消"
+        "cancel": "取消"
     }
 }
