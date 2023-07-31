@@ -1,11 +1,15 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import type { IFilterField, IFilterRule } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import Slider from './slider';
+import {
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 
 export type RuleFormProps = {
     field: IFilterField;
@@ -131,6 +135,15 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     const { commonStore } = useGlobalStore();
     const { currentDataset: { dataSource } } = commonStore;
 
+    interface SortConfig {
+        key: 'value' | 'count'; 
+        ascending: boolean;
+    }
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ 
+        key: "count", 
+        ascending: true 
+    });
+
     const count = React.useMemo(() => {
         return dataSource.reduce<Map<string | number, number>>((tmp, d) => {
             const val = d[field.fid];
@@ -140,6 +153,24 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             return tmp;
         }, new Map<string | number, number>());
     }, [dataSource, field]);
+
+    const sortedObject = useMemo(() => {
+        const entries = Array.from(count.entries());
+        entries.sort((a, b) => {
+            if (sortConfig.key === 'count') {
+                return sortConfig.ascending ? a[1] - b[1] : b[1] - a[1];
+            } else {
+                if (typeof a[0] === 'number' && typeof b[0] === 'number') {
+                    return sortConfig.ascending ? a[0] - b[0] : b[0] - a[0];
+                } else {
+                    return sortConfig.ascending 
+                        ? String(a[0]).localeCompare(String(b[0])) 
+                        : String(b[0]).localeCompare(String(a[0]));
+                }
+            }
+        });
+        return new Map(entries);
+    }, [count, sortConfig]);
 
     const { t } = useTranslation('translation');
 
@@ -194,7 +225,22 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             const s = dataSource.filter(which => which[field.fid] === key).length;
             return sum + s;
         }, 0)
-    }, [field.rule?.value])
+    }, [field.rule?.value]);
+
+    const SortButton: React.FC<{currentKey: SortConfig["key"]}> = ({ currentKey }) => {
+        const isCurrentKey = sortConfig.key === currentKey;
+        return (
+          <span 
+            className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${isCurrentKey ? "text-indigo-600" : "text-gray-500"}`}
+            onClick={() => setSortConfig({key: currentKey, ascending: (isCurrentKey ? !sortConfig.ascending : true)})}
+          >
+            {isCurrentKey && !sortConfig.ascending
+              ? <ChevronDownIcon className="h-4 w-4" />
+              : <ChevronUpIcon className="h-4 w-4" />
+            }
+          </span>
+        );
+    }
 
     return field.rule?.type === 'one of' ? (
         <Container>
@@ -234,7 +280,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             {/* <hr /> */}
             <Table>
                 {
-                    [...count.entries()].map(([value, count], idx) => {
+                    [...sortedObject.entries()].map(([value, count], idx) => {
                         const id = `rule_checkbox_${idx}`;
 
                         return (
