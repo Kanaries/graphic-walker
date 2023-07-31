@@ -245,9 +245,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     return field.rule?.type === 'one of' ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
-            <div className="text-gray-500">{t('constant.filter_type.one_of_desc')}</div>
+            <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
                 <Button
+                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
                     onClick={() => handleToggleFullOrEmptySet()}
                 >
                     {
@@ -257,12 +258,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                     }
                 </Button>
                 <Button
+                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
                     onClick={() => handleToggleReverseSet()}
                 >
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
-            <Table className="bg-slate-50">
+            <Table className="bg-slate-50 dark:bg-gray-800">
                 <div className="flex justify-center items-center">
                     <StatusCheckbox
                         currentNum={field.rule.value.size}
@@ -270,11 +272,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                         onChange={handleToggleFullOrEmptySet}
                     />
                 </div>
-                <label className="header text-gray-500">
+                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                     {t('filters.header.value')}
+                    <SortButton currentKey="value" />
                 </label>
-                <label className="header text-gray-500">
+                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                     {t('filters.header.count')}
+                    <SortButton currentKey="count" />
                 </label>
             </Table>
             {/* <hr /> */}
@@ -345,7 +349,7 @@ const CalendarInput: React.FC<CalendarInputProps> = props => {
     }
     return (
         <input
-            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             type="datetime-local" 
             min={dateStringFormatter(min)}
             max={dateStringFormatter(max)}
