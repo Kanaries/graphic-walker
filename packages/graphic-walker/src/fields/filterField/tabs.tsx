@@ -99,7 +99,7 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{currentNum: number; totalNum: number; onChange: () => void}> = props => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void }> = props => {
     const { currentNum, totalNum, onChange } = props;
     const checkboxRef = useRef(null);
 
@@ -136,12 +136,12 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     const { currentDataset: { dataSource } } = commonStore;
 
     interface SortConfig {
-        key: 'value' | 'count'; 
+        key: 'value' | 'count';
         ascending: boolean;
     }
-    const [sortConfig, setSortConfig] = useState<SortConfig>({ 
-        key: "count", 
-        ascending: true 
+    const [sortConfig, setSortConfig] = useState<SortConfig>({
+        key: "count",
+        ascending: true
     });
 
     const count = React.useMemo(() => {
@@ -149,27 +149,26 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             const val = d[field.fid];
 
             tmp.set(val, (tmp.get(val) ?? 0) + 1);
-            
+
             return tmp;
         }, new Map<string | number, number>());
     }, [dataSource, field]);
 
-    const sortedObject = useMemo(() => {
+    const sortedList = useMemo(() => {
         const entries = Array.from(count.entries());
-        entries.sort((a, b) => {
+        const compare = (a: [string | number, number], b: [string | number, number]) => {
             if (sortConfig.key === 'count') {
-                return sortConfig.ascending ? a[1] - b[1] : b[1] - a[1];
+                return a[1] - b[1];
             } else {
                 if (typeof a[0] === 'number' && typeof b[0] === 'number') {
-                    return sortConfig.ascending ? a[0] - b[0] : b[0] - a[0];
+                    return a[0] - b[0];
                 } else {
-                    return sortConfig.ascending 
-                        ? String(a[0]).localeCompare(String(b[0])) 
-                        : String(b[0]).localeCompare(String(a[0]));
+                    return String(a[0]).localeCompare(String(b[0]))
                 }
             }
-        });
-        return new Map(entries);
+        }
+        entries.sort(sortConfig.ascending ? compare : (a, b) => -compare(a, b));
+        return entries;
     }, [count, sortConfig]);
 
     const { t } = useTranslation('translation');
@@ -203,7 +202,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             value: new Set<number | string>(
                 [...count.keys()].filter(key => !curSet.has(key))
             ),
-        });    
+        });
     }
     const handleSelectValue = (value, checked) => {
         if (!field.rule || field.rule?.type !== 'one of') return;
@@ -218,7 +217,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         }
         onChange(rule);
     }
-    
+
     const selectedValueSum = useMemo(() => {
         if (!field.rule) return 0;
         return [...field.rule.value].reduce<number>((sum, key) => {
@@ -227,18 +226,18 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         }, 0)
     }, [field.rule?.value]);
 
-    const SortButton: React.FC<{currentKey: SortConfig["key"]}> = ({ currentKey }) => {
+    const SortButton: React.FC<{ currentKey: SortConfig["key"] }> = ({ currentKey }) => {
         const isCurrentKey = sortConfig.key === currentKey;
         return (
-          <span 
-            className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${isCurrentKey ? "text-indigo-600" : "text-gray-500"}`}
-            onClick={() => setSortConfig({key: currentKey, ascending: (isCurrentKey ? !sortConfig.ascending : true)})}
-          >
-            {isCurrentKey && !sortConfig.ascending
-              ? <ChevronDownIcon className="h-4 w-4" />
-              : <ChevronUpIcon className="h-4 w-4" />
-            }
-          </span>
+            <span
+                className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${isCurrentKey ? "text-indigo-600" : "text-gray-500"}`}
+                onClick={() => setSortConfig({ key: currentKey, ascending: (isCurrentKey ? !sortConfig.ascending : true) })}
+            >
+                {isCurrentKey && !sortConfig.ascending
+                    ? <ChevronDownIcon className="h-4 w-4" />
+                    : <ChevronUpIcon className="h-4 w-4" />
+                }
+            </span>
         );
     }
 
@@ -284,7 +283,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             {/* <hr /> */}
             <Table>
                 {
-                    [...sortedObject.entries()].map(([value, count], idx) => {
+                    sortedList.map(([value, count], idx) => {
                         const id = `rule_checkbox_${idx}`;
 
                         return (
@@ -350,7 +349,7 @@ const CalendarInput: React.FC<CalendarInputProps> = props => {
     return (
         <input
             className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            type="datetime-local" 
+            type="datetime-local"
             min={dateStringFormatter(min)}
             max={dateStringFormatter(max)}
             defaultValue={dateStringFormatter(value)}
@@ -376,7 +375,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
                 list.push(time);
             } catch (error) {
-                
+
             }
             return list;
         }, []).sort((a, b) => a - b);
@@ -513,7 +512,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
     React.useEffect(() => {
         if (!tabs.includes(which)) setWhich(tabs[0]);
     }, [tabs])
-    
+
     return (
         <TabsContainer>
             <div>
@@ -522,13 +521,13 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                         return (
                             <div className="flex my-2" key={option}>
                                 <div className="align-top">
-                                    <input 
+                                    <input
                                         type="radio"
                                         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
                                         id={option}
                                         checked={option === which}
                                         onChange={e => setWhich((e.target as HTMLInputElement).value as typeof which)}
-                                        name="filter_type" 
+                                        name="filter_type"
                                         value={option}
                                     />
                                 </div>
@@ -545,7 +544,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                     })
                 }
             </div>
-            <hr className="my-0.5"/>
+            <hr className="my-0.5" />
             <TabPanel>
                 {
                     tabs.map((tab, i) => {
