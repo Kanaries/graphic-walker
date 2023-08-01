@@ -1,4 +1,5 @@
 import { IAnalyticType, IMutField, IRow, ISemanticType, IUncertainMutField } from '../interfaces';
+import { getValueByKeyPath } from '../utils/dataPrep';
 
 const COMMON_TIME_FORMAT: RegExp[] = [
     /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
@@ -55,12 +56,12 @@ function inferAnalyticTypeFromSemanticType(semanticType: ISemanticType): IAnalyt
     }
 }
 
-export function inferSemanticType(data: IRow[], fid: string): ISemanticType {
-    const values = data.map((row) => row[fid]);
+export function inferSemanticType(data: IRow[], path: string[]): ISemanticType {
+    const values = data.map((row) => getValueByKeyPath(row, path));
 
     let st: ISemanticType = isNumericArray(values) ? 'quantitative' : 'nominal';
     if (st === 'nominal') {
-        if (isDateTimeArray(data.map((row) => `${row[fid]}`))) st = 'temporal';
+        if (isDateTimeArray(data.map((row) => `${getValueByKeyPath(row, path)}`))) st = 'temporal';
     }
     return st;
 }
@@ -70,7 +71,7 @@ export function inferMeta(props: { dataSource: IRow[]; fields: IUncertainMutFiel
     const finalFieldMetas: IMutField[] = [];
     for (let field of fields) {
         let semanticType: ISemanticType =
-            field.semanticType === '?' ? inferSemanticType(dataSource, field.fid) : field.semanticType;
+            field.semanticType === '?' ? inferSemanticType(dataSource, field.path) : field.semanticType;
         let analyticType: IAnalyticType = inferAnalyticTypeFromSemanticType(semanticType);
 
         finalFieldMetas.push({
