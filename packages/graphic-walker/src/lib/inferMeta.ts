@@ -79,6 +79,8 @@ export function inferMeta(props: { dataSource: IRow[]; fields: IUncertainMutFiel
             name: field.name ? field.name : field.fid,
             analyticType,
             semanticType,
+            basename: field.basename || field.name || field.fid,
+            path: field.path,
         });
     }
     return finalFieldMetas;
