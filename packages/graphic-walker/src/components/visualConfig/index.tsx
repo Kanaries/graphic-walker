@@ -40,7 +40,7 @@ const VisualConfigPanel: React.FC = (props) => {
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
         setBackground(visualConfig.background);
-        setResolve(visualConfig.resolve);
+        setResolve(toJS(visualConfig.resolve));
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
             timeFormat: visualConfig.format.timeFormat,
