@@ -1,15 +1,15 @@
 {
     "config": {
-        "format": "形式",
-        "numberFormat": "数字の形式",
-        "timeFormat": "時間の形式",
-        "normalizedNumberFormat": "正規化された数字の形式"
+        "format": "フォーマット",
+        "numberFormat": "数字",
+        "timeFormat": "日付",
+        "normalizedNumberFormat": "正規化された数字"
     },
     "constant": {
         "row_count": "行数",
         "analytic_type": {
-            "dimension": "次元",
-            "measure": "尺度"
+            "dimension": "ディメンション",
+            "measure": "メジャー"
         },
         "semantic_type": {
             "nominal": "名義尺度",
@@ -30,8 +30,8 @@
             "rect": "長方形",
             "arc": "アーク",
             "boxplot": "ボックスプロット",
-            "table": "表",
-            "text": "本文"
+            "table": "テーブル",
+            "text": "文字"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -67,7 +67,7 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文"
+            "text": "テキスト"
         },
         "aggregator": {
             "sum": "合計",
@@ -128,9 +128,9 @@
     },
     "main": {
         "tablist": {
-            "new": "+ 新規作成",
-            "auto_title": "グラフ {{idx}}",
-            "chart_name": "グラフ名"
+            "new": "+ 新規ビュー",
+            "auto_title": "ビュー {{idx}}",
+            "chart_name": "ビュー名"
         },
         "tabpanel": {
             "menubar": {
@@ -166,8 +166,8 @@
     },
     "filters": {
         "to_edit": "このルールを編集",
-        "empty_rule": "! (空のルール)",
-        "editing": "フィルタールールの設定",
+        "empty_rule": "! (未設定)",
+        "editing": "フィルターの設定",
         "form": {
             "name": "フィールド",
             "rule": "ルール"
@@ -186,8 +186,8 @@
             "cancel": "キャンセル"
         },
         "range": {
-            "start_value": "開始値",
-            "end_value": "終了値"
+            "start_value": "最小",
+            "end_value": "最大"
         }
     },
     "explain": {
