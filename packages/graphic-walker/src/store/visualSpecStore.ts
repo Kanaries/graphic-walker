@@ -336,6 +336,7 @@ export class VizSpecStore {
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
                 }));
@@ -345,6 +346,7 @@ export class VizSpecStore {
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: "sum",

@@ -12,7 +12,7 @@ export default function Pagination(props: PaginationProps) {
     const { t } = useTranslation();
     return (
         <nav
-            className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 px-4 py-3 sm:px-6"
+            className="sticky inset-x-0	flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 px-4 py-3 sm:px-6"
             aria-label="Pagination"
         >
             <div className="hidden sm:block">
