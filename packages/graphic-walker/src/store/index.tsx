@@ -39,7 +39,7 @@ export class StoreWrapper extends React.Component<StoreWrapperProps> {
         if (props.storeRef) {
             props.storeRef.current = initStore;
         }
-        if (props.keepAlive) {
+        if (!props.keepAlive) {
             rebootGWStore();
         }
     }

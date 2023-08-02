@@ -235,4 +235,4 @@ Graphic Walker is basically manual data exploration software. When facing more c
 
 ## LICENSE
 
-Please refer to [LICENSE](./LICENSE) and [LICENSE2](./LICENSE2) file.
+Please refer to [LICENSE](./LICENSE) and [LICENSE2 for Kanaries logos](./LICENSE2) file.
