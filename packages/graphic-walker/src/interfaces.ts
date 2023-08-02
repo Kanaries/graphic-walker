@@ -34,18 +34,22 @@ export interface IMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    path?: string[];
 }
 
 export interface IUncertainMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType | '?';
     analyticType: IAnalyticType | '?';
+    path: string[];
 }
 
 export type IExpParamter =
@@ -90,6 +94,8 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    basename?: string;
+    path?: [],
 }
 
 export interface IViewField extends IField {
