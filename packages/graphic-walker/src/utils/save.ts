@@ -1,4 +1,4 @@
-import { IDataSet, IDataSource, IVisSpec } from "../interfaces";
+import { IDataSet, IDataSource, IVisSpec, IVisSpecForExport } from "../interfaces";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 
 export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
@@ -12,7 +12,7 @@ export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
 export interface IStoInfo {
     datasets: IDataSet[];
     specList: {
-        [K in keyof IVisSpec]: K extends "config" ? Partial<IVisSpec[K]> : IVisSpec[K];
+        [K in keyof IVisSpecForExport]: K extends "config" ? Partial<IVisSpecForExport[K]> : IVisSpecForExport[K];
     }[];
     dataSources: IDataSource[];
 }
