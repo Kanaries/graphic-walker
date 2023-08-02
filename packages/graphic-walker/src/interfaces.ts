@@ -221,6 +221,16 @@ export interface IVisSpec {
     readonly config: DeepReadonly<IVisualConfig>;
 }
 
+export type SetToArray<T> = (
+    T extends object ? (
+      T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }
+    ) : T
+);
+
+export type IVisSpecForExport = SetToArray<IVisSpec>;
+
+export type IFilterFieldForExport = SetToArray<IFilterField>;
+
 export enum ISegmentKey {
     vis = 'vis',
     data = 'data',
