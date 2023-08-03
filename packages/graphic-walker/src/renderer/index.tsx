@@ -8,6 +8,7 @@ import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
 import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
+import { useChartIndexControl } from '../utils/chartIndexControl';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -59,6 +60,12 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             });
         }
     }, [waiting, vizStore]);
+
+    useChartIndexControl({
+        count: visList.length,
+        index: visIndex,
+        onChange: idx => vizStore.selectVisualization(idx),
+    });
 
     const handleGeomClick = useCallback(
         (values: any, e: any) => {
