@@ -491,6 +491,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     commonStore.setShowCodeExportPanel(true);
                 },
             },
+            ...(extra.length === 0 ? [] : ['-', ...extra]),
             '-',
             {
                 key: 'kanaries',
@@ -512,10 +513,6 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         ] as ToolbarItemProps[];
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
-
-        if (extra.length > 0) {
-            items.push('-', ...extra);
-        }
 
         return items;
     }, [
