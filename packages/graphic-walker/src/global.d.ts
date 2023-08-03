@@ -1,7 +1,7 @@
 declare module '@kanaries/react-beautiful-dnd' {
-    export const DOM: {
-        setHead: (head: HTMLElement | ShadowRoot) => void;
-        setBody: (body: HTMLElement | ShadowRoot) => void;
-    };
+    export const DOMProvider: import('react').Provider<{
+        head: HTMLElement | ShadowRoot;
+        body: HTMLElement | ShadowRoot;
+    }>;
     export * from 'react-beautiful-dnd';
 }
