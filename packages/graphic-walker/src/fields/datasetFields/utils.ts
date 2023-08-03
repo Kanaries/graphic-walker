@@ -63,12 +63,13 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         },
                     ],
                 },
-                f.semanticType === 'temporal' && {
+                (f.semanticType === 'temporal' || f.expression?.op === 'dateTimeDrill') && {
                     label: t('drill.name'),
                     children: DATE_TIME_DRILL_LEVELS.map(level => ({
                         label: t(`drill.levels.${level}`),
                         onPress() {
-                            vizStore.createDateTimeDrilledField(channel, index, level, name => `${t(`drill.levels.${level}`)} (${name})`);
+                            const originField = (f.expression?.op === 'dateTimeDrill' ? vizStore.allFields.find(f => f.fid === f.expression!.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            vizStore.createDateTimeDrilledField(channel, index, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
                         },
                     })),
                 },
