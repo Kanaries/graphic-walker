@@ -211,5 +211,10 @@
         "drop_field": "Drop Field Here",
         "confirm": "Confirm",
         "cancel": "Cancel"
+    },
+    "field_menu": {
+        "to_dim": "Move to dimensions",
+        "to_mea": "Move to measures",
+        "new_calc": "New calculation"
     }
 }

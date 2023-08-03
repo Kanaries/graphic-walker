@@ -22,4 +22,7 @@ export const FieldPill = styled.div<{isDragging: boolean}>`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+    :has([role="button"]:hover) {
+        background-color: unset;
+    }
 `

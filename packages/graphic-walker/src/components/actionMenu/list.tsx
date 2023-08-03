@@ -206,10 +206,6 @@ const MenuItemList = memo<IActionMenuItemListProps>(function ActionMenuItemList(
 const ActionMenuItemRoot = memo<{ onDismiss: () => void; children: any }>(function ActionMenuItemRoot({ onDismiss, children }) {
     const [path, setPath] = useState<number[]>([]);
 
-    // useEffect(() => {
-    //     console.log('==== path', path);
-    // }, [path]);
-
     return (
         <Context.Provider value={{ path, setPath, onDismiss }}>
             {children}

@@ -1,6 +1,6 @@
 import React, { Fragment, type HTMLAttributes, memo, type ComponentProps, type ReactElement, createContext, useState, useContext, useRef, useMemo, useCallback, useEffect } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import { type ReactTag, type ElementType, useButton } from './a11y';
+import { type ReactTag, type ElementType, useMenuButton } from './a11y';
 import ActionMenuItemList, { type IActionMenuItem } from "./list";
 
 
@@ -141,7 +141,7 @@ const ActionMenuButton = function ActionMenuButton<T extends ReactTag>(props: IA
         }
     }, [ctx, onPress]);
 
-    const buttonProps = useButton({
+    const buttonProps = useMenuButton({
         ...attrs,
         as: Component,
         "aria-expanded": ctx?.expanded ?? false,

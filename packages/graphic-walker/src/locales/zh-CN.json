@@ -211,5 +211,10 @@
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
         "cancel": "取消"
+    },
+    "field_menu": {
+        "to_dim": "移动到维度",
+        "to_mea": "移动到度量",
+        "new_calc": "新的计算字段"
     }
 }

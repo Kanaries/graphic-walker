@@ -11,8 +11,8 @@ interface IUseButtonOptions<T extends ReactTag> {
     disabled?: boolean;
 }
 
-export const useButton = <T extends ReactTag>(options: IUseButtonOptions<T> & Omit<ComponentProps<T>, keyof IUseButtonOptions<T>>): HTMLAttributes<ElementType<T>> => {
-    const { ["aria-expanded"]: expanded, onPress, disabled, ...attrs } = options;
+export const useMenuButton = <T extends ReactTag>(options: IUseButtonOptions<T> & Omit<ComponentProps<T>, keyof IUseButtonOptions<T>>): HTMLAttributes<ElementType<T>> => {
+    const { ["aria-expanded"]: expanded, onPress, disabled, className = '', ...attrs } = options;
 
     const onClick = useCallback((e: MouseEvent<any>) => {
         e.preventDefault();
@@ -37,6 +37,7 @@ export const useButton = <T extends ReactTag>(options: IUseButtonOptions<T> & Om
 
     return useMemo(() => ({
         ...attrs,
+        className: `${className} text-gray-500 dark:text-gray-400 ${disabled ? 'cursor-default text-opacity-50' : 'cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-500 hover:bg-indigo-100/20 dark:hover:bg-indigo-800/20 hover:text-indigo-700 dark:hover:text-indigo-200'}`,
         role: 'button',
         "aria-haspopup": 'menu',
         "aria-expanded": expanded,
@@ -44,5 +45,5 @@ export const useButton = <T extends ReactTag>(options: IUseButtonOptions<T> & Om
         tabIndex: disabled ? undefined : 0,
         onClick,
         onKeyDown,
-    }) as HTMLAttributes<ElementType<T>>, [onClick, onKeyDown, expanded, disabled, attrs]);
+    }) as HTMLAttributes<ElementType<T>>, [onClick, onKeyDown, expanded, disabled, className, attrs]);
 };
