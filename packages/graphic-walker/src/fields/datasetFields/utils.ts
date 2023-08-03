@@ -16,6 +16,8 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
+            const isDateTimeDrilled = f.expression?.op === 'dateTimeDrill';
+
             return keepTrue<IActionMenuItem>([
                 channel === 'dimensions' && {
                     label: t('to_dim'),
@@ -63,12 +65,13 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         },
                     ],
                 },
-                (f.semanticType === 'temporal' || f.expression?.op === 'dateTimeDrill') && {
+                (f.semanticType === 'temporal' || isDateTimeDrilled) && {
                     label: t('drill.name'),
                     children: DATE_TIME_DRILL_LEVELS.map(level => ({
                         label: t(`drill.levels.${level}`),
+                        disabled: isDateTimeDrilled && f.expression.params.find(p => p.type === 'value')?.value === level,
                         onPress() {
-                            const originField = (f.expression?.op === 'dateTimeDrill' ? vizStore.allFields.find(f => f.fid === f.expression!.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(f => f.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
                             vizStore.createDateTimeDrilledField(channel, index, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
                         },
                     })),
