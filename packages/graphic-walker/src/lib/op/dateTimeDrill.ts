@@ -27,7 +27,7 @@ function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame)
                 const date = new Date(v);
                 const Y = date.getFullYear();
                 const Q = Math.floor(date.getMonth() / 3) + 1;
-                return `${Y}Q${Q}`;
+                return `${Y} Q${Q}`;
             });
             return {
                 ...data,
@@ -95,7 +95,7 @@ function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame)
                 const M = date.getMonth() + 1;
                 const D = date.getDate();
                 const H = date.getHours();
-                return `${Y}-${M}-${D} ${H}`;
+                return `${Y}-${M}-${D} ${H < 10 ? ' ' : ''}${H} o'clock`;
             });
             return {
                 ...data,
@@ -110,7 +110,7 @@ function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame)
                 const D = date.getDate();
                 const H = date.getHours();
                 const m = date.getMinutes();
-                return `${Y}-${M}-${D} ${H}:${m}`;
+                return `${Y}-${M}-${D} ${H < 10 ? ' ' : ''}${H}:${m < 10 ? '0' : ''}${m}`;
             });
             return {
                 ...data,
@@ -126,7 +126,7 @@ function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame)
                 const H = date.getHours();
                 const m = date.getMinutes();
                 const s = date.getSeconds();
-                return `${Y}-${M}-${D} ${H}:${m}:${s}`;
+                return `${Y}-${M}-${D} ${H < 10 ? ' ' : ''}${H}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
             });
             return {
                 ...data,
