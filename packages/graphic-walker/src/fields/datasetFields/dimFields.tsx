@@ -6,22 +6,42 @@ import DataTypeIcon from "../../components/dataTypeIcon";
 import ActionMenu from "../../components/actionMenu";
 import { FieldPill } from "./fieldPill";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import { CommonStore } from "../../store/commonStore";
+import { IActionMenuItem } from "../../components/actionMenu/list";
 
 interface Props {
     provided: DroppableProvided;
 }
+
+
 const DimFields: React.FC<Props> = (props) => {
     const { provided } = props;
     const { vizStore, commonStore } = useGlobalStore();
     const dimensions = vizStore.draggableFieldState.dimensions;
+
     return (
         <div {...provided.droppableProps} ref={provided.innerRef}>
             {dimensions.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {
+                        let menu:IActionMenuItem[] | undefined = []
+                  
+                        if(f.semanticType === 'temporal' || f.semanticType === 'quantitative'){
+                            menu = [
+                                {
+                                    label: 'Domain',
+                                    onPress: () => {
+                                        commonStore.setShowFieldScalePanel(true);
+                                        commonStore.fieldScaleIndex = index;
+                                        commonStore.fieldScaleType = f.analyticType;
+                                    }
+                                }
+                            ]
+                        }
+                   
                         return (
                             <ActionMenu
-                                menu={[]}
+                                menu= {menu}
                                 enableContextMenu
                                 disabled={snapshot.isDragging}
                             >

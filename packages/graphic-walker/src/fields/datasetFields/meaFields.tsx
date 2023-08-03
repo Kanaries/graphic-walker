@@ -7,6 +7,7 @@ import { FieldPill } from "./fieldPill";
 import DropdownContext, { IDropdownContextOption } from "../../components/dropdownContext";
 import ActionMenu from "../../components/actionMenu";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import { IActionMenuItem } from "../../components/actionMenu/list";
 
 interface Props {
     provided: DroppableProvided;
@@ -51,10 +52,24 @@ const MeaFields: React.FC<Props> = (props) => {
             {measures.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {
+                        let menu:IActionMenuItem[] | undefined = []
+
+                        if(f.semanticType === 'temporal' || f.semanticType === 'quantitative'){
+                            menu = [
+                                {
+                                    label: 'Domain',
+                                    onPress: () => {
+                                        commonStore.setShowFieldScalePanel(true);
+                                        commonStore.fieldScaleIndex = index;
+                                        commonStore.fieldScaleType = f.analyticType;
+                                    }
+                                }
+                            ]
+                        }
                         return (
                             <div className="block">
                                 <ActionMenu
-                                    menu={[]}
+                                    menu={menu}
                                     enableContextMenu
                                     disabled={snapshot.isDragging}
                                 >
@@ -76,7 +91,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                         >
                                             <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
                                             <span>{f.name}</span>
-                                            <ActionMenu.Button>
+                                            <ActionMenu.Button as="div">
                                                 <EllipsisVerticalIcon className="w-4 h-4" />
                                             </ActionMenu.Button>
                                         </FieldPill>
@@ -89,7 +104,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                         >
                                             <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
                                             <span>{f.name}</span>
-                                            <ActionMenu.Button>
+                                            <ActionMenu.Button as="div">
                                                 <EllipsisVerticalIcon className="w-4 h-4" />
                                             </ActionMenu.Button>
                                         </FieldPill>
