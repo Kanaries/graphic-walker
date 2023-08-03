@@ -6,6 +6,7 @@ import { useGlobalStore } from "../../store";
 import DataTypeIcon from "../../components/dataTypeIcon";
 import ActionMenu from "../../components/actionMenu";
 import { FieldPill } from "./fieldPill";
+import { useMenuActions } from "./utils";
 
 interface Props {
     provided: DroppableProvided;
@@ -14,6 +15,7 @@ const DimFields: React.FC<Props> = (props) => {
     const { provided } = props;
     const { vizStore } = useGlobalStore();
     const dimensions = vizStore.draggableFieldState.dimensions;
+    const menuActions = useMenuActions('dimensions');
     return (
         <div {...provided.droppableProps} ref={provided.innerRef}>
             {dimensions.map((f, index) => (
@@ -21,7 +23,8 @@ const DimFields: React.FC<Props> = (props) => {
                     {(provided, snapshot) => {
                         return (
                             <ActionMenu
-                                menu={[]}
+                                title={f.name || f.fid}
+                                menu={menuActions[index]}
                                 enableContextMenu
                                 disabled={snapshot.isDragging}
                             >

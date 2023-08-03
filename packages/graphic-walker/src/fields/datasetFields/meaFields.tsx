@@ -7,6 +7,7 @@ import { FieldPill } from "./fieldPill";
 import DropdownContext, { IDropdownContextOption } from "../../components/dropdownContext";
 import ActionMenu from "../../components/actionMenu";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import { useMenuActions } from "./utils";
 
 interface Props {
     provided: DroppableProvided;
@@ -36,6 +37,7 @@ const MeaFields: React.FC<Props> = (props) => {
             },
         ];
     }, []);
+    const menuActions = useMenuActions('measures');
 
     const fieldActionHandler = useCallback((selectedValue: any, opIndex: number, meaIndex: number) => {
         if (selectedValue === "bin" || selectedValue === 'binCount') {
@@ -52,11 +54,11 @@ const MeaFields: React.FC<Props> = (props) => {
                         return (
                             <div className="block">
                                 <ActionMenu
-                                    menu={[]}
+                                    title={f.name || f.fid}
+                                    menu={menuActions[index]}
                                     enableContextMenu
                                     disabled={snapshot.isDragging}
                                 >
-
                                     <DropdownContext
                                         disable={snapshot.isDragging}
                                         options={MEA_ACTION_OPTIONS}
