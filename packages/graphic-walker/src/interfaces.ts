@@ -37,6 +37,7 @@ export interface IMutField {
     disable?: boolean;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    scale?: any;
 }
 
 export interface IUncertainMutField {
@@ -67,7 +68,7 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'cp';
     params: IExpParamter[];
     as: string;
 }
@@ -87,6 +88,7 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    scale?: any;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;

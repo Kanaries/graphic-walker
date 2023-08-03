@@ -46,8 +46,12 @@ export function channelEncode(props: IEncodeProps) {
                 if (props[c].analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
                 }
+                if(props[c].scale){
+                    encoding[c].scale = props[c].scale;
+                }              
             }
         });
+
     // FIXME: temporal fix, only for x and y relative order
     if (encoding.x) {
         encoding.x.axis = { labelOverlap: true }

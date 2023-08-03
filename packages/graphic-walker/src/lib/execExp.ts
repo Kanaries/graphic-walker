@@ -38,6 +38,8 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns
             return log10(exp.as, params, subFrame);
         case 'binCount':
             return binCount(exp.as, params, subFrame);
+        case 'cp':
+            return cp(exp.as, params, subFrame);
         default:
             return subFrame;
     }
@@ -110,6 +112,15 @@ function log10(resKey: string, params: IExpParamter[], data: IDataFrame): IDataF
     return {
         ...data,
         [resKey]: newField,
+    }
+}
+
+function cp(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+    const { value } = params[0];
+    const field = data[value];
+    return {
+        ...data,
+        [resKey]: field,
     }
 }
 

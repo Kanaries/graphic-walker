@@ -64,6 +64,7 @@ export function getSingleView(props: SingleViewProps) {
         details,
         text
     });
+
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }

@@ -40,7 +40,7 @@ const VisualConfigPanel: React.FC = (props) => {
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
         setBackground(visualConfig.background);
-        setResolve(visualConfig.resolve);
+        setResolve(toJS(visualConfig.resolve));
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
             timeFormat: visualConfig.format.timeFormat,
@@ -145,13 +145,12 @@ const VisualConfigPanel: React.FC = (props) => {
                         text={t('actions.confirm')}
                         className="mr-2"
                         onClick={() => {
-                            runInAction(() => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
                                 commonStore.setShowVisualConfigPanel(false);
-                            });
+                            
                         }}
                     />
                     <DefaultButton

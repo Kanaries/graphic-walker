@@ -5,13 +5,15 @@ import { useGlobalStore } from "../../store";
 import DataTypeIcon from "../../components/dataTypeIcon";
 import { FieldPill } from "./fieldPill";
 import DropdownContext, { IDropdownContextOption } from "../../components/dropdownContext";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
 interface Props {
     provided: DroppableProvided;
 }
 const MeaFields: React.FC<Props> = (props) => {
+    const { vizStore, commonStore } = useGlobalStore();
     const { provided } = props;
-    const { vizStore } = useGlobalStore();
+
     const measures = vizStore.draggableFieldState.measures;
 
     const MEA_ACTION_OPTIONS = useMemo<IDropdownContextOption[]>(() => {
@@ -42,6 +44,7 @@ const MeaFields: React.FC<Props> = (props) => {
             vizStore.createLogField("measures", meaIndex, selectedValue);
         }
     }, []);
+
     return (
         <div {...provided.droppableProps} ref={provided.innerRef}>
             {measures.map((f, index) => (
@@ -65,8 +68,23 @@ const MeaFields: React.FC<Props> = (props) => {
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                     >
+                                        <div className="flex justify-between">
                                         <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />{" "}
                                         {f.name}&nbsp;
+                                        <div className="rounded-full w-[20] hover:bg-purple-500 hover:bg-opacity-30">
+                                            <EllipsisVerticalIcon 
+                                            width={20}
+                                            onClick={e => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                commonStore.setShowFieldScalePanel(true);
+                                                commonStore.fieldScaleIndex = index;
+                                                commonStore.fieldScaleType = f.analyticType;
+                                                // commonStore.updateTempFields([f]);
+                                            }}
+                                            />
+                                        </div>
+                                        </div>
                                     </FieldPill>
                                 </DropdownContext>
                                 {

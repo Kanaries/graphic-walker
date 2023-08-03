@@ -1,4 +1,4 @@
-import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
+import { DataSet, Filters, IAnalyticType, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey, ISemanticType } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 
@@ -15,6 +15,9 @@ export class CommonStore {
     public showDataConfig: boolean = false;
     public showCodeExportPanel: boolean = false;
     public showVisualConfigPanel: boolean = false;
+    public showFieldScalePanel: boolean = false;
+    public fieldScaleIndex: number = 0;
+    public fieldScaleType: IAnalyticType = 'measure';
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     constructor () {
@@ -67,6 +70,9 @@ export class CommonStore {
     }
     public setShowVisualConfigPanel (show: boolean) {
         this.showVisualConfigPanel = show;
+    }
+    public setShowFieldScalePanel (show: boolean) {
+        this.showFieldScalePanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;
