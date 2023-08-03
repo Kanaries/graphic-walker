@@ -1,81 +1,75 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { filter, fromEvent, map, throttleTime } from 'rxjs';
+import { useTranslation } from 'react-i18next';
 
-const SliderContainer = styled.div({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'stretch',
-    overflow: 'hidden',
-    paddingBlock: '1em',
+const SliderContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+    overflow: hidden;
+    padding-block: 1em;
 
-    '> .output': {
-        display: 'flex',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        alignItems: 'stretch',
-        justifyContent: 'space-between',
+    > .output {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1em;
 
-        '> output': {
-            userSelect: 'none',
-            minWidth: '4em',
-            paddingInline: '0.5em',
-            textAlign: 'center',
-        },
-    },
-});
+        > output {
+            width: 100%;
+        }
 
-const SliderElement = styled.div({
-    marginInline: '1em',
-    paddingBlock: '10px',
-    flexGrow: 1,
-    flexShrink: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'stretch',
-});
+        > output:first-child {
+            margin-right: 0.5em;
+        }
 
-const SliderTrack = styled.div({
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: '#ccc',
-    border: '1px solid #aaa',
-    height: '10px',
-    borderRadius: '5px',
-    position: 'relative',
-});
+        > output:last-child {
+            margin-left: 0.5em;
+        }
+    }
+`;
 
-const SliderThumb = styled.div({
-    position: 'absolute',
-    top: '50%',
-    cursor: 'ew-resize',
-    backgroundColor: '#e2e2e2',
-    backgroundImage: `
-        linear-gradient(#666, #666 4%, transparent 4%, transparent 96%, #666 95%),
-        linear-gradient(90deg, #666, #666 10%, transparent 10%, transparent 90%, #666 90%)
-    `,
-    width: '10px',
-    height: '20px',
-    borderRadius: '2px',
-    outline: 'none',
+const SliderElement = styled.div`
+    margin-inline: 0.5em;
+    padding: 1em;
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: stretch;
+`;
 
-    ':hover': {
-        backgroundColor: '#fff',
-    },
-});
+const SliderTrack = styled.div`
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: #ccc;
+    height: 5px;
+    border-radius: 3px;
+    position: relative;
+`;
 
-const SliderSlice = styled.div({
-    backgroundColor: '#fff',
-    position: 'absolute',
-    height: '100%',
-    borderRadius: '5px',
+const SliderThumb = styled.div`
+    position: absolute;
+    top: 50%;
+    cursor: ew-resize;
+    background-color: #fff;
+    width: 2em;
+    height: 2em;
+    border-radius: 1em;
+    outline: none;
+    box-shadow: 0 4px 6px 2px rgba(0, 0, 0, 0.1);
 
-    ':hover': {
-        backgroundColor: '#fff',
-    },
-});
+    &:hover {
+        background-color: #fff;
+    }
+`;
+
+const SliderSlice = styled.div`
+    position: absolute;
+    height: 100%;
+`;
 
 
 const nicer = (range: readonly [number, number], value: number): string => {
@@ -84,12 +78,40 @@ const nicer = (range: readonly [number, number], value: number): string => {
     return precision === undefined ? `${value}` : value.toFixed(precision).replace(/\.?0+$/, '');
 };
 
+interface ValueInputProps {
+    min: number;
+    max: number;
+    value: number;
+    resetValue: number;
+    onChange: (value: number) => void;
+}
+
+const ValueInput: React.FC<ValueInputProps> = props => {
+    const { min, max, value, resetValue, onChange } = props;
+    const handleSubmitValue = (value) => {
+        if (!isNaN(value) && value <= max && value >= min) {
+            onChange(value);
+        } else {
+            onChange(resetValue);
+        }
+    }
+    return (
+        <input
+            type="number"
+            min={min}
+            max={max}
+            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            value={value}
+            onChange={(e) => handleSubmitValue(Number(e.target.value))}
+        />
+    )
+}
+
 interface SliderProps {
     min: number;
     max: number;
     value: readonly [number, number];
     onChange: (value: readonly [number, number]) => void;
-    isDateTime?: boolean;
 }
 
 const Slider: React.FC<SliderProps> = React.memo(function Slider ({
@@ -97,7 +119,6 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
     max,
     value,
     onChange,
-    isDateTime = false,
 }) {
     const [dragging, setDragging] = React.useState<'left' | 'right' | null>(null);
     const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -110,7 +131,9 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
 
     const mouseOffsetRef = React.useRef(0);
 
-    React.useEffect(() => {
+    const { t } = useTranslation();
+
+    useEffect(() => {
         if (dragging) {
             const stop = (ev?: MouseEvent) => {
                 setDragging(null);
@@ -166,14 +189,6 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
 
     return (
         <SliderContainer>
-            <div className="output">
-                <output htmlFor="slider:min">
-                    {isDateTime ? `${new Date(value[0])}` : nicer([min, max], value[0])}
-                </output>
-                <output htmlFor="slider:max">
-                    {isDateTime ? `${new Date(value[1])}` : nicer([min, max], value[1])}
-                </output>
-            </div>
             <SliderElement>
                 <SliderTrack
                     ref={e => trackRef.current = e}
@@ -181,6 +196,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                     <SliderSlice
                         role="presentation"
                         ref={e => sliceRef.current = e}
+                        className="bg-indigo-600"
                         style={{
                             left: `${range[0] * 100}%`,
                             width: `${(range[1] - range[0]) * 100}%`,
@@ -193,7 +209,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                         aria-valuemin={min}
                         aria-valuemax={max}
                         aria-valuenow={value[0]}
-                        aria-valuetext={isDateTime ? `${new Date(value[0])}` : nicer([min, max], value[0])}
+                        aria-valuetext={nicer([min, max], value[0])}
                         tabIndex={-1}
                         onMouseDown={ev => {
                             if (ev.buttons === 1) {
@@ -202,7 +218,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                             }
                         }}
                         style={{
-                            left: `${range[0] * 100}%`,
+                            left: `calc(1em + ${range[0] * 100}%)`,
                             transform: 'translate(-100%, -50%)',
                         }}
                     />
@@ -213,7 +229,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                         aria-valuemin={min}
                         aria-valuemax={max}
                         aria-valuenow={value[1]}
-                        aria-valuetext={isDateTime ? `${new Date(value[1])}` : nicer([min, max], value[1])}
+                        aria-valuetext={nicer([min, max], value[1])}
                         tabIndex={-1}
                         onMouseDown={ev => {
                             if (ev.buttons === 1) {
@@ -222,12 +238,38 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider ({
                             }
                         }}
                         style={{
-                            left: `${range[1] * 100}%`,
+                            left: `calc(${range[1] * 100}% - 1em)`,
                             transform: 'translate(0, -50%)',
                         }}
                     />
                 </SliderTrack>
             </SliderElement>
+            <div className="output">
+                <output htmlFor="slider:min">
+                    <div className="my-1">{t('filters.range.start_value')}</div>
+                    {
+                        <ValueInput
+                            min={min}
+                            max={value[1]}
+                            value={value[0]}
+                            resetValue={min}
+                            onChange={(newValue) => onChange([newValue, value[1]])} 
+                        />
+                    }
+                </output>
+                <output htmlFor="slider:max">
+                    <div className="my-1">{t('filters.range.end_value')}</div>
+                    {
+                        <ValueInput
+                            min={value[0]}
+                            max={max}
+                            value={value[1]}
+                            resetValue={max}
+                            onChange={(newValue) => onChange([value[0], newValue])} 
+                        />
+                    }
+                </output>
+            </div>
         </SliderContainer>
     );
 });

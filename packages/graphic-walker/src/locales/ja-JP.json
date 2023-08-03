@@ -90,9 +90,12 @@
             "variance": "分散"
         },
         "filter_type": {
-            "one_of": "1つ以上",
+            "one_of": "値のセット",
+            "one_of_desc": "指定された値を選択します",
             "range": "範囲",
-            "temporal_range": "日付範囲"
+            "range_desc": "範囲 [開始, 終了] 内の値を選択します",
+            "temporal_range": "日付範囲",
+            "temporal_range_desc": "日付範囲 [開始, 終了] 内の値を選択します"
         }
     },
     "App": {
@@ -172,7 +175,7 @@
     "filters": {
         "to_edit": "このルールを編集",
         "empty_rule": "! (空のルール)",
-        "editing": "ルールを編集",
+        "editing": "フィルタールールの設定",
         "form": {
             "name": "フィールド",
             "rule": "ルール"
@@ -189,6 +192,10 @@
             "reverse": "選択を反転する",
             "confirm": "確認",
             "cancel": "キャンセル"
+        },
+        "range": {
+            "start_value": "開始値",
+            "end_value": "終了値"
         }
     },
     "explain": {

@@ -84,7 +84,7 @@ function binCount(resKey: string, params: IExpParamter[], data: IDataFrame, binS
 
     const groupSize = valueWithIndices.length / binSize;
 
-    const newValues = valueWithIndices.map(item => {
+    const newValues = valueWithIndices.sort((a, b) => a.index - b.index).map(item => {
         let bIndex = Math.floor(item.orderIndex / groupSize);
         if (bIndex === binSize) bIndex = binSize - 1;
         return bIndex + 1

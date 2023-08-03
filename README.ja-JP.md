@@ -224,4 +224,4 @@ Graphic Walker は主に基本的な分析任務をサポートします。複�
 
 ## LICENSE
 
-Please refer to [LICENSE](./LICENSE) file.
+Please refer to [LICENSE](./LICENSE) and [LICENSE2](./LICENSE2) file.

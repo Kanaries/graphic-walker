@@ -5,15 +5,15 @@ import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-const Background = styled.div({
-    position: "fixed",
-    left: 0,
-    top: 0,
-    width: "100vw",
-    height: "100vh",
-    backdropFilter: "blur(1px)",
-    zIndex: 25535,
-});
+const Background = styled.div`
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(1px);
+    z-index: 25535;
+`;
 
 const Container = styled.div`
     width: 98%;

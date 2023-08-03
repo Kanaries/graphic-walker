@@ -3,6 +3,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces';
 import { applyFilter, applyViewQuery, transformDataService } from '../services';
 import { getMeaAggKey } from '../utils';
+import { useAppRootContext } from '../components/appRoot';
 
 
 interface UseRendererProps {
@@ -26,8 +27,11 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
 
     const [viewData, setViewData] = useState<IRow[]>([]);
 
+    const appRef = useAppRootContext();
+
     useEffect(() => {
         const taskId = ++taskIdRef.current;
+        appRef.current?.updateRenderStatus('computing');
         setComputing(true);
         applyFilter(data, filters)
             .then((data) => {
@@ -53,6 +57,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }
+                appRef.current?.updateRenderStatus('rendering');
                 unstable_batchedUpdates(() => {
                     setComputing(false);
                     setViewData(data);
@@ -61,6 +66,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }
+                appRef.current?.updateRenderStatus('error');
                 console.error(err);
                 unstable_batchedUpdates(() => {
                     setComputing(false);
