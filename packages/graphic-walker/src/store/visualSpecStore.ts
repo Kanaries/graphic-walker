@@ -2,6 +2,7 @@ import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } fro
 import produce from "immer";
 import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
+import { DATE_TIME_DRILL_LEVELS } from "../constants";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
 import { CommonStore } from "./commonStore";
@@ -550,6 +551,40 @@ export class VizSpecStore {
                         }
                     ]
                 }
+            };
+            encodings[stateKey].push(logField);
+        });
+    }
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string)) {
+        if (stateKey === "filters") {
+            return;
+        }
+
+        this.useMutable(({ encodings }) => {
+            const originField = encodings[stateKey][index];
+            const newVarKey = uniqueId();
+            const logField: IViewField = {
+                fid: newVarKey,
+                dragId: newVarKey,
+                name: typeof name === 'function' ? name(originField.name) : name,
+                semanticType: "ordinal",
+                analyticType: "dimension",
+                aggName: 'sum',
+                computed: true,
+                expression: {
+                    op: "dateTimeDrill",
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid,
+                        },
+                        {
+                            type: 'value',
+                            value: drillLevel,
+                        },
+                    ],
+                },
             };
             encodings[stateKey].push(logField);
         });

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
-import { COUNT_FIELD_ID } from "../../constants";
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -62,6 +62,15 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             },
                         },
                     ],
+                },
+                f.semanticType === 'temporal' && {
+                    label: t('drill.name'),
+                    children: DATE_TIME_DRILL_LEVELS.map(level => ({
+                        label: t(`drill.levels.${level}`),
+                        onPress() {
+                            vizStore.createDateTimeDrilledField(channel, index, level, name => `${t(`drill.levels.${level}`)} (${name})`);
+                        },
+                    })),
                 },
             ]);
         });
