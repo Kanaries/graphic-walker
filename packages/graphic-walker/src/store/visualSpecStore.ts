@@ -1,6 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
@@ -88,7 +88,7 @@ type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
 };
 
-const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["specList"]): IVisSpec[] => {
+const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["specList"]): IVisSpecForExport[] => {
     return backwards.map((content) => ({
         ...content,
         config: {
@@ -336,6 +336,7 @@ export class VizSpecStore {
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
                 }));
@@ -345,6 +346,7 @@ export class VizSpecStore {
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: "sum",
@@ -701,15 +703,15 @@ export class VizSpecStore {
         return stringifyGWContent({
             datasets: toJS(this.commonStore.datasets),
             dataSources: this.commonStore.dataSources,
-            specList: pureVisList,
+            specList: this.visSpecEncoder(pureVisList),
         });
     }
     public exportViewSpec() {
         const pureVisList = dumpsGWPureSpec(this.visList);
-        return pureVisList
+        return this.visSpecEncoder(pureVisList);
     }
     public importStoInfo (stoInfo: IStoInfo) {
-        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
+        this.visList = parseGWPureSpec(this.visSpecDecoder(forwardVisualConfigs(stoInfo.specList)));
         this.visIndex = 0;
         this.commonStore.datasets = stoInfo.datasets;
         this.commonStore.dataSources = stoInfo.dataSources;
@@ -718,5 +720,55 @@ export class VizSpecStore {
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
+    }
+
+    private visSpecEncoder(visList: IVisSpec[]): IVisSpecForExport[] {
+        const updatedVisList = visList.map((visSpec) => {
+            const updatedFilters = visSpec.encodings.filters.map((filter) => {
+                if (filter.rule?.type === "one of") {
+                    const rule =  {
+                        ...filter.rule, 
+                        value: Array.from(filter.rule.value)
+                    }
+                    return {
+                        ...filter, 
+                        rule
+                    }
+                } 
+                return filter as IFilterFieldForExport;
+            });
+            return {
+                ...visSpec,
+                encodings: {
+                    ...visSpec.encodings,
+                    filters: updatedFilters
+                }
+            }
+        });
+        return updatedVisList;
+    }
+    private visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
+        const updatedVisList = visList.map((visSpec) => {
+            const updatedFilters = visSpec.encodings.filters.map((filter) => {
+                if (filter.rule?.type === "one of" && Array.isArray(filter.rule.value)) {
+                    return {
+                        ...filter, 
+                        rule: {
+                            ...filter.rule, 
+                            value: new Set(filter.rule.value)
+                        }
+                    }
+                }
+                return filter;
+            })
+            return {
+                ...visSpec,
+                encodings: {
+                    ...visSpec.encodings,
+                    filters: updatedFilters
+                }
+            } as IVisSpec;
+        });
+        return updatedVisList;
     }
 }

@@ -23,5 +23,7 @@ module.exports = {
       pattern: /text-([a-z]+)-(500)/,
     }
   ],
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }

@@ -35,18 +35,22 @@ export interface IMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    path?: string[];
 }
 
 export interface IUncertainMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType | '?';
     analyticType: IAnalyticType | '?';
+    path: string[];
 }
 
 export type IExpParamter =
@@ -91,6 +95,8 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    basename?: string;
+    path?: [],
 }
 
 export interface IViewField extends IField {
@@ -215,6 +221,16 @@ export interface IVisSpec {
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }
+
+export type SetToArray<T> = (
+    T extends object ? (
+      T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }
+    ) : T
+);
+
+export type IVisSpecForExport = SetToArray<IVisSpec>;
+
+export type IFilterFieldForExport = SetToArray<IFilterField>;
 
 export enum ISegmentKey {
     vis = 'vis',

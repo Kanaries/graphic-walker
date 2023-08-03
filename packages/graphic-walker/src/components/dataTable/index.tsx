@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from "react";
-import styled from "styled-components";
-import { IMutField, IRow } from "../../interfaces";
-import { useTranslation } from "react-i18next";
-import Pagination from "./pagination";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import DropdownContext from "../dropdownContext";
+import React, { useMemo, useState } from 'react';
+import styled from 'styled-components';
+import { IMutField, IRow } from '../../interfaces';
+import { useTranslation } from 'react-i18next';
+import Pagination from './pagination';
+import { ChevronUpDownIcon } from '@heroicons/react/24/outline';
+import DropdownContext from '../dropdownContext';
 
 interface DataTableProps {
     size?: number;
@@ -32,33 +32,82 @@ const Container = styled.div`
         }
     }
 `;
-const ANALYTIC_TYPE_LIST = ["dimension", "measure"];
-const SEMANTIC_TYPE_LIST = ["nominal", "ordinal", "quantitative", "temporal"];
+const ANALYTIC_TYPE_LIST = ['dimension', 'measure'];
+const SEMANTIC_TYPE_LIST = ['nominal', 'ordinal', 'quantitative', 'temporal'];
 // function getCellType(field: IMutField): 'number' | 'text' {
 //     return field.dataType === 'number' || field.dataType === 'integer' ? 'number' : 'text';
 // }
-function getHeaderType(field: IMutField): "number" | "text" {
-    return field.analyticType === "dimension" ? "text" : "number";
+function getHeaderType(field: IMutField): 'number' | 'text' {
+    return field.analyticType === 'dimension' ? 'text' : 'number';
 }
 
 function getHeaderClassNames(field: IMutField) {
-    return field.analyticType === "dimension" ? "border-t-4 border-blue-400" : "border-t-4 border-purple-400";
+    return field.analyticType === 'dimension' ? 'border-t-4 border-blue-400' : 'border-t-4 border-purple-400';
 }
 
 function getSemanticColors(field: IMutField): string {
     switch (field.semanticType) {
-        case "nominal":
-            return "border border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-100 dark:border-sky-600";
-        case "ordinal":
-            return "border border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100 dark:border-indigo-600";
-        case "quantitative":
-            return "border border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100 dark:border-purple-600";
-        case "temporal":
-            return "border border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-600";
+        case 'nominal':
+            return 'border border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-100 dark:border-sky-600';
+        case 'ordinal':
+            return 'border border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100 dark:border-indigo-600';
+        case 'quantitative':
+            return 'border border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100 dark:border-purple-600';
+        case 'temporal':
+            return 'border border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-600';
         default:
-            return "border border-transparent bg-gray-400";
+            return 'border border-transparent bg-gray-400';
     }
 }
+
+type wrapMutField = {
+    colSpan: number;
+    rowSpan: number;
+} & (
+    | { type: 'field'; value: IMutField; fIndex: number }
+    | {
+          type: 'name';
+          value: string;
+      }
+);
+
+const getHeaders = (metas: IMutField[]): wrapMutField[][] => {
+    const height = metas.map((x) => x.path?.length ?? 1).reduce((a, b) => Math.max(a, b), 0);
+    const result: wrapMutField[][] = [...Array(height)].map(() => []);
+    let now = 1;
+    metas.forEach((x, fIndex) => {
+        const path = x.path ?? [x.name ?? x.fid];
+        if (path.length > now) {
+            for (let i = now - 1; i < path.length - 1; i++) {
+                result[i].push({
+                    colSpan: 0,
+                    rowSpan: 1,
+                    type: 'name',
+                    value: path[i],
+                });
+            }
+        }
+        now = path.length;
+        for (let i = 0; i < path.length - 1; i++) {
+            result[i][result[i].length - 1].colSpan++;
+        }
+        result[path.length - 1].push({
+            type: 'field',
+            value: x,
+            colSpan: 1,
+            rowSpan: height - path.length + 1,
+            fIndex,
+        });
+    });
+    return result;
+};
+
+const getHeaderKey = (f: wrapMutField) => {
+    if (f.type === 'name') {
+        return f.value;
+    }
+    return f.value.name ?? f.value.fid;
+};
 
 const DataTable: React.FC<DataTableProps> = (props) => {
     const { size = 10, data, metas, onMetaChange } = props;
@@ -82,6 +131,8 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const from = pageIndex * size;
     const to = Math.min((pageIndex + 1) * size, data.length - 1);
 
+    const headers = useMemo(() => getHeaders(metas), [metas]);
+
     return (
         <Container className="rounded border-gray-200 dark:border-gray-700 border">
             <Pagination
@@ -97,70 +148,99 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             />
             <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 dark:bg-gray-900">
-                    <tr className="divide-x divide-gray-200 dark:divide-gray-700">
-                        {metas.map((field, fIndex) => (
-                            <th key={field.fid} className={""}>
-                                <div
-                                    className={
-                                        getHeaderClassNames(field) +
-                                        " whitespace-nowrap py-3.5 px-6 text-left text-xs font-semibold text-gray-900 dark:text-gray-50 sm:pl-6"
-                                    }
+                    {headers.map((row) => (
+                        <tr
+                            className="divide-x divide-gray-200 dark:divide-gray-700"
+                            key={`row_${getHeaderKey(row[0])}`}
+                        >
+                            {row.map((f) => (
+                                <th
+                                    colSpan={f.colSpan}
+                                    rowSpan={f.rowSpan}
+                                    key={getHeaderKey(f)}
+                                    className={'align-top'}
                                 >
-                                    <b>{field.name || field.fid}</b>
-                                    <div>
-                                        <DropdownContext
-                                            options={analyticTypeList}
-                                            onSelect={(value) => {
-                                                onMetaChange(field.fid, fIndex, {
-                                                    analyticType: value as IMutField["analyticType"],
-                                                });
-                                            }}
+                                    {f.type === 'name' && (
+                                        <div
+                                            className={
+                                                'border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-semibold text-gray-900 dark:text-gray-50'
+                                            }
                                         >
-                                            <span
-                                                className={
-                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white " +
-                                                    (field.analyticType === "dimension" ? "bg-blue-500" : "bg-purple-500")
-                                                }
-                                            >
-                                                {field.analyticType}
-                                                <ChevronUpDownIcon className="ml-2 w-3" />
-                                            </span>
-                                        </DropdownContext>
-                                    </div>
-                                    <div>
-                                        <DropdownContext
-                                            options={semanticTypeList}
-                                            onSelect={(value) => {
-                                                onMetaChange(field.fid, fIndex, {
-                                                    semanticType: value as IMutField["semanticType"],
-                                                });
-                                            }}
+                                            <b className="sticky inset-x-0 w-fit px-6 sm:pl-6">{f.value}</b>
+                                        </div>
+                                    )}
+                                    {f.type === 'field' && (
+                                        <div
+                                            className={
+                                                getHeaderClassNames(f.value) +
+                                                ' whitespace-nowrap py-3.5 px-6 text-left text-xs font-semibold text-gray-900 dark:text-gray-50 sm:pl-6'
+                                            }
                                         >
-                                            <span
-                                                className={
-                                                    "cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs " +
-                                                    getSemanticColors(field)
-                                                }
-                                            >
-                                                {field.semanticType}
-                                                <ChevronUpDownIcon className="ml-2 w-3" />
-                                            </span>
-                                        </DropdownContext>
-                                    </div>
-                                </div>
-                            </th>
-                        ))}
-                    </tr>
+                                            <b>{f.value.basename || f.value.name || f.value.fid}</b>
+                                            <div>
+                                                <DropdownContext
+                                                    options={analyticTypeList}
+                                                    onSelect={(value) => {
+                                                        onMetaChange(f.value.fid, f.fIndex, {
+                                                            analyticType: value as IMutField['analyticType'],
+                                                        });
+                                                    }}
+                                                >
+                                                    <span
+                                                        className={
+                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white ' +
+                                                            (f.value.analyticType === 'dimension'
+                                                                ? 'bg-blue-500'
+                                                                : 'bg-purple-500')
+                                                        }
+                                                    >
+                                                        {f.value.analyticType}
+                                                        <ChevronUpDownIcon className="ml-2 w-3" />
+                                                    </span>
+                                                </DropdownContext>
+                                            </div>
+                                            <div>
+                                                <DropdownContext
+                                                    options={semanticTypeList}
+                                                    onSelect={(value) => {
+                                                        onMetaChange(f.value.fid, f.fIndex, {
+                                                            semanticType: value as IMutField['semanticType'],
+                                                        });
+                                                    }}
+                                                >
+                                                    <span
+                                                        className={
+                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs ' +
+                                                            getSemanticColors(f.value)
+                                                        }
+                                                    >
+                                                        {f.value.semanticType}
+                                                        <ChevronUpDownIcon className="ml-2 w-3" />
+                                                    </span>
+                                                </DropdownContext>
+                                            </div>
+                                        </div>
+                                    )}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
                     {data.slice(from, to + 1).map((row, index) => (
-                        <tr className={"divide-x divide-gray-200 dark:divide-gray-700 " + (index % 2 ? "bg-gray-50 dark:bg-gray-900" : "")} key={index}>
+                        <tr
+                            className={
+                                'divide-x divide-gray-200 dark:divide-gray-700 ' +
+                                (index % 2 ? 'bg-gray-50 dark:bg-gray-900' : '')
+                            }
+                            key={index}
+                        >
                             {metas.map((field) => (
                                 <td
                                     key={field.fid + index}
                                     className={
                                         getHeaderType(field) +
-                                        " whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6"
+                                        ' whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6'
                                     }
                                 >
                                     {`${row[field.fid]}`}

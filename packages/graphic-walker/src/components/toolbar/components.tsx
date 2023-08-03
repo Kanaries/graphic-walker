@@ -74,6 +74,7 @@ export const ToolbarItemContainerElement = styled.div<{ split: boolean; dark: bo
     outline: none;
     width: ${({ split }) => split ? 'calc(var(--height) + 10px)' : 'var(--height)'};
     height: var(--height);
+    align-items: center;
     overflow: hidden;
     color: ${({ dark }) => dark ? 'var(--dark-mode-color)' : 'var(--color)'};
     position: relative;
