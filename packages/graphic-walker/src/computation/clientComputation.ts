@@ -22,7 +22,7 @@ export const dataQueryClient = async (
         switch (step.type) {
             case 'filter': {
                 res = await applyFilter(res, step.filters.map<IFilterField>(filter => {
-                    const f = columns.find(c => c.fid === filter.field);
+                    const f = columns.find(c => c.fid === filter.fid);
                     if (!f) {
                         return null!;
                     }
@@ -34,16 +34,13 @@ export const dataQueryClient = async (
                         name: f.name || f.fid,
                         rule: null,
                     };
-                    if (filter.type === 'oneOf') {
+                    if (filter.rule.type === 'one of') {
                         res.rule = {
                             type: 'one of',
-                            value: new Set(filter.value),
+                            value: new Set(filter.rule.value),
                         };
-                    } else if (filter.type === 'range') {
-                        res.rule = {
-                            type: f.semanticType === 'temporal' ? 'temporal range' : 'range',
-                            value: [filter.min, filter.max],
-                        };
+                    } else {
+                        res.rule = filter.rule;
                     }
                     return res;
                 }).filter(Boolean));

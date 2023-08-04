@@ -404,23 +404,10 @@ export type IVisFieldComputation = {
     type: IVisField['type'];
 };
 
-export interface IVisFilterOneOf {
-    type: 'oneOf';
-    field: string;
-    value: Array<string | number>;
-}
-
-export interface IVisFilterRange {
-    type: 'range';
-    field: string;
-    min: number;
-    max: number;
-}
-
-export type IVisFilter = (
-    | IVisFilterOneOf
-    | IVisFilterRange
-);
+export interface IVisFilter {
+    fid: string;
+    rule: SetToArray<IFilterRule>;
+};
 
 export interface IFilterWorkflowStep {
     type: 'filter';
