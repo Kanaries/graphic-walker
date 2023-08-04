@@ -154,6 +154,7 @@
                     "export_chart_as": "导出 {{type}}",
                     "export_code": "导出代码"
                 },
+                "limit": "上限",
                 "size": "调整尺寸",
                 "size_setting": {
                     "width": "宽度",

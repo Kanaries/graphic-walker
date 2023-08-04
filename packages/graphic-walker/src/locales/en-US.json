@@ -154,6 +154,7 @@
                     "export_chart_as": "Export as {{type}}",
                     "export_code": "Export Code"
                 },
+                "limit": "Limit",
                 "size": "Resize",
                 "size_setting": {
                     "width": "Width",

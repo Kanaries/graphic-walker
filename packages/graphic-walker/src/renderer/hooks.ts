@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces';
-import { applyFilter, applyViewQuery, transformDataService } from '../services';
+import { applyFilter, applySort, applyViewQuery, transformDataService } from '../services';
 import { getMeaAggKey } from '../utils';
 import { useAppRootContext } from '../components/appRoot';
-
+import { useDebounceValue } from '../hooks';
 
 interface UseRendererProps {
     data: IRow[];
@@ -13,6 +13,8 @@ interface UseRendererProps {
     viewMeasures: IViewField[];
     filters: readonly DeepReadonly<IFilterField>[];
     defaultAggregated: boolean;
+    sort: 'none' | 'ascending' | 'descending';
+    limit: number;
 }
 
 interface UseRendererResult {
@@ -21,9 +23,20 @@ interface UseRendererResult {
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { data, allFields, viewDimensions, viewMeasures, filters, defaultAggregated } = props;
+    const {
+        data,
+        allFields,
+        viewDimensions,
+        viewMeasures,
+        filters,
+        defaultAggregated,
+        sort,
+        limit: storeLimit,
+    } = props;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
+
+    const limit = useDebounceValue(storeLimit);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
 
@@ -50,10 +63,26 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                 return applyViewQuery(d, dims.concat(meas), {
                     op: defaultAggregated ? 'aggregate' : 'raw',
                     groupBy: dims.map((f) => f.fid),
-                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
+                    measures: meas.map((f) => ({
+                        field: f.fid,
+                        agg: f.aggName as any,
+                        asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                    })),
                 });
             })
-            .then(data => {
+            .then((data) => {
+                if (limit > 0 && sort !== 'none' && viewMeasures.length > 0) {
+                    return applySort(data, viewMeasures, sort);
+                }
+                return data;
+            })
+            .then((data) => {
+                if (limit > 0) {
+                    return data.slice(0, limit);
+                }
+                return data;
+            })
+            .then((data) => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }
@@ -62,7 +91,8 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
                     setComputing(false);
                     setViewData(data);
                 });
-            }).catch((err) => {
+            })
+            .catch((err) => {
                 if (taskId !== taskIdRef.current) {
                     return;
                 }
@@ -76,7 +106,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         return () => {
             taskIdRef.current++;
         };
-    }, [data, filters, viewDimensions, viewMeasures, defaultAggregated]);
+    }, [data, filters, viewDimensions, viewMeasures, defaultAggregated, limit]);
 
     return useMemo(() => {
         return {
