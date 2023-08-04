@@ -81,7 +81,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             sort,
             limit > 0 ? limit : undefined
         );
-    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
+    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
     const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);

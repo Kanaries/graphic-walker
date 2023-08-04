@@ -33,8 +33,8 @@ const treeShake = (computedFields: readonly { key: string; expression: IExpressi
 export const toWorkflow = (
     viewFilters: VizSpecStore['viewFilters'],
     allFields: Omit<IViewField, 'dragId'>[],
-    viewDimensions: VizSpecStore['viewDimensions'],
-    viewMeasures: VizSpecStore['viewMeasures'],
+    viewDimensions: Omit<IViewField, 'dragId'>[],
+    viewMeasures: Omit<IViewField, 'dragId'>[],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
     sort: 'none' | 'ascending' | 'descending',
     limit?: number,
@@ -120,16 +120,16 @@ export const toWorkflow = (
     if (sort !== "none" && limit) {
         sortWorkflow = {
             type: 'sort',
-            by: viewMeasures,
-            sort
+            by: viewMeasures.map(f => f.fid),
+            sort,
         };
     }
 
     if (limit) {
         limitWorkflow = {
             type: 'limit',
-            value: limit
-        }
+            value: limit,
+        };
     }
 
     const steps: IDataQueryWorkflowStep[] = [

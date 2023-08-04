@@ -443,7 +443,7 @@ export interface IViewWorkflowStep {
 export interface ISortWorkflowStep {
     type: 'sort';
     sort: 'ascending' | 'descending';
-    by: IField[];
+    by: string[];
 }
 
 export interface ILimitWorkflowStep {
