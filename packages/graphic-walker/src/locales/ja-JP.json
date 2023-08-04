@@ -153,6 +153,7 @@
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート"
                 },
+                "limit": "上限",
                 "size": "サイズ変更",
                 "size_setting": {
                     "width": "幅",
