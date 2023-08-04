@@ -39,3 +39,4 @@ export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
 export { ISegmentKey } from './interfaces';
+export { resolveSpecFromStoInfo } from './utils/save';
