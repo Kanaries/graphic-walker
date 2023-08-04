@@ -147,14 +147,14 @@ export class CommonStore {
         this.initTempDS();
         this.showDSPanel = true;
     }
-    public addAndUseDS(dataset: IDataSetInfo) {
-        const datasetId = this.addDS(dataset);
+    public addAndUseDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
+        const id = this.addDS(dataset, datasetId);
         this.dsIndex = this.datasets.length - 1;
-        return datasetId
+        return id
     }
-    public addDS(dataset: IDataSetInfo) {
+    public addDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
         const timestamp = new Date().getTime();
-        const dataSetId = `dst-${timestamp}`
+        const dataSetId = datasetId || `dst-${timestamp}`
         const dataSourceId = `dse-${timestamp}`;
         this.dataSources.push({
             id: dataSourceId,

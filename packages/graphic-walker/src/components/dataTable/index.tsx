@@ -1,16 +1,24 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { IMutField, IRow } from '../../interfaces';
+import { observer } from 'mobx-react-lite';
+import type { IMutField, IRow, DataSet } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
+import LoadingLayer from "../loadingLayer";
+import { useComputationConfig } from "../../renderer/hooks";
+import { dataReadRawServer } from "../../computation/serverComputation";
+import { dataReadRawClient } from "../../computation/clientComputation";
 import Pagination from './pagination';
 import { ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import DropdownContext from '../dropdownContext';
 
 interface DataTableProps {
+    /** page limit */
     size?: number;
-    metas: IMutField[];
-    data: IRow[];
+    /** total count of rows */
+    total: number;
+    dataset: DataSet;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
+    loading?: boolean;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -110,9 +118,12 @@ const getHeaderKey = (f: wrapMutField) => {
 };
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, data, metas, onMetaChange } = props;
+    const { size = 10, onMetaChange, dataset, total, loading: statLoading } = props;
+    const { dataSource, id: datasetId } = dataset;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
+    const computationConfig = useComputationConfig();
+    const computationMode = computationConfig.mode;
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return ANALYTIC_TYPE_LIST.map((at) => ({
@@ -129,18 +140,72 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, []);
 
     const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size, data.length - 1);
+    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
+
+    const [rows, setRows] = useState<IRow[]>([]);
+    const [dataLoading, setDataLoading] = useState(false);
+    const taskIdRef = useRef(0);
+
+    useEffect(() => {
+        if (statLoading || computationMode !== 'client') {
+            return;
+        }
+        setDataLoading(true);
+        const taskId = ++taskIdRef.current;
+        dataReadRawClient(dataSource, size, pageIndex).then(data => {
+            if (taskId === taskIdRef.current) {
+                setDataLoading(false);
+                setRows(data);
+            }
+        }).catch(err => {
+            if (taskId === taskIdRef.current) {
+                console.error(err);
+                setDataLoading(false);
+                setRows([]);
+            }
+        });
+        return () => {
+            taskIdRef.current++;
+        };
+    }, [computationMode, statLoading, dataSource, pageIndex, size]);
+
+    useEffect(() => {
+        if (statLoading || computationMode !== 'server') {
+            return;
+        }
+        setDataLoading(true);
+        const taskId = ++taskIdRef.current;
+        dataReadRawServer(computationConfig, datasetId, size, pageIndex).then(data => {
+            if (taskId === taskIdRef.current) {
+                setDataLoading(false);
+                setRows(data);
+            }
+        }).catch(err => {
+            if (taskId === taskIdRef.current) {
+                console.error(err);
+                setDataLoading(false);
+                setRows([]);
+            }
+        });
+        return () => {
+            taskIdRef.current++;
+        };
+    }, [computationMode, computationConfig, datasetId, pageIndex, size]);
+
+    const loading = statLoading || dataLoading;
+
+    const metas = dataset.rawFields;
 
     const headers = useMemo(() => getHeaders(metas), [metas]);
 
     return (
-        <Container className="rounded border-gray-200 dark:border-gray-700 border">
+        <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
             <Pagination
-                total={data.length}
+                total={total}
                 from={from + 1}
                 to={to + 1}
                 onNext={() => {
-                    setPageIndex(Math.min(Math.ceil(data.length / size) - 1, pageIndex + 1));
+                    setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
                 }}
                 onPrev={() => {
                     setPageIndex(Math.max(0, pageIndex - 1));
@@ -227,7 +292,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
-                    {data.slice(from, to + 1).map((row, index) => (
+                    {rows.map((row, index) => (
                         <tr
                             className={
                                 'divide-x divide-gray-200 dark:divide-gray-700 ' +
@@ -250,8 +315,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </tbody>
             </table>
+            {loading && <LoadingLayer />}
         </Container>
     );
 };
 
-export default DataTable;
+export default observer(DataTable);
