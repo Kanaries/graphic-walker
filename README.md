@@ -229,6 +229,11 @@ property description
 + `i18nResources` custom lang config
 + `keepAlive`, type `boolean`. whether to keep the component state when it is unmounted. If `true`, after you unmount the graphic-walker component, the state will still be store, and will be restore when the component is mount again.
 
+## Server integration
+For those who need to integrate graphic-walker with their own databases/OLAP, you can develop based on our SDK [gw-dsl-parser](https://github.com/Kanaries/gw-dsl-parser)
+
+which translate graphic-walker specification to SQL
+
 ## What's next
 
 Graphic Walker is basically manual data exploration software. When facing more complex datasets, manual exploration can cost a lot of time, [Rath](https://github.com/Kanaries/Rath) is software providing a different data analysis experience with automation enhancement.
