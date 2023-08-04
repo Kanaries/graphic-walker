@@ -1,5 +1,4 @@
-import { IViewField, IRow } from '../interfaces';
-import { getMeaAggKey } from '../utils';
+import { IRow } from '../interfaces';
 
 function compareMulti(a: number[], b: number[]): number {
     if (a.length < b.length) return -compareMulti(b, a);

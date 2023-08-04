@@ -1,10 +1,10 @@
-import { IRow, IViewField } from '../interfaces';
+import { IRow } from '../interfaces';
 import { sortBy } from './sort';
 
 const main = (e: {
     data: {
         data: IRow[];
-        viewMeasures: IViewField[];
+        viewMeasures: string[];
         sort: 'ascending' | 'descending';
     };
 }) => {
