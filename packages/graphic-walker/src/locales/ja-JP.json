@@ -5,6 +5,12 @@
         "timeFormat": "日付",
         "normalizedNumberFormat": "正規化された数字"
     },
+    "scale": {
+        "field_settings": "フィールド設定",
+        "scale": "スケール ",
+        "start_value": "開始値",
+        "end_value":"終了値"
+    },
     "constant": {
         "row_count": "行数",
         "analytic_type": {

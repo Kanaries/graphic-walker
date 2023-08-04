@@ -5,6 +5,12 @@
         "timeFormat": "Time format",
         "normalizedNumberFormat": "Normalized number format"
     },
+    "scale": {
+        "field_settings": "Field settings",
+        "scale": "Scale",
+        "start_value": "Start Value",
+        "end_value":"End Value"
+    },
     "constant": {
         "row_count": "Row count",
         "analytic_type": {

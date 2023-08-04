@@ -31,6 +31,7 @@ export interface Filters {
 }
 
 export interface IMutField {
+    scale: any;
     fid: string;
     key?: string;
     name?: string;
@@ -71,7 +72,7 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'cp';
     params: IExpParamter[];
     as: string;
 }
@@ -91,6 +92,7 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    scale?: any;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;

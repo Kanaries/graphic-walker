@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
 import { COUNT_FIELD_ID } from "../../constants";
+import { IViewField } from "../../interfaces";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -10,7 +11,7 @@ const keepTrue = <T extends string | number | object | Function | symbol>(array:
 };
 
 export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuItem[][] => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const fields = vizStore.draggableFieldState[channel];
     const { t } = useTranslation('translation', { keyPrefix: "field_menu" });
 
@@ -63,6 +64,14 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         },
                     ],
                 },
+                ((f.semanticType === 'temporal' || f.semanticType === 'quantitative') && f.expression?.op != 'cp') && {
+                    label: 'Scale',
+                    onPress: () => {
+                        commonStore.setShowFieldScalePanel(true);
+                        commonStore.domainField = f as IViewField;
+                        commonStore.fieldScaleType = f.analyticType;
+                    }
+                }
             ]);
         });
     }, [channel, fields, vizStore, t]);

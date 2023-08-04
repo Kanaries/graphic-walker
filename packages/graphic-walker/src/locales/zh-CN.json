@@ -5,6 +5,12 @@
         "timeFormat": "时间格式",
         "normalizedNumberFormat": "标准化数字格式"
     },
+    "scale": {
+        "field_settings": "字段设置",
+        "scale": "范围",
+        "start_value": "起始值",
+        "end_value":"终止值"
+    },
     "constant": {
         "row_count": "行数",
         "analytic_type": {

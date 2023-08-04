@@ -1,6 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification, IAnalyticType } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
@@ -339,6 +339,7 @@ export class VizSpecStore {
                     basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
+                    scale: f.scale || {}
                 }));
             encodings.measures = dataset.rawFields
                 .filter((f) => f.analyticType === "measure")
@@ -350,6 +351,7 @@ export class VizSpecStore {
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: "sum",
+                    scale: f.scale || {}
                 }));
             encodings.measures.push(countField);
         });
@@ -553,6 +555,34 @@ export class VizSpecStore {
             };
             encodings[stateKey].push(logField);
         });
+    }
+    public createScaleField(type:IAnalyticType,originField: IViewField , domainStart: any, domainEnd: any) {
+        const stateKey = type === 'dimension'? 'dimensions' : 'measures';
+        this.useMutable(({ encodings }) => {
+            const newVarKey = uniqueId();
+            const scaleField: IViewField = {
+                fid: newVarKey,
+                dragId: newVarKey,
+                name:`${originField.name}(${domainStart},${domainEnd})`,
+                semanticType: originField.semanticType,
+                analyticType: originField.analyticType,
+                scale: {domain:[domainStart, domainEnd]},
+                aggName: 'sum',
+                computed: true,
+                expression: {
+                    op: 'cp',
+                    as: newVarKey,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid
+                        }
+                    ]
+                }
+            }
+            encodings[stateKey].push(scaleField);
+        })
+
     }
     public setFieldAggregator(stateKey: keyof DraggableFieldState, index: number, aggName: string) {
         this.useMutable(({ encodings }) => {
