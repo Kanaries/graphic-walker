@@ -1,5 +1,6 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type {IViewQuery} from "./lib/viewQuery";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -50,6 +51,15 @@ export interface IUncertainMutField {
     semanticType: ISemanticType | '?';
     analyticType: IAnalyticType | '?';
     path: string[];
+}
+
+export interface IDatasetStats {
+    rowCount: number;
+}
+
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
 }
 
 export type IExpParamter =
@@ -238,6 +248,19 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
+export type IClientComputationOptions = {
+    mode: 'client';
+};
+export type IServerComputationOptions = {
+    mode: 'server';
+} & (
+    | { server?: string | undefined }
+    | { service?: IComputationFunction | undefined }
+);
+export type IComputationOptions = IClientComputationOptions | IServerComputationOptions;
+export type IComputationMode = IComputationOptions['mode'];
+export type IComputationConfig = IComputationMode | IComputationOptions;
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
@@ -297,6 +320,11 @@ interface IExportChartList {
  */
 export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
 
+export interface IRenderStatusChangeEntry {
+    datasetId: string | null;
+    workflow: IDataQueryWorkflowStep[];
+}
+
 export interface IGWHandler {
     /** length of the "chart" tab list */
     chartCount: number;
@@ -317,10 +345,10 @@ export interface IGWHandler {
     /**
      * Registers a callback function to listen to the status change of the current chart.
      * 
-     * @param {(renderStatus: IRenderStatus) => void} cb - the callback function
+     * @param {(renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void} cb - the callback function
      * @returns {() => void} a dispose function to remove this callback
      */
-    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void) => (() => void);
     /**
      * Exports the current chart.
      * 
@@ -343,5 +371,92 @@ export interface IGWHandler {
 }
 
 export interface IGWHandlerInsider extends IGWHandler {
-    updateRenderStatus: (renderStatus: IRenderStatus) => void;
+    updateRenderStatus: (renderStatus: IRenderStatus, entry?: IRenderStatusChangeEntry) => void;
 }
+
+export interface IVisField {
+    key: string;
+    type: ISemanticType;
+    name?: string;
+    description?: string;
+    format?: string;
+    expression?: IExpression;
+}
+
+export type IVisFieldComputation = {
+    field: IVisField['key'];
+    expression: NonNullable<IVisField['expression']>;
+    name: NonNullable<IVisField['name']>;
+    type: IVisField['type'];
+};
+
+export interface IVisFilterOneOf {
+    type: 'oneOf';
+    field: string;
+    value: Array<string | number>;
+}
+
+export interface IVisFilterRange {
+    type: 'range';
+    field: string;
+    min: number;
+    max: number;
+}
+
+export type IVisFilter = (
+    | IVisFilterOneOf
+    | IVisFilterRange
+);
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: IVisFilter[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        key: IVisFieldComputation['field'];
+        expression: IVisFieldComputation['expression'];
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep;
+
+export interface IDataQueryPayload {
+    datasetId: string;
+    query: {
+        workflow: IDataQueryWorkflowStep[];
+        limit?: number;
+        offset?: number;
+    };
+}
+
+export interface ILoadDataPayload {
+    pageSize: number;
+    pageIndex: number;
+}
+
+export interface IGWDatasetStat {
+    count: number;
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);

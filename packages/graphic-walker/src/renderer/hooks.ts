@@ -1,87 +1,174 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces';
-import { applyFilter, applyViewQuery, transformDataService } from '../services';
-import { getMeaAggKey } from '../utils';
+import { type IDataQueryWorkflowStep, type IRow, type DeepReadonly, type IFilterField, type IViewField, type IComputationConfig, type IComputationOptions, IRenderStatusChangeEntry } from '../interfaces';
+import { useGlobalStore } from '../store';
 import { useAppRootContext } from '../components/appRoot';
+import { toWorkflow } from '../utils/workflow';
+import { dataQueryClient } from '../computation/clientComputation';
+import { dataQueryServer } from '../computation/serverComputation';
 
+
+export const getComputationConfig = (config: IComputationConfig): IComputationOptions => {
+    if (typeof config === 'string') {
+        return {
+            mode: config,
+        };
+    }
+    return config;
+};
+
+export const useComputationConfig = (): IComputationOptions => {
+    const { vizStore } = useGlobalStore();
+    const { computationConfig } = vizStore;
+    return getComputationConfig(computationConfig);
+};
 
 interface UseRendererProps {
-    data: IRow[];
+    data?: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
     viewDimensions: IViewField[];
     viewMeasures: IViewField[];
     filters: readonly DeepReadonly<IFilterField>[];
     defaultAggregated: boolean;
+    datasetId?: string;
+    computationConfig: IComputationConfig;
 }
 
 interface UseRendererResult {
     viewData: IRow[];
     loading: boolean;
+    parsed: {
+        workflow: IDataQueryWorkflowStep[];
+    };
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { data, allFields, viewDimensions, viewMeasures, filters, defaultAggregated } = props;
+    const { data, allFields, viewDimensions, viewMeasures, filters, defaultAggregated, computationConfig: _computationConfig, datasetId } = props;
+    const computationConfig = getComputationConfig(_computationConfig);
+    const { mode: computationMode } = computationConfig;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
+    const workflow = useMemo(() => {
+        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated);
+    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
+
     const [viewData, setViewData] = useState<IRow[]>([]);
+    const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);
 
     const appRef = useAppRootContext();
 
+    const renderStatusChangeEntryRef = useRef<Omit<IRenderStatusChangeEntry, 'workflow'>>({
+        datasetId: datasetId ?? null,
+    });
+    renderStatusChangeEntryRef.current.datasetId = datasetId ?? null;
+
     useEffect(() => {
+        if (computationMode !== 'client') {
+            return;
+        }
+        if (!data) {
+            console.warn('useRenderer error: prop `data` is required for "client" mode, but none is found.');
+            return;
+        }
+        if (!allFields) {
+            console.warn('useRenderer error: prop `fields` is required for "client" mode, but none is found.');
+            return;
+        }
         const taskId = ++taskIdRef.current;
-        appRef.current?.updateRenderStatus('computing');
+        appRef.current?.updateRenderStatus('computing', {
+            datasetId: renderStatusChangeEntryRef.current.datasetId,
+            workflow,
+        });
         setComputing(true);
-        applyFilter(data, filters)
-            .then((data) => {
-                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
-                    return data;
-                }
-                return transformDataService(data, allFields);
-            })
-            .then((d) => {
-                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
-                    return data;
-                }
-                // setViewData(d);
-                const dims = viewDimensions;
-                const meas = viewMeasures;
-                return applyViewQuery(d, dims.concat(meas), {
-                    op: defaultAggregated ? 'aggregate' : 'raw',
-                    groupBy: dims.map((f) => f.fid),
-                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
-                });
-            })
-            .then(data => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
-                appRef.current?.updateRenderStatus('rendering');
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData(data);
-                });
-            }).catch((err) => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
-                appRef.current?.updateRenderStatus('error');
-                console.error(err);
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData([]);
-                });
+        dataQueryClient(data, allFields, workflow).then(data => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('rendering', {
+                datasetId: renderStatusChangeEntryRef.current.datasetId,
+                workflow,
             });
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData(data);
+                setParsedWorkflow(workflow);
+            });
+        }).catch((err) => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('error', {
+                datasetId: renderStatusChangeEntryRef.current.datasetId,
+                workflow,
+            });
+            console.error(err);
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData([]);
+                setParsedWorkflow([]);
+            });
+        });
         return () => {
             taskIdRef.current++;
         };
-    }, [data, filters, viewDimensions, viewMeasures, defaultAggregated]);
+    }, [computationMode, data, allFields, workflow]);
+
+    useEffect(() => {
+        if (computationMode !== 'server') {
+            return;
+        }
+        if (!datasetId) {
+            console.warn('useRenderer error: prop `datasetId` is required for "server" mode, but none is found.');
+            return;
+        }
+        const taskId = ++taskIdRef.current;
+        appRef.current?.updateRenderStatus('computing', {
+            datasetId,
+            workflow,
+        });
+        setComputing(true);
+        dataQueryServer(computationConfig, datasetId, workflow).then(data => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('rendering', {
+                datasetId,
+                workflow,
+            });
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData(data);
+                setParsedWorkflow(workflow);
+            });
+        }).catch((err) => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('error', {
+                datasetId,
+                workflow,
+            });
+            console.error(err);
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData([]);
+                setParsedWorkflow([]);
+            });
+        });
+    }, [computationMode, computationConfig, workflow, datasetId]);
+
+    const parseResult = useMemo(() => {
+        return {
+            workflow: parsedWorkflow,
+        };
+    }, [parsedWorkflow]);
 
     return useMemo(() => {
         return {
             viewData,
             loading: computing,
+            parsed: parseResult,
         };
-    }, [viewData, computing]);
+    }, [viewData, computing, parseResult]);
 };

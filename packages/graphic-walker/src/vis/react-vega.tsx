@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useMemo, forwardRef, useRef } from 'react';
 import embed from 'vega-embed';
-import { Subject, Subscription } from 'rxjs'
+import { Subject } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
-import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
@@ -29,7 +28,7 @@ interface ReactVegaProps {
   name?: string;
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
-  dataSource: IRow[];
+  dataSource: readonly IRow[];
   defaultAggregate?: boolean;
   stack: IStackMode;
   interactiveScale: boolean;
@@ -48,6 +47,8 @@ interface ReactVegaProps {
   height: number;
   onGeomClick?: (values: any, e: any) => void
   vegaConfig: VegaGlobalConfig;
+  /** @default "en-US" */
+  locale?: string;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -61,17 +62,6 @@ const geomClick$ = selection$.pipe(
     return false
   })
 );
-
-const BRUSH_SIGNAL_NAME = "__gw_brush__";
-const POINT_SIGNAL_NAME = "__gw_point__";
-
-interface ParamStoreEntry {
-  signal: typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME;
-  /** 这个标记用于防止循环 */
-  source: number;
-  data: any;
-}
-
 
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega (props, ref) {
   const {
@@ -100,27 +90,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     // dark = 'media',
     vegaConfig,
     // format
+    locale = 'en-US',
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  const { i18n } = useTranslation();
-  // const mediaTheme = useCurrentMediaTheme(dark);
-  // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
-
-  // const vegaConfig = useMemo(() => {
-  //   const config: any = {
-  //     ...themeConfig,
-  //   }
-  //   if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
-  //     config.normalizedNumberFormat = format.normalizedNumberFormat;
-  //   }
-  //   if (format.numberFormat && format.numberFormat.length > 0) {
-  //     config.numberFormat = format.numberFormat;
-  //   }
-  //   if (format.timeFormat && format.timeFormat.length > 0) {
-  //     config.timeFormat = format.timeFormat;
-  //   }
-  //   return config;
-  // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
   useEffect(() => {
     const clickSub = geomClick$.subscribe(([values, e]) => {
@@ -142,10 +114,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
 
-  const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
-
   useEffect(() => {
-    setCrossFilterTriggerIdx(-1);
     setViewPlaceholders(views => {
       const viewNum = Math.max(1, rowRepeatFields.length * colRepeatFields.length)
       const nextViews = new Array(viewNum).fill(null).map((v, i) => views[i] || React.createRef())
@@ -222,7 +191,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
           vegaRefs.current = [{
@@ -254,23 +223,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.height = Math.floor(height / rowRepeatFields.length) - 5;
         spec.autosize = 'fit'
       }
-      const combinedParamStore$ = new Subject<ParamStoreEntry>();
-      const throttledParamStore$ = combinedParamStore$.pipe(
-        op.throttleTime(
-          dataSource.length / 64 * rowRepeatFields.length * colRepeatFields.length,
-          undefined,
-          { leading: false, trailing: true }
-        )
-      );
-      const subscriptions: Subscription[] = [];
-      const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
-        subscriptions.push(throttledParamStore$.subscribe(cb));
-      };
       let index = 0;
       vegaRefs.current = new Array(rowRepeatFields.length * colRepeatFields.length);
       for (let i = 0; i < rowRepeatFields.length; i++) {
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
-          const sourceId = index;
           const hasLegend = i === 0 && j === colRepeatFields.length - 1;
           const singleView = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
@@ -301,7 +257,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
               vegaRefs.current[id] = {
@@ -314,51 +270,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 view: res.view,
                 canvas,
               };
-              const paramStores = (res.vgSpec.data?.map(d => d.name) ?? []).filter(
-                name => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map(p => `${p}_store`).includes(name)
-              ).map(name => name.replace(/_store$/, ''));
               try {
-                for (const param of paramStores) {
-                  let noBroadcasting = false;
-                  // 发出
-                  res.view.addSignalListener(param, name => {
-                    if (noBroadcasting) {
-                      noBroadcasting = false;
-                      return;
-                    }
-                    if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
-                      const data = res.view.getState().data?.[`${name}_store`];
-                      if (!data || (Array.isArray(data) && data.length === 0)) {
-                        setCrossFilterTriggerIdx(-1);
-                      }
-                      combinedParamStore$.next({
-                        signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
-                        source: sourceId,
-                        data: data ?? null,
-                      });
-                    }
-                  });
-                  subscribe(entry => {
-                    if (entry.source === sourceId || !entry.data) {
-                      return;
-                    }
-                    noBroadcasting = true;
-                    res.view.setState({
-                      data: {
-                        [`${entry.signal}_store`]: entry.data,
-                      },
-                    });
-                  });
-                }
-              } catch (error) {
-                console.warn('Crossing filter failed', error);
-              }
-              try {
-                res.view.addEventListener('mouseover', () => {
-                  if (sourceId !== crossFilterTriggerIdx) {
-                    setCrossFilterTriggerIdx(sourceId);
-                  }
-                });
                 res.view.addEventListener('click', (e) => {
                   click$.next(e);
                 })
@@ -373,9 +285,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
         }
       }
-      return () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      };
     }
     return () => {
       vegaRefs.current = [];

@@ -1,5 +1,5 @@
 import { toJS } from 'mobx';
-import { IRow, IMutField, IField, IFilterField, Specification } from './interfaces';
+import { IRow, IField, IFilterField, Specification } from './interfaces';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -80,10 +80,10 @@ export interface IVisSpace {
 //     return result;
 // }
 
-interface PreAnalysisParams {
-    fields: IMutField[];
-    dataSource: IRow[];
-}
+// interface PreAnalysisParams {
+//     fields: IMutField[];
+//     dataSource: IRow[];
+// }
 // export async function preAnalysis(props: PreAnalysisParams) {
 //     if (workerState.eWorker !== null) {
 //         workerState.eWorker.terminate();

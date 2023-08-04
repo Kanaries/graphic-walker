@@ -4,7 +4,7 @@ import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationConfig } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -15,8 +15,12 @@ interface IPureRendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     rawData?: IRow[];
+    datasetId?: string;
     visualState: DraggableFieldState;
     visualConfig: IVisualConfig;
+    /** @default "client" */
+    computation?: IComputationConfig;
+    locale?: string;
 }
 
 /**
@@ -29,8 +33,11 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         themeKey,
         dark,
         rawData,
+        datasetId,
         visualState,
         visualConfig,
+        computation = 'client',
+        locale,
     } = props;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
@@ -57,18 +64,20 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [visualState]);
 
-    const { viewData: data, loading: waiting } = useRenderer({
+    const { viewData: data, parsed, loading: waiting } = useRenderer({
         data: rawData ?? [],
         allFields,
         viewDimensions,
         viewMeasures,
         filters,
         defaultAggregated,
+        computationConfig: computation,
+        datasetId,
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data });
-    latestFromRef.current = { data };
+    const latestFromRef = useRef({ data, parsed });
+    latestFromRef.current = { data, parsed };
 
     useEffect(() => {
         if (waiting === false) {
@@ -90,6 +99,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                     dark={dark}
                     draggableFieldState={visualState}
                     visualConfig={visualConfig}
+                    locale={locale ?? 'en-US'}
                 />
             </div>
         </ShadowDom>
