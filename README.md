@@ -106,14 +106,14 @@ In your app:
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
-const YourEmbeddingApp: React.FC = props => {
+const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
     const { dataSource, fields } = props;
     return <GraphicWalker
         dataSource={dataSource}
         rawFields={fields}
         spec={graphicWalkerSpec}
         i18nLang={langStore.lang}
-    />
+    />;
 }
 
 export default YourEmbeddingApp;
@@ -124,13 +124,13 @@ If you have a configuration of GraphicWalker chart, you can use the `PureRendere
 ```typescript
 import { PureRenderer } from '@kanaries/graphic-walker';
 
-const YourChart: React.FC = props => {
+const YourChart: React.FC<IYourChartProps> = props => {
     const { rawData, visualState, visualConfig } = props;
-    return <GraphicWalker
+    return <PureRenderer
         rawData={rawData}
         visualState={visualState}
         visualConfig={visualConfig}
-    />
+    />;
 }
 
 export default YourChart;
