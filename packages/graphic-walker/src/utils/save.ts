@@ -1,4 +1,5 @@
-import { IDataSet, IDataSource, IVisSpec, IVisSpecForExport } from "../interfaces";
+import { GEMO_TYPES } from "../config";
+import { IDataSet, IDataSource, IVisSpec, IVisSpecForExport, IVisualConfig } from "../interfaces";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 
 export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
@@ -8,6 +9,63 @@ export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
 export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
     return list.map((l) => new VisSpecWithHistory(l));
 }
+
+export function initVisualConfig(): IVisualConfig {
+    return {
+        defaultAggregated: true,
+        geoms: [GEMO_TYPES[0]!],
+        stack: "stack",
+        showActions: false,
+        interactiveScale: false,
+        sorted: "none",
+        zeroScale: true,
+        size: {
+            mode: "auto",
+            width: 320,
+            height: 200,
+        },
+        format: {
+            numberFormat: undefined,
+            timeFormat: undefined,
+            normalizedNumberFormat: undefined
+        }
+    };
+}
+
+export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
+    const updatedVisList = visList.map((visSpec) => {
+        const updatedFilters = visSpec.encodings.filters.map((filter) => {
+            if (filter.rule?.type === "one of" && Array.isArray(filter.rule.value)) {
+                return {
+                    ...filter, 
+                    rule: {
+                        ...filter.rule, 
+                        value: new Set(filter.rule.value)
+                    }
+                }
+            }
+            return filter;
+        })
+        return {
+            ...visSpec,
+            encodings: {
+                ...visSpec.encodings,
+                filters: updatedFilters
+            }
+        } as IVisSpec;
+    });
+    return updatedVisList;
+}
+
+export const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["specList"]): IVisSpecForExport[] => {
+    return backwards.map((content) => ({
+        ...content,
+        config: {
+            ...initVisualConfig(),
+            ...content.config,
+        },
+    }));
+};
 
 export interface IStoInfo {
     datasets: IDataSet[];

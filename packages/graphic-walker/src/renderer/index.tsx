@@ -8,8 +8,9 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
-import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
+import { initEncoding } from '../store/visualSpecStore';
 import { useChartIndexControl } from '../utils/chartIndexControl';
+import { initVisualConfig } from '../utils/save';
 
 interface RendererProps {
     themeKey?: IThemeKey;
