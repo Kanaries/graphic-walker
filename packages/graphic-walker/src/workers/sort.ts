@@ -11,12 +11,12 @@ function compareMulti(a: number[], b: number[]): number {
     return 0;
 }
 
-export function sortBy(data: IRow[], viewMeasures: IViewField[], sort: 'ascending' | 'descending') {
+export function sortBy(data: IRow[], viewMeasures: string[], sort: 'ascending' | 'descending') {
     const sortM = sort === 'ascending' ? 1 : -1;
     return data
         .map((x) => ({
             data: x,
-            value: viewMeasures.map((f) => x[getMeaAggKey(f.fid, f.aggName)]),
+            value: viewMeasures.map((f) => x[f]),
         }))
         .sort((a, b) => sortM * compareMulti(a.value, b.value))
         .map((x) => x.data);

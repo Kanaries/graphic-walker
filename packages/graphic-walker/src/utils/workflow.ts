@@ -94,7 +94,8 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
-    if (defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0))) {
+    const aggregate = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0))
+    if (aggregate) {
         viewQueryWorkflow = {
             type: 'view',
             query: [{
@@ -120,7 +121,7 @@ export const toWorkflow = (
     if (sort !== "none" && limit) {
         sortWorkflow = {
             type: 'sort',
-            by: viewMeasures,
+            by: viewMeasures.map(x => aggregate ? getMeaAggKey(x.fid, x.aggName!) : x.fid),
             sort
         };
     }
