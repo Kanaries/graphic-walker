@@ -111,4 +111,4 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     );
 });
 
-export default observer(withAppRoot(PureRenderer));
+export default observer(withAppRoot<IPureRendererProps>(PureRenderer));
