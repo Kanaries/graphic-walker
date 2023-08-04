@@ -264,7 +264,7 @@ export class VizSpecStore {
      */
     public get viewDimensions(): IViewField[] {
         const { draggableFieldState } = this;
-        const state = toJS(draggableFieldState);
+        const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
@@ -278,7 +278,7 @@ export class VizSpecStore {
      */
     public get viewMeasures(): IViewField[] {
         const { draggableFieldState } = this;
-        const state = toJS(draggableFieldState);
+        const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
