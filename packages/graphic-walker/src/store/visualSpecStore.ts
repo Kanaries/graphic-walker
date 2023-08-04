@@ -7,6 +7,7 @@ import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGW
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
+import { toWorkflow } from "../utils/workflow";
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
@@ -787,5 +788,17 @@ export class VizSpecStore {
             return columns[columns.length - 1].sort || 'none';
         }
         return 'none';
+    }
+
+    public getWorkflow() {
+        return toWorkflow(
+            this.viewFilters,
+            this.allFields,
+            this.viewDimensions,
+            this.viewMeasures,
+            this.visualConfig.defaultAggregated,
+            this.sort,
+            this.limit > 0 ? this.limit : undefined
+        );
     }
 }
