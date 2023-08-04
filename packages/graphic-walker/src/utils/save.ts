@@ -30,6 +30,7 @@ export function initVisualConfig(): IVisualConfig {
             timeFormat: undefined,
             normalizedNumberFormat: undefined,
         },
+        limit: -1,
     };
 }
 

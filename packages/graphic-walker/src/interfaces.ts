@@ -222,6 +222,7 @@ export interface IVisualConfig {
         width: number;
         height: number;
     };
+    limit: number;
 }
 
 export interface IVisSpec {

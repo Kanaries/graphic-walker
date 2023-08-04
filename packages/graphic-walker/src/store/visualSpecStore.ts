@@ -346,6 +346,7 @@ export class VizSpecStore {
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
                 case configKey === "zeroScale":
+                case configKey === "limit":
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
@@ -718,34 +719,18 @@ export class VizSpecStore {
         });
         return updatedVisList;
     }
-    private visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
-        const updatedVisList = visList.map((visSpec) => {
-            const updatedFilters = visSpec.encodings.filters.map((filter) => {
-                if (filter.rule?.type === "one of" && Array.isArray(filter.rule.value)) {
-                    return {
-                        ...filter, 
-                        rule: {
-                            ...filter.rule, 
-                            value: new Set(filter.rule.value)
-                        }
-                    }
-                }
-                return filter;
-            })
-            return {
-                ...visSpec,
-                encodings: {
-                    ...visSpec.encodings,
-                    filters: updatedFilters
-                }
-            } as IVisSpec;
-        });
-        return updatedVisList;
-    }
+
     public setComputationConfig(mode: IComputationConfig) {
         this.computationConfig = mode;
     }
-    public limit = -1;
+
+    public get limit() {
+        return this.visualConfig.limit;
+    }
+
+    public setLimit(value: number) {
+        this.setVisualConfig('limit', value);
+    }
 
     public get sort() {
         const { rows, columns } = this.draggableFieldState;
