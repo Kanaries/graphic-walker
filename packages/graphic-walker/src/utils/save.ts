@@ -1,5 +1,7 @@
-import { IDataSet, IDataSource, IVisSpec, IVisSpecForExport } from "../interfaces";
-import { VisSpecWithHistory } from "../models/visSpecHistory";
+import { toJS } from 'mobx';
+import { GEMO_TYPES } from '../config';
+import { DraggableFieldState, IDataSet, IDataSource, IVisSpec, IVisSpecForExport, IVisualConfig } from '../interfaces';
+import { VisSpecWithHistory } from '../models/visSpecHistory';
 
 export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
     return list.map((l) => l.exportGW());
@@ -9,10 +11,76 @@ export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
     return list.map((l) => new VisSpecWithHistory(l));
 }
 
+export function initVisualConfig(): IVisualConfig {
+    return {
+        defaultAggregated: true,
+        geoms: [GEMO_TYPES[0]!],
+        stack: 'stack',
+        showActions: false,
+        interactiveScale: false,
+        sorted: 'none',
+        zeroScale: true,
+        size: {
+            mode: 'auto',
+            width: 320,
+            height: 200,
+        },
+        format: {
+            numberFormat: undefined,
+            timeFormat: undefined,
+            normalizedNumberFormat: undefined,
+        },
+    };
+}
+
+export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
+    const updatedVisList = visList.map((visSpec) => {
+        const updatedFilters = visSpec.encodings.filters.map((filter) => {
+            if (filter.rule?.type === 'one of' && Array.isArray(filter.rule.value)) {
+                return {
+                    ...filter,
+                    rule: {
+                        ...filter.rule,
+                        value: new Set(filter.rule.value),
+                    },
+                };
+            }
+            return filter;
+        });
+        return {
+            ...visSpec,
+            encodings: {
+                ...visSpec.encodings,
+                filters: updatedFilters,
+            },
+        } as IVisSpec;
+    });
+    return updatedVisList;
+}
+
+export const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>['specList']): IVisSpecForExport[] => {
+    return backwards.map((content) => ({
+        ...content,
+        config: {
+            ...initVisualConfig(),
+            ...content.config,
+        },
+    }));
+};
+
+export function resolveSpecFromStoInfo(info: IStoInfo) {
+    const spec = parseGWPureSpec(visSpecDecoder(forwardVisualConfigs(info.specList)))[0];
+    return {
+        config: toJS(spec.config) as IVisualConfig,
+        encodings: toJS(spec.encodings) as DraggableFieldState,
+        name: spec.name,
+    };
+}
+
 export interface IStoInfo {
     datasets: IDataSet[];
     specList: {
-        [K in keyof IVisSpecForExport]: K extends "config" ? Partial<IVisSpecForExport[K]> : IVisSpecForExport[K];
+        [K in keyof IVisSpecForExport]: K extends 'config' ? Partial<IVisSpecForExport[K]> : IVisSpecForExport[K];
     }[];
     dataSources: IDataSource[];
 }
@@ -34,7 +102,7 @@ export function download(data: string, filename: string, type: string) {
         window.navigator.msSaveOrOpenBlob(file, filename);
     else {
         // Others
-        var a = document.createElement("a"),
+        var a = document.createElement('a'),
             url = URL.createObjectURL(file);
         a.href = url;
         a.download = filename;
