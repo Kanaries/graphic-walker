@@ -1,12 +1,20 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import { type IDataQueryWorkflowStep, type IRow, type DeepReadonly, type IFilterField, type IViewField, type IComputationConfig, type IComputationOptions } from '../interfaces';
+import {
+    type IDataQueryWorkflowStep,
+    type IRow,
+    type DeepReadonly,
+    type IFilterField,
+    type IViewField,
+    type IComputationConfig,
+    type IComputationOptions,
+} from '../interfaces';
 import { useGlobalStore } from '../store';
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQueryClient } from '../computation/clientComputation';
 import { dataQueryServer } from '../computation/serverComputation';
-
+import { useDebounceValue } from '../hooks';
 
 export const getComputationConfig = (config: IComputationConfig): IComputationOptions => {
     if (typeof config === 'string') {
@@ -26,12 +34,14 @@ export const useComputationConfig = (): IComputationOptions => {
 interface UseRendererProps {
     data?: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
-    viewDimensions: Omit<IViewField, 'dragId'>[];
-    viewMeasures: Omit<IViewField, 'dragId'>[];
+    viewDimensions: IViewField[];
+    viewMeasures: IViewField[];
     filters: readonly DeepReadonly<IFilterField>[];
     defaultAggregated: boolean;
     datasetId?: string;
     computationConfig: IComputationConfig;
+    sort: 'none' | 'ascending' | 'descending';
+    limit: number;
 }
 
 interface UseRendererResult {
@@ -43,14 +53,34 @@ interface UseRendererResult {
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { data, allFields, viewDimensions, viewMeasures, filters, defaultAggregated, computationConfig: _computationConfig, datasetId } = props;
+    const {
+        data,
+        allFields,
+        viewDimensions,
+        viewMeasures,
+        filters,
+        defaultAggregated,
+        computationConfig: _computationConfig,
+        datasetId,
+        sort,
+        limit: storeLimit,
+    } = props;
     const computationConfig = getComputationConfig(_computationConfig);
     const { mode: computationMode } = computationConfig;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
+    const limit = useDebounceValue(storeLimit);
 
     const workflow = useMemo(() => {
-        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated);
+        return toWorkflow(
+            filters,
+            allFields,
+            viewDimensions,
+            viewMeasures,
+            defaultAggregated,
+            sort,
+            limit > 0 ? limit : undefined
+        );
     }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -73,28 +103,30 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQueryClient(data, allFields, workflow).then(data => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('rendering');
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData(data);
-                setParsedWorkflow(workflow);
+        dataQueryClient(data, allFields, workflow)
+            .then((data) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('rendering');
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData(data);
+                    setParsedWorkflow(workflow);
+                });
+            })
+            .catch((err) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('error');
+                console.error(err);
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData([]);
+                    setParsedWorkflow([]);
+                });
             });
-        }).catch((err) => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('error');
-            console.error(err);
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData([]);
-                setParsedWorkflow([]);
-            });
-        });
         return () => {
             taskIdRef.current++;
         };
@@ -111,28 +143,30 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQueryServer(computationConfig, datasetId, workflow).then(data => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('rendering');
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData(data);
-                setParsedWorkflow(workflow);
+        dataQueryServer(computationConfig, datasetId, workflow)
+            .then((data) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('rendering');
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData(data);
+                    setParsedWorkflow(workflow);
+                });
+            })
+            .catch((err) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('error');
+                console.error(err);
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData([]);
+                    setParsedWorkflow([]);
+                });
             });
-        }).catch((err) => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('error');
-            console.error(err);
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData([]);
-                setParsedWorkflow([]);
-            });
-        });
     }, [computationMode, computationConfig, workflow, datasetId]);
 
     const parseResult = useMemo(() => {

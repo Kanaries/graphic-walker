@@ -19,6 +19,7 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -35,6 +36,8 @@ import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
 import KanariesLogo from '../assets/kanaries.png';
 import { ImageWithFallback } from '../components/timeoutImg';
+import LimitSetting from '../components/limitSetting';
+import { runInAction } from 'mobx';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -73,7 +76,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     exclude = [],
 }) => {
     const { vizStore, commonStore } = useGlobalStore();
-    const { visualConfig, canUndo, canRedo } = vizStore;
+    const { visualConfig, canUndo, canRedo, limit } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -494,6 +497,24 @@ const VisualSettings: React.FC<IVisualSettings> = ({
             ...(extra.length === 0 ? [] : ['-', ...extra]),
             '-',
             {
+                key: 'limit_axis',
+                label: t('limit'),
+                icon: HashtagIcon,
+                form: (
+                    <FormContainer>
+                        <LimitSetting
+                            value={limit}
+                            setValue={(v) => {
+                                runInAction(() => {
+                                    vizStore.limit = v;
+                                });
+                            }}
+                        />
+                    </FormContainer>
+                ),
+            },
+            '-',
+            {
                 key: 'kanaries',
                 label: 'kanaries',
                 icon: () => (
@@ -532,6 +553,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         dark,
         extra,
         exclude,
+        limit,
     ]);
 
     return (

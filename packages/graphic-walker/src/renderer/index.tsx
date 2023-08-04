@@ -23,7 +23,18 @@ interface RendererProps {
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const { themeKey, dark, computationConfig } = props;
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState, visList, visIndex } = vizStore;
+    const {
+        allFields,
+        viewFilters,
+        viewDimensions,
+        viewMeasures,
+        visualConfig,
+        draggableFieldState,
+        visList,
+        visIndex,
+        sort,
+        limit,
+    } = vizStore;
     const chart = visList[visIndex];
     const { currentDataset } = commonStore;
     const { dataSource, id: datasetId } = currentDataset;
@@ -43,6 +54,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         defaultAggregated: visualConfig.defaultAggregated,
         computationConfig,
         datasetId,
+        sort,
+        limit: limit,
     });
 
     // Dependencies that should not trigger effect individually
@@ -70,19 +83,16 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     useChartIndexControl({
         count: visList.length,
         index: visIndex,
-        onChange: idx => vizStore.selectVisualization(idx),
+        onChange: (idx) => vizStore.selectVisualization(idx),
     });
 
-    const handleGeomClick = useCallback(
-        (values: any, e: any) => {
-            e.stopPropagation();
-            runInAction(() => {
-                commonStore.showEmbededMenu([e.pageX, e.pageY]);
-                commonStore.setFilters(values);
-            });
-        },
-        []
-    );
+    const handleGeomClick = useCallback((values: any, e: any) => {
+        e.stopPropagation();
+        runInAction(() => {
+            commonStore.showEmbededMenu([e.pageX, e.pageY]);
+            commonStore.setFilters(values);
+        });
+    }, []);
 
     const handleChartResize = useCallback(
         (width: number, height: number) => {

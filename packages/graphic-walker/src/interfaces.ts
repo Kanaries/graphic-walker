@@ -105,7 +105,7 @@ export interface IField {
     computed?: boolean;
     expression?: IExpression;
     basename?: string;
-    path?: string[],
+    path?: [],
 }
 
 export interface IViewField extends IField {
@@ -404,10 +404,23 @@ export type IVisFieldComputation = {
     type: IVisField['type'];
 };
 
-export interface IVisFilter {
-    fid: string;
-    rule: SetToArray<IFilterRule>;
-};
+export interface IVisFilterOneOf {
+    type: 'oneOf';
+    field: string;
+    value: Array<string | number>;
+}
+
+export interface IVisFilterRange {
+    type: 'range';
+    field: string;
+    min: number;
+    max: number;
+}
+
+export type IVisFilter = (
+    | IVisFilterOneOf
+    | IVisFilterRange
+);
 
 export interface IFilterWorkflowStep {
     type: 'filter';
@@ -427,7 +440,18 @@ export interface IViewWorkflowStep {
     query: IViewQuery[];
 }
 
-export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep;
+export interface ISortWorkflowStep {
+    type: 'sort';
+    sort: 'ascending' | 'descending';
+    by: IField[];
+}
+
+export interface ILimitWorkflowStep {
+    type: 'limit';
+    value: number;
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep | ILimitWorkflowStep;
 
 export interface IDataQueryPayload {
     datasetId: string;

@@ -1,4 +1,4 @@
-import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter } from "../interfaces";
+import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter, ISortWorkflowStep, ILimitWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 import { getMeaAggKey } from ".";
 
@@ -33,15 +33,19 @@ const treeShake = (computedFields: readonly { key: string; expression: IExpressi
 export const toWorkflow = (
     viewFilters: VizSpecStore['viewFilters'],
     allFields: Omit<IViewField, 'dragId'>[],
-    viewDimensions: Omit<IViewField, 'dragId'>[],
-    viewMeasures: Omit<IViewField, 'dragId'>[],
+    viewDimensions: VizSpecStore['viewDimensions'],
+    viewMeasures: VizSpecStore['viewMeasures'],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
+    sort: 'none' | 'ascending' | 'descending',
+    limit?: number,
 ): IDataQueryWorkflowStep[] => {
     const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures].map(f => f.fid));
 
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;
     let viewQueryWorkflow: IViewWorkflowStep | null = null;
+    let sortWorkflow: ISortWorkflowStep | null = null;
+    let limitWorkflow: ILimitWorkflowStep | null = null;
 
     // TODO: apply **fold** before filter
     
@@ -51,29 +55,18 @@ export const toWorkflow = (
         const rule = f.rule!;
         if (rule.type === 'one of') {
             return {
-                fid: f.fid,
-                rule: {
-                    type: 'one of',
-                    value: [...rule.value],
-                },
-            };
-        } else if (rule.type === 'temporal range') {
-            const range = [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const;
-            return {
-                fid: f.fid,
-                rule: {
-                    type: 'temporal range',
-                    value: range,
-                },
+                type: 'oneOf',
+                field: f.fid,
+                value: [...rule.value],
             };
         } else {
-            const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
+            const isTemporal = allFields.find(which => which.fid === f.fid)?.semanticType === 'temporal';
+            const range = isTemporal ? [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const : [Number(rule.value[0]), Number(rule.value[1])] as const;
             return {
-                fid: f.fid,
-                rule: {
-                    type: 'range',
-                    value: range,
-                },
+                type: 'range',
+                field: f.fid,
+                min: range[0],
+                max: range[1],
             };
         }
     });
@@ -124,10 +117,27 @@ export const toWorkflow = (
         };
     }
 
+    if (sort !== "none" && limit) {
+        sortWorkflow = {
+            type: 'sort',
+            by: viewMeasures,
+            sort
+        };
+    }
+
+    if (limit) {
+        limitWorkflow = {
+            type: 'limit',
+            value: limit
+        }
+    }
+
     const steps: IDataQueryWorkflowStep[] = [
         filterWorkflow!,
         transformWorkflow!,
         viewQueryWorkflow!,
+        sortWorkflow!,
+        limitWorkflow!,
     ].filter(Boolean);
 
     return steps;

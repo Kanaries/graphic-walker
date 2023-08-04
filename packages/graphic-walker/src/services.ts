@@ -1,5 +1,5 @@
 import { toJS } from 'mobx';
-import { IRow, IMutField, IField, IFilterField, Specification } from './interfaces';
+import { IRow, IMutField, IField, IFilterField, Specification, IViewField } from './interfaces';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -11,6 +11,8 @@ import { IRow, IMutField, IField, IFilterField, Specification } from './interfac
 import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
+import SortWorker from './workers/sort.worker?worker&inline';
+
 import { IViewQuery } from './lib/viewQuery';
 
 // interface WorkerState {
@@ -154,7 +156,7 @@ export const transformDataService = async (data: IRow[], columns: IField[]): Pro
     } finally {
         worker.terminate();
     }
-}
+};
 
 export const applyViewQuery = async (data: IRow[], metas: IField[], query: IViewQuery): Promise<IRow[]> => {
     const worker = new ViewQueryWorker();
@@ -170,4 +172,24 @@ export const applyViewQuery = async (data: IRow[], metas: IField[], query: IView
     } finally {
         worker.terminate();
     }
-}
+};
+
+export const applySort = async (
+    data: IRow[],
+    viewMeasures: IField[],
+    sort: 'ascending' | 'descending'
+): Promise<IRow[]> => {
+    const worker = new SortWorker();
+    try {
+        const res: IRow[] = await workerService(worker, {
+            data,
+            viewMeasures: viewMeasures.map((x) => toJS(x)),
+            sort,
+        });
+        return res;
+    } catch (err) {
+        throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+    } finally {
+        worker.terminate();
+    }
+};

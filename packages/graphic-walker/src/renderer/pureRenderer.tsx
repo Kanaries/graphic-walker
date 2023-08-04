@@ -9,7 +9,6 @@ import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 
-
 interface IPureRendererProps {
     name?: string;
     themeKey?: IThemeKey;
@@ -21,6 +20,8 @@ interface IPureRendererProps {
     /** @default "client" */
     computation?: IComputationConfig;
     locale?: string;
+    sort?: 'none' | 'ascending' | 'descending';
+    limit?: number;
 }
 
 /**
@@ -38,11 +39,13 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         visualConfig,
         computation = 'client',
         locale,
+        sort,
+        limit,
     } = props;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-    
+
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
@@ -73,6 +76,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         defaultAggregated,
         computationConfig: computation,
         datasetId,
+        sort: sort ?? 'none',
+        limit: limit ?? -1,
     });
 
     // Dependencies that should not trigger effect individually

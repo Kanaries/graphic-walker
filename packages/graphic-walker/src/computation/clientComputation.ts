@@ -1,5 +1,5 @@
 import type { IDataQueryWorkflowStep, IFieldStats, IDatasetStats, IFilterField, IRow, IViewField } from "../interfaces";
-import { applyFilter, applyViewQuery, transformDataService } from "../services";
+import { applyFilter, applySort, applyViewQuery, transformDataService } from "../services";
 
 
 export const datasetStatsClient = async (rawData: IRow[]): Promise<IDatasetStats> => {
@@ -22,7 +22,7 @@ export const dataQueryClient = async (
         switch (step.type) {
             case 'filter': {
                 res = await applyFilter(res, step.filters.map<IFilterField>(filter => {
-                    const f = columns.find(c => c.fid === filter.fid);
+                    const f = columns.find(c => c.fid === filter.field);
                     if (!f) {
                         return null!;
                     }
@@ -34,13 +34,16 @@ export const dataQueryClient = async (
                         name: f.name || f.fid,
                         rule: null,
                     };
-                    if (filter.rule.type === 'one of') {
+                    if (filter.type === 'oneOf') {
                         res.rule = {
                             type: 'one of',
-                            value: new Set(filter.rule.value),
+                            value: new Set(filter.value),
                         };
-                    } else {
-                        res.rule = filter.rule;
+                    } else if (filter.type === 'range') {
+                        res.rule = {
+                            type: f.semanticType === 'temporal' ? 'temporal range' : 'range',
+                            value: [filter.min, filter.max],
+                        };
                     }
                     return res;
                 }).filter(Boolean));
@@ -54,6 +57,14 @@ export const dataQueryClient = async (
                 for await (const job of step.query) {
                     res = await applyViewQuery(res, columns, job);
                 }
+                break;
+            }
+            case 'sort': {
+                res = await applySort(res, step.by, step.sort);
+                break;
+            }
+            case 'limit': {
+                res = res.slice(0, step.value);
                 break;
             }
             default: {

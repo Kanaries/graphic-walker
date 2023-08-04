@@ -776,4 +776,16 @@ export class VizSpecStore {
     public setComputationConfig(mode: IComputationConfig) {
         this.computationConfig = mode;
     }
+    public limit = -1;
+
+    public get sort() {
+        const { rows, columns } = this.draggableFieldState;
+        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+            return rows[rows.length - 1].sort || 'none';
+        }
+        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+            return columns[columns.length - 1].sort || 'none';
+        }
+        return 'none';
+    }
 }
