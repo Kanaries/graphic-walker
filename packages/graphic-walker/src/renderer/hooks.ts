@@ -26,8 +26,8 @@ export const useComputationConfig = (): IComputationOptions => {
 interface UseRendererProps {
     data?: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
-    viewDimensions: IViewField[];
-    viewMeasures: IViewField[];
+    viewDimensions: Omit<IViewField, 'dragId'>[];
+    viewMeasures: Omit<IViewField, 'dragId'>[];
     filters: readonly DeepReadonly<IFilterField>[];
     defaultAggregated: boolean;
     datasetId?: string;

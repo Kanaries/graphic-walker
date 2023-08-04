@@ -33,8 +33,8 @@ const treeShake = (computedFields: readonly { key: string; expression: IExpressi
 export const toWorkflow = (
     viewFilters: VizSpecStore['viewFilters'],
     allFields: Omit<IViewField, 'dragId'>[],
-    viewDimensions: VizSpecStore['viewDimensions'],
-    viewMeasures: VizSpecStore['viewMeasures'],
+    viewDimensions: Omit<IViewField, 'dragId'>[],
+    viewMeasures: Omit<IViewField, 'dragId'>[],
     defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
 ): IDataQueryWorkflowStep[] => {
     const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures].map(f => f.fid));

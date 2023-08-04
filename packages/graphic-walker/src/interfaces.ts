@@ -105,7 +105,7 @@ export interface IField {
     computed?: boolean;
     expression?: IExpression;
     basename?: string;
-    path?: [],
+    path?: string[],
 }
 
 export interface IViewField extends IField {

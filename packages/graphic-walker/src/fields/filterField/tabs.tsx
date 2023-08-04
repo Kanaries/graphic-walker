@@ -1,12 +1,12 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField } from '../../interfaces';
+import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
-import { useComputationConfig } from '../../renderer/hooks';
+import { useComputationConfig, useRenderer } from '../../renderer/hooks';
 import { fieldStatClient } from '../../computation/clientComputation';
 import { fieldStatServer } from '../../computation/serverComputation';
 import Slider from './slider';
@@ -415,7 +415,9 @@ interface CalendarInputProps {
 const CalendarInput: React.FC<CalendarInputProps> = props => {
     const { min, max, value, onChange } = props;
     const dateStringFormatter = (timestamp: number) => {
-        return new Date(timestamp).toISOString().slice(0, 19);
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 19);
     }
     const handleSubmitDate = (value: string) => {
         if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
@@ -434,27 +436,81 @@ const CalendarInput: React.FC<CalendarInputProps> = props => {
     )
 }
 
+const emptyFilters = [] as const;
+
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     dataset,
     active,
     field,
     onChange,
 }) => {
-    const { dataSource, id: datasetId } = dataset;
+    const { dataSource, id: datasetId, rawFields } = dataset;
 
     const { t } = useTranslation('translation');
 
-    const stats = useFieldStats(datasetId, dataSource, field, { values: false, range: true }, 'none');
-    const range = stats?.range;
+    const fields = useMemo(() => {
+        return rawFields.map<Omit<IViewField, 'dragId'>>(f => ({
+            ...f,
+            name: f.name || f.fid,
+        }));
+    }, [rawFields]);
+
+    const viewDimensions = useMemo(() => {
+        return field.analyticType === 'dimension' ? [field] : [];
+    }, [field]);
+
+    const viewMeasures = useMemo(() => {
+        return field.analyticType === 'measure' ? [field] : [];
+    }, [field]);
+
+    const computationConfig = useComputationConfig();
+
+    const { viewData, loading } = useRenderer({
+        allFields: fields,
+        viewDimensions,
+        viewMeasures,
+        filters: emptyFilters,
+        defaultAggregated: false,
+        computationConfig,
+        datasetId,
+        data: dataSource,
+    });
+
+    const sorted = React.useMemo(() => {
+        return viewData.reduce<number[]>((list, d) => {
+            try {
+                const time = new Date(d[field.fid]).getTime();
+
+                list.push(time);
+            } catch (error) {
+
+            }
+            return list;
+        }, []).sort((a, b) => a - b);
+    }, [viewData, field.fid]);
+
+    const [min, max, loaded] = React.useMemo<[min: number, max: number, loaded: boolean]>(() => {
+        if (!sorted.length) return [0, 0, false];
+        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0), true];
+    }, [sorted]);
 
     React.useEffect(() => {
-        if (range && active && field.rule?.type !== 'temporal range') {
+        if (active && field.rule?.type !== 'temporal range') {
             onChange({
                 type: 'temporal range',
-                value: range,
+                value: [min, max],
             });
         }
-    }, [onChange, field, range, active]);
+    }, [onChange, field, min, max, active]);
+
+    React.useEffect(() => {
+        if (active && loaded && field.rule?.type === 'temporal range' && field.rule.value[0] !== min && field.rule.value[1] !== max) {
+            onChange({
+                type: 'temporal range',
+                value: [min, max],
+            });
+        }
+    }, [field.rule, min, max, active, loaded]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -463,15 +519,13 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         });
     }, []);
 
-    if (!range) {
+    if (loading) {
         return (
             <div className="h-24 w-full relative">
                 <LoadingLayer />
             </div>
         );
     }
-
-    const [min, max] = range;
 
     return field.rule?.type === 'temporal range' ? (
         <Container className="overflow-visible">
