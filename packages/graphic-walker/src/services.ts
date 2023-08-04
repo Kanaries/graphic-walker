@@ -176,7 +176,7 @@ export const applyViewQuery = async (data: IRow[], metas: IField[], query: IView
 
 export const applySort = async (
     data: IRow[],
-    viewMeasures: IField[],
+    viewMeasures: string[],
     sort: 'ascending' | 'descending'
 ): Promise<IRow[]> => {
     const worker = new SortWorker();

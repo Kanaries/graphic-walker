@@ -7,7 +7,6 @@ import styled from 'styled-components';
 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
-import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
@@ -29,7 +28,7 @@ interface ReactVegaProps {
   name?: string;
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
-  dataSource: IRow[];
+  dataSource: readonly IRow[];
   defaultAggregate?: boolean;
   stack: IStackMode;
   interactiveScale: boolean;
@@ -48,6 +47,8 @@ interface ReactVegaProps {
   height: number;
   onGeomClick?: (values: any, e: any) => void
   vegaConfig: VegaGlobalConfig;
+  /** @default "en-US" */
+  locale?: string;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -100,9 +101,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     // dark = 'media',
     vegaConfig,
     // format
+    locale = 'en-US',
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  const { i18n } = useTranslation();
   // const mediaTheme = useCurrentMediaTheme(dark);
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
@@ -222,7 +223,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
 
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
           vegaRefs.current = [{
@@ -301,7 +302,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
               vegaRefs.current[id] = {

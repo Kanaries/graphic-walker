@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IDataQueryWorkflowStep, IComputationConfig } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -37,6 +37,8 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    computation?: IComputationConfig;
+    datasetId?: string;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -54,6 +56,8 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
+        computation = 'client',
+        datasetId,
         toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
@@ -96,7 +100,7 @@ const App = observer<IGWProps>(function App(props) {
                 name: 'context dataset',
                 dataSource: safeDataset.safeData,
                 rawFields: safeDataset.safeMetas,
-            });
+            }, datasetId);
         }
     }, [safeDataset]);
 
@@ -105,6 +109,10 @@ const App = observer<IGWProps>(function App(props) {
             vizStore.renderSpec(spec);
         }
     }, [spec, safeDataset]);
+
+    useEffect(() => {
+        vizStore.setComputationConfig(computation);
+    }, [vizStore, computation]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -156,7 +164,7 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationConfig={vizStore.computationConfig} />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
