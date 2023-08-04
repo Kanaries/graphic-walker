@@ -28,4 +28,5 @@ export interface IBinQuery {
 
 export interface IRawQuery {
     op: 'raw';
+    fields: string[];
 }

@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationConfig } from '../interfaces';
+import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
 import { useGlobalStore } from '../store';
@@ -13,13 +14,14 @@ import { useChartIndexControl } from '../utils/chartIndexControl';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    computationConfig: IComputationConfig;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { themeKey, dark, computationConfig } = props;
     const { vizStore, commonStore } = useGlobalStore();
     const {
         allFields,
@@ -35,7 +37,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     } = vizStore;
     const chart = visList[visIndex];
     const { currentDataset } = commonStore;
-    const { dataSource } = currentDataset;
+    const { dataSource, id: datasetId } = currentDataset;
+
+    const { i18n } = useTranslation();
 
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
@@ -50,6 +54,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         defaultAggregated: visualConfig.defaultAggregated,
         sort,
         limit: limit,
+        computationConfig,
+        datasetId,
     });
 
     // Dependencies that should not trigger effect individually
@@ -107,6 +113,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             ref={ref}
             themeKey={themeKey}
             dark={dark}
+            locale={i18n.language}
             draggableFieldState={encodings}
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}

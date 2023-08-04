@@ -1,6 +1,6 @@
 import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
 import produce from "immer";
-import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification } from "../interfaces";
+import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification, IComputationConfig } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
@@ -90,6 +90,7 @@ export function initVisualConfig(): IVisualConfig {
             shape: false,
             size: false,
         },
+        limit: -1,
     };
 }
 
@@ -152,6 +153,7 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    public computationConfig: IComputationConfig = 'client';
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -166,6 +168,7 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
+            computationConfig: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -385,6 +388,7 @@ export class VizSpecStore {
                 case configKey === "sorted":
                 case configKey === "zeroScale":
                 case configKey === "background":
+                case configKey === "limit":
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
@@ -793,5 +797,9 @@ export class VizSpecStore {
             return columns[columns.length - 1].sort || 'none';
         }
         return 'none';
+    }
+    
+    public setComputationConfig(mode: IComputationConfig) {
+        this.computationConfig = mode;
     }
 }

@@ -1,5 +1,6 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type {IViewQuery} from "./lib/viewQuery";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -52,6 +53,15 @@ export interface IUncertainMutField {
     path: string[];
 }
 
+export interface IDatasetStats {
+    rowCount: number;
+}
+
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
+}
+
 export type IExpParamter =
     | {
           type: 'field';
@@ -95,7 +105,7 @@ export interface IField {
     computed?: boolean;
     expression?: IExpression;
     basename?: string;
-    path?: [],
+    path?: string[],
 }
 
 export interface IViewField extends IField {
@@ -221,6 +231,7 @@ export interface IVisualConfig {
         width: number;
         height: number;
     };
+    limit: number;
 }
 
 export interface IVisSpec {
@@ -247,6 +258,38 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
+export type IClientComputationOptions = {
+    mode: 'client';
+};
+export type IServerComputationOptions = {
+    mode: 'server';
+} & (
+    | {
+        /**
+         * Specify an HTTP server to handle the computation.
+         * The server should accept POST request with JSON body of {@link IDataQueryPayload}.
+         */
+        server: string;
+        /**
+         * Override the default API path.
+         * @default "/api/ce/dataset/v2/query"
+         */
+        APIPath?: string | undefined;
+    }
+    | {
+        /**
+         * Implement a custom computation service.
+         * @param {IDataQueryPayload} payload - the query payload
+         * @returns {Promise<IRow[]>} the computation result
+         * @throws {Error} if the computation failed
+         */
+        service: IComputationFunction;
+    }
+);
+export type IComputationOptions = IClientComputationOptions | IServerComputationOptions;
+export type IComputationMode = IComputationOptions['mode'];
+export type IComputationConfig = Extract<IComputationMode, 'client'> | IComputationOptions;
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
@@ -354,3 +397,88 @@ export interface IGWHandler {
 export interface IGWHandlerInsider extends IGWHandler {
     updateRenderStatus: (renderStatus: IRenderStatus) => void;
 }
+
+export interface IVisField {
+    key: string;
+    type: ISemanticType;
+    name?: string;
+    description?: string;
+    format?: string;
+    expression?: IExpression;
+}
+
+export type IVisFieldComputation = {
+    field: IVisField['key'];
+    expression: NonNullable<IVisField['expression']>;
+    name: NonNullable<IVisField['name']>;
+    type: IVisField['type'];
+};
+
+export interface IVisFilter {
+    fid: string;
+    rule: SetToArray<IFilterRule>;
+};
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: IVisFilter[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        key: IVisFieldComputation['field'];
+        expression: IVisFieldComputation['expression'];
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export interface ISortWorkflowStep {
+    type: 'sort';
+    sort: 'ascending' | 'descending';
+    by: string[];
+}
+
+export interface ILimitWorkflowStep {
+    type: 'limit';
+    value: number;
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep | ILimitWorkflowStep;
+
+export interface IDataQueryPayload {
+    datasetId: string;
+    query: {
+        workflow: IDataQueryWorkflowStep[];
+        limit?: number;
+        offset?: number;
+    };
+}
+
+export interface ILoadDataPayload {
+    pageSize: number;
+    pageIndex: number;
+}
+
+export interface IGWDatasetStat {
+    count: number;
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);
