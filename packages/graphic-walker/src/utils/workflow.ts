@@ -55,18 +55,29 @@ export const toWorkflow = (
         const rule = f.rule!;
         if (rule.type === 'one of') {
             return {
-                type: 'oneOf',
-                field: f.fid,
-                value: [...rule.value],
+                fid: f.fid,
+                rule: {
+                    type: 'one of',
+                    value: [...rule.value],
+                },
+            };
+        } else if (rule.type === 'temporal range') {
+            const range = [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const;
+            return {
+                fid: f.fid,
+                rule: {
+                    type: 'temporal range',
+                    value: range,
+                },
             };
         } else {
-            const isTemporal = allFields.find(which => which.fid === f.fid)?.semanticType === 'temporal';
-            const range = isTemporal ? [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const : [Number(rule.value[0]), Number(rule.value[1])] as const;
+            const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
             return {
-                type: 'range',
-                field: f.fid,
-                min: range[0],
-                max: range[1],
+                fid: f.fid,
+                rule: {
+                    type: 'range',
+                    value: range,
+                },
             };
         }
     });
