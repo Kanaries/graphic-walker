@@ -172,7 +172,7 @@ const YourApp = props => {
 
 ### Customize I18n
 
-If you need i18n support to cover languages not supported currently, or to totally rewrite the content of any built-in resource(s), you can also provide your resource(s) as `props.i18nResources` to Graphic Walker like this.
+If you need i18n support to cover languages not supported currently, or to totally rewrite the content of any built-in resource(s), you can also provide your resource(s) as [`props.i18nResources`](#propsi18nresources) to Graphic Walker like this.
 
 ```typescript
 const yourResources = {
@@ -205,7 +205,9 @@ It is recommended to use [chatGPT-i18n](https://github.com/ObservedObserver/chat
 
 ## API
 
-Graphic Walker Props interface
+Graphic Walker Props & Ref interface
+
+### Props
 
 ```ts
 export interface IGWProps {
@@ -215,19 +217,157 @@ export interface IGWProps {
 	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
-	keepAlive?: boolean;
+	keepAlive?: boolean | string;
+    fieldKeyGuard?: boolean;
+    themeKey?: IThemeKey;
+    dark?: IDarkMode;
+    storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    computation?: IComputationConfig;
+    datasetId?: string;
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
+    };
 }
 ```
 
-property description
+#### `dataSource`: optional _{ `Array<{[key: string]: any}>` }_
 
-+ `dataSource`, type `Array<{[key: string]: any}>`, array of key-value object data.
-+ `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts).  array of fields(columns) of the data.
-+ `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). visualization specification
-+ `hideDataSourceConfig` at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`
-+ `i18nLang`, type `string`. lang label
-+ `i18nResources` custom lang config
-+ `keepAlive`, type `boolean`. whether to keep the component state when it is unmounted. If `true`, after you unmount the graphic-walker component, the state will still be store, and will be restore when the component is mount again.
+Array of key-value object data. Provide this prop with `rawFields` prop together.
+
+#### `rawFields`: optional _{ [`IMutField`](./packages/graphic-walker/src/interfaces.ts) }_
+
+Array of fields(columns) of the data. Provide this prop with `dataSource` prop together.
+
+#### ~~`spec`: optional _{ [`Specification`](./packages/graphic-walker/src/interfaces.ts) }_~~
+
+Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop.
+
+#### `hideDataSourceConfig`: optional _{ `boolean = false` }_
+
+Data source control at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`.
+
+#### `i18nLang`: optional _{ `string = 'en-US'` }_
+
+Graphic Walker support i18n, you can set the language of the component by this prop. Currently, we support `en-US`, `zh-CN`, `ja-JP` with built-in locale resources. If you want to use other languages, you can provide your own locale resources by [`i18nResources` prop](#i18nresources).
+
+#### `i18nResources`: optional _{ `{ [lang: string]: Record<string, string | any> }` }_
+
+Customize locale resources. See [Customize I18n](#customize-i18n) for more details.
+
+#### `keepAlive`: optional _{ `boolean | string = false` }_
+
+Whether to keep the component state when it is unmounted. If provided, after you unmount the graphic-walker component, the state will still be stored, and will be restored when the component is mount again. If you need to enable `keepAlive` for multiple graphic-walker components, you can provide a unique string value for each component to distinguish them.
+
+#### `fieldKeyGuard`: optional _{ `boolean = true` }_
+
+Whether to use the field key guard. If enabled, the field `fid` will be transformed to ensure that it is safe to use as a reference in Vega-Lite. Otherwise, the `fid` provided in `rawFields` will be used directly.
+
+#### `themeKey`: optional _{ `IThemeKey = "vega"` }_
+
+Specify the chart theme to use.
+
+#### `dark`: optional _{ `IDarkMode = "media"` }_
+
+Specify the dark mode preference. There're three valid values:
+
++ `"media"`: Use the system dark mode preference.
++ `"dark"`: Always use dark mode.
++ `"light"`: Always use light mode.
+
+#### `storeRef`: optional _{ `React.MutableRefObject<IGlobalStore | null>` }_
+
+If you want to control the visualization specification, you can provide a `React.MutableRefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
+
+#### `computation`: optional _{ [`IComputationConfig`](./packages/graphic-walker/src/interfaces.ts) `= "client"` }_
+
+Specify the computation configuration. See [Computation](./computation.md) for more details. There're two valid modes for it:
+
+1. Client-side computation (default)
+
+Provide `"client"` or `{ mode: "client" }` to use client-side computation. In this mode, the computation will be done in the browser (mainly use WebWorker).
+
+2. Server-side computation
+
+The configuration should be
+
+```ts
+declare const config: {
+    mode: "server";
+    server: string;
+    APIPath?: string | undefined;
+};
+```
+
+to specify an HTTP server to handle the computation. The server should accept POST request with JSON body of [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts). An another case is that you can implement a custom computation service - this is useful when you want to use a different computation engine such as WebAssembly. The configuration should be
+
+```ts
+declare const config: {
+    mode: "server";
+    service: IComputationFunction;
+};
+```
+
+#### `datasetId`: optional _{ `string` }_
+
+When using server-side computation, you should provide a dataset ID to identify the dataset.
+
+#### `toolbar`: optional _{ `ToolbarProps` }_
+
+Customize the toolbar.
+
+### Ref
+
+```ts
+export interface IGWHandler {
+    chartCount: number;
+    chartIndex: number;
+    openChart: (index: number) => void;
+    get renderStatus(): IRenderStatus;
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    exportChart: IExportChart;
+    exportChartList: IExportChartList;
+}
+```
+
+#### `chartCount`: _{ `number` }_
+
+Length of the "chart" tab list.
+
+#### `chartIndex`: _{ `number` }_
+
+Current selected chart index.
+
+#### `openChart`: _{ `(index: number) => void` }_
+
+Switches to the specified chart.
+
+#### `renderStatus`: _{ `IRenderStatus` }_
+
+Returns the status of the current chart. It may be one of the following values:
+
+* `"computing"`: _GraphicWalker_ is computing the data view.
+* `"rendering"`: _GraphicWalker_ is rendering the chart.
+* `"idle"`: Rendering is finished.
+* `"error"`: An error occurs during the process above.
+
+#### `onRenderStatusChange`: _{ `(cb: (renderStatus: IRenderStatus) => void) => (() => void)` }_
+
+Registers a callback function to listen to the status change of the current chart. It returns a dispose function to remove this callback.
+
+#### `exportChart`: _{ `IExportChart` }_
+
+Exports the current chart.
+
+#### `exportChartList`: _{ `IExportChartList` }_
+
+Exports all charts. It returns an async generator to iterate over all charts. For example:
+
+```ts
+for await (const chart of gwRef.current.exportChartList()) {
+    console.log(chart);
+}
+```
 
 ## What's next
 

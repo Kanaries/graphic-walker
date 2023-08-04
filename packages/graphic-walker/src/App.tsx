@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IDataQueryWorkflowStep, IComputationConfig } from './interfaces';
+import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IComputationConfig } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -28,7 +28,7 @@ export interface IGWProps {
     hideDataSourceConfig?: boolean;
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
-    keepAlive?: boolean;
+    keepAlive?: boolean | string;
     /**
      * auto parse field key into a safe string. default is true
      */
