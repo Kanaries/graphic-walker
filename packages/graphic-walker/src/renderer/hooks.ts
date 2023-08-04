@@ -136,14 +136,10 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         if (computationMode !== 'server') {
             return;
         }
-        if (!datasetId) {
-            console.warn('useRenderer error: prop `datasetId` is required for "server" mode, but none is found.');
-            return;
-        }
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQueryServer(computationConfig, datasetId, workflow)
+        dataQueryServer(computationConfig, datasetId ?? 'unknown dataset', workflow)
             .then((data) => {
                 if (taskId !== taskIdRef.current) {
                     return;
