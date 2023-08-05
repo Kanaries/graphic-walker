@@ -139,7 +139,7 @@ export const fieldStatServer = async (config: IServerComputationOptions, dataset
     }];
 
     return {
-        values: valuesRes.sort((a, b) => b[COUNT_ID] - a[COUNT_ID]).slice(0, 20).map(row => ({
+        values: valuesRes.sort((a, b) => b[COUNT_ID] - a[COUNT_ID]).map(row => ({
             value: row[field],
             count: row[COUNT_ID],
         })),
