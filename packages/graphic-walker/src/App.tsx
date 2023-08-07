@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
@@ -78,11 +78,28 @@ const App = observer<IGWProps>(function App(props) {
         }
     }, [i18nLang, curLang]);
 
+    const [sampleRemoteData, setSampleRemoteData] = useState<IRow[]>([]);
+    const remoteDataContext = useRef(0);
+
+    useEffect(() => {
+        if (!computation) return;
+        async () => {
+            const ts = Date.now();
+            remoteDataContext.current = ts;
+            const resp = await computation({ workflow: [{ type: 'view', query: [{ op: 'raw', fields: ['*'] }] }], limit: 1 });
+            if (remoteDataContext.current === ts) {
+                setSampleRemoteData(resp);
+            }
+        };
+    }, [computation]);
+    
+    const remoteDataSource = dataSource.length > 0 ? dataSource : sampleRemoteData;
+
     const safeDataset = useMemo(() => {
-        let safeData = dataSource;
+        let safeData = remoteDataSource;
         let safeMetas = rawFields;
         if (fieldKeyGuard) {
-            const { safeData: _safeData, safeMetas: _safeMetas } = guardDataKeys(dataSource, rawFields);
+            const { safeData: _safeData, safeMetas: _safeMetas } = guardDataKeys(remoteDataSource, rawFields);
             safeData = _safeData;
             safeMetas = _safeMetas;
         }
@@ -90,7 +107,7 @@ const App = observer<IGWProps>(function App(props) {
             safeData,
             safeMetas,
         };
-    }, [rawFields, dataSource, fieldKeyGuard]);
+    }, [rawFields, remoteDataSource, computation, fieldKeyGuard]);
 
     // use as an embeding module, use outside datasource from props.
     useEffect(() => {

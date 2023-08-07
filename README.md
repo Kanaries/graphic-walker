@@ -288,7 +288,9 @@ Provide noting to use client-side computation. In this mode, the computation wil
 
 2. Server-side computation
 
-Graphic Walker will call given computation function with [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts) as parameter. The function should returns a [`IRow[]`](./packages/graphic-walker/src/interfaces.ts) as result.
+Graphic Walker will call given computation function with [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts) as parameter. 
+The function should returns a [`IRow[]`](./packages/graphic-walker/src/interfaces.ts) as result.
+When you are using Server-side computation, you should provide `rawFields` together.
 
 #### `toolbar`: optional _{ `ToolbarProps` }_
 
