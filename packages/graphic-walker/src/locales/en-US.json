@@ -45,7 +45,8 @@
             "__enum__": "Stack Mode",
             "none": "None",
             "stack": "Stack",
-            "normalize": "Normalize"
+            "normalize": "Normalize",
+            "center": "Center"
         },
         "layout_type": {
             "__enum__": "Layout Mode",

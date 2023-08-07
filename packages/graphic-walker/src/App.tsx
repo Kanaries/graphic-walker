@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
+import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
 
 export interface IGWProps {
@@ -43,6 +44,12 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    enhanceAPI?: {
+        header?: Record<string, string>;
+        features?: {
+            askviz?: string | boolean;
+        }
+    };
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -58,6 +65,7 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         computation,
         toolbar,
+        enhanceAPI,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -158,6 +166,9 @@ const App = observer<IGWProps>(function App(props) {
                         style={{ marginTop: '0em', borderTop: 'none' }}
                         className="m-4 p-4 border border-gray-200 dark:border-gray-700"
                     >
+                        {enhanceAPI?.features?.askviz && (
+                            <AskViz api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''} headers={enhanceAPI?.header} />
+                        )}
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />

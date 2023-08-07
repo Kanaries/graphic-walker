@@ -19,7 +19,8 @@ export const GEMO_TYPES: Readonly<string[]> = [
 export const STACK_MODE: Readonly<IStackMode[]> = [
     'none',
     'stack',
-    'normalize'
+    'normalize',
+    'center'
 ]
 
 export const CHART_LAYOUT_TYPE: Readonly<string[]> = [
