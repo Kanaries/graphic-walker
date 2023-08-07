@@ -1,4 +1,4 @@
-import { DraggableFieldState, IStackMode } from "./interfaces";
+import { DraggableFieldState, IStackMode, IVisualConfig } from "./interfaces";
 
 export const GEMO_TYPES: Readonly<string[]> = [
     'auto',
@@ -57,4 +57,16 @@ export const CHANNEL_LIMIT = {
 export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
     'dimensions',
     'measures',
+]
+
+export const PositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
+    'x',
+    'y',
+]
+
+export const NonPositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
+    'color',
+    'opacity',
+    'shape',
+    'size'
 ]

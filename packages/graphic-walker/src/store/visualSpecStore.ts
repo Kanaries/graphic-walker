@@ -71,6 +71,7 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: "none",
         zeroScale: true,
+        background: undefined,
         size: {
             mode: "auto",
             width: 320,
@@ -79,8 +80,16 @@ export function initVisualConfig(): IVisualConfig {
         format: {
             numberFormat: undefined,
             timeFormat: undefined,
-            normalizedNumberFormat: undefined
-        }
+            normalizedNumberFormat: undefined,
+        },
+        resolve: {
+            x: false,
+            y: false,
+            color: false,
+            opacity: false,
+            shape: false,
+            size: false,
+        },
     };
 }
 
@@ -205,7 +214,7 @@ export class VizSpecStore {
         if (this.__dangerous_is_inside_useMutable__) {
             throw new Error(
                 "A recursive call of useMutable() is detected, " +
-                    "this is prevented because update will be overwritten by parent execution context."
+                "this is prevented because update will be overwritten by parent execution context."
             );
         }
 
@@ -299,7 +308,7 @@ export class VizSpecStore {
         return state.filters;
     }
 
-
+    
     public addVisualization(defaultName?: string) {
         const name = defaultName || 'Chart ' + (this.visList.length + 1);
         this.visList.push(
@@ -375,11 +384,13 @@ export class VizSpecStore {
                 case configKey === "size" && typeof value === "object":
                 case configKey === "sorted":
                 case configKey === "zeroScale":
+                case configKey === "background":
                 case configKey === "stack": {
                     return (config[configKey] = value);
                 }
-                case configKey === 'format' && typeof value === "object": {
-                    return config[configKey] = value
+                case configKey === "format" && typeof value === "object":
+                case configKey === "resolve" && typeof value === "object": {
+                    return (config[configKey] = value);
                 }
 
                 default: {
