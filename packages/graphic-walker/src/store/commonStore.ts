@@ -17,6 +17,7 @@ export class CommonStore {
     public showVisualConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public selectedMarkObject = {};
     constructor () {
         this.datasets = [];
         this.dataSources = [];
@@ -193,6 +194,11 @@ export class CommonStore {
     public setFilters (props: Filters) {
         this.filters = props;
     }
+
+    public updateSelectedMarkObject (newMarkObj) {
+        this.selectedMarkObject = newMarkObj;
+    }
+
     public destroy () {
         this.dataSources = [];
         this.datasets = [];

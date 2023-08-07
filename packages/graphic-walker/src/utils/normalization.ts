@@ -68,6 +68,7 @@ export function compareDistribution(
             tagsForD2[targetRecordIndex] = true;
             const targetRecord = distribution2[targetRecordIndex];
             for (let mea of measures) {
+                // console.log(Math.max(targetRecord[mea], record[mea]), Math.min(targetRecord[mea], record[mea]))
                 score = Math.max(
                     score,
                     Math.max(targetRecord[mea], record[mea]) / Math.min(targetRecord[mea], record[mea])
@@ -87,6 +88,30 @@ export function compareDistribution(
             for (let mea of measures) {
                 score = Math.max(score, distribution2[i][mea]);
                 count++;
+            }
+        }
+    }
+    return score;
+}
+
+export function compareDistributionKL(
+    distribution1: IRow[],
+    distribution2: IRow[],
+    dimensions: string[],
+    measures: string[]
+): number {
+    let score = 0;
+    const tagsForD2: boolean[] = distribution2.map(() => false);
+    for (let record of distribution1) {
+        let targetRecordIndex = distribution2.findIndex((r, i) => {
+            return !tagsForD2[i] && dimensions.every((dim) => r[dim] === record[dim]);
+        });
+        if (targetRecordIndex > -1) {
+            tagsForD2[targetRecordIndex] = true;
+            const targetRecord = distribution2[targetRecordIndex];
+            for (let mea of measures) {
+                score += targetRecord[mea] * Math.log2(targetRecord[mea] / record[mea])
+                // score += record[mea] * Math.log2(record[mea] / targetRecord[mea])
             }
         }
     }
