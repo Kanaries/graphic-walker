@@ -5,6 +5,4 @@ if (!import.meta.env.DEV) {
     inject();
 }
 
-embedGraphicWalker(document.getElementById('root') as HTMLElement, {
-    enableAsking: true
-})
+embedGraphicWalker(document.getElementById('root') as HTMLElement, {})
