@@ -395,6 +395,7 @@ export class VizSpecStore {
                 case configKey === 'sorted':
                 case configKey === 'zeroScale':
                 case configKey === 'background':
+                case configKey === 'resolve':
                 case configKey === 'limit':
                 case configKey === 'stack': {
                     return (config[configKey] = value);
