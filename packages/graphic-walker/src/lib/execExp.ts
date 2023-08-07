@@ -4,7 +4,7 @@ interface IDataFrame {
     [key: string]: any[];
 }
 
-export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns: IField[]): IDataFrame {
+export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataFrame {
     const { op, params } = exp;
     const subFrame: IDataFrame = { ...dataFrame };
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
@@ -17,7 +17,7 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns
                 subFrame[param.value] = new Array(len).fill(param.value);
                 break;
             case 'expression':
-                let f = execExpression(param.value, dataFrame, columns);
+                let f = execExpression(param.value, dataFrame);
                 Object.keys(f).forEach(key => {
                     subFrame[key] = f[key];
                 })
@@ -54,11 +54,18 @@ function bin(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: 
         if (val < _min) _min = val;
     }
     const step = (_max - _min) / binSize;
-    const beaStep = Math.max(-Math.round(Math.log10(_max - _min)) + 2, 0)
+    // prevent (_max - _min) to be 0
+    const safeWidth = Math.min(Number.MAX_SAFE_INTEGER, Math.max(_max - _min, Number.MIN_VALUE));
+    const beaStep = Math.max(-Math.round(Math.log10(safeWidth)) + 2, 0)
+    // toFix() accepts 0-100
+    const safeBeaStep = Math.min(100, Math.max(0, Math.max(Number.isFinite(beaStep) ? beaStep : 0, 0)));
     const newValues = fieldValues.map((v: number) => {
         let bIndex = Math.floor((v - _min) / step);
         if (bIndex === binSize) bIndex = binSize - 1;
-        return Number(((bIndex * step + _min)).toFixed(beaStep))
+        if (Number.isNaN(bIndex)) {
+            bIndex = 0;
+        }
+        return Number(((bIndex * step + _min)).toFixed(safeBeaStep))
     });
     return {
         ...data,
@@ -124,22 +131,24 @@ function one(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFra
     }
 }
 
-export function dataset2DataFrame(dataset: IRow[], columns: IField[]): IDataFrame {
+export function dataset2DataFrame(dataset: IRow[]): IDataFrame {
     const dataFrame: IDataFrame = {};
-    columns.forEach((col) => {
-        dataFrame[col.fid] = dataset.map((row) => row[col.fid]);
+    if (dataset.length === 0) return dataFrame;
+    Object.keys(dataset[0]).forEach((k) => {
+        dataFrame[k] = dataset.map((row) => row[k]);
     });
     return dataFrame;
 }
 
-export function dataframe2Dataset(dataFrame: IDataFrame, columns: IField[]): IRow[] {
-    if (columns.length === 0) return [];
+export function dataframe2Dataset(dataFrame: IDataFrame): IRow[] {
+    const cols = Object.keys(dataFrame);
+    if (cols.length === 0) return [];
     const dataset: IRow[] = [];
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
     for (let i = 0; i < len; i++) {
         const row: IRow = {};
-        columns.forEach((col) => {
-            row[col.fid] = dataFrame[col.fid][i];
+        cols.forEach((k) => {
+            row[k] = dataFrame[k][i];
         });
         dataset.push(row);
     }
