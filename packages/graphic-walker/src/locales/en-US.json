@@ -3,7 +3,15 @@
         "format": "Format",
         "numberFormat": "Number format",
         "timeFormat": "Time format",
-        "normalizedNumberFormat": "Normalized number format"
+        "normalizedNumberFormat": "Normalized number format",
+        "background": "Background",        
+        "color":"Color",
+        "independence": "Independence",
+        "x": "x-Axis",
+        "y": "y-Axis",
+        "zeroScale": "Zero Scale",
+        "formatGuidesDocs": "Format guides docs",
+        "readHere": "read here"
     },
     "constant": {
         "row_count": "Row count",

@@ -3,7 +3,15 @@
         "format": "形式",
         "numberFormat": "数字の形式",
         "timeFormat": "時間の形式",
-        "normalizedNumberFormat": "正規化された数字の形式"
+        "normalizedNumberFormat": "正規化された数字の形式",
+        "background": "背景",
+        "color":"色",
+        "independence": "独立性",
+        "x": "x軸",
+        "y": "y軸",
+        "zeroScale": "ゼロ目盛",
+        "formatGuidesDocs": "フォーマットガイド",
+        "readHere": "ここを読む"
     },
     "constant": {
         "row_count": "行数",

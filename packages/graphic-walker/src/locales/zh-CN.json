@@ -3,7 +3,15 @@
         "format": "格式",
         "numberFormat": "数字格式",
         "timeFormat": "时间格式",
-        "normalizedNumberFormat": "标准化数字格式"
+        "normalizedNumberFormat": "标准化数字格式",
+        "background": "背景",
+        "color":"颜色",
+        "independence": "独立性",
+        "x": "x轴",
+        "y": "y轴",
+        "zeroScale": "零刻度",
+        "formatGuidesDocs": "格式指南",
+        "readHere": "阅读此处"
     },
     "constant": {
         "row_count": "行数",
