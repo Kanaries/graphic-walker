@@ -20,8 +20,9 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: 'none',
         zeroScale: true,
+        background: undefined,
         size: {
-            mode: 'auto',
+            mode: "auto",
             width: 320,
             height: 200,
         },
@@ -29,6 +30,14 @@ export function initVisualConfig(): IVisualConfig {
             numberFormat: undefined,
             timeFormat: undefined,
             normalizedNumberFormat: undefined,
+        },
+        resolve: {
+            x: false,
+            y: false,
+            color: false,
+            opacity: false,
+            shape: false,
+            size: false,
         },
         limit: -1,
     };

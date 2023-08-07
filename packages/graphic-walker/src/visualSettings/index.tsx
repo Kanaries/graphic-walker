@@ -505,9 +505,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         <LimitSetting
                             value={limit}
                             setValue={(v) => {
-                                runInAction(() => {
-                                    vizStore.limit = v;
-                                });
+                                vizStore.setLimit(v);
                             }}
                         />
                     </FormContainer>

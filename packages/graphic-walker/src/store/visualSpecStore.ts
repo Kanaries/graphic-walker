@@ -3,7 +3,7 @@ import produce from "immer";
 import { DataSet, DraggableFieldState, IFilterRule, IViewField, IVisSpec, IVisSpecForExport, IFilterFieldForExport, IVisualConfig, Specification, IComputationFunction } from "../interfaces";
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
-import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
+import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent, initVisualConfig, forwardVisualConfigs, visSpecDecoder } from "../utils/save";
 import { CommonStore } from "./commonStore";
 import { createCountField } from "../utils";
 import { nanoid } from "nanoid";
@@ -62,50 +62,9 @@ export function initEncoding(): DraggableFieldState {
     };
 }
 
-export function initVisualConfig(): IVisualConfig {
-    return {
-        defaultAggregated: true,
-        geoms: [GEMO_TYPES[0]!],
-        stack: "stack",
-        showActions: false,
-        interactiveScale: false,
-        sorted: "none",
-        zeroScale: true,
-        background: undefined,
-        size: {
-            mode: "auto",
-            width: 320,
-            height: 200,
-        },
-        format: {
-            numberFormat: undefined,
-            timeFormat: undefined,
-            normalizedNumberFormat: undefined,
-        },
-        resolve: {
-            x: false,
-            y: false,
-            color: false,
-            opacity: false,
-            shape: false,
-            size: false,
-        },
-        limit: -1,
-    };
-}
 
 type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
-};
-
-const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["specList"]): IVisSpecForExport[] => {
-    return backwards.map((content) => ({
-        ...content,
-        config: {
-            ...initVisualConfig(),
-            ...content.config,
-        },
-    }));
 };
 
 function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
@@ -727,7 +686,7 @@ export class VizSpecStore {
         return this.visSpecEncoder(pureVisList);
     }
     public importStoInfo (stoInfo: IStoInfo) {
-        this.visList = parseGWPureSpec(this.visSpecDecoder(forwardVisualConfigs(stoInfo.specList)));
+        this.visList = parseGWPureSpec(visSpecDecoder(forwardVisualConfigs(stoInfo.specList)));
         this.visIndex = 0;
         this.commonStore.datasets = stoInfo.datasets;
         this.commonStore.dataSources = stoInfo.dataSources;
@@ -763,31 +722,13 @@ export class VizSpecStore {
         });
         return updatedVisList;
     }
-    private visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
-        const updatedVisList = visList.map((visSpec) => {
-            const updatedFilters = visSpec.encodings.filters.map((filter) => {
-                if (filter.rule?.type === "one of" && Array.isArray(filter.rule.value)) {
-                    return {
-                        ...filter, 
-                        rule: {
-                            ...filter.rule, 
-                            value: new Set(filter.rule.value)
-                        }
-                    }
-                }
-                return filter;
-            })
-            return {
-                ...visSpec,
-                encodings: {
-                    ...visSpec.encodings,
-                    filters: updatedFilters
-                }
-            } as IVisSpec;
-        });
-        return updatedVisList;
+    public get limit() {
+        return this.visualConfig.limit;
     }
-    public limit = -1;
+
+    public setLimit(value: number) {
+        this.setVisualConfig('limit', value);
+    }
 
     public get sort() {
         const { rows, columns } = this.draggableFieldState;
