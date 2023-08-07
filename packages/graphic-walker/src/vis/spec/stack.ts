@@ -1,11 +1,12 @@
 import { IStackMode } from "../../interfaces";
 
 export function channelStack(encoding: { [key: string]: any }, stackMode: IStackMode) {
-    if (stackMode === 'stack') return;
-    if (encoding.x && encoding.x.type === 'quantitative') {
-        encoding.x.stack = stackMode === 'none' ? null : 'normalize';
-    }
-    if (encoding.y && encoding.y.type === 'quantitative') {
-        encoding.y.stack = stackMode === 'none' ? null : 'normalize';
+    if (stackMode === 'stack' || stackMode === 'zero') return;
+    let stackValue = stackMode === 'none' ? null : stackMode;
+    const stackableChannels = ['x', 'y', 'theta', 'radius'];
+    for (let ch of stackableChannels) {
+        if (encoding[ch] && encoding[ch].type === 'quantitative') {
+            encoding[ch].stack = stackValue
+        }
     }
 }

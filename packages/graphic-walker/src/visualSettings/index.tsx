@@ -367,6 +367,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         none: XMarkIcon,
                         stack: ChevronDoubleUpIcon,
                         normalize: ArrowsUpDownIcon,
+                        center: ChevronUpDownIcon, // TODO: fix unsafe extends
                     }[g],
                 })),
                 value: stack,
