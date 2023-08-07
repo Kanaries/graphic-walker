@@ -1,9 +1,9 @@
 import { transformData } from './transform'
 const main = e => {
-    const { dataSource, columns } = e.data;
+    const { dataSource, trans } = e.data;
 
     try {
-        const ans = transformData(dataSource, columns);
+        const ans = transformData(dataSource, trans);
         self.postMessage(ans);
     } catch (error) {
         self.postMessage({ error: error.message });

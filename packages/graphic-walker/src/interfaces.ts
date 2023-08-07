@@ -167,6 +167,11 @@ export interface IFilterField extends IViewField {
     rule: IFilterRule | null;
 }
 
+export interface IFilterFiledSimple {
+    fid: string;
+    rule: IFilterRule | null;
+}
+
 export interface DraggableFieldState {
     dimensions: IViewField[];
     measures: IViewField[];
@@ -259,37 +264,6 @@ export enum ISegmentKey {
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
 export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
-export type IClientComputationOptions = {
-    mode: 'client';
-};
-export type IServerComputationOptions = {
-    mode: 'server';
-} & (
-    | {
-        /**
-         * Specify an HTTP server to handle the computation.
-         * The server should accept POST request with JSON body of {@link IDataQueryPayload}.
-         */
-        server: string;
-        /**
-         * Override the default API path.
-         * @default "/api/ce/dataset/v2/query"
-         */
-        APIPath?: string | undefined;
-    }
-    | {
-        /**
-         * Implement a custom computation service.
-         * @param {IDataQueryPayload} payload - the query payload
-         * @returns {Promise<IRow[]>} the computation result
-         * @throws {Error} if the computation failed
-         */
-        service: IComputationFunction;
-    }
-);
-export type IComputationOptions = IClientComputationOptions | IServerComputationOptions;
-export type IComputationMode = IComputationOptions['mode'];
-export type IComputationConfig = Extract<IComputationMode, 'client'> | IComputationOptions;
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
@@ -443,20 +417,12 @@ export interface ISortWorkflowStep {
     by: string[];
 }
 
-export interface ILimitWorkflowStep {
-    type: 'limit';
-    value: number;
-}
-
-export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep | ILimitWorkflowStep;
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
 
 export interface IDataQueryPayload {
-    datasetId: string;
-    query: {
-        workflow: IDataQueryWorkflowStep[];
-        limit?: number;
-        offset?: number;
-    };
+    workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
 }
 
 export interface ILoadDataPayload {

@@ -4,7 +4,7 @@ interface IDataFrame {
     [key: string]: any[];
 }
 
-export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns: IField[]): IDataFrame {
+export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataFrame {
     const { op, params } = exp;
     const subFrame: IDataFrame = { ...dataFrame };
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
@@ -17,7 +17,7 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame, columns
                 subFrame[param.value] = new Array(len).fill(param.value);
                 break;
             case 'expression':
-                let f = execExpression(param.value, dataFrame, columns);
+                let f = execExpression(param.value, dataFrame);
                 Object.keys(f).forEach(key => {
                     subFrame[key] = f[key];
                 })
@@ -131,22 +131,24 @@ function one(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFra
     }
 }
 
-export function dataset2DataFrame(dataset: IRow[], columns: IField[]): IDataFrame {
+export function dataset2DataFrame(dataset: IRow[]): IDataFrame {
     const dataFrame: IDataFrame = {};
-    columns.forEach((col) => {
-        dataFrame[col.fid] = dataset.map((row) => row[col.fid]);
+    if (dataset.length === 0) return dataFrame;
+    Object.keys(dataset[0]).forEach((k) => {
+        dataFrame[k] = dataset.map((row) => row[k]);
     });
     return dataFrame;
 }
 
-export function dataframe2Dataset(dataFrame: IDataFrame, columns: IField[]): IRow[] {
-    if (columns.length === 0) return [];
+export function dataframe2Dataset(dataFrame: IDataFrame): IRow[] {
+    const cols = Object.keys(dataFrame);
+    if (cols.length === 0) return [];
     const dataset: IRow[] = [];
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
     for (let i = 0; i < len; i++) {
         const row: IRow = {};
-        columns.forEach((col) => {
-            row[col.fid] = dataFrame[col.fid][i];
+        cols.forEach((k) => {
+            row[k] = dataFrame[k][i];
         });
         dataset.push(row);
     }

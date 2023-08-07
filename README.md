@@ -223,7 +223,6 @@ export interface IGWProps {
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationConfig;
-    datasetId?: string;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -279,38 +278,17 @@ Specify the dark mode preference. There're three valid values:
 
 If you want to control the visualization specification, you can provide a `React.MutableRefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
 
-#### `computation`: optional _{ [`IComputationConfig`](./packages/graphic-walker/src/interfaces.ts) `= "client"` }_
+#### `computation`: optional _{ [`IComputationFunction`](./packages/graphic-walker/src/interfaces.ts) }_
 
-Specify the computation configuration. See [Computation](./computation.md) for more details. There're two valid modes for it:
+Specify the computation configuration. See [Computation](./computation.md) for more details.
 
 1. Client-side computation (default)
 
-Provide `"client"` or `{ mode: "client" }` to use client-side computation. In this mode, the computation will be done in the browser (mainly use WebWorker).
+Provide noting to use client-side computation. In this mode, the computation will be done in the browser (mainly use WebWorker).
 
 2. Server-side computation
 
-The configuration should be
-
-```ts
-declare const config: {
-    mode: "server";
-    server: string;
-    APIPath?: string | undefined;
-};
-```
-
-to specify an HTTP server to handle the computation. The server should accept POST request with JSON body of [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts). An another case is that you can implement a custom computation service - this is useful when you want to use a different computation engine such as WebAssembly. The configuration should be
-
-```ts
-declare const config: {
-    mode: "server";
-    service: IComputationFunction;
-};
-```
-
-#### `datasetId`: optional _{ `string` }_
-
-When using server-side computation, you should provide a dataset ID to identify the dataset.
+Graphic Walker will call given computation function with [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts) as parameter. The function should returns a [`IRow[]`](./packages/graphic-walker/src/interfaces.ts) as result.
 
 #### `toolbar`: optional _{ `ToolbarProps` }_
 

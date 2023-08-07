@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IComputationConfig } from './interfaces';
+import { IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import type { ToolbarItemProps } from './components/toolbar';
+import { getComputation } from './computation/clientComputation';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -37,8 +38,7 @@ export interface IGWProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
-    computation?: IComputationConfig;
-    datasetId?: string;
+    computation?: IComputationFunction;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -56,8 +56,7 @@ const App = observer<IGWProps>(function App(props) {
         fieldKeyGuard = true,
         themeKey = 'vega',
         dark = 'media',
-        computation = 'client',
-        datasetId,
+        computation,
         toolbar,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
@@ -100,7 +99,7 @@ const App = observer<IGWProps>(function App(props) {
                 name: 'context dataset',
                 dataSource: safeDataset.safeData,
                 rawFields: safeDataset.safeMetas,
-            }, datasetId);
+            });
         }
     }, [safeDataset]);
 
@@ -111,8 +110,12 @@ const App = observer<IGWProps>(function App(props) {
     }, [spec, safeDataset]);
 
     useEffect(() => {
-        vizStore.setComputationConfig(computation);
-    }, [vizStore, computation]);
+        if (computation) {
+            vizStore.setComputationFunction(computation);
+        } else {
+            vizStore.setComputationFunction(getComputation(commonStore.currentDataset.dataSource));
+        }
+    }, [vizStore, computation ?? commonStore.currentDataset.dataSource]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -164,7 +167,7 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationConfig={vizStore.computationConfig} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationFunction={vizStore.computationFuction} />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>

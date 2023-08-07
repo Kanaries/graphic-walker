@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
@@ -14,14 +14,14 @@ import { useChartIndexControl } from '../utils/chartIndexControl';
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
-    computationConfig: IComputationConfig;
+    computationFunction: IComputationFunction;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationConfig } = props;
+    const { themeKey, dark, computationFunction } = props;
     const { vizStore, commonStore } = useGlobalStore();
     const {
         allFields,
@@ -36,8 +36,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         limit,
     } = vizStore;
     const chart = visList[visIndex];
-    const { currentDataset } = commonStore;
-    const { dataSource, id: datasetId } = currentDataset;
 
     const { i18n } = useTranslation();
 
@@ -46,7 +44,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const { viewData: data, loading: waiting } = useRenderer({
-        data: dataSource,
         allFields,
         viewDimensions,
         viewMeasures,
@@ -54,8 +51,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         defaultAggregated: visualConfig.defaultAggregated,
         sort,
         limit: limit,
-        computationConfig,
-        datasetId,
+        computationFunction,
     });
 
     // Dependencies that should not trigger effect individually

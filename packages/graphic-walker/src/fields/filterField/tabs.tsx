@@ -6,8 +6,7 @@ import styled from 'styled-components';
 import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
-import { useComputationConfig, useRenderer } from '../../renderer/hooks';
-import { fieldStatClient } from '../../computation/clientComputation';
+import { useComputationFunc, useRenderer } from '../../renderer/hooks';
 import { fieldStatServer } from '../../computation/serverComputation';
 import Slider from './slider';
 import {
@@ -147,12 +146,11 @@ const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
 };
 
 const useFieldStats = (
-    datasetId: string,
-    data: IRow[],
     field: IField,
     attributes: { values: boolean; range: boolean },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none'
-): IFieldStats | null => {    const { values, range } = attributes;
+): IFieldStats | null => {    
+    const { values, range } = attributes;
     const { fid, cmp = defaultValueComparator } = field;
     const valueCmp = React.useCallback<typeof countCmp>((a, b) => {
         return cmp(a.value, b.value);
@@ -161,16 +159,12 @@ const useFieldStats = (
     const sortMulti = sortBy.endsWith("dsc") ? -1 : 1;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
-    const computationConfig = useComputationConfig();
-    const computationMode = computationConfig.mode;
+    const computationFunction = useComputationFunc();
 
     React.useEffect(() => {
-        if (computationMode !== 'client') {
-            return;
-        }
         setLoading(true);
         let isCancelled = false;
-        fieldStatClient(data, fid).then(stats => {
+        fieldStatServer(computationFunction, fid, { values, range }).then(stats => {
             if (isCancelled) {
                 return;
             }
@@ -187,32 +181,7 @@ const useFieldStats = (
         return () => {
             isCancelled = true;
         };
-    }, [fid, computationMode, data]);
-
-    React.useEffect(() => {
-        if (computationMode !== 'server') {
-            return;
-        }
-        setLoading(true);
-        let isCancelled = false;
-        fieldStatServer(computationConfig, datasetId, fid, { values, range }).then(stats => {
-            if (isCancelled) {
-                return;
-            }
-            setStats(stats);
-            setLoading(false);
-        }).catch(reason => {
-            console.warn(reason);
-            if (isCancelled) {
-                return;
-            }
-            setStats(null);
-            setLoading(false);
-        });
-        return () => {
-            isCancelled = true;
-        };
-    }, [fid, computationMode, computationConfig, datasetId, values, range]);
+    }, [fid, computationFunction, values, range]);
 
     const sortedStats = React.useMemo<typeof stats>(() => {
         if (!stats || !comparator) {
@@ -227,12 +196,10 @@ const useFieldStats = (
 };
 
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
-    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { dataSource, id: datasetId } = dataset;
 
     interface SortConfig {
         key: 'value' | 'count';
@@ -245,7 +212,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const { t } = useTranslation('translation');
 
-    const stats = useFieldStats(datasetId, dataSource, field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
+    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
     const count = stats?.values;
 
     React.useEffect(() => {
@@ -450,7 +417,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     field,
     onChange,
 }) => {
-    const { dataSource, id: datasetId, rawFields } = dataset;
+    const { rawFields } = dataset;
 
     const { t } = useTranslation('translation');
 
@@ -469,7 +436,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         return field.analyticType === 'measure' ? [field] : [];
     }, [field]);
 
-    const computationConfig = useComputationConfig();
+    const computationFunction = useComputationFunc();
 
     const { viewData, loading } = useRenderer({
         allFields: fields,
@@ -477,9 +444,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         viewMeasures,
         filters: emptyFilters,
         defaultAggregated: false,
-        computationConfig,
-        datasetId,
-        data: dataSource,
+        computationFunction,
         limit: 1000,
         sort: 'none',
     });
@@ -564,16 +529,13 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 });
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
-    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { dataSource, id: datasetId } = dataset;
-
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
-    const stats = useFieldStats(datasetId, dataSource, field, { values: false, range: true }, 'none');
+    const stats = useFieldStats(field, { values: false, range: true }, 'none');
     const range = stats?.range;
 
     React.useEffect(() => {

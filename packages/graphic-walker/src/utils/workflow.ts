@@ -1,4 +1,4 @@
-import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter, ISortWorkflowStep, ILimitWorkflowStep } from "../interfaces";
+import type { IDataQueryWorkflowStep, IExpression, IFilterWorkflowStep, ITransformWorkflowStep, IViewField, IViewWorkflowStep, IVisFilter, ISortWorkflowStep } from "../interfaces";
 import type { VizSpecStore } from "../store/visualSpecStore";
 import { getMeaAggKey } from ".";
 
@@ -45,7 +45,6 @@ export const toWorkflow = (
     let transformWorkflow: ITransformWorkflowStep | null = null;
     let viewQueryWorkflow: IViewWorkflowStep | null = null;
     let sortWorkflow: ISortWorkflowStep | null = null;
-    let limitWorkflow: ILimitWorkflowStep | null = null;
 
     // TODO: apply **fold** before filter
     
@@ -105,7 +104,8 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggregateOn = viewMeasures.filter(f => f.aggName).map(f => [f.fid, f.aggName as string]);
-    if (defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0))) {
+    const aggergated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
+    if (aggergated) {
         viewQueryWorkflow = {
             type: 'view',
             query: [{
@@ -131,24 +131,17 @@ export const toWorkflow = (
     if (sort !== "none" && limit) {
         sortWorkflow = {
             type: 'sort',
-            by: viewMeasures.map(f => f.fid),
+            by: viewMeasures.map(f => aggergated ? getMeaAggKey(f.fid, f.aggName) : f.fid),
             sort,
         };
     }
 
-    if (limit) {
-        limitWorkflow = {
-            type: 'limit',
-            value: limit,
-        };
-    }
 
     const steps: IDataQueryWorkflowStep[] = [
         filterWorkflow!,
         transformWorkflow!,
         viewQueryWorkflow!,
         sortWorkflow!,
-        limitWorkflow!,
     ].filter(Boolean);
 
     return steps;

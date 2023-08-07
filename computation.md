@@ -4,7 +4,7 @@ Before the renderer generates the visualization, GraphicWalker will apply an asy
 
 ## Computation Workflow
 
-The computation workflow contains 3 types of queries: filter query, transform query and view query.
+The computation workflow contains 4 types of queries: filter query, transform query, view query and sort query.
 
 ### Filter Query (optional)
 
@@ -435,6 +435,53 @@ The schema of the view query is
 }
 ```
 
+### Sort Query (optional)
+
+The filter query is used to sort the result data. It contains a list of fields to be used for sort, and excepted sorting order.
+
+```ts
+export interface ISortWorkflowStep {
+    type: 'sort';
+    sort: 'ascending' | 'descending';
+    by: string[];
+}
+```
+
+The schema of the sort query is
+
+```json
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "sort"
+            ]
+        },
+        "sort": {
+            "type": "string",
+            "enum": [
+                "ascending",
+                "descending"
+            ]
+        },
+        "by": {
+            "type": "array",
+            "items": {
+                "type": "string",
+            }
+        }
+    },
+    "required": [
+        "type",
+        "sort",
+        "by"
+    ]
+}
+```
+
 ## Computation Request
 
 GraphicWalker regards a computation as a request. A computation function, including HTTP service, must follow the protocol of the request.
@@ -443,12 +490,9 @@ GraphicWalker regards a computation as a request. A computation function, includ
 
 ```ts
 export interface IDataQueryPayload {
-    datasetId: string;
-    query: {
-        workflow: IDataQueryWorkflowStep[];
-        limit?: number;
-        offset?: number;
-    };
+    workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
 }
 ```
 
@@ -465,25 +509,4 @@ declare const result: IRow[];
 
 ```ts
 export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
-```
-
-And if you want to use HTTP service, the response of the API must be wrapped in the following format.
-
-```ts
-export type IResponse<T> = (
-    | {
-        success: true;
-        data: T;
-    }
-    | {
-        success: false;
-        message: string;
-        error?: {
-            code: `ERR_${Uppercase<string>}`;
-            options?: Record<string, string>;
-        };
-    }
-);
-
-declare const HTTPResponse: IResponse<IRow[]>;
 ```

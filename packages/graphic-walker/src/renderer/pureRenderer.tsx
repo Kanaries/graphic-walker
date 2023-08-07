@@ -4,44 +4,53 @@ import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationConfig } from '../interfaces';
+import type {
+    IDarkMode,
+    IViewField,
+    IRow,
+    IThemeKey,
+    DraggableFieldState,
+    IVisualConfig,
+    IComputationFunction,
+} from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
+import { getComputation } from '../computation/clientComputation';
 
-interface IPureRendererProps {
-    name?: string;
-    themeKey?: IThemeKey;
-    dark?: IDarkMode;
-    rawData?: IRow[];
-    datasetId?: string;
-    visualState: DraggableFieldState;
-    visualConfig: IVisualConfig;
-    sort?: 'none' | 'ascending' | 'descending';
-    limit?: number;
-    /** @default "client" */
-    computation?: IComputationConfig;
-    locale?: string;
-}
+type IPureRendererProps =
+    | {
+          name?: string;
+          themeKey?: IThemeKey;
+          dark?: IDarkMode;
+          visualState: DraggableFieldState;
+          visualConfig: IVisualConfig;
+          sort?: 'none' | 'ascending' | 'descending';
+          limit?: number;
+          locale?: string;
+      } & (
+          | {
+                type: 'remote',
+                computation: IComputationFunction;
+            }
+          | {
+                type?: 'local'
+                rawData: IRow[];
+            }
+      );
 
 /**
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const {
-        name,
-        themeKey,
-        dark,
-        rawData,
-        datasetId,
-        visualState,
-        visualConfig,
-        computation = 'client',
-        locale,
-        sort,
-        limit,
-    } = props;
+    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit } = props;
+    const computation = useMemo(() => {
+        if (props.type === 'remote') {
+            return props.computation;
+        }
+        return getComputation(props.rawData);
+    }, [props.type, props.type === 'remote' ? props.computation: props.rawData])
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -68,7 +77,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     }, [visualState]);
 
     const { viewData: data, loading: waiting } = useRenderer({
-        data: rawData ?? [],
         allFields,
         viewDimensions,
         viewMeasures,
@@ -76,8 +84,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         defaultAggregated,
         sort: sort ?? 'none',
         limit: limit ?? -1,
-        computationConfig: computation,
-        datasetId,
+        computationFunction: computation,
     });
 
     // Dependencies that should not trigger effect individually

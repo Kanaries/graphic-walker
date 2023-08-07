@@ -166,12 +166,12 @@ export class CommonStore {
             rawFields: dataset.rawFields,
             dsId: dataSourceId
         })
-        return dataSetId;
+        return dataSourceId;
     }
     public removeDS(datasetId: string) {
         const datasetIndex = this.datasets.findIndex(d => d.id === datasetId);
         if (datasetIndex > -1) {
-            const dataSourceId = this.datasets[datasetIndex].dsId;
+            const dataSourceId = this.datasets[datasetIndex].id;
             const dataSourceIndex = this.dataSources.findIndex(d => d.id === dataSourceId);
             this.dataSources.splice(dataSourceIndex, 1);
             this.datasets.splice(datasetIndex, 1);
