@@ -27,7 +27,7 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     cellRows[cellRows.length - 1].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}`}
-            className={`align-top whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300`}
+            className={`bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 align-top whitespace-nowrap p-2 text-xs m-1 border border-gray-300`}
             colSpan={isCollapsed ? node.height + 1 : 1}
             rowSpan={isCollapsed ? Math.max(meaNumber, 1) : childrenSize * Math.max(meaNumber, 1)}
         >
@@ -71,7 +71,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ...row,
                     <td
                         key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
-                        className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
+                        className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
                     >
                         {measInRow[0].aggName}({measInRow[0].name})
                     </td>,
@@ -80,7 +80,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ans.push([
                         <td
                             key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
-                            className="whitespace-nowrap p-2 text-xs text-gray-500 m-1 border border-gray-300"
+                            className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
                         >
                             {measInRow[j].aggName}({measInRow[j].name})
                         </td>,

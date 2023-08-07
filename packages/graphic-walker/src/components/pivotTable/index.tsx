@@ -180,7 +180,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                     <thead className="border border-gray-300">
                         {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
                             <tr className="" key={i}>
-                                <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                                <td className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
                             </tr>
                         ))}
                     </thead>
