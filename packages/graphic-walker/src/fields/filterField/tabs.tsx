@@ -135,10 +135,10 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
 type FieldDistributionEntry = IFieldStats['values'][number];
 
 const defaultValueComparator = (a: any, b: any) => {
-    if (typeof a.value === 'number' && typeof b.value === 'number') {
-        return a.value - b.value;
+    if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
     } else {
-        return String(a.value).localeCompare(String(b.value))
+        return String(a).localeCompare(String(b))
     }
 };
 
@@ -146,13 +146,19 @@ const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
     return a.count - b.count;
 };
 
-const useFieldStats = (datasetId: string, data: IRow[], field: IField, attributes: { values: boolean; range: boolean }, sortBy: "value" | "count" | "none"): IFieldStats | null => {
-    const { values, range } = attributes;
+const useFieldStats = (
+    datasetId: string,
+    data: IRow[],
+    field: IField,
+    attributes: { values: boolean; range: boolean },
+    sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none'
+): IFieldStats | null => {    const { values, range } = attributes;
     const { fid, cmp = defaultValueComparator } = field;
     const valueCmp = React.useCallback<typeof countCmp>((a, b) => {
         return cmp(a.value, b.value);
     }, [cmp]);
-    const comparator = sortBy === "none" ? null : sortBy === "value" ? valueCmp : countCmp;
+    const comparator = sortBy === "none" ? null : sortBy.startsWith("value") ? valueCmp : countCmp;
+    const sortMulti = sortBy.endsWith("dsc") ? -1 : 1;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
     const computationConfig = useComputationConfig();
@@ -213,9 +219,9 @@ const useFieldStats = (datasetId: string, data: IRow[], field: IField, attribute
             return stats;
         }
         const copy = { ...stats };
-        copy.values = copy.values.slice().sort(comparator);
+        copy.values = copy.values.slice().sort((a,b) => sortMulti * comparator(a,b));
         return copy;
-    }, [stats, comparator]);
+    }, [stats, comparator, sortMulti]);
 
     return loading ? null : sortedStats;
 };
@@ -239,7 +245,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const { t } = useTranslation('translation');
 
-    const stats = useFieldStats(datasetId, dataSource, field, { values: true, range: false }, sortConfig.key);
+    const stats = useFieldStats(datasetId, dataSource, field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
     const count = stats?.values;
 
     React.useEffect(() => {
