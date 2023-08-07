@@ -19,13 +19,14 @@ interface SpecRendererProps {
     visualConfig: DeepReadonly<IVisualConfig>;
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
+    locale?: string;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize },
+    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -163,6 +164,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 height={size.height - 12 * 4}
                 ref={ref}
                 onGeomClick={onGeomClick}
+                locale={locale}
             />
         </Resizable>
     );
