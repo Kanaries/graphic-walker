@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { useGlobalStore } from "../store";
 import DataTable from "../components/dataTable";
 import { toJS } from "mobx";
+import { getComputation } from "../computation/clientComputation";
 
 interface TableProps {
     size?: number;
@@ -21,11 +22,14 @@ const Table: React.FC<TableProps> = (props) => {
             rawFields: toJS(tmpDSRawFields),
         };
     }, [tmpDataSource, tmpDSRawFields]);
+9
+    const computation = React.useMemo(() => getComputation(tempDataset.dataSource), [tempDataset])
 
     return (
         <DataTable
             size={size}
             dataset={tempDataset}
+            computation={computation}
             total={tmpDataSource.length}
             onMetaChange={(fid, fIndex, diffMeta) => {
                 commonStore.updateTempDatasetMetas(fid, diffMeta);
