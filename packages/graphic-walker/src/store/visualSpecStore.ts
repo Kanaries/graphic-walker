@@ -1,48 +1,73 @@
-import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from "mobx";
-import produce from "immer";
+import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from 'mobx';
+import produce from 'immer';
 import { feature } from 'topojson-client';
 import type { FeatureCollection } from "geojson";
-import { DataSet, DraggableFieldState, IFilterRule, IGeographicData, IViewField, IVisSpec, IVisualConfig, Specification } from "../interfaces";
-import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from "../config";
-import { VisSpecWithHistory } from "../models/visSpecHistory";
-import { IStoInfo, dumpsGWPureSpec, parseGWContent, parseGWPureSpec, stringifyGWContent } from "../utils/save";
-import { CommonStore } from "./commonStore";
-import { createCountField } from "../utils";
-import { nanoid } from "nanoid";
+import {
+    DataSet,
+    DraggableFieldState,
+    IFilterRule,
+    IGeographicData,
+    ISortMode,
+    IStackMode,
+    IViewField,
+    IVisSpec,
+    IVisSpecForExport,
+    IFilterFieldForExport,
+    IVisualConfig,
+    Specification,
+    IComputationFunction,
+} from '../interfaces';
+import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from '../config';
+import { VisSpecWithHistory } from '../models/visSpecHistory';
+import {
+    IStoInfo,
+    dumpsGWPureSpec,
+    parseGWContent,
+    parseGWPureSpec,
+    stringifyGWContent,
+    initVisualConfig,
+    forwardVisualConfigs,
+    visSpecDecoder,
+} from '../utils/save';
+import { CommonStore } from './commonStore';
+import { createCountField } from '../utils';
+import { COUNT_FIELD_ID } from '../constants';
+import { nanoid } from 'nanoid';
+import { toWorkflow } from '../utils/workflow';
 
 function getChannelSizeLimit(channel: string): number {
-    if (typeof CHANNEL_LIMIT[channel] === "undefined") return Infinity;
+    if (typeof CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
     return CHANNEL_LIMIT[channel];
 }
 
 function uniqueId(): string {
-    return "gw_" + nanoid(4);
+    return 'gw_' + nanoid(4);
 }
 
 function geomAdapter(geom: string) {
     switch (geom) {
-        case "interval":
-        case "bar":
-            return "bar";
-        case "line":
-            return "line";
-        case "boxplot":
-            return "boxplot";
-        case "area":
-            return "area";
-        case "point":
-            return "point";
-        case "arc":
-            return "arc";
-        case "circle":
-            return "circle";
-        case "heatmap":
-            return "circle";
-        case "rect":
-            return "rect";
-        case "tick":
+        case 'interval':
+        case 'bar':
+            return 'bar';
+        case 'line':
+            return 'line';
+        case 'boxplot':
+            return 'boxplot';
+        case 'area':
+            return 'area';
+        case 'point':
+            return 'point';
+        case 'arc':
+            return 'arc';
+        case 'circle':
+            return 'circle';
+        case 'heatmap':
+            return 'circle';
+        case 'rect':
+            return 'rect';
+        case 'tick':
         default:
-            return "tick";
+            return 'tick';
     }
 }
 
@@ -67,43 +92,31 @@ export function initEncoding(): DraggableFieldState {
     };
 }
 
-export function initVisualConfig(): IVisualConfig {
-    return {
-        defaultAggregated: true,
-        geoms: [GEMO_TYPES.generic[0]!],
-        coordSystem: "generic",
-        stack: "stack",
-        showActions: false,
-        interactiveScale: false,
-        sorted: "none",
-        zeroScale: true,
-        scaleIncludeUnmatchedChoropleth: false,
-        size: {
-            mode: "auto",
-            width: 320,
-            height: 200,
-        },
-        format: {
-            numberFormat: undefined,
-            timeFormat: undefined,
-            normalizedNumberFormat: undefined
-        },
-        geoKey: 'name',
-    };
+function stackValueTransform(vlValue: string | undefined | null): IStackMode {
+    if (vlValue === 'center') return 'center';
+    if (vlValue === 'normalize') return 'normalize';
+    if (vlValue === 'zero') return 'zero';
+    return 'none';
+}
+
+function sortValueTransform(vlValue: object | string | null): ISortMode {
+    let order: string = 'none';
+    if (typeof vlValue === 'string') {
+        order = vlValue;
+    } else if (vlValue && vlValue instanceof Object) {
+        order = vlValue['order'] ?? 'ascending';
+    }
+    if (order !== 'none') {
+        const channels: string[] = ['x', 'y', 'color', 'size', 'opacity'];
+        // TODO: support all sorting config in vl
+        if (order.startsWith('-') || order === 'descending') return 'descending';
+        if (channels.indexOf(order) > -1 || order === 'ascending') return 'ascending';
+    }
+    return 'none';
 }
 
 type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
-};
-
-const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>["specList"]): IVisSpec[] => {
-    return backwards.map((content) => ({
-        ...content,
-        config: {
-            ...initVisualConfig(),
-            ...content.config,
-        },
-    }));
 };
 
 function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
@@ -151,6 +164,8 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    // TODO
+    public computationFuction: IComputationFunction = async () => [];
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -165,6 +180,7 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
+            computationFuction: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -212,8 +228,7 @@ export class VizSpecStore {
     private useMutable(cb: (tab: { encodings: DraggableFieldState; config: IVisualConfig }) => void) {
         if (this.__dangerous_is_inside_useMutable__) {
             throw new Error(
-                "A recursive call of useMutable() is detected, " +
-                    "this is prevented because update will be overwritten by parent execution context."
+                'A recursive call of useMutable() is detected, ' + 'this is prevented because update will be overwritten by parent execution context.'
             );
         }
 
@@ -272,12 +287,12 @@ export class VizSpecStore {
      */
     public get viewDimensions(): IViewField[] {
         const { draggableFieldState } = this;
-        const state = toJS(draggableFieldState);
+        const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
             .forEach((dkey) => {
-                fields.push(...state[dkey].filter((f) => f.analyticType === "dimension"));
+                fields.push(...state[dkey].filter((f) => f.analyticType === 'dimension'));
             });
         return fields;
     }
@@ -286,12 +301,12 @@ export class VizSpecStore {
      */
     public get viewMeasures(): IViewField[] {
         const { draggableFieldState } = this;
-        const state = toJS(draggableFieldState);
+        const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
             .filter((dkey) => !MetaFieldKeys.includes(dkey))
             .forEach((dkey) => {
-                fields.push(...state[dkey].filter((f) => f.analyticType === "measure"));
+                fields.push(...state[dkey].filter((f) => f.analyticType === 'measure'));
             });
         return fields;
     }
@@ -306,7 +321,6 @@ export class VizSpecStore {
         const state = toJS(draggableFieldState);
         return state.filters;
     }
-
 
     public addVisualization(defaultName?: string) {
         const name = defaultName || 'Chart ' + (this.visList.length + 1);
@@ -326,8 +340,8 @@ export class VizSpecStore {
     public setVisName(visIndex: number, name: string) {
         this.visList[visIndex] = this.visList[visIndex].clone();
         this.visList[visIndex].updateLatest({
-            name
-        })
+            name,
+        });
     }
     public initState() {
         this.useMutable((tab) => {
@@ -339,29 +353,34 @@ export class VizSpecStore {
         const countField = createCountField();
         this.useMutable(({ encodings }) => {
             encodings.dimensions = dataset.rawFields
-                .filter((f) => f.analyticType === "dimension")
+                .filter((f) => f.analyticType === 'dimension')
                 .map((f) => ({
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
                 }));
             encodings.measures = dataset.rawFields
-                .filter((f) => f.analyticType === "measure")
+                .filter((f) => f.analyticType === 'measure')
                 .map((f) => ({
                     dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
+                    basename: f.basename || f.name || f.fid,
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
-                    aggName: "sum",
+                    aggName: 'sum',
                 }));
             encodings.measures.push(countField);
         });
 
         this.freezeHistory();
     }
+    /**
+     * clear all config in draggable state
+     */
     public clearState() {
         this.useMutable(({ encodings }) => {
             for (let key in encodings) {
@@ -374,32 +393,35 @@ export class VizSpecStore {
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
         this.useMutable(({ config }) => {
             switch (true) {
-                case ["defaultAggregated", "defaultStack", "showActions", "interactiveScale", "scaleIncludeUnmatchedChoropleth"].includes(configKey): {
+                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth'].includes(configKey): {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
-                case configKey === "geoms" && Array.isArray(value):
+                case configKey === 'geoms' && Array.isArray(value):
                 case configKey === "coordSystem":
-                case configKey === "size" && typeof value === "object":
-                case configKey === "sorted":
-                case configKey === "zeroScale":
-                case configKey === "stack": {
+                case configKey === 'size' && typeof value === 'object':
+                case configKey === 'sorted':
+                case configKey === 'zeroScale':
+                case configKey === 'background':
+                case configKey === 'resolve':
+                case configKey === 'limit':
+                case configKey === 'stack': {
                     return (config[configKey] = value);
                 }
-                case configKey === 'format' && typeof value === "object": {
-                    return config[configKey] = value
+                case configKey === 'format' && typeof value === 'object': {
+                    return (config[configKey] = value);
                 }
 
                 default: {
-                    console.error("[unknown key] " + configKey + " You should registered visualConfig at setVisualConfig");
+                    console.error('[unknown key] ' + configKey + ' You should registered visualConfig at setVisualConfig');
                 }
             }
         });
     }
-    public transformCoord(coord: "cartesian" | "polar") {
-        if (coord === "polar") {
+    public transformCoord(coord: 'cartesian' | 'polar') {
+        if (coord === 'polar') {
         }
     }
-    public setChartLayout(props: { mode: IVisualConfig["size"]["mode"]; width?: number; height?: number }) {
+    public setChartLayout(props: { mode: IVisualConfig['size']['mode']; width?: number; height?: number }) {
         this.useMutable(({ config }) => {
             const { mode = config.size.mode, width = config.size.width, height = config.size.height } = props;
 
@@ -418,15 +440,10 @@ export class VizSpecStore {
             fields.splice(destinationIndex, 0, field);
         });
     }
-    public moveField(
-        sourceKey: keyof DraggableFieldState,
-        sourceIndex: number,
-        destinationKey: keyof DraggableFieldState,
-        destinationIndex: number
-    ) {
-        if (sourceKey === "filters") {
+    public moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
+        if (sourceKey === 'filters') {
             return this.removeField(sourceKey, sourceIndex);
-        } else if (destinationKey === "filters") {
+        } else if (destinationKey === 'filters') {
             return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
         }
 
@@ -446,7 +463,7 @@ export class VizSpecStore {
             if (MetaFieldKeys.includes(destinationKey)) {
                 if (!MetaFieldKeys.includes(sourceKey)) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
-                movingField.analyticType = destinationKey === "dimensions" ? "dimension" : "measure";
+                movingField.analyticType = destinationKey === 'dimensions' ? 'dimension' : 'measure';
             }
             const limitSize = getChannelSizeLimit(destinationKey);
             const fixedDestinationIndex = Math.min(destinationIndex, limitSize - 1);
@@ -464,10 +481,7 @@ export class VizSpecStore {
     }
     public replaceField(sourceKey: keyof DraggableFieldState, sourceIndex: number, fid: string) {
         if (MetaFieldKeys.includes(sourceKey)) return;
-        const enteringField = [
-            ...this.draggableFieldState.dimensions,
-            ...this.draggableFieldState.measures
-        ].find(which => which.fid === fid);
+        const enteringField = [...this.draggableFieldState.dimensions, ...this.draggableFieldState.measures].find((which) => which.fid === fid);
         if (!enteringField) {
             return;
         }
@@ -510,16 +524,23 @@ export class VizSpecStore {
             encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount') {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount'): string {
+        const newVarKey = uniqueId();
+        const state = this.draggableFieldState;
+        const existedRelatedBinField = state.dimensions.find(
+            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid
+        );
+        if (existedRelatedBinField) {
+            return existedRelatedBinField.fid;
+        }
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
-            const newVarKey = uniqueId();
             const binField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
                 name: `${binType}(${originField.name})`,
-                semanticType: "ordinal",
-                analyticType: "dimension",
+                semanticType: 'ordinal',
+                analyticType: 'dimension',
                 computed: true,
                 expression: {
                     op: binType,
@@ -527,16 +548,17 @@ export class VizSpecStore {
                     params: [
                         {
                             type: 'field',
-                            value: originField.fid
-                        }
-                    ]
-                }
+                            value: originField.fid,
+                        },
+                    ],
+                },
             };
             encodings.dimensions.push(binField);
         });
+        return newVarKey;
     }
     public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
-        if (stateKey === "filters") {
+        if (stateKey === 'filters') {
             return;
         }
 
@@ -547,7 +569,7 @@ export class VizSpecStore {
                 fid: newVarKey,
                 dragId: newVarKey,
                 name: `${scaleType}(${originField.name})`,
-                semanticType: "quantitative",
+                semanticType: 'quantitative',
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
@@ -557,10 +579,10 @@ export class VizSpecStore {
                     params: [
                         {
                             type: 'field',
-                            value: originField.fid
-                        }
-                    ]
-                }
+                            value: originField.fid,
+                        },
+                    ],
+                },
             };
             encodings[stateKey].push(logField);
         });
@@ -578,74 +600,150 @@ export class VizSpecStore {
         const { rows, columns } = this.draggableFieldState;
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;
         const xField = columns.length > 0 ? columns[columns.length - 1] : null;
-        if (
-            xField !== null &&
-            xField.analyticType === "dimension" &&
-            yField !== null &&
-            yField.analyticType === "measure"
-        ) {
+        if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
             return true;
         }
-        if (
-            xField !== null &&
-            xField.analyticType === "measure" &&
-            yField !== null &&
-            yField.analyticType === "dimension"
-        ) {
+        if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
             return true;
         }
         return false;
     }
-    public setFieldSort(
-        stateKey: keyof DraggableFieldState,
-        index: number,
-        sortType: "none" | "ascending" | "descending"
-    ) {
+    public setFieldSort(stateKey: keyof DraggableFieldState, index: number, sortType: ISortMode) {
         this.useMutable(({ encodings }) => {
             encodings[stateKey][index].sort = sortType;
         });
     }
-    public applyDefaultSort(sortType: "none" | "ascending" | "descending" = "ascending") {
+    public applyDefaultSort(sortType: ISortMode = 'ascending') {
         this.useMutable(({ encodings }) => {
             const { rows, columns } = encodings;
             const yField = rows.length > 0 ? rows[rows.length - 1] : null;
             const xField = columns.length > 0 ? columns[columns.length - 1] : null;
 
-            if (
-                xField !== null &&
-                xField.analyticType === "dimension" &&
-                yField !== null &&
-                yField.analyticType === "measure"
-            ) {
+            if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
                 encodings.columns[columns.length - 1].sort = sortType;
                 return;
             }
-            if (
-                xField !== null &&
-                xField.analyticType === "measure" &&
-                yField !== null &&
-                yField.analyticType === "dimension"
-            ) {
+            if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
                 encodings.rows[rows.length - 1].sort = sortType;
                 return;
             }
         });
     }
-    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined) {
+    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
         if (MetaFieldKeys.includes(destinationKey)) return;
-        if (typeof field === "undefined") return;
-        if (destinationKey === "filters") {
+        if (typeof field === 'undefined') return;
+        if (destinationKey === 'filters') {
             return;
         }
 
         this.useMutable(({ encodings }) => {
-            const cloneField = { ...toJS(field) };
+            const cloneField = { ...toJS(field), ...overrideAttr };
             cloneField.dragId = uniqueId();
             encodings[destinationKey].push(cloneField);
         });
     }
-    public setVizFormatConfig (formatKey: keyof IVisualConfig['format'], value?: string) {
-        this.visualConfig[formatKey] = value
+    public setVizFormatConfig(formatKey: keyof IVisualConfig['format'], value?: string) {
+        this.visualConfig[formatKey] = value;
+    }
+    public renderVLSubset(vlStruct: any) {
+        const tab = this.visList[this.visIndex];
+        this.clearState();
+        this.setVisualConfig('defaultAggregated', false);
+        this.setVisualConfig('stack', 'stack');
+        // this.setVisualConfig('sorted', 'none')
+        this.applyDefaultSort('none');
+
+        if (!tab) return;
+        const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
+        const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
+        const renderVLFacet = (vlFacet) => {
+            if (vlFacet.facet) {
+                this.appendField('rows', fields.find((f) => f.fid === vlFacet.facet.field) || countField, { analyticType: 'dimension' });
+            }
+            if (vlFacet.row) {
+                this.appendField('rows', fields.find((f) => f.fid === vlFacet.row.field) || countField, { analyticType: 'dimension' });
+            }
+            if (vlFacet.column) {
+                this.appendField('columns', fields.find((f) => f.fid === vlFacet.column.field) || countField, { analyticType: 'dimension' });
+            }
+        };
+        const isValidAggregate = (aggName) => aggName && ['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev'].includes(aggName);
+        const renderVLSpec = (vlSpec) => {
+            if (typeof vlSpec.mark === 'string') {
+                this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark)]);
+            } else {
+                this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark.type)]);
+            }
+            if (vlSpec.encoding.x) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
+                this.appendField('columns', field, { analyticType: 'dimension' });
+                if (isValidAggregate(vlSpec.encoding.x.aggregate) || field === countField) {
+                    this.setVisualConfig('defaultAggregated', true);
+                    this.setFieldAggregator('columns', this.draggableFieldState.columns.length - 1, vlSpec.encoding.x.aggregate);
+                }
+                if (vlSpec.encoding.x.bin) {
+                    const binFid = this.createBinField('columns', this.draggableFieldState.columns.length - 1, 'bin');
+                    this.replaceField('columns', this.draggableFieldState.columns.length - 1, binFid);
+                }
+                if (vlSpec.encoding.x.stack) {
+                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.x.stack));
+                }
+            }
+            if (vlSpec.encoding.y) {
+                const field = fields.find((f) => f.fid === vlSpec.encoding.y.field) || countField;
+                this.appendField('rows', field, { analyticType: 'measure' });
+                if (isValidAggregate(vlSpec.encoding.y.aggregate) || field === countField) {
+                    this.setVisualConfig('defaultAggregated', true);
+                    this.setFieldAggregator('rows', this.draggableFieldState.rows.length - 1, vlSpec.encoding.y.aggregate);
+                }
+                if (vlSpec.encoding.y.bin) {
+                    const binFid = this.createBinField('rows', this.draggableFieldState.rows.length - 1, 'bin');
+                    this.replaceField('rows', this.draggableFieldState.rows.length - 1, binFid);
+                }
+                if (vlSpec.encoding.y.stack) {
+                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.y.stack));
+                }
+            }
+
+            (['color', 'opacity', 'shape', 'size', 'details', 'theta', 'text', 'radius'] as (keyof DraggableFieldState)[]).forEach((ch) => {
+                if (vlSpec.encoding[ch]) {
+                    const field = fields.find((f) => f.fid === vlSpec.encoding[ch].field) || countField;
+                    this.appendField(
+                        ch,
+                        field,
+                        field !== countField && ['color', 'opacity', 'size', 'radius'].includes(ch)
+                            ? { analyticType: 'dimension' }
+                            : field === countField || ['theta'].includes(ch)
+                            ? { analyticType: 'measure' }
+                            : {}
+                    );
+                    const aggregate = isValidAggregate(vlSpec.encoding[ch].aggregate);
+                    if ((['theta', 'radius'].includes(ch) && aggregate) || field === countField) {
+                        this.setVisualConfig('defaultAggregated', true);
+                        if (aggregate) {
+                            this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
+                        }
+                    }
+                }
+            });
+            ['x', 'y', 'facet'].forEach((ch) => {
+                if (vlSpec.encoding[ch] && vlSpec.encoding[ch].sort) {
+                    this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort));
+                }
+            });
+            if (vlSpec.encoding.order && vlSpec.encoding.order.sort) {
+                this.applyDefaultSort(sortValueTransform(vlSpec.encoding.order.sort));
+            }
+        };
+        if (vlStruct.encoding && vlStruct.mark) {
+            renderVLFacet(vlStruct.encoding);
+            renderVLSpec(vlStruct);
+        } else if (vlStruct.spec) {
+            if (vlStruct.facet) {
+                renderVLFacet(vlStruct.facet);
+            }
+            renderVLSpec(vlStruct.spec);
+        }
     }
     public renderSpec(spec: Specification) {
         const tab = this.visList[this.visIndex];
@@ -658,7 +756,7 @@ export class VizSpecStore {
             this.setVisualConfig('defaultAggregated', Boolean(spec.aggregate));
             if ((spec.geomType?.length ?? 0) > 0) {
                 this.setVisualConfig(
-                    "geoms",
+                    'geoms',
                     spec.geomType!.map((g) => geomAdapter(g))
                 );
             }
@@ -666,7 +764,7 @@ export class VizSpecStore {
                 const facets = (spec.facets || []).concat(spec.highFacets || []);
                 for (let facet of facets) {
                     this.appendField(
-                        "rows",
+                        'rows',
                         fields.find((f) => f.fid === facet)
                     );
                 }
@@ -675,30 +773,30 @@ export class VizSpecStore {
                 const [cols, rows] = spec.position;
                 if (cols)
                     this.appendField(
-                        "columns",
+                        'columns',
                         fields.find((f) => f.fid === cols)
                     );
                 if (rows)
                     this.appendField(
-                        "rows",
+                        'rows',
                         fields.find((f) => f.fid === rows)
                     );
             }
             if ((spec.color?.length ?? 0) > 0) {
                 this.appendField(
-                    "color",
+                    'color',
                     fields.find((f) => f.fid === spec.color![0])
                 );
             }
             if ((spec.size?.length ?? 0) > 0) {
                 this.appendField(
-                    "size",
+                    'size',
                     fields.find((f) => f.fid === spec.size![0])
                 );
             }
             if ((spec.opacity?.length ?? 0) > 0) {
                 this.appendField(
-                    "opacity",
+                    'opacity',
                     fields.find((f) => f.fid === spec.opacity![0])
                 );
             }
@@ -714,15 +812,15 @@ export class VizSpecStore {
         return stringifyGWContent({
             datasets: toJS(this.commonStore.datasets),
             dataSources: this.commonStore.dataSources,
-            specList: pureVisList,
+            specList: this.visSpecEncoder(pureVisList),
         });
     }
     public exportViewSpec() {
         const pureVisList = dumpsGWPureSpec(this.visList);
-        return pureVisList
+        return this.visSpecEncoder(pureVisList);
     }
-    public importStoInfo (stoInfo: IStoInfo) {
-        this.visList = parseGWPureSpec(forwardVisualConfigs(stoInfo.specList));
+    public importStoInfo(stoInfo: IStoInfo) {
+        this.visList = parseGWPureSpec(visSpecDecoder(forwardVisualConfigs(stoInfo.specList)));
         this.visIndex = 0;
         this.commonStore.datasets = stoInfo.datasets;
         this.commonStore.dataSources = stoInfo.dataSources;
@@ -732,6 +830,7 @@ export class VizSpecStore {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
     }
+    
     public setGeographicData(data: IGeographicData, geoKey: string) {
         const geoJSON = data.type === 'GeoJSON' ? data.data : feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection;
         if (!('features' in geoJSON)) {
@@ -747,5 +846,65 @@ export class VizSpecStore {
         this.useMutable(({ config }) => {
             config.geoKey = key;
         });
+    }
+
+    private visSpecEncoder(visList: IVisSpec[]): IVisSpecForExport[] {
+        const updatedVisList = visList.map((visSpec) => {
+            const updatedFilters = visSpec.encodings.filters.map((filter) => {
+                if (filter.rule?.type === 'one of') {
+                    const rule = {
+                        ...filter.rule,
+                        value: Array.from(filter.rule.value),
+                    };
+                    return {
+                        ...filter,
+                        rule,
+                    };
+                }
+                return filter as IFilterFieldForExport;
+            });
+            return {
+                ...visSpec,
+                encodings: {
+                    ...visSpec.encodings,
+                    filters: updatedFilters,
+                },
+            };
+        });
+        return updatedVisList;
+    }
+    public get limit() {
+        return this.visualConfig.limit;
+    }
+
+    public setLimit(value: number) {
+        this.setVisualConfig('limit', value);
+    }
+
+    public get sort() {
+        const { rows, columns } = this.draggableFieldState;
+        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+            return rows[rows.length - 1].sort || 'none';
+        }
+        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+            return columns[columns.length - 1].sort || 'none';
+        }
+        return 'none';
+    }
+
+    public getWorkflow() {
+        return toWorkflow(
+            this.viewFilters,
+            this.allFields,
+            this.viewDimensions,
+            this.viewMeasures,
+            this.visualConfig.defaultAggregated,
+            this.sort,
+            this.limit > 0 ? this.limit : undefined
+        );
+    }
+
+    public setComputationFunction(f: IComputationFunction) {
+        this.computationFuction = f;
     }
 }

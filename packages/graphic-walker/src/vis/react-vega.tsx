@@ -4,10 +4,9 @@ import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
-
+import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
-import { useTranslation } from 'react-i18next';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
@@ -29,7 +28,7 @@ interface ReactVegaProps {
   name?: string;
   rows: Readonly<IViewField[]>;
   columns: Readonly<IViewField[]>;
-  dataSource: IRow[];
+  dataSource: readonly IRow[];
   defaultAggregate?: boolean;
   stack: IStackMode;
   interactiveScale: boolean;
@@ -48,6 +47,8 @@ interface ReactVegaProps {
   height: number;
   onGeomClick?: (values: any, e: any) => void
   vegaConfig: VegaGlobalConfig;
+  /** @default "en-US" */
+  locale?: string;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -100,9 +101,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     // dark = 'media',
     vegaConfig,
     // format
+    locale = 'en-US',
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  const { i18n } = useTranslation();
   // const mediaTheme = useCurrentMediaTheme(dark);
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
@@ -221,8 +222,22 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.encoding = singleView.encoding;
       }
 
+      spec.resolve ||= {};
+      // @ts-ignore
+      let resolve = vegaConfig.resolve;
+      for (let v in resolve) {
+          let value = resolve[v] ? 'independent' : 'shared';
+          // @ts-ignore
+          spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
+          if((PositionChannelConfigList as string[]).includes(v)) {
+              spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
+          }else if((NonPositionChannelConfigList as string[]).includes(v)){
+              spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
+          }
+      }
+      
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
           vegaRefs.current = [{
@@ -301,7 +316,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(i18n.language), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
               vegaRefs.current[id] = {

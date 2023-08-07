@@ -1,12 +1,11 @@
-import { IField, IRow } from "../interfaces";
+import { ITransformWorkflowStep, IRow, IExpression } from "../interfaces";
 import { dataframe2Dataset, dataset2DataFrame, execExpression } from "../lib/execExp";
 
-export function transformData(data: IRow[], columns: IField[]) {
-    const computedFields = columns.filter((f) => f.computed);
-    let df = dataset2DataFrame(data, columns);
-    for (let i = 0; i < computedFields.length; i++) {
-        const field = computedFields[i];
-        df = execExpression(field.expression!, df, columns);
+export function transformData(data: IRow[], trans: { key: string, expression: IExpression }[]) {
+    let df = dataset2DataFrame(data);
+    for (let i = 0; i < trans.length; i++) {
+        const field = trans[i];
+        df = execExpression(field.expression, df);
     }
-    return dataframe2Dataset(df, columns);
+    return dataframe2Dataset(df);
 }

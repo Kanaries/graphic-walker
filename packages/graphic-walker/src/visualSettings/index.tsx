@@ -23,6 +23,7 @@ import {
     GlobeAltIcon,
     RectangleGroupIcon,
     GlobeAmericasIcon,
+    HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -37,7 +38,9 @@ import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
 import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
-import KanariesLogo from '../assets/kanaries-logo.svg';
+import KanariesLogo from '../assets/kanaries.png';
+import { ImageWithFallback } from '../components/timeoutImg';
+import LimitSetting from '../components/limitSetting';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -76,7 +79,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     exclude = [],
 }) => {
     const { vizStore, commonStore } = useGlobalStore();
-    const { visualConfig, canUndo, canRedo } = vizStore;
+    const { visualConfig, canUndo, canRedo, limit } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -106,30 +109,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({
 
     const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
 
-    console.log('kanaries logo', KanariesLogo);
-
     const items = useMemo<ToolbarItemProps[]>(() => {
         const builtInItems = [
-            {
-                key: 'kanaries',
-                label: 'kanaries',
-                icon: () => (
-                    // Kanaries brand info is not allowed to be removed or changed unless you are granted with special permission.
-                    <a href="https://kanaries.net" target="_blank">
-                        <img
-                            id="kanaries-logo"
-                            className="m-1"
-                            src="https://imagedelivery.net/tSvh1MGEu9IgUanmf58srQ/b6bc899f-a129-4c3a-d08f-d406166d0c00/public"
-                            alt="kanaries"
-                            onError={(e) => {
-                                // @ts-ignore
-                                e.target.src = KanariesLogo;
-                            }}
-                        />
-                    </a>
-                ),
-            },
-            '-',
             {
                 key: 'undo',
                 label: 'undo (Ctrl + Z)',
@@ -392,6 +373,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         none: XMarkIcon,
                         stack: ChevronDoubleUpIcon,
                         normalize: ArrowsUpDownIcon,
+                        center: ChevronUpDownIcon, // TODO: fix unsafe extends
                     }[g],
                 })),
                 value: stack,
@@ -547,13 +529,44 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     commonStore.setShowCodeExportPanel(true);
                 },
             },
+            ...(extra.length === 0 ? [] : ['-', ...extra]),
+            '-',
+            {
+                key: 'limit_axis',
+                label: t('limit'),
+                icon: HashtagIcon,
+                form: (
+                    <FormContainer>
+                        <LimitSetting
+                            value={limit}
+                            setValue={(v) => {
+                                vizStore.setLimit(v);
+                            }}
+                        />
+                    </FormContainer>
+                ),
+            },
+            '-',
+            {
+                key: 'kanaries',
+                label: 'kanaries',
+                icon: () => (
+                    // Kanaries brand info is not allowed to be removed or changed unless you are granted with special permission.
+                    <a href="https://docs.kanaries.net" target="_blank">
+                        <ImageWithFallback
+                            id="kanaries-logo"
+                            className="p-1.5 opacity-70 hover:opacity-100"
+                            src="https://imagedelivery.net/tSvh1MGEu9IgUanmf58srQ/b6bc899f-a129-4c3a-d08f-d406166d0c00/public"
+                            fallbackSrc={KanariesLogo}
+                            timeout={1000}
+                            alt="kanaries"
+                        />
+                    </a>
+                ),
+            },
         ].filter(Boolean) as ToolbarItemProps[];
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
-
-        if (extra.length > 0) {
-            items.push('-', ...extra);
-        }
 
         return items;
     }, [
@@ -574,6 +587,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         dark,
         extra,
         exclude,
+        limit,
     ]);
 
     return (

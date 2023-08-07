@@ -1,13 +1,21 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import type { IFilterField, IFilterRule } from '../../interfaces';
+import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField } from '../../interfaces';
 import { useGlobalStore } from '../../store';
+import LoadingLayer from '../../components/loadingLayer';
+import { useComputationFunc, useRenderer } from '../../renderer/hooks';
+import { fieldStatServer } from '../../computation/serverComputation';
 import Slider from './slider';
+import {
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 
 export type RuleFormProps = {
+    dataset: DataSet;
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
 };
@@ -23,15 +31,15 @@ const Container = styled.div`
         > * {
             margin-inline-start: 0.6em;
 
-            &:first-child: {
+            &:first-child {
                 margin-inline-start: 0;
-            },
-        },
-    },
+            }
+        }
+    }
 `;
 
 export const Button = styled.button`
-    :hover: {
+    :hover {
         background-color: rgba(243, 244, 246, 0.5);
     };
     color: rgb(55, 65, 81);
@@ -95,7 +103,7 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{currentNum: number; totalNum: number; onChange: () => void}> = props => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void }> = props => {
     const { currentNum, totalNum, onChange } = props;
     const checkboxRef = useRef(null);
 
@@ -123,58 +131,120 @@ const StatusCheckbox: React.FC<{currentNum: number; totalNum: number; onChange: 
     )
 }
 
+type FieldDistributionEntry = IFieldStats['values'][number];
+
+const defaultValueComparator = (a: any, b: any) => {
+    if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
+    } else {
+        return String(a).localeCompare(String(b))
+    }
+};
+
+const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
+    return a.count - b.count;
+};
+
+const useFieldStats = (
+    field: IField,
+    attributes: { values: boolean; range: boolean },
+    sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none'
+): IFieldStats | null => {    
+    const { values, range } = attributes;
+    const { fid, cmp = defaultValueComparator } = field;
+    const valueCmp = React.useCallback<typeof countCmp>((a, b) => {
+        return cmp(a.value, b.value);
+    }, [cmp]);
+    const comparator = sortBy === "none" ? null : sortBy.startsWith("value") ? valueCmp : countCmp;
+    const sortMulti = sortBy.endsWith("dsc") ? -1 : 1;
+    const [loading, setLoading] = React.useState(true);
+    const [stats, setStats] = React.useState<IFieldStats | null>(null);
+    const computationFunction = useComputationFunc();
+
+    React.useEffect(() => {
+        setLoading(true);
+        let isCancelled = false;
+        fieldStatServer(computationFunction, fid, { values, range }).then(stats => {
+            if (isCancelled) {
+                return;
+            }
+            setStats(stats);
+            setLoading(false);
+        }).catch(reason => {
+            console.warn(reason);
+            if (isCancelled) {
+                return;
+            }
+            setStats(null);
+            setLoading(false);
+        });
+        return () => {
+            isCancelled = true;
+        };
+    }, [fid, computationFunction, values, range]);
+
+    const sortedStats = React.useMemo<typeof stats>(() => {
+        if (!stats || !comparator) {
+            return stats;
+        }
+        const copy = { ...stats };
+        copy.values = copy.values.slice().sort((a,b) => sortMulti * comparator(a,b));
+        return copy;
+    }, [stats, comparator, sortMulti]);
+
+    return loading ? null : sortedStats;
+};
+
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
     active,
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
 
-    const count = React.useMemo(() => {
-        return dataSource.reduce<Map<string | number, number>>((tmp, d) => {
-            const val = d[field.fid];
-
-            tmp.set(val, (tmp.get(val) ?? 0) + 1);
-            
-            return tmp;
-        }, new Map<string | number, number>());
-    }, [dataSource, field]);
+    interface SortConfig {
+        key: 'value' | 'count';
+        ascending: boolean;
+    }
+    const [sortConfig, setSortConfig] = useState<SortConfig>({
+        key: "count",
+        ascending: true
+    });
 
     const { t } = useTranslation('translation');
 
+    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
+    const count = stats?.values;
+
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'one of') {
+        if (count && active && field.rule?.type !== 'one of') {
             onChange({
                 type: 'one of',
-                value: new Set<string | number>(count.keys()),
+                value: new Set<string | number>(count.map(item => item.value)),
             });
         }
     }, [active, onChange, field, count]);
 
     const handleToggleFullOrEmptySet = () => {
-        if (!field.rule || field.rule.type !== 'one of') return;
+        if (!field.rule || field.rule.type !== 'one of' || !count) return;
         const curSet = field.rule.value;
         onChange({
             type: 'one of',
             value: new Set<number | string>(
-                curSet.size === count.size
-                    ? []
-                    : count.keys()
+                curSet.size === count.length ? [] : count.map(c => c.value)
             ),
         });
     }
     const handleToggleReverseSet = () => {
-        if (!field.rule || field.rule.type !== 'one of') return;
+        if (!field.rule || field.rule.type !== 'one of' || !count) return;
         const curSet = field.rule.value;
         onChange({
             type: 'one of',
             value: new Set<number | string>(
-                [...count.keys()].filter(key => !curSet.has(key))
+                count.map(c => c.value).filter(key => !curSet.has(key))
             ),
-        });    
+        });
     }
-    const handleSelectValue = (value, checked) => {
+    const handleSelectValue = (value: any, checked: boolean) => {
         if (!field.rule || field.rule?.type !== 'one of') return;
         const rule: IFilterRule = {
             type: 'one of',
@@ -187,54 +257,82 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         }
         onChange(rule);
     }
-    
+
     const selectedValueSum = useMemo(() => {
-        if (!field.rule) return 0;
+        if (!field.rule?.value || !count) return 0;
         return [...field.rule.value].reduce<number>((sum, key) => {
-            const s = dataSource.filter(which => which[field.fid] === key).length;
+            const s = count.find(c => c.value === key)?.count || 0;
             return sum + s;
         }, 0)
-    }, [field.rule?.value])
+    }, [field.rule?.value, count, field.fid]);
+
+    if (!stats) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
+
+    const SortButton: React.FC<{ currentKey: SortConfig["key"] }> = ({ currentKey }) => {
+        const isCurrentKey = sortConfig.key === currentKey;
+        return (
+            <span
+                className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${isCurrentKey ? "text-indigo-600" : "text-gray-500"}`}
+                onClick={() => setSortConfig({ key: currentKey, ascending: (isCurrentKey ? !sortConfig.ascending : true) })}
+            >
+                {isCurrentKey && !sortConfig.ascending
+                    ? <ChevronDownIcon className="h-4 w-4" />
+                    : <ChevronUpIcon className="h-4 w-4" />
+                }
+            </span>
+        );
+    }
 
     return field.rule?.type === 'one of' ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
-            <div className="text-gray-500">{t('constant.filter_type.one_of_desc')}</div>
+            <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
                 <Button
+                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
                     onClick={() => handleToggleFullOrEmptySet()}
+                    disabled={!count}
                 >
                     {
-                        field.rule.value.size === count.size
+                        field.rule.value.size === count?.length
                             ? t('filters.btn.unselect_all')
                             : t('filters.btn.select_all')
                     }
                 </Button>
                 <Button
+                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
                     onClick={() => handleToggleReverseSet()}
                 >
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
-            <Table className="bg-slate-50">
+            <Table className="bg-slate-50 dark:bg-gray-800">
                 <div className="flex justify-center items-center">
                     <StatusCheckbox
                         currentNum={field.rule.value.size}
-                        totalNum={count.size}
+                        totalNum={count?.length ?? 0}
                         onChange={handleToggleFullOrEmptySet}
                     />
                 </div>
-                <label className="header text-gray-500">
+                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                     {t('filters.header.value')}
+                    <SortButton currentKey="value" />
                 </label>
-                <label className="header text-gray-500">
+                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                     {t('filters.header.count')}
+                    <SortButton currentKey="count" />
                 </label>
             </Table>
             {/* <hr /> */}
             <Table>
                 {
-                    [...count.entries()].map(([value, count], idx) => {
+                    count?.map(({ value, count }, idx) => {
                         const id = `rule_checkbox_${idx}`;
 
                         return (
@@ -290,17 +388,19 @@ interface CalendarInputProps {
 const CalendarInput: React.FC<CalendarInputProps> = props => {
     const { min, max, value, onChange } = props;
     const dateStringFormatter = (timestamp: number) => {
-        return new Date(timestamp).toISOString().slice(0, 19);
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 19);
     }
-    const handleSubmitDate = (value) => {
+    const handleSubmitDate = (value: string) => {
         if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
             onChange(new Date(value).getTime())
         }
     }
     return (
         <input
-            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            type="datetime-local" 
+            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            type="datetime-local"
             min={dateStringFormatter(min)}
             max={dateStringFormatter(max)}
             defaultValue={dateStringFormatter(value)}
@@ -309,41 +409,81 @@ const CalendarInput: React.FC<CalendarInputProps> = props => {
     )
 }
 
+const emptyFilters = [] as const;
+
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
+    dataset,
     active,
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
+    const { rawFields } = dataset;
 
     const { t } = useTranslation('translation');
 
+    const fields = useMemo(() => {
+        return rawFields.map<Omit<IViewField, 'dragId'>>(f => ({
+            ...f,
+            name: f.name || f.fid,
+        }));
+    }, [rawFields]);
+
+    const viewDimensions = useMemo(() => {
+        return field.analyticType === 'dimension' ? [field] : [];
+    }, [field]);
+
+    const viewMeasures = useMemo(() => {
+        return field.analyticType === 'measure' ? [field] : [];
+    }, [field]);
+
+    const computationFunction = useComputationFunc();
+
+    const { viewData, loading } = useRenderer({
+        allFields: fields,
+        viewDimensions,
+        viewMeasures,
+        filters: emptyFilters,
+        defaultAggregated: false,
+        computationFunction,
+        limit: 1000,
+        sort: 'none',
+    });
+
     const sorted = React.useMemo(() => {
-        return dataSource.reduce<number[]>((list, d) => {
+        return viewData.reduce<number[]>((list, d) => {
             try {
                 const time = new Date(d[field.fid]).getTime();
 
                 list.push(time);
             } catch (error) {
-                
+
             }
             return list;
         }, []).sort((a, b) => a - b);
-    }, [dataSource, field]);
+    }, [viewData, field.fid]);
 
-    const [min, max] = React.useMemo(() => {
-        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)];
+    const [min, max, loaded] = React.useMemo<[min: number, max: number, loaded: boolean]>(() => {
+        if (!sorted.length) return [0, 0, false];
+        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0), true];
     }, [sorted]);
 
     React.useEffect(() => {
         if (active && field.rule?.type !== 'temporal range') {
             onChange({
                 type: 'temporal range',
-                value: [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)],
+                value: [min, max],
             });
         }
-    }, [onChange, field, sorted, active]);
+    }, [onChange, field, min, max, active]);
+
+    React.useEffect(() => {
+        if (active && loaded && field.rule?.type === 'temporal range' && field.rule.value[0] !== min && field.rule.value[1] !== max) {
+            onChange({
+                type: 'temporal range',
+                value: [min, max],
+            });
+        }
+    }, [field.rule, min, max, active, loaded]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -351,6 +491,14 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
             value,
         });
     }, []);
+
+    if (loading) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
 
     return field.rule?.type === 'temporal range' ? (
         <Container className="overflow-visible">
@@ -385,27 +533,19 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
     field,
     onChange,
 }) => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset: { dataSource } } = commonStore;
-
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
-    const sorted = React.useMemo(() => {
-        return dataSource.map(d => d[field.fid]).sort((a, b) => a - b);
-    }, [dataSource, field]);
-
-    const [min, max] = React.useMemo(() => {
-        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0)];
-    }, [sorted]);
+    const stats = useFieldStats(field, { values: false, range: true }, 'none');
+    const range = stats?.range;
 
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'range') {
+        if (range && active && field.rule?.type !== 'range') {
             onChange({
                 type: 'range',
-                value: [min, max],
+                value: range,
             });
         }
-    }, [onChange, field, min, max, active]);
+    }, [onChange, field, range, active]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -414,13 +554,21 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
         });
     }, []);
 
+    if (!range) {
+        return (
+            <div className="h-24 w-full relative">
+                <LoadingLayer />
+            </div>
+        );
+    }
+
     return field.rule?.type === 'range' ? (
         <Container>
             <div>{t('range')}</div>
             <div className="text-gray-500">{t('range_desc')}</div>
             <Slider
-                min={min}
-                max={max}
+                min={range[0]}
+                max={range[1]}
                 value={field.rule.value}
                 onChange={handleChange}
             />
@@ -454,8 +602,9 @@ export interface TabsProps extends RuleFormProps {
 }
 
 const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const { draggableFieldState } = vizStore;
+    const { currentDataset } = commonStore;
 
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
@@ -463,7 +612,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
     React.useEffect(() => {
         if (!tabs.includes(which)) setWhich(tabs[0]);
     }, [tabs])
-    
+
     return (
         <TabsContainer>
             <div>
@@ -472,13 +621,13 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                         return (
                             <div className="flex my-2" key={option}>
                                 <div className="align-top">
-                                    <input 
+                                    <input
                                         type="radio"
                                         className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
                                         id={option}
                                         checked={option === which}
                                         onChange={e => setWhich((e.target as HTMLInputElement).value as typeof which)}
-                                        name="filter_type" 
+                                        name="filter_type"
                                         value={option}
                                     />
                                 </div>
@@ -495,7 +644,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                     })
                 }
             </div>
-            <hr className="my-0.5"/>
+            <hr className="my-0.5" />
             <TabPanel>
                 {
                     tabs.map((tab, i) => {
@@ -514,6 +663,7 @@ const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
                                     field={field}
                                     onChange={onChange}
                                     active={which === tab}
+                                    dataset={currentDataset}
                                 />
                             </TabItem>
                         );

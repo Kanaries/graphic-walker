@@ -1,4 +1,4 @@
-export const DemoDataAssets = process.env.NODE_ENV === 'production' ? {
+export const DemoDataAssets = true ? {
     CARS: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-cars-service.json",
     STUDENTS: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-students-service.json",
     BTC_GOLD: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds_btc_gold_service.json",

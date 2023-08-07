@@ -1,43 +1,59 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction } from '../interfaces';
+import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
 import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
-import { initEncoding, initVisualConfig } from '../store/visualSpecStore';
+import { initEncoding } from '../store/visualSpecStore';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
+import { initVisualConfig } from '../utils/save';
 
 interface RendererProps {
     themeKey?: IThemeKey;
     dark?: IDarkMode;
+    computationFunction: IComputationFunction;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark } = props;
+    const { themeKey, dark, computationFunction } = props;
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewFilters, viewDimensions, viewMeasures, visualConfig, draggableFieldState, visList, visIndex } = vizStore;
+    const {
+        allFields,
+        viewFilters,
+        viewDimensions,
+        viewMeasures,
+        visualConfig,
+        draggableFieldState,
+        visList,
+        visIndex,
+        sort,
+        limit,
+    } = vizStore;
     const chart = visList[visIndex];
-    const { currentDataset } = commonStore;
-    const { dataSource } = currentDataset;
+
+    const { i18n } = useTranslation();
 
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const { viewData: data, loading: waiting } = useRenderer({
-        data: dataSource,
         allFields,
         viewDimensions,
         viewMeasures,
         filters: viewFilters,
         defaultAggregated: visualConfig.defaultAggregated,
+        sort,
+        limit: limit,
+        computationFunction,
     });
 
     // Dependencies that should not trigger effect individually
@@ -65,19 +81,16 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     useChartIndexControl({
         count: visList.length,
         index: visIndex,
-        onChange: idx => vizStore.selectVisualization(idx),
+        onChange: (idx) => vizStore.selectVisualization(idx),
     });
 
-    const handleGeomClick = useCallback(
-        (values: any, e: any) => {
-            e.stopPropagation();
-            runInAction(() => {
-                commonStore.showEmbededMenu([e.pageX, e.pageY]);
-                commonStore.setFilters(values);
-            });
-        },
-        []
-    );
+    const handleGeomClick = useCallback((values: any, e: any) => {
+        e.stopPropagation();
+        runInAction(() => {
+            commonStore.showEmbededMenu([e.pageX, e.pageY]);
+            commonStore.setFilters(values);
+        });
+    }, []);
 
     const handleChartResize = useCallback(
         (width: number, height: number) => {
@@ -119,6 +132,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             ref={ref}
             themeKey={themeKey}
             dark={dark}
+            locale={i18n.language}
             draggableFieldState={encodings}
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}
