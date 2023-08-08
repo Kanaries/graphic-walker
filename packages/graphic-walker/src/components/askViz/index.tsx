@@ -3,9 +3,9 @@ import React, { useCallback, useState } from 'react';
 import { useGlobalStore } from '../../store';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
-import { IViewField, IVisSpec } from '../../interfaces';
+import { IViewField } from '../../interfaces';
 import { VisSpecWithHistory } from '../../models/visSpecHistory';
-import { visSpecDecoder } from '../../utils/save';
+import { visSpecDecoder, forwardVisualConfigs } from '../../utils/save';
 
 type VEGALite = any;
 
@@ -52,7 +52,7 @@ const AskViz: React.FC<{api?: string; headers?: Record<string, string>}> = (prop
         setLoading(true);
         vizQuery(props.api ?? api, allFields, query, props.headers ?? {})
             .then((data) => {
-                vizStore.visList.push(new VisSpecWithHistory(visSpecDecoder([data])[0]));
+                vizStore.visList.push(new VisSpecWithHistory(visSpecDecoder(forwardVisualConfigs([data]))[0]));
                 vizStore.selectVisualization(vizStore.visList.length - 1);
                 // const liteGW = parseGW(spec);
                 // vizStore.renderSpec(liteGW);
