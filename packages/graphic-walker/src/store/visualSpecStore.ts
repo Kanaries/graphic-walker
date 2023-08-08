@@ -1,4 +1,4 @@
-import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from 'mobx';
+import { IReactionDisposer, makeAutoObservable, observable, computed, reaction, toJS } from 'mobx';
 import produce from 'immer';
 import {
     DataSet,

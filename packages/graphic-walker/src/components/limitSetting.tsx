@@ -1,8 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDebounceValueBind } from '../hooks';
 
 export default function LimitSetting(props: { value: number; setValue: (v: number) => void }) {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
+    const [innerValue, setInnerValue] = useDebounceValueBind(props.value, v => props.setValue(v));
 
     return (
         <div className=" mt-2">
@@ -10,15 +12,15 @@ export default function LimitSetting(props: { value: number; setValue: (v: numbe
                 className="w-full h-2 bg-blue-100 appearance-none"
                 type="range"
                 name="limit"
-                value={props.value > 0 ? props.value : 0}
+                value={innerValue > 0 ? innerValue : 0}
                 min="1"
                 max="50"
-                disabled={props.value < 0}
+                disabled={innerValue < 0}
                 step="1"
                 onChange={(e) => {
                     const v = parseInt(e.target.value);
                     if (!isNaN(v)) {
-                        props.setValue(v);
+                        setInnerValue(v);
                     }
                 }}
             />
@@ -26,12 +28,12 @@ export default function LimitSetting(props: { value: number; setValue: (v: numbe
                 <input
                     type="checkbox"
                     className="h-4 w-4 mr-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                    checked={props.value > 0}
+                    checked={innerValue > 0}
                     onChange={(e) => {
-                        props.setValue(e.target.checked ? 30 : -1);
+                        setInnerValue(e.target.checked ? 30 : -1);
                     }}
                 ></input>
-                {`${t('limit')}${props.value > 0 ? `: ${props.value}` : ''}`}
+                {`${t('limit')}${innerValue > 0 ? `: ${innerValue}` : ''}`}
             </output>
         </div>
     );
