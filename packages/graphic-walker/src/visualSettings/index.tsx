@@ -22,7 +22,7 @@ import {
     HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { SVGProps, useCallback, useMemo } from 'react';
+import React, { SVGProps, useCallback, useMemo, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
@@ -38,6 +38,7 @@ import KanariesLogo from '../assets/kanaries.png';
 import { ImageWithFallback } from '../components/timeoutImg';
 import LimitSetting from '../components/limitSetting';
 import { runInAction } from 'mobx';
+import { useDebounceValue, useDebounceValueBind } from '../hooks';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -104,6 +105,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     );
 
     const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
+
+    const [innerLimit, setLimit] = useDebounceValueBind(limit, v => vizStore.setLimit(v));
 
     const items = useMemo<ToolbarItemProps[]>(() => {
         const builtInItems = [
@@ -504,9 +507,9 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 form: (
                     <FormContainer>
                         <LimitSetting
-                            value={limit}
+                            value={innerLimit}
                             setValue={(v) => {
-                                vizStore.setLimit(v);
+                                setLimit(v);
                             }}
                         />
                     </FormContainer>
