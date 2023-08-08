@@ -37,7 +37,6 @@ import throttle from '../utils/throttle';
 import KanariesLogo from '../assets/kanaries.png';
 import { ImageWithFallback } from '../components/timeoutImg';
 import LimitSetting from '../components/limitSetting';
-import { runInAction } from 'mobx';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
