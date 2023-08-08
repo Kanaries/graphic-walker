@@ -1,6 +1,7 @@
 import { ArrowsPointingOutIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useDebounceValueBind } from "../hooks";
 
 interface SizeSettingProps {
     onWidthChange: (val: number) => void;
@@ -12,7 +13,8 @@ interface SizeSettingProps {
 export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
     const { onWidthChange, onHeightChange, width, height, children } = props;
     const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.settings.size_setting" });
-
+    const [innerWidth, setInnerWidth] = useDebounceValueBind(width, onWidthChange);
+    const [innerHeight, setInnerHeight] = useDebounceValueBind(height, onHeightChange);
     return (
         <div className="text-zinc-400">
             {children}
@@ -22,16 +24,16 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
                     style={{ cursor: "ew-resize" }}
                     type="range"
                     name="width"
-                    value={Math.sqrt(width / 1000)}
+                    value={Math.sqrt(innerWidth / 1000)}
                     min="0"
                     max="1"
                     step="0.01"
                     onChange={(e) => {
-                        onWidthChange(Math.round(Number(e.target.value) ** 2 * 1000));
+                        setInnerWidth(Math.round(Number(e.target.value) ** 2 * 1000));
                     }}
                 />
                 <output className="text-sm ml-1" htmlFor="width">
-                    {`${t("width")}: ${width}`}
+                    {`${t("width")}: ${innerWidth}`}
                 </output>
             </div>
             <div className=" mt-2">
@@ -40,16 +42,16 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
                     style={{ cursor: "ew-resize" }}
                     type="range"
                     name="height"
-                    value={Math.sqrt(height / 1000)}
+                    value={Math.sqrt(innerHeight / 1000)}
                     min="0"
                     max="1"
                     step="0.01"
                     onChange={(e) => {
-                        onHeightChange(Math.round(Number(e.target.value) ** 2 * 1000));
+                        setInnerHeight(Math.round(Number(e.target.value) ** 2 * 1000));
                     }}
                 />
                 <output className="text-sm ml-1" htmlFor="height">
-                    {`${t("height")}: ${height}`}
+                    {`${t("height")}: ${innerHeight}`}
                 </output>
             </div>
         </div>
