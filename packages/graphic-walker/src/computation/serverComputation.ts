@@ -29,7 +29,7 @@ export const datasetStatsServer = async (service: IComputationFunction): Promise
         ],
     })) as [{ count: number }];
     return {
-        rowCount: res[0].count,
+        rowCount: res[0]?.count ?? 0,
     };
 };
 
@@ -72,7 +72,7 @@ export const dataQueryServer = async (
     }
     const res = await service({
         workflow,
-        limit
+        limit,
     });
     return res;
 };
@@ -132,7 +132,12 @@ export const fieldStatServer = async (
             },
         ],
     };
-    const [rangeRes] = range
+    const [
+        rangeRes = {
+            [MIN_ID]: 0,
+            [MAX_ID]: 0,
+        },
+    ] = range
         ? await service(rangeQueryPayload)
         : [
               {
