@@ -28,6 +28,7 @@ import {
     initVisualConfig,
     forwardVisualConfigs,
     visSpecDecoder,
+    initEncoding,
 } from '../utils/save';
 import { CommonStore } from './commonStore';
 import { createCountField } from '../utils';
@@ -69,27 +70,6 @@ function geomAdapter(geom: string) {
         default:
             return 'tick';
     }
-}
-
-export function initEncoding(): DraggableFieldState {
-    return {
-        dimensions: [],
-        measures: [],
-        rows: [],
-        columns: [],
-        color: [],
-        opacity: [],
-        size: [],
-        shape: [],
-        radius: [],
-        theta: [],
-        longitude: [],
-        latitude: [],
-        geoId: [],
-        details: [],
-        filters: [],
-        text: [],
-    };
 }
 
 function stackValueTransform(vlValue: string | undefined | null): IStackMode {

@@ -11,6 +11,27 @@ export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
     return list.map((l) => new VisSpecWithHistory(l));
 }
 
+export function initEncoding(): DraggableFieldState {
+    return {
+        dimensions: [],
+        measures: [],
+        rows: [],
+        columns: [],
+        color: [],
+        opacity: [],
+        size: [],
+        shape: [],
+        radius: [],
+        theta: [],
+        longitude: [],
+        latitude: [],
+        geoId: [],
+        details: [],
+        filters: [],
+        text: [],
+    };
+}
+
 export function initVisualConfig(): IVisualConfig {
     return {
         defaultAggregated: true,
@@ -63,6 +84,7 @@ export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
         return {
             ...visSpec,
             encodings: {
+                ...initEncoding(),
                 ...visSpec.encodings,
                 filters: updatedFilters,
             },

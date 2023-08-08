@@ -8,7 +8,7 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
-import { initEncoding } from '../store/visualSpecStore';
+import { initEncoding } from '../utils/save';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { initVisualConfig } from '../utils/save';
