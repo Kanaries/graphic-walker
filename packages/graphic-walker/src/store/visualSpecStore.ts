@@ -117,6 +117,12 @@ function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolea
     return Object.values(state).every((value) => value.length === 0);
 }
 
+function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
+    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    })])
+}
+
 export class VizSpecStore {
     // public fields: IViewField[] = [];
     private commonStore: CommonStore;
@@ -876,7 +882,7 @@ export class VizSpecStore {
         );
     }
 
-    public setComputationFunction(f: IComputationFunction) {
-        this.computationFuction = f;
+    public setComputationFunction(f: IComputationFunction, timeout = 60000) {
+        this.computationFuction = withTimeout(f, timeout);
     }
 }
