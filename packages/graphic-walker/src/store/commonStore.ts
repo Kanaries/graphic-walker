@@ -148,14 +148,14 @@ export class CommonStore {
         this.initTempDS();
         this.showDSPanel = true;
     }
-    public addAndUseDS(dataset: IDataSetInfo) {
-        const datasetId = this.addDS(dataset);
+    public addAndUseDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
+        const id = this.addDS(dataset, datasetId);
         this.dsIndex = this.datasets.length - 1;
-        return datasetId
+        return id
     }
-    public addDS(dataset: IDataSetInfo) {
+    public addDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
         const timestamp = new Date().getTime();
-        const dataSetId = `dst-${timestamp}`
+        const dataSetId = datasetId || `dst-${timestamp}`
         const dataSourceId = `dse-${timestamp}`;
         this.dataSources.push({
             id: dataSourceId,
@@ -167,12 +167,12 @@ export class CommonStore {
             rawFields: dataset.rawFields,
             dsId: dataSourceId
         })
-        return dataSetId;
+        return dataSourceId;
     }
     public removeDS(datasetId: string) {
         const datasetIndex = this.datasets.findIndex(d => d.id === datasetId);
         if (datasetIndex > -1) {
-            const dataSourceId = this.datasets[datasetIndex].dsId;
+            const dataSourceId = this.datasets[datasetIndex].id;
             const dataSourceIndex = this.dataSources.findIndex(d => d.id === dataSourceId);
             this.dataSources.splice(dataSourceIndex, 1);
             this.datasets.splice(datasetIndex, 1);

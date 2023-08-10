@@ -19,6 +19,7 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -35,6 +36,7 @@ import { useCurrentMediaTheme } from '../utils/media';
 import throttle from '../utils/throttle';
 import KanariesLogo from '../assets/kanaries.png';
 import { ImageWithFallback } from '../components/timeoutImg';
+import LimitSetting from '../components/limitSetting';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -73,7 +75,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     exclude = [],
 }) => {
     const { vizStore, commonStore } = useGlobalStore();
-    const { visualConfig, canUndo, canRedo } = vizStore;
+    const { visualConfig, canUndo, canRedo, limit } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -364,6 +366,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         none: XMarkIcon,
                         stack: ChevronDoubleUpIcon,
                         normalize: ArrowsUpDownIcon,
+                        center: ChevronUpDownIcon, // TODO: fix unsafe extends
                     }[g],
                 })),
                 value: stack,
@@ -491,6 +494,23 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     commonStore.setShowCodeExportPanel(true);
                 },
             },
+            ...(extra.length === 0 ? [] : ['-', ...extra]),
+            '-',
+            {
+                key: 'limit_axis',
+                label: t('limit'),
+                icon: HashtagIcon,
+                form: (
+                    <FormContainer>
+                        <LimitSetting
+                            value={limit}
+                            setValue={(v) => {
+                                vizStore.setLimit(v);
+                            }}
+                        />
+                    </FormContainer>
+                ),
+            },
             '-',
             {
                 key: 'kanaries',
@@ -513,10 +533,6 @@ const VisualSettings: React.FC<IVisualSettings> = ({
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
 
-        if (extra.length > 0) {
-            items.push('-', ...extra);
-        }
-
         return items;
     }, [
         vizStore,
@@ -535,6 +551,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         dark,
         extra,
         exclude,
+        limit,
     ]);
 
     return (

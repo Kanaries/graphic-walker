@@ -3,7 +3,7 @@
 
 /**
  * @param {import('../interfaces').IRow[]} dataSource
- * @param {import('../interfaces').IFilterField[]} filters
+ * @param {import('../interfaces').IFilterFiledSimple[]} filters
  * @return {import('../interfaces').IRow[]}
  */
 const filter = (dataSource, filters) => {

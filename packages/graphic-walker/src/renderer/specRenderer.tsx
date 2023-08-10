@@ -19,17 +19,18 @@ interface SpecRendererProps {
     visualConfig: DeepReadonly<IVisualConfig>;
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
+    locale?: string;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize },
+    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, zeroScale } = visualConfig;
+    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -41,7 +42,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const sizeChannel = draggableFieldState.size;
     const details = draggableFieldState.details;
     const text = draggableFieldState.text;
-    const format = toJS(_format)
+    const format = toJS(_format);
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
     const colLeftFacetFields = useMemo(
@@ -59,8 +60,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
-          ...themeConfig,
-        }
+            ...themeConfig,
+            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+        };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
             config.normalizedNumberFormat = format.normalizedNumberFormat;
@@ -79,9 +81,23 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             config.scale = {};
         }
         // @ts-ignore
-        config.scale.zero = Boolean(zeroScale)
+        config.scale.zero = Boolean(zeroScale);
+        // @ts-ignore
+        config.resolve = resolve;
+        if (background) {
+            config.background = background;
+        }
+
         return config;
-      }, [themeConfig, zeroScale, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
+    }, [
+        themeConfig,
+        zeroScale,
+        resolve,
+        background,
+        format.normalizedNumberFormat,
+        format.numberFormat,
+        format.timeFormat,
+    ]);
 
     if (isPivotTable) {
         return (
@@ -148,6 +164,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 height={size.height - 12 * 4}
                 ref={ref}
                 onGeomClick={onGeomClick}
+                locale={locale}
             />
         </Resizable>
     );

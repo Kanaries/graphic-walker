@@ -1,5 +1,6 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type {IViewQuery} from "./lib/viewQuery";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -34,18 +35,31 @@ export interface IMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    path?: string[];
 }
 
 export interface IUncertainMutField {
     fid: string;
     key?: string;
     name?: string;
+    basename?: string;
     disable?: boolean;
     semanticType: ISemanticType | '?';
     analyticType: IAnalyticType | '?';
+    path: string[];
+}
+
+export interface IDatasetStats {
+    rowCount: number;
+}
+
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
 }
 
 export type IExpParamter =
@@ -90,11 +104,13 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    basename?: string;
+    path?: string[],
 }
-
+export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
     dragId: string;
-    sort?: 'none' | 'ascending' | 'descending';
+    sort?: ISortMode;
 }
 
 export interface DataSet {
@@ -151,6 +167,11 @@ export interface IFilterField extends IViewField {
     rule: IFilterRule | null;
 }
 
+export interface IFilterFiledSimple {
+    fid: string;
+    rule: IFilterRule | null;
+}
+
 export interface DraggableFieldState {
     dimensions: IViewField[];
     measures: IViewField[];
@@ -186,7 +207,7 @@ export type IFilterRule =
           value: Set<string | number>;
       };
 
-export type IStackMode = 'none' | 'stack' | 'normalize';
+export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
@@ -194,18 +215,28 @@ export interface IVisualConfig {
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
-    sorted: 'none' | 'ascending' | 'descending';
+    sorted: ISortMode;
     zeroScale: boolean;
+    background?: string;
     format: {
         numberFormat?: string;
         timeFormat?: string;
         normalizedNumberFormat?: string;
+    };
+    resolve: {
+        x?: boolean;
+        y?: boolean;
+        color?: boolean;
+        opacity?: boolean;
+        shape?: boolean;
+        size?: boolean;
     };
     size: {
         mode: 'auto' | 'fixed';
         width: number;
         height: number;
     };
+    limit: number;
 }
 
 export interface IVisSpec {
@@ -215,6 +246,16 @@ export interface IVisSpec {
     readonly config: DeepReadonly<IVisualConfig>;
 }
 
+export type SetToArray<T> = (
+    T extends object ? (
+      T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }
+    ) : T
+);
+
+export type IVisSpecForExport = SetToArray<IVisSpec>;
+
+export type IFilterFieldForExport = SetToArray<IFilterField>;
+
 export enum ISegmentKey {
     vis = 'vis',
     data = 'data',
@@ -222,6 +263,7 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
@@ -329,3 +371,80 @@ export interface IGWHandler {
 export interface IGWHandlerInsider extends IGWHandler {
     updateRenderStatus: (renderStatus: IRenderStatus) => void;
 }
+
+export interface IVisField {
+    key: string;
+    type: ISemanticType;
+    name?: string;
+    description?: string;
+    format?: string;
+    expression?: IExpression;
+}
+
+export type IVisFieldComputation = {
+    field: IVisField['key'];
+    expression: NonNullable<IVisField['expression']>;
+    name: NonNullable<IVisField['name']>;
+    type: IVisField['type'];
+};
+
+export interface IVisFilter {
+    fid: string;
+    rule: SetToArray<IFilterRule>;
+};
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: IVisFilter[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        key: IVisFieldComputation['field'];
+        expression: IVisFieldComputation['expression'];
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export interface ISortWorkflowStep {
+    type: 'sort';
+    sort: 'ascending' | 'descending';
+    by: string[];
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
+
+export interface IDataQueryPayload {
+    workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
+}
+
+export interface ILoadDataPayload {
+    pageSize: number;
+    pageIndex: number;
+}
+
+export interface IGWDatasetStat {
+    count: number;
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);
