@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -19,6 +19,7 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
@@ -44,6 +45,9 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    geographicData?: IGeographicData & {
+        key: string;
+    };
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
@@ -65,6 +69,7 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         computation,
         toolbar,
+        geographicData,
         enhanceAPI,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
@@ -135,6 +140,12 @@ const App = observer<IGWProps>(function App(props) {
     }, [spec, safeDataset]);
 
     useEffect(() => {
+        if (geographicData) {
+            vizStore.setGeographicData(geographicData, geographicData.key);
+        }
+    }, [geographicData]);
+    
+    useEffect(() => {
         if (computation) {
             vizStore.setComputationFunction(computation);
         } else {
@@ -172,6 +183,7 @@ const App = observer<IGWProps>(function App(props) {
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
+                        <GeoConfigPanel />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />

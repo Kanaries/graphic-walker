@@ -11,15 +11,38 @@ export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
     return list.map((l) => new VisSpecWithHistory(l));
 }
 
+export function initEncoding(): DraggableFieldState {
+    return {
+        dimensions: [],
+        measures: [],
+        rows: [],
+        columns: [],
+        color: [],
+        opacity: [],
+        size: [],
+        shape: [],
+        radius: [],
+        theta: [],
+        longitude: [],
+        latitude: [],
+        geoId: [],
+        details: [],
+        filters: [],
+        text: [],
+    };
+}
+
 export function initVisualConfig(): IVisualConfig {
     return {
         defaultAggregated: true,
         geoms: [GEMO_TYPES[0]!],
+        coordSystem: 'generic',
         stack: 'stack',
         showActions: false,
         interactiveScale: false,
         sorted: 'none',
         zeroScale: true,
+        scaleIncludeUnmatchedChoropleth: false,
         background: undefined,
         size: {
             mode: "auto",
@@ -31,6 +54,7 @@ export function initVisualConfig(): IVisualConfig {
             timeFormat: undefined,
             normalizedNumberFormat: undefined,
         },
+        geoKey: 'name',
         resolve: {
             x: false,
             y: false,
@@ -60,6 +84,7 @@ export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
         return {
             ...visSpec,
             encodings: {
+                ...initEncoding(),
                 ...visSpec.encodings,
                 filters: updatedFilters,
             },
