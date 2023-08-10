@@ -482,7 +482,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     vizStore.setVisualConfig('showActions', checked);
                 },
             },
-            {
+            ...coordSystem === 'generic' ?[{
                 key: 'export_chart',
                 label: t('button.export_chart'),
                 icon: PhotoIcon,
@@ -512,7 +512,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         </button>
                     </FormContainer>
                 ),
-            },
+            }]:[],
             {
                 key: 'config',
                 label: 'config',
