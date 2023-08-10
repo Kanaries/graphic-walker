@@ -65,10 +65,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     }, [columns]);
 
     useEffect(() => {
-        setIsLoading(loading);
-    }, [loading])
-
-    useEffect(() => {
         if (tableCollapsedHeaderMap.size > 0) {
             // If some visual configs change, clear the collapse state
             // As tableCollapsedHeaderMap is also listened, data will be reaggregated later.
@@ -174,7 +170,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     // const { leftTree, topTree, metricTable } = store;
     return (
         <div className="relative">
-            {isLoading && <LoadingLayer />}
+            {(isLoading || loading) && <LoadingLayer />}
             <div className="flex">
                 <table className="border border-gray-300 border-collapse">
                     <thead className="border border-gray-300">
