@@ -10,6 +10,7 @@ import TopTree from './topTree';
 import {
     DeepReadonly,
     DraggableFieldState,
+    IComputationFunction,
     IDarkMode,
     IRow,
     IThemeKey,
@@ -29,10 +30,11 @@ interface PivotTableProps {
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: DeepReadonly<IVisualConfig>;
+    computationFunction: IComputationFunction
 }
 
 const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
-    const { data, visualConfig, loading } = props;
+    const { data, visualConfig, loading, computationFunction } = props;
     const appRef = useAppRootContext();
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
@@ -137,7 +139,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         ).slice(0, -1);
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
-        const computationFuction = vizStore.computationFuction;
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
             const workflow = toWorkflow(
                 viewFilters,
@@ -148,7 +149,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                 sort,
                 limit > 0 ? limit : undefined
             );
-            return dataQueryServer(computationFuction, workflow, limit > 0 ? limit : undefined)
+            return dataQueryServer(computationFunction, workflow, limit > 0 ? limit : undefined)
                 .catch((err) => {
                     appRef.current?.updateRenderStatus('error');
                     return [];

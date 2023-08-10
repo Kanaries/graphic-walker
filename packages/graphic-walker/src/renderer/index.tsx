@@ -43,7 +43,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
     const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
     const [viewData, setViewData] = useState<IRow[]>([]);
-    const [transformedData, setTransformedData] = useState<IRow[]>([]);
 
     const { viewData: data, loading: waiting } = useRenderer({
         allFields,
@@ -116,6 +115,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
+            computationFunction={computationFunction}
         />
     );
 });

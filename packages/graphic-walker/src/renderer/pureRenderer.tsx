@@ -85,7 +85,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         limit: limit ?? -1,
         computationFunction: computation,
     });
-
+    console.log(computation)
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({ data });
     latestFromRef.current = { data };
@@ -111,6 +111,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                     draggableFieldState={visualState}
                     visualConfig={visualConfig}
                     locale={locale ?? 'en-US'}
+                    computationFunction={computation}
                 />
             </div>
         </ShadowDom>
