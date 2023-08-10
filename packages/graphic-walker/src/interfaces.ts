@@ -1,5 +1,7 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type { FeatureCollection } from 'geojson';
+import type { feature } from 'topojson-client';
 import type {IViewQuery} from "./lib/viewQuery";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
@@ -95,6 +97,8 @@ export interface IExpression {
     as: string;
 }
 
+export type IGeoRole = 'longitude' | 'latitude' | 'none';
+
 export interface IField {
     /**
      * fid: key in data record
@@ -110,6 +114,7 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    geoRole?: IGeoRole;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
@@ -192,6 +197,9 @@ export interface DraggableFieldState {
     shape: IViewField[];
     theta: IViewField[];
     radius: IViewField[];
+    longitude: IViewField[];
+    latitude: IViewField[];
+    geoId: IViewField[];
     details: IViewField[];
     filters: IFilterField[];
     text: IViewField[];
@@ -222,14 +230,20 @@ export type IFilterRule =
 
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 
+export type ICoordMode = 'generic' | 'geographic';
+
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
+    /** @default "generic" */
+    coordSystem?: ICoordMode;
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
     sorted: ISortMode;
     zeroScale: boolean;
+    /** @default false */
+    scaleIncludeUnmatchedChoropleth?: boolean;
     background?: string;
     format: {
         numberFormat?: string;
@@ -249,6 +263,8 @@ export interface IVisualConfig {
         width: number;
         height: number;
     };
+    geojson?: FeatureCollection;
+    geoKey?: string;
     limit: number;
 }
 
@@ -459,5 +475,22 @@ export type IResponse<T> = (
             code: `ERR_${Uppercase<string>}`;
             options?: Record<string, string>;
         };
+    }
+);
+
+export type Topology = Parameters<typeof feature>[0];
+
+export type IGeographicData = (
+    | {
+        type: 'GeoJSON';
+        data: FeatureCollection;
+    }
+    | {
+        type: 'TopoJSON';
+        data: Topology;
+        /**
+         * default to the first key of `objects` in Topology
+         */
+        objectKey?: string;
     }
 );
