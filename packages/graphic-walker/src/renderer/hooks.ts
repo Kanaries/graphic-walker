@@ -1,85 +1,105 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import type { DeepReadonly, IFilterField, IRow, IViewField } from '../interfaces';
-import { applyFilter, applyViewQuery, transformDataService } from '../services';
-import { getMeaAggKey } from '../utils';
+import type { DeepReadonly, IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
+import { useGlobalStore } from '../store';
+import { useAppRootContext } from '../components/appRoot';
+import { toWorkflow } from '../utils/workflow';
+import { dataQueryServer } from '../computation/serverComputation';
 
+export const useComputationFunc = (): IComputationFunction => {
+    const { vizStore } = useGlobalStore();
+    return vizStore.computationFuction;
+};
 
 interface UseRendererProps {
-    data: IRow[];
     allFields: Omit<IViewField, 'dragId'>[];
-    viewDimensions: IViewField[];
-    viewMeasures: IViewField[];
+    viewDimensions: Omit<IViewField, 'dragId'>[];
+    viewMeasures: Omit<IViewField, 'dragId'>[];
     filters: readonly DeepReadonly<IFilterField>[];
     defaultAggregated: boolean;
+    sort: 'none' | 'ascending' | 'descending';
+    limit: number;
+    computationFunction: IComputationFunction;
 }
 
 interface UseRendererResult {
     viewData: IRow[];
-    transformedData: IRow[];
     loading: boolean;
+    parsed: {
+        workflow: IDataQueryWorkflowStep[];
+    };
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { data, allFields, viewDimensions, viewMeasures, filters, defaultAggregated } = props;
+    const {
+        allFields,
+        viewDimensions,
+        viewMeasures,
+        filters,
+        defaultAggregated,
+        sort,
+        limit,
+        computationFunction,
+    } = props;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
+    const workflow = useMemo(() => {
+        return toWorkflow(
+            filters,
+            allFields,
+            viewDimensions,
+            viewMeasures,
+            defaultAggregated,
+            sort,
+            limit > 0 ? limit : undefined
+        );
+    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, limit]);
+
     const [viewData, setViewData] = useState<IRow[]>([]);
-    const [transformedData, setTransformedData] = useState<IRow[]>([]);
+    const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);
+
+    const appRef = useAppRootContext();
 
     useEffect(() => {
         const taskId = ++taskIdRef.current;
+        appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        applyFilter(data, filters)
-            .then((data) => {
-                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
-                    return data;
-                }
-                return transformDataService(data, allFields);
-            })
-            .then((d) => {
-                if (viewDimensions.length === 0 && viewMeasures.length === 0) {
-                    return data;
-                }
-                // setViewData(d);
-                setTransformedData(d);
-                const dims = viewDimensions;
-                const meas = viewMeasures;
-                return applyViewQuery(d, dims.concat(meas), {
-                    op: defaultAggregated ? 'aggregate' : 'raw',
-                    groupBy: dims.map((f) => f.fid),
-                    measures: meas.map((f) => ({ field: f.fid, agg: f.aggName as any, asFieldKey: getMeaAggKey(f.fid, f.aggName!) })),
-                });
-            })
-            .then(data => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData(data);
-                });
-            }).catch((err) => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
-                console.error(err);
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData([]);
-                });
+        dataQueryServer(computationFunction, workflow, limit > 0 ? limit : undefined).then(data => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('rendering');
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData(data);
+                setParsedWorkflow(workflow);
             });
-        return () => {
-            taskIdRef.current++;
+        }).catch((err) => {
+            if (taskId !== taskIdRef.current) {
+                return;
+            }
+            appRef.current?.updateRenderStatus('error');
+            console.error(err);
+            unstable_batchedUpdates(() => {
+                setComputing(false);
+                setViewData([]);
+                setParsedWorkflow([]);
+            });
+        });
+    }, [computationFunction, workflow]);
+
+    const parseResult = useMemo(() => {
+        return {
+            workflow: parsedWorkflow,
         };
-    }, [data, filters, viewDimensions, viewMeasures, defaultAggregated]);
+    }, [parsedWorkflow]);
 
     return useMemo(() => {
         return {
             viewData,
-            transformedData,
             loading: computing,
+            parsed: parseResult,
         };
     }, [viewData, computing]);
 };

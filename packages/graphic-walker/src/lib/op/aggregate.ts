@@ -37,7 +37,7 @@ export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
             aggRow[k] = subGroup[0][k];
         }
         for (let mea of measures) {
-            const aggMeaKey = getMeaAggKey(mea.field, mea.agg);
+            const aggMeaKey = mea.asFieldKey || getMeaAggKey(mea.field, mea.agg);
             if (aggRow[aggMeaKey] === undefined) {
                 aggRow[aggMeaKey] = 0;
             }

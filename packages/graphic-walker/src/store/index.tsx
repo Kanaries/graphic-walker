@@ -1,62 +1,63 @@
-import React, { useContext } from 'react';
-import { CommonStore } from './commonStore'
-import { VizSpecStore } from './visualSpecStore'
+import React, { useContext, useMemo, useEffect } from 'react';
+import { CommonStore } from './commonStore';
+import { VizSpecStore } from './visualSpecStore';
 
 export interface IGlobalStore {
     commonStore: CommonStore;
     vizStore: VizSpecStore;
 }
 
-const commonStore = new CommonStore();
-const vizStore = new VizSpecStore(commonStore);
-
-const initStore: IGlobalStore = {
-    commonStore,
-    vizStore
-}
+const StoreDict: Record<string, IGlobalStore> = {};
+const createStore = () => {
+    const commonStore = new CommonStore();
+    const vizStore = new VizSpecStore(commonStore);
+    return {
+        commonStore,
+        vizStore,
+    };
+};
+const getStore = (key?: string): IGlobalStore => {
+    if (key) {
+        if (!StoreDict[key]) StoreDict[key] = createStore();
+        return StoreDict[key];
+    } else {
+        return createStore();
+    }
+};
 
 const StoreContext = React.createContext<IGlobalStore>(null!);
-
-export function destroyGWStore() {
-    initStore.commonStore.destroy();
-    initStore.vizStore.destroy();
-}
-
-export function rebootGWStore() {
-    const cs = new CommonStore();
-    const vs = new VizSpecStore(cs);
-    initStore.commonStore = cs;
-    initStore.vizStore = vs;
-}
-
 interface StoreWrapperProps {
-    keepAlive?: boolean;
+    keepAlive?: boolean | string;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    children?: React.ReactNode;
 }
-export class StoreWrapper extends React.Component<StoreWrapperProps> {
-    constructor(props: StoreWrapperProps) {
-        super(props)
+
+const noop = () => {};
+
+export const StoreWrapper = (props: StoreWrapperProps) => {
+    const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
+    const store = useMemo(() => getStore(storeKey), [storeKey]);
+    useEffect(() => {
         if (props.storeRef) {
-            props.storeRef.current = initStore;
+            const ref = props.storeRef;
+            ref.current = store;
+            return () => {
+                ref.current = null;
+            };
         }
-        if (props.keepAlive) {
-            rebootGWStore();
+        return noop;
+    }, [props.storeRef]);
+    useEffect(() => {
+        if (!storeKey) {
+            return () => {
+                store.commonStore.destroy();
+                store.vizStore.destroy();
+            };
         }
-    }
-    componentWillUnmount() {
-        if (!this.props.keepAlive) {
-            if (this.props.storeRef) {
-                this.props.storeRef.current = null;
-            }
-            destroyGWStore();
-        }
-    }
-    render() {
-        return <StoreContext.Provider value={initStore}>
-            { this.props.children }
-        </StoreContext.Provider>
-    }
-}
+        return noop;
+    }, [storeKey]);
+    return <StoreContext.Provider value={store}>{props.children}</StoreContext.Provider>;
+};
 
 export function useGlobalStore() {
     return useContext(StoreContext);

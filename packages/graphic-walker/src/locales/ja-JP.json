@@ -3,7 +3,15 @@
         "format": "形式",
         "numberFormat": "数字の形式",
         "timeFormat": "時間の形式",
-        "normalizedNumberFormat": "正規化された数字の形式"
+        "normalizedNumberFormat": "正規化された数字の形式",
+        "background": "背景",
+        "color":"色",
+        "independence": "独立性",
+        "x": "x軸",
+        "y": "y軸",
+        "zeroScale": "ゼロ目盛",
+        "formatGuidesDocs": "フォーマットガイド",
+        "readHere": "ここを読む"
     },
     "constant": {
         "row_count": "行数",
@@ -37,7 +45,8 @@
             "__enum__": "スタックモード",
             "none": "なし",
             "stack": "スタック",
-            "normalize": "正規化"
+            "normalize": "正規化",
+            "center": "中央"
         },
         "layout_type": {
             "__enum__": "レイアウトタイプ",
@@ -82,9 +91,12 @@
             "variance": "分散"
         },
         "filter_type": {
-            "one_of": "1つ以上",
+            "one_of": "値のセット",
+            "one_of_desc": "指定された値を選択します",
             "range": "範囲",
-            "temporal_range": "日付範囲"
+            "range_desc": "範囲 [開始, 終了] 内の値を選択します",
+            "temporal_range": "日付範囲",
+            "temporal_range_desc": "日付範囲 [開始, 終了] 内の値を選択します"
         }
     },
     "App": {
@@ -150,6 +162,7 @@
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート"
                 },
+                "limit": "上限",
                 "size": "サイズ変更",
                 "size_setting": {
                     "width": "幅",
@@ -167,7 +180,7 @@
     "filters": {
         "to_edit": "このルールを編集",
         "empty_rule": "! (空のルール)",
-        "editing": "ルールを編集",
+        "editing": "フィルタールールの設定",
         "form": {
             "name": "フィールド",
             "rule": "ルール"
@@ -184,6 +197,10 @@
             "reverse": "選択を反転する",
             "confirm": "確認",
             "cancel": "キャンセル"
+        },
+        "range": {
+            "start_value": "開始値",
+            "end_value": "終了値"
         }
     },
     "explain": {

@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.3.11",
+  "version": "0.4.1",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -29,7 +29,7 @@
   },
   "prettier": {
     "tabWidth": 4,
-    "printWidth": 120,
+    "printWidth": 160,
     "singleQuote": true
   },
   "types": "./dist/index.d.ts",
@@ -38,6 +38,7 @@
     "@heroicons/react": "^2.0.8",
     "@kanaries/react-beautiful-dnd": "0.0.2",
     "@kanaries/web-data-loader": "^0.1.7",
+    "@tailwindcss/forms": "^0.5.4",
     "autoprefixer": "^10.3.5",
     "i18next": "^21.9.1",
     "i18next-browser-languagedetector": "^6.1.5",

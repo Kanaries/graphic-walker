@@ -3,40 +3,57 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
-import AppRoot from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig } from '../interfaces';
+import { withAppRoot } from '../components/appRoot';
+import type {
+    IDarkMode,
+    IViewField,
+    IRow,
+    IThemeKey,
+    DraggableFieldState,
+    IVisualConfig,
+    IComputationFunction,
+} from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
+import { getComputation } from '../computation/clientComputation';
 
-
-interface IPureRendererProps {
-    name?: string;
-    themeKey?: IThemeKey;
-    dark?: IDarkMode;
-    rawData?: IRow[];
-    visualState: DraggableFieldState;
-    visualConfig: IVisualConfig;
-}
+type IPureRendererProps =
+    | {
+          name?: string;
+          themeKey?: IThemeKey;
+          dark?: IDarkMode;
+          visualState: DraggableFieldState;
+          visualConfig: IVisualConfig;
+          sort?: 'none' | 'ascending' | 'descending';
+          limit?: number;
+          locale?: string;
+      } & (
+          | {
+                type: 'remote',
+                computation: IComputationFunction;
+            }
+          | {
+                type?: 'local'
+                rawData: IRow[];
+            }
+      );
 
 /**
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
-const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer (props, ref) {
-    const {
-        name,
-        themeKey,
-        dark,
-        rawData,
-        visualState,
-        visualConfig,
-    } = props;
+const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
+    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit } = props;
+    const computation = useMemo(() => {
+        if (props.type === 'remote') {
+            return props.computation;
+        }
+        return getComputation(props.rawData);
+    }, [props.type, props.type === 'remote' ? props.computation: props.rawData])
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-    const [transformedData, setTransformedData] = useState<IRow[]>([]);
-    
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
@@ -58,47 +75,46 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [visualState]);
 
-    const { viewData: data, transformedData: transData, loading: waiting } = useRenderer({
-        data: rawData ?? [],
+    const { viewData: data, loading: waiting } = useRenderer({
         allFields,
         viewDimensions,
         viewMeasures,
         filters,
         defaultAggregated,
+        sort: sort ?? 'none',
+        limit: limit ?? -1,
+        computationFunction: computation,
     });
 
     // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data, transData });
-    latestFromRef.current = { data, transData };
+    const latestFromRef = useRef({ data });
+    latestFromRef.current = { data };
 
     useEffect(() => {
         if (waiting === false) {
             unstable_batchedUpdates(() => {
                 setViewData(latestFromRef.current.data);
-                setTransformedData(latestFromRef.current.transData);
             });
         }
     }, [waiting]);
 
     return (
-        <AppRoot>
-            <ShadowDom>
-                <div className="relative">
-                    <SpecRenderer
-                        name={name}
-                        loading={waiting}
-                        data={viewData}
-                        transformedData={transformedData}
-                        ref={ref}
-                        themeKey={themeKey}
-                        dark={dark}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                    />
-                </div>
-            </ShadowDom>
-        </AppRoot>
+        <ShadowDom>
+            <div className="relative">
+                <SpecRenderer
+                    name={name}
+                    loading={waiting}
+                    data={viewData}
+                    ref={ref}
+                    themeKey={themeKey}
+                    dark={dark}
+                    draggableFieldState={visualState}
+                    visualConfig={visualConfig}
+                    locale={locale ?? 'en-US'}
+                />
+            </div>
+        </ShadowDom>
     );
 });
 
-export default observer(PureRenderer);
+export default observer(withAppRoot<IPureRendererProps>(PureRenderer));

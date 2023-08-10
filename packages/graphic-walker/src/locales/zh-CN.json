@@ -3,7 +3,15 @@
         "format": "格式",
         "numberFormat": "数字格式",
         "timeFormat": "时间格式",
-        "normalizedNumberFormat": "标准化数字格式"
+        "normalizedNumberFormat": "标准化数字格式",
+        "background": "背景",
+        "color":"颜色",
+        "independence": "独立性",
+        "x": "x轴",
+        "y": "y轴",
+        "zeroScale": "零刻度",
+        "formatGuidesDocs": "格式指南",
+        "readHere": "阅读此处"
     },
     "constant": {
         "row_count": "行数",
@@ -54,7 +62,8 @@
             "__enum__": "堆叠模式",
             "none": "关闭",
             "stack": "堆叠",
-            "normalize": "归一化"
+            "normalize": "归一化",
+            "center": "中央"
         },
         "draggable_key": {
             "fields": "字段",
@@ -84,8 +93,11 @@
         },
         "filter_type": {
             "one_of": "按值筛选",
+            "one_of_desc": "选择指定的值",
             "range": "按范围筛选",
-            "temporal_range": "按日期范围筛选"
+            "range_desc": "选择范围内的值 [开始, 结束]",
+            "temporal_range": "按日期范围筛选",
+            "temporal_range_desc": "选择日期范围内的值 [开始, 结束]"
         }
     },
     "App": {
@@ -151,6 +163,7 @@
                     "export_chart_as": "导出 {{type}}",
                     "export_code": "导出代码"
                 },
+                "limit": "上限",
                 "size": "调整尺寸",
                 "size_setting": {
                     "width": "宽度",
@@ -168,7 +181,7 @@
     "filters": {
         "to_edit": "编辑这条规则",
         "empty_rule": "! (空的规则)",
-        "editing": "编辑规则",
+        "editing": "筛选器规则设定",
         "form": {
             "name": "字段",
             "rule": "规则"
@@ -185,6 +198,10 @@
             "reverse": "选择反向",
             "confirm": "确认",
             "cancel": "取消"
+        },
+        "range": {
+            "start_value": "起始值",
+            "end_value": "终止值"
         }
     },
     "explain": {
@@ -206,6 +223,6 @@
         "next": "向后",
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
-        "cencel": "取消"
+        "cancel": "取消"
     }
 }

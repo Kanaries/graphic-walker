@@ -3,7 +3,15 @@
         "format": "Format",
         "numberFormat": "Number format",
         "timeFormat": "Time format",
-        "normalizedNumberFormat": "Normalized number format"
+        "normalizedNumberFormat": "Normalized number format",
+        "background": "Background",        
+        "color":"Color",
+        "independence": "Independence",
+        "x": "x-Axis",
+        "y": "y-Axis",
+        "zeroScale": "Zero Scale",
+        "formatGuidesDocs": "Format guides docs",
+        "readHere": "read here"
     },
     "constant": {
         "row_count": "Row count",
@@ -37,7 +45,8 @@
             "__enum__": "Stack Mode",
             "none": "None",
             "stack": "Stack",
-            "normalize": "Normalize"
+            "normalize": "Normalize",
+            "center": "Center"
         },
         "layout_type": {
             "__enum__": "Layout Mode",
@@ -83,9 +92,12 @@
             "variance": "Variance"
         },
         "filter_type": {
-            "one_of": "One-Of",
+            "one_of": "Value set",
+            "one_of_desc": "Select values specified",
             "range": "Range",
-            "temporal_range": "Date Range"
+            "range_desc": "Select values in a range [start, end]",
+            "temporal_range": "Date Range",
+            "temporal_range_desc": "Select values in a date range [start, end]"
         }
     },
     "App": {
@@ -151,6 +163,7 @@
                     "export_chart_as": "Export as {{type}}",
                     "export_code": "Export Code"
                 },
+                "limit": "Limit",
                 "size": "Resize",
                 "size_setting": {
                     "width": "Width",
@@ -168,7 +181,7 @@
     "filters": {
         "to_edit": "Edit This Rule",
         "empty_rule": "! (empty rule)",
-        "editing": "Edit Rule",
+        "editing": "Filter Rule Settings",
         "form": {
             "name": "Field",
             "rule": "Rule"
@@ -185,6 +198,10 @@
             "reverse": "Reverse Selection",
             "confirm": "Confirm",
             "cancel": "Cancel"
+        },
+        "range": {
+            "start_value": "Start Value",
+            "end_value": "End Value"
         }
     },
     "explain": {

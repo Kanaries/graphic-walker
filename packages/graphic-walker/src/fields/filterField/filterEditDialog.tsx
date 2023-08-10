@@ -1,4 +1,3 @@
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { observer } from "mobx-react-lite";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,28 +8,30 @@ import { useGlobalStore } from "../../store";
 import Tabs, { RuleFormProps } from "./tabs";
 import DefaultButton from "../../components/button/default";
 import PrimaryButton from "../../components/button/primary";
+import DropdownSelect from "../../components/dropdownSelect";
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of"]} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataset={dataset} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of", "temporal range"]} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={["temporal range", "one of"]} dataset={dataset} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 const FilterEditDialog: React.FC = observer(() => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const { editingFilterIdx, draggableFieldState } = vizStore;
+    const { currentDataset } = commonStore;
 
     const { t } = useTranslation("translation", { keyPrefix: "filters" });
 
@@ -71,6 +72,28 @@ const FilterEditDialog: React.FC = observer(() => {
         vizStore.closeFilterEditing();
     }, [editingFilterIdx, uncontrolledField]);
 
+    const allFieldOptions = React.useMemo(() => {
+        return [...draggableFieldState.dimensions, ...draggableFieldState.measures].map((d) => ({
+            label: d.name, 
+            value: d.fid,
+        }));
+    }, [draggableFieldState]);
+
+    const handleSelectFilterField = (fieldKey) => {
+        const existingFilterIdx = draggableFieldState.filters.findIndex((field) => field.fid === fieldKey)
+        if (existingFilterIdx >= 0) {
+            vizStore.setFilterEditing(existingFilterIdx);
+        } else {
+            const sourceKey = draggableFieldState.dimensions.find((field) => field.fid === fieldKey) 
+                ? "dimensions" 
+                : "measures"
+            const sourceIndex = sourceKey === "dimensions"
+                ? draggableFieldState.dimensions.findIndex((field) => field.fid === fieldKey)
+                : draggableFieldState.measures.findIndex((field) => field.fid === fieldKey);
+            vizStore.moveField(sourceKey, sourceIndex, "filters", 0);
+        }
+    };
+
     const Form = field
         ? ({
               quantitative: QuantitativeRuleForm,
@@ -82,13 +105,16 @@ const FilterEditDialog: React.FC = observer(() => {
 
     return uncontrolledField ? (
         <Modal show={Boolean(uncontrolledField)} title={t("editing")} onClose={() => vizStore.closeFilterEditing()}>
-            <div className="p-4">
-                <h2 className="text-base font-semibold py-2 outline-none">{t("form.name")}</h2>
-                <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-0.5 text-sm font-medium text-indigo-800">
-                    {uncontrolledField.name}
-                </span>
-                <h3 className="text-base font-semibold py-2 outline-none">{t("form.rule")}</h3>
-                <Form field={uncontrolledField} onChange={handleChange} />
+            <div className="px-4 py-1">
+                <div className="py-1">{t("form.name")}</div>
+                <DropdownSelect
+                    buttonClassName="w-96"
+                    className="mb-2"
+                    options={allFieldOptions}
+                    selectedKey={uncontrolledField.fid}
+                    onSelect={handleSelectFilterField}
+                />
+                <Form dataset={currentDataset} field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
                     <PrimaryButton
                         onClick={handleSubmit}
