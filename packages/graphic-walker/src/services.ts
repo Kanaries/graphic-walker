@@ -105,22 +105,12 @@ interface PreAnalysisParams {
 //     }
 // }
 
-let filterWorker: Worker | null = null;
-let filterWorkerAutoTerminator: NodeJS.Timeout | null = null;
 
 export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSimple[]): Promise<IRow[]> => {
     if (filters.length === 0) return data;
-    if (filterWorkerAutoTerminator !== null) {
-        clearTimeout(filterWorkerAutoTerminator);
-        filterWorkerAutoTerminator = null;
-    }
-
-    if (filterWorker === null) {
-        filterWorker = new FilterWorker();
-    }
-
+    const worker = new FilterWorker();
     try {
-        const res: IRow[] = await workerService(filterWorker, {
+        const res: IRow[] = await workerService(worker, {
             dataSource: data,
             filters: toJS(filters),
         });
@@ -130,15 +120,7 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSi
         // @ts-ignore @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
         throw new Error('Uncaught error in FilterWorker', { cause: error });
     } finally {
-        if (filterWorkerAutoTerminator !== null) {
-            clearTimeout(filterWorkerAutoTerminator);
-        }
-
-        filterWorkerAutoTerminator = setTimeout(() => {
-            filterWorker?.terminate();
-            filterWorker = null;
-            filterWorkerAutoTerminator = null;
-        }, 60_000); // Destroy the worker when no request is received for 60 secs
+        worker.terminate();
     }
 };
 
