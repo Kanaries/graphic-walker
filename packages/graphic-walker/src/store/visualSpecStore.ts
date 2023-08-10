@@ -1,9 +1,12 @@
 import { IReactionDisposer, makeAutoObservable, observable, computed, reaction, toJS } from 'mobx';
 import produce from 'immer';
+import { feature } from 'topojson-client';
+import type { FeatureCollection } from "geojson";
 import {
     DataSet,
     DraggableFieldState,
     IFilterRule,
+    IGeographicData,
     ISortMode,
     IStackMode,
     IViewField,
@@ -25,6 +28,7 @@ import {
     initVisualConfig,
     forwardVisualConfigs,
     visSpecDecoder,
+    initEncoding,
 } from '../utils/save';
 import { CommonStore } from './commonStore';
 import { createCountField } from '../utils';
@@ -66,24 +70,6 @@ function geomAdapter(geom: string) {
         default:
             return 'tick';
     }
-}
-
-export function initEncoding(): DraggableFieldState {
-    return {
-        dimensions: [],
-        measures: [],
-        rows: [],
-        columns: [],
-        color: [],
-        opacity: [],
-        size: [],
-        shape: [],
-        radius: [],
-        theta: [],
-        details: [],
-        filters: [],
-        text: [],
-    };
 }
 
 function stackValueTransform(vlValue: string | undefined | null): IStackMode {
@@ -387,10 +373,11 @@ export class VizSpecStore {
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
         this.useMutable(({ config }) => {
             switch (true) {
-                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale'].includes(configKey): {
+                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth'].includes(configKey): {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === 'geoms' && Array.isArray(value):
+                case configKey === "coordSystem":
                 case configKey === 'size' && typeof value === 'object':
                 case configKey === 'sorted':
                 case configKey === 'zeroScale':
@@ -511,6 +498,10 @@ export class VizSpecStore {
 
             encodings.columns = encodings.rows;
             encodings.rows = fieldsInCup as typeof encodings.rows; // assume this as writable
+
+            const fieldsInCup2 = encodings.longitude;
+            encodings.longitude = encodings.latitude;
+            encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
     public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount'): string {
@@ -818,6 +809,23 @@ export class VizSpecStore {
     public importRaw(raw: string) {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
+    }
+    
+    public setGeographicData(data: IGeographicData, geoKey: string) {
+        const geoJSON = data.type === 'GeoJSON' ? data.data : feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection;
+        if (!('features' in geoJSON)) {
+            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
+            return;
+        }
+        this.useMutable(({ config }) => {
+            config.geojson = geoJSON;
+            config.geoKey = geoKey;
+        });
+    }
+    public updateGeoKey(key: string) {
+        this.useMutable(({ config }) => {
+            config.geoKey = key;
+        });
     }
 
     private visSpecEncoder(visList: IVisSpec[]): IVisSpecForExport[] {

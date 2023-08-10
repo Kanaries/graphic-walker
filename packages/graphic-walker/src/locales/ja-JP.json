@@ -39,7 +39,14 @@
             "arc": "アーク",
             "boxplot": "ボックスプロット",
             "table": "表",
-            "text": "本文"
+            "text": "テキスト",
+            "poi": "POI",
+            "choropleth": "コロプレス"
+        },
+        "coord_system": {
+            "__enum__": "座標系",
+            "generic": "ジェネリック",
+            "geographic": "地理"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -76,7 +83,10 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文"
+            "text": "本文",
+            "longitude": "経度",
+            "latitude": "緯度",
+            "geoId": "地理ID"
         },
         "aggregator": {
             "sum": "合計",
@@ -167,6 +177,18 @@
                 "size_setting": {
                     "width": "幅",
                     "height": "高さ"
+                },
+                "geography": "地理情報設定",
+                "geography_settings": {
+                    "geoKey": "フィーチャーID",
+                    "format": "データ形式",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "objectKey": "Feature のキー",
+                    "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "{{format}} URLを入力",
+                    "load": "ロード"
                 }
             },
             "DatasetFields": {
