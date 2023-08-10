@@ -103,6 +103,12 @@ function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolea
     return Object.values(state).every((value) => value.length === 0);
 }
 
+function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
+    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    })])
+}
+
 export class VizSpecStore {
     // public fields: IViewField[] = [];
     private commonStore: CommonStore;
@@ -145,7 +151,7 @@ export class VizSpecStore {
     public canRedo = false;
     public editingFilterIdx: number | null = null;
     // TODO
-    public computationFuction: IComputationFunction = async () => [];
+    public computationFunction: IComputationFunction = async () => [];
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -160,7 +166,7 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
-            computationFuction: observable.ref,
+            computationFunction: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -884,7 +890,7 @@ export class VizSpecStore {
         );
     }
 
-    public setComputationFunction(f: IComputationFunction) {
-        this.computationFuction = f;
+    public setComputationFunction(f: IComputationFunction, timeout = 60000) {
+        this.computationFunction = withTimeout(f, timeout);
     }
 }
