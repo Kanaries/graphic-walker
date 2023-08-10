@@ -165,7 +165,7 @@ export class VizSpecStore {
     public canRedo = false;
     public editingFilterIdx: number | null = null;
     // TODO
-    public computationFuction: IComputationFunction = async () => [];
+    public computationFunction: IComputationFunction = async () => [];
     constructor(commonStore: CommonStore) {
         this.commonStore = commonStore;
         this.draggableFieldState = initEncoding();
@@ -180,7 +180,7 @@ export class VizSpecStore {
         );
         makeAutoObservable(this, {
             visList: observable.shallow,
-            computationFuction: observable.ref,
+            computationFunction: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -883,6 +883,6 @@ export class VizSpecStore {
     }
 
     public setComputationFunction(f: IComputationFunction, timeout = 60000) {
-        this.computationFuction = withTimeout(f, timeout);
+        this.computationFunction = withTimeout(f, timeout);
     }
 }
