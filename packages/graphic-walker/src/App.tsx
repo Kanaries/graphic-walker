@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -20,6 +20,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import ExplainData from './components/explainData';
+import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import ClickMenu from './components/clickMenu';
 import {
@@ -49,12 +50,16 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    geographicData?: IGeographicData & {
+        key: string;
+    };
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
             askviz?: string | boolean;
         }
     };
+    computationTimeout?: number;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -70,7 +75,9 @@ const App = observer<IGWProps>(function App(props) {
         dark = 'media',
         computation,
         toolbar,
+        geographicData,
         enhanceAPI,
+        computationTimeout,
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
@@ -140,12 +147,18 @@ const App = observer<IGWProps>(function App(props) {
     }, [spec, safeDataset]);
 
     useEffect(() => {
+        if (geographicData) {
+            vizStore.setGeographicData(geographicData, geographicData.key);
+        }
+    }, [geographicData]);
+    
+    useEffect(() => {
         if (computation) {
-            vizStore.setComputationFunction(computation);
+            vizStore.setComputationFunction(computation, computationTimeout);
         } else {
             vizStore.setComputationFunction(getComputation(commonStore.currentDataset.dataSource));
         }
-    }, [vizStore, computation ?? commonStore.currentDataset.dataSource]);
+    }, [vizStore, computation ?? commonStore.currentDataset.dataSource, computationTimeout]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
@@ -178,6 +191,7 @@ const App = observer<IGWProps>(function App(props) {
                         <CodeExport />
                         <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
+                        <GeoConfigPanel />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />
@@ -201,7 +215,7 @@ const App = observer<IGWProps>(function App(props) {
                                     }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationFunction={vizStore.computationFuction} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationFunction={vizStore.computationFunction} />
                                     )}
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>

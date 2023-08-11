@@ -8,7 +8,7 @@ import { dataQueryServer } from '../computation/serverComputation';
 
 export const useComputationFunc = (): IComputationFunction => {
     const { vizStore } = useGlobalStore();
-    return vizStore.computationFuction;
+    return vizStore.computationFunction;
 };
 
 interface UseRendererProps {

@@ -19,6 +19,11 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    TableCellsIcon,
+    MapPinIcon,
+    GlobeAltIcon,
+    RectangleGroupIcon,
+    GlobeAmericasIcon,
     HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
@@ -26,7 +31,7 @@ import React, { SVGProps, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
-import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE } from '../config';
+import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE, COORD_TYPES } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
@@ -82,6 +87,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     const {
         defaultAggregated,
         geoms: [markType],
+        showTableSummary,
+        coordSystem = 'generic',
         stack,
         interactiveScale,
         size: { mode: sizeMode, width, height },
@@ -163,7 +170,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         color: 'rgb(294,115,22)',
                     },
                 },
-                options: GEMO_TYPES.map((g) => ({
+                options: GEMO_TYPES[coordSystem].map((g) => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
                     icon: {
@@ -348,6 +355,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                                 />
                             </svg>
                         ),
+                        poi: MapPinIcon,
+                        choropleth: RectangleGroupIcon,
                     }[g],
                 })),
                 value: markType,
@@ -392,6 +401,15 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 label: t('button.descending'),
                 icon: BarsArrowDownIcon,
                 onClick: () => vizStore.applyDefaultSort('descending'),
+            },
+            {
+                key: 'table:summary',
+                label: t('table.summary'),
+                icon: TableCellsIcon,
+                checked: showTableSummary,
+                onChange: checked => {
+                    vizStore.setVisualConfig('showTableSummary', checked);
+                },
             },
             '-',
             {
@@ -439,6 +457,34 @@ const VisualSettings: React.FC<IVisualSettings> = ({
             },
             '-',
             {
+                key: 'coord_system',
+                label: tGlobal('constant.coord_system.__enum__'),
+                icon: StopIcon,
+                options: COORD_TYPES.map(c => ({
+                    key: c,
+                    label: tGlobal(`constant.coord_system.${c}`),
+                    icon: {
+                        generic: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2v20" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7h2M12 16h2M7 12v-2M16 12v-2"/></svg>,
+                        geographic: GlobeAltIcon,
+                    }[c],
+                })),
+                value: coordSystem,
+                onSelect: value => {
+                    const coord = value as typeof COORD_TYPES[number];
+                    vizStore.setVisualConfig('coordSystem', coord);
+                    vizStore.setVisualConfig('geoms', [GEMO_TYPES[coord][0]]);
+                },
+            },
+            coordSystem === 'geographic' && markType === 'choropleth' && {
+                key: 'geojson',
+                label: t('button.geojson'),
+                icon: GlobeAmericasIcon,
+                onClick: () => {
+                    commonStore.setShowGeoJSONConfigPanel(true);
+                },
+            },
+            '-',
+            {
                 key: 'debug',
                 label: t('toggle.debug'),
                 icon: WrenchIcon,
@@ -447,7 +493,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     vizStore.setVisualConfig('showActions', checked);
                 },
             },
-            {
+            ...coordSystem === 'generic' ?[{
                 key: 'export_chart',
                 label: t('button.export_chart'),
                 icon: PhotoIcon,
@@ -477,7 +523,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         </button>
                     </FormContainer>
                 ),
-            },
+            }]:[],
             {
                 key: 'config',
                 label: 'config',
@@ -529,17 +575,23 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     </a>
                 ),
             },
-        ] as ToolbarItemProps[];
+        ].filter(Boolean) as ToolbarItemProps[];
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
 
-        return items;
+        switch (vizStore.visualConfig.geoms[0]) {
+            case 'table':
+                return items;
+            default:
+                return items.filter(item => typeof item === 'string' || item.key !== 'table:summary');
+        }
     }, [
         vizStore,
         canUndo,
         canRedo,
         defaultAggregated,
         markType,
+        coordSystem,
         stack,
         interactiveScale,
         sizeMode,
