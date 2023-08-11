@@ -383,6 +383,7 @@ export class VizSpecStore {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === 'geoms' && Array.isArray(value):
+                case configKey === "showTableSummary":
                 case configKey === "coordSystem":
                 case configKey === 'size' && typeof value === 'object':
                 case configKey === 'sorted':

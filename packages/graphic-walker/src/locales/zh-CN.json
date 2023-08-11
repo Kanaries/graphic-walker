@@ -179,6 +179,9 @@
                     "width": "宽度",
                     "height": "高度"
                 },
+                "table": {
+                    "summary": "显示摘要"
+                },
                 "geography": "地理信息配置",
                 "geography_settings": {
                     "geoKey": "地理 ID",

@@ -15,11 +15,10 @@ function getCellData (cell: IRow, measure: IField) {
     }
     return cell[meaKey];
 }
-const MetricTable: React.FC<MetricTableProps> = (props) => {
+const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
     const { matrix, meaInRows, meaInColumns } = props;
-
     return (
-        <tbody className="bg-white border-r border-b border-gray-300">
+        <tbody className="bg-white dark:bg-black text-gray-800 dark:text-gray-100 border-r border-b border-gray-300">
             {matrix.map((row, rIndex) => {
                 if (meaInRows.length !== 0) {
                     return meaInRows.map((rowMea, rmIndex) => {
@@ -31,7 +30,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                         if (meaInColumns.length !== 0) {
                                             return meaInColumns.map((colMea, cmIndex) => (
                                                 <td
-                                                    className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                                    className="whitespace-nowrap p-2 text-xs"
                                                     key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${colMea.fid}-${colMea.aggName}`}
                                                 >
                                                     {getCellData(cell, rowMea)} , {getCellData(cell, colMea)}
@@ -40,7 +39,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                                         }
                                         return (
                                             <td
-                                                className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                                className="whitespace-nowrap p-2 text-xs"
                                                 key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}`}
                                             >
                                                 {getCellData(cell, rowMea)}
@@ -59,7 +58,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                             if (meaInRows.length === 0 && meaInColumns.length !== 0) {
                                 return meaInColumns.map((colMea, cmIndex) => (
                                     <td
-                                        className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                        className="whitespace-nowrap p-2 text-xs"
                                         key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                     >
                                         {
@@ -70,7 +69,7 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                             }else if (meaInRows.length === 0 && meaInColumns.length === 0) {
                                 return (
                                     <td
-                                        className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                        className="whitespace-nowrap p-2 text-xs"
                                         key={`${rIndex}-${cIndex}`}
                                     >
                                         {`True`}
@@ -79,12 +78,12 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
                             } else {
                                 return meaInRows.flatMap((rowMea, rmIndex) => (
                                     <td
-                                        className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                        className="whitespace-nowrap p-2 text-xs"
                                         key={`${rIndex}-${cIndex}-${rmIndex}-${rowMea.fid}-${rowMea.aggName}`}
                                     >
                                         {meaInColumns.flatMap((colMea, cmIndex) => (
                                             <td
-                                                className="whitespace-nowrap p-2 text-xs text-gray-500"
+                                                className="whitespace-nowrap p-2 text-xs"
                                                 key={`${rIndex}-${cIndex}-${rmIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                             >
                                                 { getCellData(cell, rowMea) } , { getCellData(cell, colMea) }
@@ -102,6 +101,12 @@ const MetricTable: React.FC<MetricTableProps> = (props) => {
             })}
         </tbody>
     );
-};
+}, function areEqual(prevProps, nextProps) {
+    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix)) {
+        return true;
+    }
+    
+    return false;
+});
 
 export default MetricTable;

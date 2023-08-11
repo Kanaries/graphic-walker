@@ -137,6 +137,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
+            computationFunction={computationFunction}
         />
     );
 });

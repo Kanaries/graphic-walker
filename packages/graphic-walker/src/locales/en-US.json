@@ -179,6 +179,9 @@
                     "width": "Width",
                     "height": "Height"
                 },
+                "table": {
+                    "summary": "Show summary"
+                },
                 "geography": "Geography Configuration",
                 "geography_settings": {
                     "geoKey": "Feature ID",
