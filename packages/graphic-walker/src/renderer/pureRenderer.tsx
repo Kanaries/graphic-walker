@@ -3,6 +3,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
+import LeafletRenderer from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
 import type {
     IDarkMode,
@@ -98,21 +99,33 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         }
     }, [waiting]);
 
+    const { coordSystem = 'generic' } = visualConfig;
+    const isSpatial = coordSystem === 'geographic';
+
     return (
         <ShadowDom>
             <div className="relative">
-                <SpecRenderer
-                    name={name}
-                    loading={waiting}
-                    data={viewData}
-                    ref={ref}
-                    themeKey={themeKey}
-                    dark={dark}
-                    draggableFieldState={visualState}
-                    visualConfig={visualConfig}
-                    locale={locale ?? 'en-US'}
-                    computationFunction={computation}
-                />
+                {isSpatial && (
+                    <LeafletRenderer
+                        data={data}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                    />
+                )}
+                {isSpatial || (
+                    <SpecRenderer
+                        name={name}
+                        loading={waiting}
+                        data={viewData}
+                        ref={ref}
+                        themeKey={themeKey}
+                        dark={dark}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                        locale={locale ?? 'en-US'}
+                        computationFunction={computation}
+                    />
+                )}
             </div>
         </ShadowDom>
     );

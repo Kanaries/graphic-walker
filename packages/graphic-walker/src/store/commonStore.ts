@@ -16,6 +16,7 @@ export class CommonStore {
     public showDataConfig: boolean = false;
     public showCodeExportPanel: boolean = false;
     public showVisualConfigPanel: boolean = false;
+    public showGeoJSONConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
@@ -91,6 +92,9 @@ export class CommonStore {
     public resetTableCollapsedHeader () {
         const updatedMap: Map<string, INestNode["path"]> = new Map();
         this.tableCollapsedHeaderMap = updatedMap;
+    }
+    public setShowGeoJSONConfigPanel (show: boolean) {
+        this.showGeoJSONConfigPanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;

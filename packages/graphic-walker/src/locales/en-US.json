@@ -39,7 +39,14 @@
             "arc": "Arc",
             "boxplot": "Box (Box Plot)",
             "table": "Table",
-            "text": "Text"
+            "text": "Text",
+            "poi": "POI",
+            "choropleth": "Choropleth"
+        },
+        "coord_system": {
+            "__enum__": "Coordinate System",
+            "generic": "Generic",
+            "geographic": "Geographic"
         },
         "stack_mode": {
             "__enum__": "Stack Mode",
@@ -77,7 +84,10 @@
             "radius": "Radius",
             "filters": "Filters",
             "details": "Details",
-            "text": "Text"
+            "text": "Text",
+            "longitude": "Longitude",
+            "latitude": "Latitude",
+            "geoId": "Geometry ID"
         },
         "aggregator": {
             "sum": "Sum",
@@ -171,6 +181,18 @@
                 },
                 "table": {
                     "summary": "Show summary"
+                },
+                "geography": "Geography Configuration",
+                "geography_settings": {
+                    "geoKey": "Feature ID",
+                    "format": "Format",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "objectKey": "Extract Feature Key",
+                    "jsonInputPlaceholder": "Paste {{format}} here",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "Enter {{format}} URL",
+                    "load": "Load"
                 }
             },
             "DatasetFields": {
