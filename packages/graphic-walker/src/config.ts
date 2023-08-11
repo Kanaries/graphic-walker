@@ -1,25 +1,37 @@
-import { DraggableFieldState, IStackMode } from "./interfaces";
+import { DraggableFieldState, ICoordMode, IStackMode, IVisualConfig } from "./interfaces";
 
-export const GEMO_TYPES: Readonly<string[]> = [
-    'auto',
-    'bar',
-    'line',
-    'area',
-    'trail',
-    'point',
-    'circle',
-    'tick',
-    'rect',
-    'arc',
-    'text',
-    'boxplot',
-    'table'
-] as const;
+export const GEMO_TYPES: Record<ICoordMode, Readonly<string[]>> = {
+    generic: [
+        'auto',
+        'bar',
+        'line',
+        'area',
+        'trail',
+        'point',
+        'circle',
+        'tick',
+        'rect',
+        'arc',
+        'text',
+        'boxplot',
+        'table',
+    ],
+    geographic: [
+        'poi',
+        'choropleth',
+    ],
+} as const;
+
+export const COORD_TYPES: Readonly<ICoordMode[]> = [
+    'generic',
+    'geographic',
+];
 
 export const STACK_MODE: Readonly<IStackMode[]> = [
     'none',
     'stack',
-    'normalize'
+    'normalize',
+    'center'
 ]
 
 export const CHART_LAYOUT_TYPE: Readonly<string[]> = [
@@ -57,4 +69,16 @@ export const CHANNEL_LIMIT = {
 export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
     'dimensions',
     'measures',
+]
+
+export const PositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
+    'x',
+    'y',
+]
+
+export const NonPositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
+    'color',
+    'opacity',
+    'shape',
+    'size'
 ]

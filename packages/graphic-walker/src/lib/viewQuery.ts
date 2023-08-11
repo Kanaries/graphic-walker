@@ -1,4 +1,4 @@
-import { IField, IRow } from "../interfaces";
+import { IRow } from "../interfaces";
 import { aggregate } from "./op/aggregate";
 import { fold } from "./op/fold";
 import { IAggQuery, IBinQuery, IFoldQuery, IRawQuery } from "./interfaces";
@@ -6,7 +6,7 @@ import { bin } from "./op/bin";
 
 export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
 
-export function queryView (rawData: IRow[], metas: IField[], query: IViewQuery) {
+export function queryView (rawData: IRow[], query: IViewQuery) {
     switch (query.op) {
         case 'aggregate':
             return aggregate(rawData, query);

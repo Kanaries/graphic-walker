@@ -3,7 +3,15 @@
         "format": "フォーマット",
         "numberFormat": "数字",
         "timeFormat": "日付",
-        "normalizedNumberFormat": "正規化された数字"
+        "normalizedNumberFormat": "正規化された数字",
+        "background": "背景",
+        "color":"色",
+        "independence": "独立したスケーリング",
+        "x": "x軸",
+        "y": "y軸",
+        "zeroScale": "０を含む",
+        "formatGuidesDocs": "フォーマットガイド",
+        "readHere": "ここを読む"
     },
     "constant": {
         "row_count": "行数",
@@ -31,13 +39,16 @@
             "arc": "アーク",
             "boxplot": "ボックスプロット",
             "table": "テーブル",
-            "text": "文字"
+            "text": "文字",
+            "poi": "POI",
+            "choropleth": "コロプレス"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
             "none": "なし",
             "stack": "スタック",
-            "normalize": "正規化"
+            "normalize": "正規化",
+            "center": "中央"
         },
         "layout_type": {
             "__enum__": "レイアウトタイプ",
@@ -67,7 +78,10 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "テキスト"
+            "text": "テキスト",
+            "longitude": "経度",
+            "latitude": "緯度",
+            "geoId": "地理ID"
         },
         "aggregator": {
             "sum": "合計",
@@ -153,10 +167,26 @@
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート"
                 },
+                "limit": "上限",
                 "size": "サイズ変更",
                 "size_setting": {
                     "width": "幅",
                     "height": "高さ"
+                },
+                "table": {
+                    "summary": "サマリを表示"
+                },
+                "geography": "地理情報設定",
+                "geography_settings": {
+                    "geoKey": "フィーチャーID",
+                    "format": "データ形式",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "objectKey": "Feature のキー",
+                    "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "{{format}} URLを入力",
+                    "load": "ロード"
                 }
             },
             "DatasetFields": {

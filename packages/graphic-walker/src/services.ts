@@ -1,5 +1,6 @@
 import { toJS } from 'mobx';
-import { IRow, IMutField, IField, IFilterField, Specification } from './interfaces';
+import { IRow, IMutField, IViewField, Specification, IFilterFiledSimple, IExpression } from './interfaces';
+import { INestNode } from "./components/pivotTable/inteface";
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -11,6 +12,9 @@ import { IRow, IMutField, IField, IFilterField, Specification } from './interfac
 import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
+import BuildMetricTableWorker from './workers/buildMetricTable.worker?worker&inline';
+import SortWorker from './workers/sort.worker?worker&inline';
+
 import { IViewQuery } from './lib/viewQuery';
 
 // interface WorkerState {
@@ -103,22 +107,12 @@ interface PreAnalysisParams {
 //     }
 // }
 
-let filterWorker: Worker | null = null;
-let filterWorkerAutoTerminator: NodeJS.Timeout | null = null;
 
-export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]): Promise<IRow[]> => {
+export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSimple[]): Promise<IRow[]> => {
     if (filters.length === 0) return data;
-    if (filterWorkerAutoTerminator !== null) {
-        clearTimeout(filterWorkerAutoTerminator);
-        filterWorkerAutoTerminator = null;
-    }
-
-    if (filterWorker === null) {
-        filterWorker = new FilterWorker();
-    }
-
+    const worker = new FilterWorker();
     try {
-        const res: IRow[] = await workerService(filterWorker, {
+        const res: IRow[] = await workerService(worker, {
             dataSource: data,
             filters: toJS(filters),
         });
@@ -128,25 +122,17 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterField[]
         // @ts-ignore @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
         throw new Error('Uncaught error in FilterWorker', { cause: error });
     } finally {
-        if (filterWorkerAutoTerminator !== null) {
-            clearTimeout(filterWorkerAutoTerminator);
-        }
-
-        filterWorkerAutoTerminator = setTimeout(() => {
-            filterWorker?.terminate();
-            filterWorker = null;
-            filterWorkerAutoTerminator = null;
-        }, 60_000); // Destroy the worker when no request is received for 60 secs
+        worker.terminate();
     }
 };
 
-export const transformDataService = async (data: IRow[], columns: IField[]): Promise<IRow[]> => {
-    if (columns.length === 0 || data.length === 0) return data;
+export const transformDataService = async (data: IRow[], trans: { key: string, expression: IExpression }[]): Promise<IRow[]> => {
+    if (data.length === 0) return data;
     const worker = new TransformDataWorker();
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
-            columns: toJS(columns),
+            trans,
         });
         return res;
     } catch (error) {
@@ -154,14 +140,13 @@ export const transformDataService = async (data: IRow[], columns: IField[]): Pro
     } finally {
         worker.terminate();
     }
-}
+};
 
-export const applyViewQuery = async (data: IRow[], metas: IField[], query: IViewQuery): Promise<IRow[]> => {
+export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<IRow[]> => {
     const worker = new ViewQueryWorker();
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
-            metas: toJS(metas),
             query: toJS(query),
         });
         return res;
@@ -171,3 +156,48 @@ export const applyViewQuery = async (data: IRow[], metas: IField[], query: IView
         worker.terminate();
     }
 }
+
+export const buildPivotTableService = async (dimsInRow: IViewField[], 
+        dimsInColumn: IViewField[], 
+        allData: IRow[], 
+        aggData: IRow[], 
+        collapsedKeyList: string[], 
+        showTableSummary: boolean
+    ): Promise<{lt: INestNode, tt: INestNode, metric: (IRow | null)[][]}> => {
+    const worker = new BuildMetricTableWorker();
+    try {
+        const res: {lt: INestNode, tt: INestNode, metric: (IRow | null)[][]} = await workerService(worker, {
+            dimsInRow,
+            dimsInColumn, 
+            allData, 
+            aggData, 
+            collapsedKeyList, 
+            showTableSummary
+        });
+        return res;
+    } catch (error) {
+        throw new Error('Uncaught error in TableBuilderDataWorker', { cause: error });
+    } finally {
+        worker.terminate();
+    }
+}
+
+export const applySort = async (
+    data: IRow[],
+    viewMeasures: string[],
+    sort: 'ascending' | 'descending'
+): Promise<IRow[]> => {
+    const worker = new SortWorker();
+    try {
+        const res: IRow[] = await workerService(worker, {
+            data,
+            viewMeasures: viewMeasures.map((x) => toJS(x)),
+            sort,
+        });
+        return res;
+    } catch (err) {
+        throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+    } finally {
+        worker.terminate();
+    }
+};
