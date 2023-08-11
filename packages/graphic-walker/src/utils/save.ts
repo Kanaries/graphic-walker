@@ -33,9 +33,10 @@ export function initEncoding(): DraggableFieldState {
 }
 
 export function initVisualConfig(): IVisualConfig {
+    const [ geom ] = GEMO_TYPES.generic;
     return {
         defaultAggregated: true,
-        geoms: [GEMO_TYPES[0]!],
+        geoms: [geom],
         coordSystem: 'generic',
         stack: 'stack',
         showActions: false,
