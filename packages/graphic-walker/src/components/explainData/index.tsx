@@ -33,7 +33,7 @@ const Tab = styled.div`
 
 const getCategoryName = (row: IRow, field: IField) => {
   if (field.semanticType === "quantitative") {
-    let id = `${field.fid}_bin`
+    let id = field.fid;
     return `${row[id][0].toFixed(2)}-${row[id][1].toFixed(2)}`;
   } else {
     return row[field.fid];
@@ -45,9 +45,8 @@ const ExplainData: React.FC<{
   themeKey: IThemeKey
 }> = observer(({dark, themeKey}) => {
     const { vizStore, commonStore } = useGlobalStore();
-    const { allFields } = vizStore;
-    const { showInsightBoard, currentDataset, selectedMarkObject } = commonStore;
-    const { dataSource } = currentDataset;
+    const { allFields, viewMeasures, viewDimensions, viewFilters, computationFunction } = vizStore;
+    const { showInsightBoard, selectedMarkObject } = commonStore;
     const [ explainDataInfoList, setExplainDataInfoList ] = useState<{ 
       score: number; 
       measureField: IField; 
@@ -67,20 +66,22 @@ const ExplainData: React.FC<{
 
     const { t } = useTranslation();
     
+    const explain = async (predicates) => {
+      const explainInfoList = await explainBySelection({predicates, viewFilters, allFields, viewMeasures, viewDimensions, computationFunction});
+      setExplainDataInfoList(explainInfoList);
+    }
+
     useEffect(() => {
       if (!showInsightBoard || Object.keys(selectedMarkObject).length === 0) return;
-      const viewFields = allFields.filter((field) => Object.keys(selectedMarkObject).includes(field.fid))
-      const predicateFields = allFields.filter((field) => selectedMarkObject[field.fid]);
-      const predicates: IPredicate[] = predicateFields.map((field) => {
+      const predicates: IPredicate[] = viewDimensions.map((field) => {
           return {
               key: field.fid,
               type: "discrete",
               range: new Set([selectedMarkObject[field.fid]])
           } as IPredicate
       });
-      const explainInfoList = explainBySelection({dataSource, predicates, viewFields, metas: allFields});
-      setExplainDataInfoList(explainInfoList);
-    }, [dataSource, allFields, showInsightBoard, selectedMarkObject]);
+      explain(predicates)
+    }, [viewMeasures, viewDimensions, showInsightBoard, selectedMarkObject]);
 
     useEffect(() => {
       if (chartRef.current && explainDataInfoList.length > 0) {
