@@ -1,5 +1,5 @@
-import React, { type ForwardedRef, forwardRef } from "react";
-import { DOM } from "@kanaries/react-beautiful-dnd";
+import React, { type ForwardedRef, forwardRef, useState } from "react";
+import { DOMProvider } from "@kanaries/react-beautiful-dnd";
 import { observer } from "mobx-react-lite";
 import App, { IGWProps } from "./App";
 import { StoreWrapper } from "./store/index";
@@ -13,22 +13,24 @@ import "./empty_sheet.css";
 export const GraphicWalker = observer(forwardRef<IGWHandler, IGWProps>((props, ref) => {
     const { storeRef } = props;
 
+    const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
+
     const handleMount = (shadowRoot: ShadowRoot) => {
-        DOM.setBody(shadowRoot);
-        DOM.setHead(shadowRoot);
+        setShadowRoot(shadowRoot);
     };
     const handleUnmount = () => {
-        DOM.setBody(document.body);
-        DOM.setHead(document.head);
+        setShadowRoot(null);
     };
 
     return (
         <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
-                    <FieldsContextWrapper>
-                        <App {...props} />
-                    </FieldsContextWrapper>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                        <FieldsContextWrapper>
+                            <App {...props} />
+                        </FieldsContextWrapper>
+                    </DOMProvider>
                 </ShadowDom>
             </AppRoot>
         </StoreWrapper>
