@@ -5,7 +5,7 @@ import React, { forwardRef, useMemo } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -21,13 +21,14 @@ interface SpecRendererProps {
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
+    computationFunction: IComputationFunction;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
+    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction  },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -109,6 +110,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 loading={loading}
                 themeKey={themeKey}
                 dark={dark}
+                computationFunction={computationFunction}
             />
         );
     }

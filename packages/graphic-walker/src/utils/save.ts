@@ -37,6 +37,7 @@ export function initVisualConfig(): IVisualConfig {
     return {
         defaultAggregated: true,
         geoms: [geom],
+        showTableSummary: false,
         coordSystem: 'generic',
         stack: 'stack',
         showActions: false,
