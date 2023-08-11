@@ -18,7 +18,7 @@ function getCellData (cell: IRow, measure: IField) {
 const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
     const { matrix, meaInRows, meaInColumns } = props;
     return (
-        <tbody className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 border-r border-b border-gray-300">
+        <tbody className="bg-white dark:bg-black text-gray-800 dark:text-gray-100 border-r border-b border-gray-300">
             {matrix.map((row, rIndex) => {
                 if (meaInRows.length !== 0) {
                     return meaInRows.map((rowMea, rmIndex) => {
