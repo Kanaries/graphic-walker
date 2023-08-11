@@ -178,6 +178,9 @@
                     "width": "幅",
                     "height": "高さ"
                 },
+                "table": {
+                    "summary": "サマリを表示"
+                },
                 "geography": "地理情報設定",
                 "geography_settings": {
                     "geoKey": "フィーチャーID",

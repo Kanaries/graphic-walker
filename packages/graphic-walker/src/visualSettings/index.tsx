@@ -19,6 +19,7 @@ import {
     LightBulbIcon,
     CodeBracketSquareIcon,
     Cog6ToothIcon,
+    TableCellsIcon,
     MapPinIcon,
     GlobeAltIcon,
     RectangleGroupIcon,
@@ -86,6 +87,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
     const {
         defaultAggregated,
         geoms: [markType],
+        showTableSummary,
         coordSystem = 'generic',
         stack,
         interactiveScale,
@@ -400,6 +402,15 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 icon: BarsArrowDownIcon,
                 onClick: () => vizStore.applyDefaultSort('descending'),
             },
+            {
+                key: 'table:summary',
+                label: t('table.summary'),
+                icon: TableCellsIcon,
+                checked: showTableSummary,
+                onChange: checked => {
+                    vizStore.setVisualConfig('showTableSummary', checked);
+                },
+            },
             '-',
             {
                 key: 'axes_resize',
@@ -568,7 +579,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
 
-        return items;
+        switch (vizStore.visualConfig.geoms[0]) {
+            case 'table':
+                return items;
+            default:
+                return items.filter(item => typeof item === 'string' || item.key !== 'table:summary');
+        }
     }, [
         vizStore,
         canUndo,

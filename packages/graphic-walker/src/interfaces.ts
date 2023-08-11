@@ -222,6 +222,7 @@ export type ICoordMode = 'generic' | 'geographic';
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
+    showTableSummary: boolean;
     /** @default "generic" */
     coordSystem?: ICoordMode;
     stack: IStackMode;
