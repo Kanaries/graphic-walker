@@ -3,7 +3,15 @@
         "format": "格式",
         "numberFormat": "数字格式",
         "timeFormat": "时间格式",
-        "normalizedNumberFormat": "标准化数字格式"
+        "normalizedNumberFormat": "标准化数字格式",
+        "background": "背景",
+        "color":"颜色",
+        "independence": "独立性",
+        "x": "x轴",
+        "y": "y轴",
+        "zeroScale": "零刻度",
+        "formatGuidesDocs": "格式指南",
+        "readHere": "阅读此处"
     },
     "constant": {
         "row_count": "行数",
@@ -31,7 +39,14 @@
             "arc": "弧形",
             "boxplot": "统计箱",
             "table": "表格",
-            "text": "文本"
+            "text": "文本",
+            "poi": "兴趣点",
+            "choropleth": "区域图"
+        },
+        "coord_system": {
+            "__enum__": "坐标系统",
+            "generic": "通用",
+            "geographic": "地理"
         },
         "layout_type": {
             "__enum__": "尺寸模式",
@@ -54,7 +69,8 @@
             "__enum__": "堆叠模式",
             "none": "关闭",
             "stack": "堆叠",
-            "normalize": "归一化"
+            "normalize": "归一化",
+            "center": "中央"
         },
         "draggable_key": {
             "fields": "字段",
@@ -68,7 +84,10 @@
             "radius": "半径",
             "filters": "筛选器",
             "details": "信息",
-            "text": "文本"
+            "text": "文本",
+            "longitude": "经度",
+            "latitude": "纬度",
+            "geoId": "地理 ID"
         },
         "aggregator": {
             "sum": "求和",
@@ -154,10 +173,26 @@
                     "export_chart_as": "导出 {{type}}",
                     "export_code": "导出代码"
                 },
+                "limit": "上限",
                 "size": "调整尺寸",
                 "size_setting": {
                     "width": "宽度",
                     "height": "高度"
+                },
+                "table": {
+                    "summary": "显示摘要"
+                },
+                "geography": "地理信息配置",
+                "geography_settings": {
+                    "geoKey": "地理 ID",
+                    "format": "数据格式",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "objectKey": "提取要素键",
+                    "jsonInputPlaceholder": "在此粘贴 {{format}}",
+                    "href": "{{format}} URL",
+                    "hrefPlaceholder": "输入在线资源地址",
+                    "load": "加载"
                 }
             },
             "DatasetFields": {

@@ -1,47 +1,47 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
-![graphic-walker-banner](https://user-images.githubusercontent.com/22167673/222895294-47ddd664-106e-45ff-a613-e7919522cb79.png)
+![graphic-walker-banner](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-banner.png)
 
 
-# graphic-walker
+# Graphic Walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml?style=flat-square)
 [![](https://img.shields.io/badge/twitter-kanaries_data-03A9F4?style=flat-square&logo=twitter)](https://twitter.com/kanaries_data)
 [![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/WWHraZ8SeV)
 [![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/@kanaries_data)
-[![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
-Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
+Graphic Walker is a different open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop / natural language query operations. 
 
 ### Why is it different?
 
-It is extremely easy to embed in your apps just as a React component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
+It is extremely easy to embed in your apps just as a component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
 
 ### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
-+ A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
 + Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
 + Graphic Walker now supports Dark Theme! 🤩
++ Spatial visualization.
 + Natural language / Chat interface. Ask question about your data!
++ A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 
 https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
-## Usage
+## Usage for End Users
 
-First, upload your CSV file, preview your data, and define the analytic type of columns (dimension or measure).
+First, upload your Data(csv/json) file, preview your data, and define the analytic type of columns (dimension or measure).
 
 > We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
-![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
+![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-create-ds.png)
 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
-![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/after_load_data.png)
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-readme-01.png)
 
 You can also view raw data any time or edit the meta data.
 
@@ -50,12 +50,12 @@ You can also view raw data any time or edit the meta data.
 
 Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
 
-![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-bar-01.png)
+![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-bar-01.png)
 
 
 You can change the mark type into others to make different charts, for example a line chart.
 
-![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-line-01.png)
+![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-line-01.png)
 
 
 To compare different measures, you can create a concat view by adding more than one measure into rows/columns.
@@ -78,7 +78,7 @@ For example, in bike sharing dataset, ask why registered rents in Jan. is lower 
 
 ![graphic walker explain data result](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
 
-## Deploy
+## Deploy, Usage for Developers
 
 If you want to use Graphic Walker as a data exploration tool without thinking about deployment details, you can use our online out-of-the-box version.
 
@@ -106,14 +106,14 @@ In your app:
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
-const YourEmbeddingApp: React.FC = props => {
+const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
     const { dataSource, fields } = props;
     return <GraphicWalker
         dataSource={dataSource}
         rawFields={fields}
         spec={graphicWalkerSpec}
         i18nLang={langStore.lang}
-    />
+    />;
 }
 
 export default YourEmbeddingApp;
@@ -124,13 +124,13 @@ If you have a configuration of GraphicWalker chart, you can use the `PureRendere
 ```typescript
 import { PureRenderer } from '@kanaries/graphic-walker';
 
-const YourChart: React.FC = props => {
+const YourChart: React.FC<IYourChartProps> = props => {
     const { rawData, visualState, visualConfig } = props;
-    return <GraphicWalker
+    return <PureRenderer
         rawData={rawData}
         visualState={visualState}
         visualConfig={visualConfig}
-    />
+    />;
 }
 
 export default YourChart;
@@ -172,7 +172,7 @@ const YourApp = props => {
 
 ### Customize I18n
 
-If you need i18n support to cover languages not supported currently, or to totally rewrite the content of any built-in resource(s), you can also provide your resource(s) as `props.i18nResources` to Graphic Walker like this.
+If you need i18n support to cover languages not supported currently, or to totally rewrite the content of any built-in resource(s), you can also provide your resource(s) as [`props.i18nResources`](#propsi18nresources) to Graphic Walker like this.
 
 ```typescript
 const yourResources = {
@@ -205,7 +205,9 @@ It is recommended to use [chatGPT-i18n](https://github.com/ObservedObserver/chat
 
 ## API
 
-Graphic Walker Props interface
+Graphic Walker Props & Ref interface
+
+### Props
 
 ```ts
 export interface IGWProps {
@@ -215,19 +217,142 @@ export interface IGWProps {
 	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
-	keepAlive?: boolean;
+	keepAlive?: boolean | string;
+    fieldKeyGuard?: boolean;
+    themeKey?: IThemeKey;
+    dark?: IDarkMode;
+    storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    computation?: IComputationConfig;
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
+    };
 }
 ```
 
-property description
+#### `dataSource`: optional _{ `Array<{[key: string]: any}>` }_
 
-+ `dataSource`, type `Array<{[key: string]: any}>`, array of key-value object data.
-+ `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts).  array of fields(columns) of the data.
-+ `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). visualization specification
-+ `hideDataSourceConfig` at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`
-+ `i18nLang`, type `string`. lang label
-+ `i18nResources` custom lang config
-+ `keepAlive`, type `boolean`. whether to keep the component state when it is unmounted. If `true`, after you unmount the graphic-walker component, the state will still be store, and will be restore when the component is mount again.
+Array of key-value object data. Provide this prop with `rawFields` prop together.
+
+#### `rawFields`: optional _{ [`IMutField`](./packages/graphic-walker/src/interfaces.ts) }_
+
+Array of fields(columns) of the data. Provide this prop with `dataSource` prop together.
+
+#### ~~`spec`: optional _{ [`Specification`](./packages/graphic-walker/src/interfaces.ts) }_~~
+
+Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop.
+
+#### `hideDataSourceConfig`: optional _{ `boolean = false` }_
+
+Data source control at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`.
+
+#### `i18nLang`: optional _{ `string = 'en-US'` }_
+
+Graphic Walker support i18n, you can set the language of the component by this prop. Currently, we support `en-US`, `zh-CN`, `ja-JP` with built-in locale resources. If you want to use other languages, you can provide your own locale resources by [`i18nResources` prop](#i18nresources).
+
+#### `i18nResources`: optional _{ `{ [lang: string]: Record<string, string | any> }` }_
+
+Customize locale resources. See [Customize I18n](#customize-i18n) for more details.
+
+#### `keepAlive`: optional _{ `boolean | string = false` }_
+
+Whether to keep the component state when it is unmounted. If provided, after you unmount the graphic-walker component, the state will still be stored, and will be restored when the component is mount again. If you need to enable `keepAlive` for multiple graphic-walker components, you can provide a unique string value for each component to distinguish them.
+
+#### `fieldKeyGuard`: optional _{ `boolean = true` }_
+
+Whether to use the field key guard. If enabled, the field `fid` will be transformed to ensure that it is safe to use as a reference in Vega-Lite. Otherwise, the `fid` provided in `rawFields` will be used directly.
+
+#### `themeKey`: optional _{ `IThemeKey = "vega"` }_
+
+Specify the chart theme to use.
+
+#### `dark`: optional _{ `IDarkMode = "media"` }_
+
+Specify the dark mode preference. There're three valid values:
+
++ `"media"`: Use the system dark mode preference.
++ `"dark"`: Always use dark mode.
++ `"light"`: Always use light mode.
+
+#### `storeRef`: optional _{ `React.MutableRefObject<IGlobalStore | null>` }_
+
+If you want to control the visualization specification, you can provide a `React.MutableRefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
+
+#### `computation`: optional _{ [`IComputationFunction`](./packages/graphic-walker/src/interfaces.ts) }_
+
+Specify the computation configuration. See [Computation](./computation.md) for more details.
+
+1. Client-side computation (default)
+
+Provide noting to use client-side computation. In this mode, the computation will be done in the browser (mainly use WebWorker).
+
+2. Server-side computation
+
+Graphic Walker will call given computation function with [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts) as parameter. 
+The function should returns a [`IRow[]`](./packages/graphic-walker/src/interfaces.ts) as result.
+When you are using Server-side computation, you should provide `rawFields` together.
+
+#### `toolbar`: optional _{ `ToolbarProps` }_
+
+Customize the toolbar.
+
+### Ref
+
+```ts
+export interface IGWHandler {
+    chartCount: number;
+    chartIndex: number;
+    openChart: (index: number) => void;
+    get renderStatus(): IRenderStatus;
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    exportChart: IExportChart;
+    exportChartList: IExportChartList;
+}
+```
+
+#### `chartCount`: _{ `number` }_
+
+Length of the "chart" tab list.
+
+#### `chartIndex`: _{ `number` }_
+
+Current selected chart index.
+
+#### `openChart`: _{ `(index: number) => void` }_
+
+Switches to the specified chart.
+
+#### `renderStatus`: _{ `IRenderStatus` }_
+
+Returns the status of the current chart. It may be one of the following values:
+
+* `"computing"`: _GraphicWalker_ is computing the data view.
+* `"rendering"`: _GraphicWalker_ is rendering the chart.
+* `"idle"`: Rendering is finished.
+* `"error"`: An error occurs during the process above.
+
+#### `onRenderStatusChange`: _{ `(cb: (renderStatus: IRenderStatus) => void) => (() => void)` }_
+
+Registers a callback function to listen to the status change of the current chart. It returns a dispose function to remove this callback.
+
+#### `exportChart`: _{ `IExportChart` }_
+
+Exports the current chart.
+
+#### `exportChartList`: _{ `IExportChartList` }_
+
+Exports all charts. It returns an async generator to iterate over all charts. For example:
+
+```ts
+for await (const chart of gwRef.current.exportChartList()) {
+    console.log(chart);
+}
+```
+
+## Server integration
+For those who need to integrate graphic-walker with their own databases/OLAP, you can develop based on our SDK [gw-dsl-parser](https://github.com/Kanaries/gw-dsl-parser)
+
+which translate graphic-walker specification to SQL
 
 ## What's next
 

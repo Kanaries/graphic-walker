@@ -1,6 +1,7 @@
 import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
+import { INestNode } from '../components/pivotTable/inteface';
 
 export class CommonStore {
     public datasets: IDataSet[] = [];
@@ -15,15 +16,18 @@ export class CommonStore {
     public showDataConfig: boolean = false;
     public showCodeExportPanel: boolean = false;
     public showVisualConfigPanel: boolean = false;
+    public showGeoJSONConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
     constructor () {
         this.datasets = [];
         this.dataSources = [];
         makeAutoObservable(this, {
             dataSources: observable.ref,
             tmpDataSource: observable.ref,
-            filters: observable.ref
+            filters: observable.ref,
+            tableCollapsedHeaderMap: observable.ref,
         });
     }
     public get currentDataset (): DataSet {
@@ -67,6 +71,30 @@ export class CommonStore {
     }
     public setShowVisualConfigPanel (show: boolean) {
         this.showVisualConfigPanel = show;
+    }
+    public updateTableCollapsedHeader (node: INestNode) {
+        const {uniqueKey, height} = node;
+        if (height < 1) return;
+        const updatedMap = new Map(this.tableCollapsedHeaderMap)
+        // if some child nodes of the incoming node are collapsed, remove them first
+        updatedMap.forEach((existingPath, existingKey) => {
+            if (existingKey.startsWith(uniqueKey) && existingKey.length > uniqueKey.length) {
+                updatedMap.delete(existingKey)
+            }
+        })
+        if (!updatedMap.has(uniqueKey)) {
+            updatedMap.set(uniqueKey, node.path)
+        } else {
+            updatedMap.delete(uniqueKey)
+        }
+        this.tableCollapsedHeaderMap = updatedMap
+    }
+    public resetTableCollapsedHeader () {
+        const updatedMap: Map<string, INestNode["path"]> = new Map();
+        this.tableCollapsedHeaderMap = updatedMap;
+    }
+    public setShowGeoJSONConfigPanel (show: boolean) {
+        this.showGeoJSONConfigPanel = show;
     }
     public closeEmbededMenu () {
         this.vizEmbededMenu.show = false;
@@ -147,14 +175,14 @@ export class CommonStore {
         this.initTempDS();
         this.showDSPanel = true;
     }
-    public addAndUseDS(dataset: IDataSetInfo) {
-        const datasetId = this.addDS(dataset);
+    public addAndUseDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
+        const id = this.addDS(dataset, datasetId);
         this.dsIndex = this.datasets.length - 1;
-        return datasetId
+        return id
     }
-    public addDS(dataset: IDataSetInfo) {
+    public addDS(dataset: IDataSetInfo, datasetId?: string | undefined) {
         const timestamp = new Date().getTime();
-        const dataSetId = `dst-${timestamp}`
+        const dataSetId = datasetId || `dst-${timestamp}`
         const dataSourceId = `dse-${timestamp}`;
         this.dataSources.push({
             id: dataSourceId,
@@ -166,12 +194,12 @@ export class CommonStore {
             rawFields: dataset.rawFields,
             dsId: dataSourceId
         })
-        return dataSetId;
+        return dataSourceId;
     }
     public removeDS(datasetId: string) {
         const datasetIndex = this.datasets.findIndex(d => d.id === datasetId);
         if (datasetIndex > -1) {
-            const dataSourceId = this.datasets[datasetIndex].dsId;
+            const dataSourceId = this.datasets[datasetIndex].id;
             const dataSourceIndex = this.dataSources.findIndex(d => d.id === dataSourceId);
             this.dataSources.splice(dataSourceIndex, 1);
             this.datasets.splice(datasetIndex, 1);

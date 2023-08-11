@@ -1,5 +1,8 @@
 import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
+import type { FeatureCollection } from 'geojson';
+import type { feature } from 'topojson-client';
+import type {IViewQuery} from "./lib/viewQuery";
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -52,6 +55,15 @@ export interface IUncertainMutField {
     path: string[];
 }
 
+export interface IDatasetStats {
+    rowCount: number;
+}
+
+export interface IFieldStats {
+    values: { value: number | string; count: number }[];
+    range: [number, number];
+}
+
 export type IExpParamter =
     | {
           type: 'field';
@@ -76,6 +88,8 @@ export interface IExpression {
     as: string;
 }
 
+export type IGeoRole = 'longitude' | 'latitude' | 'none';
+
 export interface IField {
     /**
      * fid: key in data record
@@ -91,16 +105,17 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    geoRole?: IGeoRole;
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
     basename?: string;
-    path?: [],
+    path?: string[],
 }
-
+export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
     dragId: string;
-    sort?: 'none' | 'ascending' | 'descending';
+    sort?: ISortMode;
 }
 
 export interface DataSet {
@@ -157,6 +172,11 @@ export interface IFilterField extends IViewField {
     rule: IFilterRule | null;
 }
 
+export interface IFilterFiledSimple {
+    fid: string;
+    rule: IFilterRule | null;
+}
+
 export interface DraggableFieldState {
     dimensions: IViewField[];
     measures: IViewField[];
@@ -168,6 +188,9 @@ export interface DraggableFieldState {
     shape: IViewField[];
     theta: IViewField[];
     radius: IViewField[];
+    longitude: IViewField[];
+    latitude: IViewField[];
+    geoId: IViewField[];
     details: IViewField[];
     filters: IFilterField[];
     text: IViewField[];
@@ -192,26 +215,45 @@ export type IFilterRule =
           value: Set<string | number>;
       };
 
-export type IStackMode = 'none' | 'stack' | 'normalize';
+export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
+
+export type ICoordMode = 'generic' | 'geographic';
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
+    showTableSummary: boolean;
+    /** @default "generic" */
+    coordSystem?: ICoordMode;
     stack: IStackMode;
     showActions: boolean;
     interactiveScale: boolean;
-    sorted: 'none' | 'ascending' | 'descending';
+    sorted: ISortMode;
     zeroScale: boolean;
+    /** @default false */
+    scaleIncludeUnmatchedChoropleth?: boolean;
+    background?: string;
     format: {
         numberFormat?: string;
         timeFormat?: string;
         normalizedNumberFormat?: string;
+    };
+    resolve: {
+        x?: boolean;
+        y?: boolean;
+        color?: boolean;
+        opacity?: boolean;
+        shape?: boolean;
+        size?: boolean;
     };
     size: {
         mode: 'auto' | 'fixed';
         width: number;
         height: number;
     };
+    geojson?: FeatureCollection;
+    geoKey?: string;
+    limit: number;
 }
 
 export interface IVisSpec {
@@ -238,6 +280,7 @@ export enum ISegmentKey {
 
 export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
+export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
 
 export type VegaGlobalConfig = VgConfig | VlConfig;
 
@@ -345,3 +388,97 @@ export interface IGWHandler {
 export interface IGWHandlerInsider extends IGWHandler {
     updateRenderStatus: (renderStatus: IRenderStatus) => void;
 }
+
+export interface IVisField {
+    key: string;
+    type: ISemanticType;
+    name?: string;
+    description?: string;
+    format?: string;
+    expression?: IExpression;
+}
+
+export type IVisFieldComputation = {
+    field: IVisField['key'];
+    expression: NonNullable<IVisField['expression']>;
+    name: NonNullable<IVisField['name']>;
+    type: IVisField['type'];
+};
+
+export interface IVisFilter {
+    fid: string;
+    rule: SetToArray<IFilterRule>;
+};
+
+export interface IFilterWorkflowStep {
+    type: 'filter';
+    filters: IVisFilter[];
+}
+
+export interface ITransformWorkflowStep {
+    type: 'transform';
+    transform: {
+        key: IVisFieldComputation['field'];
+        expression: IVisFieldComputation['expression'];
+    }[];
+}
+
+export interface IViewWorkflowStep {
+    type: 'view';
+    query: IViewQuery[];
+}
+
+export interface ISortWorkflowStep {
+    type: 'sort';
+    sort: 'ascending' | 'descending';
+    by: string[];
+}
+
+export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
+
+export interface IDataQueryPayload {
+    workflow: IDataQueryWorkflowStep[];
+    limit?: number;
+    offset?: number;
+}
+
+export interface ILoadDataPayload {
+    pageSize: number;
+    pageIndex: number;
+}
+
+export interface IGWDatasetStat {
+    count: number;
+}
+
+export type IResponse<T> = (
+    | {
+        success: true;
+        data: T;
+    }
+    | {
+        success: false;
+        message: string;
+        error?: {
+            code: `ERR_${Uppercase<string>}`;
+            options?: Record<string, string>;
+        };
+    }
+);
+
+export type Topology = Parameters<typeof feature>[0];
+
+export type IGeographicData = (
+    | {
+        type: 'GeoJSON';
+        data: FeatureCollection;
+    }
+    | {
+        type: 'TopoJSON';
+        data: Topology;
+        /**
+         * default to the first key of `objects` in Topology
+         */
+        objectKey?: string;
+    }
+);
