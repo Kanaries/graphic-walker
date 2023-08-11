@@ -45,8 +45,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const { allFields, viewFilters, viewMeasures, sort, limit, draggableFieldState } = vizStore;
     const { rows, columns } = draggableFieldState;
     const { showTableSummary, defaultAggregated } = visualConfig;
-    const { currentDataset, tableCollapsedHeaderMap } = commonStore;
-    const { dataSource } = currentDataset;
+    const { tableCollapsedHeaderMap } = commonStore;
     const aggData = useRef<IRow[]>([]);
     const [ topTreeHeaderRowNum, setTopTreeHeaderRowNum ] = useState<number>(0);
 
@@ -76,7 +75,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                 aggregateGroupbyData();
             }
         } else {
-            aggregateGroupbyData();
+            aggregateThenGenerate();
         }
     }, [data]);
 
@@ -85,9 +84,14 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
             // If showTableSummary is on, there is no need to generate extra queries. Directly generate new table.
             generateNewTable();
         } else {
-            aggregateGroupbyData();
+            aggregateThenGenerate();
         }
     }, [tableCollapsedHeaderMap]);
+
+    const aggregateThenGenerate = async() => {
+        await aggregateGroupbyData();
+        generateNewTable();
+    };
 
     const generateNewTable = () => {
         appRef.current?.updateRenderStatus('rendering');
@@ -155,17 +159,21 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                     return [];
                 });
         });
-        Promise.all(groupbyPromises)
-            .then((result) => {
-                setIsLoading(false);
-                const finalizedData = [...result.flat()];
-                aggData.current = finalizedData;
-                generateNewTable();
-            })
-            .catch((err) => {
-                console.error(err);
-                setIsLoading(false);
-            });
+        return new Promise<void>((resolve, reject) => {
+            Promise.all(groupbyPromises)
+                .then((result) => {
+                    setIsLoading(false);
+                    const finalizedData = [...result.flat()];
+                    aggData.current = finalizedData;
+                    resolve();
+                })
+                .catch((err) => {
+                    console.error(err);
+                    setIsLoading(false);
+                    reject();
+                });
+        })
+
     };
 
     // const { leftTree, topTree, metricTable } = store;
