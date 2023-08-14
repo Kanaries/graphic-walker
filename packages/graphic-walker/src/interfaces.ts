@@ -62,6 +62,15 @@ export interface IFieldStats {
     range: [number, number];
 }
 
+
+export interface FilterSortConfig {
+    key: 'label' | 'count', 
+    order: 'ascending' | 'descending'
+}
+
+export type IFieldReadStats = {value: number | string; count: number }[];
+
+
 export type IExpParamter =
     | {
           type: 'field';
@@ -205,7 +214,11 @@ export type IFilterRule =
     | {
           type: 'one of';
           value: Set<string | number>;
-      };
+      }
+    | {
+        type: 'not in';
+        value: Set<string | number>;
+    }
 
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 

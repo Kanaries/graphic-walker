@@ -21,6 +21,7 @@ const filter = (dataSource, filters) => {
                         return false;
                     }
                 }
+                
                 case 'range': {
                     if (rule.value[0] <= which[fid] && which[fid] <= rule.value[1]) {
                         break;
