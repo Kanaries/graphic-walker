@@ -83,8 +83,10 @@ const FilterPill: React.FC<FilterPillProps> = observer(props => {
                         <span className="flex-1">
                             {
                                 field.rule.type === 'one of' ? (
-                                    `oneOf: [${[...field.rule.value].map(d => JSON.stringify(d)).join(', ')}]`
-                                ) : field.rule.type === 'range' ? (
+                                    `Expect: [${[...field.rule.value].map(d => JSON.stringify(d)).join(', ')}]`
+                                ) :  field.rule.type === 'not in' ? (
+                                    `includes: [${[...field.rule.value].map(d => JSON.stringify(d)).join(', ')}]`
+                                ) :field.rule.type === 'range' ? (
                                     `range: [${field.rule.value[0]}, ${field.rule.value[1]}]`
                                 ) : field.rule.type === 'temporal range' ? (
                                     `range: [${new Date(field.rule.value[0])}, ${new Date(field.rule.value[1])}]`
