@@ -573,6 +573,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         extra,
         exclude,
         limit,
+        showTableSummary,
     ]);
 
     return (

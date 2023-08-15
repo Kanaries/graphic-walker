@@ -169,7 +169,7 @@ const actions: {
             rows: e.columns,
         })),
     [Methods.setLayout]: (data, kvs) =>
-        mutPath(data, 'layout', (l) => Object.assign(l, Object.fromEntries(kvs))),
+        mutPath(data, 'layout', (l) => Object.assign({}, l, Object.fromEntries(kvs))),
     [Methods.setFieldAggregator]: (data, encoding, index, aggName) =>
         mutPath(data, `encodings.${encoding}`, (f) => replace(f, index, (x) => ({ ...x, aggName }))),
     [Methods.setGeoData]: (data, geojson, geoKey) => mutPath(data, 'layout', (l) => ({ ...l, geojson, geoKey })),
