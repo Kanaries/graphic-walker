@@ -4,7 +4,7 @@ import React, { forwardRef, useMemo } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -16,7 +16,8 @@ interface SpecRendererProps {
     data: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: DeepReadonly<IVisualConfig>;
+    visualConfig: IVisualConfigNew;
+    layout: IVisualLayout;
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
@@ -26,11 +27,12 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
+    { name,layout, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve } = visualConfig;
+    const { geoms, defaultAggregated} = visualConfig;
+    const { interactiveScale, stack, showActions, size, format: _format, background, zeroScale, resolve } = layout;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -42,7 +44,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const sizeChannel = draggableFieldState.size;
     const details = draggableFieldState.details;
     const text = draggableFieldState.text;
-    const format = toJS(_format);
+    const format = _format;
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
     const colLeftFacetFields = useMemo(
@@ -105,6 +107,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 data={data}
                 draggableFieldState={draggableFieldState}
                 visualConfig={visualConfig}
+                layout={layout}
                 loading={loading}
                 themeKey={themeKey}
                 dark={dark}

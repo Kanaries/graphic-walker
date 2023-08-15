@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { IDraggableStateKey } from '../../interfaces';
+import { DraggableFieldState, IAggregator, IDraggableStateKey } from '../../interfaces';
 import { observer } from 'mobx-react-lite';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
 import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
@@ -17,15 +17,17 @@ const PillActions = styled.div`
 `;
 
 interface SingleEncodeEditorProps {
-    dkey: IDraggableStateKey;
+    dkey: {
+        id: keyof Omit<DraggableFieldState, 'filters'>
+    };
     provided: DroppableProvided;
     snapshot: DroppableStateSnapshot;
 }
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
-    const { vizStore } = useGlobalStore();
-    const { draggableFieldState, visualConfig } = vizStore;
-    const channelItem = draggableFieldState[dkey.id][0];
+    const vizStore = useVizStore();
+    const { allEncodings, config } = vizStore;
+    const channelItem = allEncodings[dkey.id][0];
     const { t } = useTranslation();
 
     const aggregationOptions = useMemo(() => {
@@ -37,14 +39,23 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
 
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
-            <div className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'} relative z-0`}>
+            <div
+                className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
+                    snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
+                } relative z-0`}
+            >
                 {t('actions.drop_field')}
             </div>
             {channelItem && (
                 <Draggable key={channelItem.dragId} draggableId={channelItem.dragId} index={0}>
                     {(provided, snapshot) => {
                         return (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1">
+                            <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1"
+                            >
                                 <div
                                     onClick={() => {
                                         vizStore.removeField(dkey.id, 0);
@@ -54,18 +65,16 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                     <TrashIcon className="w-4" />
                                 </div>
                                 <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
-                                    <span className="flex-1 truncate">
-                                        {channelItem.name}
-                                    </span>
-                                    {channelItem.analyticType === "measure" && channelItem.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
+                                    <span className="flex-1 truncate">{channelItem.name}</span>
+                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
                                         <DropdownContext
                                             options={aggregationOptions}
                                             onSelect={(value) => {
-                                                vizStore.setFieldAggregator(dkey.id, 0, value);
+                                                vizStore.setFieldAggregator(dkey.id, 0, value as IAggregator);
                                             }}
                                         >
                                             <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                                                {channelItem.aggName || ""}
+                                                {channelItem.aggName || ''}
                                                 <ChevronUpDownIcon className="w-3" />
                                             </span>
                                         </DropdownContext>

@@ -1,21 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import type { DeepReadonly, IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
-import { useGlobalStore } from '../store';
+import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
-import { dataQueryServer } from '../computation/serverComputation';
-
-export const useComputationFunc = (): IComputationFunction => {
-    const { vizStore } = useGlobalStore();
-    return vizStore.computationFuction;
-};
+import { dataQuery } from '../computation';
+import { toJS } from 'mobx';
 
 interface UseRendererProps {
     allFields: Omit<IViewField, 'dragId'>[];
     viewDimensions: Omit<IViewField, 'dragId'>[];
     viewMeasures: Omit<IViewField, 'dragId'>[];
-    filters: readonly DeepReadonly<IFilterField>[];
+    filters: IFilterField[];
     defaultAggregated: boolean;
     sort: 'none' | 'ascending' | 'descending';
     limit: number;
@@ -65,7 +60,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQueryServer(computationFunction, workflow, limit > 0 ? limit : undefined).then(data => {
+        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined).then(data => {
             if (taskId !== taskIdRef.current) {
                 return;
             }

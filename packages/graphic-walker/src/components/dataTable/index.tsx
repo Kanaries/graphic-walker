@@ -4,8 +4,7 @@ import { observer } from 'mobx-react-lite';
 import type { IMutField, IRow, DataSet, IComputationFunction } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from "../loadingLayer";
-import { useComputationFunc } from "../../renderer/hooks";
-import { dataReadRawServer } from "../../computation/serverComputation";
+import { dataReadRaw } from "../../computation";
 import Pagination from './pagination';
 import { ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import DropdownContext from '../dropdownContext';
@@ -15,8 +14,8 @@ interface DataTableProps {
     size?: number;
     /** total count of rows */
     total: number;
-    dataset: DataSet;
-    computation?: IComputationFunction;
+    metas: IMutField[];
+    computation: IComputationFunction;
     onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
     loading?: boolean;
 }
@@ -118,11 +117,10 @@ const getHeaderKey = (f: wrapMutField) => {
 };
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, dataset, computation, total, loading: statLoading } = props;
+    const { size = 10, onMetaChange, metas, computation, total, loading: statLoading } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
-    const defaultComputation = useComputationFunc();
-    const computationFunction = computation ?? defaultComputation;
+    const computationFunction = computation;
 
     const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return ANALYTIC_TYPE_LIST.map((at) => ({
@@ -151,7 +149,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         }
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
-        dataReadRawServer(computationFunction, size, pageIndex).then(data => {
+        dataReadRaw(computationFunction, size, pageIndex).then(data => {
             if (taskId === taskIdRef.current) {
                 setDataLoading(false);
                 setRows(data);
@@ -169,8 +167,6 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     }, [computationFunction, pageIndex, size]);
 
     const loading = statLoading || dataLoading;
-
-    const metas = dataset.rawFields;
 
     const headers = useMemo(() => getHeaders(metas), [metas]);
 

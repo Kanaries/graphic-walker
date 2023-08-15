@@ -7,6 +7,9 @@ export const dataQueryClient = async (
     offset?: number,
     limit?: number,
 ): Promise<IRow[]> => {
+    if (process.env.NODE_ENV !== "production") {
+        console.log('local query triggered');
+    }
     let res = rawData;
     for await (const step of workflow) {
         switch (step.type) {

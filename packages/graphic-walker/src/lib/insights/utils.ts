@@ -1,5 +1,4 @@
-import { IAggregator, IField } from '../../interfaces';
-import { IAggQuery } from '../interfaces';
+import { IField } from '../../interfaces';
 
 export function groupByAnalyticTypes(fields: IField[]) {
     const dimensions = fields.filter((f) => f.analyticType === 'dimension');
@@ -11,7 +10,5 @@ export function groupByAnalyticTypes(fields: IField[]) {
 }
 
 export function complementaryFields(props: { selection: IField[]; all: IField[] }): IField[] {
-    return props.all
-        .filter((f) => f.analyticType === 'dimension')
-        .filter((f) => !props.selection.find((vf) => vf.fid === f.fid));
+    return props.all.filter((f) => f.analyticType === 'dimension').filter((f) => !props.selection.find((vf) => vf.fid === f.fid));
 }

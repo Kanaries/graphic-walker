@@ -3,11 +3,11 @@ import ReactDOM from 'react-dom';
 import { GraphicWalker } from './index';
 
 import './index.css';
-import { IGWProps } from './App';
+import { IGWProps } from './FullApp';
 
-export function embedGraphicWalker (dom: HTMLElement | null, props: IGWProps | undefined = {}) {
+export function embedGraphicWalker(dom: HTMLElement | null, props: IGWProps | undefined = {}) {
     if (!dom) {
-        throw("DOM element not found.")
+        throw 'DOM element not found.';
     }
     // Example: Detect if Concurrent Mode is available
     const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
@@ -15,7 +15,9 @@ export function embedGraphicWalker (dom: HTMLElement | null, props: IGWProps | u
     // Use the new ReactDOM.createRoot API if available, otherwise fall back to the old ReactDOM.render API
     if (isConcurrentModeAvailable) {
         if (import.meta.env.DEV) {
-            console.warn('React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18')
+            console.warn(
+                'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
+            );
         }
         // @ts-ignore
         const root = ReactDOM.createRoot(dom as HTMLElement);

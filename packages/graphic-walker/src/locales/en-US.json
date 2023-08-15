@@ -140,7 +140,8 @@
         "tablist": {
             "new": "+ New",
             "auto_title": "Chart {{idx}}",
-            "chart_name": "Chart Name"
+            "chart_name": "Chart Name",
+            "remove_confirm": "Are you sure you want to remove this chart?"
         },
         "tabpanel": {
             "menubar": {

@@ -10,14 +10,13 @@ import {
     IDarkMode,
     IRow,
     IThemeKey,
-    IViewField,
-    IVisualConfig,
+    IVisualConfigNew,
+    IVisualLayout,
 } from '../../interfaces';
 import { INestNode } from './inteface';
 import { buildMetricTableFromNestTree, buildNestTree } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
-import { toJS } from 'mobx';
 
 // const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
 //     const store = usePivotTableStore();
@@ -39,7 +38,8 @@ interface PivotTableProps {
     data: IRow[];
     loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: DeepReadonly<IVisualConfig>;
+    visualConfig: IVisualConfigNew;
+    layout: IVisualLayout;
 }
 const PivotTable: React.FC<PivotTableProps> = (props) => {
     const { data, draggableFieldState } = props;

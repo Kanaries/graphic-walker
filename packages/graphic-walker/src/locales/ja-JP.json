@@ -139,7 +139,8 @@
         "tablist": {
             "new": "+ 新規作成",
             "auto_title": "グラフ {{idx}}",
-            "chart_name": "グラフ名"
+            "chart_name": "グラフ名",
+            "remove_confirm": "このグラフを削除してもよろしいですか？"
         },
         "tabpanel": {
             "menubar": {

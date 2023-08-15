@@ -1,5 +1,5 @@
 import { IRow } from "../../interfaces";
-import { IFoldQuery } from "../interfaces";
+import { IFoldQuery } from "../../interfaces";
 
 export function fold (data: IRow[], query: IFoldQuery): IRow[] {
     const { foldBy, newFoldKeyCol, newFoldValueCol } = query;

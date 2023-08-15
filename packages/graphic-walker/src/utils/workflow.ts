@@ -35,7 +35,7 @@ export const toWorkflow = (
     allFields: Omit<IViewField, 'dragId'>[],
     viewDimensions: Omit<IViewField, 'dragId'>[],
     viewMeasures: Omit<IViewField, 'dragId'>[],
-    defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
+    defaultAggregated: VizSpecStore['config']['defaultAggregated'],
     sort: 'none' | 'ascending' | 'descending',
     limit?: number,
 ): IDataQueryWorkflowStep[] => {

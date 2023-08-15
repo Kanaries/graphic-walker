@@ -1,6 +1,5 @@
-import {Config as VgConfig, View} from 'vega';
-import {Config as VlConfig} from 'vega-lite';
-import type {IViewQuery} from "./lib/viewQuery";
+import { Config as VgConfig, View } from 'vega';
+import { Config as VlConfig } from 'vega-lite';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -101,11 +100,11 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
-    cmp?: (a: any, b: any) => number;
+    cmp?: string;
     computed?: boolean;
     expression?: IExpression;
     basename?: string;
-    path?: string[],
+    path?: string[];
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
@@ -132,7 +131,7 @@ export interface IMeasure {
 
 export interface IPredicate {
     key: string;
-    type: "discrete" | "continuous";
+    type: 'discrete' | 'continuous';
     range: Set<any> | [number, number];
 }
 
@@ -143,6 +142,7 @@ export interface IExplainProps {
     metas: IField[];
 }
 
+/** @deprecated */
 export interface IDataSet {
     id: string;
     name: string;
@@ -160,6 +160,8 @@ export interface IDataSetInfo {
 
 export interface IDataSource {
     id: string;
+    metaId?: string;
+    name?: string;
     data: IRow[];
 }
 
@@ -192,6 +194,12 @@ export interface IDraggableStateKey {
     id: keyof DraggableFieldState;
     mode: number;
 }
+
+export interface IDraggableViewStateKey {
+    id: keyof Omit<DraggableFieldState, 'filters'>;
+    mode: number;
+}
+
 
 export type IFilterRule =
     | {
@@ -239,6 +247,39 @@ export interface IVisualConfig {
     limit: number;
 }
 
+export interface IVisualLayout {
+    format: {
+        numberFormat?: string;
+        timeFormat?: string;
+        normalizedNumberFormat?: string;
+    };
+    resolve: {
+        x?: boolean;
+        y?: boolean;
+        color?: boolean;
+        opacity?: boolean;
+        shape?: boolean;
+        size?: boolean;
+    };
+    size: {
+        mode: 'auto' | 'fixed';
+        width: number;
+        height: number;
+    };
+    interactiveScale: boolean;
+    stack: IStackMode;
+    showActions: boolean;
+    zeroScale: boolean;
+    background?: string;
+}
+
+export interface IVisualConfigNew {
+    defaultAggregated: boolean;
+    geoms: string[];
+    limit: number;
+}
+
+/** @deprecated */
 export interface IVisSpec {
     readonly visId: string;
     readonly name?: string;
@@ -246,11 +287,7 @@ export interface IVisSpec {
     readonly config: DeepReadonly<IVisualConfig>;
 }
 
-export type SetToArray<T> = (
-    T extends object ? (
-      T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }
-    ) : T
-);
+export type SetToArray<T> = T extends object ? (T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }) : T;
 
 export type IVisSpecForExport = SetToArray<IVisSpec>;
 
@@ -332,7 +369,7 @@ export interface IGWHandler {
     openChart: (index: number) => void;
     /**
      * Returns the status of the current chart.
-     * 
+     *
      * It is computed by the following rules:
      * - If _GraphicWalker_ is computing the data view, it returns `computing`.
      * - If _GraphicWalker_ is rendering the chart, it returns `rendering`.
@@ -342,20 +379,20 @@ export interface IGWHandler {
     get renderStatus(): IRenderStatus;
     /**
      * Registers a callback function to listen to the status change of the current chart.
-     * 
+     *
      * @param {(renderStatus: IRenderStatus) => void} cb - the callback function
      * @returns {() => void} a dispose function to remove this callback
      */
-    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => () => void;
     /**
      * Exports the current chart.
-     * 
+     *
      * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
      */
     exportChart: IExportChart;
     /**
      * Exports all charts.
-     * 
+     *
      * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
      * @returns {AsyncGenerator<IChartListExportResult, void, unknown>} an async generator to iterate over all charts
      * @example
@@ -388,10 +425,15 @@ export type IVisFieldComputation = {
     type: IVisField['type'];
 };
 
+export type IFieldTransform = {
+    key: IVisFieldComputation['field'];
+    expression: IVisFieldComputation['expression'];
+};
+
 export interface IVisFilter {
     fid: string;
     rule: SetToArray<IFilterRule>;
-};
+}
 
 export interface IFilterWorkflowStep {
     type: 'filter';
@@ -400,10 +442,7 @@ export interface IFilterWorkflowStep {
 
 export interface ITransformWorkflowStep {
     type: 'transform';
-    transform: {
-        key: IVisFieldComputation['field'];
-        expression: IVisFieldComputation['expression'];
-    }[];
+    transform: IFieldTransform[];
 }
 
 export interface IViewWorkflowStep {
@@ -434,17 +473,51 @@ export interface IGWDatasetStat {
     count: number;
 }
 
-export type IResponse<T> = (
+export type IResponse<T> =
     | {
-        success: true;
-        data: T;
-    }
+          success: true;
+          data: T;
+      }
     | {
-        success: false;
-        message: string;
-        error?: {
-            code: `ERR_${Uppercase<string>}`;
-            options?: Record<string, string>;
-        };
-    }
-);
+          success: false;
+          message: string;
+          error?: {
+              code: `ERR_${Uppercase<string>}`;
+              options?: Record<string, string>;
+          };
+      };
+export interface IAggQuery {
+    op: 'aggregate';
+    groupBy: string[];
+    measures: { field: string; agg: IAggregator; asFieldKey: string }[];
+}
+
+export interface IFoldQuery {
+    op: 'fold';
+    foldBy: string[];
+    newFoldKeyCol: string;
+    newFoldValueCol: string;
+}
+
+export interface IBinQuery {
+    op: 'bin';
+    binBy: string;
+    newBinCol: string;
+    binSize: number;
+}
+
+export interface IRawQuery {
+    op: 'raw';
+    fields: string[];
+}
+
+export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
+
+export interface IChart {
+    visId: string;
+    name?: string;
+    encodings: DraggableFieldState;
+    config: IVisualConfigNew;
+    layout: IVisualLayout;
+}
+export type IChartForExport = SetToArray<IChart>;

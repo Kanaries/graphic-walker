@@ -1,42 +1,63 @@
-import React, { type ForwardedRef, forwardRef } from "react";
-import { DOM } from "@kanaries/react-beautiful-dnd";
-import { observer } from "mobx-react-lite";
-import App, { IGWProps } from "./App";
-import { StoreWrapper } from "./store/index";
-import { FieldsContextWrapper } from "./fields/fieldsContext";
-import { ShadowDom } from "./shadow-dom";
-import AppRoot from "./components/appRoot";
-import type { IGWHandler, IGWHandlerInsider } from "./interfaces";
+import React, { type ForwardedRef, forwardRef } from 'react';
+import { DOM } from '@kanaries/react-beautiful-dnd';
+import { observer } from 'mobx-react-lite';
+import { VizAppWithContext, VizProps } from './App';
+import { App, IGWProps } from './FullApp';
 
-import "./empty_sheet.css";
+import { StoreWrapper } from './store/index';
+import { ShadowDom } from './shadow-dom';
+import AppRoot from './components/appRoot';
+import type { IGWHandler, IGWHandlerInsider } from './interfaces';
 
-export const GraphicWalker = observer(forwardRef<IGWHandler, IGWProps>((props, ref) => {
-    const { storeRef } = props;
+import './empty_sheet.css';
 
-    const handleMount = (shadowRoot: ShadowRoot) => {
-        DOM.setBody(shadowRoot);
-        DOM.setHead(shadowRoot);
-    };
-    const handleUnmount = () => {
-        DOM.setBody(document.body);
-        DOM.setHead(document.head);
-    };
+export const GraphicWalker = observer(
+    forwardRef<IGWHandler, IGWProps>((props, ref) => {
+        const { storeRef } = props;
 
-    return (
-        <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
+        const handleMount = (shadowRoot: ShadowRoot) => {
+            DOM.setBody(shadowRoot);
+            DOM.setHead(shadowRoot);
+        };
+        const handleUnmount = () => {
+            DOM.setBody(document.body);
+            DOM.setHead(document.head);
+        };
+
+        return (
+            <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
+                <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
+                    <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                            <App {...props} />
+                    </ShadowDom>
+                </AppRoot>
+            </StoreWrapper>
+        );
+    })
+);
+
+export const SimpleGraphicWalker = observer(
+    forwardRef<IGWHandler, VizProps>((props, ref) => {
+        const handleMount = (shadowRoot: ShadowRoot) => {
+            DOM.setBody(shadowRoot);
+            DOM.setHead(shadowRoot);
+        };
+        const handleUnmount = () => {
+            DOM.setBody(document.body);
+            DOM.setHead(document.head);
+        };
+
+        return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
-                    <FieldsContextWrapper>
-                        <App {...props} />
-                    </FieldsContextWrapper>
+                        <VizAppWithContext {...props} />
                 </ShadowDom>
             </AppRoot>
-        </StoreWrapper>
-    );
-}));
+        );
+    })
+);
 
 export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
 export { ISegmentKey } from './interfaces';
-export { resolveSpecFromStoInfo } from './utils/save';

@@ -10,8 +10,9 @@ import type {
     IRow,
     IThemeKey,
     DraggableFieldState,
-    IVisualConfig,
+    IVisualConfigNew,
     IComputationFunction,
+    IVisualLayout,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -24,7 +25,8 @@ type IPureRendererProps =
           themeKey?: IThemeKey;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
-          visualConfig: IVisualConfig;
+          visualConfig: IVisualConfigNew;
+          visualLayout: IVisualLayout;
           sort?: 'none' | 'ascending' | 'descending';
           limit?: number;
           locale?: string;
@@ -44,7 +46,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit } = props;
+    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, sort, limit } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -59,7 +61,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(visualState);
+        const { dimensions, measures, filters, ...state } = visualState;
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -111,6 +113,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                     dark={dark}
                     draggableFieldState={visualState}
                     visualConfig={visualConfig}
+                    layout={visualLayout}
                     locale={locale ?? 'en-US'}
                 />
             </div>

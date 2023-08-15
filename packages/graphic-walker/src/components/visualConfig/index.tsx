@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
-import { useGlobalStore } from '../../store';
-import { NonPositionChannelConfigList,PositionChannelConfigList } from '../../config'; 
+import { useVizStore } from '../../store';
+import { NonPositionChannelConfigList, PositionChannelConfigList } from '../../config';
 
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
@@ -12,39 +12,35 @@ import Toggle from '../toggle';
 import { runInAction, toJS } from 'mobx';
 
 const VisualConfigPanel: React.FC = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showVisualConfigPanel } = commonStore;
-    const { visualConfig } = vizStore;
+    const vizStore = useVizStore();
+    const { showVisualConfigPanel } = vizStore;
+    const { layout } = vizStore;
     const { t } = useTranslation();
-    const formatConfigList: (keyof IVisualConfig['format'])[] = [
-        'numberFormat',
-        'timeFormat',
-        'normalizedNumberFormat',
-    ];
+    const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
-        numberFormat: visualConfig.format.numberFormat,
-        timeFormat: visualConfig.format.timeFormat,
-        normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
+        numberFormat: layout.format.numberFormat,
+        timeFormat: layout.format.timeFormat,
+        normalizedNumberFormat: layout.format.normalizedNumberFormat,
     });
     const [resolve, setResolve] = useState<IVisualConfig['resolve']>({
-        x: visualConfig.resolve.x,
-        y: visualConfig.resolve.y,
-        color: visualConfig.resolve.color,
-        opacity: visualConfig.resolve.opacity,
-        shape: visualConfig.resolve.shape,
-        size: visualConfig.resolve.size,
+        x: layout.resolve.x,
+        y: layout.resolve.y,
+        color: layout.resolve.color,
+        opacity: layout.resolve.opacity,
+        shape: layout.resolve.shape,
+        size: layout.resolve.size,
     });
-    const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
-    const [background, setBackground] = useState<string | undefined>(visualConfig.background);
+    const [zeroScale, setZeroScale] = useState<boolean>(layout.zeroScale);
+    const [background, setBackground] = useState<string | undefined>(layout.background);
 
     useEffect(() => {
-        setZeroScale(visualConfig.zeroScale);
-        setBackground(visualConfig.background);
-        setResolve(toJS(visualConfig.resolve));
+        setZeroScale(layout.zeroScale);
+        setBackground(layout.background);
+        setResolve(layout.resolve);
         setFormat({
-            numberFormat: visualConfig.format.numberFormat,
-            timeFormat: visualConfig.format.timeFormat,
-            normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
+            numberFormat: layout.format.numberFormat,
+            timeFormat: layout.format.timeFormat,
+            normalizedNumberFormat: layout.format.normalizedNumberFormat,
         });
     }, [showVisualConfigPanel]);
 
@@ -52,18 +48,14 @@ const VisualConfigPanel: React.FC = (props) => {
         <Modal
             show={showVisualConfigPanel}
             onClose={() => {
-                commonStore.setShowVisualConfigPanel(false);
+                vizStore.setShowVisualConfigPanel(false);
             }}
         >
             <div>
                 <h2 className="text-lg mb-4">{t('config.format')}</h2>
                 <p className="text-xs">
                     {t(`config.formatGuidesDocs`)}:{' '}
-                    <a
-                        target="_blank"
-                        className="underline text-blue-500"
-                        href="https://github.com/d3/d3-format#locale_format"
-                    >
+                    <a target="_blank" className="underline text-blue-500" href="https://github.com/d3/d3-format#locale_format">
                         {t(`config.readHere`)}
                     </a>
                 </p>
@@ -146,11 +138,11 @@ const VisualConfigPanel: React.FC = (props) => {
                         className="mr-2"
                         onClick={() => {
                             runInAction(() => {
-                                vizStore.setVisualConfig('format', format);
-                                vizStore.setVisualConfig('zeroScale', zeroScale);
-                                vizStore.setVisualConfig('background', background);
-                                vizStore.setVisualConfig('resolve', resolve);
-                                commonStore.setShowVisualConfigPanel(false);
+                                vizStore.setVisualLayout('format', format);
+                                vizStore.setVisualLayout('zeroScale', zeroScale);
+                                vizStore.setVisualLayout('background', background);
+                                vizStore.setVisualLayout('resolve', resolve);
+                                vizStore.setShowVisualConfigPanel(false);
                             });
                         }}
                     />
@@ -158,7 +150,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         text={t('actions.cancel')}
                         className="mr-2"
                         onClick={() => {
-                            commonStore.setShowVisualConfigPanel(false);
+                            vizStore.setShowVisualConfigPanel(false);
                         }}
                     />
                 </div>

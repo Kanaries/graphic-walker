@@ -1,5 +1,5 @@
 import { IRow } from '../interfaces';
-import { sortBy } from './sort';
+import { sortBy } from '../lib/sort';
 
 const main = (e: {
     data: {

@@ -1,15 +1,5 @@
-import { DraggableFieldState, IDataSet, IDataSource, IVisSpec, IVisSpecForExport, IVisualConfig } from "../interfaces";
-import { VisSpecWithHistory } from "../models/visSpecHistory";
-import { toJS } from 'mobx';
+import { DraggableFieldState, IDataSet, IDataSource, IMutField, IVisSpec, IVisSpecForExport, IVisualConfig, IVisualConfigNew, IVisualLayout } from '../interfaces';
 import { GEMO_TYPES } from '../config';
-
-export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
-    return list.map((l) => l.exportGW());
-}
-
-export function parseGWPureSpec(list: IVisSpec[]): VisSpecWithHistory[] {
-    return list.map((l) => new VisSpecWithHistory(l));
-}
 
 export function initVisualConfig(): IVisualConfig {
     return {
@@ -22,7 +12,7 @@ export function initVisualConfig(): IVisualConfig {
         zeroScale: true,
         background: undefined,
         size: {
-            mode: "auto",
+            mode: 'auto',
             width: 320,
             height: 200,
         },
@@ -42,6 +32,54 @@ export function initVisualConfig(): IVisualConfig {
         limit: -1,
     };
 }
+
+export const emptyVisualLayout: IVisualLayout = {
+    showActions: false,
+    stack: 'stack',
+    interactiveScale: false,
+    zeroScale: true,
+    background: undefined,
+    size: {
+        mode: 'auto',
+        width: 320,
+        height: 200,
+    },
+    format: {
+        numberFormat: undefined,
+        timeFormat: undefined,
+        normalizedNumberFormat: undefined,
+    },
+    resolve: {
+        x: false,
+        y: false,
+        color: false,
+        opacity: false,
+        shape: false,
+        size: false,
+    },
+};
+
+export const emptyVisualConfig: IVisualConfigNew = {
+    defaultAggregated: true,
+    geoms: [GEMO_TYPES[0]],
+    limit: -1,
+};
+
+export const emptyEncodings: DraggableFieldState = {
+    dimensions: [],
+    measures: [],
+    rows: [],
+    columns: [],
+    color: [],
+    opacity: [],
+    size: [],
+    shape: [],
+    radius: [],
+    theta: [],
+    details: [],
+    filters: [],
+    text: [],
+};
 
 export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
     const updatedVisList = visList.map((visSpec) => {
@@ -68,7 +106,7 @@ export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
     return updatedVisList;
 }
 
-export const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent>['specList']): IVisSpecForExport[] => {
+export const forwardVisualConfigs = (backwards: IStoInfoOld['specList']): IVisSpecForExport[] => {
     return backwards.map((content) => ({
         ...content,
         config: {
@@ -78,16 +116,8 @@ export const forwardVisualConfigs = (backwards: ReturnType<typeof parseGWContent
     }));
 };
 
-export function resolveSpecFromStoInfo(info: IStoInfo) {
-    const spec = parseGWPureSpec(visSpecDecoder(forwardVisualConfigs(info.specList)))[0];
-    return {
-        config: toJS(spec.config) as IVisualConfig,
-        encodings: toJS(spec.encodings) as DraggableFieldState,
-        name: spec.name,
-    };
-}
-
-export interface IStoInfo {
+export interface IStoInfoOld {
+    $schema: undefined;
     datasets: IDataSet[];
     specList: {
         [K in keyof IVisSpecForExport]: K extends 'config' ? Partial<IVisSpecForExport[K]> : IVisSpecForExport[K];
@@ -95,13 +125,16 @@ export interface IStoInfo {
     dataSources: IDataSource[];
 }
 
-export function stringifyGWContent(info: IStoInfo) {
-    return JSON.stringify(info);
-}
+export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/public/stoinfo_v2.json';
 
-export function parseGWContent(raw: string): IStoInfo {
-    return JSON.parse(raw);
-}
+export interface IStoInfoV2 {
+    $schema: typeof IStoInfoV2SchemaUrl,
+    metaDict: Record<string, IMutField[]>,
+    datasets: Required<IDataSource>[],
+    specDict: Record<string, string[]>,
+};
+
+export type IStoInfo = IStoInfoOld | IStoInfoV2;
 
 export function download(data: string, filename: string, type: string) {
     var file = new Blob([data], { type: type });

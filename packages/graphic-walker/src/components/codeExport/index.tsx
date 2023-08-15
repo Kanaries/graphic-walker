@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../modal";
 import { observer } from "mobx-react-lite";
-import { useGlobalStore } from "../../store";
+import {  useVizStore } from "../../store";
 import DefaultButton from "../button/default";
 import PrimaryButton from "../button/primary";
 import { useTranslation } from "react-i18next";
@@ -39,8 +39,8 @@ const syntaxHighlight = (json: any) => {
 };
 
 const CodeExport: React.FC = observer((props) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showCodeExportPanel } = commonStore;
+    const vizStore = useVizStore();
+    const { showCodeExportPanel } = vizStore;
     const { t } = useTranslation();
     const [tabKey, setTabKey] = useState<string>("graphic-walker");
     const [code, setCode] = useState<any>("");
@@ -60,7 +60,7 @@ const CodeExport: React.FC = observer((props) => {
     useEffect(() => {
         if (showCodeExportPanel) {
             if (tabKey === "graphic-walker") {
-                const res = vizStore.exportViewSpec();
+                const res = vizStore.exportAllCharts();
                 setCode(res);
             } else {
                 setCode("vega code");
@@ -71,7 +71,7 @@ const CodeExport: React.FC = observer((props) => {
         <Modal
             show={showCodeExportPanel}
             onClose={() => {
-                commonStore.setShowCodeExportPanel(false);
+                vizStore.setShowCodeExportPanel(false);
             }}
         >
             <div>
@@ -95,14 +95,14 @@ const CodeExport: React.FC = observer((props) => {
                         text="Copy to Clipboard"
                         onClick={() => {
                             navigator.clipboard.writeText(JSON.stringify(code));
-                            commonStore.setShowCodeExportPanel(false);
+                            vizStore.setShowCodeExportPanel(false);
                         }}
                     />
                     <DefaultButton
                         text={t("actions.cancel")}
                         className="mr-2 px-6"
                         onClick={() => {
-                            commonStore.setShowCodeExportPanel(false);
+                            vizStore.setShowCodeExportPanel(false);
                         }}
                     />
                 </div>

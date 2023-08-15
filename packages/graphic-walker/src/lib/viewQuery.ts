@@ -1,12 +1,10 @@
-import { IRow } from "../interfaces";
-import { aggregate } from "./op/aggregate";
-import { fold } from "./op/fold";
-import { IAggQuery, IBinQuery, IFoldQuery, IRawQuery } from "./interfaces";
-import { bin } from "./op/bin";
+import { IRow } from '../interfaces';
+import { aggregate } from './op/aggregate';
+import { fold } from './op/fold';
+import { bin } from './op/bin';
+import { IViewQuery } from '../interfaces';
 
-export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
-
-export function queryView (rawData: IRow[], query: IViewQuery) {
+export function queryView(rawData: IRow[], query: IViewQuery) {
     switch (query.op) {
         case 'aggregate':
             return aggregate(rawData, query);
@@ -18,5 +16,4 @@ export function queryView (rawData: IRow[], query: IViewQuery) {
         default:
             return rawData;
     }
-
 }

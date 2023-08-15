@@ -4,7 +4,7 @@ import { DraggableProvided } from "@kanaries/react-beautiful-dnd";
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 
 
 interface FilterPillProps {
@@ -55,10 +55,10 @@ const Pill = styled.div({
 
 const FilterPill: React.FC<FilterPillProps> = observer(props => {
     const { provided, fIndex } = props;
-    const { vizStore } = useGlobalStore();
-    const { draggableFieldState } = vizStore;
+    const vizStore = useVizStore();
+    const { viewFilters } = vizStore;
 
-    const field = draggableFieldState.filters[fIndex];
+    const field = viewFilters[fIndex];
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 

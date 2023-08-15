@@ -7,7 +7,7 @@ interface GWFileProps {
     fileRef: React.RefObject<HTMLInputElement>;
 }
 const GWFile: React.FC<GWFileProps> = (props) => {
-    const { vizStore } = useGlobalStore();
+    const { dataStore } = useGlobalStore();
 
     return (
         <input
@@ -19,7 +19,7 @@ const GWFile: React.FC<GWFileProps> = (props) => {
                 if (files !== null) {
                     const file = files[0];
                     file.text().then(res => {
-                        vizStore.importRaw(res)
+                        dataStore.importData(JSON.parse(res))
                     })
                 }
             }}
