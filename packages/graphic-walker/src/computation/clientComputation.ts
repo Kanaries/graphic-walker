@@ -21,7 +21,12 @@ export const dataQueryClient = async (
                             type: 'one of',
                             value: new Set(filter.rule.value),
                         };
-                    } else {
+                    } else if(filter.rule.type === 'not in'){
+                        res.rule = {
+                            type: 'not in',
+                            value: new Set(filter.rule.value),
+                        };
+                    }else{
                         res.rule = filter.rule;
                     }
                     return res;
