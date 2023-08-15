@@ -14,21 +14,17 @@ const Table: React.FC<TableProps> = (props) => {
     const { commonStore } = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
 
-    const tempDataset = React.useMemo(() => {
-        return {
-            id: "tmp",
-            name: "tmp",
-            dataSource: tmpDataSource,
-            rawFields: toJS(tmpDSRawFields),
-        };
-    }, [tmpDataSource, tmpDSRawFields]);
-9
-    const computation = React.useMemo(() => getComputation(tempDataset.dataSource), [tempDataset])
+    const computation = React.useMemo(() => getComputation(tmpDataSource), [tmpDataSource])
 
     return (
         <DataTable
             size={size}
-            dataset={tempDataset}
+            dataset={{
+                id: "tmp",
+                name: "tmp",
+                dataSource: tmpDataSource,
+                rawFields: toJS(tmpDSRawFields),
+            }}
             computation={computation}
             total={tmpDataSource.length}
             onMetaChange={(fid, fIndex, diffMeta) => {

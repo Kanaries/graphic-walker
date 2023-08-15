@@ -3,6 +3,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
+import LeafletRenderer from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
 import type {
     IDarkMode,
@@ -54,7 +55,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
-
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
@@ -86,7 +86,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         limit: limit ?? -1,
         computationFunction: computation,
     });
-
+    console.log(computation)
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({ data });
     latestFromRef.current = { data };
@@ -99,20 +99,33 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         }
     }, [waiting]);
 
+    const { coordSystem = 'generic' } = visualConfig;
+    const isSpatial = coordSystem === 'geographic';
+
     return (
         <ShadowDom>
             <div className="relative">
-                <SpecRenderer
-                    name={name}
-                    loading={waiting}
-                    data={viewData}
-                    ref={ref}
-                    themeKey={themeKey}
-                    dark={dark}
-                    draggableFieldState={visualState}
-                    visualConfig={visualConfig}
-                    locale={locale ?? 'en-US'}
-                />
+                {isSpatial && (
+                    <LeafletRenderer
+                        data={data}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                    />
+                )}
+                {isSpatial || (
+                    <SpecRenderer
+                        name={name}
+                        loading={waiting}
+                        data={viewData}
+                        ref={ref}
+                        themeKey={themeKey}
+                        dark={dark}
+                        draggableFieldState={visualState}
+                        visualConfig={visualConfig}
+                        locale={locale ?? 'en-US'}
+                        computationFunction={computation}
+                    />
+                )}
             </div>
         </ShadowDom>
     );

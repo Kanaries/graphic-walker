@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGlobalStore } from '../../store';
 import { NonPositionChannelConfigList,PositionChannelConfigList } from '../../config'; 
 
@@ -15,6 +15,8 @@ const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showVisualConfigPanel } = commonStore;
     const { visualConfig } = vizStore;
+    const { coordSystem, geoms: [markType] } = visualConfig;
+    const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = [
         'numberFormat',
@@ -35,12 +37,14 @@ const VisualConfigPanel: React.FC = (props) => {
         size: visualConfig.resolve.size,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
+    const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
 
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
         setBackground(visualConfig.background);
         setResolve(toJS(visualConfig.resolve));
+        setScaleIncludeUnmatchedChoropleth(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
             timeFormat: visualConfig.format.timeFormat,
@@ -140,6 +144,17 @@ const VisualConfigPanel: React.FC = (props) => {
                         }}
                     />
                 </div>
+                {isChoropleth && (
+                    <div className="my-2">
+                        <Toggle
+                            label="include unmatched choropleth in scale"
+                            enabled={scaleIncludeUnmatchedChoropleth}
+                            onChange={(en) => {
+                                setScaleIncludeUnmatchedChoropleth(en);
+                            }}
+                        />
+                    </div>
+                )}
                 <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}
@@ -148,6 +163,7 @@ const VisualConfigPanel: React.FC = (props) => {
                             runInAction(() => {
                                 vizStore.setVisualConfig('format', format);
                                 vizStore.setVisualConfig('zeroScale', zeroScale);
+                                vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
                                 commonStore.setShowVisualConfigPanel(false);
