@@ -4,8 +4,13 @@ function compareMulti(a: number[], b: number[]): number {
     if (a.length < b.length) return -compareMulti(b, a);
     for (let i = 0; i < a.length; i++) {
         if (!b[i]) return 1;
-        const c = a[i] - b[i];
-        if (c !== 0) return c;
+        if (typeof a[i] === 'number' && typeof b[i] === 'number') {
+            const c = a[i] - b[i];
+            if (c !== 0) return c;
+        } else {
+            const c = String(a[i]).localeCompare(String(b[i]));
+            if (c !== 0) return c;
+        }
     }
     return 0;
 }

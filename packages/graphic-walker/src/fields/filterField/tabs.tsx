@@ -106,9 +106,6 @@ const CalendarInputContainer = styled.div`
 const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
-
-type FieldDistributionEntry = IFieldStats['values'][number];
-
 interface CalendarInputProps {
     min: number;
     max: number;
@@ -151,56 +148,59 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         key: "count",
         order: "ascending"
     });
-    const [localSet,setLocalSet] = useState<Set<string | number>>(new Set());
+    const [localSet,setLocalSet] = useState<Set<string | number>>(new Set(field.rule?.value));
     const [localSetSum, setLocalSetSum] = useState<number>(0);
     const [selectMode,setSelectMode] = useState<boolean>(true);
-  
+    const [pageIndex,setPageIndex] = useState(0);
+
     useEffect(()=>{
-        setLocalSet(new Set());
+        setLocalSet(new Set(field.rule?.value));
         setSelectMode(true);
         setLocalSetSum(0);
-    },[field])
-  
-  
-    console.log("set ----------------mode")
-    console.log(localSet);
-    console.log(selectMode);
+    },[field.fid])
+
     const { t } = useTranslation('translation');
-  
     const res = useFieldTotal(field);
     const total = res?.total?res.total:0;
-    const [pageIndex,setPageIndex] = useState(0);
     const size = 10;
     const from = pageIndex * size;
     const to = Math.min((pageIndex + 1) * size - 1, total - 1);
+
     const statsValue = useFieldReadStats(field,sortConfig,size,pageIndex);
-    
-    React.useEffect(() => {
+
+    useEffect(() => {
         if (field && active && !(field.rule?.type === 'one of' || field.rule?.type === 'not in')) {
             onChange({
-                type: 'one of',
+                type: selectMode?'one of':'not in',
                 value: new Set<string | number>(localSet),
             });
         }
-    }, [active, field]);    
-  
+    }, [active, field.fid]);   
+    
     const handleToggleFullOrEmptySet = () => {
-        if (!field.rule ||!(field.rule.type === 'one of' || field.rule.type === 'not in' )|| !res) return;
         setSelectMode(!selectMode);
         setLocalSet(new Set());
         setLocalSetSum(0);
     }
     const handleToggleReverseSet = () => {
-        if (!field.rule || !(field.rule.type === 'one of' || field.rule.type === 'not in' ) || !res) return;
         setSelectMode(!selectMode);
     }
-    const handleSelectValue = () => {
-        if (!field.rule || !(field.rule.type === 'one of' || field.rule.type === 'not in' )) return;
-        const rule: IFilterRule = {
-            type: selectMode?'one of':'not in',
-            value: localSet
-        };
-        onChange(rule);
+    const handleSelectValue = (isDelete: boolean,value:string|number,count:number) => {
+        if(isDelete){
+            localSet.delete(value);
+            onChange({
+                type: selectMode?'one of':'not in',
+                value: localSet
+            });
+            setLocalSetSum(localSetSum - count);
+        }else{
+            localSet.add(value);
+            onChange({
+                type: selectMode?'one of':'not in',
+                value: localSet
+            });            
+            setLocalSetSum(localSetSum + count);
+        }
     }
  
     const SortButton: React.FC<{ currentKey: FilterSortConfig["key"] }> = ({ currentKey }) => {
@@ -218,9 +218,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             </span>
         );
     }
-    console.log("observable::::",field)
-    console.log(field)
-    return field.rule?.type === 'one of' ? (
+
+    return (field.rule?.type === 'one of' || field.rule?.type === 'not in') ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
             <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
@@ -278,19 +277,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                                         id={id}
                                         aria-describedby={`${id}_label`}
                                         title={String(value)}
-                                        onChange={({ target: { checked } }) => {
-                                            if(localSet.has(value)){
-                                                localSet.delete(value);
-                                                setLocalSetSum(localSetSum - count);
-                                           
-                                            }else{
-                                                localSet.add(value);
-                                                setLocalSetSum(localSetSum + count);
-                                          
-                                            }
-                                            console.log("localSet",localSet)
-                                            // updateSet({})
-                                            console.log(value,'tttttttt',selectMode && !localSet.has(value))
+                                        onChange={() => {
+                                            handleSelectValue(localSet.has(value),value,count);
                                         }}
                                     />
                                 </div>
@@ -337,8 +325,6 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                     {res && !selectMode && t('filters.selected_keys', { count:  localSetSum })}
                 </label>
             </Table>
-  
-  
         </Container>
     ) : null;
   });
@@ -385,7 +371,6 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         return viewData.reduce<number[]>((list, d) => {
             try {
                 const time = new Date(d[field.fid]).getTime();
-
                 list.push(time);
             } catch (error) {
 
