@@ -13,6 +13,7 @@ import type {
     DraggableFieldState,
     IVisualConfig,
     IComputationFunction,
+    IMutField,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -37,6 +38,7 @@ type IPureRendererProps =
           | {
                 type?: 'local'
                 rawData: IRow[];
+                fields?: IMutField[];
             }
       );
 
@@ -50,8 +52,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         if (props.type === 'remote') {
             return props.computation;
         }
-        return getComputation(props.rawData);
-    }, [props.type, props.type === 'remote' ? props.computation: props.rawData])
+        return getComputation(props.rawData, props.fields);
+    }, [props.type, props.type === 'remote' ? props.computation : props.rawData, props.type === 'remote' ? null : props.fields])
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);

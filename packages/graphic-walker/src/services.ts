@@ -142,12 +142,13 @@ export const transformDataService = async (data: IRow[], trans: { key: string, e
     }
 };
 
-export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<IRow[]> => {
+export const applyViewQuery = async (data: IRow[], columns: IMutField[], query: IViewQuery): Promise<IRow[]> => {
     const worker = new ViewQueryWorker();
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
             query: toJS(query),
+            metas: columns,
         });
         return res;
     } catch (err) {
@@ -196,7 +197,7 @@ export const applySort = async (
         });
         return res;
     } catch (err) {
-        throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+        throw new Error('Uncaught error in SortWorker', { cause: err });
     } finally {
         worker.terminate();
     }

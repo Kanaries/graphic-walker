@@ -1,8 +1,9 @@
-import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IRow } from "../interfaces";
+import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IMutField, IRow } from "../interfaces";
 import { applyFilter, applySort, applyViewQuery, transformDataService } from "../services";
 
 export const dataQueryClient = async (
     rawData: IRow[],
+    columns: IMutField[],
     workflow: IDataQueryWorkflowStep[],
     offset?: number,
     limit?: number,
@@ -34,7 +35,7 @@ export const dataQueryClient = async (
             }
             case 'view': {
                 for await (const job of step.query) {
-                    res = await applyViewQuery(res, job);
+                    res = await applyViewQuery(res, columns, job);
                 }
                 break;
             }
@@ -52,4 +53,27 @@ export const dataQueryClient = async (
     return res.slice(offset ?? 0, limit ? ((offset ?? 0) + limit) : undefined);
 };
 
-export const getComputation = (rawData: IRow[]) => (payload: IDataQueryPayload) => dataQueryClient(rawData, payload.workflow, payload.offset, payload.limit)
+export const getComputation = (rawData: IRow[], columns?: IMutField[] | undefined) => (payload: IDataQueryPayload) => {
+    const workflow = payload.workflow.slice(0);
+    let hasFolding = false;
+    const workflowWithoutFolding = workflow.map<typeof workflow[number]>(w => {
+        if (w.type === 'view') {
+            const next = w.query.filter(q => q.op !== 'fold');
+            if (next.length < w.query.length) {
+                hasFolding = true;
+            }
+            return {
+                type: 'view',
+                query: next,
+            };
+        }
+        return w;
+    }).filter(w => w.type !== 'view' || w.query.length > 0);
+    if (!columns && hasFolding) {
+        // `columns` comes from a new prop which might be missing in the lower version of GraphicWalker,
+        // and folding cannot work without a valid `columns` argument.
+        console.warn('Folding is disabled because no valid `columns` prop is given.');
+        return dataQueryClient(rawData, [], workflowWithoutFolding, payload.offset, payload.limit);
+    }
+    return dataQueryClient(rawData, columns ?? [], payload.workflow, payload.offset, payload.limit);
+};

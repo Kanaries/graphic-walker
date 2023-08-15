@@ -14,7 +14,7 @@ const Table: React.FC<TableProps> = (props) => {
     const { commonStore } = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
 
-    const computation = React.useMemo(() => getComputation(tmpDataSource), [tmpDataSource])
+    const computation = React.useMemo(() => getComputation(tmpDataSource, tmpDSRawFields), [tmpDataSource, tmpDSRawFields])
 
     return (
         <DataTable

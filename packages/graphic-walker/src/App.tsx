@@ -151,9 +151,9 @@ const App = observer<IGWProps>(function App(props) {
         if (computation) {
             vizStore.setComputationFunction(computation, computationTimeout);
         } else {
-            vizStore.setComputationFunction(getComputation(commonStore.currentDataset.dataSource));
+            vizStore.setComputationFunction(getComputation(commonStore.currentDataset.dataSource, commonStore.currentDataset.rawFields));
         }
-    }, [vizStore, computation ?? commonStore.currentDataset.dataSource, computationTimeout]);
+    }, [vizStore, computation ?? commonStore.currentDataset.dataSource, computation ?? commonStore.currentDataset.rawFields, computationTimeout]);
 
     const darkMode = useCurrentMediaTheme(dark);
 
