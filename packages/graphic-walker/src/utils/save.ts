@@ -1,15 +1,40 @@
 import { DraggableFieldState, IDataSet, IDataSource, IMutField, IVisSpec, IVisSpecForExport, IVisualConfig, IVisualConfigNew, IVisualLayout } from '../interfaces';
-import { GEMO_TYPES } from '../config';
+import { GEOM_TYPES } from '../config';
+
+export function initEncoding(): DraggableFieldState {
+    return {
+        dimensions: [],
+        measures: [],
+        rows: [],
+        columns: [],
+        color: [],
+        opacity: [],
+        size: [],
+        shape: [],
+        radius: [],
+        theta: [],
+        longitude: [],
+        latitude: [],
+        geoId: [],    
+        details: [],
+        filters: [],
+        text: [],
+    };
+}
 
 export function initVisualConfig(): IVisualConfig {
+    const [ geom ] = GEOM_TYPES.generic;
     return {
         defaultAggregated: true,
-        geoms: [GEMO_TYPES[0]!],
+        geoms: [geom],
+        showTableSummary: false,
+        coordSystem: 'generic',
         stack: 'stack',
         showActions: false,
         interactiveScale: false,
         sorted: 'none',
         zeroScale: true,
+        scaleIncludeUnmatchedChoropleth: false,
         background: undefined,
         size: {
             mode: 'auto',
@@ -21,6 +46,7 @@ export function initVisualConfig(): IVisualConfig {
             timeFormat: undefined,
             normalizedNumberFormat: undefined,
         },
+        geoKey: 'name',
         resolve: {
             x: false,
             y: false,
@@ -35,6 +61,7 @@ export function initVisualConfig(): IVisualConfig {
 
 export const emptyVisualLayout: IVisualLayout = {
     showActions: false,
+    showTableSummary: false,
     stack: 'stack',
     interactiveScale: false,
     zeroScale: true,
@@ -49,6 +76,7 @@ export const emptyVisualLayout: IVisualLayout = {
         timeFormat: undefined,
         normalizedNumberFormat: undefined,
     },
+    geoKey: 'name',
     resolve: {
         x: false,
         y: false,
@@ -61,7 +89,8 @@ export const emptyVisualLayout: IVisualLayout = {
 
 export const emptyVisualConfig: IVisualConfigNew = {
     defaultAggregated: true,
-    geoms: [GEMO_TYPES[0]],
+    geoms: [GEOM_TYPES.generic[0]],
+    coordSystem: 'generic',
     limit: -1,
 };
 
@@ -76,6 +105,9 @@ export const emptyEncodings: DraggableFieldState = {
     shape: [],
     radius: [],
     theta: [],
+    longitude: [],
+    latitude: [],
+    geoId: [],
     details: [],
     filters: [],
     text: [],
@@ -98,6 +130,7 @@ export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
         return {
             ...visSpec,
             encodings: {
+                ...initEncoding(),
                 ...visSpec.encodings,
                 filters: updatedFilters,
             },

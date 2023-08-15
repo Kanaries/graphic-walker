@@ -11,12 +11,16 @@ import {
     IChartForExport,
     IVisualConfigNew,
     IVisSpec,
+    PartialChart,
+    ICoordMode,
 } from '../interfaces';
+import type { FeatureCollection } from 'geojson';
 import { createCountField } from '../utils';
 import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
-import { AssertSameKey, DeepPartial, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
+import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
+import { GEOM_TYPES } from '../config';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -36,6 +40,8 @@ export enum Methods {
     transpose,
     setLayout,
     setFieldAggregator,
+    setGeoData,
+    setCoordSystem,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -50,8 +56,10 @@ type PropsMap = {
     [Methods.setName]: [string];
     [Methods.applySort]: [ISortMode];
     [Methods.transpose]: [];
-    [Methods.setLayout]: KVTuple<IVisualLayout>;
+    [Methods.setLayout]: [KVTuple<IVisualLayout>[]];
     [Methods.setFieldAggregator]: [normalKeys, number, IAggregator];
+    [Methods.setGeoData]: [FeatureCollection, string];
+    [Methods.setCoordSystem]: [ICoordMode];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -160,13 +168,17 @@ const actions: {
             columns: e.rows,
             rows: e.columns,
         })),
-    [Methods.setLayout]: (data, key, value) =>
-        mutPath(data, 'layout', (l) => ({
-            ...l,
-            [key]: value,
-        })),
+    [Methods.setLayout]: (data, kvs) =>
+        mutPath(data, 'layout', (l) => Object.assign(l, Object.fromEntries(kvs))),
     [Methods.setFieldAggregator]: (data, encoding, index, aggName) =>
         mutPath(data, `encodings.${encoding}`, (f) => replace(f, index, (x) => ({ ...x, aggName }))),
+    [Methods.setGeoData]: (data, geojson, geoKey) => mutPath(data, 'layout', (l) => ({ ...l, geojson, geoKey })),
+    [Methods.setCoordSystem]: (data, system) =>
+        mutPath(data, 'config', (c) => ({
+            ...c,
+            coordSystem: system,
+            geoms: [GEOM_TYPES[system][0]],
+        })),
 };
 
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {
@@ -195,7 +207,7 @@ export function encodeVisSpec(data: IChart): IChartForExport {
         }))
     );
 }
-export function decodeVisSpec(snapshot: DeepPartial<IChartForExport>): DeepPartial<IChart> {
+export function decodeVisSpec(snapshot: Partial<IChartForExport>): PartialChart {
     return mutPath(snapshot, 'encodings', (e) => {
         const filters = e?.filters?.map((x) => ({
             ...x,
@@ -248,7 +260,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
             .concat(createCountField()),
     }));
 }
-export function fillChart(chart: DeepPartial<IChart>): IChart {
+export function fillChart(chart: PartialChart): IChart {
     const result = emptyChart(chart.visId || uniqueId(), chart.name || 'Chart');
     result.config = {
         ...result.config,
@@ -268,14 +280,14 @@ export function fillChart(chart: DeepPartial<IChart>): IChart {
     };
     return result;
 }
-export function fromSnapshot(snapshot: DeepPartial<IChart>): VisSpecWithHistory {
+export function fromSnapshot(snapshot: PartialChart): VisSpecWithHistory {
     return create(fillChart(snapshot));
 }
 export function fromFields(fields: IMutField[], name: string): VisSpecWithHistory {
     return create(newChart(fields, name));
 }
 type VisSpecHistoryInfoForExport = {
-    base: DeepPartial<IChartForExport>;
+    base: Partial<IChartForExport>;
     timeline: VisAction[];
 };
 export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string {
@@ -311,6 +323,7 @@ export function convertChart(data: IVisSpec): IChart {
         shape: data.encodings.shape.slice(),
         theta: data.encodings.theta.slice(),
         radius: data.encodings.radius.slice(),
+
         details: data.encodings.details.slice(),
         filters: data.encodings.filters.slice(),
         text: data.encodings.text.slice(),
@@ -324,6 +337,7 @@ export function convertChart(data: IVisSpec): IChart {
         showActions: data.config.showActions,
         stack: data.config.stack,
         zeroScale: data.config.zeroScale,
+
         size: {
             ...result.layout.size,
             ...data.config.size,

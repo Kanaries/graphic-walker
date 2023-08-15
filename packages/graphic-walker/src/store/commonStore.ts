@@ -2,6 +2,7 @@ import {   IDataSetInfo, IMutField, IRow } from '../interfaces';
 import { makeAutoObservable, observable } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { DataStore } from './dataStore';
+import { INestNode } from '../components/pivotTable/inteface';
 
 export class CommonStore {
     public dataStore: DataStore = new DataStore();
@@ -17,7 +18,6 @@ export class CommonStore {
     public setShowDSPanel (show: boolean) {
         this.showDSPanel = show;
     }
-
     public initTempDS () {
         this.tmpDSName = 'New Dataset'
         this.tmpDSRawFields = [];

@@ -36,6 +36,13 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom ({ onMoun
         <root.div {...attrs} mode="open" ref={rootRef}>
             <style>{tailwindStyle}</style>
             <style>{style}</style>
+            {/* Leaflet CSS file */}
+            <link
+                rel="stylesheet"
+                href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+                crossOrigin=""
+            />
             {shadowRoot && (
                 <StyleSheetManager target={shadowRoot}>
                     <ShadowDomContext.Provider value={{ root: shadowRoot }}>

@@ -84,3 +84,13 @@ export function useVizStore() {
 }
 
 export const ComputationContext = createContext<IComputationFunction>(async () => []);
+
+export function useCompututaion() {
+    return useContext(ComputationContext);
+}
+
+export function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
+    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), timeout)
+    })])
+}

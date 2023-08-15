@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IComputationFunction, IMutField, ISegmentKey, IThemeKey } from './interfaces';
+import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
 import AestheticFields from './fields/aestheticFields';
 import DatasetFields from './fields/datasetFields/index';
 import ReactiveRenderer from './renderer/index';
-import { ComputationContext, VizStoreWrapper, useVizStore } from './store';
+import { ComputationContext, VizStoreWrapper, useVizStore, withTimeout } from './store';
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
@@ -16,12 +16,13 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import AskViz from './components/askViz';
 import { VizSpecStore } from './store/visualSpecStore';
+import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
-import FieldsContextWrapper from './fields/fieldsContext';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -32,12 +33,16 @@ export interface BaseVizProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    geographicData?: IGeographicData & {
+        key: string;
+    };
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
             askviz?: string | boolean;
         };
     };
+    computationTimeout?: number;
 }
 
 export const VizApp = observer(function VizApp(
@@ -45,7 +50,17 @@ export const VizApp = observer(function VizApp(
         computation?: IComputationFunction;
     }
 ) {
-    const { computation, darkMode = 'light', i18nLang = 'en-US', enhanceAPI, i18nResources, themeKey = 'vega', toolbar } = props;
+    const {
+        computation,
+        darkMode = 'light',
+        i18nLang = 'en-US',
+        enhanceAPI,
+        i18nResources,
+        themeKey = 'vega',
+        toolbar,
+        geographicData,
+        computationTimeout = 60000,
+    } = props;
 
     const { i18n } = useTranslation();
     const curLang = i18n.language;
@@ -64,11 +79,17 @@ export const VizApp = observer(function VizApp(
 
     const vizStore = useVizStore();
 
+    useEffect(() => {
+        if (props.geographicData) {
+            vizStore.setGeographicData(props.geographicData, props.geographicData.key);
+        }
+    }, [geographicData]);
+
     const rendererRef = useRef<IReactVegaHandler>(null);
 
     const { segmentKey } = vizStore;
 
-    const c = computation || (async () => []);
+    const c = useMemo(() => (computation ? withTimeout(computation, computationTimeout) : async () => []), [computation, computationTimeout]);
     return (
         <ComputationContext.Provider value={c}>
             <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
@@ -85,6 +106,7 @@ export const VizApp = observer(function VizApp(
                             <VisualSettings rendererHandler={rendererRef} darkModePreference={darkMode} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                             <CodeExport />
                             <VisualConfig />
+                            <GeoConfigPanel />
                             <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                                 <div className="md:col-span-3 xl:col-span-1">
                                     <DatasetFields />
@@ -136,6 +158,7 @@ export type VizProps = {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     rawFields: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    computationTimeout?: number;
 } & (
     | {
           /**
@@ -183,6 +206,7 @@ export function VizAppWithContext(props: VizProps) {
                     themeKey={props.themeKey}
                     toolbar={props.toolbar}
                     computation={computation}
+                    computationTimeout={props.computationTimeout}
                 />
             </FieldsContextWrapper>
         </VizStoreWrapper>

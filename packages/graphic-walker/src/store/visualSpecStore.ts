@@ -12,6 +12,8 @@ import {
     undo,
 } from '../models/visSpecHistory';
 import { emptyEncodings } from '../utils/save';
+import { feature } from 'topojson-client';
+import type { FeatureCollection } from 'geojson';
 import {
     DraggableFieldState,
     Filters,
@@ -20,19 +22,44 @@ import {
     IFilterRule,
     IMutField,
     ISegmentKey,
+    IGeographicData,
     ISortMode,
     IViewField,
     IVisSpec,
     IVisualConfigNew,
     IVisualLayout,
     Specification,
+    ICoordMode,
 } from '../interfaces';
 import { MetaFieldKeys } from '../config';
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
 import { encodeFilterRule } from '../utils/filter';
+import { INestNode } from '../components/pivotTable/inteface';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !MetaFieldKeys.includes(dkey));
+const viewEncodingKeys = (geom: string) => {
+    switch (geom) {
+        case 'choropleth':
+            return ['geoId', 'color', 'opacity', 'text', 'details'];
+        case 'poi':
+            return ['longitude', 'latitude', 'color', 'opacity', 'size', 'details'];
+        case 'arc':
+            return ['radius', 'theta', 'color', 'opacity', 'size', 'details', 'text'];
+        case 'bar':
+        case 'tick':
+        case 'line':
+        case 'area':
+        case 'boxplot':
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'text'];
+        case 'text':
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'text'];
+        case 'table':
+            return ['columns', 'rows'];
+        default:
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'shape'];
+    }
+};
 
 export class VizSpecStore {
     visList: VisSpecWithHistory[];
@@ -45,8 +72,10 @@ export class VizSpecStore {
     showDataConfig: boolean = false;
     showCodeExportPanel: boolean = false;
     showVisualConfigPanel: boolean = false;
+    showGeoJSONConfigPanel: boolean = false;
     removeConfirmIdx: number | null = null;
     filters: Filters = {};
+    tableCollapsedHeaderMap: Map<string, INestNode['path']> = new Map();
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
     constructor(
@@ -63,6 +92,7 @@ export class VizSpecStore {
             visList: observable.shallow,
             allEncodings: computed.struct,
             filters: observable.ref,
+            tableCollapsedHeaderMap: observable.ref,
         });
     }
 
@@ -129,16 +159,24 @@ export class VizSpecStore {
         return result;
     }
 
-    get allEncodingFields() {
-        return encodingKeys.flatMap((k) => this.allEncodings[k]);
+    get viewEncodings() {
+        const result: Record<string, IViewField[]> = {};
+        viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
+            result[k] = this.currentVis.encodings[k];
+        });
+        return result;
+    }
+
+    get viewEncodingFields() {
+        return viewEncodingKeys(this.config.geoms[0]).flatMap((k) => this.viewEncodings[k]);
     }
 
     get viewDimensions() {
-        return this.allEncodingFields.filter((x) => x.analyticType === 'dimension');
+        return this.viewEncodingFields.filter((x) => x.analyticType === 'dimension');
     }
 
     get viewMeasures() {
-        return this.allEncodingFields.filter((x) => x.analyticType === 'measure');
+        return this.viewEncodingFields.filter((x) => x.analyticType === 'measure');
     }
 
     get workflow() {
@@ -210,8 +248,18 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.setConfig(this.visList[this.visIndex], ...args);
     }
 
-    setVisualLayout(...args: KVTuple<IVisualLayout>) {
-        this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], ...args);
+    setCoordSystem(mode: ICoordMode) {
+        this.visList[this.visIndex] = performers.setCoordSystem(this.visList[this.visIndex], mode);
+    }
+
+    setVisualLayout(...args: KVTuple<IVisualLayout>);
+    setVisualLayout(...args: KVTuple<IVisualLayout>[]);
+    setVisualLayout(...args: KVTuple<IVisualLayout> | KVTuple<IVisualLayout>[]) {
+        if (typeof args[0] === 'string') {
+            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], [args]);
+        } else {
+            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], args);
+        }
     }
 
     reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
@@ -354,6 +402,43 @@ export class VizSpecStore {
 
     closeRemoveConfirmModal() {
         this.removeConfirmIdx = null;
+    }
+
+    setGeographicData(data: IGeographicData, geoKey: string) {
+        const geoJSON =
+            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
+        if (!('features' in geoJSON)) {
+            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
+            return;
+        }
+        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey);
+    }
+    updateGeoKey(key: string) {
+        this.setVisualLayout('geoKey', key);
+    }
+    public updateTableCollapsedHeader(node: INestNode) {
+        const { uniqueKey, height } = node;
+        if (height < 1) return;
+        const updatedMap = new Map(this.tableCollapsedHeaderMap);
+        // if some child nodes of the incoming node are collapsed, remove them first
+        updatedMap.forEach((existingPath, existingKey) => {
+            if (existingKey.startsWith(uniqueKey) && existingKey.length > uniqueKey.length) {
+                updatedMap.delete(existingKey);
+            }
+        });
+        if (!updatedMap.has(uniqueKey)) {
+            updatedMap.set(uniqueKey, node.path);
+        } else {
+            updatedMap.delete(uniqueKey);
+        }
+        this.tableCollapsedHeaderMap = updatedMap;
+    }
+    public resetTableCollapsedHeader() {
+        const updatedMap: Map<string, INestNode['path']> = new Map();
+        this.tableCollapsedHeaderMap = updatedMap;
+    }
+    public setShowGeoJSONConfigPanel(show: boolean) {
+        this.showGeoJSONConfigPanel = show;
     }
 }
 

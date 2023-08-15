@@ -1,5 +1,5 @@
-import React, { type ForwardedRef, forwardRef } from 'react';
-import { DOM } from '@kanaries/react-beautiful-dnd';
+import React, { type ForwardedRef, forwardRef, useState } from 'react';
+import { DOMProvider } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
 import { VizAppWithContext, VizProps } from './App';
 import { App, IGWProps } from './FullApp';
@@ -14,21 +14,22 @@ import './empty_sheet.css';
 export const GraphicWalker = observer(
     forwardRef<IGWHandler, IGWProps>((props, ref) => {
         const { storeRef } = props;
+        const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
-            DOM.setBody(shadowRoot);
-            DOM.setHead(shadowRoot);
+            setShadowRoot(shadowRoot);
         };
         const handleUnmount = () => {
-            DOM.setBody(document.body);
-            DOM.setHead(document.head);
+            setShadowRoot(null);
         };
 
         return (
             <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
                 <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                     <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                        <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
                             <App {...props} />
+                        </DOMProvider>
                     </ShadowDom>
                 </AppRoot>
             </StoreWrapper>
@@ -38,19 +39,21 @@ export const GraphicWalker = observer(
 
 export const SimpleGraphicWalker = observer(
     forwardRef<IGWHandler, VizProps>((props, ref) => {
+        const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
+
         const handleMount = (shadowRoot: ShadowRoot) => {
-            DOM.setBody(shadowRoot);
-            DOM.setHead(shadowRoot);
+            setShadowRoot(shadowRoot);
         };
         const handleUnmount = () => {
-            DOM.setBody(document.body);
-            DOM.setHead(document.head);
+            setShadowRoot(null);
         };
 
         return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
                         <VizAppWithContext {...props} />
+                    </DOMProvider>
                 </ShadowDom>
             </AppRoot>
         );

@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { StoreWrapper, useGlobalStore } from '../../store';
-import { PivotTableDataProps, PivotTableStoreWrapper, usePivotTableStore } from './store';
+import React, { useEffect, useMemo, useState, useRef, useContext } from 'react';
+import { buildPivotTableService } from '../../services';
+import { toWorkflow } from '../../utils/workflow';
+import { dataQuery } from '../../computation';
+import { useAppRootContext } from '../../components/appRoot';
 import { observer } from 'mobx-react-lite';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
@@ -10,27 +12,15 @@ import {
     IDarkMode,
     IRow,
     IThemeKey,
+    IViewField,
     IVisualConfigNew,
     IVisualLayout,
 } from '../../interfaces';
 import { INestNode } from './inteface';
-import { buildMetricTableFromNestTree, buildNestTree } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
-
-// const PTStateConnector = observer(function StateWrapper (props: PivotTableProps) {
-//     const store = usePivotTableStore();
-//     const { vizStore } = useGlobalStore();
-//     const { draggableFieldState } = vizStore;
-//     const { rows, columns } = draggableFieldState;
-//     return (
-//         <PivotTable
-//             {...props}
-//             draggableFieldState={draggableFieldState}
-//             visualConfig={visualConfig}
-//         />
-//     );
-// })
+import LoadingLayer from '../loadingLayer';
+import { useCompututaion, useVizStore } from '../../store';
 
 interface PivotTableProps {
     themeKey?: IThemeKey;
@@ -41,15 +31,23 @@ interface PivotTableProps {
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
 }
-const PivotTable: React.FC<PivotTableProps> = (props) => {
-    const { data, draggableFieldState } = props;
-    // const store = usePivotTableStore();
-    // const { vizStore } = useGlobalStore();
-    // const { draggableFieldState } = vizStore;
-    const { rows, columns } = draggableFieldState;
+
+const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
+    const { data, visualConfig, loading, layout } = props;
+    const computation = useCompututaion();
+    const appRef = useAppRootContext();
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const vizStore = useVizStore();
+    const { allFields, viewFilters, viewMeasures, sort, limit, allEncodings, tableCollapsedHeaderMap } = vizStore;
+    const { rows, columns } = allEncodings;
+    const {  defaultAggregated } = visualConfig;
+    const { showTableSummary } = layout
+    const aggData = useRef<IRow[]>([]);
+    const [ topTreeHeaderRowNum, setTopTreeHeaderRowNum ] = useState<number>(0);
 
     const dimsInRow = useMemo(() => {
         return rows.filter((f) => f.analyticType === 'dimension');
@@ -68,51 +66,157 @@ const PivotTable: React.FC<PivotTableProps> = (props) => {
     }, [columns]);
 
     useEffect(() => {
-        if ((dimsInRow.length > 0 || dimsInColumn.length > 0) && data.length > 0) {
-            const lt = buildNestTree(
-                dimsInRow.map((d) => d.fid),
-                data
-            );
-            const tt = buildNestTree(
-                dimsInColumn.map((d) => d.fid),
-                data
-            );
-            const metric = buildMetricTableFromNestTree(lt, tt, data);
-            unstable_batchedUpdates(() => {
-                setLeftTree(lt);
-                setTopTree(tt);
-                setMetricTable(metric);
-            });
+        if (tableCollapsedHeaderMap.size > 0) {
+            // If some visual configs change, clear the collapse state
+            // As tableCollapsedHeaderMap is also listened, data will be reaggregated later.
+            vizStore.resetTableCollapsedHeader();
+            // This forces data to be reaggregated if showTableSummary is on, as aggregation will be skipped later.
+            if (showTableSummary) {
+                aggregateGroupbyData();
+            }
+        } else {
+            aggregateThenGenerate();
         }
-    }, [dimsInRow, dimsInColumn, data]);
+    }, [data]);
+
+    useEffect(() => {
+        if (showTableSummary) {
+            // If showTableSummary is on, there is no need to generate extra queries. Directly generate new table.
+            generateNewTable();
+        } else {
+            aggregateThenGenerate();
+        }
+    }, [tableCollapsedHeaderMap]);
+
+    const aggregateThenGenerate = async() => {
+        await aggregateGroupbyData();
+        generateNewTable();
+    };
+
+    const generateNewTable = () => {
+        appRef.current?.updateRenderStatus('rendering');
+        setIsLoading(true);
+        buildPivotTableService(
+            dimsInRow,
+            dimsInColumn,
+            data,
+            aggData.current,
+            Array.from(tableCollapsedHeaderMap.keys()),
+            showTableSummary
+        )
+            .then((data) => {
+                const {lt, tt, metric} = data;
+                unstable_batchedUpdates(() => {
+                    setLeftTree(lt);
+                    setTopTree(tt);
+                    setMetricTable(metric);
+                });
+                appRef.current?.updateRenderStatus('idle');
+                setIsLoading(false);
+            })
+            .catch((err) => {
+                appRef.current?.updateRenderStatus('error');
+                console.log(err);
+                setIsLoading(false);
+            })
+    };
+
+    const aggregateGroupbyData = () => {
+        if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
+        if (data.length === 0) return;
+        let groupbyCombListInRow:IViewField[][]  = [];
+        let groupbyCombListInCol:IViewField[][]  = [];
+        if (showTableSummary) {
+            groupbyCombListInRow = dimsInRow.map((dim, idx) => dimsInRow.slice(0, idx));
+            groupbyCombListInCol = dimsInColumn.map((dim, idx) => dimsInColumn.slice(0, idx));
+        } else {
+            const collapsedDimList = Array.from(tableCollapsedHeaderMap).map(([key, path]) => path[path.length - 1].key);
+            const collapsedDimsInRow = dimsInRow.filter((dim) => collapsedDimList.includes(dim.fid));
+            const collapsedDimsInColumn = dimsInColumn.filter((dim) => collapsedDimList.includes(dim.fid));
+            groupbyCombListInRow = collapsedDimsInRow.map((dim) => dimsInRow.slice(0, dimsInRow.indexOf(dim) + 1));
+            groupbyCombListInCol = collapsedDimsInColumn.map((dim) => dimsInColumn.slice(0, dimsInColumn.indexOf(dim) + 1));
+        }
+        groupbyCombListInRow.push(dimsInRow);
+        groupbyCombListInCol.push(dimsInColumn);
+        const groupbyCombList:IViewField[][] = groupbyCombListInCol.flatMap(combInCol =>
+            groupbyCombListInRow.map(combInRow => [...combInCol, ...combInRow])
+        ).slice(0, -1);
+        setIsLoading(true);
+        appRef.current?.updateRenderStatus('computing');
+        const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
+            const workflow = toWorkflow(
+                viewFilters,
+                allFields,
+                dimComb,
+                viewMeasures,
+                defaultAggregated,
+                sort,
+                limit > 0 ? limit : undefined
+            );
+            return dataQuery(computation, workflow, limit > 0 ? limit : undefined)
+                .catch((err) => {
+                    appRef.current?.updateRenderStatus('error');
+                    return [];
+                });
+        });
+        return new Promise<void>((resolve, reject) => {
+            Promise.all(groupbyPromises)
+                .then((result) => {
+                    setIsLoading(false);
+                    const finalizedData = [...result.flat()];
+                    aggData.current = finalizedData;
+                    resolve();
+                })
+                .catch((err) => {
+                    console.error(err);
+                    setIsLoading(false);
+                    reject();
+                });
+        })
+
+    };
 
     // const { leftTree, topTree, metricTable } = store;
     return (
-        <div className="flex">
-            <table className="border border-gray-300 border-collapse">
-                <thead className="border border-gray-300">
-                    {new Array(dimsInColumn.length + (measInColumn.length > 0 ? 1 : 0)).fill(0).map((_, i) => (
-                        <tr className="" key={i}>
-                            <td className="p-2 m-1 text-xs text-white border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
-                        </tr>
-                    ))}
-                </thead>
-                {leftTree && <LeftTree data={leftTree} dimsInRow={dimsInRow} measInRow={measInRow} />}
-            </table>
-            <table className="border border-gray-300 border-collapse">
-                {topTree && <TopTree data={topTree} dimsInCol={dimsInColumn} measInCol={measInColumn} />}
-                {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
-            </table>
+        <div className="relative">
+            {(isLoading || loading) && <LoadingLayer />}
+            <div className="flex">
+                <table className="border border-gray-300 border-collapse">
+                    <thead className="border border-gray-300">
+                        {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
+                            <tr className="" key={i}>
+                                <td className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                            </tr>
+                        ))}
+                    </thead>
+                    {leftTree && 
+                        <LeftTree 
+                            data={leftTree} 
+                            dimsInRow={dimsInRow} 
+                            measInRow={measInRow} 
+                            onHeaderCollapse={vizStore.updateTableCollapsedHeader.bind(vizStore)}
+                        />}
+                </table>
+                <table className="border border-gray-300 border-collapse">
+                    {topTree && 
+                        <TopTree 
+                            data={topTree} 
+                            dimsInCol={dimsInColumn} 
+                            measInCol={measInColumn} 
+                            onHeaderCollapse={vizStore.updateTableCollapsedHeader.bind(vizStore)}
+                            onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
+                        />}
+                    {metricTable && 
+                        <MetricTable 
+                            matrix={metricTable} 
+                            meaInColumns={measInColumn} 
+                            meaInRows={measInRow} 
+                        />}
+                </table>
+            </div>
         </div>
+
     );
-};
+});
 
 export default PivotTable;
-
-// const PivotTableApp: React.FC<PivotTableProps> = (props) => {
-//     return (
-//         <PivotTableStoreWrapper {...props}>
-//             <PivotTable />
-//         </PivotTableStoreWrapper>
-//     );
-// };

@@ -1,4 +1,5 @@
-import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery } from './interfaces';
+import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
+import { INestNode } from "./components/pivotTable/inteface";
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -10,6 +11,7 @@ import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQ
 import FilterWorker from './workers/filter.worker?worker&inline';
 import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
+import BuildMetricTableWorker from './workers/buildMetricTable.worker?worker&inline';
 import SortWorker from './workers/sort.worker?worker&inline';
 
 function workerService<T, R>(worker: Worker, data: R): Promise<T> {
@@ -94,22 +96,12 @@ interface PreAnalysisParams {
 //     }
 // }
 
-let filterWorker: Worker | null = null;
-let filterWorkerAutoTerminator: NodeJS.Timeout | null = null;
 
 export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSimple[]): Promise<IRow[]> => {
     if (filters.length === 0) return data;
-    if (filterWorkerAutoTerminator !== null) {
-        clearTimeout(filterWorkerAutoTerminator);
-        filterWorkerAutoTerminator = null;
-    }
-
-    if (filterWorker === null) {
-        filterWorker = new FilterWorker();
-    }
-
+    const worker = new FilterWorker();
     try {
-        const res: IRow[] = await workerService(filterWorker, {
+        const res: IRow[] = await workerService(worker, {
             dataSource: data,
             filters: filters,
         });
@@ -119,15 +111,7 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSi
         // @ts-ignore @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
         throw new Error('Uncaught error in FilterWorker', { cause: error });
     } finally {
-        if (filterWorkerAutoTerminator !== null) {
-            clearTimeout(filterWorkerAutoTerminator);
-        }
-
-        filterWorkerAutoTerminator = setTimeout(() => {
-            filterWorker?.terminate();
-            filterWorker = null;
-            filterWorkerAutoTerminator = null;
-        }, 60_000); // Destroy the worker when no request is received for 60 secs
+        worker.terminate();
     }
 };
 
@@ -160,7 +144,32 @@ export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<I
     } finally {
         worker.terminate();
     }
-};
+}
+
+export const buildPivotTableService = async (dimsInRow: IViewField[], 
+        dimsInColumn: IViewField[], 
+        allData: IRow[], 
+        aggData: IRow[], 
+        collapsedKeyList: string[], 
+        showTableSummary: boolean
+    ): Promise<{lt: INestNode, tt: INestNode, metric: (IRow | null)[][]}> => {
+    const worker = new BuildMetricTableWorker();
+    try {
+        const res: {lt: INestNode, tt: INestNode, metric: (IRow | null)[][]} = await workerService(worker, {
+            dimsInRow,
+            dimsInColumn, 
+            allData, 
+            aggData, 
+            collapsedKeyList, 
+            showTableSummary
+        });
+        return res;
+    } catch (error) {
+        throw new Error('Uncaught error in TableBuilderDataWorker', { cause: error });
+    } finally {
+        worker.terminate();
+    }
+}
 
 export const applySort = async (
     data: IRow[],

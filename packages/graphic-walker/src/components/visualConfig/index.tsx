@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useVizStore } from '../../store';
 import { NonPositionChannelConfigList, PositionChannelConfigList } from '../../config';
 
@@ -14,7 +14,12 @@ import { runInAction, toJS } from 'mobx';
 const VisualConfigPanel: React.FC = (props) => {
     const vizStore = useVizStore();
     const { showVisualConfigPanel } = vizStore;
-    const { layout } = vizStore;
+    const { config, layout } = vizStore;
+    const {
+        coordSystem,
+        geoms: [markType],
+    } = config;
+    const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
@@ -31,12 +36,14 @@ const VisualConfigPanel: React.FC = (props) => {
         size: layout.resolve.size,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(layout.zeroScale);
+    const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(layout.background);
 
     useEffect(() => {
         setZeroScale(layout.zeroScale);
         setBackground(layout.background);
         setResolve(layout.resolve);
+        setScaleIncludeUnmatchedChoropleth(layout.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: layout.format.numberFormat,
             timeFormat: layout.format.timeFormat,
@@ -132,16 +139,30 @@ const VisualConfigPanel: React.FC = (props) => {
                         }}
                     />
                 </div>
+                {isChoropleth && (
+                    <div className="my-2">
+                        <Toggle
+                            label="include unmatched choropleth in scale"
+                            enabled={scaleIncludeUnmatchedChoropleth}
+                            onChange={(en) => {
+                                setScaleIncludeUnmatchedChoropleth(en);
+                            }}
+                        />
+                    </div>
+                )}
                 <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}
                         className="mr-2"
                         onClick={() => {
                             runInAction(() => {
-                                vizStore.setVisualLayout('format', format);
-                                vizStore.setVisualLayout('zeroScale', zeroScale);
-                                vizStore.setVisualLayout('background', background);
-                                vizStore.setVisualLayout('resolve', resolve);
+                                vizStore.setVisualLayout(
+                                    ['format', format],
+                                    ['zeroScale', zeroScale],
+                                    ['scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth],
+                                    ['background', background],
+                                    ['resolve', resolve]
+                                );
                                 vizStore.setShowVisualConfigPanel(false);
                             });
                         }}

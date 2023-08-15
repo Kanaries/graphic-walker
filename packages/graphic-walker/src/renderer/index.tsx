@@ -9,6 +9,7 @@ import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
 import { useChartIndexControl } from '../utils/chartIndexControl';
+import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 
 interface RendererProps {
@@ -102,6 +103,27 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         },
         [vizStore]
     );
+
+    const isSpatial = viewConfig.coordSystem === 'geographic';
+
+    const sizeRef = useRef(layout.size);
+    sizeRef.current = layout.size;
+
+    useEffect(() => {
+        if (isSpatial) {
+            const prevSizeConfig = sizeRef.current;
+            if (sizeRef.current.width < LEAFLET_DEFAULT_WIDTH || sizeRef.current.height < LEAFLET_DEFAULT_HEIGHT) {
+                vizStore.setVisualLayout('size', {
+                    mode: sizeRef.current.mode,
+                    width: Math.max(prevSizeConfig.width, LEAFLET_DEFAULT_WIDTH),
+                    height: Math.max(prevSizeConfig.height, LEAFLET_DEFAULT_HEIGHT),
+                });
+                return () => {
+                    vizStore.setVisualLayout('size', prevSizeConfig);
+                };
+            }
+        }
+    }, [isSpatial, vizStore]);
 
     return (
         <SpecRenderer

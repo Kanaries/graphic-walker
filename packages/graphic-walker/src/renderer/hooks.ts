@@ -4,7 +4,6 @@ import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputati
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQuery } from '../computation';
-import { toJS } from 'mobx';
 
 interface UseRendererProps {
     allFields: Omit<IViewField, 'dragId'>[];

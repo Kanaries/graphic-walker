@@ -1,10 +1,10 @@
 import { observer } from 'mobx-react-lite';
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
-import { ComputationContext, useVizStore } from '../../store';
+import type { IFilterField, IFilterRule, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
+import { useCompututaion, useVizStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { useRenderer } from '../../renderer/hooks';
 import { fieldStat } from '../../computation';
@@ -203,7 +203,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const { t } = useTranslation('translation');
 
-    const computation = useContext(ComputationContext);
+    const computation = useCompututaion();
 
     const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation);
     const count = stats?.values;
@@ -388,7 +388,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         return field.analyticType === 'measure' ? [field] : [];
     }, [field]);
 
-    const computationFunction = useContext(ComputationContext);
+    const computationFunction = useCompututaion();
 
     const { viewData, loading } = useRenderer({
         allFields: fields,
@@ -482,7 +482,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
-    const computation = useContext(ComputationContext);
+    const computation = useCompututaion();
 
     const stats = useFieldStats(field, { values: false, range: true }, 'none', computation);
     const range = stats?.range;

@@ -1,12 +1,12 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import DatasetTable from '../../components/dataTable';
 import { observer } from 'mobx-react-lite';
-import { ComputationContext, useVizStore } from '../../store';
+import { useCompututaion, useVizStore } from '../../store';
 import { datasetStats } from '../../computation';
 
 const DatasetConfig: React.FC = () => {
     const vizStore = useVizStore();
-    const computation = useContext(ComputationContext);
+    const computation = useCompututaion();
 
     const [count, setCount] = useState(0);
     const taskIdRef = useRef(0);

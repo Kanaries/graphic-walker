@@ -3,8 +3,9 @@ import { Resizable } from 're-resizable';
 import React, { forwardRef, useMemo } from 'react';
 
 import PivotTable from '../components/pivotTable';
+import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../interfaces';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -15,7 +16,7 @@ interface SpecRendererProps {
     dark?: IDarkMode;
     data: IRow[];
     loading: boolean;
-    draggableFieldState: DeepReadonly<DraggableFieldState>;
+    draggableFieldState: DraggableFieldState;
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
     onGeomClick?: ((values: any, e: any) => void) | undefined;
@@ -31,7 +32,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, defaultAggregated} = visualConfig;
+    const { geoms, defaultAggregated, coordSystem } = visualConfig;
     const { interactiveScale, stack, showActions, size, format: _format, background, zeroScale, resolve } = layout;
 
     const rows = draggableFieldState.rows;
@@ -115,6 +116,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         );
     }
 
+    const isSpatial = coordSystem === 'geographic';
+
     return (
         <Resizable
             className={enableResize ? 'border-blue-400 border-2 overflow-hidden' : ''}
@@ -142,33 +145,44 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             }}
         >
             {loading && <LoadingLayer />}
-            <ReactVega
-                name={name}
-                vegaConfig={vegaConfig}
-                // format={format}
-                layoutMode={size.mode}
-                interactiveScale={interactiveScale}
-                geomType={geoms[0]}
-                defaultAggregate={defaultAggregated}
-                stack={stack}
-                dataSource={data}
-                rows={rows}
-                columns={columns}
-                color={color[0]}
-                theta={theta[0]}
-                radius={radius[0]}
-                shape={shape[0]}
-                opacity={opacity[0]}
-                size={sizeChannel[0]}
-                details={details}
-                text={text[0]}
-                showActions={showActions}
-                width={size.width - 12 * 4}
-                height={size.height - 12 * 4}
-                ref={ref}
-                onGeomClick={onGeomClick}
-                locale={locale}
-            />
+            {isSpatial && (
+                <LeafletRenderer
+                    data={data}
+                    draggableFieldState={draggableFieldState}
+                    visualConfig={visualConfig}
+                    visualLayout={layout}
+                    vegaConfig={vegaConfig}
+                />
+            )}
+            {isSpatial || (
+                <ReactVega
+                    name={name}
+                    vegaConfig={vegaConfig}
+                    // format={format}
+                    layoutMode={size.mode}
+                    interactiveScale={interactiveScale}
+                    geomType={geoms[0]}
+                    defaultAggregate={defaultAggregated}
+                    stack={stack}
+                    dataSource={data}
+                    rows={rows}
+                    columns={columns}
+                    color={color[0]}
+                    theta={theta[0]}
+                    radius={radius[0]}
+                    shape={shape[0]}
+                    opacity={opacity[0]}
+                    size={sizeChannel[0]}
+                    details={details}
+                    text={text[0]}
+                    showActions={showActions}
+                    width={size.width - 12 * 4}
+                    height={size.height - 12 * 4}
+                    ref={ref}
+                    onGeomClick={onGeomClick}
+                    locale={locale}
+                />
+            )}
         </Resizable>
     );
 });

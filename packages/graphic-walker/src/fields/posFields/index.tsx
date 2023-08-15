@@ -10,14 +10,20 @@ import { IDraggableViewStateKey } from '../../interfaces';
 const PosFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { config } = vizStore;
-    const { geoms } = config;
+    const { geoms, coordSystem = 'generic' } = config;
 
     const channels = useMemo(() => {
+        if (coordSystem === 'geographic') {
+            if (geoms[0] === 'choropleth') {
+                return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'geoId') as IDraggableViewStateKey[];
+            }
+            return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'longitude' || f.id === 'latitude') as IDraggableViewStateKey[];
+        }
         if (geoms[0] === 'arc') {
             return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'radius' || f.id === 'theta') as IDraggableViewStateKey[];
         }
         return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'columns' || f.id === 'rows') as IDraggableViewStateKey[];
-    }, [geoms[0]]);
+    }, [geoms[0], coordSystem]);
     return (
         <div>
             {channels.map((dkey) => (

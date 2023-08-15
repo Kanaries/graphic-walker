@@ -1,47 +1,47 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
-![graphic-walker-banner](https://user-images.githubusercontent.com/22167673/222895294-47ddd664-106e-45ff-a613-e7919522cb79.png)
+![graphic-walker-banner](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-banner.png)
 
 
-# graphic-walker
+# Graphic Walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/kanaries/graphic-walker/auto-build.yml?style=flat-square)
 [![](https://img.shields.io/badge/twitter-kanaries_data-03A9F4?style=flat-square&logo=twitter)](https://twitter.com/kanaries_data)
 [![](https://img.shields.io/discord/987366424634884096?color=%237289da&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/WWHraZ8SeV)
 [![](https://img.shields.io/badge/YouTube-red?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/@kanaries_data)
-[![](https://img.shields.io/badge/Medium-grey?style=flat-square&logo=medium&logoColor=white)](https://medium.com/@observedobserver)
 [![](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/kanaries-data/)
 
-Graphic Walker is an open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop operations. 
+Graphic Walker is a different open-source alternative to Tableau. It allows data scientists to analyze data and visualize patterns with simple drag-and-drop / natural language query operations. 
 
 ### Why is it different?
 
-It is extremely easy to embed in your apps just as a React component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
+It is extremely easy to embed in your apps just as a component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
 
 ### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
-+ A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
 + Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
 + Graphic Walker now supports Dark Theme! 🤩
++ Spatial visualization.
 + Natural language / Chat interface. Ask question about your data!
++ A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 
 https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
 > Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
-## Usage
+## Usage for End Users
 
-First, upload your CSV file, preview your data, and define the analytic type of columns (dimension or measure).
+First, upload your Data(csv/json) file, preview your data, and define the analytic type of columns (dimension or measure).
 
 > We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
-![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
+![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-create-ds.png)
 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
-![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/after_load_data.png)
+![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-readme-01.png)
 
 You can also view raw data any time or edit the meta data.
 
@@ -50,12 +50,12 @@ You can also view raw data any time or edit the meta data.
 
 Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
 
-![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-bar-01.png)
+![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-bar-01.png)
 
 
 You can change the mark type into others to make different charts, for example a line chart.
 
-![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-line-01.png)
+![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-line-01.png)
 
 
 To compare different measures, you can create a concat view by adding more than one measure into rows/columns.
@@ -78,7 +78,7 @@ For example, in bike sharing dataset, ask why registered rents in Jan. is lower 
 
 ![graphic walker explain data result](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
 
-## Deploy
+## Deploy, Usage for Developers
 
 If you want to use Graphic Walker as a data exploration tool without thinking about deployment details, you can use our online out-of-the-box version.
 
