@@ -5,6 +5,7 @@ import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../int
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 import { TooltipContent } from "./tooltip";
+import { useAppRootContext } from "../appRoot";
 
 
 export interface IPOIRendererProps {
@@ -99,6 +100,22 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
             };
         }
     });
+
+    const appRef = useAppRootContext();
+
+    useEffect(() => {
+        const ctx = appRef.current;
+        if (ctx) {
+            ctx.exportChart = async (mode) => ({
+                mode,
+                title: '',
+                nCols: 0,
+                nRows: 0,
+                charts: [],
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null
+            })
+        }
+    }, []);
 
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);

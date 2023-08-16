@@ -7,6 +7,7 @@ import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale } from "./encodings";
 import { isValidLatLng } from "./POIRenderer";
 import { TooltipContent } from "./tooltip";
+import { useAppRootContext } from "../appRoot";
 
 
 export interface IChoroplethRendererProps {
@@ -190,6 +191,22 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
             };
         }
     });
+    
+    const appRef = useAppRootContext();
+
+    useEffect(() => {
+        const ctx = appRef.current;
+        if (ctx) {
+            ctx.exportChart = async (mode) => ({
+                mode,
+                title: '',
+                nCols: 0,
+                nRows: 0,
+                charts: [],
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null
+            })
+        }
+    }, []);
 
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
