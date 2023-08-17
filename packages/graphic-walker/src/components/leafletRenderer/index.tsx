@@ -5,6 +5,7 @@ import ChoroplethRenderer from "./ChoroplethRenderer";
 
 
 export interface ILeafletRendererProps {
+    name?: string;
     vegaConfig?: VegaGlobalConfig;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: DeepReadonly<IVisualConfig>;
@@ -17,7 +18,7 @@ export const LEAFLET_DEFAULT_WIDTH = 800;
 export const LEAFLET_DEFAULT_HEIGHT = 600;
 
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
-    const { draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
+    const { name, draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
     const { defaultAggregated, geoms: [markType], geojson, geoKey = '', scaleIncludeUnmatchedChoropleth = false } = visualConfig;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
@@ -29,6 +30,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     if (markType === 'poi') {
         return (
             <POIRenderer
+                name={name}
                 data={data}
                 allFields={allFields}
                 defaultAggregated={defaultAggregated}
@@ -44,6 +46,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     } else if (markType === 'choropleth') {
         return (
             <ChoroplethRenderer
+                name={name}
                 data={data}
                 allFields={allFields}
                 features={geojson}

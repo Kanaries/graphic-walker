@@ -146,6 +146,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             {loading && <LoadingLayer />}
             {isSpatial && (
                 <LeafletRenderer
+                    name={name}
                     data={data}
                     draggableFieldState={draggableFieldState}
                     visualConfig={visualConfig}
