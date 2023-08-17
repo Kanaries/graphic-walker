@@ -7,9 +7,11 @@ import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale } from "./encodings";
 import { isValidLatLng } from "./POIRenderer";
 import { TooltipContent } from "./tooltip";
+import { useAppRootContext } from "../appRoot";
 
 
 export interface IChoroplethRendererProps {
+    name?: string;
     data: IRow[];
     allFields: DeepReadonly<IViewField[]>;
     features: FeatureCollection | undefined;
@@ -86,7 +88,7 @@ const resolveCenter = (coordinates: [lat: number, lng: number][]): [lng: number,
 };
 
 const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendererProps>(function ChoroplethRenderer (props, ref) {
-    const { data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
+    const { name, data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
 
     useImperativeHandle(ref, () => ({}));
 
@@ -190,6 +192,23 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
             };
         }
     });
+    
+    const appRef = useAppRootContext();
+
+    useEffect(() => {
+        const ctx = appRef.current;
+        if (ctx) {
+            ctx.exportChart = async (mode) => ({
+                mode,
+                title: name || 'untitled',
+                nCols: 0,
+                nRows: 0,
+                charts: [],
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null,
+                chartType: 'map'
+            })
+        }
+    }, []);
 
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
