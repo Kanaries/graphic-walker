@@ -89,6 +89,7 @@ export const useVegaExportApi = (
                         nCols: 0,
                         nRows: 0,
                         charts: [],
+                        chartType: 'vega',
                     };
                 }
                 if (ctx.renderStatus !== 'idle') {
@@ -114,6 +115,7 @@ export const useVegaExportApi = (
                             nCols: 0,
                             nRows: 0,
                             charts: [],
+                            chartType: 'vega',
                         };
                     } finally {
                         dispose?.();
@@ -139,6 +141,7 @@ export const useVegaExportApi = (
                     container() {
                         return containerRef.current;
                     },
+                    chartType: 'vega',
                 };
                 if (mode === 'data-url') {
                     const imgData = await renderHandle.getCanvasData();

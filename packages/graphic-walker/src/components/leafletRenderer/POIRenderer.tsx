@@ -9,6 +9,7 @@ import { useAppRootContext } from "../appRoot";
 
 
 export interface IPOIRendererProps {
+    name?: string;
     data: IRow[];
     allFields: DeepReadonly<IViewField[]>;
     defaultAggregated: boolean;
@@ -40,7 +41,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer (props, ref) {
-    const { data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
+    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
     
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
@@ -108,11 +109,12 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         if (ctx) {
             ctx.exportChart = async (mode) => ({
                 mode,
-                title: '',
+                title: name || 'untitled',
                 nCols: 0,
                 nRows: 0,
                 charts: [],
-                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null,
+                chartType: 'map',
             })
         }
     }, []);

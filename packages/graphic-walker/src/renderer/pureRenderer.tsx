@@ -107,6 +107,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             <div className="relative">
                 {isSpatial && (
                     <LeafletRenderer
+                        name={name}
                         data={data}
                         draggableFieldState={visualState}
                         visualConfig={visualConfig}
