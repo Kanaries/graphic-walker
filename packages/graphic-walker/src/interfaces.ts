@@ -33,6 +33,11 @@ export interface Filters {
     [key: string]: any[];
 }
 
+export interface ICreateField {
+    channel:"dimensions" | "measures";
+    index:number;
+}
+
 export interface IMutField {
     fid: string;
     key?: string;
@@ -83,9 +88,10 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'one' | 'binCount' | 'log' ;
     params: IExpParamter[];
     as: string;
+    num?: number;
 }
 
 export type IGeoRole = 'longitude' | 'latitude' | 'none';

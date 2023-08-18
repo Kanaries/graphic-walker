@@ -511,11 +511,11 @@ export class VizSpecStore {
             encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount'): string {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount', num:number|undefined=10): string {
         const newVarKey = uniqueId();
         const state = this.draggableFieldState;
         const existedRelatedBinField = state.dimensions.find(
-            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid
+            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.num === num && f.expression.params[0].value === state[stateKey][index].fid 
         );
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
@@ -525,7 +525,7 @@ export class VizSpecStore {
             const binField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `${binType}(${originField.name})`,
+                name: `${binType}${num}(${originField.name})`,
                 semanticType: 'ordinal',
                 analyticType: 'dimension',
                 computed: true,
@@ -538,24 +538,24 @@ export class VizSpecStore {
                             value: originField.fid,
                         },
                     ],
+                    num: num
                 },
             };
             encodings.dimensions.push(binField);
         });
         return newVarKey;
     }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
+    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log', num: number|undefined = 10) {
         if (stateKey === 'filters') {
             return;
         }
-
         this.useMutable(({ encodings }) => {
             const originField = encodings[stateKey][index];
             const newVarKey = uniqueId();
             const logField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `${scaleType}(${originField.name})`,
+                name: `${scaleType}${num}(${originField.name})`,
                 semanticType: 'quantitative',
                 analyticType: originField.analyticType,
                 aggName: 'sum',
@@ -563,6 +563,7 @@ export class VizSpecStore {
                 expression: {
                     op: scaleType,
                     as: newVarKey,
+                    num: num,
                     params: [
                         {
                             type: 'field',

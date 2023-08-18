@@ -23,6 +23,8 @@ import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
+import LogPanel from './fields/datasetFields/logPanel';
+import BinPanel from './fields/datasetFields/binPanel';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -185,6 +187,8 @@ const App = observer<IGWProps>(function App(props) {
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
+                        <LogPanel />
+                        <BinPanel/>
                         <GeoConfigPanel />
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
