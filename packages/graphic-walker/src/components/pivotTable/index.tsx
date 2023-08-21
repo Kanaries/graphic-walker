@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState, useRef, useContext } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { buildPivotTableService } from '../../services';
 import { toWorkflow } from '../../utils/workflow';
 import { dataQuery } from '../../computation';
 import { useAppRootContext } from '../../components/appRoot';
-import { observer } from 'mobx-react-lite';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
 import {
@@ -32,8 +31,10 @@ interface PivotTableProps {
     layout: IVisualLayout;
 }
 
-const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent (props) {
-    const { data, visualConfig, loading, layout } = props;
+const emptyMap = new Map();
+
+const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (props) {
+    const { data, visualConfig, loading, layout, draggableFieldState } = props;
     const computation = useCompututaion();
     const appRef = useAppRootContext();
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
@@ -42,8 +43,10 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const vizStore = useVizStore();
-    const { allFields, viewFilters, viewMeasures, sort, limit, allEncodings, tableCollapsedHeaderMap } = vizStore;
-    const { rows, columns } = allEncodings;
+    const enableCollapse = !!vizStore;
+    // const { allFields, viewFilters, viewMeasures, sort, limit, allEncodings, tableCollapsedHeaderMap } = vizStore;
+    const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
+    const { rows, columns } = draggableFieldState;
     const {  defaultAggregated } = visualConfig;
     const { showTableSummary } = layout
     const aggData = useRef<IRow[]>([]);
@@ -66,7 +69,11 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     }, [columns]);
 
     useEffect(() => {
-        if (tableCollapsedHeaderMap.size > 0) {
+        if (!enableCollapse) {
+            generateNewTable();
+            return;
+        }
+        if (vizStore.tableCollapsedHeaderMap.size > 0) {
             // If some visual configs change, clear the collapse state
             // As tableCollapsedHeaderMap is also listened, data will be reaggregated later.
             vizStore.resetTableCollapsedHeader();
@@ -77,16 +84,16 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         } else {
             aggregateThenGenerate();
         }
-    }, [data]);
+    }, [data, enableCollapse]);
 
     useEffect(() => {
-        if (showTableSummary) {
+        if (!enableCollapse || showTableSummary) {
             // If showTableSummary is on, there is no need to generate extra queries. Directly generate new table.
             generateNewTable();
         } else {
             aggregateThenGenerate();
         }
-    }, [tableCollapsedHeaderMap]);
+    }, [enableCollapse, vizStore?.tableCollapsedHeaderMap]);
 
     const aggregateThenGenerate = async() => {
         await aggregateGroupbyData();
@@ -145,15 +152,15 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
             const workflow = toWorkflow(
-                viewFilters,
-                allFields,
+                vizStore.viewFilters,
+                vizStore.allFields,
                 dimComb,
-                viewMeasures,
+                vizStore.viewMeasures,
                 defaultAggregated,
-                sort,
-                limit > 0 ? limit : undefined
+                vizStore.sort,
+                vizStore.limit > 0 ? vizStore.limit : undefined
             );
-            return dataQuery(computation, workflow, limit > 0 ? limit : undefined)
+            return dataQuery(computation, workflow, vizStore.limit > 0 ? vizStore.limit : undefined)
                 .catch((err) => {
                     appRef.current?.updateRenderStatus('error');
                     return [];
@@ -194,7 +201,8 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             data={leftTree} 
                             dimsInRow={dimsInRow} 
                             measInRow={measInRow} 
-                            onHeaderCollapse={vizStore.updateTableCollapsedHeader.bind(vizStore)}
+                            onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
+                            enableCollapse={enableCollapse}
                         />}
                 </table>
                 <table className="border border-gray-300 border-collapse">
@@ -203,8 +211,9 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             data={topTree} 
                             dimsInCol={dimsInColumn} 
                             measInCol={measInColumn} 
-                            onHeaderCollapse={vizStore.updateTableCollapsedHeader.bind(vizStore)}
+                            onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
                             onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
+                            enableCollapse={enableCollapse}
                         />}
                     {metricTable && 
                         <MetricTable 
@@ -217,6 +226,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         </div>
 
     );
-});
+};
 
 export default PivotTable;

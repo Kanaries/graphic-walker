@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useEffect, createContext } from 'react';
+import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
 import { CommonStore } from './commonStore';
 import { VizSpecStore } from './visualSpecStore';
 import { IComputationFunction, IMutField, IRow } from '../interfaces';
@@ -66,6 +66,13 @@ interface VizStoreWrapperProps {
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
     const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange }), [storeKey]);
+    const lastMeta = useRef(props.meta);
+    useEffect(() => {
+        if (lastMeta.current !== props.meta) {
+            store.setMeta(props.meta);
+            lastMeta.current = props.meta;
+        }
+    }, [props.meta]);
     useEffect(() => {
         if (props.storeRef) {
             const ref = props.storeRef;
@@ -89,8 +96,12 @@ export function useCompututaion() {
     return useContext(ComputationContext);
 }
 
-export function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
-    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), timeout)
-    })])
+export function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number) {
+    return (...args: T) =>
+        Promise.race([
+            f(...args),
+            new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('timeout')), timeout);
+            }),
+        ]);
 }

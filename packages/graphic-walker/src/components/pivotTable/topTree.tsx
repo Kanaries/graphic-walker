@@ -18,7 +18,7 @@ function getChildCount(node: INestNode): number {
  * @param cellRows
  * @returns
  */
-function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRows: ReactNode[][], meaNumber: number, onHeaderCollapse: (node: INestNode) => void) {
+function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRows: ReactNode[][], meaNumber: number, onHeaderCollapse: (node: INestNode) => void, enableCollapse: boolean) {
     const childrenSize = getChildCount(node);
     const { isCollapsed } = node;
     if (depth > dimsInCol.length) {
@@ -33,7 +33,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
         >
             <div className="flex">
                 <div>{node.value}</div>
-                {node.height > 0 && node.key !== "__total" && (
+                {node.height > 0 && node.key !== "__total" && enableCollapse && (
                     <>
                         {isCollapsed && <PlusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
                         {!isCollapsed && <MinusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
@@ -45,7 +45,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
     if (isCollapsed) return;
     for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
-        renderTree(child, dimsInCol, depth + 1, cellRows, meaNumber, onHeaderCollapse);
+        renderTree(child, dimsInCol, depth + 1, cellRows, meaNumber, onHeaderCollapse, enableCollapse);
     }
 }
 
@@ -55,12 +55,13 @@ export interface TreeProps {
     measInCol: IField[];
     onHeaderCollapse: (node: INestNode) => void;
     onTopTreeHeaderRowNumChange: (num: number) => void;
+    enableCollapse: boolean;
 }
 const TopTree: React.FC<TreeProps> = (props) => {
     const { data, dimsInCol, measInCol, onHeaderCollapse, onTopTreeHeaderRowNumChange } = props;
     const nodeCells: ReactNode[][] = useMemo(() => {
         const cellRows: ReactNode[][] = new Array(dimsInCol.length + 1).fill(0).map(() => []);
-        renderTree(data, dimsInCol, 0, cellRows, measInCol.length, onHeaderCollapse);
+        renderTree(data, dimsInCol, 0, cellRows, measInCol.length, onHeaderCollapse, props.enableCollapse);
         const totalChildrenSize = getChildCount(data);
 
         // if all children in one layer are collapsed, then we need to reset the rowSpan of all children to 1

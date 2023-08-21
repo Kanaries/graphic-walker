@@ -42,14 +42,12 @@ export interface BaseVizProps {
             askviz?: string | boolean;
         };
     };
+    dataSelection?: React.ReactChild;
+    computation?: IComputationFunction;
     computationTimeout?: number;
 }
 
-export const VizApp = observer(function VizApp(
-    props: BaseVizProps & {
-        computation?: IComputationFunction;
-    }
-) {
+export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const {
         computation,
         darkMode = 'light',
@@ -94,6 +92,7 @@ export const VizApp = observer(function VizApp(
         <ComputationContext.Provider value={c}>
             <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                 <div className="bg-white dark:bg-zinc-900 dark:text-white">
+                    {props.dataSelection}
                     <div className="px-2 mx-2">
                         <SegmentNav />
                         {segmentKey === ISegmentKey.vis && <VisNav />}
@@ -168,8 +167,8 @@ export type VizProps = {
           dataSource: any[];
       }
     | {
-          fieldKeyGuard: undefined;
-          dataSource: undefined;
+          fieldKeyGuard?: undefined;
+          dataSource?: undefined;
           computation: IComputationFunction;
       }
 );

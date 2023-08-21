@@ -149,16 +149,18 @@ export const forwardVisualConfigs = (backwards: IStoInfoOld['specList']): IVisSp
     }));
 };
 
+export const resolveVisSpec = (a: IVisSpecForExport[]): IVisSpec[] => {
+    return visSpecDecoder(forwardVisualConfigs(a))
+}
+
 export interface IStoInfoOld {
     $schema: undefined;
     datasets: IDataSet[];
-    specList: {
-        [K in keyof IVisSpecForExport]: K extends 'config' ? Partial<IVisSpecForExport[K]> : IVisSpecForExport[K];
-    }[];
+    specList: IVisSpecForExport[];
     dataSources: IDataSource[];
 }
 
-export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/public/stoinfo_v2.json';
+export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/stoinfo_v2.json';
 
 export interface IStoInfoV2 {
     $schema: typeof IStoInfoV2SchemaUrl,

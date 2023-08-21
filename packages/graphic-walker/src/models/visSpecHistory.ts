@@ -303,30 +303,38 @@ export function importFull(data: string): VisSpecWithHistory {
     return result.timeline.reduce(perform, base);
 }
 
+export function resolveChart(data: string): IChart {
+    const result: VisSpecHistoryInfoForExport = JSON.parse(data);
+    const base = fillChart(decodeVisSpec(result.base));
+    return result.timeline.reduce(reducer, base);
+}
+
 export function convertChart(data: IVisSpec): IChart {
     const result = emptyChart(data.visId, data.name || 'Chart');
     result.config = {
         ...result.config,
         defaultAggregated: data.config.defaultAggregated,
-        geoms: data.config.geoms.slice(),
+        geoms: data.config.geoms?.slice() ?? [],
         limit: data.config.limit,
     };
     result.encodings = {
         ...result.encodings,
-        dimensions: data.encodings.dimensions.slice(),
-        measures: data.encodings.measures.slice(),
-        rows: data.encodings.rows.slice(),
-        columns: data.encodings.columns.slice(),
-        color: data.encodings.color.slice(),
-        opacity: data.encodings.opacity.slice(),
-        size: data.encodings.size.slice(),
-        shape: data.encodings.shape.slice(),
-        theta: data.encodings.theta.slice(),
-        radius: data.encodings.radius.slice(),
-
-        details: data.encodings.details.slice(),
-        filters: data.encodings.filters.slice(),
-        text: data.encodings.text.slice(),
+        dimensions: data.encodings.dimensions?.slice() ?? [],
+        measures: data.encodings.measures?.slice() ?? [],
+        rows: data.encodings.rows?.slice() ?? [],
+        columns: data.encodings.columns?.slice() ?? [],
+        color: data.encodings.color?.slice() ?? [],
+        opacity: data.encodings.opacity?.slice() ?? [],
+        size: data.encodings.size?.slice() ?? [],
+        shape: data.encodings.shape?.slice() ?? [],
+        theta: data.encodings.theta?.slice() ?? [],
+        radius: data.encodings.radius?.slice() ?? [],
+        longitude: data.encodings.longitude?.slice() ?? [],
+        latitude: data.encodings.latitude?.slice() ?? [],
+        geoId: data.encodings.geoId?.slice() ?? [],
+        details: data.encodings.details?.slice() ?? [],
+        filters: data.encodings.filters?.slice() ?? [],
+        text: data.encodings.text?.slice() ?? [],
     };
     result.layout = {
         ...result.layout,
@@ -337,7 +345,6 @@ export function convertChart(data: IVisSpec): IChart {
         showActions: data.config.showActions,
         stack: data.config.stack,
         zeroScale: data.config.zeroScale,
-
         size: {
             ...result.layout.size,
             ...data.config.size,

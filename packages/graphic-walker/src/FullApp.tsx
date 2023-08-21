@@ -42,8 +42,8 @@ export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(fun
         <VisContext.Provider value={dataStore.visSpecStore}>
             <FieldsContextWrapper>
                 <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                    <DataSourceSegment />
                     <VizApp
+                        dataSelection={<DataSourceSegment />}
                         computation={dataStore.computation}
                         darkMode={darkMode}
                         enhanceAPI={enhanceAPI}

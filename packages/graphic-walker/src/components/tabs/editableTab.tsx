@@ -107,9 +107,9 @@ export default function EditableTabs(props: EditableTabsProps) {
                                 }}
                             />
                         )}
-                        {showRemove && tab.key === selectedKey && tab.editable && (
+                        {tab.key === selectedKey && tab.editable && (
                             <TrashIcon
-                                className="w-3 ml-1 text-red-500 invisible group-hover:visible inline cursor-pointer"
+                                className={'w-3 ml-1 text-red-500 invisible inline cursor-pointer' + (showRemove ? ' group-hover:visible ' : '')}
                                 onClick={() => {
                                     onRemove?.(tabIndex);
                                 }}

@@ -11,7 +11,7 @@ import {
     redo,
     undo,
 } from '../models/visSpecHistory';
-import { emptyEncodings } from '../utils/save';
+import { emptyEncodings, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { feature } from 'topojson-client';
 import type { FeatureCollection } from 'geojson';
 import {
@@ -30,6 +30,7 @@ import {
     IVisualLayout,
     Specification,
     ICoordMode,
+    IVisSpecForExport,
 } from '../interfaces';
 import { MetaFieldKeys } from '../config';
 import { toWorkflow } from '../utils/workflow';
@@ -220,6 +221,14 @@ export class VizSpecStore {
         this.visList[index] = performers.setName(this.visList[index], name);
     }
 
+    setMeta(meta: IMutField[]) {
+        this.meta = meta;
+    }
+
+    resetVisualization() {
+        this.visList = [fromFields(this.meta, 'Chart 1')];
+    }
+
     addVisualization(defaultName?: string) {
         const name = defaultName || 'Chart ' + (this.visList.length + 1);
         this.visList.push(fromFields(this.meta, name));
@@ -349,8 +358,13 @@ export class VizSpecStore {
         this.visIndex = 0;
     }
 
-    appendFromOld(data: IVisSpec) {
-        const newChart = fromSnapshot(convertChart(data));
+    importOld(data: IVisSpecForExport[]) {
+        this.visList = visSpecDecoder(forwardVisualConfigs(data)).map(convertChart).map(fromSnapshot);
+        this.visIndex = 0;
+    }
+
+    appendFromOld(data: IVisSpecForExport) {
+        const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs([data]))[0]));
         this.visList.push(newChart);
         this.visIndex = this.visList.length - 1;
     }
@@ -413,10 +427,12 @@ export class VizSpecStore {
         }
         this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey);
     }
+
     updateGeoKey(key: string) {
         this.setVisualLayout('geoKey', key);
     }
-    public updateTableCollapsedHeader(node: INestNode) {
+    
+    updateTableCollapsedHeader(node: INestNode) {
         const { uniqueKey, height } = node;
         if (height < 1) return;
         const updatedMap = new Map(this.tableCollapsedHeaderMap);
@@ -433,11 +449,13 @@ export class VizSpecStore {
         }
         this.tableCollapsedHeaderMap = updatedMap;
     }
-    public resetTableCollapsedHeader() {
+    
+    resetTableCollapsedHeader() {
         const updatedMap: Map<string, INestNode['path']> = new Map();
         this.tableCollapsedHeaderMap = updatedMap;
     }
-    public setShowGeoJSONConfigPanel(show: boolean) {
+    
+    setShowGeoJSONConfigPanel(show: boolean) {
         this.showGeoJSONConfigPanel = show;
     }
 }

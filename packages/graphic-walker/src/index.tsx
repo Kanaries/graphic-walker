@@ -64,3 +64,5 @@ export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
 export { ISegmentKey } from './interfaces';
+export { resolveChart, convertChart } from './models/visSpecHistory';
+export { resolveVisSpec } from './utils/save';

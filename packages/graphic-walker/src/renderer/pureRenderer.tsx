@@ -2,18 +2,9 @@ import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
-import LeafletRenderer from '../components/leafletRenderer';
+import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type {
-    IDarkMode,
-    IViewField,
-    IRow,
-    IThemeKey,
-    DraggableFieldState,
-    IVisualConfigNew,
-    IComputationFunction,
-    IVisualLayout,
-} from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfigNew, IComputationFunction, IVisualLayout } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -32,11 +23,11 @@ type IPureRendererProps =
           locale?: string;
       } & (
           | {
-                type: 'remote',
+                type: 'remote';
                 computation: IComputationFunction;
             }
           | {
-                type?: 'local'
+                type?: 'local';
                 rawData: IRow[];
             }
       );
@@ -52,7 +43,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             return props.computation;
         }
         return getComputation(props.rawData);
-    }, [props.type, props.type === 'remote' ? props.computation: props.rawData])
+    }, [props.type, props.type === 'remote' ? props.computation : props.rawData]);
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -87,7 +78,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         limit: limit ?? -1,
         computationFunction: computation,
     });
-    console.log(computation)
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({ data });
     latestFromRef.current = { data };
@@ -107,12 +97,9 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         <ShadowDom>
             <div className="relative">
                 {isSpatial && (
-                    <LeafletRenderer
-                        data={data}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                        visualLayout={visualLayout}
-                    />
+                    <div style={{ width: LEAFLET_DEFAULT_WIDTH, height: LEAFLET_DEFAULT_HEIGHT }}>
+                        <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
+                    </div>
                 )}
                 {isSpatial || (
                     <SpecRenderer
