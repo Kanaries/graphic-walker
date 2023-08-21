@@ -241,6 +241,17 @@ export class VizSpecStore {
         this.visList.splice(index, 1);
     }
 
+    duplicateVisualization(index: number) {
+        this.visList.push(
+            fromSnapshot({
+                ...this.visList[index].now,
+                name: this.visList[index].now.name + ' Copy',
+                visId: uniqueId(),
+            })
+        );
+        this.visIndex = this.visList.length - 1;
+    }
+
     setFilterEditing(index: number) {
         this.editingFilterIdx = index;
     }
@@ -431,7 +442,7 @@ export class VizSpecStore {
     updateGeoKey(key: string) {
         this.setVisualLayout('geoKey', key);
     }
-    
+
     updateTableCollapsedHeader(node: INestNode) {
         const { uniqueKey, height } = node;
         if (height < 1) return;
@@ -449,12 +460,12 @@ export class VizSpecStore {
         }
         this.tableCollapsedHeaderMap = updatedMap;
     }
-    
+
     resetTableCollapsedHeader() {
         const updatedMap: Map<string, INestNode['path']> = new Map();
         this.tableCollapsedHeaderMap = updatedMap;
     }
-    
+
     setShowGeoJSONConfigPanel(show: boolean) {
         this.showGeoJSONConfigPanel = show;
     }

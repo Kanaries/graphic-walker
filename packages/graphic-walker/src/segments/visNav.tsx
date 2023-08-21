@@ -40,12 +40,17 @@ const VisNav: React.FC = (props) => {
         vizStore.openRemoveConfirmModal(tabIndex);
     }, [])
 
+    const dupHandler = useCallback((tabIndex: number) => {
+        vizStore.duplicateVisualization(tabIndex);
+    }, [])
+
     return (
         <EditableTabs
             selectedKey={currentVis.visId}
             tabs={tabs}
             onEditLabel={editLabelHandler}
             onSelected={visSelectionHandler}
+            onDuplicate={dupHandler}
             onRemove={deleteHandler}
             showRemove={visLength > 1}
         />
