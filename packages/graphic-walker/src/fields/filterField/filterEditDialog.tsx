@@ -30,7 +30,7 @@ const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 const FilterEditDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingFilterIdx, viewFilters, viewDimensions, viewMeasures, meta, allFields } = vizStore;
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields } = vizStore;
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
@@ -83,12 +83,14 @@ const FilterEditDialog: React.FC = observer(() => {
         if (existingFilterIdx >= 0) {
             vizStore.setFilterEditing(existingFilterIdx);
         } else {
-            const sourceKey = viewDimensions.find((field) => field.fid === fieldKey) ? 'dimensions' : 'measures';
+            const sourceKey = dimensions.find((field) => field.fid === fieldKey) ? 'dimensions' : 'measures';
             const sourceIndex =
                 sourceKey === 'dimensions'
-                    ? viewDimensions.findIndex((field) => field.fid === fieldKey)
-                    : viewMeasures.findIndex((field) => field.fid === fieldKey);
-            vizStore.moveField(sourceKey, sourceIndex, 'filters', 0);
+                    ? dimensions.findIndex((field) => field.fid === fieldKey)
+                    : measures.findIndex((field) => field.fid === fieldKey);
+            if (editingFilterIdx !== null) {
+                vizStore.modFilter(editingFilterIdx, sourceKey, sourceIndex);
+            }
         }
     };
 

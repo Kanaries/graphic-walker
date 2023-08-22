@@ -33,7 +33,7 @@ export enum Methods {
     cloneField,
     createField,
     appendFilter,
-    removeFilter,
+    modFilter,
     writeFilter,
     setName,
     applySort,
@@ -51,7 +51,7 @@ type PropsMap = {
     [Methods.cloneField]: [normalKeys, number, normalKeys, number, string];
     [Methods.createField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2', string];
     [Methods.appendFilter]: [number, normalKeys, number, string];
-    [Methods.removeFilter]: [number];
+    [Methods.modFilter]: [number, normalKeys, number];
     [Methods.writeFilter]: [number, SetToArray<IFilterRule> | null];
     [Methods.setName]: [string];
     [Methods.applySort]: [ISortMode];
@@ -143,7 +143,14 @@ const actions: {
             )
         );
     },
-    [Methods.removeFilter]: (data, index) => mutPath(data, 'encodings.filters', (filters) => remove(filters, index)),
+    [Methods.modFilter]: (data, index, from, findex) => mutPath(data, 'encodings.filters', (filters) => {
+        const originField = data.encodings[from][findex];
+        return replace(filters, index, f => ({
+            ...originField,
+            rule: null,
+            dragId: f.dragId
+        }))
+    }),
     [Methods.writeFilter]: (data, index, rule) =>
         mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule: decodeFilterRule(rule) }))),
     [Methods.setName]: (data, name) => ({
