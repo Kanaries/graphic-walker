@@ -324,6 +324,7 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         canvas(): HTMLCanvasElement | null;
     }[];
     container(): HTMLDivElement | null;
+    chartType?: string;
 }
 
 interface IExportChart {
