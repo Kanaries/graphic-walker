@@ -76,7 +76,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setViewConfig(latestFromRef.current.visualConfig);
             });
         }
-    }, [waiting, vizStore]);
+    }, [waiting, data, vizStore]);
 
     useChartIndexControl({
         count: visList.length,
