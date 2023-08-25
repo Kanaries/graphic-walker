@@ -22,7 +22,7 @@ const GeoConfigPanel: React.FC = (props) => {
     const [geoJSON, setGeoJSON] = useState('');
     const [topoJSON, setTopoJSON] = useState('');
     const [topoJSONKey, setTopoJSONKey] = useState('');
-    const [loadedUrl, setLoadedUrl] = useState<IGeoUrl | undefined>(undefined);
+    const [loadedUrl, setLoadedUrl] = useState<IGeoUrl | undefined>(geoUrl);
 
     const defaultTopoJSONKey = useMemo(() => {
         try {
@@ -161,28 +161,24 @@ const GeoConfigPanel: React.FC = (props) => {
                             try {
                                 const json = JSON.parse(dataMode === 'GeoJSON' ? geoJSON : topoJSON);
                                 if (dataMode === 'TopoJSON') {
-                                    runInAction(() => {
-                                        vizStore.setGeographicData(
-                                            {
-                                                type: 'TopoJSON',
-                                                data: json,
-                                                objectKey: topoJSONKey || defaultTopoJSONKey,
-                                            },
-                                            featureId,
-                                            loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined,
-                                        );
-                                    });
+                                    vizStore.setGeographicData(
+                                        {
+                                            type: 'TopoJSON',
+                                            data: json,
+                                            objectKey: topoJSONKey || defaultTopoJSONKey,
+                                        },
+                                        featureId,
+                                        loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined,
+                                    );
                                 } else {
-                                    runInAction(() => {
-                                        vizStore.setGeographicData(
-                                            {
-                                                type: 'GeoJSON',
-                                                data: json,
-                                            },
-                                            featureId,
-                                            loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined,
-                                        );
-                                    });
+                                    vizStore.setGeographicData(
+                                        {
+                                            type: 'GeoJSON',
+                                            data: json,
+                                        },
+                                        featureId,
+                                        loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined,
+                                    );
                                 }
                                 commonStore.setShowGeoJSONConfigPanel(false);
                             } catch (err) {
