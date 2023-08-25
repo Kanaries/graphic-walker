@@ -1,13 +1,14 @@
 import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip } from "react-leaflet";
 import { type Map, divIcon } from "leaflet";
-import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
+import type { DeepReadonly, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import type { FeatureCollection, Geometry } from "geojson";
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale } from "./encodings";
 import { isValidLatLng } from "./POIRenderer";
 import { TooltipContent } from "./tooltip";
 import { useAppRootContext } from "../appRoot";
+import { useGeoJSON } from "../../hooks/service";
 
 
 export interface IChoroplethRendererProps {
@@ -15,6 +16,7 @@ export interface IChoroplethRendererProps {
     data: IRow[];
     allFields: DeepReadonly<IViewField[]>;
     features: FeatureCollection | undefined;
+    featuresUrl?: IGeoUrl;
     geoKey: string;
     defaultAggregated: boolean;
     geoId: DeepReadonly<IViewField>;
@@ -88,9 +90,11 @@ const resolveCenter = (coordinates: [lat: number, lng: number][]): [lng: number,
 };
 
 const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendererProps>(function ChoroplethRenderer (props, ref) {
-    const { name, data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
+    const { name, data, allFields, features: localFeatures, featuresUrl, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
 
     useImperativeHandle(ref, () => ({}));
+
+    const features = useGeoJSON(localFeatures, featuresUrl)
 
     const geoIndices = useMemo(() => {
         if (geoId) {

@@ -5,6 +5,7 @@ import { useGlobalStore } from "../../store";
 import DataTypeIcon from "../../components/dataTypeIcon";
 import { FieldPill } from "./fieldPill";
 import DropdownContext, { IDropdownContextOption } from "../../components/dropdownContext";
+import { COUNT_FIELD_ID } from "../../constants";
 
 interface Props {
     provided: DroppableProvided;
@@ -50,7 +51,7 @@ const MeaFields: React.FC<Props> = (props) => {
                         return (
                             <div className="block">
                                 <DropdownContext
-                                    disable={snapshot.isDragging}
+                                    disable={snapshot.isDragging || f.fid === COUNT_FIELD_ID}
                                     options={MEA_ACTION_OPTIONS}
                                     onSelect={(v, opIndex) => {
                                         fieldActionHandler(v, opIndex, index);
