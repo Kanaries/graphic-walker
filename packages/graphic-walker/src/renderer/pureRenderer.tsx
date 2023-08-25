@@ -38,7 +38,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit } = props;
+    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit, themeConfig } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -104,6 +104,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                 )}
                 {isSpatial || (
                     <SpecRenderer
+                        themeConfig={themeConfig}
                         name={name}
                         loading={waiting}
                         data={viewData}
