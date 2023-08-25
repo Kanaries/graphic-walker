@@ -238,6 +238,7 @@ export interface IVisualConfig {
         timeFormat?: string;
         normalizedNumberFormat?: string;
     };
+    primaryColor?:string;
     resolve: {
         x?: boolean;
         y?: boolean;

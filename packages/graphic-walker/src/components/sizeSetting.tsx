@@ -98,6 +98,7 @@ const SizeSetting: React.FC<SizeSettingProps> = (props) => {
                 className="w-4 h-4 inline-block mr-0.5 text-gray-900"
             />
             {show && (
+                <>
                 <ResizeDialog {...props}>
                     <div>
                         <XMarkIcon
@@ -112,6 +113,7 @@ const SizeSetting: React.FC<SizeSettingProps> = (props) => {
                         />
                     </div>
                 </ResizeDialog>
+                </>
             )}
         </div>
     );

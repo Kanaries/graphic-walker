@@ -44,6 +44,7 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: 'none',
         zeroScale: true,
+        primaryColor: 'rgba(91, 143, 249,1)',
         scaleIncludeUnmatchedChoropleth: false,
         background: undefined,
         size: {
