@@ -98,7 +98,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         <ShadowDom className="flex w-full" style={{ height: '100%' }}>
             <div className="relative flex flex-col w-full flex-1">
                 {isSpatial && (
-                    <div className="max-w-full" style={{ width: LEAFLET_DEFAULT_WIDTH, height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
+                    <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} />
                     </div>
                 )}
