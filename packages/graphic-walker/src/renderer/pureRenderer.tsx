@@ -3,17 +3,9 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
-import LeafletRenderer from '../components/leafletRenderer';
+import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type {
-    IDarkMode,
-    IViewField,
-    IRow,
-    IThemeKey,
-    DraggableFieldState,
-    IVisualConfig,
-    IComputationFunction,
-} from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationFunction } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -32,11 +24,11 @@ type IPureRendererProps =
           locale?: string;
       } & (
           | {
-                type: 'remote',
+                type: 'remote';
                 computation: IComputationFunction;
             }
           | {
-                type?: 'local'
+                type?: 'local';
                 rawData: IRow[];
             }
       );
@@ -52,7 +44,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             return props.computation;
         }
         return getComputation(props.rawData);
-    }, [props.type, props.type === 'remote' ? props.computation: props.rawData])
+    }, [props.type, props.type === 'remote' ? props.computation : props.rawData]);
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -103,15 +95,12 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom>
-            <div className="relative">
+        <ShadowDom className="flex w-full" style={{ height: '100%' }}>
+            <div className="relative flex flex-col w-full flex-1">
                 {isSpatial && (
-                    <LeafletRenderer
-                        name={name}
-                        data={data}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                    />
+                    <div className="max-w-full" style={{ width: LEAFLET_DEFAULT_WIDTH, height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
+                        <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} />
+                    </div>
                 )}
                 {isSpatial || (
                     <SpecRenderer
