@@ -18,9 +18,9 @@ export function useGeoJSON(geojson?: FeatureCollection, url?: IGeoUrl) {
                 .then((json) => {
                     if (timestamp !== lastFetchedRef.current) return;
                     if (url.type === 'GeoJSON') {
-                        data[key] = json;
+                        GeoJSONDict[key] = json;
                     } else {
-                        data[key] = feature(json, Object.keys(json.objects)[0]);
+                        GeoJSONDict[key] = feature(json, Object.keys(json.objects)[0]) as unknown as FeatureCollection;
                     }
                     setLastFetched(timestamp);
                 });
