@@ -23,6 +23,7 @@ type IPureRendererProps =
     | {
           name?: string;
           themeKey?: IThemeKey;
+          themeConfig?: any;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
           visualConfig: IVisualConfig;
