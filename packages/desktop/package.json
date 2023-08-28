@@ -10,7 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@kanaries/graphic-walker": "0.4.1",
+    "@kanaries/graphic-walker": "0.4.9",
     "@tauri-apps/api": "^1.1.0",
     "react": "^17.x",
     "react-dom": "^17.x"

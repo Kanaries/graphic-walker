@@ -259,7 +259,13 @@ export interface IVisualConfig {
     };
     geojson?: FeatureCollection;
     geoKey?: string;
+    geoUrl?: IGeoUrl;
     limit: number;
+}
+
+export interface IGeoUrl {
+    type: 'GeoJSON' | 'TopoJSON',
+    url: string,
 }
 
 export interface IVisSpec {
@@ -317,6 +323,7 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         canvas(): HTMLCanvasElement | null;
     }[];
     container(): HTMLDivElement | null;
+    chartType?: string;
 }
 
 interface IExportChart {

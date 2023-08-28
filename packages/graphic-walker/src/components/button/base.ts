@@ -5,4 +5,5 @@ export interface ButtonBaseProps {
     text: string;
     disabled?: boolean;
     className?: string;
+    icon?: JSX.Element;
 }

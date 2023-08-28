@@ -9,6 +9,7 @@ import ActionMenu from "../../components/actionMenu";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { useMenuActions } from "./utils";
 
+
 interface Props {
     provided: DroppableProvided;
 }
@@ -58,6 +59,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                     menu={menuActions[index]}
                                     enableContextMenu
                                     disabled={snapshot.isDragging}
+
                                 >
                                     <DropdownContext
                                         disable={snapshot.isDragging}

@@ -1,7 +1,7 @@
 import { IReactionDisposer, makeAutoObservable, observable, computed, reaction, toJS } from 'mobx';
 import produce from 'immer';
 import { feature } from 'topojson-client';
-import type { FeatureCollection } from "geojson";
+import type { FeatureCollection } from 'geojson';
 import {
     DataSet,
     DraggableFieldState,
@@ -16,6 +16,7 @@ import {
     IVisualConfig,
     Specification,
     IComputationFunction,
+    IGeoUrl,
 } from '../interfaces';
 import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from '../config';
 import { VisSpecWithHistory } from '../models/visSpecHistory';
@@ -103,10 +104,14 @@ function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolea
     return Object.values(state).every((value) => value.length === 0);
 }
 
-function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
-    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), timeout)
-    })])
+function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number) {
+    return (...args: T) =>
+        Promise.race([
+            f(...args),
+            new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('timeout')), timeout);
+            }),
+        ]);
 }
 
 export class VizSpecStore {
@@ -383,8 +388,8 @@ export class VizSpecStore {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === 'geoms' && Array.isArray(value):
-                case configKey === "showTableSummary":
-                case configKey === "coordSystem":
+                case configKey === 'showTableSummary':
+                case configKey === 'coordSystem':
                 case configKey === 'size' && typeof value === 'object':
                 case configKey === 'sorted':
                 case configKey === 'zeroScale':
@@ -818,9 +823,10 @@ export class VizSpecStore {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
     }
-    
-    public setGeographicData(data: IGeographicData, geoKey: string) {
-        const geoJSON = data.type === 'GeoJSON' ? data.data : feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection;
+
+    public setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
+        const geoJSON =
+            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
         if (!('features' in geoJSON)) {
             console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
             return;
@@ -828,6 +834,7 @@ export class VizSpecStore {
         this.useMutable(({ config }) => {
             config.geojson = geoJSON;
             config.geoKey = geoKey;
+            config.geoUrl = geoUrl;
         });
     }
     public updateGeoKey(key: string) {
@@ -857,6 +864,10 @@ export class VizSpecStore {
                     ...visSpec.encodings,
                     filters: updatedFilters,
                 },
+                config: {
+                    ...visSpec.config,
+                    geojson: visSpec.config.geoUrl ? undefined : visSpec.config.geojson
+                }
             };
         });
         return updatedVisList;
