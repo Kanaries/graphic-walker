@@ -130,7 +130,9 @@ export default YourChart;
 
 ### 本地测试
 ```bash
+yarn
 # packages/graphic-walker
+npm install
 npm run dev
 ```
 

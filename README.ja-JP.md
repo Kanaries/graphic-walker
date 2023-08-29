@@ -128,7 +128,9 @@ export default YourChart;
 
 ### ローカルに試す (dev mode)
 ```bash
+yarn
 # packages/graphic-walker
+npm install
 npm run dev
 ```
 
