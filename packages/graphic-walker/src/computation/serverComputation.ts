@@ -185,7 +185,6 @@ export const fieldTotalServer = async (
     };
     const valuesRes = await service(valuesQueryPayload);
     const countSum = valuesRes.reduce((pre,cur) => {return pre = pre + cur[COUNT_ID]},0);
-    console.log(countSum)
     return {total:valuesRes.length,sum:countSum};
     
   };
@@ -226,12 +225,10 @@ export const fieldTotalServer = async (
         offset: pageOffset * pageSize,
     };
     const valuesRes = await service(valuesQueryPayload);
-  console.log('valueres',valuesRes)
     const res =  valuesRes.map((row) => ({
                 value: row[field],
                 count: row[COUNT_ID],
             }))
-    console.log(res)
     return res;
   }
 

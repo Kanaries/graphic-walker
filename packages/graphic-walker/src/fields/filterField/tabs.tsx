@@ -171,7 +171,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
     useEffect(() => {
         if (field && active && !(field.rule?.type === 'one of' || field.rule?.type === 'not in')) {
             onChange({
-                type: selectMode?'one of':'not in',
+                type: selectMode?'not in':'one of',
                 value: new Set<string | number>(localSet),
             });
         }
@@ -189,14 +189,14 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         if(isDelete){
             localSet.delete(value);
             onChange({
-                type: selectMode?'one of':'not in',
+                type: selectMode?'not in':'one of',
                 value: localSet
             });
             setLocalSetSum(localSetSum - count);
         }else{
             localSet.add(value);
             onChange({
-                type: selectMode?'one of':'not in',
+                type: selectMode?'not in':'one of',
                 value: localSet
             });            
             setLocalSetSum(localSetSum + count);
