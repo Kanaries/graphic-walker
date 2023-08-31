@@ -91,6 +91,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             commonStore.showEmbededMenu([e.pageX, e.pageY]);
             commonStore.setFilters(values);
         });
+        const selectedMarkObject = values.vlPoint.or[0];
+        commonStore.updateSelectedMarkObject(selectedMarkObject);
     }, []);
 
     const handleChartResize = useCallback(
