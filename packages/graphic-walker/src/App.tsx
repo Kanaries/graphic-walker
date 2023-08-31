@@ -38,6 +38,7 @@ export interface IGWProps {
     fieldKeyGuard?: boolean;
     /** @default "vega" */
     themeKey?: IThemeKey;
+    themeConfig?: any;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationFunction;
@@ -67,6 +68,7 @@ const App = observer<IGWProps>(function App(props) {
         hideDataSourceConfig,
         fieldKeyGuard = true,
         themeKey = 'vega',
+        themeConfig,
         dark = 'media',
         computation,
         toolbar,
@@ -185,7 +187,7 @@ const App = observer<IGWProps>(function App(props) {
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <VisualConfig />
-                        <GeoConfigPanel />
+                        {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />
@@ -209,7 +211,7 @@ const App = observer<IGWProps>(function App(props) {
                                     // }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationFunction={vizStore.computationFunction} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} />
                                     )}
                                     {/* {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>

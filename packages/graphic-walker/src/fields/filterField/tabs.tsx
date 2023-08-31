@@ -353,7 +353,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                                     htmlFor={id}
                                     title={String(value)}
                                 >
-                                    {value}
+                                    {`${value}`}
                                 </label>
                                 <label
                                     htmlFor={id}
