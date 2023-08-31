@@ -246,5 +246,23 @@
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
         "cancel": "取消"
+    },
+    "field_menu": {
+        "to_dim": "移动到维度",
+        "to_mea": "移动到度量",
+        "new_calc": "新的计算字段",
+        "drill": {
+            "name": "钻取",
+            "levels": {
+                "year": "年",
+                "quarter": "季度",
+                "month": "月",
+                "week": "周",
+                "day": "日",
+                "hour": "时",
+                "minute": "分",
+                "second": "秒"
+            }
+        }
     }
 }
