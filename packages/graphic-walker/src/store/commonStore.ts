@@ -22,6 +22,7 @@ export class CommonStore {
     public showGeoJSONConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public selectedMarkObject: Record<string, string | number | undefined> = {};
     public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
 
     constructor () {
@@ -234,6 +235,11 @@ export class CommonStore {
     public setFilters (props: Filters) {
         this.filters = props;
     }
+
+    public updateSelectedMarkObject (newMarkObj) {
+        this.selectedMarkObject = newMarkObj;
+    }
+
     public destroy () {
         this.dataSources = [];
         this.datasets = [];

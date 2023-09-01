@@ -244,6 +244,19 @@
     "field_menu": {
         "to_dim": "ディメンションに変更",
         "to_mea": "メジャーに変更",
-        "new_calc": "計算フィールドを作成"
+        "new_calc": "計算フィールドを作成",
+        "drill": {
+            "name": "ドリルダウン/アップ",
+            "levels": {
+                "year": "年",
+                "quarter": "四半期",
+                "month": "月",
+                "week": "週",
+                "day": "日",
+                "hour": "時",
+                "minute": "分",
+                "second": "秒"
+            }
+        }
     }
 }
