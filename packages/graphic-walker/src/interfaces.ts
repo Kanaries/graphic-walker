@@ -88,7 +88,7 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'one' | 'binCount' | 'log' ;
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'log';
     params: IExpParamter[];
     as: string;
     num?: number;

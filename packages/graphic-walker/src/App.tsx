@@ -19,8 +19,13 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
+import ClickMenu from './components/clickMenu';
+import {
+    LightBulbIcon,
+} from "@heroicons/react/24/outline";
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
@@ -80,7 +85,7 @@ const App = observer<IGWProps>(function App(props) {
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
-    const { datasets, segmentKey } = commonStore;
+    const { datasets, segmentKey, vizEmbededMenu } = commonStore;
 
     const { t, i18n } = useTranslation();
     const curLang = i18n.language;
@@ -188,6 +193,7 @@ const App = observer<IGWProps>(function App(props) {
                         )}
                         <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
+                        <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
                         <LogPanel />
                         <BinPanel/>
@@ -207,17 +213,17 @@ const App = observer<IGWProps>(function App(props) {
                                 <div
                                     className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
                                     style={{ minHeight: '600px', overflow: 'auto' }}
-                                    // onMouseLeave={() => {
-                                    //     vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    // }}
-                                    // onClick={() => {
-                                    //     vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    // }}
+                                    onMouseLeave={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
+                                    onClick={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
                                 >
                                     {datasets.length > 0 && (
                                         <ReactiveRenderer ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} />
                                     )}
-                                    {/* {vizEmbededMenu.show && (
+                                    {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
                                                 className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
@@ -232,7 +238,7 @@ const App = observer<IGWProps>(function App(props) {
                                                 <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
                                             </div>
                                         </ClickMenu>
-                                    )} */}
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -250,6 +250,19 @@
     "field_menu": {
         "to_dim": "Move to dimensions",
         "to_mea": "Move to measures",
-        "new_calc": "New calculation"
+        "new_calc": "New calculation",
+        "drill": {
+            "name": "Drill down / up",
+            "levels": {
+                "year": "Year",
+                "quarter": "Quarter",
+                "month": "Month",
+                "week": "Week",
+                "day": "Day",
+                "hour": "Hour",
+                "minute": "Minute",
+                "second": "Second"
+            }
+        }
     }
 }

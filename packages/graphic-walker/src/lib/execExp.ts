@@ -1,6 +1,7 @@
 import { IExpParamter, IExpression, IField, IRow } from "../interfaces";
+import dateTimeDrill from "./op/dateTimeDrill";
 
-interface IDataFrame {
+export interface IDataFrame {
     [key: string]: any[];
 }
 
@@ -33,10 +34,16 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
             return one(exp.as, params, subFrame);
         case 'log':
             return log(exp.as, params, subFrame, num);
+        case 'log2':
+            return log(exp.as, params, subFrame, 2);
+        case 'log10':
+            return log(exp.as, params, subFrame, 10);
         case 'binCount':
             return binCount(exp.as, params, subFrame, num);
         case 'bin':
             return bin(exp.as, params, subFrame, num);
+        case 'dateTimeDrill':
+            return dateTimeDrill(exp.as, params, subFrame);
         default:
             return subFrame;
     }

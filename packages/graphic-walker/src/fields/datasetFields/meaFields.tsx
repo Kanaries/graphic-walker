@@ -8,7 +8,7 @@ import DropdownContext, { IDropdownContextOption } from "../../components/dropdo
 import ActionMenu from "../../components/actionMenu";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { useMenuActions } from "./utils";
-
+import { COUNT_FIELD_ID } from "../../constants";
 
 interface Props {
     provided: DroppableProvided;
@@ -59,7 +59,6 @@ const MeaFields: React.FC<Props> = (props) => {
                                     menu={menuActions[index]}
                                     enableContextMenu
                                     disabled={snapshot.isDragging}
-
                                 >
                                     <DropdownContext
                                         disable={snapshot.isDragging}

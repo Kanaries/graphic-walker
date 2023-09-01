@@ -68,6 +68,7 @@ export function compareDistribution(
             tagsForD2[targetRecordIndex] = true;
             const targetRecord = distribution2[targetRecordIndex];
             for (let mea of measures) {
+                // console.log(Math.max(targetRecord[mea], record[mea]), Math.min(targetRecord[mea], record[mea]))
                 score = Math.max(
                     score,
                     Math.max(targetRecord[mea], record[mea]) / Math.min(targetRecord[mea], record[mea])
@@ -91,6 +92,60 @@ export function compareDistribution(
         }
     }
     return score;
+}
+
+export function compareDistributionKL(
+    distribution1: IRow[],
+    distribution2: IRow[],
+    dimensions: string[],
+    measures: string[]
+): number {
+    let score = 0;
+    const tagsForD2: boolean[] = distribution2.map(() => false);
+    for (let record of distribution1) {
+        let targetRecordIndex = distribution2.findIndex((r, i) => {
+            return !tagsForD2[i] && dimensions.every((dim) => r[dim] === record[dim]);
+        });
+        if (targetRecordIndex > -1) {
+            tagsForD2[targetRecordIndex] = true;
+            const targetRecord = distribution2[targetRecordIndex];
+            for (let mea of measures) {
+                score += targetRecord[mea] * Math.log2(targetRecord[mea] / record[mea])
+                // score += record[mea] * Math.log2(record[mea] / targetRecord[mea])
+            }
+        }
+    }
+    return score;
+}
+
+// Jensen–Shannon divergence
+export function compareDistributionJS(
+    distribution1: IRow[],
+    distribution2: IRow[],
+    dimensions: string[],
+    measure: string
+): number {
+    let score = 0;
+    const tagsForD2: boolean[] = distribution2.map(() => false);
+    for (let record of distribution1) {
+        let targetRecordIndex = distribution2.findIndex((r, i) => {
+            return !tagsForD2[i] && dimensions.every((dim) => r[dim] === record[dim]);
+        });
+        if (targetRecordIndex > -1) {
+            tagsForD2[targetRecordIndex] = true;
+            const targetRecord = distribution2[targetRecordIndex];
+            let p = record[measure];
+            let q = targetRecord[measure];
+            if (p === 0 || q === 0) continue;
+            let m = 0.5 * (p + q);
+            score += (0.5 * p * Math.log2(p / m) + 0.5 * q * Math.log2(q / m));
+        }
+    }
+    // console.log(score)
+    const weight = tagsForD2.filter((tag) => tag === true).length / tagsForD2.length;
+
+    // console.log(tagsForD2)
+    return score * weight;
 }
 
 export function normalizeByMeasures(dataSource: IRow[], measures: string[]) {

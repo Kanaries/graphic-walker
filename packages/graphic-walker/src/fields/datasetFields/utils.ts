@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
-import { COUNT_FIELD_ID } from "../../constants";
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
 import { CommonStore } from "../../store/commonStore";
 
 
@@ -17,6 +17,8 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
+            const isDateTimeDrilled = f.expression?.op === 'dateTimeDrill';
+
             return keepTrue<IActionMenuItem>([
                 channel === 'dimensions' && {
                     label: t('to_dim'),
@@ -52,14 +54,14 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             label: "Log10",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
-                                vizStore.createLogField(channel, index, "log",10);
+                                vizStore.createLogField(channel, index, "log", 10);
                             },
                         },
                         {
                             label: "Log2",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
-                                vizStore.createLogField(channel, index, "log",2);
+                                vizStore.createLogField(channel, index, "log", 2);
                             },
                         },
                         {
@@ -80,6 +82,17 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         },
                         
                     ],
+                },
+                (f.semanticType === 'temporal' || isDateTimeDrilled) && {
+                    label: t('drill.name'),
+                    children: DATE_TIME_DRILL_LEVELS.map(level => ({
+                        label: t(`drill.levels.${level}`),
+                        disabled: isDateTimeDrilled && f.expression.params.find(p => p.type === 'value')?.value === level,
+                        onPress() {
+                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(f => f.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            vizStore.createDateTimeDrilledField(channel, index, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
+                        },
+                    })),
                 },
             ]);
         });
