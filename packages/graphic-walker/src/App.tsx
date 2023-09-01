@@ -28,6 +28,8 @@ import {
 } from "@heroicons/react/24/outline";
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
+import LogPanel from './fields/datasetFields/logPanel';
+import BinPanel from './fields/datasetFields/binPanel';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -193,6 +195,8 @@ const App = observer<IGWProps>(function App(props) {
                         <CodeExport />
                         <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
+                        <LogPanel />
+                        <BinPanel/>
                         {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
