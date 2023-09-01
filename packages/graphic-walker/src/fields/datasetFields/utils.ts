@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
+import { CommonStore } from "../../store/commonStore";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -10,7 +11,7 @@ const keepTrue = <T extends string | number | object | Function | symbol>(array:
 };
 
 export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuItem[][] => {
-    const { vizStore } = useGlobalStore();
+    const { vizStore, commonStore } = useGlobalStore();
     const fields = vizStore.draggableFieldState[channel];
     const { t } = useTranslation('translation', { keyPrefix: "field_menu" });
 
@@ -53,16 +54,33 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             label: "Log10",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
-                                vizStore.createLogField(channel, index, "log10");
+                                vizStore.createLogField(channel, index, "log", 10);
                             },
                         },
                         {
                             label: "Log2",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
-                                vizStore.createLogField(channel, index, "log2");
+                                vizStore.createLogField(channel, index, "log", 2);
                             },
                         },
+                        {
+                            label:"Log(customize)",
+                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
+                            onPress(){
+                                commonStore.setShowLogSettingPanel(true);
+                                commonStore.setCreateField({channel:channel,index:index})
+                            }
+                        },
+                        {
+                            label:"Bin(customize)",
+                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
+                            onPress(){
+                                commonStore.setShowBinSettingPanel(true);
+                                commonStore.setCreateField({channel:channel,index:index});
+                            }
+                        },
+                        
                     ],
                 },
                 (f.semanticType === 'temporal' || isDateTimeDrilled) && {
