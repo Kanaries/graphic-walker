@@ -21,13 +21,13 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
 
             return keepTrue<IActionMenuItem>([
                 channel === 'dimensions' && {
-                    label: t('to_dim'),
+                    label: t('to_mea'),
                     onPress() {
                         vizStore.moveField("dimensions", index, "measures", vizStore.draggableFieldState.measures.length);
                     },
                 },
                 channel === 'measures' && {
-                    label: t('to_mea'),
+                    label: t('to_dim'),
                     disabled: f.fid === COUNT_FIELD_ID,
                     onPress() {
                         vizStore.moveField("measures", index, "dimensions", vizStore.draggableFieldState.dimensions.length);
