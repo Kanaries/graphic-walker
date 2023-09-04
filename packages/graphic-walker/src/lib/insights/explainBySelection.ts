@@ -1,56 +1,83 @@
-import { IAggregator, IExplainProps, IField } from '../../interfaces';
+import { IAggregator, IExplainProps, IPredicate, IField, IRow, IViewField, IFilterField, IComputationFunction, IViewWorkflowStep } from '../../interfaces';
 import { filterByPredicates, getMeaAggKey } from '../../utils';
-import { compareDistribution, normalizeWithParent } from '../../utils/normalization';
+import { compareDistribution, compareDistributionKL, compareDistributionJS, normalizeWithParent } from '../../utils/normalization';
+import { IBinQuery } from '../interfaces';
 import { aggregate } from '../op/aggregate';
+import { bin } from '../op/bin';
+import { VizSpecStore } from "../../store/visualSpecStore";
 import { complementaryFields, groupByAnalyticTypes } from './utils';
+import { toWorkflow } from '../../utils/workflow';
+import { dataQueryServer } from '../../computation/serverComputation';
 
-export function explainBySelection(props: IExplainProps) {
-    const { metas, dataSource, viewFields, predicates } = props;
-    const { dimensions: dimsInView, measures: measInView } = groupByAnalyticTypes(viewFields);
+const QUANT_BIN_NUM = 10;
+
+export async function explainBySelection(props: {
+    predicates: IPredicate[],
+    viewFilters: VizSpecStore['viewFilters'],
+    allFields: IViewField[],
+    viewMeasures: IViewField[],
+    viewDimensions: IViewField[],
+    computationFunction: IComputationFunction
+}) {
+    const { allFields, viewFilters, viewMeasures, viewDimensions, predicates, computationFunction } = props;
     const complementaryDimensions = complementaryFields({
-        all: metas.filter((f) => f.analyticType === 'dimension'),
-        selection: dimsInView,
+        all: allFields.filter((f) => f.analyticType === 'dimension'),
+        selection: viewDimensions,
     });
-    const outlierList: Array<{ score: number; viiewFields: IField[] }> = complementaryDimensions.map(extendDim => {
-        const overallData = aggregate(dataSource, {
-            groupBy: [extendDim.fid],
-            op: 'aggregate',
-            measures: measInView.map((mea) => ({
-                field: mea.fid,
-                agg: (mea.aggName ?? 'sum') as IAggregator,
-                asFieldKey: getMeaAggKey(mea.fid, (mea.aggName ?? 'sum') as IAggregator),
-            })),
-                
-        });
-        const viewData = aggregate(dataSource, {
-            groupBy: dimsInView.map((f) => f.fid),
-            op: 'aggregate',
-            measures: measInView.map((mea) => ({
-                field: mea.fid,
-                agg: (mea.aggName ?? 'sum') as IAggregator,
-                asFieldKey: getMeaAggKey(mea.fid, (mea.aggName ?? 'sum') as IAggregator),
-            }))
-        });
-        const subData = filterByPredicates(viewData, predicates);
-
-        let outlierNormalization = normalizeWithParent(
-            subData,
-            overallData,
-            measInView.map((mea) => mea.fid),
-            false
-        );
-
-        let outlierScore = compareDistribution(
-            outlierNormalization.normalizedData,
-            outlierNormalization.normalizedParentData,
-            [extendDim.fid],
-            measInView.map((mea) => mea.fid)
-        );
-        return {
-            viiewFields: measInView.concat(extendDim),
-            score: outlierScore,
+    const outlierList: { 
+        score: number; 
+        measureField: IField; 
+        targetField: IField; 
+        normalizedData: IRow[]; 
+        normalizedParentData: IRow[];
+    }[] = [];
+    for (let extendDim of complementaryDimensions) {
+        let extendDimFid = extendDim.fid;
+        let extraPreWorkflow: IViewWorkflowStep[] = [];
+        if (extendDim.semanticType === "quantitative") {
+            extraPreWorkflow.push({
+                type: "view",
+                query: [
+                    {
+                        op: "bin",
+                        binBy: extendDim.fid,
+                        binSize: QUANT_BIN_NUM,
+                        newBinCol: extendDimFid
+                    }
+                ]
+            })
         }
-    }).sort((a, b) => b.score - a.score)
- 
-    return outlierList;
+        for (let mea of viewMeasures) {
+            const overallWorkflow = toWorkflow(viewFilters, allFields, [extendDim], [mea], true, 'none');
+            const fullOverallWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...overallWorkflow] : overallWorkflow
+            const overallData = await dataQueryServer(computationFunction, fullOverallWorkflow)
+            const viewWorkflow = toWorkflow(viewFilters, allFields, [...viewDimensions, extendDim], [mea], true, 'none');
+            const fullViewWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...viewWorkflow] : viewWorkflow
+            const viewData = await dataQueryServer(computationFunction, fullViewWorkflow);
+            const subData = filterByPredicates(viewData, predicates);
+            let outlierNormalization = normalizeWithParent(
+                subData,
+                overallData,
+                [getMeaAggKey(mea.fid, (mea.aggName ?? 'sum'))],
+                false
+            );
+            console.log(outlierNormalization)
+            let outlierScore = compareDistributionJS(
+                outlierNormalization.normalizedData,
+                outlierNormalization.normalizedParentData,
+                [extendDim.fid],
+                getMeaAggKey(mea.fid, (mea.aggName ?? 'sum'))
+            );
+            outlierList.push(
+                {
+                    measureField: mea,
+                    targetField: extendDim,
+                    score: outlierScore,
+                    normalizedData: subData,
+                    normalizedParentData: overallData
+                }
+            )
+        }
+    }
+    return outlierList.sort((a, b) => b.score - a.score);
 }

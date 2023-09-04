@@ -13,6 +13,7 @@ import {
     IVisSpec,
     PartialChart,
     ICoordMode,
+    IGeoUrl,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField } from '../utils';
@@ -58,7 +59,7 @@ type PropsMap = {
     [Methods.transpose]: [];
     [Methods.setLayout]: [KVTuple<IVisualLayout>[]];
     [Methods.setFieldAggregator]: [normalKeys, number, IAggregator];
-    [Methods.setGeoData]: [FeatureCollection, string];
+    [Methods.setGeoData]: [FeatureCollection, string, IGeoUrl | undefined];
     [Methods.setCoordSystem]: [ICoordMode];
 };
 // ensure propsMap has all keys of methods
@@ -179,7 +180,7 @@ const actions: {
         mutPath(data, 'layout', (l) => Object.assign({}, l, Object.fromEntries(kvs))),
     [Methods.setFieldAggregator]: (data, encoding, index, aggName) =>
         mutPath(data, `encodings.${encoding}`, (f) => replace(f, index, (x) => ({ ...x, aggName }))),
-    [Methods.setGeoData]: (data, geojson, geoKey) => mutPath(data, 'layout', (l) => ({ ...l, geojson, geoKey })),
+    [Methods.setGeoData]: (data, geojson, geoKey, geoUrl) => mutPath(data, 'layout', (l) => ({ ...l, geojson, geoKey, geoUrl })),
     [Methods.setCoordSystem]: (data, system) =>
         mutPath(data, 'config', (c) => ({
             ...c,

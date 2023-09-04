@@ -321,7 +321,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                                 />
                             </div>
                             <label id={`${id}_label`} htmlFor={id} title={String(value)}>
-                                {value}
+                                {`${value}`}
                             </label>
                             <label htmlFor={id}>{count}</label>
                         </React.Fragment>

@@ -1,23 +1,23 @@
 {
     "config": {
-        "format": "形式",
-        "numberFormat": "数字の形式",
-        "timeFormat": "時間の形式",
-        "normalizedNumberFormat": "正規化された数字の形式",
+        "format": "フォーマット",
+        "numberFormat": "数字",
+        "timeFormat": "日付",
+        "normalizedNumberFormat": "正規化された数字",
         "background": "背景",
         "color":"色",
-        "independence": "独立性",
+        "independence": "独立したスケーリング",
         "x": "x軸",
         "y": "y軸",
-        "zeroScale": "ゼロ目盛",
+        "zeroScale": "０を含む",
         "formatGuidesDocs": "フォーマットガイド",
         "readHere": "ここを読む"
     },
     "constant": {
         "row_count": "行数",
         "analytic_type": {
-            "dimension": "次元",
-            "measure": "尺度"
+            "dimension": "ディメンション",
+            "measure": "メジャー"
         },
         "semantic_type": {
             "nominal": "名義尺度",
@@ -38,15 +38,10 @@
             "rect": "長方形",
             "arc": "アーク",
             "boxplot": "ボックスプロット",
-            "table": "表",
-            "text": "テキスト",
+            "table": "テーブル",
+            "text": "文字",
             "poi": "POI",
             "choropleth": "コロプレス"
-        },
-        "coord_system": {
-            "__enum__": "座標系",
-            "generic": "ジェネリック",
-            "geographic": "地理"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -83,7 +78,7 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文",
+            "text": "テキスト",
             "longitude": "経度",
             "latitude": "緯度",
             "geoId": "地理ID"
@@ -202,8 +197,8 @@
     },
     "filters": {
         "to_edit": "このルールを編集",
-        "empty_rule": "! (空のルール)",
-        "editing": "フィルタールールの設定",
+        "empty_rule": "! (未設定)",
+        "editing": "フィルターの設定",
         "form": {
             "name": "フィールド",
             "rule": "ルール"
@@ -222,8 +217,8 @@
             "cancel": "キャンセル"
         },
         "range": {
-            "start_value": "開始値",
-            "end_value": "終了値"
+            "start_value": "最小",
+            "end_value": "最大"
         }
     },
     "explain": {
@@ -246,5 +241,23 @@
         "drop_field": "ここにフィールドをドロップ",
         "confirm": "確認",
         "cancel": "キャンセル"
+    },
+    "field_menu": {
+        "to_dim": "ディメンションに変更",
+        "to_mea": "メジャーに変更",
+        "new_calc": "計算フィールドを作成",
+        "drill": {
+            "name": "ドリルダウン/アップ",
+            "levels": {
+                "year": "年",
+                "quarter": "四半期",
+                "month": "月",
+                "week": "週",
+                "day": "日",
+                "hour": "時",
+                "minute": "分",
+                "second": "秒"
+            }
+        }
     }
 }

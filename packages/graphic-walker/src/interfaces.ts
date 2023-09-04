@@ -32,6 +32,11 @@ export interface Filters {
     [key: string]: any[];
 }
 
+export interface ICreateField {
+    channel:"dimensions" | "measures";
+    index:number;
+}
+
 export interface IMutField {
     fid: string;
     key?: string;
@@ -82,9 +87,10 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'log';
     params: IExpParamter[];
     as: string;
+    num?: number;
 }
 
 export type IGeoRole = 'longitude' | 'latitude' | 'none';
@@ -261,6 +267,7 @@ export interface IVisualConfig {
     };
     geojson?: FeatureCollection;
     geoKey?: string;
+    geoUrl?: IGeoUrl;
     limit: number;
 }
 
@@ -286,6 +293,7 @@ export interface IVisualLayout {
     };
     geojson?: FeatureCollection;
     geoKey?: string;
+    geoUrl?: IGeoUrl;
     interactiveScale: boolean;
     stack: IStackMode;
     showActions: boolean;
@@ -301,6 +309,11 @@ export interface IVisualConfigNew {
     /** @default "generic" */
     coordSystem?: ICoordMode;
     limit: number;
+}
+
+export interface IGeoUrl {
+    type: 'GeoJSON' | 'TopoJSON',
+    url: string,
 }
 
 /** @deprecated */
@@ -355,6 +368,7 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         canvas(): HTMLCanvasElement | null;
     }[];
     container(): HTMLDivElement | null;
+    chartType?: string;
 }
 
 interface IExportChart {

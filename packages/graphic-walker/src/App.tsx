@@ -16,19 +16,27 @@ import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
+import ClickMenu from './components/clickMenu';
+import {
+    LightBulbIcon,
+} from "@heroicons/react/24/outline";
 import AskViz from './components/askViz';
 import { VizSpecStore } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
+import LogPanel from './fields/datasetFields/logPanel';
+import BinPanel from './fields/datasetFields/binPanel';
 
 export interface BaseVizProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     themeKey?: IThemeKey;
     darkMode?: 'light' | 'dark';
+    themeConfig?: any;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -55,12 +63,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         enhanceAPI,
         i18nResources,
         themeKey = 'vega',
+        themeConfig,
         toolbar,
         geographicData,
         computationTimeout = 60000,
     } = props;
 
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const curLang = i18n.language;
 
     useEffect(() => {
@@ -85,7 +94,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
-    const { segmentKey } = vizStore;
+    const { segmentKey, vizEmbededMenu } = vizStore;
 
     const c = useMemo(() => (computation ? withTimeout(computation, computationTimeout) : async () => []), [computation, computationTimeout]);
     return (
@@ -104,8 +113,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                             )}
                             <VisualSettings rendererHandler={rendererRef} darkModePreference={darkMode} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                             <CodeExport />
+                            <ExplainData themeKey={themeKey} dark={darkMode}/>
                             <VisualConfig />
-                            <GeoConfigPanel />
+                            <LogPanel />
+                            <BinPanel/>
+                            {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
                             <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                                 <div className="md:col-span-3 xl:col-span-1">
                                     <DatasetFields />
@@ -118,10 +130,35 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <div>
                                         <PosFields />
                                     </div>
-                                    <div className="m-0.5 p-1 border border-gray-200 dark:border-gray-700" style={{ minHeight: '600px', overflow: 'auto' }}>
+                                    <div
+                                    className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
+                                    style={{ minHeight: '600px', overflow: 'auto' }}
+                                    onMouseLeave={() => {
+                                        vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                    }}
+                                    onClick={() => {
+                                        vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                    }}
+                                >
                                         {computation && (
-                                            <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={darkMode} computationFunction={computation} />
+                                            <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={darkMode} themeConfig={themeConfig} computationFunction={computation} />
                                         )}
+                                    {vizEmbededMenu.show && (
+                                        <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
+                                            <div
+                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                                onClick={() => {
+                                                    vizStore.closeEmbededMenu();
+                                                    vizStore.setShowInsightBoard(true);
+                                                }}
+                                            >
+                                                <span className="flex-1 pr-2">
+                                                    {t("App.labels.data_interpretation")}
+                                                </span>
+                                                <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
+                                            </div>
+                                        </ClickMenu>
+                                    )}
                                     </div>
                                 </div>
                             </div>

@@ -31,8 +31,11 @@ import {
     Specification,
     ICoordMode,
     IVisSpecForExport,
+    IGeoUrl,
 } from '../interfaces';
-import { MetaFieldKeys } from '../config';
+import { CHANNEL_LIMIT, MetaFieldKeys } from '../config';
+import { DATE_TIME_DRILL_LEVELS } from "../constants";
+
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
 import { encodeFilterRule } from '../utils/filter';
@@ -77,6 +80,10 @@ export class VizSpecStore {
     removeConfirmIdx: number | null = null;
     filters: Filters = {};
     tableCollapsedHeaderMap: Map<string, INestNode['path']> = new Map();
+    public selectedMarkObject: Record<string, string | number | undefined> = {};
+    public showLogSettingPanel: boolean = false;
+    public showBinSettingPanel: boolean = false;
+
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
     constructor(
@@ -433,14 +440,14 @@ export class VizSpecStore {
         this.removeConfirmIdx = null;
     }
 
-    setGeographicData(data: IGeographicData, geoKey: string) {
+    setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
         const geoJSON =
             data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
         if (!('features' in geoJSON)) {
             console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
             return;
         }
-        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey);
+        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, geoUrl);
     }
 
     updateGeoKey(key: string) {

@@ -1,11 +1,13 @@
 import { IExpParamter, IExpression, IField, IRow } from "../interfaces";
+import dateTimeDrill from "./op/dateTimeDrill";
 
-interface IDataFrame {
+export interface IDataFrame {
     [key: string]: any[];
 }
 
 export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataFrame {
-    const { op, params } = exp;
+    const { op, params, num } = exp;
+    console.log('exo',exp)
     const subFrame: IDataFrame = { ...dataFrame };
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
     for (let param of params) {
@@ -30,14 +32,18 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
     switch (op) {
         case 'one':
             return one(exp.as, params, subFrame);
-        case 'bin':
-            return bin(exp.as, params, subFrame);
+        case 'log':
+            return log(exp.as, params, subFrame, num);
         case 'log2':
-            return log2(exp.as, params, subFrame);
+            return log(exp.as, params, subFrame, 2);
         case 'log10':
-            return log10(exp.as, params, subFrame);
+            return log(exp.as, params, subFrame, 10);
         case 'binCount':
-            return binCount(exp.as, params, subFrame);
+            return binCount(exp.as, params, subFrame, num);
+        case 'bin':
+            return bin(exp.as, params, subFrame, num);
+        case 'dateTimeDrill':
+            return dateTimeDrill(exp.as, params, subFrame);
         default:
             return subFrame;
     }
@@ -114,6 +120,16 @@ function log10(resKey: string, params: IExpParamter[], data: IDataFrame): IDataF
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey];
     const newField = fieldValues.map((v: number) => Math.log10(v));
+    return {
+        ...data,
+        [resKey]: newField,
+    }
+}
+
+function log(resKey: string, params: IExpParamter[], data: IDataFrame, baseNum: number | undefined=10): IDataFrame {
+    const { value: fieldKey } = params[0];
+    const fieldValues = data[fieldKey];
+    const newField = fieldValues.map((v: number) => Math.log(v) / Math.log(baseNum) );
     return {
         ...data,
         [resKey]: newField,

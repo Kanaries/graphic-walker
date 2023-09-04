@@ -14,6 +14,7 @@ import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 
 interface RendererProps {
     themeKey?: IThemeKey;
+    themeConfig?: any;
     dark?: IDarkMode;
     computationFunction: IComputationFunction;
 }
@@ -22,7 +23,7 @@ interface RendererProps {
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationFunction } = props;
+    const { themeKey, dark, computationFunction, themeConfig } = props;
     const vizStore = useVizStore();
     const {
         allFields,
@@ -77,7 +78,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setViewConfig(latestFromRef.current.visualConfig);
             });
         }
-    }, [waiting, vizStore]);
+    }, [waiting, data, vizStore]);
 
     useChartIndexControl({
         count: visLength,
@@ -91,6 +92,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             vizStore.showEmbededMenu([e.pageX, e.pageY]);
             vizStore.setFilters(values);
         });
+        const selectedMarkObject = values.vlPoint.or[0];
+        commonStore.updateSelectedMarkObject(selectedMarkObject);
     }, []);
 
     const handleChartResize = useCallback(
@@ -132,6 +135,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             data={viewData}
             ref={ref}
             themeKey={themeKey}
+            themeConfig={themeConfig}
             dark={dark}
             locale={i18n.language}
             draggableFieldState={encodings}

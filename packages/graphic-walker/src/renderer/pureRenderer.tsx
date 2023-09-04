@@ -14,6 +14,7 @@ type IPureRendererProps =
     | {
           name?: string;
           themeKey?: IThemeKey;
+          themeConfig?: any;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
           visualConfig: IVisualConfigNew;
@@ -37,7 +38,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, sort, limit } = props;
+    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, sort, limit, themeConfig } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -94,15 +95,16 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom>
-            <div className="relative">
+        <ShadowDom className="flex w-full" style={{ height: '100%' }}>
+            <div className="relative flex flex-col w-full flex-1">
                 {isSpatial && (
-                    <div style={{ width: LEAFLET_DEFAULT_WIDTH, height: LEAFLET_DEFAULT_HEIGHT }}>
+                    <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
                     </div>
                 )}
                 {isSpatial || (
                     <SpecRenderer
+                        themeConfig={themeConfig}
                         name={name}
                         loading={waiting}
                         data={viewData}

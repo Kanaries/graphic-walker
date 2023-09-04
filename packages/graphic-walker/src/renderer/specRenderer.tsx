@@ -9,6 +9,7 @@ import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVis
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
+import { useTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
     name?: string;
@@ -22,13 +23,14 @@ interface SpecRendererProps {
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
+    themeConfig?: any;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name,layout, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale },
+    { name,layout, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, themeConfig: customizedThemeConfig  },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -59,7 +61,11 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
+    const themeConfig = useTheme({
+        themeKey,
+        mediaTheme,
+        themeConfig: customizedThemeConfig
+    })
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
@@ -147,6 +153,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             {loading && <LoadingLayer />}
             {isSpatial && (
                 <LeafletRenderer
+                    name={name}
                     data={data}
                     draggableFieldState={draggableFieldState}
                     visualConfig={visualConfig}

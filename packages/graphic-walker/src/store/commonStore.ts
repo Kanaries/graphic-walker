@@ -1,4 +1,4 @@
-import {   IDataSetInfo, IMutField, IRow } from '../interfaces';
+import { IDataSetInfo, IMutField, IRow } from '../interfaces';
 import { makeAutoObservable, observable } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { DataStore } from './dataStore';
@@ -84,5 +84,4 @@ export class CommonStore {
         this.initTempDS();
         this.showDSPanel = true;
     }
-
 }
