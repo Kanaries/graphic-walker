@@ -22,7 +22,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
     const { defaultAggregated, geoms: [markType],  } = visualConfig;
-    const {geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false} = visualLayout
+    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false } = visualLayout;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);

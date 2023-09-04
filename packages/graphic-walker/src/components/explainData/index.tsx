@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Modal from "../modal";
 import { observer } from "mobx-react-lite";
-import { useGlobalStore } from "../../store";
+import { useCompututaion, useGlobalStore, useVizStore } from "../../store";
 import { useTranslation } from "react-i18next";
 import { getMeaAggKey } from '../../utils';
 import styled from 'styled-components';
@@ -44,9 +44,9 @@ const ExplainData: React.FC<{
   dark: IDarkMode, 
   themeKey: IThemeKey
 }> = observer(({dark, themeKey}) => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const { allFields, viewMeasures, viewDimensions, viewFilters, computationFunction } = vizStore;
-    const { showInsightBoard, selectedMarkObject } = commonStore;
+    const vizStore = useVizStore();
+    const computationFunction = useCompututaion();
+    const { allFields, viewMeasures, viewDimensions, viewFilters, showInsightBoard, selectedMarkObject } = vizStore;
     const [ explainDataInfoList, setExplainDataInfoList ] = useState<{ 
       score: number; 
       measureField: IField; 
@@ -167,7 +167,7 @@ const ExplainData: React.FC<{
         <Modal
           show={showInsightBoard}
           onClose={() => {
-            commonStore.setShowInsightBoard(false);
+            vizStore.setShowInsightBoard(false);
             setSelectedInfoIndex(0);
           }}
         >

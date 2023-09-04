@@ -1,13 +1,12 @@
 import { IAggregator, IExplainProps, IPredicate, IField, IRow, IViewField, IFilterField, IComputationFunction, IViewWorkflowStep } from '../../interfaces';
 import { filterByPredicates, getMeaAggKey } from '../../utils';
 import { compareDistribution, compareDistributionKL, compareDistributionJS, normalizeWithParent } from '../../utils/normalization';
-import { IBinQuery } from '../interfaces';
 import { aggregate } from '../op/aggregate';
 import { bin } from '../op/bin';
 import { VizSpecStore } from "../../store/visualSpecStore";
 import { complementaryFields, groupByAnalyticTypes } from './utils';
 import { toWorkflow } from '../../utils/workflow';
-import { dataQueryServer } from '../../computation/serverComputation';
+import { dataQuery } from '../../computation/index';
 
 const QUANT_BIN_NUM = 10;
 
@@ -50,10 +49,10 @@ export async function explainBySelection(props: {
         for (let mea of viewMeasures) {
             const overallWorkflow = toWorkflow(viewFilters, allFields, [extendDim], [mea], true, 'none');
             const fullOverallWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...overallWorkflow] : overallWorkflow
-            const overallData = await dataQueryServer(computationFunction, fullOverallWorkflow)
+            const overallData = await dataQuery(computationFunction, fullOverallWorkflow)
             const viewWorkflow = toWorkflow(viewFilters, allFields, [...viewDimensions, extendDim], [mea], true, 'none');
             const fullViewWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...viewWorkflow] : viewWorkflow
-            const viewData = await dataQueryServer(computationFunction, fullViewWorkflow);
+            const viewData = await dataQuery(computationFunction, fullViewWorkflow);
             const subData = filterByPredicates(viewData, predicates);
             let outlierNormalization = normalizeWithParent(
                 subData,
@@ -61,7 +60,6 @@ export async function explainBySelection(props: {
                 [getMeaAggKey(mea.fid, (mea.aggName ?? 'sum'))],
                 false
             );
-            console.log(outlierNormalization)
             let outlierScore = compareDistributionJS(
                 outlierNormalization.normalizedData,
                 outlierNormalization.normalizedParentData,

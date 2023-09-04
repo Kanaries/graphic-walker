@@ -7,7 +7,6 @@ export interface IDataFrame {
 
 export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataFrame {
     const { op, params, num } = exp;
-    console.log('exo',exp)
     const subFrame: IDataFrame = { ...dataFrame };
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
     for (let param of params) {

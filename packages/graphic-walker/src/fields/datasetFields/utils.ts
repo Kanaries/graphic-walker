@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useGlobalStore } from "../../store";
+import { useVizStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
-import { CommonStore } from "../../store/commonStore";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -11,8 +10,8 @@ const keepTrue = <T extends string | number | object | Function | symbol>(array:
 };
 
 export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuItem[][] => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const fields = vizStore.draggableFieldState[channel];
+    const vizStore = useVizStore();
+    const fields = vizStore.currentVis.encodings[channel];
     const { t } = useTranslation('translation', { keyPrefix: "field_menu" });
 
     return useMemo<IActionMenuItem[][]>(() => {
@@ -23,14 +22,14 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                 channel === 'dimensions' && {
                     label: t('to_mea'),
                     onPress() {
-                        vizStore.moveField("dimensions", index, "measures", vizStore.draggableFieldState.measures.length);
+                        vizStore.moveField("dimensions", index, "measures", vizStore.viewMeasures.length);
                     },
                 },
                 channel === 'measures' && {
                     label: t('to_dim'),
                     disabled: f.fid === COUNT_FIELD_ID,
                     onPress() {
-                        vizStore.moveField("measures", index, "dimensions", vizStore.draggableFieldState.dimensions.length);
+                        vizStore.moveField("measures", index, "dimensions", vizStore.viewDimensions.length);
                     },
                 },
                 {
@@ -68,16 +67,16 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             label:"Log(customize)",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress(){
-                                commonStore.setShowLogSettingPanel(true);
-                                commonStore.setCreateField({channel:channel,index:index})
+                                vizStore.setShowLogSettingPanel(true);
+                                vizStore.setCreateField({channel:channel,index:index})
                             }
                         },
                         {
                             label:"Bin(customize)",
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress(){
-                                commonStore.setShowBinSettingPanel(true);
-                                commonStore.setCreateField({channel:channel,index:index});
+                                vizStore.setShowBinSettingPanel(true);
+                                vizStore.setCreateField({channel:channel,index:index});
                             }
                         },
                         
@@ -87,7 +86,7 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                     label: t('drill.name'),
                     children: DATE_TIME_DRILL_LEVELS.map(level => ({
                         label: t(`drill.levels.${level}`),
-                        disabled: isDateTimeDrilled && f.expression.params.find(p => p.type === 'value')?.value === level,
+                        disabled: isDateTimeDrilled && f.expression?.params.find(p => p.type === 'value')?.value === level,
                         onPress() {
                             const originField = (isDateTimeDrilled ? vizStore.allFields.find(f => f.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
                             vizStore.createDateTimeDrilledField(channel, index, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);

@@ -32,9 +32,10 @@ import {
     ICoordMode,
     IVisSpecForExport,
     IGeoUrl,
+    ICreateField,
 } from '../interfaces';
 import { CHANNEL_LIMIT, MetaFieldKeys } from '../config';
-import { DATE_TIME_DRILL_LEVELS } from "../constants";
+import { DATE_TIME_DRILL_LEVELS } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
@@ -80,9 +81,11 @@ export class VizSpecStore {
     removeConfirmIdx: number | null = null;
     filters: Filters = {};
     tableCollapsedHeaderMap: Map<string, INestNode['path']> = new Map();
-    public selectedMarkObject: Record<string, string | number | undefined> = {};
-    public showLogSettingPanel: boolean = false;
-    public showBinSettingPanel: boolean = false;
+    selectedMarkObject: Record<string, string | number | undefined> = {};
+    showLogSettingPanel: boolean = false;
+    showBinSettingPanel: boolean = false;
+    createField: ICreateField | undefined = undefined;
+    localGeoJSON: FeatureCollection | undefined = undefined;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -156,7 +159,12 @@ export class VizSpecStore {
     }
 
     get layout() {
-        return this.currentVis.layout;
+        return {
+            ...this.currentVis.layout,
+            ...(this.localGeoJSON ? {
+                geoJson: this.localGeoJSON
+            }: {})
+        };
     }
 
     get allEncodings() {
@@ -336,21 +344,30 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.transpose(this.visList[this.visIndex]);
     }
 
-    createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount'): string {
+    createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount', binNumber = 10): string {
         const newVarKey = uniqueId();
         const state = this.currentVis.encodings;
         const existedRelatedBinField = state.dimensions.find(
-            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid
+            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid && f.expression.num === binNumber
         );
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
         }
-        this.visList[this.visIndex] = performers.createField(this.visList[this.visIndex], stateKey, index, binType, newVarKey);
+        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, binType, newVarKey, binNumber);
         return newVarKey;
     }
 
-    createLogField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, scaleType: 'log10' | 'log2') {
-        this.visList[this.visIndex] = performers.createField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId());
+    createLogField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, scaleType: 'log10' | 'log2' | 'log', logNumber = 10) {
+        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId(), logNumber);
+    }
+
+    public createDateTimeDrilledField(
+        stateKey: keyof Omit<DraggableFieldState, 'filters'>,
+        index: number,
+        drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
+        name: string
+    ) {
+        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name);
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
@@ -447,7 +464,12 @@ export class VizSpecStore {
             console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
             return;
         }
-        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, geoUrl);
+        this.localGeoJSON = geoJSON;
+        if (geoUrl) {
+            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, geoKey, geoUrl);
+        } else {
+            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
+        }
     }
 
     updateGeoKey(key: string) {
@@ -479,6 +501,22 @@ export class VizSpecStore {
 
     setShowGeoJSONConfigPanel(show: boolean) {
         this.showGeoJSONConfigPanel = show;
+    }
+
+    setShowBinSettingPanel(show: boolean) {
+        this.showBinSettingPanel = show;
+    }
+
+    setShowLogSettingPanel(show: boolean) {
+        this.showLogSettingPanel = show;
+    }
+
+    setCreateField(field: ICreateField) {
+        this.createField = field;
+    }
+
+    updateSelectedMarkObject(newMarkObj: Record<string, string | number | undefined>) {
+        this.selectedMarkObject = newMarkObj;
     }
 }
 

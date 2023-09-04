@@ -93,7 +93,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             vizStore.setFilters(values);
         });
         const selectedMarkObject = values.vlPoint.or[0];
-        commonStore.updateSelectedMarkObject(selectedMarkObject);
+        vizStore.updateSelectedMarkObject(selectedMarkObject);
     }, []);
 
     const handleChartResize = useCallback(

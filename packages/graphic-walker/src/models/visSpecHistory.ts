@@ -22,6 +22,7 @@ import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/s
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GEOM_TYPES } from '../config';
+import { DATE_TIME_DRILL_LEVELS } from '../constants';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -32,7 +33,7 @@ export enum Methods {
     reorderField,
     moveField,
     cloneField,
-    createField,
+    createBinlogField,
     appendFilter,
     modFilter,
     writeFilter,
@@ -43,6 +44,7 @@ export enum Methods {
     setFieldAggregator,
     setGeoData,
     setCoordSystem,
+    createDateDrillField,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -50,7 +52,7 @@ type PropsMap = {
     [Methods.reorderField]: [keyof DraggableFieldState, number, number];
     [Methods.moveField]: [normalKeys, number, normalKeys, number];
     [Methods.cloneField]: [normalKeys, number, normalKeys, number, string];
-    [Methods.createField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2', string];
+    [Methods.createBinlogField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2' | 'log', string, number];
     [Methods.appendFilter]: [number, normalKeys, number, string];
     [Methods.modFilter]: [number, normalKeys, number];
     [Methods.writeFilter]: [number, SetToArray<IFilterRule> | null];
@@ -59,8 +61,9 @@ type PropsMap = {
     [Methods.transpose]: [];
     [Methods.setLayout]: [KVTuple<IVisualLayout>[]];
     [Methods.setFieldAggregator]: [normalKeys, number, IAggregator];
-    [Methods.setGeoData]: [FeatureCollection, string, IGeoUrl | undefined];
+    [Methods.setGeoData]: [FeatureCollection | undefined, string | undefined, IGeoUrl | undefined];
     [Methods.setCoordSystem]: [ICoordMode];
+    [Methods.createDateDrillField]: [normalKeys, number, typeof DATE_TIME_DRILL_LEVELS[number], string, string];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -103,14 +106,15 @@ const actions: {
             [to]: insert(data.encodings[to], field, tindex),
         }));
     },
-    [Methods.createField]: (data, encoding, index, op, newVarKey) => {
+    [Methods.createBinlogField]: (data, encoding, index, op, newVarKey, num) => {
         const originField = data.encodings[encoding][index];
         const isBin = op.startsWith('bin');
         const channel = isBin ? 'dimensions' : encoding;
+        const prefix = isBin ? `${op}${num}` : `log${num}`
         const newField: IViewField = {
             fid: newVarKey,
             dragId: newVarKey,
-            name: `${op}(${originField.name})`,
+            name: `${prefix}(${originField.name})`,
             semanticType: isBin ? 'ordinal' : 'quantitative',
             analyticType: isBin ? 'dimension' : originField.analyticType,
             computed: true,
@@ -123,6 +127,7 @@ const actions: {
                         value: originField.fid,
                     },
                 ],
+                num
             },
         };
         if (!isBin) {
@@ -187,6 +192,33 @@ const actions: {
             coordSystem: system,
             geoms: [GEOM_TYPES[system][0]],
         })),
+    [Methods.createDateDrillField]: (data, channel, index, drillLevel, newVarKey, newName) => {
+        const originField = data.encodings[channel][index];
+        const newField: IViewField = {
+            fid: newVarKey,
+            dragId: newVarKey,
+            name: newName,
+            semanticType: "ordinal",
+            analyticType: "dimension",
+            aggName: 'sum',
+            computed: true,
+            expression: {
+                op: "dateTimeDrill",
+                as: newVarKey,
+                params: [
+                    {
+                        type: 'field',
+                        value: originField.fid,
+                    },
+                    {
+                        type: 'value',
+                        value: drillLevel,
+                    },
+                ],
+            },
+        };
+        return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
+    }
 };
 
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {

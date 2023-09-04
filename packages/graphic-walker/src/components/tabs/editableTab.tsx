@@ -38,7 +38,6 @@ const Slider = (props: { className?: string; children: React.ReactNode; safeDist
             e.stopPropagation();
             const rect = ref.current?.children[0]?.getBoundingClientRect();
             if (rect) {
-                console.log(rect);
                 setX((x) => Math.min(rect.width - props.safeDistance, Math.max(0, x + e.deltaY)));
             }
             return false;
