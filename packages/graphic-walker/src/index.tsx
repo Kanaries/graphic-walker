@@ -66,3 +66,4 @@ export type { IGWProps };
 export { ISegmentKey } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
 export { resolveVisSpec } from './utils/save';
+export { getComputation } from './computation/clientComputation'
