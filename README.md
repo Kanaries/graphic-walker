@@ -16,26 +16,26 @@ Graphic Walker is a different open-source alternative to Tableau. It allows data
 
 ### Why is it different?
 
-It is extremely easy to embed in your apps just as a component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
+It is extremely easy to embed in your apps just as a React component 🎉! The original purpose of graphic-walker is not to be a heavy BI platform, but a easy to embed, lite, plugin.
 
 ### Main features
 + A user friendly drag and drop based interaction for exploratory data analysis with visualizations.
 + A Data Explainer which explains why some patterns occur / what may cause them (like salesforce einstein).
 + Using web workers to handle computational tasks which allow you to use it as a pure front-end app.
-+ Graphic Walker now supports Dark Theme! 🤩
-+ Spatial visualization.
++ A general query interface for submit data queries to your own computation service. You can have a look at how we using DuckDB to handle data queries in [PyGWalker](https://github.com/kanaries/pygwalker)
++ Light Theme / Dark Theme! 🤩
++ Spatial visualization. (supports GeoJSON, TopoJSON)
 + Natural language / Chat interface. Ask question about your data!
 + A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 
 https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
-> Graphic Walker is a lite visual analytic component. If you are interested in more advanced data analysis software, check our related project [RATH](https://github.com/Kanaries/Rath), an augmented analytic BI with automated insight discovery, causal analysis and visualization auto generation based on human's visual perception.
 
 ## Usage for End Users
 
 First, upload your Data(csv/json) file, preview your data, and define the analytic type of columns (dimension or measure).
 
-> We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedding components, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
+> We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embeded component, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
 ![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-create-ds.png)
 
