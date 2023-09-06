@@ -72,7 +72,6 @@ const FieldScalePanel: React.FC = (props) => {
                         text="Confirm"
                         onClick={() => {
                           const field = commonStore.createField as ICreateField;
-                          console.log(field,value);
                           vizStore.createBinField(field.channel, field.index, chosenOption === 'widths'?'bin':'binCount', Number(value));
                           commonStore.setShowBinSettingPanel(false);
                           return;
