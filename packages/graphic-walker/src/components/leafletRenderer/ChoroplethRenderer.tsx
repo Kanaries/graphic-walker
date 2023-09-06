@@ -1,5 +1,5 @@
 import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
-import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip } from "react-leaflet";
+import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip, AttributionControl } from "react-leaflet";
 import { type Map, divIcon } from "leaflet";
 import type { DeepReadonly, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import type { FeatureCollection, Geometry } from "geojson";
@@ -219,11 +219,12 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
     return (
-        <MapContainer center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <AttributionControl prefix="Leaflet" />
             {lngLat.length > 0 && data.map((row, i) => {
                 const coords = lngLat[i];
                 const opacity = opacityScale(row);
