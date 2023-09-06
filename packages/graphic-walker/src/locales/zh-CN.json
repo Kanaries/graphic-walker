@@ -10,6 +10,7 @@
         "x": "x轴",
         "y": "y轴",
         "zeroScale": "零刻度",
+        "misc": "其他",
         "formatGuidesDocs": "格式指南",
         "readHere": "阅读此处"
     },
