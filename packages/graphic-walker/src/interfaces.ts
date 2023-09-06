@@ -239,6 +239,7 @@ export interface IVisualConfig {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     background?: string;
+    useSvg?: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;

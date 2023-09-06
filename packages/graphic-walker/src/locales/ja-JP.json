@@ -12,7 +12,8 @@
         "zeroScale": "０を含む",
         "misc": "その他",
         "formatGuidesDocs": "フォーマットガイド",
-        "readHere": "ここを読む"
+        "readHere": "ここを読む",
+        "svg": "SVGを使う"
     },
     "constant": {
         "row_count": "行数",

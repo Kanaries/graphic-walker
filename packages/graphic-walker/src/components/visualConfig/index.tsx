@@ -36,6 +36,7 @@ const VisualConfigPanel: React.FC = (props) => {
         size: visualConfig.resolve.size,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
+    const [svg, setSvg] = useState<boolean>(visualConfig.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
 
@@ -84,9 +85,11 @@ const VisualConfigPanel: React.FC = (props) => {
                         </div>
                     </div>
                 ))}
-                <hr className='my-4' />
+                <hr className="my-4" />
                 <div className="my-2">
-                    <label className="block text-xs font-medium leading-6">{t('config.background')} {t(`config.color`)}</label>
+                    <label className="block text-xs font-medium leading-6">
+                        {t('config.background')} {t(`config.color`)}
+                    </label>
                     <div className="mt-1">
                         <input
                             type="text"
@@ -139,6 +142,13 @@ const VisualConfigPanel: React.FC = (props) => {
                                 setZeroScale(en);
                             }}
                         />
+                        <Toggle
+                            label={t(`config.svg`)}
+                            enabled={svg}
+                            onChange={(en) => {
+                                setSvg(en);
+                            }}
+                        />
                         {isChoropleth && (
                             <Toggle
                                 label="include unmatched choropleth in scale"
@@ -161,6 +171,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
+                                vizStore.setVisualConfig('useSvg', svg);
                                 commonStore.setShowVisualConfigPanel(false);
                             });
                         }}
