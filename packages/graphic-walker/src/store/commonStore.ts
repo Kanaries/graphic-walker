@@ -24,6 +24,7 @@ export class CommonStore {
     public segmentKey: ISegmentKey = ISegmentKey.vis;
     public selectedMarkObject: Record<string, string | number | undefined> = {};
     public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
+    public showErrorResolutionPanel: number = 0;
 
     constructor () {
         this.datasets = [];
@@ -238,6 +239,10 @@ export class CommonStore {
 
     public updateSelectedMarkObject (newMarkObj) {
         this.selectedMarkObject = newMarkObj;
+    }
+
+    public updateShowErrorResolutionPanel(errCode: number) {
+        this.showErrorResolutionPanel = errCode;
     }
 
     public destroy () {

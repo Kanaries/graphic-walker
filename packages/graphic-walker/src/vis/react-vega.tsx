@@ -10,6 +10,8 @@ import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '.
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
+import canvasSize from 'canvas-size';
+import { Errors, useReporter } from '../utils/reportError';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -145,6 +147,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
 
+  const { reportError: reportGWError } = useReporter();
+
   const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
 
   useEffect(() => {
@@ -242,6 +246,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         const task = embed(viewPlaceholders[0].current, spec, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
+          const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+          if (!success) {
+            if (canvas) {
+              reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+            } else {
+              reportGWError("canvas not found", Errors.canvasExceedSize);
+            }
+          }
           vegaRefs.current = [{
             w: container?.clientWidth ?? res.view.width(),
             h: container?.clientHeight ?? res.view.height(),
@@ -321,6 +333,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             const task = embed(node, ans, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
+              const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+              if (!success) {
+                if (canvas) {
+                  reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+                } else {
+                  reportGWError("canvas not found", Errors.canvasExceedSize);
+                }
+              }
               vegaRefs.current[id] = {
                 w: container?.clientWidth ?? res.view.width(),
                 h: container?.clientHeight ?? res.view.height(),
