@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
@@ -30,6 +30,9 @@ import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
+import { ErrorContext } from './utils/reportError';
+import { ErrorBoundary } from "react-error-boundary";
+import Errorpanel from './components/errorpanel';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -63,6 +66,7 @@ export interface IGWProps {
         }
     };
     computationTimeout?: number;
+    onError?: (err: Error) => void;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -168,7 +172,18 @@ const App = observer<IGWProps>(function App(props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const reportError = useCallback((msg: string, code?: number) => {
+        const err = new Error(`Error${code ? `(${code})`: ''}: ${msg}`);
+        console.error(err);
+        props.onError?.(err);
+        if (code) {
+            commonStore.updateShowErrorResolutionPanel(code);
+        }
+    }, [props.onError]);
+
     return (
+        <ErrorContext value={{reportError}}>
+        <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError} >
         <div
             className={`${
                 darkMode === 'dark' ? 'dark' : ''
@@ -195,6 +210,7 @@ const App = observer<IGWProps>(function App(props) {
                         <CodeExport />
                         <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
+                        <Errorpanel />
                         <LogPanel />
                         <BinPanel/>
                         {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
@@ -254,6 +270,8 @@ const App = observer<IGWProps>(function App(props) {
                 )}
             </div>
         </div>
+        </ErrorBoundary>
+        </ErrorContext>
     );
 });
 
