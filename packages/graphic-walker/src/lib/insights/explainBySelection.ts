@@ -61,7 +61,6 @@ export async function explainBySelection(props: {
                 [getMeaAggKey(mea.fid, (mea.aggName ?? 'sum'))],
                 false
             );
-            console.log(outlierNormalization)
             let outlierScore = compareDistributionJS(
                 outlierNormalization.normalizedData,
                 outlierNormalization.normalizedParentData,
