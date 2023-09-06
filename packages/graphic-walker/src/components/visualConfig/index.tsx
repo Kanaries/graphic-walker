@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useGlobalStore } from '../../store';
-import { NonPositionChannelConfigList,PositionChannelConfigList } from '../../config'; 
+import { NonPositionChannelConfigList, PositionChannelConfigList } from '../../config';
 
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
@@ -15,14 +15,13 @@ const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
     const { showVisualConfigPanel } = commonStore;
     const { visualConfig } = vizStore;
-    const { coordSystem, geoms: [markType] } = visualConfig;
+    const {
+        coordSystem,
+        geoms: [markType],
+    } = visualConfig;
     const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
     const { t } = useTranslation();
-    const formatConfigList: (keyof IVisualConfig['format'])[] = [
-        'numberFormat',
-        'timeFormat',
-        'normalizedNumberFormat',
-    ];
+    const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
         numberFormat: visualConfig.format.numberFormat,
         timeFormat: visualConfig.format.timeFormat,
@@ -63,11 +62,7 @@ const VisualConfigPanel: React.FC = (props) => {
                 <h2 className="text-lg mb-4">{t('config.format')}</h2>
                 <p className="text-xs">
                     {t(`config.formatGuidesDocs`)}:{' '}
-                    <a
-                        target="_blank"
-                        className="underline text-blue-500"
-                        href="https://github.com/d3/d3-format#locale_format"
-                    >
+                    <a target="_blank" className="underline text-blue-500" href="https://github.com/d3/d3-format#locale_format">
                         {t(`config.readHere`)}
                     </a>
                 </p>
@@ -89,9 +84,9 @@ const VisualConfigPanel: React.FC = (props) => {
                         </div>
                     </div>
                 ))}
-                <h2 className="text-lg">{t('config.background')}</h2>
+                <hr className='my-4' />
                 <div className="my-2">
-                    <label className="block text-xs font-medium leading-6">{t(`config.color`)}</label>
+                    <label className="block text-xs font-medium leading-6">{t('config.background')} {t(`config.color`)}</label>
                     <div className="mt-1">
                         <input
                             type="text"
@@ -103,7 +98,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         />
                     </div>
                 </div>
-                <h2 className="text-lg">{t('config.independence')}</h2>
+                <label className="block text-xs font-medium leading-6">{t('config.independence')}</label>
                 <div className="my-2">
                     <div className="flex space-x-6">
                         {PositionChannelConfigList.map((pc) => (
@@ -134,27 +129,27 @@ const VisualConfigPanel: React.FC = (props) => {
                         ))}
                     </div>
                 </div>
-                <h2 className="text-lg">{t('config.zeroScale')}</h2>
+                <label className="block text-xs font-medium leading-6">{t('config.misc')}</label>
                 <div className="my-2">
-                    <Toggle
-                        label={t(`config.zeroScale`)}
-                        enabled={zeroScale}
-                        onChange={(en) => {
-                            setZeroScale(en);
-                        }}
-                    />
-                </div>
-                {isChoropleth && (
-                    <div className="my-2">
+                    <div className="flex space-x-6">
                         <Toggle
-                            label="include unmatched choropleth in scale"
-                            enabled={scaleIncludeUnmatchedChoropleth}
+                            label={t(`config.zeroScale`)}
+                            enabled={zeroScale}
                             onChange={(en) => {
-                                setScaleIncludeUnmatchedChoropleth(en);
+                                setZeroScale(en);
                             }}
                         />
+                        {isChoropleth && (
+                            <Toggle
+                                label="include unmatched choropleth in scale"
+                                enabled={scaleIncludeUnmatchedChoropleth}
+                                onChange={(en) => {
+                                    setScaleIncludeUnmatchedChoropleth(en);
+                                }}
+                            />
+                        )}
                     </div>
-                )}
+                </div>
                 <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}

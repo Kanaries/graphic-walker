@@ -10,6 +10,7 @@
         "x": "x軸",
         "y": "y軸",
         "zeroScale": "０を含む",
+        "misc": "その他",
         "formatGuidesDocs": "フォーマットガイド",
         "readHere": "ここを読む"
     },
