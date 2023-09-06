@@ -49,6 +49,7 @@ interface ReactVegaProps {
   vegaConfig: VegaGlobalConfig;
   /** @default "en-US" */
   locale?: string;
+  useSvg?: boolean;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -102,6 +103,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     vegaConfig,
     // format
     locale = 'en-US',
+    useSvg
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   // const mediaTheme = useCurrentMediaTheme(dark);
@@ -237,7 +239,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
       
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
           vegaRefs.current = [{
@@ -316,7 +318,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
               vegaRefs.current[id] = {
@@ -421,7 +423,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     vegaConfig,
     details,
-    text
+    text,
+    useSvg
   ]);
 
   const containerRef = useRef<HTMLDivElement>(null);

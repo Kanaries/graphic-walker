@@ -34,7 +34,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve } = visualConfig;
+    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve, useSvg } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -186,6 +186,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     ref={ref}
                     onGeomClick={onGeomClick}
                     locale={locale}
+                    useSvg={useSvg}
                 />
             )}
         </Resizable>
