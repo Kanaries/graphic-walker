@@ -68,7 +68,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                         }}
                                     >
                                         <FieldPill
-                                            className={`dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full truncate border border-transparent ${snapshot.isDragging ? "bg-purple-100 dark:bg-purple-800" : ""
+                                            className={`flex dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full truncate border border-transparent ${snapshot.isDragging ? "bg-purple-100 dark:bg-purple-800" : ""
                                                 }`}
                                             isDragging={snapshot.isDragging}
                                             ref={provided.innerRef}
@@ -84,7 +84,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                     </DropdownContext>
                                     {
                                         <FieldPill
-                                            className={`dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full border-purple-400 border truncate ${snapshot.isDragging ? "bg-purple-100 dark:bg-purple-800" : "hidden"
+                                            className={`dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full border-purple-400 border truncate ${snapshot.isDragging ? "bg-purple-100 dark:bg-purple-800 flex" : "hidden"
                                                 }`}
                                             isDragging={snapshot.isDragging}
                                         >
