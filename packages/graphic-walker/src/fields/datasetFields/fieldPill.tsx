@@ -7,7 +7,6 @@ import styled from 'styled-components';
 export const FieldPill = styled.div<{isDragging: boolean}>`
     transform: ${props => !props.isDragging && 'translate(0px, 0px) !important'};
     user-select: none;
-    display: flex;
     align-items: center;
     overflow: hidden;
     > *:not(span) {

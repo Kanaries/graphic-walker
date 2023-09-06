@@ -29,7 +29,7 @@ const DimFields: React.FC<Props> = (props) => {
                                 disabled={snapshot.isDragging}
                             >
                                 <FieldPill
-                                    className={`dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full truncate border border-transparent ${
+                                    className={`flex dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full truncate border border-transparent ${
                                         snapshot.isDragging ? "bg-blue-100 dark:bg-blue-800" : ""
                                     }`}
                                     ref={provided.innerRef}
@@ -46,7 +46,7 @@ const DimFields: React.FC<Props> = (props) => {
                                 {
                                     <FieldPill
                                         className={`dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full border-blue-400 border truncate ${
-                                            snapshot.isDragging ? "bg-blue-100 dark:bg-blue-800" : "hidden"
+                                            snapshot.isDragging ? "bg-blue-100 dark:bg-blue-800 flex" : "hidden"
                                         }`}
                                         isDragging={snapshot.isDragging}
                                     >
