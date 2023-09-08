@@ -3,6 +3,7 @@ import {Config as VlConfig} from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
 import type { feature } from 'topojson-client';
 import type {IViewQuery} from "./lib/viewQuery";
+import { DATE_TIME_DRILL_LEVELS } from './constants';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -115,6 +116,7 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
     basename?: string;
     path?: string[],
 }

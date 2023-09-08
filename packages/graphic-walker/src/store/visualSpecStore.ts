@@ -593,10 +593,11 @@ export class VizSpecStore {
                 fid: newVarKey,
                 dragId: newVarKey,
                 name: typeof name === 'function' ? name(originField.name) : name,
-                semanticType: "ordinal",
-                analyticType: "dimension",
+                semanticType: "temporal",
+                analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
+                timeUnit: drillLevel,
                 expression: {
                     op: "dateTimeDrill",
                     as: newVarKey,
