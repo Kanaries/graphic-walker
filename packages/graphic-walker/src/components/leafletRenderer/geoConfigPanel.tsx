@@ -8,6 +8,8 @@ import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
 import type { IGeoDataItem, IGeoUrl, Topology } from '../../interfaces';
 import DropdownSelect from '../dropdownSelect';
+import Dropzone from 'react-dropzone';
+import { GeojsonRenderer } from './geojsonRenderer';
 
 const emptyList = [];
 
@@ -28,7 +30,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
     const [loadedUrl, setLoadedUrl] = useState<IGeoUrl | undefined>(geoUrl);
     const [loading, setLoading] = useState(false);
 
-    const hasCustomData = url || (dataMode === 'GeoJSON' && geoJSON) || (dataMode === 'TopoJSON' && topoJSON);
+    const hasCustomData = url || geojson;
 
     const [selectItem, setSelectItemR] = useState(() => {
         const i = geoList.findIndex((x) => x.url === geoUrl?.url && x.type === geoUrl?.type);
@@ -75,6 +77,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
         if (!isCustom) {
             const item = geoList[selectItem];
             if (!item) {
+                vizStore.clearGeographicData();
             } else {
                 vizStore.setGeographicUrl({
                     type: item.type,
@@ -85,6 +88,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
             return;
         }
         try {
+            if (!(dataMode === 'GeoJSON' ? geoJSON : topoJSON) && loadedUrl) {
+                commonStore.setShowGeoJSONConfigPanel(false);
+                return;
+            }
             const json = JSON.parse(dataMode === 'GeoJSON' ? geoJSON : topoJSON);
             if (dataMode === 'TopoJSON') {
                 vizStore.setGeographicData(
@@ -203,17 +210,40 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                         }}
                                     />
                                 </div>
-                                <textarea
-                                    className="block w-full h-40 rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 resize-none"
-                                    value={dataMode === 'GeoJSON' ? geoJSON : topoJSON}
-                                    placeholder={t('geography_settings.jsonInputPlaceholder', { format: dataMode.toLowerCase() })}
-                                    onChange={(e) => {
-                                        (dataMode === 'GeoJSON' ? setGeoJSON : setTopoJSON)(e.target.value);
-                                        if (loadedUrl?.type === dataMode) {
-                                            setLoadedUrl(undefined);
+                                <Dropzone
+                                    onDrop={(acceptedFiles) => {
+                                        const f: File = acceptedFiles[0];
+                                        if (f) {
+                                            const reader = new FileReader();
+                                            reader.addEventListener('load', (event) => {
+                                                const data = event.target!.result as string;
+                                                setLoadedUrl(undefined);
+                                                (dataMode === 'GeoJSON' ? setGeoJSON : setTopoJSON)(data);
+                                            });
+                                            reader.readAsText(f);
                                         }
                                     }}
-                                />
+                                    noClick
+                                >
+                                    {({ getRootProps, getInputProps, isDragActive, open }) => (
+                                        <div
+                                            className={`relative flex-col justify-center flex w-full h-80 rounded ring-gray-300 shadow-sm ring-1 ring-inset`}
+                                            {...getRootProps()}
+                                        >
+                                            {isDragActive && (
+                                                <div
+                                                    onClick={open}
+                                                    className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 opacity-80"
+                                                ></div>
+                                            )}
+                                            <input {...getInputProps()} />
+                                            <div onClick={open} className="flex w-full items-center justify-center py-2">
+                                                {t('geography_settings.jsonInputPlaceholder', { format: dataMode.toLowerCase() })}
+                                            </div>
+                                            <GeojsonRenderer data={dataMode === 'GeoJSON' ? geoJSON : topoJSON} type={dataMode} url={loadedUrl} />
+                                        </div>
+                                    )}
+                                </Dropzone>
                                 {dataMode === 'TopoJSON' && (
                                     <div className="flex items-center space-x-2">
                                         <label className="text-xs whitespace-nowrap capitalize">{t('geography_settings.objectKey')}</label>

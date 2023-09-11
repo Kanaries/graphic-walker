@@ -866,6 +866,14 @@ export class VizSpecStore {
         });
     }
 
+    public clearGeographicData() {
+        this.useMutable(({ config }) => {
+            config.geojson = undefined;
+            config.geoKey = undefined;
+            config.geoUrl = undefined;
+        });
+    }
+
     public setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
         const geoJSON =
             data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
