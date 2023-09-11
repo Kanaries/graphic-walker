@@ -185,7 +185,7 @@
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
                     "objectKey": "Feature のキー",
-                    "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
+                    "jsonInputPlaceholder": "{{format}}ファイルをここに",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "{{format}} URLを入力",
                     "load": "ロード"

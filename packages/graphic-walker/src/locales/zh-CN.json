@@ -191,7 +191,7 @@
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
                     "objectKey": "提取要素键",
-                    "jsonInputPlaceholder": "在此粘贴 {{format}}",
+                    "jsonInputPlaceholder": "拖动{{format}}文件到此",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "输入在线资源地址",
                     "load": "加载"
