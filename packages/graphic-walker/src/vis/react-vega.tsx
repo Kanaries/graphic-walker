@@ -10,6 +10,8 @@ import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '.
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView } from './spec/view';
 import { NULL_FIELD } from './spec/field';
+import canvasSize from 'canvas-size';
+import { Errors, useReporter } from '../utils/reportError';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -49,6 +51,7 @@ interface ReactVegaProps {
   vegaConfig: VegaGlobalConfig;
   /** @default "en-US" */
   locale?: string;
+  useSvg?: boolean;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -102,6 +105,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     vegaConfig,
     // format
     locale = 'en-US',
+    useSvg
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   // const mediaTheme = useCurrentMediaTheme(dark);
@@ -142,6 +146,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   const rowRepeatFields = useMemo(() => rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas, [rowDims, rowMeas]);//rowMeas.slice(0, -1);
   const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
+
+  const { reportError: reportGWError } = useReporter();
 
   const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
 
@@ -237,9 +243,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       }
       
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
+          const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+          if (!success) {
+            if (canvas) {
+              reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+            } else {
+              reportGWError("canvas not found", Errors.canvasExceedSize);
+            }
+          }
           vegaRefs.current = [{
             w: container?.clientWidth ?? res.view.width(),
             h: container?.clientHeight ?? res.view.height(),
@@ -316,9 +330,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
+              const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+              if (!success) {
+                if (canvas) {
+                  reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+                } else {
+                  reportGWError("canvas not found", Errors.canvasExceedSize);
+                }
+              }
               vegaRefs.current[id] = {
                 w: container?.clientWidth ?? res.view.width(),
                 h: container?.clientHeight ?? res.view.height(),
@@ -421,7 +443,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     vegaConfig,
     details,
-    text
+    text,
+    useSvg
   ]);
 
   const containerRef = useRef<HTMLDivElement>(null);

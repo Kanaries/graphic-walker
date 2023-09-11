@@ -2,6 +2,7 @@ import {Config as VgConfig, View} from 'vega';
 import {Config as VlConfig} from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
 import type { feature } from 'topojson-client';
+import { DATE_TIME_DRILL_LEVELS } from './constants';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -114,6 +115,7 @@ export interface IField {
     geoRole?: IGeoRole;
     computed?: boolean;
     expression?: IExpression;
+    timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
     basename?: string;
     path?: string[];
 }
@@ -247,6 +249,7 @@ export interface IVisualConfig {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     background?: string;
+    useSvg?: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;
@@ -291,6 +294,7 @@ export interface IVisualLayout {
         width: number;
         height: number;
     };
+    useSvg?: boolean;
     geojson?: FeatureCollection;
     geoKey?: string;
     geoUrl?: IGeoUrl;

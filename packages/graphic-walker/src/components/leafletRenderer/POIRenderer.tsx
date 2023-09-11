@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Tooltip, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Tooltip, CircleMarker, AttributionControl } from "react-leaflet";
 import type { Map } from "leaflet";
 import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import { getMeaAggKey } from "../../utils";
@@ -137,11 +137,12 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
     }, [defaultAggregated, details, size, color, opacity]);
     
     return (
-        <MapContainer center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <AttributionControl prefix="Leaflet" />
             {Boolean(latitude && longitude) && data.map((row, i) => {
                 const lat = row[latitude!.fid];
                 const lng = row[longitude!.fid];

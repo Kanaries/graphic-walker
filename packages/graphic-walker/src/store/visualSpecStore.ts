@@ -86,6 +86,7 @@ export class VizSpecStore {
     showBinSettingPanel: boolean = false;
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
+    showErrorResolutionPanel: number = 0;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -517,6 +518,10 @@ export class VizSpecStore {
 
     updateSelectedMarkObject(newMarkObj: Record<string, string | number | undefined>) {
         this.selectedMarkObject = newMarkObj;
+    }
+
+    updateShowErrorResolutionPanel(errCode: number) {
+        this.showErrorResolutionPanel = errCode;
     }
 }
 

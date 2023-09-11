@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField } from './interfaces';
@@ -20,9 +20,7 @@ import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import ClickMenu from './components/clickMenu';
-import {
-    LightBulbIcon,
-} from "@heroicons/react/24/outline";
+import { LightBulbIcon } from '@heroicons/react/24/outline';
 import AskViz from './components/askViz';
 import { VizSpecStore } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
@@ -30,6 +28,9 @@ import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
+import { ErrorContext } from './utils/reportError';
+import { ErrorBoundary } from 'react-error-boundary';
+import Errorpanel from './components/errorpanel';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -53,6 +54,7 @@ export interface BaseVizProps {
     dataSelection?: React.ReactChild;
     computation?: IComputationFunction;
     computationTimeout?: number;
+    onError?: (err: Error) => void;
 }
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
@@ -94,84 +96,113 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const reportError = useCallback(
+        (msg: string, code?: number) => {
+            const err = new Error(`Error${code ? `(${code})` : ''}: ${msg}`);
+            console.error(err);
+            props.onError?.(err);
+            if (code) {
+                vizStore.updateShowErrorResolutionPanel(code);
+            }
+        },
+        [props.onError]
+    );
+
     const { segmentKey, vizEmbededMenu } = vizStore;
 
     const c = useMemo(() => (computation ? withTimeout(computation, computationTimeout) : async () => []), [computation, computationTimeout]);
     return (
-        <ComputationContext.Provider value={c}>
-            <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                    {props.dataSelection}
-                    <div className="px-2 mx-2">
-                        <SegmentNav />
-                        {segmentKey === ISegmentKey.vis && <VisNav />}
-                    </div>
-                    {segmentKey === ISegmentKey.vis && (
-                        <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
-                            {enhanceAPI?.features?.askviz && (
-                                <AskViz api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''} headers={enhanceAPI?.header} />
-                            )}
-                            <VisualSettings rendererHandler={rendererRef} darkModePreference={darkMode} exclude={toolbar?.exclude} extra={toolbar?.extra} />
-                            <CodeExport />
-                            <ExplainData themeKey={themeKey} dark={darkMode}/>
-                            <VisualConfig />
-                            <LogPanel />
-                            <BinPanel/>
-                            {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
-                            <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                                <div className="md:col-span-3 xl:col-span-1">
-                                    <DatasetFields />
-                                </div>
-                                <div className="md:col-span-2 xl:col-span-1">
-                                    <FilterField />
-                                    <AestheticFields />
-                                </div>
-                                <div className="md:col-span-7 xl:col-span-4">
-                                    <div>
-                                        <PosFields />
-                                    </div>
-                                    <div
-                                    className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
-                                    style={{ minHeight: '600px', overflow: 'auto' }}
-                                    onMouseLeave={() => {
-                                        vizEmbededMenu.show && vizStore.closeEmbededMenu();
-                                    }}
-                                    onClick={() => {
-                                        vizEmbededMenu.show && vizStore.closeEmbededMenu();
-                                    }}
-                                >
-                                        {computation && (
-                                            <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={darkMode} themeConfig={themeConfig} computationFunction={computation} />
-                                        )}
-                                    {vizEmbededMenu.show && (
-                                        <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
+        <ErrorContext value={{ reportError }}>
+            <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
+                <ComputationContext.Provider value={c}>
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+                        <div className="bg-white dark:bg-zinc-900 dark:text-white">
+                            {props.dataSelection}
+                            <div className="px-2 mx-2">
+                                <SegmentNav />
+                                {segmentKey === ISegmentKey.vis && <VisNav />}
+                            </div>
+                            {segmentKey === ISegmentKey.vis && (
+                                <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
+                                    {enhanceAPI?.features?.askviz && (
+                                        <AskViz
+                                            api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''}
+                                            headers={enhanceAPI?.header}
+                                        />
+                                    )}
+                                    <VisualSettings
+                                        rendererHandler={rendererRef}
+                                        darkModePreference={darkMode}
+                                        exclude={toolbar?.exclude}
+                                        extra={toolbar?.extra}
+                                    />
+                                    <CodeExport />
+                                    <ExplainData themeKey={themeKey} dark={darkMode} />
+                                    <VisualConfig />
+                                    <Errorpanel />
+                                    <LogPanel />
+                                    <BinPanel />
+                                    {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
+                                    <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
+                                        <div className="md:col-span-3 xl:col-span-1">
+                                            <DatasetFields />
+                                        </div>
+                                        <div className="md:col-span-2 xl:col-span-1">
+                                            <FilterField />
+                                            <AestheticFields />
+                                        </div>
+                                        <div className="md:col-span-7 xl:col-span-4">
+                                            <div>
+                                                <PosFields />
+                                            </div>
                                             <div
-                                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                                className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
+                                                style={{ minHeight: '600px', overflow: 'auto' }}
+                                                onMouseLeave={() => {
+                                                    vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                                }}
                                                 onClick={() => {
-                                                    vizStore.closeEmbededMenu();
-                                                    vizStore.setShowInsightBoard(true);
+                                                    vizEmbededMenu.show && vizStore.closeEmbededMenu();
                                                 }}
                                             >
-                                                <span className="flex-1 pr-2">
-                                                    {t("App.labels.data_interpretation")}
-                                                </span>
-                                                <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
+                                                {computation && (
+                                                    <ReactiveRenderer
+                                                        ref={rendererRef}
+                                                        themeKey={themeKey}
+                                                        dark={darkMode}
+                                                        themeConfig={themeConfig}
+                                                        computationFunction={computation}
+                                                    />
+                                                )}
+                                                {vizEmbededMenu.show && (
+                                                    <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
+                                                        <div
+                                                            className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                                            onClick={() => {
+                                                                vizStore.closeEmbededMenu();
+                                                                vizStore.setShowInsightBoard(true);
+                                                            }}
+                                                        >
+                                                            <span className="flex-1 pr-2">{t('App.labels.data_interpretation')}</span>
+                                                            <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
+                                                        </div>
+                                                    </ClickMenu>
+                                                )}
                                             </div>
-                                        </ClickMenu>
-                                    )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+                            {segmentKey === ISegmentKey.data && (
+                                <div className="m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
+                                    <DatasetConfig />
+                                </div>
+                            )}
                         </div>
-                    )}
-                    {segmentKey === ISegmentKey.data && (
-                        <div className="m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
-                            <DatasetConfig />
-                        </div>
-                    )}
-                </div>
-            </div>
-        </ComputationContext.Provider>
+                    </div>
+                </ComputationContext.Provider>
+            </ErrorBoundary>
+        </ErrorContext>
     );
 });
 

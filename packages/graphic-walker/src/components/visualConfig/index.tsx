@@ -13,8 +13,7 @@ import { runInAction, toJS } from 'mobx';
 
 const VisualConfigPanel: React.FC = (props) => {
     const vizStore = useVizStore();
-    const { showVisualConfigPanel } = vizStore;
-    const { config, layout } = vizStore;
+    const { config, layout, showVisualConfigPanel } = vizStore;
     const {
         coordSystem,
         geoms: [markType],
@@ -36,6 +35,7 @@ const VisualConfigPanel: React.FC = (props) => {
         size: layout.resolve.size,
     });
     const [zeroScale, setZeroScale] = useState<boolean>(layout.zeroScale);
+    const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(layout.background);
 
@@ -84,9 +84,11 @@ const VisualConfigPanel: React.FC = (props) => {
                         </div>
                     </div>
                 ))}
-                <h2 className="text-lg">{t('config.background')}</h2>
+                <hr className="my-4" />
                 <div className="my-2">
-                    <label className="block text-xs font-medium leading-6">{t(`config.color`)}</label>
+                    <label className="block text-xs font-medium leading-6">
+                        {t('config.background')} {t(`config.color`)}
+                    </label>
                     <div className="mt-1">
                         <input
                             type="text"
@@ -98,7 +100,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         />
                     </div>
                 </div>
-                <h2 className="text-lg">{t('config.independence')}</h2>
+                <label className="block text-xs font-medium leading-6">{t('config.independence')}</label>
                 <div className="my-2">
                     <div className="flex space-x-6">
                         {PositionChannelConfigList.map((pc) => (
@@ -129,27 +131,34 @@ const VisualConfigPanel: React.FC = (props) => {
                         ))}
                     </div>
                 </div>
-                <h2 className="text-lg">{t('config.zeroScale')}</h2>
+                <label className="block text-xs font-medium leading-6">{t('config.misc')}</label>
                 <div className="my-2">
-                    <Toggle
-                        label={t(`config.zeroScale`)}
-                        enabled={zeroScale}
-                        onChange={(en) => {
-                            setZeroScale(en);
-                        }}
-                    />
-                </div>
-                {isChoropleth && (
-                    <div className="my-2">
+                    <div className="flex space-x-6">
                         <Toggle
-                            label="include unmatched choropleth in scale"
-                            enabled={scaleIncludeUnmatchedChoropleth}
+                            label={t(`config.zeroScale`)}
+                            enabled={zeroScale}
                             onChange={(en) => {
-                                setScaleIncludeUnmatchedChoropleth(en);
+                                setZeroScale(en);
                             }}
                         />
+                        <Toggle
+                            label={t(`config.svg`)}
+                            enabled={svg}
+                            onChange={(en) => {
+                                setSvg(en);
+                            }}
+                        />
+                        {isChoropleth && (
+                            <Toggle
+                                label="include unmatched choropleth in scale"
+                                enabled={scaleIncludeUnmatchedChoropleth}
+                                onChange={(en) => {
+                                    setScaleIncludeUnmatchedChoropleth(en);
+                                }}
+                            />
+                        )}
                     </div>
-                )}
+                </div>
                 <div className="mt-4">
                     <PrimaryButton
                         text={t('actions.confirm')}
@@ -161,7 +170,8 @@ const VisualConfigPanel: React.FC = (props) => {
                                     ['zeroScale', zeroScale],
                                     ['scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth],
                                     ['background', background],
-                                    ['resolve', resolve]
+                                    ['resolve', resolve],
+                                    ['useSvg', svg],
                                 );
                                 vizStore.setShowVisualConfigPanel(false);
                             });

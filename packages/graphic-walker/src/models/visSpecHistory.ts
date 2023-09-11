@@ -198,10 +198,11 @@ const actions: {
             fid: newVarKey,
             dragId: newVarKey,
             name: newName,
-            semanticType: "ordinal",
-            analyticType: "dimension",
+            semanticType: "temporal",
+            analyticType: originField.analyticType,
             aggName: 'sum',
             computed: true,
+            timeUnit: drillLevel,
             expression: {
                 op: "dateTimeDrill",
                 as: newVarKey,

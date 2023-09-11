@@ -88,8 +88,10 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         label: t(`drill.levels.${level}`),
                         disabled: isDateTimeDrilled && f.expression?.params.find(p => p.type === 'value')?.value === level,
                         onPress() {
-                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(f => f.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
-                            vizStore.createDateTimeDrilledField(channel, index, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
+                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
+                            const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
+                            vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
                         },
                     })),
                 },
