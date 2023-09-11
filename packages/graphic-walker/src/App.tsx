@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IGeoDataItem } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -67,6 +67,7 @@ export interface IGWProps {
     };
     computationTimeout?: number;
     onError?: (err: Error) => void;
+    geoList?: IGeoDataItem[];
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -213,7 +214,7 @@ const App = observer<IGWProps>(function App(props) {
                         <Errorpanel />
                         <LogPanel />
                         <BinPanel/>
-                        {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
+                        {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />

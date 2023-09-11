@@ -860,6 +860,12 @@ export class VizSpecStore {
         this.importStoInfo(content);
     }
 
+    public setGeographicUrl(geoUrl: IGeoUrl) {
+        this.useMutable(({ config }) => {
+            config.geoUrl = geoUrl;
+        });
+    }
+
     public setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
         const geoJSON =
             data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
