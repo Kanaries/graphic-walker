@@ -40,6 +40,7 @@ interface ModalProps {
     onClose?: () => void;
     show?: boolean;
     title?: string;
+    containerStyle?: React.CSSProperties;
 }
 const Modal: React.FC<ModalProps> = (props) => {
     const { onClose, title, show } = props;
@@ -60,7 +61,7 @@ const Modal: React.FC<ModalProps> = (props) => {
                 }
             }}
         >
-            <Container role="dialog" className="bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800" onMouseDown={(e) => e.stopPropagation()}>
+            <Container style={props.containerStyle} role="dialog" className="bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800" onMouseDown={(e) => e.stopPropagation()}>
             <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                   <button
                     type="button"

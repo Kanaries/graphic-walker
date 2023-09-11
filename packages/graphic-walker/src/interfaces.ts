@@ -498,3 +498,9 @@ export type IGeographicData = (
         objectKey?: string;
     }
 );
+
+export type IGeoDataItem = {
+    type: 'GeoJSON' | 'TopoJSON';
+    name: string;
+    url: string;
+}
