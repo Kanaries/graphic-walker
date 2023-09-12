@@ -49,6 +49,13 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
     useEffect(() => setK((x) => x + 1), [data]);
 
     if (!d && !props.url) return null;
+    if (!data) {
+        return (
+            <div className="w-full flex-1 flex items-center justify-center border-l border-gray-500">
+                Loading Geo Data...
+            </div>
+        );
+    }
     return (
         <div className="w-full flex-1 relative">
             <Renderer key={k} data={data} />
@@ -93,4 +100,3 @@ function getGeojson(str: string, type: 'GeoJSON' | 'TopoJSON') {
     }
     return undefined;
 }
-
