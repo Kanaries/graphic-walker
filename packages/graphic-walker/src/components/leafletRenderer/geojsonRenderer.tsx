@@ -4,6 +4,7 @@ import { useGeoJSON } from '../../hooks/service';
 import { IGeoUrl } from '../../interfaces';
 import { FeatureCollection, Geometry } from 'geojson';
 import { feature } from 'topojson-client';
+import { canvas } from 'leaflet';
 
 const resolveCoords = (featureGeom: Geometry): [lat: number, lng: number][][] => {
     switch (featureGeom.type) {
@@ -47,15 +48,15 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
     const [k, setK] = useState(0);
     useEffect(() => setK((x) => x + 1), [data]);
 
-    if (!data) return null;
+    if (!d && !props.url) return null;
     return (
         <div className="w-full flex-1 relative">
-            <Renderer key={k} data={data} />{' '}
+            <Renderer key={k} data={data} />
         </div>
     );
 }
 
-function Renderer(props: { data: FeatureCollection }) {
+function Renderer(props: { data?: FeatureCollection }) {
     return (
         <MapContainer
             attributionControl={false}
@@ -64,6 +65,7 @@ function Renderer(props: { data: FeatureCollection }) {
                 [-180, -90],
                 [180, 90],
             ]}
+            renderer={canvas()}
             zoom={1}
             style={{ width: '100%', height: '100%', zIndex: 1 }}
         >
@@ -72,7 +74,7 @@ function Renderer(props: { data: FeatureCollection }) {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <AttributionControl prefix="Leaflet" />
-            <GeoJSON data={props.data} />
+            {props.data && <GeoJSON data={props.data} />}
         </MapContainer>
     );
 }
@@ -91,3 +93,4 @@ function getGeojson(str: string, type: 'GeoJSON' | 'TopoJSON') {
     }
     return undefined;
 }
+

@@ -227,17 +227,14 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                 >
                                     {({ getRootProps, getInputProps, isDragActive, open }) => (
                                         <div
-                                            className={`relative flex-col justify-center flex w-full h-80 rounded ring-gray-300 shadow-sm ring-1 ring-inset`}
+                                            className={`relative justify-center flex w-full h-80 rounded ring-gray-300 shadow-sm ring-1 ring-inset`}
                                             {...getRootProps()}
                                         >
                                             {isDragActive && (
-                                                <div
-                                                    onClick={open}
-                                                    className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 opacity-80"
-                                                ></div>
+                                                <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 opacity-80" />
                                             )}
                                             <input {...getInputProps()} />
-                                            <div onClick={open} className="flex w-full items-center justify-center py-2">
+                                            <div onClick={open} className="flex h-full items-center justify-center w-48">
                                                 {t('geography_settings.jsonInputPlaceholder', { format: dataMode.toLowerCase() })}
                                             </div>
                                             <GeojsonRenderer data={dataMode === 'GeoJSON' ? geoJSON : topoJSON} type={dataMode} url={loadedUrl} />
