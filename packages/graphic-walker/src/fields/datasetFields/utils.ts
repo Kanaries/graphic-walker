@@ -38,46 +38,46 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                     disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                     children: [
                         {
-                            label: "Bin",
+                            label: t('bin'),
                             onPress() {
                                 vizStore.createBinField(channel, index, "bin");
                             },
                         },
                         {
-                            label: "Bin Count",
+                            label: t('binCount'),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createBinField(channel, index, "binCount");
                             },
                         },
                         {
-                            label: "Log10",
+                            label: t('log', {base: 10}),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createLogField(channel, index, "log", 10);
                             },
                         },
                         {
-                            label: "Log2",
+                            label: t('log', {base: 2}),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createLogField(channel, index, "log", 2);
                             },
                         },
                         {
-                            label:"Log(customize)",
-                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
-                            onPress(){
-                                commonStore.setShowLogSettingPanel(true);
-                                commonStore.setCreateField({channel:channel,index:index})
-                            }
-                        },
-                        {
-                            label:"Bin(customize)",
+                            label:t('binCustom'),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress(){
                                 commonStore.setShowBinSettingPanel(true);
                                 commonStore.setCreateField({channel:channel,index:index});
+                            }
+                        },
+                        {
+                            label:t('logCustom'),
+                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
+                            onPress(){
+                                commonStore.setShowLogSettingPanel(true);
+                                commonStore.setCreateField({channel:channel,index:index})
                             }
                         },
                         
