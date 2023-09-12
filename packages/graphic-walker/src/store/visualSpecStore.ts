@@ -582,7 +582,7 @@ export class VizSpecStore {
             encodings[stateKey].push(logField);
         });
     }
-    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string)) {
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string) {
         if (stateKey === "filters") {
             return;
         }
@@ -611,6 +611,10 @@ export class VizSpecStore {
                             type: 'value',
                             value: drillLevel,
                         },
+                        {
+                            type: 'format',
+                            value: format
+                        }
                     ],
                 },
             };

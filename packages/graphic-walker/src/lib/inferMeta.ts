@@ -11,6 +11,23 @@ const COMMON_TIME_FORMAT: RegExp[] = [
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, // YYYY-MM-DDTHH:MM:SS (ISO-8601)
 ];
 
+const TIME_FORMAT = [
+    '%Y-%m-%d',
+    '%m/%d/%Y',
+    '%d/%m/%Y',
+    '%Y/%m/%d',
+    '%Y.%m.%d',
+    '%Y-%m-%d %H:%i:%s',
+    '%Y-%m-%dT%H:%i:%s',
+]
+
+export function getTimeFormat(data: string | number) {
+    if (typeof data === 'number') return 'timestamp';
+    const i = COMMON_TIME_FORMAT.findIndex(x => x.test(data));
+    if (i >= 0) return TIME_FORMAT[i];
+    return ''
+}
+
 /**
  * check if this array is a date time array based on some common date format
  * @param data string array

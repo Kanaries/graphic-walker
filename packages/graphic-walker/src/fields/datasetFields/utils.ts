@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
-import { CommonStore } from "../../store/commonStore";
+import { useComputationFunc } from "../../renderer/hooks";
+import { getSample } from "../../computation/serverComputation";
+import { getTimeFormat } from "../../lib/inferMeta";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -14,6 +16,7 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
     const { vizStore, commonStore } = useGlobalStore();
     const fields = vizStore.draggableFieldState[channel];
     const { t } = useTranslation('translation', { keyPrefix: "field_menu" });
+    const computation = useComputationFunc();
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
@@ -92,11 +95,11 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
                             const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
                             const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
-                            vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
+                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`, format));
                         },
                     })),
                 },
             ]);
         });
-    }, [channel, fields, vizStore, t]);
+    }, [channel, fields, vizStore, t, computation]);
 };
