@@ -218,6 +218,10 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
+    if (!features) {
+        return <div className="flex items-center justify-center w-full h-full">Loading Geo Data...</div>
+    }
+
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
