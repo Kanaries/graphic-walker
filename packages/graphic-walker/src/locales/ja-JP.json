@@ -148,6 +148,9 @@
             "auto_title": "ビュー {{idx}}",
             "chart_name": "ビュー名"
         },
+        "askviz":{
+            "placeholder": "データセットから描画したい視覚化は何ですか？"
+        },
         "tabpanel": {
             "menubar": {
                 "undo": "元に戻す",

@@ -159,6 +159,9 @@
                 "undo": "Undo",
                 "redo": "Redo"
             },
+            "askviz":{
+                "placeholder": "What visualization your want to draw from the dataset"
+            },
             "settings": {
                 "toggle": {
                     "aggregation": "Aggregation",

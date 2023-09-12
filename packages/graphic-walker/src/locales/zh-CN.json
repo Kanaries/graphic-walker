@@ -154,6 +154,9 @@
             "auto_title": "图表 {{idx}}",
             "chart_name": "图表名称"
         },
+        "askviz":{
+            "placeholder": "想从数据集中绘制哪种可视化呢?"
+        },
         "tabpanel": {
             "menubar": {
                 "undo": "撤销",
