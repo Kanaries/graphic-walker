@@ -5,6 +5,7 @@ import { IGeoUrl } from '../../interfaces';
 import { FeatureCollection, Geometry } from 'geojson';
 import { feature } from 'topojson-client';
 import { canvas } from 'leaflet';
+import { useTranslation } from 'react-i18next';
 
 const resolveCoords = (featureGeom: Geometry): [lat: number, lng: number][][] => {
     switch (featureGeom.type) {
@@ -47,12 +48,13 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
     const data = useGeoJSON(d, props.url);
     const [k, setK] = useState(0);
     useEffect(() => setK((x) => x + 1), [data]);
+    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
     if (!d && !props.url) return null;
     if (!data) {
         return (
             <div className="w-full flex-1 flex items-center justify-center border-l border-gray-500">
-                Loading Geo Data...
+                {t('geography_settings.loading')}
             </div>
         );
     }

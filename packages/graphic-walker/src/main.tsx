@@ -6,6 +6,7 @@ if (!import.meta.env.DEV) {
 }
 
 embedGraphicWalker(document.getElementById('root') as HTMLElement, {
+    i18nLang: 'zh-CN',
     geoList: [
         { name: 'World Countries', type: 'TopoJSON', url: 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json' },
         {

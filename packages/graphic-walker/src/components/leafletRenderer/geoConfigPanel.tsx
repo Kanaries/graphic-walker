@@ -190,7 +190,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                     />
                                     <DefaultButton
                                         text={t('geography_settings.load')}
-                                        className="mr-2"
+                                        className="mr-2 flex-shrink-0"
                                         disabled={loading}
                                         icon={loading ? <Spinner className="text-black" /> : undefined}
                                         onClick={() => {

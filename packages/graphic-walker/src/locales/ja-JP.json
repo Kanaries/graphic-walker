@@ -5,7 +5,7 @@
         "timeFormat": "日付",
         "normalizedNumberFormat": "正規化された数字",
         "background": "背景",
-        "color":"色",
+        "color": "色",
         "independence": "独立したスケーリング",
         "x": "x軸",
         "y": "y軸",
@@ -165,9 +165,11 @@
                     "ascending": "昇順に並べ替える",
                     "descending": "降順に並べ替える",
                     "transpose": "転置",
+                    "config": "設定",
                     "export_chart": "エクスポート",
                     "export_chart_as": "{{type}}としてエクスポート",
-                    "export_code": "コードをエクスポート"
+                    "export_code": "コードをエクスポート",
+                    "geojson": "地理情報設定"
                 },
                 "limit": "上限",
                 "size": "サイズ変更",
@@ -188,7 +190,8 @@
                     "jsonInputPlaceholder": "{{format}}ファイルをここに",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "{{format}} URLを入力",
-                    "load": "ロード"
+                    "load": "ロード",
+                    "loading": "地理データを読み込んでいます..."
                 }
             },
             "DatasetFields": {
@@ -247,8 +250,13 @@
         "to_dim": "ディメンションに変更",
         "to_mea": "メジャーに変更",
         "new_calc": "計算フィールドを作成",
+        "bin": "ビン",
+        "binCount": "ビンカウント",
+        "log": "対数({{ base }})",
+        "binCustom": "ビン（カスタム）",
+        "logCustom": "対数（カスタム）",
         "drill": {
-            "name": "ドリルダウン/アップ",
+            "name": "時間単位",
             "levels": {
                 "year": "年",
                 "quarter": "四半期",
@@ -260,5 +268,15 @@
                 "second": "秒"
             }
         }
+    },
+    "calc": {
+        "bin_panel_title": "ビン",
+        "bin_panel_desc": "フィールドのビン構成を設定する",
+        "bin_panel_option_widths": "等しい幅のビン",
+        "bin_panel_option_counts": "等しい数のビン",
+        "bin_panel_number": "ビンの数",
+        "log_panel_title": "対数変換",
+        "log_panel_desc": "フィールドの対数設定を設定する",
+        "log_panel_number": "対数の底"
     }
 }
