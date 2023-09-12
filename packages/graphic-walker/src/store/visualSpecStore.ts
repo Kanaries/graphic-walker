@@ -173,6 +173,7 @@ export class VizSpecStore {
         makeAutoObservable(this, {
             visList: observable.shallow,
             computationFunction: observable.ref,
+            visualConfig: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
