@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationFunction } from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -22,6 +22,7 @@ type IPureRendererProps =
           sort?: 'none' | 'ascending' | 'descending';
           limit?: number;
           locale?: string;
+          channelScales?: IChannelScales;
       } & (
           | {
                 type: 'remote';
@@ -38,7 +39,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit, themeConfig } = props;
+    const { name, themeKey, dark, visualState, visualConfig, type, locale, sort, limit, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -115,6 +116,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                         visualConfig={visualConfig}
                         locale={locale ?? 'en-US'}
                         computationFunction={computation}
+                        channelScales={channelScales}
                     />
                 )}
             </div>

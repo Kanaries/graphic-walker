@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IGeoDataItem } from './interfaces';
+import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -48,7 +48,7 @@ export interface IGWProps {
     fieldKeyGuard?: boolean;
     /** @default "vega" */
     themeKey?: IThemeKey;
-    themeConfig?: any;
+    themeConfig?: VegaGlobalConfig;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationFunction;
@@ -68,6 +68,7 @@ export interface IGWProps {
     computationTimeout?: number;
     onError?: (err: Error) => void;
     geoList?: IGeoDataItem[];
+    channelScales?: IChannelScales;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -238,7 +239,7 @@ const App = observer<IGWProps>(function App(props) {
                                     }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} />
+                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} channelScales={props.channelScales} />
                                     )}
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>

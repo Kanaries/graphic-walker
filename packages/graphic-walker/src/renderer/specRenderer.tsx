@@ -5,7 +5,7 @@ import React, { forwardRef, useMemo } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { builtInThemes } from '../vis/theme';
@@ -23,14 +23,15 @@ interface SpecRendererProps {
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
     computationFunction: IComputationFunction;
-    themeConfig?: any;
+    themeConfig?: VegaGlobalConfig;
+    channelScales?: IChannelScales;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction, themeConfig: customizedThemeConfig },
+    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction, themeConfig: customizedThemeConfig, channelScales },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -144,10 +145,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={{
+            size={(size.mode === 'fixed' || isSpatial) ? {
                 width: size.width + 'px',
                 height: size.height + 'px',
-            }}
+            }: undefined}
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
@@ -187,6 +188,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     onGeomClick={onGeomClick}
                     locale={locale}
                     useSvg={useSvg}
+                    channelScales={channelScales}
+                    dark={dark}
                 />
             )}
         </Resizable>
