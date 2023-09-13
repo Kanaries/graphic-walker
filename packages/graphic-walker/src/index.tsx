@@ -40,5 +40,5 @@ export const GraphicWalker = observer(forwardRef<IGWHandler, IGWProps>((props, r
 export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
-export { ISegmentKey } from './interfaces';
+export { ISegmentKey, ColorSchemes } from './interfaces';
 export { resolveSpecFromStoInfo } from './utils/save';
