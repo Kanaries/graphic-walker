@@ -616,24 +616,26 @@ export type IColorSchemes =
       };
 
 export type IScale = {
-    domain?: [number, number] | string[],
-    domainMin?: number,
-    domainMax?: number,
-    range?: [number, number] | string[],
-    rangeMin?: number,
-    rangeMax?: number,
-}
+    domain?: [number, number] | string[];
+    domainMin?: number;
+    domainMax?: number;
+    range?: [number, number] | string[];
+    rangeMin?: number;
+    rangeMax?: number;
+};
 
-export type IColorScale = IScale & { scheme?: IColorSchemes }
+export type IColorScale = IScale & { scheme?: IColorSchemes };
 
 export type IFieldInfos = {
-    semanticType: ISemanticType,
-    theme: 'dark' | 'light',
-    values: any[],
-}
+    semanticType: ISemanticType;
+    theme: 'dark' | 'light';
+    values: any[];
+};
 
 export interface IChannelScales {
     color?: IColorScale | ((info: IFieldInfos) => IColorScale);
     opacity?: IScale | ((info: IFieldInfos) => IScale);
     size?: IScale | ((info: IFieldInfos) => IScale);
+    radius?: IScale | ((info: IFieldInfos) => IScale);
+    theta?: IScale | ((info: IFieldInfos) => IScale);
 }

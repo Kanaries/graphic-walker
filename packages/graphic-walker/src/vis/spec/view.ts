@@ -102,7 +102,9 @@ export function resolveScales(scale: IChannelScales, view: any, data: readonly a
     addScale('color');
     addScale('opacity');
     addScale('size');
-    console.log(newEncoding)
+    addScale('radius');
+    addScale('theta');
+
     return {
         ...view,
         encoding: newEncoding

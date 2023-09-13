@@ -296,6 +296,56 @@ When you are using Server-side computation, you should provide `rawFields` toget
 
 Customize the toolbar.
 
+#### `channelScales`: optional _{ [`IChannelScales`](./packages/graphic-walker/src/interfaces.ts) }_
+
+Customize the scale of color, opacity, and size channel.
+see [Vega Docs](https://vega.github.io/vega/docs/schemes/#reference) for available color schemes.
+
+Here are some examples:
+```ts
+// use a another color pattren
+const channelScales = {
+    color: {
+        scheme: "tableau10"
+    }
+}
+// use a diffrent color pattren in dark mode and light mode
+const channelScales = {
+    color({theme}) {
+        if(theme === 'dark') {
+            return {
+                scheme: 'darkblue'
+            }
+        }else {
+            return {
+                scheme: 'lightmulti'
+            }
+        }
+    }
+}
+// use a custom color palette
+const channelScales = {
+    color: {
+        range: ['red', 'blue', '#000000']
+    }
+}
+// customing opacity
+const channelScales = {
+    // map value of 0 - 255 to opacity 0 - 1
+    opacity: {
+        range: [0, 1],
+        domain: [0, 255],
+    }
+}
+// set min radius for arc chart
+const channelScales = {
+    radius: {
+        rangeMin: 20
+    }
+}
+
+```
+
 ### Ref
 
 ```ts
