@@ -9,7 +9,8 @@ const formatDate = (date: Date) => {
     const H = date.getHours();
     const m = date.getMinutes();
     const s = date.getSeconds();
-    return `${Y}-${M}-${D} ${`${H}`.padStart(2, ' ')}:${`${m}`.padStart(2, '0')}:${`${s}`.padStart(2, '0')}`;
+    const pad = (x: number) => `${x}`.padStart(2, '0');
+    return `${Y}-${pad(M)}-${D} ${pad(H)}:${pad(m)}:${pad(s)}`;
 };
 
 function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
