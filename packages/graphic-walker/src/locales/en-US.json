@@ -266,11 +266,13 @@
         "logCustom": "Log(customize)",
         "drill": {
             "name": "Time Unit",
+            "feature_name": "Time feature",
             "levels": {
                 "year": "Year",
                 "quarter": "Quarter",
                 "month": "Month",
                 "week": "Week",
+                "weekday": "Weekday",
                 "day": "Day",
                 "hour": "Hour",
                 "minute": "Minute",

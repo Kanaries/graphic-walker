@@ -19,7 +19,7 @@ import {
     IGeoUrl,
 } from '../interfaces';
 import { CHANNEL_LIMIT, MetaFieldKeys } from '../config';
-import { DATE_TIME_DRILL_LEVELS } from "../constants";
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../constants";
 import { VisSpecWithHistory } from '../models/visSpecHistory';
 import {
     IStoInfo,
@@ -582,7 +582,9 @@ export class VizSpecStore {
             encodings[stateKey].push(logField);
         });
     }
-    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string) {
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeDrill',  drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeFeature', drillLevel: typeof DATE_TIME_FEATURE_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
+    public createDateTimeDrilledField(stateKey, index, op, drillLevel, name, format) {
         if (stateKey === "filters") {
             return;
         }
@@ -594,13 +596,13 @@ export class VizSpecStore {
                 fid: newVarKey,
                 dragId: newVarKey,
                 name: typeof name === 'function' ? name(originField.name) : name,
-                semanticType: "temporal",
+                semanticType: op === 'dateTimeDrill' ? "temporal" : "ordinal",
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
-                timeUnit: drillLevel,
+                timeUnit: op === 'dateTimeDrill' ? drillLevel : undefined,
                 expression: {
-                    op: "dateTimeDrill",
+                    op,
                     as: newVarKey,
                     params: [
                         {

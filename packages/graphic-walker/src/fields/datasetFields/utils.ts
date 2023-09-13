@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../../constants";
 import { useComputationFunc } from "../../renderer/hooks";
 import { getSample } from "../../computation/serverComputation";
 import { getTimeFormat } from "../../lib/inferMeta";
@@ -95,10 +95,24 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
                             const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
                             const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
-                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`, format));
+                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateTimeDrilledField(originChannel, originIndex,  'dateTimeDrill',level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`, format));
                         },
                     })),
                 },
+                (f.semanticType === 'temporal' || isDateTimeDrilled) && {
+                    label: t('drill.feature_name'),
+                    children: DATE_TIME_FEATURE_LEVELS.map(level => ({
+                        label: t(`drill.levels.${level}`),
+                        disabled: isDateTimeDrilled && f.expression.params.find(p => p.type === 'value')?.value === level,
+                        onPress() {
+                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
+                            const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
+                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateTimeDrilledField(originChannel, originIndex, 'dateTimeFeature', level,`${t(`drill.levels.${level}`)} [${originField.name || originField.fid}]`, format));
+                        },
+                    })),
+                },
+
             ]);
         });
     }, [channel, fields, vizStore, t, computation]);

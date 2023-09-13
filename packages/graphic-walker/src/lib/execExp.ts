@@ -1,5 +1,6 @@
 import { IExpParamter, IExpression, IField, IRow } from "../interfaces";
 import dateTimeDrill from "./op/dateTimeDrill";
+import dateTimeFeature from "./op/dateTimeFeature";
 
 export interface IDataFrame {
     [key: string]: any[];
@@ -43,6 +44,8 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
             return bin(exp.as, params, subFrame, num);
         case 'dateTimeDrill':
             return dateTimeDrill(exp.as, params, subFrame);
+        case 'dateTimeFeature':
+            return dateTimeFeature(exp.as, params, subFrame);
         default:
             return subFrame;
     }

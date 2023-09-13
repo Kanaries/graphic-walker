@@ -260,11 +260,13 @@
         "logCustom": "対数（カスタム）",
         "drill": {
             "name": "時間単位",
+            "feature_name": "時間特性",
             "levels": {
                 "year": "年",
                 "quarter": "四半期",
                 "month": "月",
                 "week": "週",
+                "weekday": "曜日",
                 "day": "日",
                 "hour": "時",
                 "minute": "分",
