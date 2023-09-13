@@ -266,11 +266,13 @@
         "logCustom": "自定义对数",
         "drill": {
             "name": "时间粒度",
+            "feature_name": "时间特征",
             "levels": {
                 "year": "年",
                 "quarter": "季度",
                 "month": "月",
                 "week": "周",
+                "weekdat": "星期几",
                 "day": "日",
                 "hour": "时",
                 "minute": "分",

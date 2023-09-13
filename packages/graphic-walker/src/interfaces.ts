@@ -93,7 +93,7 @@ export type IExpParamter =
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'log';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log';
     params: IExpParamter[];
     as: string;
     num?: number;
