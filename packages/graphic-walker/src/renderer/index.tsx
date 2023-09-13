@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
@@ -18,6 +18,7 @@ interface RendererProps {
     themeConfig?: any;
     dark?: IDarkMode;
     computationFunction: IComputationFunction;
+    channelScales?: IChannelScales;
 }
 /**
  * Renderer of GraphicWalker editor.
@@ -142,6 +143,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
             computationFunction={computationFunction}
+            channelScales={props.channelScales}
         />
     );
 });

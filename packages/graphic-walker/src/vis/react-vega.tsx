@@ -6,12 +6,13 @@ import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { getSingleView } from './spec/view';
+import { getSingleView, resolveScales } from './spec/view';
 import { NULL_FIELD } from './spec/field';
 import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
+import { useCurrentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -52,6 +53,8 @@ interface ReactVegaProps {
   /** @default "en-US" */
   locale?: string;
   useSvg?: boolean;
+  dark?: IDarkMode;
+  channelScales?: IChannelScales;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -101,14 +104,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     details = [],
     // themeKey = 'vega',
-    // dark = 'media',
+    dark = 'media',
     vegaConfig,
     // format
     locale = 'en-US',
-    useSvg
+    useSvg,
+    channelScales,
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  // const mediaTheme = useCurrentMediaTheme(dark);
+  const mediaTheme = useCurrentMediaTheme(dark);
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
   // const vegaConfig = useMemo(() => {
@@ -203,7 +207,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.width = width;
         spec.height = height;
       }
-      const singleView = getSingleView({
+      const v = getSingleView({
         x: xField,
         y: yField,
         color: color ? color : NULL_FIELD,
@@ -222,6 +226,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         stack,
         geomType,
       });
+      const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
       spec.mark = singleView.mark;
       if ('encoding' in singleView) {
@@ -301,7 +306,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
           const hasLegend = i === 0 && j === colRepeatFields.length - 1;
-          const singleView = getSingleView({
+          const v = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
             color: color ? color : NULL_FIELD,
@@ -321,6 +326,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             geomType,
             hideLegend: !hasLegend,
           });
+          const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
 
@@ -444,7 +450,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     vegaConfig,
     details,
     text,
-    useSvg
+    useSvg,
+    channelScales,
+    mediaTheme
   ]);
 
   const containerRef = useRef<HTMLDivElement>(null);
