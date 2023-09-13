@@ -28,14 +28,14 @@ const FieldScalePanel: React.FC = (props) => {
           commonStore.setShowBinSettingPanel(false);
       }}
   >
-               <div className="flex flex-col justify-center items-start">
-                    <h2 className="font-medium text-xl">{t('calc.bin_panel_title')}</h2>
+               <div className="flex flex-col justify-center items-start text-xs">
+                    <h2 className='text-lg font-medium mb-2'>{t('calc.bin_panel_title')}</h2>
                     <p className="font-normal">{t('calc.bin_panel_desc')}</p>
                     <fieldset className="mt-2 gap-1 flex flex-col justify-center items-start">
                         {options.map((option,index) => {
                             return (
                               <div key={index}>
-                                <div className="flex my-2" key={option}>
+                                <div className="flex my-1" key={option}>
                                     <div className="align-top">
                                         <input
                                             type="radio"
