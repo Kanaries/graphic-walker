@@ -16,10 +16,10 @@ import {
     IVisualConfig,
     Specification,
     IComputationFunction,
-    IGeoUrl,
+    IGeoUrl
 } from '../interfaces';
-import { CHANNEL_LIMIT, MetaFieldKeys } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../constants";
+import { GLOBAL_CONFIG } from '../config';
 import { VisSpecWithHistory } from '../models/visSpecHistory';
 import {
     IStoInfo,
@@ -39,8 +39,8 @@ import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
 
 function getChannelSizeLimit(channel: string): number {
-    if (typeof CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
-    return CHANNEL_LIMIT[channel];
+    if (typeof GLOBAL_CONFIG.CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
+    return GLOBAL_CONFIG.CHANNEL_LIMIT[channel];
 }
 
 function uniqueId(): string {
@@ -283,7 +283,7 @@ export class VizSpecStore {
         const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !MetaFieldKeys.includes(dkey))
+            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
             .forEach((dkey) => {
                 fields.push(...state[dkey].filter((f) => f.analyticType === 'dimension'));
             });
@@ -297,7 +297,7 @@ export class VizSpecStore {
         const { filters, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !MetaFieldKeys.includes(dkey))
+            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
             .forEach((dkey) => {
                 fields.push(...state[dkey].filter((f) => f.analyticType === 'measure'));
             });
@@ -377,7 +377,7 @@ export class VizSpecStore {
     public clearState() {
         this.useMutable(({ encodings }) => {
             for (let key in encodings) {
-                if (!MetaFieldKeys.includes(key as keyof DraggableFieldState)) {
+                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(key as keyof DraggableFieldState)) {
                     encodings[key] = [];
                 }
             }
@@ -425,7 +425,7 @@ export class VizSpecStore {
         });
     }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
-        if (MetaFieldKeys.includes(stateKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
 
         this.useMutable(({ encodings }) => {
@@ -444,7 +444,7 @@ export class VizSpecStore {
         this.useMutable(({ encodings }) => {
             let movingField: IViewField;
             // 来源是不是metafield，是->clone；不是->直接删掉
-            if (MetaFieldKeys.includes(sourceKey)) {
+            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) {
                 // use a different dragId
                 movingField = {
                     ...toJS(encodings[sourceKey][sourceIndex]), // toJS will NOT shallow copy a object here
@@ -454,8 +454,8 @@ export class VizSpecStore {
                 [movingField] = encodings[sourceKey].splice(sourceIndex, 1);
             }
             // 目的地是metafields的情况，只有在来源也是metafields时，会执行字段类型转化操作
-            if (MetaFieldKeys.includes(destinationKey)) {
-                if (!MetaFieldKeys.includes(sourceKey)) return;
+            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) {
+                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
                 movingField.analyticType = destinationKey === 'dimensions' ? 'dimension' : 'measure';
             }
@@ -466,7 +466,7 @@ export class VizSpecStore {
         });
     }
     public removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
-        if (MetaFieldKeys.includes(sourceKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
 
         this.useMutable(({ encodings }) => {
             const fields = encodings[sourceKey];
@@ -474,7 +474,7 @@ export class VizSpecStore {
         });
     }
     public replaceField(sourceKey: keyof DraggableFieldState, sourceIndex: number, fid: string) {
-        if (MetaFieldKeys.includes(sourceKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
         const enteringField = [...this.draggableFieldState.dimensions, ...this.draggableFieldState.measures].find((which) => which.fid === fid);
         if (!enteringField) {
             return;
@@ -666,7 +666,7 @@ export class VizSpecStore {
         });
     }
     public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
-        if (MetaFieldKeys.includes(destinationKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) return;
         if (typeof field === 'undefined') return;
         if (destinationKey === 'filters') {
             return;
@@ -692,7 +692,7 @@ export class VizSpecStore {
         if (!tab) return;
         const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
         const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
-        const renderVLFacet = (vlFacet) => {
+        const renderVLFacet = (vlFacet: any) => {
             if (vlFacet.facet) {
                 this.appendField('rows', fields.find((f) => f.fid === vlFacet.facet.field) || countField, { analyticType: 'dimension' });
             }
@@ -703,8 +703,8 @@ export class VizSpecStore {
                 this.appendField('columns', fields.find((f) => f.fid === vlFacet.column.field) || countField, { analyticType: 'dimension' });
             }
         };
-        const isValidAggregate = (aggName) => aggName && ['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev'].includes(aggName);
-        const renderVLSpec = (vlSpec) => {
+        const isValidAggregate = (aggName: string) => aggName && (GLOBAL_CONFIG.AGGREGATOR_LIST as string[]).includes(aggName);
+        const renderVLSpec = (vlSpec: any) => {
             if (typeof vlSpec.mark === 'string') {
                 this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark)]);
             } else {

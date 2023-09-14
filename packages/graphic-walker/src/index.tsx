@@ -42,3 +42,5 @@ export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
 export { ISegmentKey, ColorSchemes } from './interfaces';
 export { resolveSpecFromStoInfo } from './utils/save';
+export { getGlobalConfig } from './config';
+export type { IGlobalStore } from './store/index';

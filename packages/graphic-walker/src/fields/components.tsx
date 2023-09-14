@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { useTranslation } from 'react-i18next';
-import { COLORS } from "../config";
+import { GLOBAL_CONFIG } from "../config";
 
 export const FieldListContainer: React.FC<{ name: string }> = (props) => {
   const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
@@ -108,9 +108,9 @@ export const FilterFieldSegment = styled.div`
 `
 
 export const Pill = styled.div<{colType: 'discrete' | 'continuous'}>`
-  background-color: ${props => props.colType === 'continuous' ? COLORS.white : COLORS.black};
-  border-color: ${props => props.colType === 'continuous' ? COLORS.black : COLORS.white};
-  color: ${props => props.colType === 'continuous' ? COLORS.black : COLORS.white};
+  background-color: ${props => props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.white : GLOBAL_CONFIG.COLORS.black};
+  border-color: ${props => props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.black : GLOBAL_CONFIG.COLORS.white};
+  color: ${props => props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.black : GLOBAL_CONFIG.COLORS.white};
   -moz-user-select: none;
   -ms-user-select: none;
   -webkit-align-items: center;

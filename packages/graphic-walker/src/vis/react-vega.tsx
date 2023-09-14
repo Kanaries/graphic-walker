@@ -4,7 +4,7 @@ import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
-import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
+import { GLOBAL_CONFIG } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
@@ -240,9 +240,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           let value = resolve[v] ? 'independent' : 'shared';
           // @ts-ignore
           spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
-          if((PositionChannelConfigList as string[]).includes(v)) {
+          if((GLOBAL_CONFIG.POSITION_CHANNEL_CONFIG_LIST as string[]).includes(v)) {
               spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
-          }else if((NonPositionChannelConfigList as string[]).includes(v)){
+          }else if((GLOBAL_CONFIG.NON_POSITION_CHANNEL_CONFIG_LIST as string[]).includes(v)){
               spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
           }
       }
