@@ -31,7 +31,7 @@ import React, { SVGProps, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
-import { GEMO_TYPES, STACK_MODE, CHART_LAYOUT_TYPE, COORD_TYPES } from '../config';
+import { GLOBAL_CONFIG } from '../config';
 import { useGlobalStore } from '../store';
 import { IStackMode, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
@@ -170,7 +170,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         color: 'rgb(294,115,22)',
                     },
                 },
-                options: GEMO_TYPES[coordSystem].map((g) => ({
+                options: GLOBAL_CONFIG.GEMO_TYPES[coordSystem].map((g) => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
                     icon: {
@@ -368,7 +368,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 key: 'stack_mode',
                 label: tGlobal('constant.stack_mode.__enum__'),
                 icon: Square3Stack3DIcon,
-                options: STACK_MODE.map((g) => ({
+                options: GLOBAL_CONFIG.STACK_MODE.map((g) => ({
                     key: g,
                     label: tGlobal(`constant.stack_mode.${g}`),
                     icon: {
@@ -425,7 +425,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 key: 'scale',
                 icon: ArrowsPointingOutIcon,
                 label: tGlobal(`constant.layout_type.__enum__`),
-                options: CHART_LAYOUT_TYPE.map((g) => ({
+                options: GLOBAL_CONFIG.CHART_LAYOUT_TYPE.map((g) => ({
                     key: g,
                     label: tGlobal(`constant.layout_type.${g}`),
                     icon: g === 'auto' ? LockClosedIcon : LockOpenIcon,
@@ -460,7 +460,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 key: 'coord_system',
                 label: tGlobal('constant.coord_system.__enum__'),
                 icon: StopIcon,
-                options: COORD_TYPES.map(c => ({
+                options: GLOBAL_CONFIG.COORD_TYPES.map(c => ({
                     key: c,
                     label: tGlobal(`constant.coord_system.${c}`),
                     icon: {
@@ -470,9 +470,9 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 })),
                 value: coordSystem,
                 onSelect: value => {
-                    const coord = value as typeof COORD_TYPES[number];
+                    const coord = value as typeof GLOBAL_CONFIG.COORD_TYPES[number];
                     vizStore.setVisualConfig('coordSystem', coord);
-                    vizStore.setVisualConfig('geoms', [GEMO_TYPES[coord][0]]);
+                    vizStore.setVisualConfig('geoms', [GLOBAL_CONFIG.GEMO_TYPES[coord][0]]);
                 },
             },
             coordSystem === 'geographic' && markType === 'choropleth' && {
