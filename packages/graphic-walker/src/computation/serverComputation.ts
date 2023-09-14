@@ -77,7 +77,7 @@ export const fieldStatServer = async (service: IComputationFunction, field: stri
                         groupBy: [field],
                         measures: [
                             {
-                                field,
+                                field: '*',
                                 agg: 'count',
                                 asFieldKey: COUNT_ID,
                             },
