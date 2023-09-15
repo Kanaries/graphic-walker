@@ -28,14 +28,14 @@ const FieldScalePanel: React.FC = (props) => {
           setShowBinSettingPanel(false);
       }}
   >
-               <div className="flex flex-col justify-center items-start">
-                    <h2 className="font-medium text-xl">Bins</h2>
-                    <p className="font-normal">Set bin config for field</p>
+               <div className="flex flex-col justify-center items-start text-xs">
+                    <h2 className='text-lg font-medium mb-2'>{t('calc.bin_panel_title')}</h2>
+                    <p className="font-normal">{t('calc.bin_panel_desc')}</p>
                     <fieldset className="mt-2 gap-1 flex flex-col justify-center items-start">
                         {options.map((option,index) => {
                             return (
                               <div key={index}>
-                                <div className="flex my-2" key={option}>
+                                <div className="flex my-1" key={option}>
                                     <div className="align-top">
                                         <input
                                             type="radio"
@@ -46,11 +46,11 @@ const FieldScalePanel: React.FC = (props) => {
                                         />
                                     </div>
                                     <div className="ml-3">
-                                        <label htmlFor={option}>{`Bin with equal ${option}`}</label>
+                                        <label htmlFor={option}>{t(`calc.bin_panel_option_${option}`)}</label>
                                     </div>
                                 </div>
                                    {chosenOption === option && (<div className="flex items-center space-x-2">
-                                   <label className="text-ml whitespace-nowrap">Bin number</label>
+                                   <label className="text-ml whitespace-nowrap">{t(`calc.bin_panel_number`)}</label>
                                    <input
                                        type="text"
                                        className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "

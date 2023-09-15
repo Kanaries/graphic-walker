@@ -21,8 +21,8 @@ import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
-import { GEOM_TYPES } from '../config';
-import { DATE_TIME_DRILL_LEVELS } from '../constants';
+import { GLOBAL_CONFIG } from '../config';
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -45,6 +45,7 @@ export enum Methods {
     setGeoData,
     setCoordSystem,
     createDateDrillField,
+    createDateFeatureField,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -63,7 +64,8 @@ type PropsMap = {
     [Methods.setFieldAggregator]: [normalKeys, number, IAggregator];
     [Methods.setGeoData]: [FeatureCollection | undefined, string | undefined, IGeoUrl | undefined];
     [Methods.setCoordSystem]: [ICoordMode];
-    [Methods.createDateDrillField]: [normalKeys, number, typeof DATE_TIME_DRILL_LEVELS[number], string, string];
+    [Methods.createDateDrillField]: [normalKeys, number, (typeof DATE_TIME_DRILL_LEVELS)[number], string, string, string | undefined];
+    [Methods.createDateFeatureField]: [normalKeys, number, (typeof DATE_TIME_FEATURE_LEVELS)[number], string, string, string | undefined];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -110,7 +112,7 @@ const actions: {
         const originField = data.encodings[encoding][index];
         const isBin = op.startsWith('bin');
         const channel = isBin ? 'dimensions' : encoding;
-        const prefix = isBin ? `${op}${num}` : `log${num}`
+        const prefix = isBin ? `${op}${num}` : `log${num}`;
         const newField: IViewField = {
             fid: newVarKey,
             dragId: newVarKey,
@@ -127,7 +129,7 @@ const actions: {
                         value: originField.fid,
                     },
                 ],
-                num
+                num,
             },
         };
         if (!isBin) {
@@ -149,14 +151,15 @@ const actions: {
             )
         );
     },
-    [Methods.modFilter]: (data, index, from, findex) => mutPath(data, 'encodings.filters', (filters) => {
-        const originField = data.encodings[from][findex];
-        return replace(filters, index, f => ({
-            ...originField,
-            rule: null,
-            dragId: f.dragId
-        }))
-    }),
+    [Methods.modFilter]: (data, index, from, findex) =>
+        mutPath(data, 'encodings.filters', (filters) => {
+            const originField = data.encodings[from][findex];
+            return replace(filters, index, (f) => ({
+                ...originField,
+                rule: null,
+                dragId: f.dragId,
+            }));
+        }),
     [Methods.writeFilter]: (data, index, rule) =>
         mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule: decodeFilterRule(rule) }))),
     [Methods.setName]: (data, name) => ({
@@ -181,8 +184,7 @@ const actions: {
             columns: e.rows,
             rows: e.columns,
         })),
-    [Methods.setLayout]: (data, kvs) =>
-        mutPath(data, 'layout', (l) => Object.assign({}, l, Object.fromEntries(kvs))),
+    [Methods.setLayout]: (data, kvs) => mutPath(data, 'layout', (l) => Object.assign({}, l, Object.fromEntries(kvs))),
     [Methods.setFieldAggregator]: (data, encoding, index, aggName) =>
         mutPath(data, `encodings.${encoding}`, (f) => replace(f, index, (x) => ({ ...x, aggName }))),
     [Methods.setGeoData]: (data, geojson, geoKey, geoUrl) => mutPath(data, 'layout', (l) => ({ ...l, geojson, geoKey, geoUrl })),
@@ -190,21 +192,21 @@ const actions: {
         mutPath(data, 'config', (c) => ({
             ...c,
             coordSystem: system,
-            geoms: [GEOM_TYPES[system][0]],
+            geoms: [GLOBAL_CONFIG.GEOM_TYPES[system][0]],
         })),
-    [Methods.createDateDrillField]: (data, channel, index, drillLevel, newVarKey, newName) => {
+    [Methods.createDateDrillField]: (data, channel, index, drillLevel, newVarKey, newName, format) => {
         const originField = data.encodings[channel][index];
         const newField: IViewField = {
             fid: newVarKey,
             dragId: newVarKey,
             name: newName,
-            semanticType: "temporal",
+            semanticType: 'temporal',
             analyticType: originField.analyticType,
             aggName: 'sum',
             computed: true,
             timeUnit: drillLevel,
             expression: {
-                op: "dateTimeDrill",
+                op: 'dateTimeDrill',
                 as: newVarKey,
                 params: [
                     {
@@ -215,11 +217,54 @@ const actions: {
                         type: 'value',
                         value: drillLevel,
                     },
+                    ...(format
+                        ? [
+                              {
+                                  type: 'format',
+                                  value: format,
+                              } as const,
+                          ]
+                        : []),
                 ],
             },
         };
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
-    }
+    },
+    [Methods.createDateFeatureField]: (data, channel, index, drillLevel, newVarKey, newName, format) => {
+        const originField = data.encodings[channel][index];
+        const newField: IViewField = {
+            fid: newVarKey,
+            dragId: newVarKey,
+            name: newName,
+            semanticType: 'ordinal',
+            analyticType: originField.analyticType,
+            aggName: 'sum',
+            computed: true,
+            expression: {
+                op: 'dateTimeFeature',
+                as: newVarKey,
+                params: [
+                    {
+                        type: 'field',
+                        value: originField.fid,
+                    },
+                    {
+                        type: 'value',
+                        value: drillLevel,
+                    },
+                    ...(format
+                        ? [
+                              {
+                                  type: 'format',
+                                  value: format,
+                              } as const,
+                          ]
+                        : []),
+                ],
+            },
+        };
+        return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
+    },
 };
 
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {

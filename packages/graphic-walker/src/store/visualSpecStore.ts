@@ -34,15 +34,15 @@ import {
     IGeoUrl,
     ICreateField,
 } from '../interfaces';
-import { CHANNEL_LIMIT, MetaFieldKeys } from '../config';
-import { DATE_TIME_DRILL_LEVELS } from '../constants';
+import { GLOBAL_CONFIG } from '../config';
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
 import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
 
-const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !MetaFieldKeys.includes(dkey));
+const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 const viewEncodingKeys = (geom: string) => {
     switch (geom) {
         case 'choropleth':
@@ -299,7 +299,7 @@ export class VizSpecStore {
     }
 
     reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
-        if (MetaFieldKeys.includes(stateKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
         this.visList[this.visIndex] = performers.reorderField(this.visList[this.visIndex], stateKey, sourceIndex, destinationIndex);
     }
@@ -310,8 +310,8 @@ export class VizSpecStore {
         } else if (destinationKey === 'filters') {
             return this.appendFilter(destinationIndex, sourceKey, sourceIndex);
         }
-        const sourceMeta = MetaFieldKeys.includes(sourceKey);
-        const destMeta = MetaFieldKeys.includes(destinationKey);
+        const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
+        const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
         if (destMeta === sourceMeta) {
             this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex);
         } else if (destMeta) {
@@ -333,7 +333,7 @@ export class VizSpecStore {
     }
 
     removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
-        if (MetaFieldKeys.includes(sourceKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
         this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
     }
 
@@ -366,9 +366,20 @@ export class VizSpecStore {
         stateKey: keyof Omit<DraggableFieldState, 'filters'>,
         index: number,
         drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
-        name: string
+        name: string,
+        format: string
     ) {
-        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name);
+        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+    }
+
+    public createDateFeatureField(
+        stateKey: keyof Omit<DraggableFieldState, 'filters'>,
+        index: number,
+        drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
+        name: string,
+        format: string
+    ) {
+        this.visList[this.visIndex] = performers.createDateFeatureField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
@@ -471,6 +482,10 @@ export class VizSpecStore {
         } else {
             this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
         }
+    }
+
+    clearGeographicData() {
+        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, undefined, undefined);
     }
 
     updateGeoKey(key: string) {

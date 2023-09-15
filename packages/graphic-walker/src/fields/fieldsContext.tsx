@@ -55,14 +55,3 @@ export const DRAGGABLE_STATE_KEYS: Readonly<IDraggableStateKey[]> = [
     { id: 'details', mode: 1 },
     { id: 'text', mode: 1 },
 ] as const;
-
-export const AGGREGATOR_LIST: Readonly<string[]> = [
-    'sum',
-    'mean',
-    'median',
-    'count',
-    'min',
-    'max',
-    'variance',
-    'stdev'
-] as const;

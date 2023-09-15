@@ -4,6 +4,7 @@ import { useVizStore } from '../../store';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
 import { IViewField } from '../../interfaces';
+import { useTranslation } from 'react-i18next';
 
 type VEGALite = any;
 
@@ -43,6 +44,7 @@ const AskViz: React.FC<{ api?: string; headers?: Record<string, string> }> = (pr
     const [query, setQuery] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const vizStore = useVizStore();
+    const {t} = useTranslation();
 
     const allFields = vizStore.allFields;
 
@@ -61,7 +63,7 @@ const AskViz: React.FC<{ api?: string; headers?: Record<string, string> }> = (pr
             <input
                 type="text"
                 className="rounded-l-md px-4 block w-full border-0 py-1.5 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
-                placeholder="What visualization your want to draw from the dataset"
+                placeholder={t("main.tabpanel.askviz.placeholder")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {

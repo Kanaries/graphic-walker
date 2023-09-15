@@ -9,7 +9,8 @@ const formatDate = (date: Date) => {
     const H = date.getHours();
     const m = date.getMinutes();
     const s = date.getSeconds();
-    return `${Y}-${M}-${D} ${`${H}`.padStart(2, ' ')}:${`${m}`.padStart(2, '0')}:${`${s}`.padStart(2, '0')}`;
+    const pad = (x: number) => `${x}`.padStart(2, '0');
+    return `${Y}-${pad(M)}-${D} ${pad(H)}:${pad(m)}:${pad(s)}`;
 };
 
 function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
@@ -57,13 +58,12 @@ function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame)
         }
         case 'week': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
-                const _Y = date.getFullYear();
-                const _firstDayOfYear = new Date(_Y, 0, 1);
-                const _SundayOfFirstWeek = new Date(new Date(_firstDayOfYear).setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay()));
-                const Y = date.getTime() - _SundayOfFirstWeek.getTime() > 1_000 * 60 * 60 * 24 * 7 ? _Y : _SundayOfFirstWeek.getFullYear();
-                const SundayOfThisWeek = new Date(new Date(date).setDate(date.getDate() - date.getDay()));
-                return formatDate(SundayOfThisWeek);
+                const today = new Date(v);
+                const date = new Date(today.setDate(today.getDate() - today.getDay()));
+                const Y = date.getFullYear();
+                const M = date.getMonth();
+                const D = date.getDate();
+                return formatDate(new Date(Y, M, D));
             });
             return {
                 ...data,

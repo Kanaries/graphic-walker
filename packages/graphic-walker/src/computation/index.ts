@@ -77,7 +77,7 @@ export const fieldStat = async (service: IComputationFunction, field: string, op
                         groupBy: [field],
                         measures: [
                             {
-                                field,
+                                field: '*',
                                 agg: 'count',
                                 asFieldKey: COUNT_ID,
                             },
@@ -137,3 +137,23 @@ export const fieldStat = async (service: IComputationFunction, field: string, op
         range: [rangeRes[MIN_ID], rangeRes[MAX_ID]],
     };
 };
+
+
+export async function getSample(service: IComputationFunction, field: string) {
+    const res = await service({
+        workflow: [
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'raw',
+                        fields: [field],
+                    },
+                ],
+            },
+        ],
+        limit: 1,
+        offset: 0,
+    });
+    return res?.[0]?.[field];
+}

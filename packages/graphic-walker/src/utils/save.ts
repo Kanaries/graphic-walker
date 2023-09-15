@@ -1,5 +1,5 @@
 import { DraggableFieldState, IDataSet, IDataSource, IMutField, IVisSpec, IVisSpecForExport, IVisualConfig, IVisualConfigNew, IVisualLayout } from '../interfaces';
-import { GEOM_TYPES } from '../config';
+import { GLOBAL_CONFIG } from '../config';
 
 export function initEncoding(): DraggableFieldState {
     return {
@@ -23,7 +23,7 @@ export function initEncoding(): DraggableFieldState {
 }
 
 export function initVisualConfig(): IVisualConfig {
-    const [ geom ] = GEOM_TYPES.generic;
+    const [ geom ] = GLOBAL_CONFIG.GEOM_TYPES.generic;
     return {
         defaultAggregated: true,
         geoms: [geom],
@@ -89,7 +89,7 @@ export const emptyVisualLayout: IVisualLayout = {
 
 export const emptyVisualConfig: IVisualConfigNew = {
     defaultAggregated: true,
-    geoms: [GEOM_TYPES.generic[0]],
+    geoms: [GLOBAL_CONFIG.GEOM_TYPES.generic[0]],
     coordSystem: 'generic',
     limit: -1,
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField } from './interfaces';
+import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -37,7 +37,7 @@ export interface BaseVizProps {
     i18nResources?: { [lang: string]: Record<string, string | any> };
     themeKey?: IThemeKey;
     darkMode?: 'light' | 'dark';
-    themeConfig?: any;
+    themeConfig?: VegaGlobalConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -55,6 +55,8 @@ export interface BaseVizProps {
     computation?: IComputationFunction;
     computationTimeout?: number;
     onError?: (err: Error) => void;
+    geoList?: IGeoDataItem[];
+    channelScales?: IChannelScales;
 }
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
@@ -142,7 +144,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <Errorpanel />
                                     <LogPanel />
                                     <BinPanel />
-                                    {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel />}
+                                    {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                                         <div className="md:col-span-3 xl:col-span-1">
                                             <DatasetFields />
@@ -172,6 +174,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                         dark={darkMode}
                                                         themeConfig={themeConfig}
                                                         computationFunction={computation}
+                                                        channelScales={props.channelScales}
                                                     />
                                                 )}
                                                 {vizEmbededMenu.show && (

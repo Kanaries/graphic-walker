@@ -1,45 +1,17 @@
-import { DraggableFieldState, ICoordMode, IStackMode, IVisualConfig } from "./interfaces";
+import { DraggableFieldState, IAggregator, ICoordMode, IStackMode, IVisualConfig } from './interfaces';
 
-export const GEOM_TYPES: Record<ICoordMode, Readonly<string[]>> = {
-    generic: [
-        'auto',
-        'bar',
-        'line',
-        'area',
-        'trail',
-        'point',
-        'circle',
-        'tick',
-        'rect',
-        'arc',
-        'text',
-        'boxplot',
-        'table',
-    ],
-    geographic: [
-        'poi',
-        'choropleth',
-    ],
-} as const;
+const GEOM_TYPES: Record<ICoordMode, string[]> = {
+    generic: ['auto', 'bar', 'line', 'area', 'trail', 'point', 'circle', 'tick', 'rect', 'arc', 'text', 'boxplot', 'table'],
+    geographic: ['poi', 'choropleth'],
+};
 
-export const COORD_TYPES: Readonly<ICoordMode[]> = [
-    'generic',
-    'geographic',
-];
+const COORD_TYPES: ICoordMode[] = ['generic', 'geographic'];
 
-export const STACK_MODE: Readonly<IStackMode[]> = [
-    'none',
-    'stack',
-    'normalize',
-    'center'
-]
+const STACK_MODE: IStackMode[] = ['none', 'stack', 'normalize', 'center'];
 
-export const CHART_LAYOUT_TYPE: Readonly<string[]> = [
-    'auto',
-    'fixed',
-] as const;
+const CHART_LAYOUT_TYPE: ('auto' | 'fixed')[] = ['auto', 'fixed'];
 
-export const COLORS = {
+const COLORS = {
     // tableau style
     // dimension: 'rgb(73, 150, 178)',
     // measure: 'rgb(0, 177, 128)',
@@ -48,12 +20,10 @@ export const COLORS = {
     dimension: 'rgba(0, 0, 0, 0.9)',
     measure: 'rgba(10, 0, 0, 0.6)',
     black: '#141414',
-    white: '#fafafa'
-}
+    white: '#fafafa',
+};
 
-export const MAX_HISTORY_SIZE = 20;
-
-export const CHANNEL_LIMIT = {
+const CHANNEL_LIMIT = {
     rows: Infinity,
     columns: Infinity,
     color: 1,
@@ -64,21 +34,30 @@ export const CHANNEL_LIMIT = {
     radius: 1,
     details: Infinity,
     text: 1,
+};
+
+const META_FIELD_KEYS: Array<keyof DraggableFieldState> = ['dimensions', 'measures'];
+
+const POSITION_CHANNEL_CONFIG_LIST: Array<keyof IVisualConfig['resolve']> = ['x', 'y'];
+
+const NON_POSITION_CHANNEL_CONFIG_LIST: Array<keyof IVisualConfig['resolve']> = ['color', 'opacity', 'shape', 'size'];
+
+const AGGREGATOR_LIST: IAggregator[] = ['sum', 'mean', 'median', 'count', 'min', 'max', 'variance', 'stdev'];
+
+export const GLOBAL_CONFIG = {
+    AGGREGATOR_LIST,
+    CHART_LAYOUT_TYPE,
+    COLORS,
+    COORD_TYPES,
+    GEOM_TYPES,
+    MAX_HISTORY_SIZE: 20,
+    STACK_MODE,
+    META_FIELD_KEYS,
+    CHANNEL_LIMIT,
+    POSITION_CHANNEL_CONFIG_LIST,
+    NON_POSITION_CHANNEL_CONFIG_LIST,
+};
+
+export function getGlobalConfig() {
+    return GLOBAL_CONFIG;
 }
-
-export const MetaFieldKeys: Array<keyof DraggableFieldState> = [
-    'dimensions',
-    'measures',
-]
-
-export const PositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
-    'x',
-    'y',
-]
-
-export const NonPositionChannelConfigList: Array<keyof IVisualConfig['resolve']> = [
-    'color',
-    'opacity',
-    'shape',
-    'size'
-]

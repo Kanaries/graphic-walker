@@ -25,12 +25,12 @@ const FieldScalePanel: React.FC = (props) => {
                 vizStore.setShowLogSettingPanel(false);
             }}
         >
-            <div className="flex flex-col justify-center items-start">
-                <h2 className="font-medium text-xl my-2">Logarithm Transformation</h2>
-                <p className="font-normal ">Set log config for field</p>
+            <div className="flex flex-col justify-center items-start text-xs">
+                <h2 className="text-lg font-medium mb-2">{t(`calc.log_panel_title`)}</h2>
+                <p className="font-normal">{t(`calc.log_panel_desc`)}</p>
                 <fieldset className="mt-2 gap-1 flex flex-col justify-center items-start">
                     <div className="flex items-center space-x-2">
-                        <label className="text-ml whitespace-nowrap">Logarithmic base</label>
+                        <label className="text-ml whitespace-nowrap">{t(`calc.log_panel_number`)}</label>
                         <input
                             type="text"
                             value={baseNum}

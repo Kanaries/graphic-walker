@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { toJS } from 'mobx';
 import Modal from '../../components/modal';
 import type { IFilterField, IFilterRule } from '../../interfaces';
 import { useVizStore } from '../../store';

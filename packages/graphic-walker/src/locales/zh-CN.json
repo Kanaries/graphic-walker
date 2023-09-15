@@ -5,7 +5,7 @@
         "timeFormat": "时间格式",
         "normalizedNumberFormat": "标准化数字格式",
         "background": "背景",
-        "color":"颜色",
+        "color": "颜色",
         "independence": "独立性",
         "x": "x轴",
         "y": "y轴",
@@ -155,6 +155,9 @@
             "chart_name": "图表名称",
             "remove_confirm": "你确定要删除这个图表吗？"
         },
+        "askviz":{
+            "placeholder": "想从数据集中绘制哪种可视化呢?"
+        },
         "tabpanel": {
             "menubar": {
                 "undo": "撤销",
@@ -172,9 +175,11 @@
                     "ascending": "升序排序",
                     "descending": "降序排序",
                     "transpose": "转置",
+                    "config": "配置",
                     "export_chart": "导出",
                     "export_chart_as": "导出 {{type}}",
-                    "export_code": "导出代码"
+                    "export_code": "导出代码",
+                    "geojson": "地理信息配置"
                 },
                 "limit": "上限",
                 "size": "调整尺寸",
@@ -192,10 +197,11 @@
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
                     "objectKey": "提取要素键",
-                    "jsonInputPlaceholder": "在此粘贴 {{format}}",
+                    "jsonInputPlaceholder": "拖动{{format}}文件到此",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "输入在线资源地址",
-                    "load": "加载"
+                    "load": "加载",
+                    "loading": "加载地理数据中..."
                 }
             },
             "DatasetFields": {
@@ -254,18 +260,35 @@
         "to_dim": "移动到维度",
         "to_mea": "移动到度量",
         "new_calc": "新的计算字段",
+        "bin": "分箱",
+        "binCount": "计数分箱",
+        "log": "对数（{{ base }}）",
+        "binCustom": "自定义分箱",
+        "logCustom": "自定义对数",
         "drill": {
-            "name": "钻取",
+            "name": "时间粒度",
+            "feature_name": "时间特征",
             "levels": {
                 "year": "年",
                 "quarter": "季度",
                 "month": "月",
                 "week": "周",
+                "weekdat": "星期几",
                 "day": "日",
                 "hour": "时",
                 "minute": "分",
                 "second": "秒"
             }
         }
+    },
+    "calc": {
+        "bin_panel_title": "分箱",
+        "bin_panel_desc": "设置字段的箱体配置",
+        "bin_panel_option_widths": "等宽箱体",
+        "bin_panel_option_counts": "等量箱体",
+        "bin_panel_number": "箱体数量",
+        "log_panel_title": "对数变换",
+        "log_panel_desc": "设置字段的对数配置",
+        "log_panel_number": "对数底数"
     }
 }

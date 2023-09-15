@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useVizStore } from '../../store';
-import { NonPositionChannelConfigList, PositionChannelConfigList } from '../../config';
+import { GLOBAL_CONFIG } from '../../config';
 
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
@@ -103,7 +103,7 @@ const VisualConfigPanel: React.FC = (props) => {
                 <label className="block text-xs font-medium leading-6">{t('config.independence')}</label>
                 <div className="my-2">
                     <div className="flex space-x-6">
-                        {PositionChannelConfigList.map((pc) => (
+                        {GLOBAL_CONFIG.POSITION_CHANNEL_CONFIG_LIST.map((pc) => (
                             <Toggle
                                 label={t(`config.${pc}`)}
                                 key={pc}
@@ -116,7 +116,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 }}
                             />
                         ))}
-                        {NonPositionChannelConfigList.map((npc) => (
+                        {GLOBAL_CONFIG.NON_POSITION_CHANNEL_CONFIG_LIST.map((npc) => (
                             <Toggle
                                 label={t(`constant.draggable_key.${npc}`)}
                                 key={npc}

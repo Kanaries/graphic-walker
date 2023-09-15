@@ -9,6 +9,7 @@ import { isValidLatLng } from "./POIRenderer";
 import { TooltipContent } from "./tooltip";
 import { useAppRootContext } from "../appRoot";
 import { useGeoJSON } from "../../hooks/service";
+import { useTranslation } from "react-i18next";
 
 
 export interface IChoroplethRendererProps {
@@ -95,6 +96,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     useImperativeHandle(ref, () => ({}));
 
     const features = useGeoJSON(localFeatures, featuresUrl)
+    const { t } = useTranslation('translation');
 
     const geoIndices = useMemo(() => {
         if (geoId) {
@@ -217,6 +219,10 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
+
+    if (!features) {
+        return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>
+    }
 
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>

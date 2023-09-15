@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useVizStore } from "../../store";
+import { useCompututaion, useVizStore } from "../../store";
 import type { IActionMenuItem } from "../../components/actionMenu/list";
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS } from "../../constants";
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../../constants";
+import { getSample } from "../../computation";
+import { getTimeFormat } from "../../lib/inferMeta";
 
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -13,6 +15,7 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
     const vizStore = useVizStore();
     const fields = vizStore.currentVis.encodings[channel];
     const { t } = useTranslation('translation', { keyPrefix: "field_menu" });
+    const computation = useCompututaion();
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
@@ -37,46 +40,46 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                     disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                     children: [
                         {
-                            label: "Bin",
+                            label: t('bin'),
                             onPress() {
                                 vizStore.createBinField(channel, index, "bin");
                             },
                         },
                         {
-                            label: "Bin Count",
+                            label: t('binCount'),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createBinField(channel, index, "binCount");
                             },
                         },
                         {
-                            label: "Log10",
+                            label: t('log', {base: 10}),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createLogField(channel, index, "log", 10);
                             },
                         },
                         {
-                            label: "Log2",
+                            label: t('log', {base: 2}),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress() {
                                 vizStore.createLogField(channel, index, "log", 2);
                             },
                         },
                         {
-                            label:"Log(customize)",
-                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
-                            onPress(){
-                                vizStore.setShowLogSettingPanel(true);
-                                vizStore.setCreateField({channel:channel,index:index})
-                            }
-                        },
-                        {
-                            label:"Bin(customize)",
+                            label:t('binCustom'),
                             disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
                             onPress(){
                                 vizStore.setShowBinSettingPanel(true);
                                 vizStore.setCreateField({channel:channel,index:index});
+                            }
+                        },
+                        {
+                            label:t('logCustom'),
+                            disabled: f.semanticType === 'nominal' || f.semanticType === 'ordinal',
+                            onPress(){
+                                vizStore.setShowLogSettingPanel(true);
+                                vizStore.setCreateField({channel:channel,index:index})
                             }
                         },
                         
@@ -91,11 +94,25 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                             const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
                             const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
                             const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
-                            vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`);
+                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateTimeDrilledField(originChannel, originIndex, level, `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`, format));
                         },
                     })),
                 },
+                (f.semanticType === 'temporal' || isDateTimeDrilled) && {
+                    label: t('drill.feature_name'),
+                    children: DATE_TIME_FEATURE_LEVELS.map(level => ({
+                        label: t(`drill.levels.${level}`),
+                        disabled: isDateTimeDrilled && f.expression?.params.find(p => p.type === 'value')?.value === level,
+                        onPress() {
+                            const originField = (isDateTimeDrilled ? vizStore.allFields.find(field => field.fid === f.expression?.params.find(p => p.type === 'field')?.value) : null) ?? f;
+                            const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
+                            const originIndex = vizStore.allFields.findIndex(x => x.fid === originField.fid);
+                            getSample(computation, originField.fid).then(getTimeFormat).then(format => vizStore.createDateFeatureField(originChannel, originIndex, level,`${t(`drill.levels.${level}`)} [${originField.name || originField.fid}]`, format));
+                        },
+                    })),
+                },
+
             ]);
         });
-    }, [channel, fields, vizStore, t]);
+    }, [channel, fields, vizStore, t, computation]);
 };
