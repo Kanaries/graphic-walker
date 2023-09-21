@@ -16,7 +16,8 @@ import {
     IVisualConfig,
     Specification,
     IComputationFunction,
-    IGeoUrl
+    IGeoUrl,
+    ISemanticType
 } from '../interfaces';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../constants";
 import { GLOBAL_CONFIG } from '../config';
@@ -580,6 +581,15 @@ export class VizSpecStore {
                 },
             };
             encodings[stateKey].push(logField);
+        });
+    }
+    public changeSemanticType(stateKey: keyof DraggableFieldState, index: number, newSemanticType: ISemanticType) {
+        this.useMutable(({ encodings }) => {
+            const originField = encodings[stateKey][index];
+            encodings[stateKey].splice(index, 1, {
+                ...originField,
+                semanticType: newSemanticType
+            })
         });
     }
     public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeDrill',  drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)

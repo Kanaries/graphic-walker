@@ -258,6 +258,15 @@
         "log": "対数({{ base }})",
         "binCustom": "ビン（カスタム）",
         "logCustom": "対数（カスタム）",
+        "semantic_type": {
+            "name": "セマンティックタイプの変更",
+            "types": {
+                "nominal": "名義",
+                "ordinal": "序数",
+                "quantitative": "量的",
+                "temporal": "時間的"
+            }
+        },
         "drill": {
             "name": "時間単位",
             "feature_name": "時間特性",
