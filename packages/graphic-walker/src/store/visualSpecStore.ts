@@ -33,6 +33,7 @@ import {
     IVisSpecForExport,
     IGeoUrl,
     ICreateField,
+    ISemanticType
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
@@ -486,6 +487,10 @@ export class VizSpecStore {
 
     clearGeographicData() {
         this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, undefined, undefined);
+    }
+
+    changeSemanticType(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, semanticType: ISemanticType) {
+        this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
     }
 
     updateGeoKey(key: string) {

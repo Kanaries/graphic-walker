@@ -98,6 +98,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const downloadCSVRef = useRef<{ download: () => void }>({download() {}});
+
     const reportError = useCallback(
         (msg: string, code?: number) => {
             const err = new Error(`Error${code ? `(${code})` : ''}: ${msg}`);
@@ -133,7 +135,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         />
                                     )}
                                     <VisualSettings
-                                        rendererHandler={rendererRef}
+                                        csvHandler={downloadCSVRef} rendererHandler={rendererRef}
                                         darkModePreference={darkMode}
                                         exclude={toolbar?.exclude}
                                         extra={toolbar?.extra}
@@ -168,7 +170,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 }}
                                             >
                                                 {computation && (
-                                                    <ReactiveRenderer
+                                                    <ReactiveRenderer csvRef={downloadCSVRef}
                                                         ref={rendererRef}
                                                         themeKey={themeKey}
                                                         dark={darkMode}

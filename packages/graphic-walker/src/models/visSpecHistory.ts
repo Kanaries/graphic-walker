@@ -14,6 +14,7 @@ import {
     PartialChart,
     ICoordMode,
     IGeoUrl,
+    ISemanticType,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField } from '../utils';
@@ -46,6 +47,7 @@ export enum Methods {
     setCoordSystem,
     createDateDrillField,
     createDateFeatureField,
+    changeSemanticType,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -66,6 +68,7 @@ type PropsMap = {
     [Methods.setCoordSystem]: [ICoordMode];
     [Methods.createDateDrillField]: [normalKeys, number, (typeof DATE_TIME_DRILL_LEVELS)[number], string, string, string | undefined];
     [Methods.createDateFeatureField]: [normalKeys, number, (typeof DATE_TIME_FEATURE_LEVELS)[number], string, string, string | undefined];
+    [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -265,6 +268,9 @@ const actions: {
         };
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
+    [Methods.changeSemanticType]: (data, channel, index, semanticType) => {
+        return mutPath(data, `encodings.${channel}`, (f) => replace(f, index, (x) => ({ ...x, semanticType })));
+    }
 };
 
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {

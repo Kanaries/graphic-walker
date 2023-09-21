@@ -69,11 +69,12 @@ const FormContainer = styled.div`
 interface IVisualSettings {
     darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler>;
+    csvHandler?: React.MutableRefObject<{ download: () => void }>;
     exclude?: string[];
     extra?: ToolbarItemProps[];
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, extra = [], exclude = [] }) => {
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [] }) => {
     const vizStore = useVizStore();
     const { config, layout, canUndo, canRedo, limit } = vizStore;
     const { t: tGlobal } = useTranslation();
@@ -105,6 +106,13 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             rendererHandler?.current?.downloadSVG();
         }, 200),
         [rendererHandler]
+    );
+
+    const downloadCSV = useCallback(
+        throttle(() => {
+            csvHandler?.current?.download();
+        }, 200),
+        []
     );
 
     const dark = useCurrentMediaTheme(darkModePreference) === 'dark';
@@ -493,6 +501,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     </FormContainer>
                 ),
             }]:[],
+            {
+                key: 'csv',
+                label: t('button.export_chart_as', { type: 'csv' }),
+                icon: TableCellsIcon,
+                onClick: downloadCSV,
+            },
             {
                 key: 'config',
                 label: t('button.config'),

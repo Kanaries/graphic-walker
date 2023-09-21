@@ -259,6 +259,15 @@
     "field_menu": {
         "to_dim": "Move to dimensions",
         "to_mea": "Move to measures",
+        "semantic_type": {
+            "name": "Change Semantic Type",
+            "types": {
+                "nominal": "Nominal",
+                "ordinal": "Ordinal",
+                "quantitative": "Quantitative",
+                "temporal": "Temporal"
+            }
+        },
         "new_calc": "New calculation",
         "bin": "Bin",
         "binCount": "Bin Count",

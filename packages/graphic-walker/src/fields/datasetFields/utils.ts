@@ -85,6 +85,17 @@ export const useMenuActions = (channel: "dimensions" | "measures"): IActionMenuI
                         
                     ],
                 },
+                {
+                    label: t('semantic_type.name'),
+                    children: (["nominal", "ordinal", "quantitative", "temporal"] as const).map(x => ({
+                        label: t(`semantic_type.types.${x}`),
+                        disabled: f.semanticType === x,
+                        onPress() {
+                            const originChannel = f.analyticType === 'dimension' ? 'dimensions' : 'measures';
+                            vizStore.changeSemanticType(originChannel, index, x);
+                        },
+                    }))
+                },
                 (f.semanticType === 'temporal' || isDateTimeDrilled) && {
                     label: t('drill.name'),
                     children: DATE_TIME_DRILL_LEVELS.map(level => ({
