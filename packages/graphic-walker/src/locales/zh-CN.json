@@ -154,7 +154,7 @@
             "auto_title": "图表 {{idx}}",
             "chart_name": "图表名称"
         },
-        "askviz":{
+        "askviz": {
             "placeholder": "想从数据集中绘制哪种可视化呢?"
         },
         "tabpanel": {
@@ -264,6 +264,15 @@
         "log": "对数（{{ base }}）",
         "binCustom": "自定义分箱",
         "logCustom": "自定义对数",
+        "semantic_type": {
+            "name": "更改语义类型",
+            "types": {
+                "nominal": "名义",
+                "ordinal": "序数",
+                "quantitative": "计量",
+                "temporal": "时间"
+            }
+        },
         "drill": {
             "name": "时间粒度",
             "feature_name": "时间特征",
