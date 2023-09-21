@@ -174,6 +174,8 @@ const App = observer<IGWProps>(function App(props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const downloadCSVRef = useRef<{ download: () => void }>({download() {}});
+
     const reportError = useCallback((msg: string, code?: number) => {
         const err = new Error(`Error${code ? `(${code})`: ''}: ${msg}`);
         console.error(err);
@@ -208,7 +210,7 @@ const App = observer<IGWProps>(function App(props) {
                         {enhanceAPI?.features?.askviz && (
                             <AskViz api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''} headers={enhanceAPI?.header} />
                         )}
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
+                        <VisualSettings csvHandler={downloadCSVRef} rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
                         <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
@@ -239,7 +241,7 @@ const App = observer<IGWProps>(function App(props) {
                                     }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} channelScales={props.channelScales} />
+                                        <ReactiveRenderer csvRef={downloadCSVRef} ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} channelScales={props.channelScales} />
                                     )}
                                     {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
