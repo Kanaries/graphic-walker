@@ -1,6 +1,6 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.4.3",
+  "version": "0.4.13",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
@@ -40,6 +40,7 @@
     "@kanaries/web-data-loader": "^0.1.7",
     "@tailwindcss/forms": "^0.5.4",
     "autoprefixer": "^10.3.5",
+    "canvas-size": "^1.2.6",
     "d3-format": "^3.1.0",
     "d3-scale": "^4.0.2",
     "d3-time-format": "^4.1.0",
@@ -54,6 +55,8 @@
     "postinstall-postinstall": "^2.1.0",
     "re-resizable": "^6.9.8",
     "react-color": "^2.19.3",
+    "react-dropzone": "^14.2.3",
+    "react-error-boundary": "^4.0.11",
     "react-i18next": "^11.18.6",
     "react-leaflet": "^4.2.1",
     "react-shadow": "^20.0.0",

@@ -7,7 +7,7 @@ import { COUNT_FIELD_ID } from "../../constants";
 import { IDraggableStateKey } from "../../interfaces";
 import { useGlobalStore } from "../../store";
 import { Pill } from "../components";
-import { AGGREGATOR_LIST } from "../fieldsContext";
+import { GLOBAL_CONFIG } from "../../config";
 import DropdownContext from "../../components/dropdownContext";
 
 interface PillProps {
@@ -23,7 +23,7 @@ const OBPill: React.FC<PillProps> = (props) => {
     const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
 
     const aggregationOptions = useMemo(() => {
-        return AGGREGATOR_LIST.map((op) => ({
+        return GLOBAL_CONFIG.AGGREGATOR_LIST.map((op) => ({
             value: op,
             label: t(op),
         }));

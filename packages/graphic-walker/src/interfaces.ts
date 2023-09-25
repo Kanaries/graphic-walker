@@ -1,8 +1,9 @@
-import {Config as VgConfig, View} from 'vega';
-import {Config as VlConfig} from 'vega-lite';
+import { Config as VgConfig, View } from 'vega';
+import { Config as VlConfig } from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
 import type { feature } from 'topojson-client';
-import type {IViewQuery} from "./lib/viewQuery";
+import type { IViewQuery } from './lib/viewQuery';
+import { DATE_TIME_DRILL_LEVELS } from './constants';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -31,6 +32,11 @@ export interface Specification {
 }
 export interface Filters {
     [key: string]: any[];
+}
+
+export interface ICreateField {
+    channel: 'dimensions' | 'measures';
+    index: number;
 }
 
 export interface IMutField {
@@ -80,12 +86,17 @@ export type IExpParamter =
     | {
           type: 'constant';
           value: any;
+      }
+    | {
+          type: 'format';
+          value: string;
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log';
     params: IExpParamter[];
     as: string;
+    num?: number;
 }
 
 export type IGeoRole = 'longitude' | 'latitude' | 'none';
@@ -109,8 +120,9 @@ export interface IField {
     cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
+    timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
     basename?: string;
-    path?: string[],
+    path?: string[];
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
@@ -137,7 +149,7 @@ export interface IMeasure {
 
 export interface IPredicate {
     key: string;
-    type: "discrete" | "continuous";
+    type: 'discrete' | 'continuous';
     range: Set<any> | [number, number];
 }
 
@@ -233,6 +245,7 @@ export interface IVisualConfig {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     background?: string;
+    useSvg?: boolean;
     format: {
         numberFormat?: string;
         timeFormat?: string;
@@ -254,7 +267,13 @@ export interface IVisualConfig {
     };
     geojson?: FeatureCollection;
     geoKey?: string;
+    geoUrl?: IGeoUrl;
     limit: number;
+}
+
+export interface IGeoUrl {
+    type: 'GeoJSON' | 'TopoJSON';
+    url: string;
 }
 
 export interface IVisSpec {
@@ -264,11 +283,7 @@ export interface IVisSpec {
     readonly config: DeepReadonly<IVisualConfig>;
 }
 
-export type SetToArray<T> = (
-    T extends object ? (
-      T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }
-    ) : T
-);
+export type SetToArray<T> = T extends object ? (T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }) : T;
 
 export type IVisSpecForExport = SetToArray<IVisSpec>;
 
@@ -351,7 +366,7 @@ export interface IGWHandler {
     openChart: (index: number) => void;
     /**
      * Returns the status of the current chart.
-     * 
+     *
      * It is computed by the following rules:
      * - If _GraphicWalker_ is computing the data view, it returns `computing`.
      * - If _GraphicWalker_ is rendering the chart, it returns `rendering`.
@@ -361,20 +376,20 @@ export interface IGWHandler {
     get renderStatus(): IRenderStatus;
     /**
      * Registers a callback function to listen to the status change of the current chart.
-     * 
+     *
      * @param {(renderStatus: IRenderStatus) => void} cb - the callback function
      * @returns {() => void} a dispose function to remove this callback
      */
-    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => (() => void);
+    onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => () => void;
     /**
      * Exports the current chart.
-     * 
+     *
      * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
      */
     exportChart: IExportChart;
     /**
      * Exports all charts.
-     * 
+     *
      * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
      * @returns {AsyncGenerator<IChartListExportResult, void, unknown>} an async generator to iterate over all charts
      * @example
@@ -410,7 +425,7 @@ export type IVisFieldComputation = {
 export interface IVisFilter {
     fid: string;
     rule: SetToArray<IFilterRule>;
-};
+}
 
 export interface IFilterWorkflowStep {
     type: 'filter';
@@ -453,34 +468,175 @@ export interface IGWDatasetStat {
     count: number;
 }
 
-export type IResponse<T> = (
+export type IResponse<T> =
     | {
-        success: true;
-        data: T;
-    }
+          success: true;
+          data: T;
+      }
     | {
-        success: false;
-        message: string;
-        error?: {
-            code: `ERR_${Uppercase<string>}`;
-            options?: Record<string, string>;
-        };
-    }
-);
+          success: false;
+          message: string;
+          error?: {
+              code: `ERR_${Uppercase<string>}`;
+              options?: Record<string, string>;
+          };
+      };
 
 export type Topology = Parameters<typeof feature>[0];
 
-export type IGeographicData = (
+export type IGeographicData =
     | {
-        type: 'GeoJSON';
-        data: FeatureCollection;
-    }
+          type: 'GeoJSON';
+          data: FeatureCollection;
+      }
     | {
-        type: 'TopoJSON';
-        data: Topology;
-        /**
-         * default to the first key of `objects` in Topology
-         */
-        objectKey?: string;
-    }
-);
+          type: 'TopoJSON';
+          data: Topology;
+          /**
+           * default to the first key of `objects` in Topology
+           */
+          objectKey?: string;
+      };
+
+export type IGeoDataItem = {
+    type: 'GeoJSON' | 'TopoJSON';
+    name: string;
+    url: string;
+};
+
+function toDict<T extends string>(a: readonly T[]) {
+    return Object.fromEntries(a.map((x) => [x, x])) as {
+        [k in T]: k;
+    };
+}
+
+export const ColorSchemes = {
+    /**
+     * @name Categorical Schemes
+     * @summary For nominal data.
+     * @description Categorical color schemes can be used to encode discrete data values, each representing a distinct category.
+     */
+    discrete: toDict([
+        'accent',
+        'category10',
+        'category20',
+        'category20b',
+        'category20c',
+        'dark2',
+        'paired',
+        'pastel1',
+        'pastel2',
+        'set1',
+        'set2',
+        'set3',
+        'tableau10',
+        'tableau20',
+    ] as const),
+    /**
+     * @name Sequential Single-Hue Schemes
+     * @summary For increasing quantitative data.
+     * @description Sequential color schemes can be used to encode quantitative values. These color ramps are designed to encode increasing numeric values.
+     */
+    single: toDict(['blues', 'tealblues', 'teals', 'greens', 'browns', 'oranges', 'reds', 'purples', 'warmgreys', 'greys'] as const),
+    /**
+     * @name Sequential Multi-Hue Schemes
+     * @summary For quantitative data in heatmaps.
+     * @description Sequential color schemes can be used to encode quantitative values. These color ramps are designed to encode increasing numeric values, but use additional hues for more color discrimination, which may be useful for visualizations such as heatmaps. However, beware that using multiple hues may cause viewers to inaccurately see the data range as grouped into color-coded clusters.
+     */
+    multi: toDict([
+        'viridis',
+        'magma',
+        'inferno',
+        'plasma',
+        'cividis',
+        'turbo',
+        'bluegreen',
+        'bluepurple',
+        'goldgreen',
+        'goldorange',
+        'goldred',
+        'greenblue',
+        'orangered',
+        'purplebluegreen',
+        'purpleblue',
+        'purplered',
+        'redpurple',
+        'yellowgreenblue',
+        'yellowgreen',
+        'yelloworangebrown',
+        'yelloworangered',
+        'darkblue',
+        'darkgold',
+        'darkgreen',
+        'darkmulti',
+        'darkred',
+        'lightgreyred',
+        'lightgreyteal',
+        'lightmulti',
+        'lightorange',
+        'lighttealblue',
+    ] as const),
+    /**
+     * @name Diverging Schemes
+     * @summary For quantitative data with meaningful mid-point.
+     * @description Diverging color schemes can be used to encode quantitative values with a meaningful mid-point, such as zero or the average value. Color ramps with different hues diverge with increasing saturation to highlight the values below and above the mid-point.
+     */
+    deiverging: toDict([
+        'blueorange',
+        'brownbluegreen',
+        'purplegreen',
+        'pinkyellowgreen',
+        'purpleorange',
+        'redblue',
+        'redgrey',
+        'redyellowblue',
+        'redyellowgreen',
+        'spectral',
+    ] as const),
+    /**
+     * @name Cyclical Schemes
+     * @summary For quantitative data with periodic patterns.
+     * @description Cyclical color schemes may be used to highlight periodic patterns in continuous data. However, these schemes are not well suited to accurately convey value differences.
+     */
+    cyclical: toDict(['rainbow', 'sinebow'] as const),
+};
+
+export type IPreDefinedColorSchemes =
+    | keyof (typeof ColorSchemes)['discrete']
+    | keyof (typeof ColorSchemes)['single']
+    | keyof (typeof ColorSchemes)['multi']
+    | keyof (typeof ColorSchemes)['deiverging']
+    | keyof (typeof ColorSchemes)['cyclical'];
+
+export type IColorSchemes =
+    | IPreDefinedColorSchemes
+    | {
+          name: IPreDefinedColorSchemes;
+          extent?: [number, number];
+          count?: number;
+      };
+
+export type IScale = {
+    domain?: [number, number] | string[];
+    domainMin?: number;
+    domainMax?: number;
+    range?: [number, number] | string[];
+    rangeMin?: number;
+    rangeMax?: number;
+};
+
+export type IColorScale = IScale & { scheme?: IColorSchemes };
+
+export type IFieldInfos = {
+    semanticType: ISemanticType;
+    theme: 'dark' | 'light';
+    values: any[];
+};
+
+export interface IChannelScales {
+    color?: IColorScale | ((info: IFieldInfos) => IColorScale);
+    opacity?: IScale | ((info: IFieldInfos) => IScale);
+    size?: IScale | ((info: IFieldInfos) => IScale);
+    radius?: IScale | ((info: IFieldInfos) => IScale);
+    theta?: IScale | ((info: IFieldInfos) => IScale);
+}

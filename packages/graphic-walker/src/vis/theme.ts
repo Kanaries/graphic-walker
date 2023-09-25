@@ -136,7 +136,7 @@ export const builtInThemes: { [themeKey: string]: { light: any; dark: any; } } =
     g2: AntVTheme,
 };
 
-export const usePrimaryColor = (defaultColor:string) => {
+export const getPrimaryColor = (defaultColor:string) => {
     return {
         light: {
             area: { fill: defaultColor },

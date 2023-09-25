@@ -4,12 +4,15 @@ import { Subject, Subscription } from 'rxjs'
 import * as op from 'rxjs/operators';
 import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
-import { NonPositionChannelConfigList, PositionChannelConfigList } from '../config'; 
+import { GLOBAL_CONFIG } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
-import { getSingleView } from './spec/view';
+import { getSingleView, resolveScales } from './spec/view';
 import { NULL_FIELD } from './spec/field';
+import canvasSize from 'canvas-size';
+import { Errors, useReporter } from '../utils/reportError';
+import { useCurrentMediaTheme } from '../utils/media';
 
 const CanvaContainer = styled.div<{rowSize: number; colSize: number;}>`
   display: grid;
@@ -49,6 +52,9 @@ interface ReactVegaProps {
   vegaConfig: VegaGlobalConfig;
   /** @default "en-US" */
   locale?: string;
+  useSvg?: boolean;
+  dark?: IDarkMode;
+  channelScales?: IChannelScales;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -98,13 +104,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     details = [],
     // themeKey = 'vega',
-    // dark = 'media',
+    dark = 'media',
     vegaConfig,
     // format
     locale = 'en-US',
+    useSvg,
+    channelScales,
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-  // const mediaTheme = useCurrentMediaTheme(dark);
+  const mediaTheme = useCurrentMediaTheme(dark);
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
   // const vegaConfig = useMemo(() => {
@@ -142,6 +150,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   const rowRepeatFields = useMemo(() => rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas, [rowDims, rowMeas]);//rowMeas.slice(0, -1);
   const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
+
+  const { reportError: reportGWError } = useReporter();
 
   const [crossFilterTriggerIdx, setCrossFilterTriggerIdx] = useState(-1);
 
@@ -197,7 +207,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         spec.width = width;
         spec.height = height;
       }
-      const singleView = getSingleView({
+      const v = getSingleView({
         x: xField,
         y: yField,
         color: color ? color : NULL_FIELD,
@@ -216,6 +226,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         stack,
         geomType,
       });
+      const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
       spec.mark = singleView.mark;
       if ('encoding' in singleView) {
@@ -229,17 +240,25 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           let value = resolve[v] ? 'independent' : 'shared';
           // @ts-ignore
           spec.resolve.scale = { ...spec.resolve.scale, [v]: value };
-          if((PositionChannelConfigList as string[]).includes(v)) {
+          if((GLOBAL_CONFIG.POSITION_CHANNEL_CONFIG_LIST as string[]).includes(v)) {
               spec.resolve.axis = { ...spec.resolve.axis, [v]: value };
-          }else if((NonPositionChannelConfigList as string[]).includes(v)){
+          }else if((GLOBAL_CONFIG.NON_POSITION_CHANNEL_CONFIG_LIST as string[]).includes(v)){
               spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
           }
       }
       
       if (viewPlaceholders.length > 0 && viewPlaceholders[0].current) {
-        const task = embed(viewPlaceholders[0].current, spec, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+        const task = embed(viewPlaceholders[0].current, spec, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
           const container = res.view.container();
           const canvas = container?.querySelector('canvas') ?? null;
+          const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+          if (!success) {
+            if (canvas) {
+              reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+            } else {
+              reportGWError("canvas not found", Errors.canvasExceedSize);
+            }
+          }
           vegaRefs.current = [{
             w: container?.clientWidth ?? res.view.width(),
             h: container?.clientHeight ?? res.view.height(),
@@ -287,7 +306,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         for (let j = 0; j < colRepeatFields.length; j++, index++) {
           const sourceId = index;
           const hasLegend = i === 0 && j === colRepeatFields.length - 1;
-          const singleView = getSingleView({
+          const v = getSingleView({
             x: colRepeatFields[j] || NULL_FIELD,
             y: rowRepeatFields[i] || NULL_FIELD,
             color: color ? color : NULL_FIELD,
@@ -307,6 +326,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             geomType,
             hideLegend: !hasLegend,
           });
+          const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
           const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null
           let commonSpec = { ...spec };
 
@@ -316,9 +336,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
           }
           if (node) {
             const id = index;
-            const task = embed(node, ans, { mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
+            const task = embed(node, ans, { renderer: useSvg ? 'svg' : 'canvas', mode: 'vega-lite', actions: showActions, timeFormatLocale: getVegaTimeFormatRules(locale), config: vegaConfig }).then(res => {
               const container = res.view.container();
               const canvas = container?.querySelector('canvas') ?? null;
+              const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+              if (!success) {
+                if (canvas) {
+                  reportGWError("canvas exceed max size", Errors.canvasExceedSize);
+                } else {
+                  reportGWError("canvas not found", Errors.canvasExceedSize);
+                }
+              }
               vegaRefs.current[id] = {
                 w: container?.clientWidth ?? res.view.width(),
                 h: container?.clientHeight ?? res.view.height(),
@@ -421,7 +449,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     height,
     vegaConfig,
     details,
-    text
+    text,
+    useSvg,
+    channelScales,
+    mediaTheme
   ]);
 
   const containerRef = useRef<HTMLDivElement>(null);

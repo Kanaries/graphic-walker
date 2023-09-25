@@ -16,15 +16,8 @@ const Background = styled.div`
 `;
 
 const Container = styled.div`
-    width: 98%;
-    @media (min-width: 600px) {
-        width: 80%;
-    }
-    @media (min-width: 1100px) {
-        width: 880px;
-    }
+    width: 360px;
     max-height: 800px;
-    overflow: auto;
     > div.container {
         padding: 0.5em 1em 1em 1em;
     }
@@ -40,7 +33,6 @@ interface ModalProps {
     onClose?: () => void;
     show?: boolean;
     title?: string;
-    containerStyle?: React.CSSProperties;
 }
 const Modal: React.FC<ModalProps> = (props) => {
     const { onClose, title, show } = props;
@@ -61,7 +53,7 @@ const Modal: React.FC<ModalProps> = (props) => {
                 }
             }}
         >
-            <Container style={props.containerStyle} role="dialog" className="bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800" onMouseDown={(e) => e.stopPropagation()}>
+            <Container role="dialog" className="bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800" onMouseDown={(e) => e.stopPropagation()}>
             <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                   <button
                     type="button"

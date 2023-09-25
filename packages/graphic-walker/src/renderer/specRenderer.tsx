@@ -5,10 +5,11 @@ import React, { forwardRef, useMemo } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
-import { builtInThemes, usePrimaryColor} from '../vis/theme';
+import { builtInThemes, getPrimaryColor } from '../vis/theme';
+import { getTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
     name?: string;
@@ -22,17 +23,19 @@ interface SpecRendererProps {
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
     computationFunction: IComputationFunction;
+    themeConfig?: VegaGlobalConfig;
+    channelScales?: IChannelScales;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction  },
+    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction, themeConfig: customizedThemeConfig, channelScales },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve } = visualConfig;
+    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve, useSvg } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -60,7 +63,11 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = defaultColor? usePrimaryColor(defaultColor)[mediaTheme]:builtInThemes[themeKey ?? 'vega']?.[mediaTheme];
+    const themeConfig = defaultColor? getPrimaryColor(defaultColor)[mediaTheme]: getTheme({
+        themeKey,
+        mediaTheme,
+        themeConfig: customizedThemeConfig
+    })
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         console.log(themeConfig)
@@ -141,10 +148,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={{
+            size={(size.mode === 'fixed' || isSpatial) ? {
                 width: size.width + 'px',
                 height: size.height + 'px',
-            }}
+            }: undefined}
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
@@ -183,6 +190,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     ref={ref}
                     onGeomClick={onGeomClick}
                     locale={locale}
+                    useSvg={useSvg}
+                    channelScales={channelScales}
+                    dark={dark}
                 />
             )}
         </Resizable>

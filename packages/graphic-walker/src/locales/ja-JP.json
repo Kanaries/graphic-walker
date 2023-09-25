@@ -1,23 +1,25 @@
 {
     "config": {
-        "format": "形式",
-        "numberFormat": "数字の形式",
-        "timeFormat": "時間の形式",
-        "normalizedNumberFormat": "正規化された数字の形式",
+        "format": "フォーマット",
+        "numberFormat": "数字",
+        "timeFormat": "日付",
+        "normalizedNumberFormat": "正規化された数字",
         "background": "背景",
-        "color":"色",
-        "independence": "独立性",
+        "color": "色",
+        "independence": "独立したスケーリング",
         "x": "x軸",
         "y": "y軸",
-        "zeroScale": "ゼロ目盛",
+        "zeroScale": "０を含む",
+        "misc": "その他",
         "formatGuidesDocs": "フォーマットガイド",
-        "readHere": "ここを読む"
+        "readHere": "ここを読む",
+        "svg": "SVGを使う"
     },
     "constant": {
         "row_count": "行数",
         "analytic_type": {
-            "dimension": "次元",
-            "measure": "尺度"
+            "dimension": "ディメンション",
+            "measure": "メジャー"
         },
         "semantic_type": {
             "nominal": "名義尺度",
@@ -38,15 +40,10 @@
             "rect": "長方形",
             "arc": "アーク",
             "boxplot": "ボックスプロット",
-            "table": "表",
-            "text": "テキスト",
+            "table": "テーブル",
+            "text": "文字",
             "poi": "POI",
             "choropleth": "コロプレス"
-        },
-        "coord_system": {
-            "__enum__": "座標系",
-            "generic": "ジェネリック",
-            "geographic": "地理"
         },
         "stack_mode": {
             "__enum__": "スタックモード",
@@ -83,7 +80,7 @@
             "theta": "角度",
             "radius": "半径",
             "filters": "フィルター",
-            "text": "本文",
+            "text": "テキスト",
             "longitude": "経度",
             "latitude": "緯度",
             "geoId": "地理ID"
@@ -147,9 +144,12 @@
     },
     "main": {
         "tablist": {
-            "new": "+ 新規作成",
-            "auto_title": "グラフ {{idx}}",
-            "chart_name": "グラフ名"
+            "new": "+ 新規ビュー",
+            "auto_title": "ビュー {{idx}}",
+            "chart_name": "ビュー名"
+        },
+        "askviz":{
+            "placeholder": "データセットから描画したい視覚化は何ですか？"
         },
         "tabpanel": {
             "menubar": {
@@ -168,9 +168,11 @@
                     "ascending": "昇順に並べ替える",
                     "descending": "降順に並べ替える",
                     "transpose": "転置",
+                    "config": "設定",
                     "export_chart": "エクスポート",
                     "export_chart_as": "{{type}}としてエクスポート",
-                    "export_code": "コードをエクスポート"
+                    "export_code": "コードをエクスポート",
+                    "geojson": "地理情報設定"
                 },
                 "limit": "上限",
                 "size": "サイズ変更",
@@ -188,10 +190,11 @@
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
                     "objectKey": "Feature のキー",
-                    "jsonInputPlaceholder": "{{format}}をここに貼り付けてください",
+                    "jsonInputPlaceholder": "{{format}}ファイルをここに",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "{{format}} URLを入力",
-                    "load": "ロード"
+                    "load": "ロード",
+                    "loading": "地理データを読み込んでいます..."
                 }
             },
             "DatasetFields": {
@@ -201,8 +204,8 @@
     },
     "filters": {
         "to_edit": "このルールを編集",
-        "empty_rule": "! (空のルール)",
-        "editing": "フィルタールールの設定",
+        "empty_rule": "! (未設定)",
+        "editing": "フィルターの設定",
         "form": {
             "name": "フィールド",
             "rule": "ルール"
@@ -221,8 +224,8 @@
             "cancel": "キャンセル"
         },
         "range": {
-            "start_value": "開始値",
-            "end_value": "終了値"
+            "start_value": "最小",
+            "end_value": "最大"
         }
     },
     "explain": {
@@ -245,5 +248,49 @@
         "drop_field": "ここにフィールドをドロップ",
         "confirm": "確認",
         "cancel": "キャンセル"
+    },
+    "field_menu": {
+        "to_dim": "ディメンションに変更",
+        "to_mea": "メジャーに変更",
+        "new_calc": "計算フィールドを作成",
+        "bin": "ビン",
+        "binCount": "ビンカウント",
+        "log": "対数({{ base }})",
+        "binCustom": "ビン（カスタム）",
+        "logCustom": "対数（カスタム）",
+        "semantic_type": {
+            "name": "セマンティックタイプの変更",
+            "types": {
+                "nominal": "名義",
+                "ordinal": "序数",
+                "quantitative": "量的",
+                "temporal": "時間的"
+            }
+        },
+        "drill": {
+            "name": "時間単位",
+            "feature_name": "時間特性",
+            "levels": {
+                "year": "年",
+                "quarter": "四半期",
+                "month": "月",
+                "week": "週",
+                "weekday": "曜日",
+                "day": "日",
+                "hour": "時",
+                "minute": "分",
+                "second": "秒"
+            }
+        }
+    },
+    "calc": {
+        "bin_panel_title": "ビン",
+        "bin_panel_desc": "フィールドのビン構成を設定する",
+        "bin_panel_option_widths": "等しい幅のビン",
+        "bin_panel_option_counts": "等しい数のビン",
+        "bin_panel_number": "ビンの数",
+        "log_panel_title": "対数変換",
+        "log_panel_desc": "フィールドの対数設定を設定する",
+        "log_panel_number": "対数の底"
     }
 }

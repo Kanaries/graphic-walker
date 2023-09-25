@@ -153,9 +153,10 @@ type IExpParameter = (
 );
 
 interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount';
+    op: 'bin' | 'one' | 'binCount'|'log';
     params: IExpParameter[]; 
     as: string;
+    num?:number;
 }
 
 interface ITransformField {
