@@ -565,6 +565,44 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
+"@kanaries/graphic-walker@0.4.13":
+  version "0.4.13"
+  resolved "https://registry.npmjs.org/@kanaries/graphic-walker/-/graphic-walker-0.4.13.tgz#a03d400f4774974454e1525a2e3a3d879e31eac6"
+  integrity sha512-8Mn8rQjAuGgnEDN60VgxAlV1aVMqjJ/UdbRdtQkaxwPKdSOQ+DTMoFu/uccFQUaotT77eWJMLIvc06l+R+mpRw==
+  dependencies:
+    "@headlessui/react" "^1.7.12"
+    "@heroicons/react" "^2.0.8"
+    "@kanaries/react-beautiful-dnd" "^0.0.3"
+    "@kanaries/web-data-loader" "^0.1.7"
+    "@tailwindcss/forms" "^0.5.4"
+    autoprefixer "^10.3.5"
+    canvas-size "^1.2.6"
+    d3-format "^3.1.0"
+    d3-scale "^4.0.2"
+    d3-time-format "^4.1.0"
+    i18next "^21.9.1"
+    i18next-browser-languagedetector "^6.1.5"
+    immer "^9.0.15"
+    leaflet "^1.9.4"
+    mobx "^6.3.3"
+    mobx-react-lite "^3.2.1"
+    nanoid "^4.0.2"
+    postcss "^8.3.7"
+    postinstall-postinstall "^2.1.0"
+    re-resizable "^6.9.8"
+    react-dropzone "^14.2.3"
+    react-error-boundary "^4.0.11"
+    react-i18next "^11.18.6"
+    react-leaflet "^4.2.1"
+    react-shadow "^20.0.0"
+    rxjs "^7.3.0"
+    tailwindcss "^3.2.4"
+    topojson-client "^3.1.0"
+    uuid "^8.3.2"
+    vega "^5.22.1"
+    vega-embed "^6.21.0"
+    vega-lite "^5.6.0"
+
 "@kanaries/react-beautiful-dnd@^0.0.3":
   version "0.0.3"
   resolved "https://registry.npmmirror.com/@kanaries/react-beautiful-dnd/-/react-beautiful-dnd-0.0.3.tgz#fce3972ed34a55223866b259b0adbabe003c7ba4"
@@ -787,6 +825,14 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-color@^3.0.6":
+  version "3.0.6"
+  resolved "https://registry.npmjs.org/@types/react-color/-/react-color-3.0.6.tgz#602fed023802b2424e7cd6ff3594ccd3d5055f9a"
+  integrity sha512-OzPIO5AyRmLA7PlOyISlgabpYUa3En74LP8mTMa0veCA719SvYQov4WLMsHvCgXP+L+KI9yGhYnqZafVGG0P4w==
+  dependencies:
+    "@types/react" "*"
+    "@types/reactcss" "*"
+
 "@types/react-dom@^17.x":
   version "17.0.19"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-17.0.19.tgz#36feef3aa35d045cacd5ed60fe0eef5272f19492"
@@ -812,6 +858,13 @@
     "@types/prop-types" "*"
     "@types/scheduler" "*"
     csstype "^3.0.2"
+
+"@types/reactcss@*":
+  version "1.2.6"
+  resolved "https://registry.npmjs.org/@types/reactcss/-/reactcss-1.2.6.tgz#133c1e7e896f2726370d1d5a26bf06a30a038bcc"
+  integrity sha512-qaIzpCuXNWomGR1Xq8SCFTtF4v8V27Y6f+b9+bzHiv087MylI/nTCqqdChNeWS7tslgROmYB7yeiruWX7WnqNg==
+  dependencies:
+    "@types/react" "*"
 
 "@types/scheduler@*":
   version "0.16.2"

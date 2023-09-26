@@ -1,4 +1,4 @@
-import { IExpParamter, IExpression, IField, IRow } from "../interfaces";
+import { IExpParamter, IExpression, IRow } from "../interfaces";
 import dateTimeDrill from "./op/dateTimeDrill";
 import dateTimeFeature from "./op/dateTimeFeature";
 
