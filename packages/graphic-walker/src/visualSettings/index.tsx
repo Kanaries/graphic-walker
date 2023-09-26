@@ -111,6 +111,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         [rendererHandler]
     );
 
+    const downloadBase64 = useCallback(
+        throttle(() => {
+            rendererHandler?.current?.getCanvasData().then(x => navigator.clipboard.writeText(x.join(',')));
+        }, 200),
+        [rendererHandler]
+    );
+
+
     const downloadCSV = useCallback(
         throttle(() => {
             csvHandler?.current?.download();
@@ -529,6 +537,17 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                             onClick={() => downloadSVG()}
                         >
                             {t('button.export_chart_as', { type: 'svg' })}
+                        </button>
+                        <button
+                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
+                                dark
+                                    ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700'
+                                    : 'bg-white hover:bg-gray-200 text-gray-800'
+                            }`}
+                            aria-label={t('button.export_chart_as', { type: 'base64' })}
+                            onClick={() => downloadBase64()}
+                        >
+                            {t('button.export_chart_as', { type: 'base64' })}
                         </button>
                     </FormContainer>
                 ),
