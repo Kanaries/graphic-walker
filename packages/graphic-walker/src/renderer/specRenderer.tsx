@@ -8,8 +8,8 @@ import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
-import { builtInThemes } from '../vis/theme';
-import { useTheme } from '../utils/useTheme';
+import { builtInThemes, getPrimaryColor } from '../vis/theme';
+import { getTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
     name?: string;
@@ -54,20 +54,23 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         () => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'),
         [columns]
     );
-
+    
+    const defaultColor = visualConfig.primaryColor;
+    
     const isPivotTable = geoms[0] === 'table';
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = useTheme({
+    const themeConfig = defaultColor? getPrimaryColor(defaultColor)[mediaTheme]: getTheme({
         themeKey,
         mediaTheme,
         themeConfig: customizedThemeConfig
     })
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
+        console.log(themeConfig)
         const config: VegaGlobalConfig = {
             ...themeConfig,
             background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',

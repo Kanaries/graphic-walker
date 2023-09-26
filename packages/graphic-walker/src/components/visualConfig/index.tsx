@@ -1,7 +1,8 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useGlobalStore } from '../../store';
 import { GLOBAL_CONFIG } from '../../config';
+import { TwitterPicker, BlockPicker, SketchPicker } from 'react-color';
 
 import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
@@ -10,6 +11,7 @@ import DefaultButton from '../button/default';
 import { useTranslation } from 'react-i18next';
 import Toggle from '../toggle';
 import { runInAction, toJS } from 'mobx';
+import { ColorSchemes } from './colorScheme';
 
 const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -39,11 +41,28 @@ const VisualConfigPanel: React.FC = (props) => {
     const [svg, setSvg] = useState<boolean>(visualConfig.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
+    const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
+    const [displayColorPicker, setDisplayColorPicker] = useState(false);
+    const [displaySchemePicker, setDisplaySchemePicker] = useState(false);
+    const selectColor = useRef('rgb(91, 143, 249)');
+
+    const getRGBA = (rgba) => {
+        console.log(rgba);
+        let arr = rgba.match(/\d+/g);
+        console.log('arr', arr);
+        return {
+            r: arr[0],
+            g: arr[1],
+            b: arr[2],
+            a: arr[3],
+        };
+    };
 
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
         setBackground(visualConfig.background);
         setResolve(toJS(visualConfig.resolve));
+        setDefaultColor(getRGBA(visualConfig.primaryColor));
         setScaleIncludeUnmatchedChoropleth(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
@@ -59,7 +78,69 @@ const VisualConfigPanel: React.FC = (props) => {
                 commonStore.setShowVisualConfigPanel(false);
             }}
         >
-            <div>
+            <div
+                onClick={() => {
+                    setDisplayColorPicker(false);
+                }}
+            >
+                <div className="mb-2">
+                    <h2 className="text-lg mb-4">Scheme</h2>
+                    <div className="flex">
+                        <p className="w-28">Primary Color</p>
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                            }}
+                        >
+                            <div
+                                className="w-8 h-5 border-2"
+                                style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setDisplayColorPicker(true);
+                                }}
+                            ></div>
+                            <div className="absolute left-32 top-22 index-40">
+                                {displayColorPicker && (
+                                    <SketchPicker
+                                        presetColors={[
+                                            '#5B8FF9',
+                                            '#FF6900',
+                                            '#FCB900',
+                                            '#7BDCB5',
+                                            '#00D084',
+                                            '#8ED1FC',
+                                            '#0693E3',
+                                            '#ABB8C3',
+                                            '#EB144C',
+                                            '#F78DA7',
+                                            '#9900EF',
+                                        ]}
+                                        color={defaultColor}
+                                        onChange={(color, event) => {
+                                            console.log(color.hex);
+                                            console.log('event', event);
+                                            setDefaultColor(color.rgb);
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* {ColorSchemes.map((scheme) => {
+                        return (
+                            <div key={scheme.name} className="flex justify-start items-center">
+                                <div className="font-light mx-2 w-24 ">{scheme.name}</div>
+                                {scheme.value.map((c, index) => {
+                                    return <div key={index} className="w-4 h-4" style={{ backgroundColor: `${c}` }}></div>;
+                                })}
+                            </div>
+                        );
+                    })} */}
+                </div>
                 <h2 className="text-lg mb-4">{t('config.format')}</h2>
                 <p className="text-xs">
                     {t(`config.formatGuidesDocs`)}:{' '}
@@ -171,6 +252,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
+                                vizStore.setVisualConfig('primaryColor', `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`);
                                 vizStore.setVisualConfig('useSvg', svg);
                                 commonStore.setShowVisualConfigPanel(false);
                             });
