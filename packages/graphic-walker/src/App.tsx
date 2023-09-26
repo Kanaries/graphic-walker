@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
@@ -23,9 +24,6 @@ import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import ClickMenu from './components/clickMenu';
-import {
-    LightBulbIcon,
-} from "@heroicons/react/24/outline";
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';

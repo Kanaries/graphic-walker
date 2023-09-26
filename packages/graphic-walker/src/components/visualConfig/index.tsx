@@ -1,17 +1,31 @@
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState, useRef } from 'react';
+import { runInAction, toJS } from 'mobx';
+import { useTranslation } from 'react-i18next';
+import { SketchPicker } from 'react-color';
+
 import { useGlobalStore } from '../../store';
 import { GLOBAL_CONFIG } from '../../config';
-import { TwitterPicker, BlockPicker, SketchPicker } from 'react-color';
-
-import Modal from '../modal';
 import { IVisualConfig } from '../../interfaces';
 import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
-import { useTranslation } from 'react-i18next';
+
+import Modal from '../modal';
 import Toggle from '../toggle';
-import { runInAction, toJS } from 'mobx';
-import { ColorSchemes } from './colorScheme';
+
+const DEFAULT_COLOR_SCHEME = [
+    '#5B8FF9',
+    '#FF6900',
+    '#FCB900',
+    '#7BDCB5',
+    '#00D084',
+    '#8ED1FC',
+    '#0693E3',
+    '#ABB8C3',
+    '#EB144C',
+    '#F78DA7',
+    '#9900EF',
+]
 
 const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -43,26 +57,22 @@ const VisualConfigPanel: React.FC = (props) => {
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
-    const [displaySchemePicker, setDisplaySchemePicker] = useState(false);
-    const selectColor = useRef('rgb(91, 143, 249)');
 
-    const getRGBA = (rgba) => {
-        console.log(rgba);
-        let arr = rgba.match(/\d+/g);
-        console.log('arr', arr);
-        return {
-            r: arr[0],
-            g: arr[1],
-            b: arr[2],
-            a: arr[3],
-        };
-    };
+    const extractRGBA = useCallback((rgba?: string) => {
+        if (!rgba) {
+            return { r: 0, g: 0, b: 0, a: 0 };
+        }
+
+        const arr = rgba.match(/\d+/g) || [];
+        const [r = 0, g = 0, b = 0, a = 0] = arr.map(Number);
+        return { r, g, b, a };
+    }, []);
 
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
         setBackground(visualConfig.background);
         setResolve(toJS(visualConfig.resolve));
-        setDefaultColor(getRGBA(visualConfig.primaryColor));
+        setDefaultColor(extractRGBA(visualConfig.primaryColor));
         setScaleIncludeUnmatchedChoropleth(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
@@ -105,24 +115,13 @@ const VisualConfigPanel: React.FC = (props) => {
                             <div className="absolute left-32 top-22 index-40">
                                 {displayColorPicker && (
                                     <SketchPicker
-                                        presetColors={[
-                                            '#5B8FF9',
-                                            '#FF6900',
-                                            '#FCB900',
-                                            '#7BDCB5',
-                                            '#00D084',
-                                            '#8ED1FC',
-                                            '#0693E3',
-                                            '#ABB8C3',
-                                            '#EB144C',
-                                            '#F78DA7',
-                                            '#9900EF',
-                                        ]}
+                                        presetColors={DEFAULT_COLOR_SCHEME}
                                         color={defaultColor}
                                         onChange={(color, event) => {
-                                            console.log(color.hex);
-                                            console.log('event', event);
-                                            setDefaultColor(color.rgb);
+                                            setDefaultColor({
+                                                ...color.rgb,
+                                                a: color.rgb.a ?? 1,
+                                            });
                                         }}
                                     />
                                 )}

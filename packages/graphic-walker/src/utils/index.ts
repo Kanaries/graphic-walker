@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { COUNT_FIELD_ID } from "../constants";
-import { IRow, Filters, IMutField, IViewField } from "../interfaces";
+import { IRow, Filters, IViewField } from "../interfaces";
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;

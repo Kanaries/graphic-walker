@@ -8,7 +8,7 @@ import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
-import { builtInThemes, getPrimaryColor } from '../vis/theme';
+import { getPrimaryColor } from '../vis/theme';
 import { getTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
@@ -70,7 +70,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     })
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
-        console.log(themeConfig)
         const config: VegaGlobalConfig = {
             ...themeConfig,
             background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',

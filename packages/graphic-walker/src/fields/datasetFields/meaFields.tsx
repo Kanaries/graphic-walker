@@ -1,12 +1,12 @@
 import React from 'react';
 import { Draggable, DroppableProvided } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { useGlobalStore } from '../../store';
 import DataTypeIcon from '../../components/dataTypeIcon';
-import { FieldPill } from './fieldPill';
 import ActionMenu from '../../components/actionMenu';
-import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { useMenuActions } from './utils';
+import { FieldPill } from './fieldPill';
 
 interface Props {
     provided: DroppableProvided;
