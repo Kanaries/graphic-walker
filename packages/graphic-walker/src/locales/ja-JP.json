@@ -1,5 +1,13 @@
 {
     "config": {
+        "scheme": "スキーム",
+        "primary_color": "プライマリカラー",
+        "color_palette": "カラーパレット",
+        "opacity": "不透明度",
+        "size": "サイズ",
+        "min_domain": "最小ドメイン",
+        "max_domain": "最大ドメイン",
+        "range": "範囲",
         "format": "フォーマット",
         "numberFormat": "数字",
         "timeFormat": "日付",
@@ -148,7 +156,7 @@
             "auto_title": "ビュー {{idx}}",
             "chart_name": "ビュー名"
         },
-        "askviz":{
+        "askviz": {
             "placeholder": "データセットから描画したい視覚化は何ですか？"
         },
         "tabpanel": {

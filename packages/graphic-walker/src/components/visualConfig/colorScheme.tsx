@@ -95,3 +95,14 @@ export const ColorSchemes = [
         value: ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'],
     },
 ];
+
+export const extractRGBA = (rgba?: string) => {
+    if (!rgba) {
+        return { r: 0, g: 0, b: 0, a: 0 };
+    }
+
+    const arr = rgba.match(/\d+/g) || [];
+    const [r = 0, g = 0, b = 0, a = 0] = arr.map(Number);
+    return { r, g, b, a };
+};
+
