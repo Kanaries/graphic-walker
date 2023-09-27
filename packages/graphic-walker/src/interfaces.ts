@@ -252,6 +252,7 @@ export interface IVisualConfig {
         normalizedNumberFormat?: string;
     };
     primaryColor?:string;
+    colorPalette?: string;
     resolve: {
         x?: boolean;
         y?: boolean;

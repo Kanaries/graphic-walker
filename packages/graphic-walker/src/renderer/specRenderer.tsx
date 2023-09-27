@@ -5,10 +5,19 @@ import React, { forwardRef, useMemo } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, VegaGlobalConfig, IComputationFunction, IChannelScales } from '../interfaces';
+import {
+    DeepReadonly,
+    DraggableFieldState,
+    IDarkMode,
+    IRow,
+    IThemeKey,
+    IVisualConfig,
+    VegaGlobalConfig,
+    IComputationFunction,
+    IChannelScales,
+} from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
-import { getPrimaryColor } from '../vis/theme';
 import { getTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
@@ -31,11 +40,40 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, computationFunction, themeConfig: customizedThemeConfig, channelScales },
+    {
+        name,
+        themeKey,
+        dark,
+        data,
+        loading,
+        draggableFieldState,
+        visualConfig,
+        onGeomClick,
+        onChartResize,
+        locale,
+        computationFunction,
+        themeConfig: customizedThemeConfig,
+        channelScales,
+    },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, coordSystem = 'generic', interactiveScale, defaultAggregated, stack, showActions, size, format: _format, background, zeroScale, resolve, useSvg } = visualConfig;
+    const {
+        geoms,
+        coordSystem = 'generic',
+        interactiveScale,
+        defaultAggregated,
+        stack,
+        showActions,
+        size,
+        format: _format,
+        background,
+        zeroScale,
+        resolve,
+        useSvg,
+        primaryColor,
+        colorPalette,
+    } = visualConfig;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -50,24 +88,21 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const format = toJS(_format);
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
-    const colLeftFacetFields = useMemo(
-        () => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'),
-        [columns]
-    );
-    
-    const defaultColor = visualConfig.primaryColor;
-    
+    const colLeftFacetFields = useMemo(() => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [columns]);
+
     const isPivotTable = geoms[0] === 'table';
 
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = defaultColor? getPrimaryColor(defaultColor)[mediaTheme]: getTheme({
+    const themeConfig = getTheme({
         themeKey,
         mediaTheme,
-        themeConfig: customizedThemeConfig
-    })
+        themeConfig: customizedThemeConfig,
+        primaryColor,
+        colorPalette,
+    });
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
@@ -100,15 +135,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
 
         return config;
-    }, [
-        themeConfig,
-        zeroScale,
-        resolve,
-        background,
-        format.normalizedNumberFormat,
-        format.numberFormat,
-        format.timeFormat,
-    ]);
+    }, [themeConfig, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
         return (
@@ -147,20 +174,18 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={(size.mode === 'fixed' || isSpatial) ? {
-                width: size.width + 'px',
-                height: size.height + 'px',
-            }: undefined}
+            size={
+                size.mode === 'fixed' || isSpatial
+                    ? {
+                          width: size.width + 'px',
+                          height: size.height + 'px',
+                      }
+                    : undefined
+            }
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
-                <LeafletRenderer
-                    name={name}
-                    data={data}
-                    draggableFieldState={draggableFieldState}
-                    visualConfig={visualConfig}
-                    vegaConfig={vegaConfig}
-                />
+                <LeafletRenderer name={name} data={data} draggableFieldState={draggableFieldState} visualConfig={visualConfig} vegaConfig={vegaConfig} />
             )}
             {isSpatial || (
                 <ReactVega

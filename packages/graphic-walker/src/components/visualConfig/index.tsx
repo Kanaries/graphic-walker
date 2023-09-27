@@ -12,20 +12,10 @@ import DefaultButton from '../button/default';
 
 import Modal from '../modal';
 import Toggle from '../toggle';
+import DropdownSelect from '../dropdownSelect';
+import { ColorSchemes, extractRGBA } from './colorScheme';
 
-const DEFAULT_COLOR_SCHEME = [
-    '#5B8FF9',
-    '#FF6900',
-    '#FCB900',
-    '#7BDCB5',
-    '#00D084',
-    '#8ED1FC',
-    '#0693E3',
-    '#ABB8C3',
-    '#EB144C',
-    '#F78DA7',
-    '#9900EF',
-]
+const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
 const VisualConfigPanel: React.FC = (props) => {
     const { commonStore, vizStore } = useGlobalStore();
@@ -57,16 +47,7 @@ const VisualConfigPanel: React.FC = (props) => {
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
-
-    const extractRGBA = useCallback((rgba?: string) => {
-        if (!rgba) {
-            return { r: 0, g: 0, b: 0, a: 0 };
-        }
-
-        const arr = rgba.match(/\d+/g) || [];
-        const [r = 0, g = 0, b = 0, a = 0] = arr.map(Number);
-        return { r, g, b, a };
-    }, []);
+    const [colorPalette, setColorPalette] = useState('');
 
     useEffect(() => {
         setZeroScale(visualConfig.zeroScale);
@@ -79,6 +60,7 @@ const VisualConfigPanel: React.FC = (props) => {
             timeFormat: visualConfig.format.timeFormat,
             normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
         });
+        setColorPalette(visualConfig.colorPalette ?? '');
     }, [showVisualConfigPanel]);
 
     return (
@@ -96,50 +78,73 @@ const VisualConfigPanel: React.FC = (props) => {
                 <div className="mb-2">
                     <h2 className="text-lg mb-4">Scheme</h2>
                     <div className="flex">
-                        <p className="w-28">Primary Color</p>
-                        <div
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                            }}
-                        >
-                            <div
-                                className="w-8 h-5 border-2"
-                                style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    setDisplayColorPicker(true);
-                                }}
-                            ></div>
-                            <div className="absolute left-32 top-22 index-40">
-                                {displayColorPicker && (
-                                    <SketchPicker
-                                        presetColors={DEFAULT_COLOR_SCHEME}
-                                        color={defaultColor}
-                                        onChange={(color, event) => {
-                                            setDefaultColor({
-                                                ...color.rgb,
-                                                a: color.rgb.a ?? 1,
-                                            });
+                        <div className="flex space-x-6">
+                            <div>
+                                <label className="block text-xs font-medium leading-6">Primary Color</label>
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    }}
+                                >
+                                    <div
+                                        className="w-8 h-5 border-2"
+                                        style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            setDisplayColorPicker(true);
                                         }}
-                                    />
-                                )}
+                                    ></div>
+                                    <div className="absolute left-32 top-22 index-40">
+                                        {displayColorPicker && (
+                                            <SketchPicker
+                                                presetColors={DEFAULT_COLOR_SCHEME}
+                                                color={defaultColor}
+                                                onChange={(color, event) => {
+                                                    setDefaultColor({
+                                                        ...color.rgb,
+                                                        a: color.rgb.a ?? 1,
+                                                    });
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium leading-6">Color Palette</label>
+                                <DropdownSelect
+                                    buttonClassName="w-48"
+                                    selectedKey={colorPalette}
+                                    onSelect={setColorPalette}
+                                    options={ColorSchemes.map((scheme) => ({
+                                        value: scheme.name,
+                                        label: (
+                                            <>
+                                                <div key={scheme.name} className="flex flex-col justify-start items-center">
+                                                    <div className="font-light">{scheme.name}</div>
+                                                    <div className="flex w-full">
+                                                        {scheme.value.map((c, index) => {
+                                                            return <div key={index} className="w-4 h-4 flex-shrink" style={{ backgroundColor: `${c}` }}></div>;
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ),
+                                    }))}
+                                />
                             </div>
                         </div>
                     </div>
 
                     {/* {ColorSchemes.map((scheme) => {
                         return (
-                            <div key={scheme.name} className="flex justify-start items-center">
-                                <div className="font-light mx-2 w-24 ">{scheme.name}</div>
-                                {scheme.value.map((c, index) => {
-                                    return <div key={index} className="w-4 h-4" style={{ backgroundColor: `${c}` }}></div>;
-                                })}
-                            </div>
+
                         );
                     })} */}
                 </div>
+                <hr className="my-4" />
                 <h2 className="text-lg mb-4">{t('config.format')}</h2>
                 <p className="text-xs">
                     {t(`config.formatGuidesDocs`)}:{' '}
@@ -252,6 +257,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
                                 vizStore.setVisualConfig('primaryColor', `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`);
+                                vizStore.setVisualConfig('colorPalette', colorPalette);
                                 vizStore.setVisualConfig('useSvg', svg);
                                 commonStore.setShowVisualConfigPanel(false);
                             });
