@@ -146,9 +146,6 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const taskIdRef = useRef(0);
 
     useEffect(() => {
-        if (statLoading) {
-            return;
-        }
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
         dataReadRawServer(computationFunction, size, pageIndex).then(data => {
