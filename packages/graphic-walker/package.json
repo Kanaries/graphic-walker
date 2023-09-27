@@ -63,7 +63,6 @@
     "rxjs": "^7.3.0",
     "tailwindcss": "^3.2.4",
     "topojson-client": "^3.1.0",
-    "uuid": "^8.3.2",
     "vega": "^5.22.1",
     "vega-embed": "^6.21.0",
     "vega-lite": "^5.6.0"
@@ -81,7 +80,6 @@
     "@types/react-dom": "^17.x",
     "@types/styled-components": "^5.1.26",
     "@types/topojson-client": "^3.1.1",
-    "@types/uuid": "^8.3.1",
     "@vercel/analytics": "^0.1.8",
     "@vitejs/plugin-react": "^3.1.0",
     "styled-components": "^5.3.6",

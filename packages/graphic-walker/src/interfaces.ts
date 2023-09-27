@@ -236,6 +236,13 @@ export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 
 export type ICoordMode = 'generic' | 'geographic';
 
+export type IConfigScale = {
+    rangeMax?: number,
+    rangeMin?: number,
+    domainMin?: number,
+    domainMax?: number,
+}
+
 export interface IVisualConfig {
     defaultAggregated: boolean;
     geoms: string[];
@@ -257,6 +264,11 @@ export interface IVisualConfig {
         normalizedNumberFormat?: string;
     };
     primaryColor?:string;
+    colorPalette?: string;
+    scale?: {
+        opacity: IConfigScale,
+        size: IConfigScale
+    };
     resolve: {
         x?: boolean;
         y?: boolean;
