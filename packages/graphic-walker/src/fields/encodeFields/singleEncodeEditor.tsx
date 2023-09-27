@@ -7,7 +7,7 @@ import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
-import { AGGREGATOR_LIST } from '../fieldsContext';
+import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
@@ -30,7 +30,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { t } = useTranslation();
 
     const aggregationOptions = useMemo(() => {
-        return AGGREGATOR_LIST.map((op) => ({
+        return GLOBAL_CONFIG.AGGREGATOR_LIST.map((op) => ({
             value: op,
             label: t(`constant.aggregator.${op}`),
         }));

@@ -10,17 +10,9 @@ function insertNode (tree: INestNode, layerKeys: string[], nodeData: IRow, depth
     }
     const key = nodeData[layerKeys[depth]];
     const uniqueKey = `${tree.uniqueKey}__${key}`;
-    // console.log({
-    //     key,
-    //     nodeData,
-    //     layerKeys,
-    //     depth
-    // })
+
     let child = tree.children.find((c) => c.key === key);
     if (!child) {
-        // console.log(key, tree.children.map(c => c.key))
-        // insertNode(child, layerKeys, nodeData, depth + 1);
-        // return;
         child = {
             key,
             value: key,
@@ -127,7 +119,6 @@ class NodeIterator {
             let parent = this.nodeStack[this.nodeStack.length - 2];
             let nodeIndex = parent.children.findIndex(n => n.key === node!.key);
             if (nodeIndex === -1) break;
-            // console.log(this.nodeStack.map(n => `${n.fieldKey}-${n.value}`))
             if (cursorMoved) {
                 if (node.children.length > 0 && !node.isCollapsed) {
                     this.nodeStack.push(node.children[0]);
@@ -153,7 +144,6 @@ class NodeIterator {
         } else {
             this.current = null;
         }
-        // console.log(this.current)
         return this.current;
     }
     public predicates (): { key: string; value: string | number }[] {
@@ -168,9 +158,7 @@ export function buildMetricTableFromNestTree (leftTree: INestNode, topTree: INes
     const mat: any[][] = [];
     const iteLeft = new NodeIterator(leftTree);
     const iteTop = new NodeIterator(topTree);
-    // console.log(iteLeft, iteTop)
     iteLeft.first();
-    // return mat;
     while (iteLeft.current !== null) {
         const vec: any[] = [];
         iteTop.first();

@@ -1,13 +1,15 @@
 import React, { forwardRef, useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Tooltip, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Tooltip, CircleMarker, AttributionControl } from "react-leaflet";
 import type { Map } from "leaflet";
 import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 import { TooltipContent } from "./tooltip";
+import { useAppRootContext } from "../appRoot";
 
 
 export interface IPOIRendererProps {
+    name?: string;
     data: IRow[];
     allFields: DeepReadonly<IViewField[]>;
     defaultAggregated: boolean;
@@ -39,7 +41,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer (props, ref) {
-    const { data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
+    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
     
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
@@ -100,6 +102,23 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         }
     });
 
+    const appRef = useAppRootContext();
+
+    useEffect(() => {
+        const ctx = appRef.current;
+        if (ctx) {
+            ctx.exportChart = async (mode) => ({
+                mode,
+                title: name || 'untitled',
+                nCols: 0,
+                nRows: 0,
+                charts: [],
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null,
+                chartType: 'map',
+            })
+        }
+    }, []);
+
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
@@ -118,11 +137,12 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
     }, [defaultAggregated, details, size, color, opacity]);
     
     return (
-        <MapContainer center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <AttributionControl prefix="Leaflet" />
             {Boolean(latitude && longitude) && data.map((row, i) => {
                 const lat = row[latitude!.fid];
                 const lng = row[longitude!.fid];

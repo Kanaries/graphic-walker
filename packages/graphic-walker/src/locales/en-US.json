@@ -10,8 +10,10 @@
         "x": "x-Axis",
         "y": "y-Axis",
         "zeroScale": "Zero Scale",
+        "misc": "Misc",
         "formatGuidesDocs": "Format guides docs",
-        "readHere": "read here"
+        "readHere": "read here",
+        "svg": "Use SVG"
     },
     "constant": {
         "row_count": "Row count",
@@ -159,6 +161,9 @@
                 "undo": "Undo",
                 "redo": "Redo"
             },
+            "askviz":{
+                "placeholder": "What visualization your want to draw from the dataset"
+            },
             "settings": {
                 "toggle": {
                     "aggregation": "Aggregation",
@@ -171,9 +176,11 @@
                     "ascending": "Sort in Ascending Order",
                     "descending": "Sort in Descending Order",
                     "transpose": "Transpose",
+                    "config": "Config",
                     "export_chart": "Export",
                     "export_chart_as": "Export as {{type}}",
-                    "export_code": "Export Code"
+                    "export_code": "Export Code",
+                    "geojson": "Geography Configuration"
                 },
                 "limit": "Limit",
                 "size": "Resize",
@@ -191,10 +198,11 @@
                     "geojson": "GeoJSON",
                     "topojson": "TopoJSON",
                     "objectKey": "Extract Feature Key",
-                    "jsonInputPlaceholder": "Paste {{format}} here",
+                    "jsonInputPlaceholder": "Drop {{format}} file here",
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "Enter {{format}} URL",
-                    "load": "Load"
+                    "load": "Load",
+                    "loading": "Loading Geographic Data..."
                 }
             },
             "DatasetFields": {
@@ -248,5 +256,49 @@
         "drop_field": "Drop Field Here",
         "confirm": "Confirm",
         "cancel": "Cancel"
+    },
+    "field_menu": {
+        "to_dim": "Move to dimensions",
+        "to_mea": "Move to measures",
+        "semantic_type": {
+            "name": "Change Semantic Type",
+            "types": {
+                "nominal": "Nominal",
+                "ordinal": "Ordinal",
+                "quantitative": "Quantitative",
+                "temporal": "Temporal"
+            }
+        },
+        "new_calc": "New calculation",
+        "bin": "Bin",
+        "binCount": "Bin Count",
+        "log": "Log{{ base }}",
+        "binCustom": "Bin(customize)",
+        "logCustom": "Log(customize)",
+        "drill": {
+            "name": "Time Unit",
+            "feature_name": "Time feature",
+            "levels": {
+                "year": "Year",
+                "quarter": "Quarter",
+                "month": "Month",
+                "week": "Week",
+                "weekday": "Weekday",
+                "day": "Day",
+                "hour": "Hour",
+                "minute": "Minute",
+                "second": "Second"
+            }
+        }
+    },
+    "calc": {
+        "bin_panel_title": "Bins",
+        "bin_panel_desc": "Set bin config for field",
+        "bin_panel_option_widths": "Bin with equal widths",
+        "bin_panel_option_counts": "Bin with equal counts",
+        "bin_panel_number": "Bin number",
+        "log_panel_title": "Logarithm Transformation",
+        "log_panel_desc": "Set log config for field",
+        "log_panel_number": "Logarithmic base"
     }
 }

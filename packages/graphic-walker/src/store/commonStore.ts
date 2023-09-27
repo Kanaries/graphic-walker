@@ -1,4 +1,4 @@
-import { DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
+import { ICreateField, DataSet, Filters, IDataSet, IDataSetInfo, IDataSource, IMutField, IRow, ISegmentKey } from '../interfaces';
 import { makeAutoObservable, observable, toJS } from 'mobx';
 import { transData } from '../dataSource/utils';
 import { INestNode } from '../components/pivotTable/inteface';
@@ -11,7 +11,10 @@ export class CommonStore {
     public tmpDSRawFields: IMutField[] = [];
     public tmpDataSource: IRow[] = [];
     public showDSPanel: boolean = false;
+    public showLogSettingPanel: boolean = false;
+    public showBinSettingPanel: boolean = false;
     public showInsightBoard: boolean = false;
+    public createField: ICreateField | undefined = undefined; 
     public vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     public showDataConfig: boolean = false;
     public showCodeExportPanel: boolean = false;
@@ -19,7 +22,10 @@ export class CommonStore {
     public showGeoJSONConfigPanel: boolean = false;
     public filters: Filters = {};
     public segmentKey: ISegmentKey = ISegmentKey.vis;
+    public selectedMarkObject: Record<string, string | number | undefined> = {};
     public tableCollapsedHeaderMap: Map<string, INestNode["path"]> = new Map();
+    public showErrorResolutionPanel: number = 0;
+
     constructor () {
         this.datasets = [];
         this.dataSources = [];
@@ -71,6 +77,15 @@ export class CommonStore {
     }
     public setShowVisualConfigPanel (show: boolean) {
         this.showVisualConfigPanel = show;
+    }
+    public setShowLogSettingPanel (show: boolean) {
+        this.showLogSettingPanel = show;
+    }
+    public setShowBinSettingPanel (show: boolean) {
+        this.showBinSettingPanel = show;
+    }
+    public setCreateField ( field: ICreateField ){
+        this.createField = field;
     }
     public updateTableCollapsedHeader (node: INestNode) {
         const {uniqueKey, height} = node;
@@ -221,6 +236,15 @@ export class CommonStore {
     public setFilters (props: Filters) {
         this.filters = props;
     }
+
+    public updateSelectedMarkObject (newMarkObj) {
+        this.selectedMarkObject = newMarkObj;
+    }
+
+    public updateShowErrorResolutionPanel(errCode: number) {
+        this.showErrorResolutionPanel = errCode;
+    }
+
     public destroy () {
         this.dataSources = [];
         this.datasets = [];

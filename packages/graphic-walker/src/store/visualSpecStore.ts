@@ -1,7 +1,7 @@
-import { IReactionDisposer, makeAutoObservable, observable, computed, reaction, toJS } from 'mobx';
+import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from 'mobx';
 import produce from 'immer';
 import { feature } from 'topojson-client';
-import type { FeatureCollection } from "geojson";
+import type { FeatureCollection } from 'geojson';
 import {
     DataSet,
     DraggableFieldState,
@@ -16,8 +16,11 @@ import {
     IVisualConfig,
     Specification,
     IComputationFunction,
+    IGeoUrl,
+    ISemanticType
 } from '../interfaces';
-import { CHANNEL_LIMIT, GEMO_TYPES, MetaFieldKeys } from '../config';
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../constants";
+import { GLOBAL_CONFIG } from '../config';
 import { VisSpecWithHistory } from '../models/visSpecHistory';
 import {
     IStoInfo,
@@ -37,8 +40,8 @@ import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
 
 function getChannelSizeLimit(channel: string): number {
-    if (typeof CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
-    return CHANNEL_LIMIT[channel];
+    if (typeof GLOBAL_CONFIG.CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
+    return GLOBAL_CONFIG.CHANNEL_LIMIT[channel];
 }
 
 function uniqueId(): string {
@@ -103,10 +106,14 @@ function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolea
     return Object.values(state).every((value) => value.length === 0);
 }
 
-function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number){
-    return (...args: T) => Promise.race([f(...args), new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), timeout)
-    })])
+function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number) {
+    return (...args: T) =>
+        Promise.race([
+            f(...args),
+            new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('timeout')), timeout);
+            }),
+        ]);
 }
 
 export class VizSpecStore {
@@ -167,6 +174,7 @@ export class VizSpecStore {
         makeAutoObservable(this, {
             visList: observable.shallow,
             computationFunction: observable.ref,
+            visualConfig: observable.ref,
             // @ts-expect-error private fields are not supported
             reactions: false,
         });
@@ -276,7 +284,7 @@ export class VizSpecStore {
         const { filters: _, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !MetaFieldKeys.includes(dkey))
+            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
             .forEach((dkey) => {
                 fields.push(...state[dkey].filter((f) => f.analyticType === 'dimension'));
             });
@@ -290,7 +298,7 @@ export class VizSpecStore {
         const { filters: _, ...state } = toJS(draggableFieldState);
         const fields: IViewField[] = [];
         (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !MetaFieldKeys.includes(dkey))
+            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
             .forEach((dkey) => {
                 fields.push(...state[dkey].filter((f) => f.analyticType === 'measure'));
             });
@@ -374,7 +382,7 @@ export class VizSpecStore {
     public clearState() {
         this.useMutable(({ encodings }) => {
             for (let key in encodings) {
-                if (!MetaFieldKeys.includes(key as keyof DraggableFieldState)) {
+                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(key as keyof DraggableFieldState)) {
                     encodings[key] = [];
                 }
             }
@@ -383,18 +391,19 @@ export class VizSpecStore {
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
         this.useMutable(({ config }) => {
             switch (true) {
-                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth'].includes(configKey): {
+                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth', 'useSvg'].includes(configKey): {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === 'geoms' && Array.isArray(value):
-                case configKey === "showTableSummary":
-                case configKey === "coordSystem":
+                case configKey === 'showTableSummary':
+                case configKey === 'coordSystem':
                 case configKey === 'size' && typeof value === 'object':
                 case configKey === 'sorted':
                 case configKey === 'zeroScale':
                 case configKey === 'background':
                 case configKey === 'resolve':
                 case configKey === 'limit':
+                case configKey === 'primaryColor':
                 case configKey === 'stack': {
                     return (config[configKey] = value);
                 }
@@ -422,7 +431,7 @@ export class VizSpecStore {
         });
     }
     public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
-        if (MetaFieldKeys.includes(stateKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
 
         this.useMutable(({ encodings }) => {
@@ -442,9 +451,9 @@ export class VizSpecStore {
             }
             return this.appendFilter(destinationIndex, field);
         }
-        if (MetaFieldKeys.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey) && this.draggableFieldState[sourceKey][sourceIndex].viewLevel) {
             // Cannot change the analytic type of a view level field
-            if (!MetaFieldKeys.includes(sourceKey)) {
+            if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) {
                 this.useMutable(({ encodings }) => {
                     encodings[sourceKey].splice(sourceIndex, 1);
                 });
@@ -455,7 +464,7 @@ export class VizSpecStore {
         this.useMutable(({ encodings }) => {
             let movingField: IViewField;
             // 来源是不是metafield，是->clone；不是->直接删掉
-            if (MetaFieldKeys.includes(sourceKey)) {
+            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) {
                 // use a different dragId
                 movingField = {
                     ...toJS(encodings[sourceKey][sourceIndex]), // toJS will NOT shallow copy a object here
@@ -471,8 +480,8 @@ export class VizSpecStore {
                 [movingField] = encodings[sourceKey].splice(sourceIndex, 1);
             }
             // 目的地是metafields的情况，只有在来源也是metafields时，会执行字段类型转化操作
-            if (MetaFieldKeys.includes(destinationKey)) {
-                if (!MetaFieldKeys.includes(sourceKey)) return;
+            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) {
+                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
                 if (movingField.viewLevel) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
                 movingField.analyticType = destinationKey === 'dimensions' ? 'dimension' : 'measure';
@@ -484,7 +493,7 @@ export class VizSpecStore {
         });
     }
     public removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
-        if (MetaFieldKeys.includes(sourceKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
 
         this.useMutable(({ encodings }) => {
             const fields = encodings[sourceKey];
@@ -492,7 +501,7 @@ export class VizSpecStore {
         });
     }
     public replaceField(sourceKey: keyof DraggableFieldState, sourceIndex: number, fid: string) {
-        if (MetaFieldKeys.includes(sourceKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
         const enteringField = [...this.draggableFieldState.dimensions, ...this.draggableFieldState.measures].find((which) => which.fid === fid);
         if (!enteringField) {
             return;
@@ -536,14 +545,14 @@ export class VizSpecStore {
             encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount'): string {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount', num:number|undefined=10): string {
         if (this.draggableFieldState[stateKey][index]?.fid === MEA_KEY_ID) {
             return '';
         }
         const newVarKey = uniqueId();
         const state = this.draggableFieldState;
         const existedRelatedBinField = state.dimensions.find(
-            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid
+            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.num === num && f.expression.params[0].value === state[stateKey][index].fid 
         );
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
@@ -553,7 +562,7 @@ export class VizSpecStore {
             const binField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `${binType}(${originField.name})`,
+                name: `${binType}${num}(${originField.name})`,
                 semanticType: 'ordinal',
                 analyticType: 'dimension',
                 computed: true,
@@ -566,17 +575,59 @@ export class VizSpecStore {
                             value: originField.fid,
                         },
                     ],
+                    num: num
                 },
             };
             encodings.dimensions.push(binField);
         });
         return newVarKey;
     }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log10' | 'log2') {
+    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log', num: number|undefined = 10) {
         if (stateKey === 'filters') {
             return;
         }
         if (this.draggableFieldState[stateKey][index]?.fid === MEA_KEY_ID) {
+            return;
+        }
+        this.useMutable(({ encodings }) => {
+            const originField = encodings[stateKey][index];
+            const newVarKey = uniqueId();
+            const logField: IViewField = {
+                fid: newVarKey,
+                dragId: newVarKey,
+                name: `${scaleType}${num}(${originField.name})`,
+                semanticType: 'quantitative',
+                analyticType: originField.analyticType,
+                aggName: 'sum',
+                computed: true,
+                expression: {
+                    op: scaleType,
+                    as: newVarKey,
+                    num: num,
+                    params: [
+                        {
+                            type: 'field',
+                            value: originField.fid,
+                        },
+                    ],
+                },
+            };
+            encodings[stateKey].push(logField);
+        });
+    }
+    public changeSemanticType(stateKey: keyof DraggableFieldState, index: number, newSemanticType: ISemanticType) {
+        this.useMutable(({ encodings }) => {
+            const originField = encodings[stateKey][index];
+            encodings[stateKey].splice(index, 1, {
+                ...originField,
+                semanticType: newSemanticType
+            })
+        });
+    }
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeDrill',  drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
+    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeFeature', drillLevel: typeof DATE_TIME_FEATURE_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
+    public createDateTimeDrilledField(stateKey, index, op, drillLevel, name, format) {
+        if (stateKey === "filters") {
             return;
         }
 
@@ -586,19 +637,28 @@ export class VizSpecStore {
             const logField: IViewField = {
                 fid: newVarKey,
                 dragId: newVarKey,
-                name: `${scaleType}(${originField.name})`,
-                semanticType: 'quantitative',
+                name: typeof name === 'function' ? name(originField.name) : name,
+                semanticType: op === 'dateTimeDrill' ? "temporal" : "ordinal",
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
+                timeUnit: op === 'dateTimeDrill' ? drillLevel : undefined,
                 expression: {
-                    op: scaleType,
+                    op,
                     as: newVarKey,
                     params: [
                         {
                             type: 'field',
                             value: originField.fid,
                         },
+                        {
+                            type: 'value',
+                            value: drillLevel,
+                        },
+                        {
+                            type: 'format',
+                            value: format
+                        }
                     ],
                 },
             };
@@ -658,7 +718,7 @@ export class VizSpecStore {
         });
     }
     public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
-        if (MetaFieldKeys.includes(destinationKey)) return;
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) return;
         if (typeof field === 'undefined') return;
         if (destinationKey === 'filters') {
             return;
@@ -684,7 +744,7 @@ export class VizSpecStore {
         if (!tab) return;
         const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
         const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
-        const renderVLFacet = (vlFacet) => {
+        const renderVLFacet = (vlFacet: any) => {
             if (vlFacet.facet) {
                 this.appendField('rows', fields.find((f) => f.fid === vlFacet.facet.field) || countField, { analyticType: 'dimension' });
             }
@@ -695,8 +755,8 @@ export class VizSpecStore {
                 this.appendField('columns', fields.find((f) => f.fid === vlFacet.column.field) || countField, { analyticType: 'dimension' });
             }
         };
-        const isValidAggregate = (aggName) => aggName && ['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev'].includes(aggName);
-        const renderVLSpec = (vlSpec) => {
+        const isValidAggregate = (aggName: string) => aggName && (GLOBAL_CONFIG.AGGREGATOR_LIST as string[]).includes(aggName);
+        const renderVLSpec = (vlSpec: any) => {
             if (typeof vlSpec.mark === 'string') {
                 this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark)]);
             } else {
@@ -858,9 +918,24 @@ export class VizSpecStore {
         const content = parseGWContent(raw);
         this.importStoInfo(content);
     }
-    
-    public setGeographicData(data: IGeographicData, geoKey: string) {
-        const geoJSON = data.type === 'GeoJSON' ? data.data : feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection;
+
+    public setGeographicUrl(geoUrl: IGeoUrl) {
+        this.useMutable(({ config }) => {
+            config.geoUrl = geoUrl;
+        });
+    }
+
+    public clearGeographicData() {
+        this.useMutable(({ config }) => {
+            config.geojson = undefined;
+            config.geoKey = undefined;
+            config.geoUrl = undefined;
+        });
+    }
+
+    public setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
+        const geoJSON =
+            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
         if (!('features' in geoJSON)) {
             console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
             return;
@@ -868,6 +943,7 @@ export class VizSpecStore {
         this.useMutable(({ config }) => {
             config.geojson = geoJSON;
             config.geoKey = geoKey;
+            config.geoUrl = geoUrl;
         });
     }
     public updateGeoKey(key: string) {
@@ -897,6 +973,10 @@ export class VizSpecStore {
                     ...visSpec.encodings,
                     filters: updatedFilters,
                 },
+                config: {
+                    ...visSpec.config,
+                    geojson: visSpec.config.geoUrl ? undefined : visSpec.config.geojson
+                }
             };
         });
         return updatedVisList;

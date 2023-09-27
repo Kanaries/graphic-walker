@@ -1,5 +1,5 @@
 import { toJS } from "mobx";
-import { MAX_HISTORY_SIZE } from "../config";
+import { GLOBAL_CONFIG } from "../config";
 import { DeepReadonly, DraggableFieldState, IVisSpec, IVisualConfig } from "../interfaces";
 
 export class VisSpecWithHistory {
@@ -56,7 +56,7 @@ export class VisSpecWithHistory {
             }),
         ];
 
-        if (this.snapshots.length > MAX_HISTORY_SIZE) {
+        if (this.snapshots.length > GLOBAL_CONFIG.MAX_HISTORY_SIZE) {
             this.snapshots.splice(0, 1);
         }
 

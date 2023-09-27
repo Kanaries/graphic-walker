@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification } from './interfaces';
+import { LightBulbIcon } from "@heroicons/react/24/outline";
+import { IGeographicData, IComputationFunction, IDarkMode, IMutField, IRow, ISegmentKey, IThemeKey, Specification, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -19,10 +20,17 @@ import DatasetConfig from './dataSource/datasetConfig';
 import { useCurrentMediaTheme } from './utils/media';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
+import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
+import ClickMenu from './components/clickMenu';
 import AskViz from './components/askViz';
 import { getComputation } from './computation/clientComputation';
+import LogPanel from './fields/datasetFields/logPanel';
+import BinPanel from './fields/datasetFields/binPanel';
+import { ErrorContext } from './utils/reportError';
+import { ErrorBoundary } from "react-error-boundary";
+import Errorpanel from './components/errorpanel';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -38,6 +46,7 @@ export interface IGWProps {
     fieldKeyGuard?: boolean;
     /** @default "vega" */
     themeKey?: IThemeKey;
+    themeConfig?: VegaGlobalConfig;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationFunction;
@@ -55,6 +64,9 @@ export interface IGWProps {
         }
     };
     computationTimeout?: number;
+    onError?: (err: Error) => void;
+    geoList?: IGeoDataItem[];
+    channelScales?: IChannelScales;
 }
 
 const App = observer<IGWProps>(function App(props) {
@@ -67,6 +79,7 @@ const App = observer<IGWProps>(function App(props) {
         hideDataSourceConfig,
         fieldKeyGuard = true,
         themeKey = 'vega',
+        themeConfig,
         dark = 'media',
         computation,
         toolbar,
@@ -76,7 +89,7 @@ const App = observer<IGWProps>(function App(props) {
     } = props;
     const { commonStore, vizStore } = useGlobalStore();
 
-    const { datasets, segmentKey } = commonStore;
+    const { datasets, segmentKey, vizEmbededMenu } = commonStore;
 
     const { t, i18n } = useTranslation();
     const curLang = i18n.language;
@@ -159,7 +172,20 @@ const App = observer<IGWProps>(function App(props) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
+    const downloadCSVRef = useRef<{ download: () => void }>({download() {}});
+
+    const reportError = useCallback((msg: string, code?: number) => {
+        const err = new Error(`Error${code ? `(${code})`: ''}: ${msg}`);
+        console.error(err);
+        props.onError?.(err);
+        if (code) {
+            commonStore.updateShowErrorResolutionPanel(code);
+        }
+    }, [props.onError]);
+
     return (
+        <ErrorContext value={{reportError}}>
+        <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError} >
         <div
             className={`${
                 darkMode === 'dark' ? 'dark' : ''
@@ -182,10 +208,14 @@ const App = observer<IGWProps>(function App(props) {
                         {enhanceAPI?.features?.askviz && (
                             <AskViz api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''} headers={enhanceAPI?.header} />
                         )}
-                        <VisualSettings rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
+                        <VisualSettings csvHandler={downloadCSVRef} rendererHandler={rendererRef} darkModePreference={dark} exclude={toolbar?.exclude} extra={toolbar?.extra} />
                         <CodeExport />
+                        <ExplainData themeKey={themeKey} dark={darkMode}/>
                         <VisualConfig />
-                        <GeoConfigPanel />
+                        <Errorpanel />
+                        <LogPanel />
+                        <BinPanel/>
+                        {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                         <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
                             <div className="md:col-span-3 xl:col-span-1">
                                 <DatasetFields />
@@ -201,17 +231,17 @@ const App = observer<IGWProps>(function App(props) {
                                 <div
                                     className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
                                     style={{ minHeight: '600px', overflow: 'auto' }}
-                                    // onMouseLeave={() => {
-                                    //     vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    // }}
-                                    // onClick={() => {
-                                    //     vizEmbededMenu.show && commonStore.closeEmbededMenu();
-                                    // }}
+                                    onMouseLeave={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
+                                    onClick={() => {
+                                        vizEmbededMenu.show && commonStore.closeEmbededMenu();
+                                    }}
                                 >
                                     {datasets.length > 0 && (
-                                        <ReactiveRenderer ref={rendererRef} themeKey={themeKey} dark={dark} computationFunction={vizStore.computationFunction} />
+                                        <ReactiveRenderer csvRef={downloadCSVRef} ref={rendererRef} themeKey={themeKey} themeConfig={themeConfig} dark={dark} computationFunction={vizStore.computationFunction} channelScales={props.channelScales} />
                                     )}
-                                    {/* {vizEmbededMenu.show && (
+                                    {vizEmbededMenu.show && (
                                         <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                                             <div
                                                 className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
@@ -226,7 +256,7 @@ const App = observer<IGWProps>(function App(props) {
                                                 <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
                                             </div>
                                         </ClickMenu>
-                                    )} */}
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -242,6 +272,8 @@ const App = observer<IGWProps>(function App(props) {
                 )}
             </div>
         </div>
+        </ErrorBoundary>
+        </ErrorContext>
     );
 });
 

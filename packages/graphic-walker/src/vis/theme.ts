@@ -20,6 +20,7 @@ const DARK_COMMON_DESIGN = {
         stroke: '#666'
     }
 }
+
 export const VegaTheme = {
     light: {
         background: "transparent",
@@ -134,3 +135,96 @@ export const builtInThemes: { [themeKey: string]: { light: any; dark: any; } } =
     vega: VegaTheme,
     g2: AntVTheme,
 };
+
+export const getPrimaryColor = (defaultColor:string) => {
+    return {
+        light: {
+            area: { fill: defaultColor },
+            bar: { fill: defaultColor },
+            circle: { fill: defaultColor },
+            line: { stroke: defaultColor },
+            point: { stroke: defaultColor },
+            rect: { fill: defaultColor },
+            tick: { stroke: defaultColor },
+            boxplot: { fill: defaultColor },
+            errorbar: { stroke: defaultColor },
+            errorband: { fill: defaultColor },
+            arc: { fill: defaultColor },
+            background: "transparent",
+            range: {
+                category: [
+                    "#5B8FF9",
+                    "#61DDAA",
+                    "#65789B",
+                    "#F6BD16",
+                    "#7262FD",
+                    "#78D3F8",
+                    "#9661BC",
+                    "#F6903D",
+                    "#008685",
+                    "#F08BB4",
+                ],
+                diverging: ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+                heatmap: ["#000000", "#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+                ramp: [
+                    "#EBCCFF",
+                    "#CCB0FF",
+                    "#AE95FF",
+                    "#907BFF",
+                    "#7262FD",
+                    "#5349E0",
+                    "#2F32C3",
+                    "#001BA7",
+                    "#00068C"
+                ],
+            },
+            scale: {
+                continuous: { range: ["#f7fbff", "#08306b"] },
+            },
+        },
+        dark: {
+            ...DARK_COMMON_DESIGN,
+            area: { fill: defaultColor },
+            bar: { fill: defaultColor },
+            circle: { fill: defaultColor },
+            line: { stroke: defaultColor },
+            point: { stroke: defaultColor },
+            rect: { fill: defaultColor },
+            tick: { stroke: defaultColor },
+            boxplot: { fill: defaultColor },
+            errorbar: { stroke: defaultColor },
+            errorband: { fill: defaultColor },
+            arc: { fill: defaultColor },
+            range: {
+                category: [
+                    "#5B8FF9",
+                    "#61DDAA",
+                    "#65789B",
+                    "#F6BD16",
+                    "#7262FD",
+                    "#78D3F8",
+                    "#9661BC",
+                    "#F6903D",
+                    "#008685",
+                    "#F08BB4",
+                ],
+                diverging: ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+                heatmap: ["#000000", "#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+                ramp: [
+                    "#EBCCFF",
+                    "#CCB0FF",
+                    "#AE95FF",
+                    "#907BFF",
+                    "#7262FD",
+                    "#5349E0",
+                    "#2F32C3",
+                    "#001BA7",
+                    "#00068C"
+                ],
+            },
+            scale: {
+                continuous: { range: ["#f7fbff", "#08306b"] },
+            },
+        },
+    } 
+}

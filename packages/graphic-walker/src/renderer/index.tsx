@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction } from '../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction, IChannelScales } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction, toJS } from 'mobx';
@@ -8,22 +8,27 @@ import { useGlobalStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
-import { initEncoding } from '../utils/save';
+import { download, initEncoding } from '../utils/save';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { initVisualConfig } from '../utils/save';
+import { getMeaAggKey } from '../utils';
+import { COUNT_FIELD_ID } from '../constants';
 
 interface RendererProps {
     themeKey?: IThemeKey;
+    themeConfig?: any;
     dark?: IDarkMode;
     computationFunction: IComputationFunction;
+    channelScales?: IChannelScales;
+    csvRef?: React.MutableRefObject<{ download: () => void }>;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationFunction } = props;
+    const { themeKey, dark, computationFunction, themeConfig, csvRef, } = props;
     const { vizStore, commonStore } = useGlobalStore();
     const {
         allFields,
@@ -56,6 +61,32 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         computationFunction,
     });
 
+    useEffect(() => {
+        if (csvRef) {
+            csvRef.current = {
+                download() {
+                    const headers = viewDimensions.concat(viewMeasures).map(x => {
+                        if (x.fid === COUNT_FIELD_ID) {
+                            return {
+                                name: 'Count',
+                                fid: COUNT_FIELD_ID
+                            }
+                        }
+                        if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
+                            return {
+                                fid: getMeaAggKey(x.fid,x.aggName),
+                                name: `${x.aggName}(${x.name})`
+                            }
+                        }
+                        return {fid: x.fid, name: x.name};
+                    });
+                    const result = `${headers.map(x=>x.name).join(',')}\n${data.map(x => headers.map(f => x[f.fid]).join(',')).join('\n')}`;
+                    download(result, `${chart.name}.csv`, 'text/plain');
+                },
+            }
+        }
+    }, [data,viewDimensions,viewMeasures,visualConfig.defaultAggregated]);
+
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
         data,
@@ -76,7 +107,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 setViewConfig(latestFromRef.current.visualConfig);
             });
         }
-    }, [waiting, vizStore]);
+    }, [waiting, data, vizStore]);
 
     useChartIndexControl({
         count: visList.length,
@@ -90,6 +121,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             commonStore.showEmbededMenu([e.pageX, e.pageY]);
             commonStore.setFilters(values);
         });
+        const selectedMarkObject = values.vlPoint.or[0];
+        commonStore.updateSelectedMarkObject(selectedMarkObject);
     }, []);
 
     const handleChartResize = useCallback(
@@ -131,6 +164,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             data={viewData}
             ref={ref}
             themeKey={themeKey}
+            themeConfig={themeConfig}
             dark={dark}
             locale={i18n.language}
             draggableFieldState={encodings}
@@ -138,6 +172,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
             computationFunction={computationFunction}
+            channelScales={props.channelScales}
         />
     );
 });

@@ -1,4 +1,4 @@
-import { IStackMode, IViewField } from '../../interfaces';
+import { IChannelScales, IStackMode, IViewField } from '../../interfaces';
 import { channelAggregate } from './aggregate';
 import { IEncodeProps, channelEncode } from './encode';
 import { channelStack } from './stack';
@@ -69,5 +69,35 @@ export function getSingleView(props: SingleViewProps) {
         config,
         mark,
         encoding,
+    };
+}
+
+export function resolveScales(scale: IChannelScales, view: any, data: readonly any[], theme: 'dark' | 'light') {
+    const newEncoding = {...view.encoding};
+    function addScale(c: string) {
+        if (scale[c] && newEncoding[c]) {
+            if (typeof scale[c] === 'function') {
+                const field = newEncoding[c].field;
+                const values = data.map(x => x[field]);
+                newEncoding[c].scale = scale[c]({
+                    semanticType: newEncoding[c].type,
+                    theme,
+                    values,
+                })
+            } else {
+                newEncoding[c].scale = scale[c];
+            }
+
+        }
+    }
+    addScale('color');
+    addScale('opacity');
+    addScale('size');
+    addScale('radius');
+    addScale('theta');
+
+    return {
+        ...view,
+        encoding: newEncoding
     };
 }

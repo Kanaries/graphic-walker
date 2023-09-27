@@ -1,7 +1,7 @@
 import { DraggableFieldState, IDataSet, IDataSource, IVisSpec, IVisSpecForExport, IVisualConfig } from "../interfaces";
 import { VisSpecWithHistory } from "../models/visSpecHistory";
 import { toJS } from 'mobx';
-import { GEMO_TYPES } from '../config';
+import { GLOBAL_CONFIG } from '../config';
 
 export function dumpsGWPureSpec(list: VisSpecWithHistory[]): IVisSpec[] {
     return list.map((l) => l.exportGW());
@@ -33,7 +33,7 @@ export function initEncoding(): DraggableFieldState {
 }
 
 export function initVisualConfig(): IVisualConfig {
-    const [ geom ] = GEMO_TYPES.generic;
+    const [ geom ] = GLOBAL_CONFIG.GEMO_TYPES.generic;
     return {
         defaultAggregated: true,
         geoms: [geom],
@@ -44,6 +44,7 @@ export function initVisualConfig(): IVisualConfig {
         interactiveScale: false,
         sorted: 'none',
         zeroScale: true,
+        primaryColor: 'rgba(91, 143, 249,1)',
         scaleIncludeUnmatchedChoropleth: false,
         background: undefined,
         size: {

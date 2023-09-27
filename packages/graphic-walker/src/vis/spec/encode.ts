@@ -1,3 +1,4 @@
+import { DATE_TIME_DRILL_LEVELS } from '../../constants';
 import { IViewField } from '../../interfaces';
 import { NULL_FIELD } from './field';
 export interface IEncodeProps {
@@ -26,6 +27,26 @@ export function availableChannels(geomType: string): Set<string> {
     }
     return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
 }
+function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
+    switch(unit) {
+        case 'quarter':
+            return 'yearquarter';
+        case 'month':
+            return 'yearmonth';
+        case 'week':
+            return 'yearweek';
+        case 'day':
+            return 'yearmonthdate';
+        case 'hour':
+            return 'yearmonthdatehours';
+        case 'minute':
+            return 'yearmonthdatehoursminutes';
+        case 'second':
+            return 'yearmonthdatehoursminutesseconds';
+    }
+    return unit;
+}
+
 export function channelEncode(props: IEncodeProps) {
     const avcs = availableChannels(props.markType);
     const encoding: { [key: string]: any } = {};
@@ -45,6 +66,9 @@ export function channelEncode(props: IEncodeProps) {
                 }
                 if (props[c].analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
+                }
+                if (props[c].semanticType === 'temporal' && props[c].timeUnit) {
+                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit)
                 }
             }
         });

@@ -1,18 +1,23 @@
 import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
-import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip } from "react-leaflet";
+import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip, AttributionControl } from "react-leaflet";
 import { type Map, divIcon } from "leaflet";
-import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
+import type { DeepReadonly, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
 import type { FeatureCollection, Geometry } from "geojson";
 import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale } from "./encodings";
 import { isValidLatLng } from "./POIRenderer";
 import { TooltipContent } from "./tooltip";
+import { useAppRootContext } from "../appRoot";
+import { useGeoJSON } from "../../hooks/service";
+import { useTranslation } from "react-i18next";
 
 
 export interface IChoroplethRendererProps {
+    name?: string;
     data: IRow[];
     allFields: DeepReadonly<IViewField[]>;
     features: FeatureCollection | undefined;
+    featuresUrl?: IGeoUrl;
     geoKey: string;
     defaultAggregated: boolean;
     geoId: DeepReadonly<IViewField>;
@@ -86,9 +91,12 @@ const resolveCenter = (coordinates: [lat: number, lng: number][]): [lng: number,
 };
 
 const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendererProps>(function ChoroplethRenderer (props, ref) {
-    const { data, allFields, features, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
+    const { name, data, allFields, features: localFeatures, featuresUrl, geoKey, defaultAggregated, geoId, color, opacity, text, details, vegaConfig, scaleIncludeUnmatchedChoropleth } = props;
 
     useImperativeHandle(ref, () => ({}));
+
+    const features = useGeoJSON(localFeatures, featuresUrl)
+    const { t } = useTranslation('translation');
 
     const geoIndices = useMemo(() => {
         if (geoId) {
@@ -190,17 +198,39 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
             };
         }
     });
+    
+    const appRef = useAppRootContext();
+
+    useEffect(() => {
+        const ctx = appRef.current;
+        if (ctx) {
+            ctx.exportChart = async (mode) => ({
+                mode,
+                title: name || 'untitled',
+                nCols: 0,
+                nRows: 0,
+                charts: [],
+                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null,
+                chartType: 'map'
+            })
+        }
+    }, []);
 
     useEffect(() => {
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
+    if (!features) {
+        return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>
+    }
+
     return (
-        <MapContainer center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <AttributionControl prefix="Leaflet" />
             {lngLat.length > 0 && data.map((row, i) => {
                 const coords = lngLat[i];
                 const opacity = opacityScale(row);

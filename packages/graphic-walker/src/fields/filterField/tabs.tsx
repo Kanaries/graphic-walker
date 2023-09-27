@@ -1,9 +1,13 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import {
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 
-import type { IFilterField, IFilterRule, IRow, DataSet, IFieldStats, IField, IViewField, IDataQueryWorkflowStep } from '../../interfaces';
+import type { IFilterField, IFilterRule, DataSet, IFieldStats, IField, IViewField, IDataQueryWorkflowStep } from '../../interfaces';
 import { useGlobalStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { useComputationFunc, useRenderer } from '../../renderer/hooks';
@@ -11,10 +15,7 @@ import { fieldStatServer } from '../../computation/serverComputation';
 import { toWorkflow } from '../../utils/workflow';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import Slider from './slider';
-import {
-    ChevronDownIcon,
-    ChevronUpIcon,
-} from '@heroicons/react/24/outline';
+
 
 export type RuleFormProps = {
     dataset: DataSet;
@@ -375,7 +376,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
                                     htmlFor={id}
                                     title={String(value)}
                                 >
-                                    {value}
+                                    {`${value}`}
                                 </label>
                                 <label
                                     htmlFor={id}
