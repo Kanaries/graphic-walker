@@ -73,6 +73,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         useSvg,
         primaryColor,
         colorPalette,
+        scale  
     } = visualConfig;
 
     const rows = draggableFieldState.rows;
@@ -217,6 +218,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     useSvg={useSvg}
                     channelScales={channelScales}
                     dark={dark}
+                    scale={scale}
                 />
             )}
         </Resizable>

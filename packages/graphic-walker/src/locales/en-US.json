@@ -1,5 +1,13 @@
 {
     "config": {
+        "scheme": "Scheme",
+        "primary_color": "Primary Color",
+        "color_palette": "Color Palette",
+        "opacity": "Opacity",
+        "size":"Size",
+        "min_domain": "Domain Min",
+        "max_domain": "Domain Max",
+        "range": "Range",
         "format": "Format",
         "numberFormat": "Number format",
         "timeFormat": "Time format",
