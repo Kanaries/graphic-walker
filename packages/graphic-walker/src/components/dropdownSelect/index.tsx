@@ -7,7 +7,7 @@ function classNames(...classes: string[]) {
 }
 
 export interface IDropdownSelectOption {
-    label: string;
+    label: React.ReactNode;
     value: string;
     disabled?: boolean;
 }

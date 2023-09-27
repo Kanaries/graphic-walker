@@ -6,7 +6,7 @@ import type { ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 import { GLOBAL_CONFIG } from '../config'; 
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScale } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import { getSingleView, resolveScales } from './spec/view';
 import { NULL_FIELD } from './spec/field';
@@ -55,6 +55,10 @@ interface ReactVegaProps {
   useSvg?: boolean;
   dark?: IDarkMode;
   channelScales?: IChannelScales;
+  scale?: {
+    opacity: IConfigScale,
+    size: IConfigScale
+  }
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -109,10 +113,24 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     // format
     locale = 'en-US',
     useSvg,
-    channelScales,
+    channelScales : channelScaleRaw,
+    scale
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const mediaTheme = useCurrentMediaTheme(dark);
+  const channelScales = channelScaleRaw ?? {};
+  if (scale?.opacity) {
+    channelScales.opacity = {
+      ...channelScales.opacity ?? {},
+      ...scale.opacity
+    };
+  }
+  if (scale?.size) {
+    channelScales.size = {
+      ...channelScales.size ?? {},
+      ...scale.size
+    };
+  }
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
   // const vegaConfig = useMemo(() => {

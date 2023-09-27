@@ -23,7 +23,7 @@ const Container = styled.div`
     @media (min-width: 1100px) {
         width: 880px;
     }
-    max-height: 800px;
+    max-height: calc(min(800px, 90vh));
     overflow: auto;
     > div.container {
         padding: 0.5em 1em 1em 1em;
