@@ -58,6 +58,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         defaultAggregated: visualConfig.defaultAggregated,
         sort,
         limit: limit,
+        folds: visualConfig.folds,
         computationFunction,
     });
 

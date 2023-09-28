@@ -5,11 +5,12 @@ import { useGlobalStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
 import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { COUNT_FIELD_ID } from '../../constants';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
+import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 
 const PillActions = styled.div`
     overflow: visible !important;
@@ -24,7 +25,8 @@ interface SingleEncodeEditorProps {
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const { vizStore } = useGlobalStore();
-    const { draggableFieldState, visualConfig } = vizStore;
+    const { draggableFieldState, visualConfig, allFields } = vizStore;
+    const folds = visualConfig.folds ?? [];
     const channelItem = draggableFieldState[dkey.id][0];
     const { t } = useTranslation();
 
@@ -35,16 +37,33 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
         }));
     }, []);
 
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+        return validFoldBy.map<ISelectContextOption>((f) => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
-            <div className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'} relative z-0`}>
+            <div
+                className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
+                    (channelItem && !snapshot.draggingFromThisWith) || snapshot.isDraggingOver ? 'opacity-0' : 'opacity-100'
+                } relative z-0`}
+            >
                 {t('actions.drop_field')}
             </div>
             {channelItem && (
                 <Draggable key={channelItem.dragId} draggableId={channelItem.dragId} index={0}>
                     {(provided, snapshot) => {
                         return (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1">
+                            <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1"
+                            >
                                 <div
                                     onClick={() => {
                                         vizStore.removeField(dkey.id, 0);
@@ -54,10 +73,20 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                     <TrashIcon className="w-4" />
                                 </div>
                                 <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
-                                    <span className="flex-1 truncate">
-                                        {channelItem.name}
-                                    </span>
-                                    {channelItem.analyticType === "measure" && channelItem.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
+                                    {channelItem.fid === MEA_KEY_ID && (
+                                        <SelectContext
+                                            options={foldOptions}
+                                            selectedKeys={folds}
+                                            onSelect={(keys) => {
+                                                vizStore.setVisualConfig('folds', keys);
+                                            }}
+                                            className="flex-1"
+                                        >
+                                            <span className="flex-1 truncate">{channelItem.name}</span>
+                                        </SelectContext>
+                                    )}
+                                    {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}
+                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                                         <DropdownContext
                                             options={aggregationOptions}
                                             onSelect={(value) => {
@@ -65,7 +94,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             }}
                                         >
                                             <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                                                {channelItem.aggName || ""}
+                                                {channelItem.aggName || ''}
                                                 <ChevronUpDownIcon className="w-3" />
                                             </span>
                                         </DropdownContext>

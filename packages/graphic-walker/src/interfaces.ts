@@ -281,6 +281,7 @@ export interface IVisualConfig {
     geoKey?: string;
     geoUrl?: IGeoUrl;
     limit: number;
+    folds?: string[];
 }
 
 export interface IGeoUrl {

@@ -13,6 +13,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
 import { toJS } from 'mobx';
 import LoadingLayer from '../loadingLayer';
+import { fold2 } from '../../lib/op/fold';
 
 interface PivotTableProps {
     themeKey?: IThemeKey;
@@ -35,7 +36,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const { vizStore, commonStore } = useGlobalStore();
     const { allFields, viewFilters, viewMeasures, sort, limit, draggableFieldState } = vizStore;
     const { rows, columns } = draggableFieldState;
-    const { showTableSummary, defaultAggregated } = visualConfig;
+    const { showTableSummary, defaultAggregated, folds } = visualConfig;
     const { tableCollapsedHeaderMap } = commonStore;
     const aggData = useRef<IRow[]>([]);
     const [topTreeHeaderRowNum, setTopTreeHeaderRowNum] = useState<number>(0);
@@ -128,11 +129,13 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
-            const workflow = toWorkflow(viewFilters, allFields, dimComb, viewMeasures, defaultAggregated, sort, limit > 0 ? limit : undefined);
-            return dataQueryServer(computationFunction, workflow, limit > 0 ? limit : undefined).catch((err) => {
-                appRef.current?.updateRenderStatus('error');
-                return [];
-            });
+            const workflow = toWorkflow(viewFilters, allFields, dimComb, viewMeasures, defaultAggregated, sort, folds ?? [], limit > 0 ? limit : undefined);
+            return dataQueryServer(computationFunction, workflow, limit > 0 ? limit : undefined)
+                .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, dimComb, folds))
+                .catch((err) => {
+                    appRef.current?.updateRenderStatus('error');
+                    return [];
+                });
         });
         return new Promise<void>((resolve, reject) => {
             Promise.all(groupbyPromises)

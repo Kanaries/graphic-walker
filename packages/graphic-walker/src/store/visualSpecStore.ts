@@ -19,7 +19,7 @@ import {
     IGeoUrl,
     ISemanticType,
 } from '../interfaces';
-import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { GLOBAL_CONFIG } from '../config';
 import { VisSpecWithHistory } from '../models/visSpecHistory';
 import {
@@ -34,7 +34,7 @@ import {
     initEncoding,
 } from '../utils/save';
 import { CommonStore } from './commonStore';
-import { createCountField } from '../utils';
+import { createCountField, createVirtualFields } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
@@ -363,6 +363,7 @@ export class VizSpecStore {
     }
     public initMetaState(dataset: DataSet) {
         const countField = createCountField();
+        const virtualFields = createVirtualFields();
         this.useMutable(({ encodings }) => {
             encodings.dimensions = dataset.rawFields
                 .filter((f) => f.analyticType === 'dimension')
@@ -386,6 +387,9 @@ export class VizSpecStore {
                     aggName: 'sum',
                 }));
             encodings.measures.push(countField);
+            for (const vf of virtualFields) {
+                encodings[`${vf.analyticType}s`].push(vf);
+            }
         });
 
         this.freezeHistory();
@@ -422,6 +426,7 @@ export class VizSpecStore {
                 case configKey === 'primaryColor':
                 case configKey === 'colorPalette':
                 case configKey === 'scale':
+                case configKey === 'folds':
                 case configKey === 'stack': {
                     return (config[configKey] = value);
                 }
@@ -1016,6 +1021,7 @@ export class VizSpecStore {
             this.viewMeasures,
             this.visualConfig.defaultAggregated,
             this.sort,
+            this.visualConfig.folds ?? [],
             this.limit > 0 ? this.limit : undefined
         );
     }

@@ -25,6 +25,8 @@
     },
     "constant": {
         "row_count": "行数",
+        "dim_key": "名",
+        "dim_val": "値",
         "analytic_type": {
             "dimension": "ディメンション",
             "measure": "メジャー"
