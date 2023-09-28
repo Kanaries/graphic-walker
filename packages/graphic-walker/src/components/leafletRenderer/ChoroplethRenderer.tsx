@@ -185,7 +185,6 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     }, [defaultAggregated, details, color, opacity]);
 
     const mapRef = useRef<Map>(null);
-
     useEffect(() => {
         const container = mapRef.current?.getContainer();
         if (container) {

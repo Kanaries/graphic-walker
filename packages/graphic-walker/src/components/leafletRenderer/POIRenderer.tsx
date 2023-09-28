@@ -7,7 +7,6 @@ import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 import { TooltipContent } from "./tooltip";
 import { useAppRootContext } from "../appRoot";
 
-
 export interface IPOIRendererProps {
     name?: string;
     data: IRow[];
@@ -161,9 +160,9 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                         opacity={0.8}
                         fillOpacity={opacity}
                         fillColor={color}
-                        color="#0004"
-                        weight={1}
+                        color="#00000022"
                         stroke
+                        weight={1}
                         fill
                     >
                         {tooltipFields.length > 0 && (
