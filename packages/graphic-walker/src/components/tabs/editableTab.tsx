@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import Modal from "../modal";
-import { unstable_batchedUpdates } from "react-dom";
-import DefaultButton from "../button/default";
-import PrimaryButton from "../button/primary";
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Modal from '../modal';
+import { unstable_batchedUpdates } from 'react-dom';
+import DefaultButton from '../button/default';
+import PrimaryButton from '../button/primary';
+import RemoveConfirm from '../removeConfirm';
 
 function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(" ");
+    return classes.filter(Boolean).join(' ');
 }
 
 export interface ITabOption {
@@ -18,17 +19,20 @@ export interface ITabOption {
 interface EditableTabsProps {
     tabs: ITabOption[];
     selectedKey: string;
+    showRemove?: boolean;
     onSelected: (selectedKey: string, index: number) => void;
     onEditLabel?: (label: string, index: number) => void;
+    onRemove?: (index: number) => void;
 }
 export default function EditableTabs(props: EditableTabsProps) {
-    const { tabs, selectedKey, onSelected, onEditLabel } = props;
+    const { tabs, selectedKey, onSelected, onEditLabel, onRemove, showRemove } = props;
     const [editingIndex, setEditingIndex] = useState<number>(-1);
-    const [name, setName] = useState<string>("");
+    const [name, setName] = useState<string>('');
     const { t } = useTranslation();
 
     return (
         <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden">
+            <RemoveConfirm />
             <Modal
                 show={editingIndex > -1}
                 onClose={() => {
@@ -51,21 +55,21 @@ export default function EditableTabs(props: EditableTabsProps) {
                     <div className="mt-4 flex justify-end">
                         <DefaultButton
                             className="mr-2"
-                            text={t("actions.cancel")}
+                            text={t('actions.cancel')}
                             onClick={() => {
                                 unstable_batchedUpdates(() => {
                                     setEditingIndex(-1);
-                                    setName("");
+                                    setName('');
                                 });
                             }}
                         />
                         <PrimaryButton
-                            text={t("actions.confirm")}
+                            text={t('actions.confirm')}
                             onClick={() => {
                                 unstable_batchedUpdates(() => {
                                     onEditLabel && onEditLabel(name, editingIndex);
                                     setEditingIndex(-1);
-                                    setName("");
+                                    setName('');
                                 });
                             }}
                         />
@@ -86,20 +90,28 @@ export default function EditableTabs(props: EditableTabsProps) {
                         key={tab.key}
                         className={classNames(
                             tab.key === selectedKey
-                                ? "border rounded-t"
-                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-50 dark:hover:text-gray-200 dark:hover:bg-gray-800",
-                            "whitespace-nowrap border-gray-200 dark:border-gray-700 py-1 px-2 pr-6 text-sm cursor-default dark:text-white"
+                                ? 'border rounded-t'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-50 dark:hover:text-gray-200 dark:hover:bg-gray-800',
+                            'whitespace-nowrap group border-gray-200 dark:border-gray-700 py-1 px-2 pr-2 text-sm cursor-default dark:text-white'
                         )}
                     >
-                        {tab.label}{" "}
+                        {tab.label}
                         {tab.key === selectedKey && tab.editable && (
                             <PencilSquareIcon
-                                className="w-3 inline cursor-pointer"
+                                className="w-3 ml-1 inline cursor-pointer"
                                 onClick={() => {
                                     unstable_batchedUpdates(() => {
                                         setEditingIndex(tabIndex);
                                         setName(tab.label);
                                     });
+                                }}
+                            />
+                        )}
+                        {showRemove && tab.key === selectedKey && tab.editable && (
+                            <TrashIcon
+                                className="w-3 ml-1 text-red-500 invisible group-hover:visible inline cursor-pointer"
+                                onClick={() => {
+                                    onRemove?.(tabIndex);
                                 }}
                             />
                         )}

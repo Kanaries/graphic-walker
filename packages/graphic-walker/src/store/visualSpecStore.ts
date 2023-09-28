@@ -157,6 +157,7 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    public removeConfirmIdx: number | null = null;
     // TODO
     public computationFunction: IComputationFunction = async () => [];
     constructor(commonStore: CommonStore) {
@@ -331,6 +332,12 @@ export class VizSpecStore {
     public selectVisualization(visIndex: number) {
         this.visIndex = visIndex;
     }
+    public removeVisualization(index: number) {
+        if (this.visList.length === 1) return;
+        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
+        this.visList.splice(index, 1);
+    }
+
     public setVisName(visIndex: number, name: string) {
         this.visList[visIndex] = this.visList[visIndex].clone();
         this.visList[visIndex].updateLatest({
@@ -645,6 +652,14 @@ export class VizSpecStore {
             }
         });
     }
+    public openRemoveConfirmModal(index: number) {
+        this.removeConfirmIdx = index;
+    }
+
+    public closeRemoveConfirmModal() {
+        this.removeConfirmIdx = null;
+    }
+
     public get sortCondition() {
         const { rows, columns } = this.draggableFieldState;
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;

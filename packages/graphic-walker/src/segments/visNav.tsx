@@ -46,12 +46,18 @@ const VisNav: React.FC = (props) => {
         vizStore.setVisName(tabIndex, content)
     }, [])
 
+    const deleteHandler = useCallback((tabIndex: number) => {
+        vizStore.openRemoveConfirmModal(tabIndex);
+    }, [])
+
     return (
         <EditableTabs
             selectedKey={visList[visIndex].visId}
             tabs={tabs}
             onEditLabel={editLabelHandler}
             onSelected={visSelectionHandler}
+            onRemove={deleteHandler}
+            showRemove={visList.length > 1}
         />
     );
 };
