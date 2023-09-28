@@ -1,4 +1,4 @@
-import { IExpParamter, IExpression, IRow } from "../interfaces";
+import { IExpParameter, IExpression, IRow } from "../interfaces";
 import dateTimeDrill from "./op/dateTimeDrill";
 import dateTimeFeature from "./op/dateTimeFeature";
 
@@ -51,7 +51,7 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
     }
 }
 
-function bin(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
+function bin(resKey: string, params: IExpParameter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey] as number[];
     let _min = Infinity;
@@ -81,7 +81,7 @@ function bin(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: 
     }
 }
 
-function binCount(resKey: string, params: IExpParamter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
+function binCount(resKey: string, params: IExpParameter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey] as number[];
 
@@ -108,7 +108,7 @@ function binCount(resKey: string, params: IExpParamter[], data: IDataFrame, binS
     }
 }
 
-function log2(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+function log2(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const { value } = params[0];
     const field = data[value];
     const newField = field.map((v: number) => Math.log2(v));
@@ -118,7 +118,7 @@ function log2(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFr
     }
 }
 
-function log10(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+function log10(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey];
     const newField = fieldValues.map((v: number) => Math.log10(v));
@@ -128,7 +128,7 @@ function log10(resKey: string, params: IExpParamter[], data: IDataFrame): IDataF
     }
 }
 
-function log(resKey: string, params: IExpParamter[], data: IDataFrame, baseNum: number | undefined=10): IDataFrame {
+function log(resKey: string, params: IExpParameter[], data: IDataFrame, baseNum: number | undefined=10): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey];
     const newField = fieldValues.map((v: number) => Math.log(v) / Math.log(baseNum) );
@@ -138,7 +138,7 @@ function log(resKey: string, params: IExpParamter[], data: IDataFrame, baseNum: 
     }
 }
 
-function one(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+function one(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     // const { value: fieldKey } = params[0];
     if (Object.keys(data).length === 0) return data;
     const len = data[Object.keys(data)[0]].length;
