@@ -17,9 +17,9 @@ import {
     Specification,
     IComputationFunction,
     IGeoUrl,
-    ISemanticType
+    ISemanticType,
 } from '../interfaces';
-import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from "../constants";
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
 import { GLOBAL_CONFIG } from '../config';
 import { VisSpecWithHistory } from '../models/visSpecHistory';
 import {
@@ -157,6 +157,7 @@ export class VizSpecStore {
     public canUndo = false;
     public canRedo = false;
     public editingFilterIdx: number | null = null;
+    public removeConfirmIdx: number | null = null;
     // TODO
     public computationFunction: IComputationFunction = async () => [];
     constructor(commonStore: CommonStore) {
@@ -331,6 +332,23 @@ export class VizSpecStore {
     public selectVisualization(visIndex: number) {
         this.visIndex = visIndex;
     }
+    public removeVisualization(index: number) {
+        if (this.visList.length === 1) return;
+        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
+        this.visList.splice(index, 1);
+    }
+    public duplicateVisualization(index: number) {
+        const ori = this.visList[index].exportGW();
+        this.visList.push(
+            new VisSpecWithHistory({
+                ...ori,
+                name: ori.name + ' Copy',
+                visId: uniqueId(),
+            })
+        );
+        this.visIndex = this.visList.length - 1;
+    }
+
     public setVisName(visIndex: number, name: string) {
         this.visList[visIndex] = this.visList[visIndex].clone();
         this.visList[visIndex].updateLatest({
@@ -391,7 +409,9 @@ export class VizSpecStore {
     public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
         this.useMutable(({ config }) => {
             switch (true) {
-                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth', 'useSvg'].includes(configKey): {
+                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth', 'useSvg'].includes(
+                    configKey
+                ): {
                     return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
                 }
                 case configKey === 'geoms' && Array.isArray(value):
@@ -547,14 +567,19 @@ export class VizSpecStore {
             encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
         });
     }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount', num:number|undefined=10): string {
+    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount', num: number | undefined = 10): string {
         if (this.draggableFieldState[stateKey][index]?.fid === MEA_KEY_ID) {
             return '';
         }
         const newVarKey = uniqueId();
         const state = this.draggableFieldState;
         const existedRelatedBinField = state.dimensions.find(
-            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.num === num && f.expression.params[0].value === state[stateKey][index].fid 
+            (f) =>
+                f.computed &&
+                f.expression &&
+                f.expression.op === binType &&
+                f.expression.num === num &&
+                f.expression.params[0].value === state[stateKey][index].fid
         );
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
@@ -577,14 +602,14 @@ export class VizSpecStore {
                             value: originField.fid,
                         },
                     ],
-                    num: num
+                    num: num,
                 },
             };
             encodings.dimensions.push(binField);
         });
         return newVarKey;
     }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log', num: number|undefined = 10) {
+    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log', num: number | undefined = 10) {
         if (stateKey === 'filters') {
             return;
         }
@@ -622,14 +647,28 @@ export class VizSpecStore {
             const originField = encodings[stateKey][index];
             encodings[stateKey].splice(index, 1, {
                 ...originField,
-                semanticType: newSemanticType
-            })
+                semanticType: newSemanticType,
+            });
         });
     }
-    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeDrill',  drillLevel: typeof DATE_TIME_DRILL_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
-    public createDateTimeDrilledField(stateKey: keyof DraggableFieldState, index: number, op: 'dateTimeFeature', drillLevel: typeof DATE_TIME_FEATURE_LEVELS[number], name: string | ((originFieldName: string) => string), format: string)
+    public createDateTimeDrilledField(
+        stateKey: keyof DraggableFieldState,
+        index: number,
+        op: 'dateTimeDrill',
+        drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
+        name: string | ((originFieldName: string) => string),
+        format: string
+    );
+    public createDateTimeDrilledField(
+        stateKey: keyof DraggableFieldState,
+        index: number,
+        op: 'dateTimeFeature',
+        drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
+        name: string | ((originFieldName: string) => string),
+        format: string
+    );
     public createDateTimeDrilledField(stateKey, index, op, drillLevel, name, format) {
-        if (stateKey === "filters") {
+        if (stateKey === 'filters') {
             return;
         }
 
@@ -640,7 +679,7 @@ export class VizSpecStore {
                 fid: newVarKey,
                 dragId: newVarKey,
                 name: typeof name === 'function' ? name(originField.name) : name,
-                semanticType: op === 'dateTimeDrill' ? "temporal" : "ordinal",
+                semanticType: op === 'dateTimeDrill' ? 'temporal' : 'ordinal',
                 analyticType: originField.analyticType,
                 aggName: 'sum',
                 computed: true,
@@ -659,8 +698,8 @@ export class VizSpecStore {
                         },
                         {
                             type: 'format',
-                            value: format
-                        }
+                            value: format,
+                        },
                     ],
                 },
             };
@@ -686,6 +725,14 @@ export class VizSpecStore {
             }
         });
     }
+    public openRemoveConfirmModal(index: number) {
+        this.removeConfirmIdx = index;
+    }
+
+    public closeRemoveConfirmModal() {
+        this.removeConfirmIdx = null;
+    }
+
     public get sortCondition() {
         const { rows, columns } = this.draggableFieldState;
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;
@@ -977,8 +1024,8 @@ export class VizSpecStore {
                 },
                 config: {
                     ...visSpec.config,
-                    geojson: visSpec.config.geoUrl ? undefined : visSpec.config.geojson
-                }
+                    geojson: visSpec.config.geoUrl ? undefined : visSpec.config.geojson,
+                },
             };
         });
         return updatedVisList;

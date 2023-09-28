@@ -156,7 +156,8 @@
         "tablist": {
             "new": "+ 新規ビュー",
             "auto_title": "ビュー {{idx}}",
-            "chart_name": "ビュー名"
+            "chart_name": "グラフ名",
+            "remove_confirm": "このグラフを削除してもよろしいですか？"            
         },
         "askviz": {
             "placeholder": "データセットから描画したい視覚化は何ですか？"
