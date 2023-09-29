@@ -52,10 +52,19 @@ export const toWorkflow = (
     folds = [] as string[],
     limit?: number
 ): IDataQueryWorkflowStep[] => {
-    const viewKeys = new Set<string>([...viewDimensionsRaw, ...viewMeasuresRaw].map((f) => f.fid));
-    const hasFold = viewKeys.has(MEA_KEY_ID) && viewKeys.has(MEA_VAL_ID);
+    const hasFold = viewDimensionsRaw.find(x => x.fid === MEA_KEY_ID) && viewMeasuresRaw.find(x => x.fid === MEA_VAL_ID);
     const viewDimensions = viewDimensionsRaw.filter((x) => x.fid !== MEA_KEY_ID);
     const viewMeasures = viewMeasuresRaw.filter((x) => x.fid !== MEA_VAL_ID);
+    if (hasFold) {
+        const aggName = viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID)!.aggName;
+        const newFields = folds
+            .map((k) => allFields.find((x) => x.fid === k)!)
+            .map((x) => ({ ...x, aggName }))
+            .filter(Boolean);
+        viewDimensions.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
+        viewMeasures.push(...newFields.filter((x) => x?.analyticType === 'measure'));
+    }
+    const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures].map((f) => f.fid));
 
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;
@@ -128,16 +137,6 @@ export const toWorkflow = (
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggregateOn = viewMeasures.filter((f) => f.aggName).map((f) => [f.fid, f.aggName as string]);
     const aggergated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
-
-    if (hasFold) {
-        const aggName = viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID)!.aggName;
-        const newFields = folds
-            .map((k) => allFields.find((x) => x.fid === k)!)
-            .map((x) => ({ ...x, aggName }))
-            .filter(Boolean);
-        viewDimensions.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
-        viewMeasures.push(...newFields.filter((x) => x?.analyticType === 'measure'));
-    }
 
     if (aggergated) {
         viewQueryWorkflow = {
