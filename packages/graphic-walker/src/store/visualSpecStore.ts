@@ -38,6 +38,7 @@ import { createCountField } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
+import { Field } from '../models/field';
 
 function getChannelSizeLimit(channel: string): number {
     if (typeof GLOBAL_CONFIG.CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
@@ -481,7 +482,7 @@ export class VizSpecStore {
             if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) {
                 if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
                 encodings[sourceKey].splice(sourceIndex, 1);
-                movingField.analyticType = destinationKey === 'dimensions' ? 'dimension' : 'measure';
+                movingField = new Field(movingField).switchAnalyticType(destinationKey === 'dimensions' ? 'dimension' : 'measure')
             }
             const limitSize = getChannelSizeLimit(destinationKey);
             const fixedDestinationIndex = Math.min(destinationIndex, limitSize - 1);
