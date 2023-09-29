@@ -1,14 +1,15 @@
-import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import { observer } from "mobx-react-lite";
-import React, { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { DraggableProvided } from "@kanaries/react-beautiful-dnd";
-import { COUNT_FIELD_ID } from "../../constants";
-import { IDraggableStateKey } from "../../interfaces";
-import { useGlobalStore } from "../../store";
-import { Pill } from "../components";
-import { GLOBAL_CONFIG } from "../../config";
-import DropdownContext from "../../components/dropdownContext";
+import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
+import { observer } from 'mobx-react-lite';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { IDraggableStateKey } from '../../interfaces';
+import { useGlobalStore } from '../../store';
+import { Pill } from '../components';
+import { GLOBAL_CONFIG } from '../../config';
+import DropdownContext from '../../components/dropdownContext';
+import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 
 interface PillProps {
     provided: DraggableProvided;
@@ -18,9 +19,9 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const { vizStore } = useGlobalStore();
-    const { visualConfig } = vizStore;
+    const { visualConfig, allFields } = vizStore;
     const field = vizStore.draggableFieldState[dkey.id][fIndex];
-    const { t } = useTranslation("translation", { keyPrefix: "constant.aggregator" });
+    const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
     const aggregationOptions = useMemo(() => {
         return GLOBAL_CONFIG.AGGREGATOR_LIST.map((op) => ({
@@ -29,15 +30,37 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, []);
 
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+        return validFoldBy.map<ISelectContextOption>((f) => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
+    const folds = field.fid === MEA_KEY_ID ? visualConfig.folds ?? [] : null;
+
     return (
         <Pill
             ref={provided.innerRef}
-            colType={field.analyticType === "dimension" ? "discrete" : "continuous"}
+            colType={field.analyticType === 'dimension' ? 'discrete' : 'continuous'}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
-            <span className="flex-1 truncate">{field.name}</span>&nbsp;
-            {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
+            {folds && (
+                <SelectContext
+                    options={foldOptions}
+                    selectedKeys={folds}
+                    onSelect={(keys) => {
+                        vizStore.setVisualConfig('folds', keys);
+                    }}
+                >
+                    <span className="flex-1 truncate">{field.name}</span>
+                </SelectContext>
+            )}
+            {!folds && <span className="flex-1 truncate">{field.name}</span>}
+            &nbsp;
+            {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}
                     onSelect={(value) => {
@@ -45,7 +68,7 @@ const OBPill: React.FC<PillProps> = (props) => {
                     }}
                 >
                     <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                        {field.aggName || ""}
+                        {field.aggName || ''}
                         <ChevronUpDownIcon className="w-3" />
                     </span>
                 </DropdownContext>
@@ -65,10 +88,10 @@ const OBPill: React.FC<PillProps> = (props) => {
                     ))}
                 </select>
             )} */}
-            {field.analyticType === "dimension" && field.sort === "ascending" && (
+            {field.analyticType === 'dimension' && field.sort === 'ascending' && (
                 <BarsArrowUpIcon className="float-right w-3" role="status" aria-label="Sorted in ascending order" />
             )}
-            {field.analyticType === "dimension" && field.sort === "descending" && (
+            {field.analyticType === 'dimension' && field.sort === 'descending' && (
                 <BarsArrowDownIcon className="float-right w-3" role="status" aria-label="Sorted in descending order" />
             )}
         </Pill>

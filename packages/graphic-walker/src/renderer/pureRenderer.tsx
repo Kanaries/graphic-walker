@@ -77,6 +77,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         filters,
         defaultAggregated,
         sort: sort ?? 'none',
+        folds: visualConfig.folds,
         limit: limit ?? -1,
         computationFunction: computation,
     });

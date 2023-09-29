@@ -1,7 +1,9 @@
-import { IRow } from "../../interfaces";
-import { IFoldQuery } from "../interfaces";
+import { MEA_VAL_ID, MEA_KEY_ID } from '../../constants';
+import { IRow, IViewField } from '../../interfaces';
+import { getMeaAggKey } from '../../utils';
+import { IFoldQuery } from '../interfaces';
 
-export function fold (data: IRow[], query: IFoldQuery): IRow[] {
+export function fold(data: IRow[], query: IFoldQuery): IRow[] {
     const { foldBy, newFoldKeyCol, newFoldValueCol } = query;
     const ans: IRow[] = [];
     for (let row of data) {
@@ -14,4 +16,42 @@ export function fold (data: IRow[], query: IFoldQuery): IRow[] {
         }
     }
     return ans;
+}
+
+export function fold2(
+    data: IRow,
+    defaultAggregated: boolean,
+    allFields: Omit<IViewField, 'dragId'>[],
+    viewMeasures: Omit<IViewField, 'dragId'>[],
+    viewDimensions: Omit<IViewField, 'dragId'>[],
+    folds?: string[]
+) {
+    const meaVal = viewMeasures.find((x) => x.fid === MEA_VAL_ID);
+    if (viewDimensions.find((x) => x.fid === MEA_KEY_ID) && meaVal) {
+        if (!folds?.length) {
+            return [];
+        }
+        const foldedFields = (folds ?? [])
+            .map((x) => allFields.find((y) => y.fid === x)!)
+            .filter(Boolean)
+            .map((x) => {
+                if (defaultAggregated) {
+                    return {
+                        name: `${meaVal.aggName}(${x.name})`,
+                        fid: getMeaAggKey(x.fid, meaVal.aggName),
+                    };
+                }
+                return { name: x.name, fid: x.fid };
+            });
+        const set = new Set(foldedFields.map((x) => x.fid));
+        return data.flatMap((x) => {
+            const i = Object.fromEntries(Object.entries(x).filter((x) => !set.has(x[0])));
+            return foldedFields.map((k) => ({
+                ...i,
+                [MEA_KEY_ID]: k.name,
+                [defaultAggregated ? getMeaAggKey(MEA_VAL_ID, meaVal.aggName) : MEA_VAL_ID]: x[k.fid],
+            }));
+        });
+    }
+    return data;
 }
