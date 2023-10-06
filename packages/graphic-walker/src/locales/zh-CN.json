@@ -4,6 +4,7 @@
         "primary_color": "主要颜色",
         "color_palette": "调色板",
         "opacity": "不透明度",
+        "default_color_palette": "默认",
         "size": "尺寸",
         "min_domain": "最小域值",
         "max_domain": "最大域值",

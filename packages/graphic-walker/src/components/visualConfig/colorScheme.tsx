@@ -98,7 +98,7 @@ export const ColorSchemes = [
 
 export const extractRGBA = (rgba?: string) => {
     if (!rgba) {
-        return { r: 0, g: 0, b: 0, a: 0 };
+        return { r: 91, g: 143, b: 249, a: 1 };
     }
 
     const arr = rgba.match(/\d+/g) || [];
