@@ -94,6 +94,7 @@ const VisualConfigPanel: React.FC = (props) => {
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(visualConfig.background);
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
+    const [colorEdited, setColorEdited] = useState(false);
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
     const opacityValue = useScale(0, 1, 0.3, 0.8);
@@ -104,6 +105,7 @@ const VisualConfigPanel: React.FC = (props) => {
         setBackground(visualConfig.background);
         setResolve(toJS(visualConfig.resolve));
         setDefaultColor(extractRGBA(visualConfig.primaryColor));
+        setColorEdited(false);
         setScaleIncludeUnmatchedChoropleth(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: visualConfig.format.numberFormat,
@@ -149,12 +151,13 @@ const VisualConfigPanel: React.FC = (props) => {
                                                 setDisplayColorPicker(true);
                                             }}
                                         ></div>
-                                        <div className="absolute left-32 top-22 index-40">
+                                        <div className="absolute left-32 top-22 z-40">
                                             {displayColorPicker && (
                                                 <SketchPicker
                                                     presetColors={DEFAULT_COLOR_SCHEME}
                                                     color={defaultColor}
                                                     onChange={(color, event) => {
+                                                        setColorEdited(true);
                                                         setDefaultColor({
                                                             ...color.rgb,
                                                             a: color.rgb.a ?? 1,
@@ -187,7 +190,10 @@ const VisualConfigPanel: React.FC = (props) => {
                                                     </div>
                                                 </>
                                             ),
-                                        }))}
+                                        })).concat({
+                                            value: '',
+                                            label: <>{t('config.default_color_palette')}</>,
+                                        })}
                                     />
                                 </div>
                             </div>
@@ -310,7 +316,9 @@ const VisualConfigPanel: React.FC = (props) => {
                                 vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
                                 vizStore.setVisualConfig('background', background);
                                 vizStore.setVisualConfig('resolve', resolve);
-                                vizStore.setVisualConfig('primaryColor', `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`);
+                                if (colorEdited) {
+                                    vizStore.setVisualConfig('primaryColor', `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`);
+                                }
                                 vizStore.setVisualConfig('colorPalette', colorPalette);
                                 vizStore.setVisualConfig('useSvg', svg);
                                 vizStore.setVisualConfig('scale', { opacity: opacityValue.value, size: sizeValue.value });

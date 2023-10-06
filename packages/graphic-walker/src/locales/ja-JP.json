@@ -4,6 +4,7 @@
         "primary_color": "プライマリカラー",
         "color_palette": "カラーパレット",
         "opacity": "不透明度",
+        "default_color_palette": "デフォルト",
         "size": "サイズ",
         "min_domain": "最小ドメイン",
         "max_domain": "最大ドメイン",
