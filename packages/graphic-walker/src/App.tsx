@@ -217,15 +217,15 @@ const App = observer<IGWProps>(function App(props) {
                         <LogPanel />
                         <BinPanel/>
                         {commonStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                        <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                            <div className="md:col-span-3 xl:col-span-1">
+                        <div className="sm:grid sm:grid-cols-12 xl:grid-cols-6">
+                            <div className="sm:col-span-3 xl:col-span-1">
                                 <DatasetFields />
                             </div>
-                            <div className="md:col-span-2 xl:col-span-1">
+                            <div className="sm:col-span-2 xl:col-span-1">
                                 <FilterField />
                                 <AestheticFields />
                             </div>
-                            <div className="md:col-span-7 xl:col-span-4">
+                            <div className="sm:col-span-7 xl:col-span-4">
                                 <div>
                                     <PosFields />
                                 </div>
