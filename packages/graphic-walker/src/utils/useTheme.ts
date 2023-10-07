@@ -1,35 +1,34 @@
 import { IThemeKey } from '../interfaces';
 import { builtInThemes, getColorPalette, getPrimaryColor } from '../vis/theme';
 
-const isPlainObject = (a): a is object => typeof a === 'object' && !(a instanceof Array);
+type PlainObject = { [key: string]: any };
 
-const clone = <T>(a: T) => {
-    if (isPlainObject(a)) {
-        if (a === null) return a;
-        return Object.fromEntries(Object.keys(a).map((k) => [k, clone(a[k])]));
+const isPlainObject = (obj: any): obj is PlainObject => {
+    return obj && typeof obj === 'object' && obj.constructor === Object;
+};
+
+const clone = <T>(a: T): T => {
+    if (Array.isArray(a)) {
+        return a.map(clone) as any;
+    } else if (isPlainObject(a)) {
+        return { ...a };
     }
     return a;
 };
 
-const merge = (a: any, b: any) => {
+const deepMerge = (a: PlainObject, b: PlainObject): PlainObject => {
     if (isPlainObject(a) && isPlainObject(b)) {
-        const result = clone(a);
-        Object.keys(b).forEach((k) => {
-            result[k] = merge(result[k], b[k]);
+        const result = { ...a };
+        Object.keys(b).forEach((key) => {
+            result[key] = isPlainObject(result[key]) ? deepMerge(result[key], b[key]) : b[key];
         });
         return result;
     }
     return b;
 };
 
-const merge2 = (...a: any[]) => {
-    if (a.length === 0) return undefined;
-    if (a.length === 1) return a[0];
-    let result = merge(a[0], a[1]);
-    for (let i = 2; i < a.length; i++) {
-        result = merge(result, a[i]);
-    }
-    return result;
+const deepMergeAll = (...objects: PlainObject[]): PlainObject => {
+    return objects.reduce((acc, obj) => deepMerge(acc, obj), {});
 };
 
 export function getTheme(props: { themeKey?: IThemeKey; themeConfig?: any; primaryColor?: string; colorPalette?: string; mediaTheme: 'dark' | 'light' }) {
@@ -37,6 +36,6 @@ export function getTheme(props: { themeKey?: IThemeKey; themeConfig?: any; prima
     const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
     const colorConfig = primaryColor ? getPrimaryColor(primaryColor) : {};
     const paletteConfig = colorPalette ? getColorPalette(colorPalette) : {};
-    const config = merge2(presetConfig, colorConfig, paletteConfig)?.[mediaTheme];
+    const config = deepMergeAll(presetConfig, colorConfig, paletteConfig)?.[mediaTheme];
     return config;
 }
