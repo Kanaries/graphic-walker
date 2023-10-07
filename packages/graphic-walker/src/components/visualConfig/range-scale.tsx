@@ -57,7 +57,7 @@ function Checkbox(props: { inputKey: string; title: string; value: boolean; onCh
         <div className="flex justify-center items-center space-x-1 text-xs">
             <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-300 focus:ring-0 bg-gray-50 dark:bg-gray-900"
                 checked={props.value}
                 id={`${props.inputKey}`}
                 aria-describedby={`${props.inputKey}_label`}
@@ -178,7 +178,7 @@ export function RangeScale(props: {
                     }}
                     type="number"
                     disabled={!props.enableMinDomain}
-                    className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:opacity-50"
                 />
             </div>
             <div className="flex flex-col space-y-1 items-start">
@@ -198,7 +198,7 @@ export function RangeScale(props: {
                     }}
                     type="number"
                     disabled={!props.enableMaxDomain}
-                    className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:opacity-50"
                 />
             </div>
             <div className="flex flex-col space-y-1 items-start w-48">

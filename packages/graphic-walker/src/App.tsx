@@ -31,6 +31,7 @@ import BinPanel from './fields/datasetFields/binPanel';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from "react-error-boundary";
 import Errorpanel from './components/errorpanel';
+import { GWGlobalConfig } from './vis/theme';
 
 export interface IGWProps {
     dataSource?: IRow[];
@@ -46,7 +47,7 @@ export interface IGWProps {
     fieldKeyGuard?: boolean;
     /** @default "vega" */
     themeKey?: IThemeKey;
-    themeConfig?: VegaGlobalConfig;
+    themeConfig?: GWGlobalConfig;
     dark?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationFunction;
