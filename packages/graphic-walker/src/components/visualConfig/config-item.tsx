@@ -1,13 +1,13 @@
 import React from 'react';
 
 export function ConfigItemContainer (props: { children?: React.ReactNode; className?: string }) {
-    return <div className="border border-gray-50 dark:border-gray-700 p-4 m-4 rounded-lg">
+    return <div className="border border-gray-200 dark:border-gray-700 p-4 m-4 rounded-lg">
         {props.children}
     </div>
 }
 
 export function ConfigItemContent (props: { children?: React.ReactNode }) {
-    return <div className="border-t border-gray-50 dark:border-gray-700 mt-4 pt-4">
+    return <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
         {props.children}
     </div>
 }
