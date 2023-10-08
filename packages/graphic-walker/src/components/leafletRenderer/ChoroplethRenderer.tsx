@@ -219,7 +219,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         mapRef.current?.flyToBounds(bounds);
     }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
 
-    if (!features) {
+    if (!features && (localFeatures || featuresUrl)) {
         return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>
     }
 

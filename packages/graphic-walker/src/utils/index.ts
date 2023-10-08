@@ -1,6 +1,6 @@
-import i18next from "i18next";
-import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from "../constants";
-import { IRow, Filters, IViewField } from "../interfaces";
+import i18next from 'i18next';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { IRow, Filters, IViewField } from '../interfaces';
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -88,7 +88,7 @@ export function checkMajorFactor(
 ): { majorKey: string; majorSum: number } {
     const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalizeRecords(data, measures);
     let majorSum = Infinity;
-    let majorKey = "";
+    let majorKey = '';
     for (let [key, childData] of childrenData) {
         let sum = 0;
         for (let record of normalizedData) {
@@ -97,7 +97,7 @@ export function checkMajorFactor(
             });
             if (target) {
                 measures.forEach((mea) => {
-                    let targetValue = typeof target![mea] === "number" && !isNaN(target![mea]) ? target![mea] : 0;
+                    let targetValue = typeof target![mea] === 'number' && !isNaN(target![mea]) ? target![mea] : 0;
                     targetValue = targetValue / totalMeasures[mea];
                     sum += Math.abs(record[mea] - targetValue);
                 });
@@ -125,7 +125,7 @@ export function checkChildOutlier(
     // const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalize2PositiveRecords(data, measures);
     const { normalizedData, maxMeasures, minMeasures, totalMeasures } = normalizeRecords(data, measures);
     let outlierSum = -Infinity;
-    let outlierKey = "";
+    let outlierKey = '';
     for (let [key, childData] of childrenData) {
         // const { normalizedData: normalizedChildData } = normalize2PositiveRecords(childData, measures);
         const { normalizedData: normalizedChildData } = normalizeRecords(childData, measures);
@@ -136,7 +136,7 @@ export function checkChildOutlier(
             });
             if (target) {
                 measures.forEach((mea) => {
-                    let targetValue = typeof target![mea] === "number" && !isNaN(target![mea]) ? target![mea] : 0;
+                    let targetValue = typeof target![mea] === 'number' && !isNaN(target![mea]) ? target![mea] : 0;
                     sum += Math.abs(record[mea] - targetValue);
                 });
             } else {
@@ -155,7 +155,7 @@ export function checkChildOutlier(
 }
 export interface IPredicate {
     key: string;
-    type: "discrete" | "continuous";
+    type: 'discrete' | 'continuous';
     range: Set<any> | [number, number];
 }
 export function getPredicates(selection: IRow[], dimensions: string[], measures: string[]): IPredicate[] {
@@ -163,14 +163,14 @@ export function getPredicates(selection: IRow[], dimensions: string[], measures:
     dimensions.forEach((dim) => {
         predicates.push({
             key: dim,
-            type: "discrete",
+            type: 'discrete',
             range: new Set(),
         });
     });
     measures.forEach((mea) => {
         predicates.push({
             key: mea,
-            type: "continuous",
+            type: 'continuous',
             range: [Infinity, -Infinity],
         });
     });
@@ -179,14 +179,8 @@ export function getPredicates(selection: IRow[], dimensions: string[], measures:
             (predicates[index].range as Set<any>).add(record[dim]);
         });
         measures.forEach((mea, index) => {
-            (predicates[index].range as [number, number])[0] = Math.min(
-                (predicates[index].range as [number, number])[0],
-                record[mea]
-            );
-            (predicates[index].range as [number, number])[1] = Math.max(
-                (predicates[index].range as [number, number])[1],
-                record[mea]
-            );
+            (predicates[index].range as [number, number])[0] = Math.min((predicates[index].range as [number, number])[0], record[mea]);
+            (predicates[index].range as [number, number])[1] = Math.max((predicates[index].range as [number, number])[1], record[mea]);
         });
     });
     return predicates;
@@ -196,7 +190,7 @@ export function getPredicatesFromVegaSignals(signals: Filters, dimensions: strin
     const predicates: IPredicate[] = [];
     dimensions.forEach((dim) => {
         predicates.push({
-            type: "discrete",
+            type: 'discrete',
             range: new Set(signals[dim]),
             key: dim,
         });
@@ -207,11 +201,8 @@ export function getPredicatesFromVegaSignals(signals: Filters, dimensions: strin
 export function filterByPredicates(data: IRow[], predicates: IPredicate[]): IRow[] {
     const filterData = data.filter((record) => {
         return predicates.every((pre) => {
-            if (pre.type === "continuous") {
-                return (
-                    record[pre.key] >= (pre.range as [number, number])[0] &&
-                    record[pre.key] <= (pre.range as [number, number])[1]
-                );
+            if (pre.type === 'continuous') {
+                return record[pre.key] >= (pre.range as [number, number])[0] && record[pre.key] <= (pre.range as [number, number])[1];
             } else {
                 return (pre.range as Set<any>).has(record[pre.key]);
             }
@@ -241,41 +232,40 @@ export function createCountField(): IViewField {
         // viewId: "",
         dragId: COUNT_FIELD_ID,
         fid: COUNT_FIELD_ID,
-        name: i18next.t("constant.row_count"),
-        analyticType: "measure",
-        semanticType: "quantitative",
+        name: i18next.t('constant.row_count'),
+        analyticType: 'measure',
+        semanticType: 'quantitative',
         aggName: 'sum',
         computed: true,
         expression: {
             op: 'one',
             params: [],
             as: COUNT_FIELD_ID,
-        }
+        },
     };
 }
-
 
 export function createVirtualFields(): IViewField[] {
     return [
         {
             dragId: MEA_KEY_ID,
             fid: MEA_KEY_ID,
-            name: i18next.t("constant.mea_key"),
-            analyticType: "dimension",
-            semanticType: "nominal",
+            name: i18next.t('constant.mea_key'),
+            analyticType: 'dimension',
+            semanticType: 'nominal',
         },
         {
             dragId: MEA_VAL_ID,
             fid: MEA_VAL_ID,
-            name: i18next.t("constant.mea_val"),
-            analyticType: "measure",
-            semanticType: "quantitative",
+            name: i18next.t('constant.mea_val'),
+            analyticType: 'measure',
+            semanticType: 'quantitative',
             aggName: 'sum',
         },
     ];
 }
 
-export function getRange (nums: number[]): [number, number] {
+export function getRange(nums: number[]): [number, number] {
     let _min = Infinity;
     let _max = -Infinity;
     for (let i = 0; i < nums.length; i++) {
@@ -285,22 +275,32 @@ export function getRange (nums: number[]): [number, number] {
     return [_min, _max];
 }
 
-export function makeNumbersBeautiful (nums: number[]): number[] {
+export function makeNumbersBeautiful(nums: number[]): number[] {
     const [min, max] = getRange(nums);
     const range = max - min;
     const step = Math.pow(10, Math.floor(Math.log10(range)));
     return nums.map((num) => {
         return Math.round(num / step) * step;
-    })
+    });
 }
 
 export function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ')
+    return classes.filter(Boolean).join(' ');
 }
 
-export function getMeaAggKey (meaKey: string, agg?: string | undefined) {
+export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
     if (!agg) {
         return meaKey;
     }
     return `${meaKey}_${agg}`;
+}
+
+export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
+    if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        return rows[rows.length - 1].sort || 'none';
+    }
+    if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        return columns[columns.length - 1].sort || 'none';
+    }
+    return 'none';
 }
