@@ -34,7 +34,7 @@ import {
     initEncoding,
 } from '../utils/save';
 import { CommonStore } from './commonStore';
-import { createCountField, createVirtualFields } from '../utils';
+import { createCountField, createVirtualFields, getSort } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { nanoid } from 'nanoid';
 import { toWorkflow } from '../utils/workflow';
@@ -1004,14 +1004,7 @@ export class VizSpecStore {
     }
 
     public get sort() {
-        const { rows, columns } = this.draggableFieldState;
-        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-            return rows[rows.length - 1].sort || 'none';
-        }
-        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-            return columns[columns.length - 1].sort || 'none';
-        }
-        return 'none';
+        return getSort(this.draggableFieldState);
     }
 
     public getWorkflow() {
