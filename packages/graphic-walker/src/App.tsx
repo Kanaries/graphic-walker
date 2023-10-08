@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
@@ -20,7 +21,6 @@ import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import ClickMenu from './components/clickMenu';
-import { LightBulbIcon } from '@heroicons/react/24/outline';
 import AskViz from './components/askViz';
 import { VizSpecStore } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
@@ -31,13 +31,14 @@ import BinPanel from './fields/datasetFields/binPanel';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
+import { GWGlobalConfig } from './vis/theme';
 
 export interface BaseVizProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     themeKey?: IThemeKey;
     darkMode?: 'light' | 'dark';
-    themeConfig?: VegaGlobalConfig;
+    themeConfig?: GWGlobalConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -147,15 +148,15 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <LogPanel />
                                     <BinPanel />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                    <div className="md:grid md:grid-cols-12 xl:grid-cols-6">
-                                        <div className="md:col-span-3 xl:col-span-1">
+                                    <div className="sm:grid sm:grid-cols-12 xl:grid-cols-6">
+                                        <div className="sm:col-span-3 xl:col-span-1">
                                             <DatasetFields />
                                         </div>
-                                        <div className="md:col-span-2 xl:col-span-1">
+                                        <div className="sm:col-span-2 xl:col-span-1">
                                             <FilterField />
                                             <AestheticFields />
                                         </div>
-                                        <div className="md:col-span-7 xl:col-span-4">
+                                        <div className="sm:col-span-7 xl:col-span-4">
                                             <div>
                                                 <PosFields />
                                             </div>

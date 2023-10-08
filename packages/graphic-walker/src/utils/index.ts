@@ -1,6 +1,6 @@
 import i18next from 'i18next';
-import { COUNT_FIELD_ID } from '../constants';
-import { IRow, Filters, IMutField, IViewField } from '../interfaces';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { IRow, Filters, IViewField } from '../interfaces';
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -245,6 +245,26 @@ export function createCountField(): IViewField {
     };
 }
 
+export function createVirtualFields(): IViewField[] {
+    return [
+        {
+            dragId: MEA_KEY_ID,
+            fid: MEA_KEY_ID,
+            name: i18next.t('constant.mea_key'),
+            analyticType: 'dimension',
+            semanticType: 'nominal',
+        },
+        {
+            dragId: MEA_VAL_ID,
+            fid: MEA_VAL_ID,
+            name: i18next.t('constant.mea_val'),
+            analyticType: 'measure',
+            semanticType: 'quantitative',
+            aggName: 'sum',
+        },
+    ];
+}
+
 export function getRange(nums: number[]): [number, number] {
     let _min = Infinity;
     let _max = -Infinity;
@@ -273,6 +293,15 @@ export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
         return meaKey;
     }
     return `${meaKey}_${agg}`;
+}
+export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
+    if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        return rows[rows.length - 1].sort || 'none';
+    }
+    if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        return columns[columns.length - 1].sort || 'none';
+    }
+    return 'none';
 }
 
 const defaultValueComparator = (a: any, b: any) => {

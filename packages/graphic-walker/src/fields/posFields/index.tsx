@@ -5,6 +5,10 @@ import { useVizStore } from '../../store';
 import { FieldListContainer } from '../components';
 import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
 import OBFieldContainer from '../obComponents/obFContainer';
+
+const firstChannelStyle = {
+    zIndex: 2,
+};
 import { IDraggableViewStateKey } from '../../interfaces';
 
 const PosFields: React.FC = (props) => {
@@ -26,8 +30,8 @@ const PosFields: React.FC = (props) => {
     }, [geoms[0], coordSystem]);
     return (
         <div>
-            {channels.map((dkey) => (
-                <FieldListContainer name={dkey.id} key={dkey.id}>
+            {channels.map((dkey, i) => (
+                <FieldListContainer name={dkey.id} key={dkey.id} style={i === 0 ? firstChannelStyle : undefined}>
                     <Droppable droppableId={dkey.id} direction="horizontal">
                         {(provided, snapshot) => <OBFieldContainer dkey={dkey} provided={provided} />}
                     </Droppable>

@@ -9,8 +9,8 @@ export interface Scale<T> {
 }
 
 const DEFAULT_COLOR = "#5B8FF9";
-const DEFAULT_COLOR_STEP_1 = "#EBCCFF";
-const DEFAULT_COLOR_STEP_2 = "#0D1090";
+const DEFAULT_COLOR_STEP_1 = "#d4d4e8";
+const DEFAULT_COLOR_STEP_2 = "#3b196f";
 const DEFAULT_SCHEME_CATEGORY = [
     "#5B8FF9",
     "#61DDAA",

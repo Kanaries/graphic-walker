@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales, IViewField } from '../interfaces';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction } from 'mobx';
@@ -60,6 +60,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         defaultAggregated: visualConfig.defaultAggregated,
         sort,
         limit: limit,
+        folds: visualConfig.folds,
         computationFunction,
     });
 

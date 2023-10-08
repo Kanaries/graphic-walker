@@ -1,5 +1,5 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
-import type { IExpParamter } from '../../interfaces';
+import type { IExpParameter } from '../../interfaces';
 import type { IDataFrame } from '../execExp';
 
 const formatDate = (date: Date) => {
@@ -13,7 +13,7 @@ const formatDate = (date: Date) => {
     return `${Y}-${pad(M)}-${D} ${pad(H)}:${pad(m)}:${pad(s)}`;
 };
 
-function dateTimeDrill(resKey: string, params: IExpParamter[], data: IDataFrame): IDataFrame {
+function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const fieldKey = params.find((p) => p.type === 'field')?.value;
     const drillLevel = params.find((p) => p.type === 'value')?.value as (typeof DATE_TIME_DRILL_LEVELS)[number] | undefined;
     if (!fieldKey || !drillLevel) {

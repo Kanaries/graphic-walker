@@ -2,13 +2,14 @@ import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
-import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
+import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
 import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfigNew, IComputationFunction, IVisualLayout, IChannelScales } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
+import { getSort } from '../utils';
 
 type IPureRendererProps =
     | {
@@ -19,8 +20,6 @@ type IPureRendererProps =
           visualState: DraggableFieldState;
           visualConfig: IVisualConfigNew;
           visualLayout: IVisualLayout;
-          sort?: 'none' | 'ascending' | 'descending';
-          limit?: number;
           locale?: string;
           channelScales?: IChannelScales;
       } & (
@@ -39,13 +38,16 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, sort, limit, themeConfig, channelScales } = props;
+    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
         }
         return getComputation(props.rawData);
-    }, [props.type, props.type === 'remote' ? props.computation : props.rawData]);
+    }, [type, type === 'remote' ? props.computation : props.rawData]);
+
+    const sort = getSort(visualState);
+    const limit = visualConfig.limit ?? -1;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -76,8 +78,9 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         viewMeasures,
         filters,
         defaultAggregated,
-        sort: sort ?? 'none',
-        limit: limit ?? -1,
+        sort,
+        folds: visualConfig.folds,
+        limit,
         computationFunction: computation,
     });
     // Dependencies that should not trigger effect individually

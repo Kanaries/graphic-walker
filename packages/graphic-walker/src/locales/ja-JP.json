@@ -1,5 +1,14 @@
 {
     "config": {
+        "scheme": "スキーム",
+        "primary_color": "プライマリカラー",
+        "color_palette": "カラーパレット",
+        "opacity": "不透明度",
+        "default_color_palette": "デフォルト",
+        "size": "サイズ",
+        "min_domain": "最小ドメイン",
+        "max_domain": "最大ドメイン",
+        "range": "範囲",
         "format": "フォーマット",
         "numberFormat": "数字",
         "timeFormat": "日付",
@@ -17,6 +26,8 @@
     },
     "constant": {
         "row_count": "行数",
+        "dim_key": "名",
+        "dim_val": "値",
         "analytic_type": {
             "dimension": "ディメンション",
             "measure": "メジャー"
@@ -149,7 +160,7 @@
             "chart_name": "グラフ名",
             "remove_confirm": "このグラフを削除してもよろしいですか？"
         },
-        "askviz":{
+        "askviz": {
             "placeholder": "データセットから描画したい視覚化は何ですか？"
         },
         "tabpanel": {

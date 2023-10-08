@@ -20,6 +20,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
 import LoadingLayer from '../loadingLayer';
 import { useCompututaion, useVizStore } from '../../store';
+import { fold2 } from '../../lib/op/fold';
 
 interface PivotTableProps {
     themeKey?: IThemeKey;
@@ -33,7 +34,7 @@ interface PivotTableProps {
 
 const emptyMap = new Map();
 
-const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (props) {
+const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props) {
     const { data, visualConfig, loading, layout, draggableFieldState } = props;
     const computation = useCompututaion();
     const appRef = useAppRootContext();
@@ -44,13 +45,13 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
 
     const vizStore = useVizStore();
     const enableCollapse = !!vizStore;
-    // const { allFields, viewFilters, viewMeasures, sort, limit, allEncodings, tableCollapsedHeaderMap } = vizStore;
+    const { allFields, viewMeasures } = vizStore;
     const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
     const { rows, columns } = draggableFieldState;
-    const {  defaultAggregated } = visualConfig;
+    const {  defaultAggregated, folds } = visualConfig;
     const { showTableSummary } = layout
     const aggData = useRef<IRow[]>([]);
-    const [ topTreeHeaderRowNum, setTopTreeHeaderRowNum ] = useState<number>(0);
+    const [topTreeHeaderRowNum, setTopTreeHeaderRowNum] = useState<number>(0);
 
     const dimsInRow = useMemo(() => {
         return rows.filter((f) => f.analyticType === 'dimension');
@@ -95,7 +96,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
         }
     }, [enableCollapse, vizStore?.tableCollapsedHeaderMap]);
 
-    const aggregateThenGenerate = async() => {
+    const aggregateThenGenerate = async () => {
         await aggregateGroupbyData();
         generateNewTable();
     };
@@ -103,16 +104,9 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
     const generateNewTable = () => {
         appRef.current?.updateRenderStatus('rendering');
         setIsLoading(true);
-        buildPivotTableService(
-            dimsInRow,
-            dimsInColumn,
-            data,
-            aggData.current,
-            Array.from(tableCollapsedHeaderMap.keys()),
-            showTableSummary
-        )
+        buildPivotTableService(dimsInRow, dimsInColumn, data, aggData.current, Array.from(tableCollapsedHeaderMap.keys()), showTableSummary)
             .then((data) => {
-                const {lt, tt, metric} = data;
+                const { lt, tt, metric } = data;
                 unstable_batchedUpdates(() => {
                     setLeftTree(lt);
                     setTopTree(tt);
@@ -125,14 +119,14 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
                 appRef.current?.updateRenderStatus('error');
                 console.log(err);
                 setIsLoading(false);
-            })
+            });
     };
 
     const aggregateGroupbyData = () => {
         if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
         if (data.length === 0) return;
-        let groupbyCombListInRow:IViewField[][]  = [];
-        let groupbyCombListInCol:IViewField[][]  = [];
+        let groupbyCombListInRow: IViewField[][] = [];
+        let groupbyCombListInCol: IViewField[][] = [];
         if (showTableSummary) {
             groupbyCombListInRow = dimsInRow.map((dim, idx) => dimsInRow.slice(0, idx));
             groupbyCombListInCol = dimsInColumn.map((dim, idx) => dimsInColumn.slice(0, idx));
@@ -145,22 +139,15 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
         }
         groupbyCombListInRow.push(dimsInRow);
         groupbyCombListInCol.push(dimsInColumn);
-        const groupbyCombList:IViewField[][] = groupbyCombListInCol.flatMap(combInCol =>
-            groupbyCombListInRow.map(combInRow => [...combInCol, ...combInRow])
-        ).slice(0, -1);
+        const groupbyCombList: IViewField[][] = groupbyCombListInCol
+            .flatMap((combInCol) => groupbyCombListInRow.map((combInRow) => [...combInCol, ...combInRow]))
+            .slice(0, -1);
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
-            const workflow = toWorkflow(
-                vizStore.viewFilters,
-                vizStore.allFields,
-                dimComb,
-                vizStore.viewMeasures,
-                defaultAggregated,
-                vizStore.sort,
-                vizStore.limit > 0 ? vizStore.limit : undefined
-            );
+            const workflow = toWorkflow(vizStore.viewFilters, vizStore.allFields, dimComb, vizStore.viewMeasures, defaultAggregated, vizStore.sort, folds ?? [], vizStore.limit > 0 ? vizStore.limit : undefined);
             return dataQuery(computation, workflow, vizStore.limit > 0 ? vizStore.limit : undefined)
+                .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, dimComb, folds))
                 .catch((err) => {
                     appRef.current?.updateRenderStatus('error');
                     return [];
@@ -179,8 +166,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
                     setIsLoading(false);
                     reject();
                 });
-        })
-
+        });
     };
 
     // const { leftTree, topTree, metricTable } = store;
@@ -190,41 +176,62 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent (prop
             <div className="flex">
                 <table className="border border-gray-300 border-collapse">
                     <thead className="border border-gray-300">
-                        {new Array(topTreeHeaderRowNum).fill(0).map((_, i) => (
+                        {new Array(Math.max(topTreeHeaderRowNum - 1, 0)).fill(0).map((_, i) => (
                             <tr className="" key={i}>
-                                <td className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border border-gray-300" colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}>_</td>
+                                <td
+                                    className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border border-gray-300"
+                                    colSpan={dimsInRow.length + (measInRow.length > 0 ? 1 : 0)}
+                                >
+                                    _
+                                </td>
                             </tr>
                         ))}
+                        {topTreeHeaderRowNum > 0 && (
+                            <tr className="">
+                                {dimsInRow.map((x) => (
+                                    <td
+                                        className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border whitespace-nowrap border-gray-300"
+                                        colSpan={1}
+                                    >
+                                        {x.name}
+                                    </td>
+                                ))}
+                                {measInRow.length > 0 && (
+                                    <td
+                                        className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 p-2 m-1 text-xs border border-gray-300"
+                                        colSpan={1}
+                                    >
+                                        _
+                                    </td>
+                                )}
+                            </tr>
+                        )}
                     </thead>
-                    {leftTree && 
-                        <LeftTree 
-                            data={leftTree} 
-                            dimsInRow={dimsInRow} 
-                            measInRow={measInRow} 
+                    {leftTree && (
+                        <LeftTree
+                            data={leftTree}
+                            dimsInRow={dimsInRow}
+                            measInRow={measInRow}
                             onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
                             enableCollapse={enableCollapse}
-                        />}
+                        />
+                    )}
                 </table>
                 <table className="border border-gray-300 border-collapse">
-                    {topTree && 
-                        <TopTree 
-                            data={topTree} 
-                            dimsInCol={dimsInColumn} 
-                            measInCol={measInColumn} 
+                    {topTree && (
+                        <TopTree
+                            data={topTree}
+                            dimsInCol={dimsInColumn}
+                            measInCol={measInColumn}
                             onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
                             onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
                             enableCollapse={enableCollapse}
-                        />}
-                    {metricTable && 
-                        <MetricTable 
-                            matrix={metricTable} 
-                            meaInColumns={measInColumn} 
-                            meaInRows={measInRow} 
-                        />}
+                        />
+                    )}
+                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
                 </table>
             </div>
         </div>
-
     );
 };
 

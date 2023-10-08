@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { Draggable, DroppableProvided } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { useVizStore } from '../../store';
 import DataTypeIcon from '../../components/dataTypeIcon';
+import ActionMenu from '../../components/actionMenu';
+import { useMenuActions } from './utils';
 import { FieldPill } from './fieldPill';
-import ActionMenu from "../../components/actionMenu";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { useMenuActions } from "./utils";
+import { MEA_KEY_ID } from '../../constants';
 
 interface Props {
     provided: DroppableProvided;
@@ -25,7 +26,7 @@ const MeaFields: React.FC<Props> = (props) => {
                     {(provided, snapshot) => {
                         return (
                             <div className="block">
-                                <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu disabled={snapshot.isDragging}>
+                                <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}>
                                     <FieldPill
                                         className={`flex dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full truncate border border-transparent ${
                                             snapshot.isDragging ? 'bg-purple-100 dark:bg-purple-800' : ''

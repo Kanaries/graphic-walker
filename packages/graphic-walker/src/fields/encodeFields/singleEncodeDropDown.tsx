@@ -1,10 +1,6 @@
 import React, { Fragment } from "react";
-import { Listbox, Menu, Transition } from "@headlessui/react";
-import { CheckIcon, ChevronDownIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
-
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(" ");
-}
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 
 export interface IDropdownSelectOption {
     label: string;

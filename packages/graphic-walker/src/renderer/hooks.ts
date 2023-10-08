@@ -4,6 +4,7 @@ import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputati
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQuery } from '../computation';
+import { fold2 } from '../lib/op/fold';
 
 interface UseRendererProps {
     allFields: Omit<IViewField, 'dragId'>[];
@@ -14,6 +15,7 @@ interface UseRendererProps {
     sort: 'none' | 'ascending' | 'descending';
     limit: number;
     computationFunction: IComputationFunction;
+    folds?: string[];
 }
 
 interface UseRendererResult {
@@ -25,29 +27,12 @@ interface UseRendererResult {
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const {
-        allFields,
-        viewDimensions,
-        viewMeasures,
-        filters,
-        defaultAggregated,
-        sort,
-        limit,
-        computationFunction,
-    } = props;
+    const { allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds } = props;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
     const workflow = useMemo(() => {
-        return toWorkflow(
-            filters,
-            allFields,
-            viewDimensions,
-            viewMeasures,
-            defaultAggregated,
-            sort,
-            limit > 0 ? limit : undefined
-        );
+        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined);
     }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -59,28 +44,31 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined).then(data => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('rendering');
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData(data);
-                setParsedWorkflow(workflow);
+        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined)
+            .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, viewDimensions, folds))
+            .then((data) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('rendering');
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData(data);
+                    setParsedWorkflow(workflow);
+                });
+            })
+            .catch((err) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                appRef.current?.updateRenderStatus('error');
+                console.error(err);
+                unstable_batchedUpdates(() => {
+                    setComputing(false);
+                    setViewData([]);
+                    setParsedWorkflow([]);
+                });
             });
-        }).catch((err) => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            appRef.current?.updateRenderStatus('error');
-            console.error(err);
-            unstable_batchedUpdates(() => {
-                setComputing(false);
-                setViewData([]);
-                setParsedWorkflow([]);
-            });
-        });
     }, [computationFunction, workflow]);
 
     const parseResult = useMemo(() => {

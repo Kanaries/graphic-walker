@@ -3,12 +3,13 @@ import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
-import { COUNT_FIELD_ID } from '../../constants';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { IAggregator, IDraggableViewStateKey } from '../../interfaces';
 import { useVizStore } from '../../store';
 import { Pill } from '../components';
 import { GLOBAL_CONFIG } from '../../config';
 import DropdownContext from '../../components/dropdownContext';
+import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 
 interface PillProps {
     provided: DraggableProvided;
@@ -18,7 +19,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const vizStore = useVizStore();
-    const { config } = vizStore;
+    const { config, allFields } = vizStore;
     const field = vizStore.allEncodings[dkey.id][fIndex];
     const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
@@ -29,6 +30,16 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, []);
 
+    const foldOptions = useMemo<ISelectContextOption[]>(() => {
+        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+        return validFoldBy.map<ISelectContextOption>((f) => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }, [allFields]);
+
+    const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
+
     return (
         <Pill
             ref={provided.innerRef}
@@ -36,7 +47,19 @@ const OBPill: React.FC<PillProps> = (props) => {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
-            <span className="flex-1 truncate">{field.name}</span>&nbsp;
+            {folds && (
+                <SelectContext
+                    options={foldOptions}
+                    selectedKeys={folds}
+                    onSelect={(keys) => {
+                        vizStore.setVisualConfig('folds', keys);
+                    }}
+                >
+                    <span className="flex-1 truncate">{field.name}</span>
+                </SelectContext>
+            )}
+            {!folds && <span className="flex-1 truncate">{field.name}</span>}
+            &nbsp;
             {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}

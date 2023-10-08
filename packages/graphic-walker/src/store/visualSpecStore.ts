@@ -205,6 +205,7 @@ export class VizSpecStore {
             this.viewMeasures,
             this.config.defaultAggregated,
             this.sort,
+            this.config.folds,
             this.config.limit
         );
     }

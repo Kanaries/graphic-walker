@@ -1,5 +1,14 @@
 {
     "config": {
+        "scheme": "方案",
+        "primary_color": "主要颜色",
+        "color_palette": "调色板",
+        "opacity": "不透明度",
+        "default_color_palette": "默认",
+        "size": "尺寸",
+        "min_domain": "最小域值",
+        "max_domain": "最大域值",
+        "range": "范围",
         "format": "格式",
         "numberFormat": "数字格式",
         "timeFormat": "时间格式",
@@ -17,6 +26,8 @@
     },
     "constant": {
         "row_count": "行数",
+        "mea_key": "度量名称",
+        "mea_val": "度量值",
         "analytic_type": {
             "dimension": "维度",
             "measure": "度量"

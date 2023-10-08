@@ -69,7 +69,7 @@ export interface IFieldStats {
     range: [number, number];
 }
 
-export type IExpParamter =
+export type IExpParameter =
     | {
           type: 'field';
           value: string;
@@ -93,7 +93,7 @@ export type IExpParamter =
 
 export interface IExpression {
     op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log';
-    params: IExpParamter[];
+    params: IExpParameter[];
     as: string;
     num?: number;
 }
@@ -220,7 +220,6 @@ export interface IDraggableViewStateKey {
     mode: number;
 }
 
-
 export type IFilterRule =
     | {
           type: 'range';
@@ -238,6 +237,13 @@ export type IFilterRule =
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 
 export type ICoordMode = 'generic' | 'geographic';
+
+export type IConfigScale = {
+    rangeMax?: number;
+    rangeMin?: number;
+    domainMin?: number;
+    domainMax?: number;
+};
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
@@ -259,6 +265,12 @@ export interface IVisualConfig {
         timeFormat?: string;
         normalizedNumberFormat?: string;
     };
+    primaryColor?: string;
+    colorPalette?: string;
+    scale?: {
+        opacity: IConfigScale;
+        size: IConfigScale;
+    };
     resolve: {
         x?: boolean;
         y?: boolean;
@@ -276,6 +288,7 @@ export interface IVisualConfig {
     geoKey?: string;
     geoUrl?: IGeoUrl;
     limit: number;
+    folds?: string[];
 }
 
 export interface IVisualLayout {
@@ -284,6 +297,12 @@ export interface IVisualLayout {
         numberFormat?: string;
         timeFormat?: string;
         normalizedNumberFormat?: string;
+    };
+    primaryColor?: string;
+    colorPalette?: string;
+    scale?: {
+        opacity: IConfigScale;
+        size: IConfigScale;
     };
     resolve: {
         x?: boolean;
@@ -317,6 +336,7 @@ export interface IVisualConfigNew {
     /** @default "generic" */
     coordSystem?: ICoordMode;
     limit: number;
+    folds?: string[];
 }
 
 export interface IGeoUrl {
@@ -521,9 +541,9 @@ export interface IGWDatasetStat {
 
 export type IResponse<T> =
     | {
-            success: true;
-            data: T;
-        }
+          success: true;
+          data: T;
+      }
     | {
           success: false;
           message: string;
@@ -571,7 +591,7 @@ export interface PartialChart {
     visId?: string;
     name?: string;
     encodings?: Partial<DraggableFieldState>;
-    config?:  Partial<IVisualConfigNew>;
+    config?: Partial<IVisualConfigNew>;
     layout?: Partial<IVisualLayout>;
 }
 

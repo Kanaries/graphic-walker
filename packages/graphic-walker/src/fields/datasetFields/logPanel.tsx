@@ -1,14 +1,11 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGlobalStore, useVizStore } from '../../store';
 import SmallModal from '../../components/smallModal';
 import PrimaryButton from '../../components/button/primary';
 import DefaultButton from '../../components/button/default';
-import { useTranslation } from 'react-i18next';
-import { runInAction, toJS } from 'mobx';
-import { ICreateField, IViewField } from '../../interfaces';
-import { useRenderer } from '../../renderer/hooks';
-import { applyViewQuery, transformDataService } from '../../services';
+import { ICreateField } from '../../interfaces';
 
 const FieldScalePanel: React.FC = (props) => {
     const vizStore = useVizStore();

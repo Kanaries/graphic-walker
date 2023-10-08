@@ -68,7 +68,6 @@ export function compareDistribution(
             tagsForD2[targetRecordIndex] = true;
             const targetRecord = distribution2[targetRecordIndex];
             for (let mea of measures) {
-                // console.log(Math.max(targetRecord[mea], record[mea]), Math.min(targetRecord[mea], record[mea]))
                 score = Math.max(
                     score,
                     Math.max(targetRecord[mea], record[mea]) / Math.min(targetRecord[mea], record[mea])
@@ -141,10 +140,8 @@ export function compareDistributionJS(
             score += (0.5 * p * Math.log2(p / m) + 0.5 * q * Math.log2(q / m));
         }
     }
-    // console.log(score)
     const weight = tagsForD2.filter((tag) => tag === true).length / tagsForD2.length;
 
-    // console.log(tagsForD2)
     return score * weight;
 }
 

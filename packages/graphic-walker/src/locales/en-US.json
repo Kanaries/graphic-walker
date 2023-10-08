@@ -1,5 +1,14 @@
 {
     "config": {
+        "scheme": "Scheme",
+        "primary_color": "Primary Color",
+        "color_palette": "Color Palette",
+        "opacity": "Opacity",
+        "default_color_palette": "Default",
+        "size":"Size",
+        "min_domain": "Domain Min",
+        "max_domain": "Domain Max",
+        "range": "Range",
         "format": "Format",
         "numberFormat": "Number format",
         "timeFormat": "Time format",
@@ -17,6 +26,8 @@
     },
     "constant": {
         "row_count": "Row count",
+        "mea_key": "Measure names",
+        "mea_val": "Measure values",
         "analytic_type": {
             "dimension": "dimension",
             "measure": "measure"

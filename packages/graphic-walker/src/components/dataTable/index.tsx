@@ -144,9 +144,6 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const taskIdRef = useRef(0);
 
     useEffect(() => {
-        if (statLoading) {
-            return;
-        }
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
         dataReadRaw(computationFunction, size, pageIndex).then(data => {
@@ -225,7 +222,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                 >
                                                     <span
                                                         className={
-                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs text-white ' +
+                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-white ' +
                                                             (f.value.analyticType === 'dimension'
                                                                 ? 'bg-blue-500'
                                                                 : 'bg-purple-500')
@@ -247,7 +244,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                 >
                                                     <span
                                                         className={
-                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-xs ' +
+                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full ' +
                                                             getSemanticColors(f.value)
                                                         }
                                                     >

@@ -2,6 +2,10 @@ import { observer } from 'mobx-react-lite';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import {
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 
 import type { IFilterField, IFilterRule, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
 import { useCompututaion, useVizStore } from '../../store';
@@ -9,7 +13,6 @@ import LoadingLayer from '../../components/loadingLayer';
 import { useRenderer } from '../../renderer/hooks';
 import { fieldStat } from '../../computation';
 import Slider from './slider';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { parseCmpFunction } from '../../utils';
 
 export type RuleFormProps = {

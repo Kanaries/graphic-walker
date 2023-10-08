@@ -5,11 +5,20 @@ import React, { forwardRef, useMemo } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
+import {
+   
+    DraggableFieldState,
+    IDarkMode,
+    IRow,
+    IThemeKey,
+    IVisualConfigNew, IVisualLayout,
+    VegaGlobalConfig,
+   
+    IChannelScales,
+} from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
-import { builtInThemes } from '../vis/theme';
-import { useTheme } from '../utils/useTheme';
+import { getTheme } from '../utils/useTheme';
 
 interface SpecRendererProps {
     name?: string;
@@ -31,12 +40,42 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name,layout, themeKey, dark, data, loading, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, themeConfig: customizedThemeConfig, channelScales  },
+    {
+        name,layout,
+        themeKey,
+        dark,
+        data,
+        loading,
+        draggableFieldState,
+        visualConfig,
+        onGeomClick,
+        onChartResize,
+        locale,
+       
+        themeConfig: customizedThemeConfig,
+        channelScales,
+     },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, defaultAggregated, coordSystem } = visualConfig;
-    const { interactiveScale, stack, showActions, size, format: _format, background, zeroScale, resolve, useSvg } = layout;
+    const {
+        geoms, defaultAggregated,
+        coordSystem } = visualConfig;
+    const {
+        interactiveScale,
+       
+        stack,
+        showActions,
+        size,
+        format: _format,
+        background,
+        zeroScale,
+        resolve,
+        useSvg,
+        primaryColor,
+        colorPalette,
+        scale  
+    } = layout;
 
     const rows = draggableFieldState.rows;
     const columns = draggableFieldState.columns;
@@ -51,10 +90,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const format = _format;
 
     const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
-    const colLeftFacetFields = useMemo(
-        () => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'),
-        [columns]
-    );
+    const colLeftFacetFields = useMemo(() => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [columns]);
 
     const isPivotTable = geoms[0] === 'table';
 
@@ -62,11 +98,13 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useCurrentMediaTheme(dark);
-    const themeConfig = useTheme({
+    const themeConfig = getTheme({
         themeKey,
         mediaTheme,
-        themeConfig: customizedThemeConfig
-    })
+        themeConfig: customizedThemeConfig,
+        primaryColor,
+        colorPalette,
+    });
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
@@ -99,15 +137,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
 
         return config;
-    }, [
-        themeConfig,
-        zeroScale,
-        resolve,
-        background,
-        format.normalizedNumberFormat,
-        format.numberFormat,
-        format.timeFormat,
-    ]);
+    }, [themeConfig, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
         return (
@@ -146,10 +176,14 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={(size.mode === 'fixed' || isSpatial) ? {
-                width: size.width + 'px',
-                height: size.height + 'px',
-            }: undefined}
+            size={
+                size.mode === 'fixed' || isSpatial
+                    ? {
+                          width: size.width + 'px',
+                          height: size.height + 'px',
+                      }
+                    : undefined
+            }
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
@@ -192,6 +226,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     useSvg={useSvg}
                     channelScales={channelScales}
                     dark={dark}
+                    scale={scale}
                 />
             )}
         </Resizable>
