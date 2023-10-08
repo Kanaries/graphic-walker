@@ -1,4 +1,5 @@
 import type { IComputationFunction, IDataQueryPayload, IDataQueryWorkflowStep, IDatasetStats, IFieldStats, IRow } from '../interfaces';
+import { getTimeFormat } from '../lib/inferMeta';
 
 export const datasetStatsServer = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -155,4 +156,45 @@ export async function getSample(service: IComputationFunction, field: string) {
         offset: 0,
     });
     return res?.[0]?.[field];
+}
+
+export async function getTemporalRange(service: IComputationFunction, field: string) {
+    const sample = await getSample(service, field);
+    const format = getTimeFormat(sample);
+    const MIN_ID = `min_${field}`;
+    const MAX_ID = `max_${field}`;
+    const rangeQueryPayload: IDataQueryPayload = {
+        workflow: [
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'aggregate',
+                        groupBy: [],
+                        measures: [
+                            {
+                                field,
+                                agg: 'min',
+                                asFieldKey: MIN_ID,
+                                format,
+                            },
+                            {
+                                field,
+                                agg: 'max',
+                                asFieldKey: MAX_ID,
+                                format
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    };
+    const [
+        rangeRes = {
+            [MIN_ID]: 0,
+            [MAX_ID]: 0,
+        },
+    ]  = await service(rangeQueryPayload);
+    return [rangeRes[MIN_ID], rangeRes[MAX_ID]] as [number, number];
 }
