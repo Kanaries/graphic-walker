@@ -68,4 +68,5 @@ export { resolveChart, convertChart } from './models/visSpecHistory';
 export { resolveVisSpec } from './utils/save';
 export { getGlobalConfig } from './config';
 
-export { getComputation } from './computation/clientComputation'
+export { getComputation } from './computation/clientComputation';
+export { addFilterForQuery } from './utils/workflow';
