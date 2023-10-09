@@ -10,8 +10,7 @@ import {
 import type { IFilterField, IFilterRule, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
 import { useCompututaion, useVizStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
-import { useRenderer } from '../../renderer/hooks';
-import { fieldStat } from '../../computation';
+import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
 import { parseCmpFunction } from '../../utils';
 
@@ -371,74 +370,28 @@ const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     );
 };
 
-const emptyFilters = [];
+export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
 
-export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ rawFields, active, field, onChange }) => {
     const { t } = useTranslation('translation');
-
-    const fields = useMemo(() => {
-        return rawFields.map<Omit<IViewField, 'dragId'>>((f) => ({
-            ...f,
-            name: f.name || f.fid,
-        }));
-    }, [rawFields]);
-
-    const viewDimensions = useMemo(() => {
-        return field.analyticType === 'dimension' ? [field] : [];
-    }, [field]);
-
-    const viewMeasures = useMemo(() => {
-        return field.analyticType === 'measure' ? [field] : [];
-    }, [field]);
 
     const computationFunction = useCompututaion();
 
-    const { viewData, loading } = useRenderer({
-        allFields: fields,
-        viewDimensions,
-        viewMeasures,
-        filters: emptyFilters,
-        defaultAggregated: false,
-        computationFunction,
-        limit: 1000,
-        sort: 'none',
-    });
-
-    const sorted = React.useMemo(() => {
-        return viewData
-            .reduce<number[]>((list, d) => {
-                try {
-                    const time = new Date(d[field.fid]).getTime();
-
-                    list.push(time);
-                } catch (error) {}
-                return list;
-            }, [])
-            .sort((a, b) => a - b);
-    }, [viewData, field.fid]);
-
-    const [min, max, loaded] = React.useMemo<[min: number, max: number, loaded: boolean]>(() => {
-        if (!sorted.length) return [0, 0, false];
-        return [sorted[0] ?? 0, Math.max(sorted[sorted.length - 1] ?? 0, sorted[0] ?? 0), true];
-    }, [sorted]);
+    const [res, setRes] = useState<[number, number, boolean]>(() => [0, 0, false]);
 
     React.useEffect(() => {
-        if (active && field.rule?.type !== 'temporal range') {
+        getTemporalRange(computationFunction, field.fid).then(([min, max]) => setRes([min, max, true]));
+    }, [field.fid]);
+
+    const [min, max, loaded] = res;
+
+    React.useEffect(() => {
+        if (active && field.rule?.type !== 'temporal range' && loaded) {
             onChange({
                 type: 'temporal range',
                 value: [min, max],
             });
         }
     }, [onChange, field, min, max, active]);
-
-    React.useEffect(() => {
-        if (active && loaded && field.rule?.type === 'temporal range' && field.rule.value[0] !== min && field.rule.value[1] !== max) {
-            onChange({
-                type: 'temporal range',
-                value: [min, max],
-            });
-        }
-    }, [field.rule, min, max, active, loaded]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -447,7 +400,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         });
     }, []);
 
-    if (loading) {
+    if (!loaded) {
         return (
             <div className="h-24 w-full relative">
                 <LoadingLayer />
@@ -482,6 +435,8 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         </Container>
     ) : null;
 });
+
+
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });

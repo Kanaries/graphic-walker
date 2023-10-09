@@ -555,7 +555,7 @@ export type IResponse<T> =
 export interface IAggQuery {
     op: 'aggregate';
     groupBy: string[];
-    measures: { field: string; agg: IAggregator; asFieldKey: string }[];
+    measures: { field: string; agg: IAggregator; asFieldKey: string; format?: string }[];
 }
 
 export interface IFoldQuery {

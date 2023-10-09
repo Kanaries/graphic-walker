@@ -41,7 +41,14 @@ export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
             if (aggRow[aggMeaKey] === undefined) {
                 aggRow[aggMeaKey] = 0;
             }
-            const values: number[] = subGroup.map((r) => r[mea.field]) ?? [];
+            const values: number[] = subGroup
+                .map((r) => r[mea.field])
+                .map((x) => {
+                    if (mea.format) {
+                        return new Date(x).getTime();
+                    }
+                    return x;
+                });
             const aggregator = aggregatorMap[mea.agg] ?? sum;
             aggRow[aggMeaKey] = aggregator(values);
         }
