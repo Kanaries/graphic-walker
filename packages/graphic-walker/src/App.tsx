@@ -110,7 +110,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 vizStore.updateShowErrorResolutionPanel(code);
             }
         },
-        [props.onError]
+        [vizStore, props.onError]
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
