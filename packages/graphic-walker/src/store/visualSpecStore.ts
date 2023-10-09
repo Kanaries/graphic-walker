@@ -228,6 +228,7 @@ export class VizSpecStore {
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
         this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, uniqueId());
+        this.editingFilterIdx = index;
     }
 
     undo() {

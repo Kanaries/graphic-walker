@@ -17,14 +17,13 @@ import {
     ISemanticType,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
-import { createCountField } from '../utils';
+import { createCountField, createVirtualFields } from '../utils';
 import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
-import { Stream } from 'stream';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -271,7 +270,7 @@ const actions: {
     },
     [Methods.changeSemanticType]: (data, channel, index, semanticType) => {
         return mutPath(data, `encodings.${channel}`, (f) => replace(f, index, (x) => ({ ...x, semanticType })));
-    }
+    },
 };
 
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {
@@ -323,6 +322,9 @@ function emptyChart(visId: string, name: string): IChart {
 }
 export function newChart(fields: IMutField[], name: string, visId?: string): IChart {
     if (fields.length === 0) return emptyChart(visId || uniqueId(), name);
+    const extraFields = [...createVirtualFields(), createCountField()];
+    const extraDimensions = extraFields.filter((x) => x.analyticType === 'dimension');
+    const extraMeasures = extraFields.filter((x) => x.analyticType === 'measure');
     return mutPath(emptyChart(visId || uniqueId(), name), 'encodings', (e) => ({
         ...e,
         dimensions: fields
@@ -336,7 +338,8 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
                 })
-            ),
+            )
+            .concat(extraDimensions),
         measures: fields
             .filter((f) => f.analyticType === 'measure')
             .map(
@@ -350,7 +353,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     aggName: 'sum',
                 })
             )
-            .concat(createCountField()),
+            .concat(extraMeasures),
     }));
 }
 export function fillChart(chart: PartialChart): IChart {
