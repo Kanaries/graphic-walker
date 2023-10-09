@@ -3,9 +3,11 @@ import {
     VisSpecWithHistory,
     convertChart,
     exportFullRaw,
+    exportNow,
     fromFields,
     fromSnapshot,
     importFull,
+    importNow,
     newChart,
     performers,
     redo,
@@ -33,7 +35,8 @@ import {
     IVisSpecForExport,
     IGeoUrl,
     ICreateField,
-    ISemanticType
+    ISemanticType,
+    IChartForExport
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
@@ -398,6 +401,15 @@ export class VizSpecStore {
 
     exportAllCharts() {
         return this.visList.map((x) => exportFullRaw(x));
+    }
+
+    exportCode() {
+        return this.visList.map(x => exportNow(x));
+    }
+
+    importCode(data: IChartForExport[]) {
+        this.visList = data.map(x => importNow(x));
+        this.visIndex = 0;
     }
 
     appendRaw(data: string) {

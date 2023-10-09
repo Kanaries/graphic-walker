@@ -24,6 +24,7 @@ import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } fr
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
+import { Stream } from 'stream';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -389,6 +390,15 @@ export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string
     };
     return JSON.stringify(result);
 }
+
+export function exportNow(data: VisSpecWithHistory) {
+    return encodeVisSpec(data.now);
+}
+
+export function importNow(data: IChartForExport) {
+    return fromSnapshot(decodeVisSpec(data));
+}
+
 export function importFull(data: string): VisSpecWithHistory {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
     const base = fromSnapshot(decodeVisSpec(result.base));
@@ -408,6 +418,8 @@ export function convertChart(data: IVisSpec): IChart {
         defaultAggregated: data.config.defaultAggregated,
         geoms: data.config.geoms?.slice() ?? [],
         limit: data.config.limit,
+        coordSystem: data.config.coordSystem,
+        folds: data.config.folds,
     };
     result.encodings = {
         ...result.encodings,
@@ -441,6 +453,15 @@ export function convertChart(data: IVisSpec): IChart {
             ...result.layout.size,
             ...data.config.size,
         },
+        colorPalette: data.config.colorPalette,
+        geojson: data.config.geojson,
+        geoKey: data.config.geoKey,
+        geoUrl: data.config.geoUrl,
+        primaryColor: data.config.primaryColor,
+        scale: data.config.scale,
+        scaleIncludeUnmatchedChoropleth: data.config.scaleIncludeUnmatchedChoropleth,
+        showTableSummary: data.config.showTableSummary,
+        useSvg: data.config.useSvg,
     };
     return result;
 }

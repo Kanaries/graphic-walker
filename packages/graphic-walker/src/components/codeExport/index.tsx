@@ -60,7 +60,7 @@ const CodeExport: React.FC = observer((props) => {
     useEffect(() => {
         if (showCodeExportPanel) {
             if (tabKey === "graphic-walker") {
-                const res = vizStore.exportAllCharts();
+                const res = vizStore.exportCode();
                 setCode(res);
             } else {
                 setCode("vega code");
