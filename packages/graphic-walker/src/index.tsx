@@ -44,3 +44,4 @@ export { ISegmentKey, ColorSchemes } from './interfaces';
 export { resolveSpecFromStoInfo } from './utils/save';
 export { getGlobalConfig } from './config';
 export type { IGlobalStore } from './store/index';
+export { addFilterForQuery } from './utils/workflow';

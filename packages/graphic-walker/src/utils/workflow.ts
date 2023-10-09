@@ -7,6 +7,7 @@ import type {
     IViewWorkflowStep,
     IVisFilter,
     ISortWorkflowStep,
+    IDataQueryPayload,
 } from '../interfaces';
 import type { VizSpecStore } from '../store/visualSpecStore';
 import { getMeaAggKey } from '.';
@@ -52,7 +53,7 @@ export const toWorkflow = (
     folds = [] as string[],
     limit?: number
 ): IDataQueryWorkflowStep[] => {
-    const hasFold = viewDimensionsRaw.find(x => x.fid === MEA_KEY_ID) && viewMeasuresRaw.find(x => x.fid === MEA_VAL_ID);
+    const hasFold = viewDimensionsRaw.find((x) => x.fid === MEA_KEY_ID) && viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID);
     const viewDimensions = viewDimensionsRaw.filter((x) => x.fid !== MEA_KEY_ID);
     const viewMeasures = viewMeasuresRaw.filter((x) => x.fid !== MEA_VAL_ID);
     if (hasFold) {
@@ -175,4 +176,26 @@ export const toWorkflow = (
 
     const steps: IDataQueryWorkflowStep[] = [filterWorkflow!, transformWorkflow!, viewQueryWorkflow!, sortWorkflow!].filter(Boolean);
     return steps;
+};
+
+export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[]): IDataQueryPayload => {
+    if (query.workflow.find((x) => x.type === 'filter')) {
+        return {
+            ...query,
+            workflow: query.workflow.map((x) => {
+                if (x.type === 'filter') {
+                    return {
+                        type: 'filter',
+                        filters: filters.concat(x.filters),
+                    };
+                }
+                return x;
+            }),
+        };
+    }
+    const filterQuery: IFilterWorkflowStep = { type: 'filter', filters };
+    return {
+        ...query,
+        workflow: [filterQuery, ...query.workflow],
+    };
 };
