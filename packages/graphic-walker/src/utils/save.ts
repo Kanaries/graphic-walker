@@ -1,4 +1,14 @@
-import { DraggableFieldState, IDataSet, IDataSource, IMutField, IVisSpec, IVisSpecForExport, IVisualConfig, IVisualConfigNew, IVisualLayout } from '../interfaces';
+import {
+    DraggableFieldState,
+    IDataSet,
+    IDataSource,
+    IMutField,
+    IVisSpec,
+    IVisSpecForExport,
+    IVisualConfig,
+    IVisualConfigNew,
+    IVisualLayout,
+} from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 
 export function initEncoding(): DraggableFieldState {
@@ -15,7 +25,7 @@ export function initEncoding(): DraggableFieldState {
         theta: [],
         longitude: [],
         latitude: [],
-        geoId: [],    
+        geoId: [],
         details: [],
         filters: [],
         text: [],
@@ -23,7 +33,7 @@ export function initEncoding(): DraggableFieldState {
 }
 
 export function initVisualConfig(): IVisualConfig {
-    const [ geom ] = GLOBAL_CONFIG.GEOM_TYPES.generic;
+    const [geom] = GLOBAL_CONFIG.GEOM_TYPES.generic;
     return {
         defaultAggregated: true,
         geoms: [geom],
@@ -113,46 +123,38 @@ export const emptyEncodings: DraggableFieldState = {
     text: [],
 };
 
-export function visSpecDecoder(visList: IVisSpecForExport[]): IVisSpec[] {
-    const updatedVisList = visList.map((visSpec) => {
-        const updatedFilters = visSpec.encodings.filters.map((filter) => {
-            if (filter.rule?.type === 'one of' && Array.isArray(filter.rule.value)) {
-                return {
-                    ...filter,
-                    rule: {
-                        ...filter.rule,
-                        value: new Set(filter.rule.value),
-                    },
-                };
-            }
-            return filter;
-        });
-        return {
-            ...visSpec,
-            encodings: {
-                ...initEncoding(),
-                ...visSpec.encodings,
-                filters: updatedFilters,
-            },
-        } as IVisSpec;
+export function visSpecDecoder(visSpec: IVisSpecForExport): IVisSpec {
+    const updatedFilters = visSpec.encodings.filters.map((filter) => {
+        if (filter.rule?.type === 'one of' && Array.isArray(filter.rule.value)) {
+            return {
+                ...filter,
+                rule: {
+                    ...filter.rule,
+                    value: new Set(filter.rule.value),
+                },
+            };
+        }
+        return filter;
     });
-    return updatedVisList;
+    return {
+        ...visSpec,
+        encodings: {
+            ...initEncoding(),
+            ...visSpec.encodings,
+            filters: updatedFilters,
+        },
+    } as IVisSpec;
 }
 
-export const forwardVisualConfigs = (backwards: IStoInfoOld['specList']): IVisSpecForExport[] => {
-    return backwards.map((content) => ({
+export const forwardVisualConfigs = (content: IStoInfoOld['specList'][number]): IVisSpecForExport => {
+    return {
         ...content,
         config: {
             ...initVisualConfig(),
             ...content.config,
         },
-    }));
+    };
 };
-
-export const resolveVisSpec = (a: IVisSpecForExport[]): IVisSpec[] => {
-    return visSpecDecoder(forwardVisualConfigs(a))
-}
-
 export interface IStoInfoOld {
     $schema: undefined;
     datasets: IDataSet[];
@@ -163,11 +165,11 @@ export interface IStoInfoOld {
 export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/stoinfo_v2.json';
 
 export interface IStoInfoV2 {
-    $schema: typeof IStoInfoV2SchemaUrl,
-    metaDict: Record<string, IMutField[]>,
-    datasets: Required<IDataSource>[],
-    specDict: Record<string, string[]>,
-};
+    $schema: typeof IStoInfoV2SchemaUrl;
+    metaDict: Record<string, IMutField[]>;
+    datasets: Required<IDataSource>[];
+    specDict: Record<string, string[]>;
+}
 
 export type IStoInfo = IStoInfoOld | IStoInfoV2;
 

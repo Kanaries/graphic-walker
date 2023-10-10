@@ -65,7 +65,6 @@ export { embedGraphicWalker } from './vanilla';
 export type { IGWProps };
 export { ISegmentKey, ColorSchemes } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
-export { resolveVisSpec } from './utils/save';
 export { getGlobalConfig } from './config';
 
 export { getComputation } from './computation/clientComputation';

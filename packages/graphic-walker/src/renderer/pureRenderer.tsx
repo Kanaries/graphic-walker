@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfigNew, IComputationFunction, IVisualLayout, IChannelScales } from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IVisualConfigNew, IComputationFunction, IVisualLayout, IChannelScales } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -19,8 +19,8 @@ type IPureRendererProps =
           themeConfig?: GWGlobalConfig;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
-          visualConfig: IVisualConfigNew;
-          visualLayout: IVisualLayout;
+          visualConfig: IVisualConfigNew | IVisualConfig;
+          visualLayout?: IVisualLayout;
           locale?: string;
           channelScales?: IChannelScales;
       } & (
@@ -39,13 +39,15 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, type, themeConfig, channelScales } = props;
+    const { name, themeKey, dark, visualState, visualConfig, visualLayout: layout, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
         }
         return getComputation(props.rawData);
     }, [type, type === 'remote' ? props.computation : props.rawData]);
+
+    const visualLayout = layout ?? (visualConfig as IVisualConfig);
 
     const sort = getSort(visualState);
     const limit = visualConfig.limit ?? -1;
