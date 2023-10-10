@@ -2,7 +2,7 @@ import { computed, makeAutoObservable, toJS } from 'mobx';
 import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISemanticType } from '../interfaces';
 import { VizSpecStore } from './visualSpecStore';
 import { getComputation } from '../computation/clientComputation';
-import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
+import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl } from '../utils/save';
 import { uniqueId } from '../models/utils';
 
 const emptyMeta: IMutField[] = [];
