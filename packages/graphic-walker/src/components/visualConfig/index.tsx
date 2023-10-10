@@ -263,12 +263,6 @@ const VisualConfigPanel: React.FC = (props) => {
                 <ConfigItemContainer>
                     <ConfigItemHeader>
                         <ConfigItemTitle>{t('config.independence')}</ConfigItemTitle>
-                        <p className="text-xs">
-                            {t(`config.formatGuidesDocs`)}:{' '}
-                            <a target="_blank" className="underline text-blue-500" href="https://docs.kanaries.net">
-                                {t(`config.readHere`)}
-                            </a>
-                        </p>
                     </ConfigItemHeader>
                     <ConfigItemContent>
                         <div className="flex space-x-6">
