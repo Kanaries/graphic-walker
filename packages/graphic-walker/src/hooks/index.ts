@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function useDebounceValue<T>(value: T, timeout = 200): T {
     const [innerValue, setInnerValue] = useState(value);
@@ -12,7 +12,14 @@ export function useDebounceValue<T>(value: T, timeout = 200): T {
 export function useDebounceValueBind<T>(value: T, setter: (v: T) => void, timeout = 200): [T, (v: T) => void] {
     const [innerValue, setInnerValue] = useState(value);
     const valueToSet = useDebounceValue(innerValue, timeout);
-    useEffect(() => setInnerValue(value), [value])
-    useEffect(() => setter(valueToSet), [valueToSet]);
+    const first = useRef(true);
+    useEffect(() => setInnerValue(value), [value]);
+    useEffect(() => {
+        if (first.current) {
+            first.current = false;
+        } else {
+            setter(valueToSet);
+        }
+    }, [valueToSet]);
     return [innerValue, setInnerValue];
 }

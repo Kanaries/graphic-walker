@@ -124,24 +124,28 @@ export class VizSpecStore {
         return this.visList[this.visIndex].now;
     }
 
+    get currentEncodings() {
+        return this.currentVis.encodings;
+    }
+
     get viewFilters() {
-        return this.currentVis.encodings.filters;
+        return this.currentEncodings.filters;
     }
 
     get dimensions() {
-        return this.currentVis.encodings.dimensions;
+        return this.currentEncodings.dimensions;
     }
 
     get measures() {
-        return this.currentVis.encodings.measures;
+        return this.currentEncodings.measures;
     }
 
     get rows() {
-        return this.currentVis.encodings.rows;
+        return this.currentEncodings.rows;
     }
 
     get columns() {
-        return this.currentVis.encodings.columns;
+        return this.currentEncodings.columns;
     }
 
     get sort() {
@@ -175,7 +179,7 @@ export class VizSpecStore {
     get allEncodings() {
         const result: Record<string, IViewField[]> = {};
         encodingKeys.forEach((k) => {
-            result[k] = this.currentVis.encodings[k];
+            result[k] = this.currentEncodings[k];
         });
         return result;
     }
@@ -183,7 +187,7 @@ export class VizSpecStore {
     get viewEncodings() {
         const result: Record<string, IViewField[]> = {};
         viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
-            result[k] = this.currentVis.encodings[k];
+            result[k] = this.currentEncodings[k];
         });
         return result;
     }
@@ -353,7 +357,7 @@ export class VizSpecStore {
 
     createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount', binNumber = 10): string {
         const newVarKey = uniqueId();
-        const state = this.currentVis.encodings;
+        const state = this.currentEncodings;
         const existedRelatedBinField = state.dimensions.find(
             (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid && f.expression.num === binNumber
         );
