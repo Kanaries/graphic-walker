@@ -3,7 +3,7 @@ import React from 'react';
 import styled from 'styled-components'
 import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
-import { useGlobalStore } from '../store';
+import { useVizStore } from '../store';
 
 
 export const MenubarContainer = styled.div({
@@ -83,7 +83,7 @@ export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, s
 };
 
 const Menubar: React.FC = () => {
-    const { vizStore } = useGlobalStore();
+    const vizStore = useVizStore();
     const { canUndo, canRedo } = vizStore;
 
     return (

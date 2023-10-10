@@ -155,10 +155,10 @@
     },
     "main": {
         "tablist": {
-            "new": "+ 新規ビュー",
-            "auto_title": "ビュー {{idx}}",
+            "new": "+ 新規作成",
+            "auto_title": "グラフ {{idx}}",
             "chart_name": "グラフ名",
-            "remove_confirm": "このグラフを削除してもよろしいですか？"            
+            "remove_confirm": "このグラフを削除してもよろしいですか？"
         },
         "askviz": {
             "placeholder": "データセットから描画したい視覚化は何ですか？"

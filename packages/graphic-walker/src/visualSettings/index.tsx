@@ -32,7 +32,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
 import { GLOBAL_CONFIG } from '../config';
-import { useGlobalStore } from '../store';
+import { useVizStore } from '../store';
 import { IStackMode, IDarkMode } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
 import Toolbar, { ToolbarItemProps } from '../components/toolbar';
@@ -74,28 +74,25 @@ interface IVisualSettings {
     extra?: ToolbarItemProps[];
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({
-    rendererHandler,
-    darkModePreference,
-    csvHandler,
-    extra = [],
-    exclude = [],
-}) => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const { visualConfig, canUndo, canRedo, limit } = vizStore;
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [] }) => {
+    const vizStore = useVizStore();
+    const { config, layout, canUndo, canRedo, limit } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
     const {
         defaultAggregated,
-        geoms: [markType],
-        showTableSummary,
         coordSystem = 'generic',
+        geoms: [markType],
+    } = config;
+
+    const {
+        showTableSummary,
         stack,
         interactiveScale,
         size: { mode: sizeMode, width, height },
         showActions,
-    } = visualConfig;
+    } = layout;
 
     const downloadPNG = useCallback(
         throttle(() => {
@@ -137,12 +134,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     <>
                         <ArrowUturnLeftIcon />
                         <Invisible aria-hidden>
-                            <ButtonWithShortcut
-                                label="undo"
-                                disabled={!canUndo}
-                                handler={vizStore.undo.bind(vizStore)}
-                                shortcut="Ctrl+Z"
-                            />
+                            <ButtonWithShortcut label="undo" disabled={!canUndo} handler={vizStore.undo.bind(vizStore)} shortcut="Ctrl+Z" />
                         </Invisible>
                     </>
                 ),
@@ -156,12 +148,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     <>
                         <ArrowUturnRightIcon />
                         <Invisible aria-hidden>
-                            <ButtonWithShortcut
-                                label="redo"
-                                disabled={!canRedo}
-                                handler={vizStore.redo.bind(vizStore)}
-                                shortcut="Ctrl+Shift+Z"
-                            />
+                            <ButtonWithShortcut label="redo" disabled={!canRedo} handler={vizStore.redo.bind(vizStore)} shortcut="Ctrl+Shift+Z" />
                         </Invisible>
                     </>
                 ),
@@ -187,7 +174,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         color: 'rgb(294,115,22)',
                     },
                 },
-                options: GLOBAL_CONFIG.GEMO_TYPES[coordSystem].map((g) => ({
+                options: GLOBAL_CONFIG.GEOM_TYPES[coordSystem].map((g) => ({
                     key: g,
                     label: tGlobal(`constant.mark_type.${g}`),
                     icon: {
@@ -254,11 +241,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                                 aria-hidden
                                 {...props}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M9,12 A3,3,0,0,1,16,12 A3,3,0,0,1,9,12"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9,12 A3,3,0,0,1,16,12 A3,3,0,0,1,9,12" />
                             </svg>
                         ),
                         circle: (props: SVGProps<SVGSVGElement>) => (
@@ -271,11 +254,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                                 aria-hidden
                                 {...props}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M6,12 A6,6,0,0,1,18,12 A6,6,0,0,1,6,12"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6,12 A6,6,0,0,1,18,12 A6,6,0,0,1,6,12" />
                             </svg>
                         ),
                         tick: (props: SVGProps<SVGSVGElement>) => (
@@ -331,11 +310,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                                 aria-hidden
                                 {...props}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12,21l-9,-15a12,12,0,0,1,18,0Z"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12,21l-9,-15a12,12,0,0,1,18,0Z" />
                             </svg>
                         ),
                         boxplot: (props: SVGProps<SVGSVGElement>) => (
@@ -348,11 +323,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                                 aria-hidden
                                 {...props}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M7,7v9h10v-9Zm0,4h8M12,7v-6m-3,0h6M12,16v7m-3,0h6"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7,7v9h10v-9Zm0,4h8M12,7v-6m-3,0h6M12,16v7m-3,0h6" />
                             </svg>
                         ),
                         table: (props: SVGProps<SVGSVGElement>) => (
@@ -397,7 +368,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 })),
                 value: stack,
                 onSelect: (value) => {
-                    vizStore.setVisualConfig('stack', value as IStackMode);
+                    vizStore.setVisualLayout('stack', value as IStackMode);
                 },
             },
             '-',
@@ -425,7 +396,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 icon: TableCellsIcon,
                 checked: showTableSummary,
                 onChange: checked => {
-                    vizStore.setVisualConfig('showTableSummary', checked);
+                    vizStore.setVisualLayout('showTableSummary', checked);
                 },
             },
             '-',
@@ -435,7 +406,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 icon: ChevronUpDownIcon,
                 checked: interactiveScale,
                 onChange: (checked) => {
-                    vizStore.setVisualConfig('interactiveScale', checked);
+                    vizStore.setVisualLayout('interactiveScale', checked);
                 },
             },
             {
@@ -449,7 +420,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 })),
                 value: sizeMode,
                 onSelect: (key) => {
-                    vizStore.setChartLayout({ mode: key as 'fixed' | 'auto' });
+                    vizStore.setVisualLayout('size', { ...layout.size, mode: key as 'fixed' | 'auto' });
                 },
                 form: (
                     <FormContainer>
@@ -457,15 +428,17 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                             width={width}
                             height={height}
                             onHeightChange={(v) => {
-                                vizStore.setChartLayout({
+                                vizStore.setVisualLayout('size', {
                                     mode: 'fixed',
                                     height: v,
+                                    width: layout.size.width
                                 });
                             }}
                             onWidthChange={(v) => {
-                                vizStore.setChartLayout({
+                                vizStore.setVisualLayout('size', {
                                     mode: 'fixed',
                                     width: v,
+                                    height: layout.size.height
                                 });
                             }}
                         />
@@ -488,8 +461,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 value: coordSystem,
                 onSelect: value => {
                     const coord = value as typeof GLOBAL_CONFIG.COORD_TYPES[number];
-                    vizStore.setVisualConfig('coordSystem', coord);
-                    vizStore.setVisualConfig('geoms', [GLOBAL_CONFIG.GEMO_TYPES[coord][0]]);
+                    vizStore.setCoordSystem(coord);
                 },
             },
             coordSystem === 'geographic' && markType === 'choropleth' && {
@@ -497,7 +469,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 label: t('button.geojson'),
                 icon: GlobeAmericasIcon,
                 onClick: () => {
-                    commonStore.setShowGeoJSONConfigPanel(true);
+                    vizStore.setShowGeoJSONConfigPanel(true);
                 },
             },
             '-',
@@ -507,7 +479,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 icon: WrenchIcon,
                 checked: showActions,
                 onChange: (checked) => {
-                    vizStore.setVisualConfig('showActions', checked);
+                    vizStore.setVisualLayout('showActions', checked);
                 },
             },
             ...coordSystem === 'generic' ?[{
@@ -518,9 +490,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                     <FormContainer className={dark ? 'dark' : ''}>
                         <button
                             className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
-                                dark
-                                    ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700'
-                                    : 'bg-white hover:bg-gray-200 text-gray-800'
+                                dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
                             }`}
                             aria-label={t('button.export_chart_as', { type: 'png' })}
                             onClick={() => downloadPNG()}
@@ -529,9 +499,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         </button>
                         <button
                             className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
-                                dark
-                                    ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700'
-                                    : 'bg-white hover:bg-gray-200 text-gray-800'
+                                dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
                             }`}
                             aria-label={t('button.export_chart_as', { type: 'svg' })}
                             onClick={() => downloadSVG()}
@@ -563,7 +531,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 label: t('button.config'),
                 icon: Cog6ToothIcon,
                 onClick: () => {
-                    commonStore.setShowVisualConfigPanel(true);
+                    vizStore.setShowVisualConfigPanel(true);
                 },
             },
             {
@@ -571,7 +539,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                 label: t('button.export_code'),
                 icon: CodeBracketSquareIcon,
                 onClick: () => {
-                    commonStore.setShowCodeExportPanel(true);
+                    vizStore.setShowCodeExportPanel(true);
                 },
             },
             ...(extra.length === 0 ? [] : ['-', ...extra]),
@@ -585,7 +553,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
                         <LimitSetting
                             value={limit}
                             setValue={(v) => {
-                                vizStore.setLimit(v);
+                                vizStore.setVisualConfig('limit', v);
                             }}
                         />
                     </FormContainer>
@@ -613,7 +581,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
 
         const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
 
-        switch (vizStore.visualConfig.geoms[0]) {
+        switch (vizStore.config.geoms[0]) {
             case 'table':
                 return items;
             default:
@@ -638,6 +606,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({
         extra,
         exclude,
         limit,
+        showTableSummary,
     ]);
 
     return (

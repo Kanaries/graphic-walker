@@ -1,15 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGlobalStore } from '../../store';
+import { useGlobalStore, useVizStore } from '../../store';
 import SmallModal from '../../components/smallModal';
 import PrimaryButton from '../../components/button/primary';
 import DefaultButton from '../../components/button/default';
 import { ICreateField } from '../../interfaces';
 
 const FieldScalePanel: React.FC = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showLogSettingPanel } = commonStore;
+    const vizStore = useVizStore();
+    const { showLogSettingPanel } = vizStore;
     const [baseNum, setBaseNum] = useState<string>('');
     const { t } = useTranslation();
     useEffect(() => {
@@ -19,7 +19,7 @@ const FieldScalePanel: React.FC = (props) => {
         <SmallModal
             show={showLogSettingPanel}
             onClose={() => {
-                commonStore.setShowLogSettingPanel(false);
+                vizStore.setShowLogSettingPanel(false);
             }}
         >
             <div className="flex flex-col justify-center items-start text-xs">
@@ -43,16 +43,16 @@ const FieldScalePanel: React.FC = (props) => {
                             className="mr-2 px-2 "
                             // text="Confirm"
                             onClick={() => {
-                                const field = commonStore.createField as ICreateField;
+                                const field = vizStore.createField as ICreateField;
                                 vizStore.createLogField(field.channel, field.index, 'log', Number(baseNum));
-                                commonStore.setShowLogSettingPanel(false);
+                                vizStore.setShowLogSettingPanel(false);
                             }}
                         />
                         <DefaultButton
                             text={t('actions.cancel')}
                             className="mr-2 px-2"
                             onClick={() => {
-                                commonStore.setShowLogSettingPanel(false);
+                                vizStore.setShowLogSettingPanel(false);
                             }}
                         />
                     </div>

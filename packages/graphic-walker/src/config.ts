@@ -1,6 +1,6 @@
 import { DraggableFieldState, IAggregator, ICoordMode, IStackMode, IVisualConfig } from './interfaces';
 
-const GEMO_TYPES: Record<ICoordMode, string[]> = {
+const GEOM_TYPES: Record<ICoordMode, string[]> = {
     generic: ['auto', 'bar', 'line', 'area', 'trail', 'point', 'circle', 'tick', 'rect', 'arc', 'text', 'boxplot', 'table'],
     geographic: ['poi', 'choropleth'],
 };
@@ -49,7 +49,7 @@ export const GLOBAL_CONFIG = {
     CHART_LAYOUT_TYPE,
     COLORS,
     COORD_TYPES,
-    GEMO_TYPES,
+    GEOM_TYPES,
     MAX_HISTORY_SIZE: 20,
     STACK_MODE,
     META_FIELD_KEYS,

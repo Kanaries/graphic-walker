@@ -1,7 +1,7 @@
 import { MEA_VAL_ID, MEA_KEY_ID } from '../../constants';
 import { IRow, IViewField } from '../../interfaces';
 import { getMeaAggKey } from '../../utils';
-import { IFoldQuery } from '../interfaces';
+import { IFoldQuery } from '../../interfaces';
 
 export function fold(data: IRow[], query: IFoldQuery): IRow[] {
     const { foldBy, newFoldKeyCol, newFoldValueCol } = query;

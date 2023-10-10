@@ -294,7 +294,6 @@ export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
     }
     return `${meaKey}_${agg}`;
 }
-
 export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
         return rows[rows.length - 1].sort || 'none';
@@ -303,4 +302,16 @@ export function getSort({ rows, columns }: { rows: readonly IViewField[]; column
         return columns[columns.length - 1].sort || 'none';
     }
     return 'none';
+}
+
+const defaultValueComparator = (a: any, b: any) => {
+    if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
+    } else {
+        return String(a).localeCompare(String(b));
+    }
+};
+
+export function parseCmpFunction(str?: string): (a: any, b: any) => number {
+    return defaultValueComparator;
 }

@@ -1,18 +1,11 @@
-/* eslint no-restricted-globals: 0 */
-/* eslint-disable */ 
+import { IRow, IFilterFiledSimple } from '../interfaces';
 
-/**
- * @param {import('../interfaces').IRow[]} dataSource
- * @param {import('../interfaces').IFilterFiledSimple[]} filters
- * @return {import('../interfaces').IRow[]}
- */
-const filter = (dataSource, filters) => {
-    return dataSource.filter(which => {
+export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
+    return dataSource.filter((which) => {
         for (const { rule, fid } of filters) {
             if (!rule) {
                 continue;
             }
-
             switch (rule.type) {
                 case 'one of': {
                     if (rule.value.has(which[fid])) {
@@ -31,17 +24,13 @@ const filter = (dataSource, filters) => {
                 case 'temporal range': {
                     try {
                         const time = new Date(which[fid]).getTime();
-
-                        if (
-                            rule.value[0] <= time && time <= rule.value[1]
-                        ) {
+                        if (rule.value[0] <= time && time <= rule.value[1]) {
                             break;
                         } else {
                             return false;
                         }
                     } catch (error) {
                         console.error(error);
-
                         return false;
                     }
                 }
@@ -55,16 +44,3 @@ const filter = (dataSource, filters) => {
         return true;
     });
 };
-
-/**
- * @param {MessageEvent<{ dataSource: import('../interfaces').IRow[]; filters: import('../interfaces').IFilterField[] }>} e
- */
-const main = e => {
-    const { dataSource, filters } = e.data;
-
-    const filtered = filter(dataSource, filters);
-
-    self.postMessage(filtered);
-};
-
-self.addEventListener('message', main, false);

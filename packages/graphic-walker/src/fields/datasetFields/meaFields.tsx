@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Draggable, DroppableProvided } from '@kanaries/react-beautiful-dnd';
 import { observer } from 'mobx-react-lite';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import DataTypeIcon from '../../components/dataTypeIcon';
 import ActionMenu from '../../components/actionMenu';
 import { useMenuActions } from './utils';
@@ -14,8 +14,8 @@ interface Props {
 }
 const MeaFields: React.FC<Props> = (props) => {
     const { provided } = props;
-    const { vizStore } = useGlobalStore();
-    const measures = vizStore.draggableFieldState.measures;
+    const vizStore = useVizStore();
+    const { measures } = vizStore;
 
     const menuActions = useMenuActions('measures');
 

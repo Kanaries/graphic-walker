@@ -1,43 +1,42 @@
-import { observer } from "mobx-react-lite";
-import React from "react";
-import { useTranslation } from "react-i18next";
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { toJS } from 'mobx';
-import Modal from "../../components/modal";
-import type { IFilterField, IFilterRule } from "../../interfaces";
-import { useGlobalStore } from "../../store";
-import Tabs, { RuleFormProps } from "./tabs";
-import DefaultButton from "../../components/button/default";
-import PrimaryButton from "../../components/button/primary";
-import DropdownSelect from "../../components/dropdownSelect";
+import Modal from '../../components/modal';
+import type { IFilterField, IFilterRule } from '../../interfaces';
+import { useVizStore } from '../../store';
+import Tabs, { RuleFormProps } from './tabs';
+import DefaultButton from '../../components/button/default';
+import PrimaryButton from '../../components/button/primary';
+import DropdownSelect from '../../components/dropdownSelect';
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["one of"]} dataset={dataset} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["range", "one of"]} dataset={dataset} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ dataset, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={["temporal range", "one of"]} dataset={dataset} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['temporal range', 'one of']} rawFields={rawFields} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 const FilterEditDialog: React.FC = observer(() => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const { editingFilterIdx, draggableFieldState } = vizStore;
-    const { currentDataset } = commonStore;
+    const vizStore = useVizStore();
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields } = vizStore;
 
-    const { t } = useTranslation("translation", { keyPrefix: "filters" });
+    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
     const field = React.useMemo(() => {
-        return editingFilterIdx !== null ? draggableFieldState.filters[editingFilterIdx] : null;
-    }, [editingFilterIdx, draggableFieldState]);
+        return editingFilterIdx !== null ? viewFilters[editingFilterIdx] : null;
+    }, [editingFilterIdx, viewFilters]);
 
     const [uncontrolledField, setUncontrolledField] = React.useState(field as IFilterField | null);
     const ufRef = React.useRef(uncontrolledField);
@@ -45,7 +44,7 @@ const FilterEditDialog: React.FC = observer(() => {
 
     React.useEffect(() => {
         if (field !== ufRef.current) {
-            setUncontrolledField(toJS(field) );
+            setUncontrolledField(field as IFilterField);
         }
     }, [field]);
 
@@ -73,24 +72,25 @@ const FilterEditDialog: React.FC = observer(() => {
     }, [editingFilterIdx, uncontrolledField]);
 
     const allFieldOptions = React.useMemo(() => {
-        return [...draggableFieldState.dimensions, ...draggableFieldState.measures].map((d) => ({
-            label: d.name, 
+        return allFields.map((d) => ({
+            label: d.name,
             value: d.fid,
         }));
-    }, [draggableFieldState]);
+    }, [allFields]);
 
     const handleSelectFilterField = (fieldKey) => {
-        const existingFilterIdx = draggableFieldState.filters.findIndex((field) => field.fid === fieldKey)
+        const existingFilterIdx = viewFilters.findIndex((field) => field.fid === fieldKey);
         if (existingFilterIdx >= 0) {
             vizStore.setFilterEditing(existingFilterIdx);
         } else {
-            const sourceKey = draggableFieldState.dimensions.find((field) => field.fid === fieldKey) 
-                ? "dimensions" 
-                : "measures"
-            const sourceIndex = sourceKey === "dimensions"
-                ? draggableFieldState.dimensions.findIndex((field) => field.fid === fieldKey)
-                : draggableFieldState.measures.findIndex((field) => field.fid === fieldKey);
-            vizStore.moveField(sourceKey, sourceIndex, "filters", 0);
+            const sourceKey = dimensions.find((field) => field.fid === fieldKey) ? 'dimensions' : 'measures';
+            const sourceIndex =
+                sourceKey === 'dimensions'
+                    ? dimensions.findIndex((field) => field.fid === fieldKey)
+                    : measures.findIndex((field) => field.fid === fieldKey);
+            if (editingFilterIdx !== null) {
+                vizStore.modFilter(editingFilterIdx, sourceKey, sourceIndex);
+            }
         }
     };
 
@@ -104,9 +104,9 @@ const FilterEditDialog: React.FC = observer(() => {
         : EmptyForm;
 
     return uncontrolledField ? (
-        <Modal show={Boolean(uncontrolledField)} title={t("editing")} onClose={() => vizStore.closeFilterEditing()}>
+        <Modal show={Boolean(uncontrolledField)} title={t('editing')} onClose={() => vizStore.closeFilterEditing()}>
             <div className="px-4 py-1">
-                <div className="py-1">{t("form.name")}</div>
+                <div className="py-1">{t('form.name')}</div>
                 <DropdownSelect
                     buttonClassName="w-96"
                     className="mb-2"
@@ -114,17 +114,10 @@ const FilterEditDialog: React.FC = observer(() => {
                     selectedKey={uncontrolledField.fid}
                     onSelect={handleSelectFilterField}
                 />
-                <Form dataset={currentDataset} field={uncontrolledField} onChange={handleChange} />
+                <Form rawFields={meta} field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
-                    <PrimaryButton
-                        onClick={handleSubmit}
-                        text={t("btn.confirm")}
-                    />
-                    <DefaultButton
-                        className="ml-2"
-                        onClick={() => vizStore.closeFilterEditing()}
-                        text={t("btn.cancel")}
-                    />
+                    <PrimaryButton onClick={handleSubmit} text={t('btn.confirm')} />
+                    <DefaultButton className="ml-2" onClick={() => vizStore.closeFilterEditing()} text={t('btn.cancel')} />
                 </div>
             </div>
         </Modal>

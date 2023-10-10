@@ -89,8 +89,7 @@ export function inferMeta(props: { dataSource: IRow[]; fields: IUncertainMutFiel
     const { dataSource, fields } = props;
     const finalFieldMetas: IMutField[] = [];
     for (let field of fields) {
-        let semanticType: ISemanticType =
-            field.semanticType === '?' ? inferSemanticType(dataSource, field.path) : field.semanticType;
+        let semanticType: ISemanticType = field.semanticType === '?' ? inferSemanticType(dataSource, field.path) : field.semanticType;
         let analyticType: IAnalyticType = inferAnalyticTypeFromSemanticType(semanticType);
 
         finalFieldMetas.push({

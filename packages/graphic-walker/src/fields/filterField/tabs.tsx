@@ -7,16 +7,15 @@ import {
     ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 
-import type { IFilterField, IFilterRule, DataSet, IFieldStats, IField, IViewField } from '../../interfaces';
-import { useGlobalStore } from '../../store';
+import type { IFilterField, IFilterRule, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
+import { useCompututaion, useVizStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
-import { useComputationFunc, useRenderer } from '../../renderer/hooks';
-import { fieldStatServer, getTemporalRange } from '../../computation/serverComputation';
+import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
-
+import { parseCmpFunction } from '../../utils';
 
 export type RuleFormProps = {
-    dataset: DataSet;
+    rawFields: IMutField[];
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
 };
@@ -42,7 +41,7 @@ const Container = styled.div`
 export const Button = styled.button`
     :hover {
         background-color: rgba(243, 244, 246, 0.5);
-    };
+    }
     color: rgb(55, 65, 81);
     border: 1px solid rgb(226 232 240);
     border-radius: 0.5em;
@@ -58,7 +57,7 @@ const Table = styled.div`
     grid-template-columns: 4em auto max-content;
     max-height: 30vh;
     overflow-y: scroll;
-    
+
     & > * {
         padding-block: 0.6em;
         padding-inline: 0.2em;
@@ -104,13 +103,13 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void }> = props => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
     const checkboxRef = useRef(null);
 
     React.useEffect(() => {
         if (!checkboxRef.current) return;
-        const checkboxRefDOM = (checkboxRef.current as HTMLInputElement)
+        const checkboxRefDOM = checkboxRef.current as HTMLInputElement;
         if (currentNum === totalNum) {
             checkboxRefDOM.checked = true;
             checkboxRefDOM.indeterminate = false;
@@ -120,7 +119,7 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
             checkboxRefDOM.checked = false;
             checkboxRefDOM.indeterminate = false;
         }
-    }, [currentNum, totalNum])
+    }, [currentNum, totalNum]);
 
     return (
         <input
@@ -129,18 +128,10 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
             ref={checkboxRef}
             onChange={() => onChange()}
         />
-    )
-}
+    );
+};
 
 type FieldDistributionEntry = IFieldStats['values'][number];
-
-const defaultValueComparator = (a: any, b: any) => {
-    if (typeof a === 'number' && typeof b === 'number') {
-        return a - b;
-    } else {
-        return String(a).localeCompare(String(b))
-    }
-};
 
 const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
     return a.count - b.count;
@@ -149,78 +140,81 @@ const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
 const useFieldStats = (
     field: IField,
     attributes: { values: boolean; range: boolean },
-    sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none'
-): IFieldStats | null => {    
+    sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
+    computation: IComputationFunction
+): IFieldStats | null => {
     const { values, range } = attributes;
-    const { fid, cmp = defaultValueComparator } = field;
-    const valueCmp = React.useCallback<typeof countCmp>((a, b) => {
-        return cmp(a.value, b.value);
-    }, [cmp]);
-    const comparator = sortBy === "none" ? null : sortBy.startsWith("value") ? valueCmp : countCmp;
-    const sortMulti = sortBy.endsWith("dsc") ? -1 : 1;
+    const { fid, cmp: cmpRaw } = field;
+    const cmp = parseCmpFunction(cmpRaw);
+    const valueCmp = React.useCallback<typeof countCmp>(
+        (a, b) => {
+            return cmp(a.value, b.value);
+        },
+        [cmp]
+    );
+    const comparator = sortBy === 'none' ? null : sortBy.startsWith('value') ? valueCmp : countCmp;
+    const sortMulti = sortBy.endsWith('dsc') ? -1 : 1;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
-    const computationFunction = useComputationFunc();
 
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStatServer(computationFunction, fid, { values, range }).then(stats => {
-            if (isCancelled) {
-                return;
-            }
-            setStats(stats);
-            setLoading(false);
-        }).catch(reason => {
-            console.warn(reason);
-            if (isCancelled) {
-                return;
-            }
-            setStats(null);
-            setLoading(false);
-        });
+        fieldStat(computation, fid, { values, range })
+            .then((stats) => {
+                if (isCancelled) {
+                    return;
+                }
+                setStats(stats);
+                setLoading(false);
+            })
+            .catch((reason) => {
+                console.warn(reason);
+                if (isCancelled) {
+                    return;
+                }
+                setStats(null);
+                setLoading(false);
+            });
         return () => {
             isCancelled = true;
         };
-    }, [fid, computationFunction, values, range]);
+    }, [fid, computation, values, range]);
 
     const sortedStats = React.useMemo<typeof stats>(() => {
         if (!stats || !comparator) {
             return stats;
         }
         const copy = { ...stats };
-        copy.values = copy.values.slice().sort((a,b) => sortMulti * comparator(a,b));
+        copy.values = copy.values.slice().sort((a, b) => sortMulti * comparator(a, b));
         return copy;
     }, [stats, comparator, sortMulti]);
 
     return loading ? null : sortedStats;
 };
 
-export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
-    active,
-    field,
-    onChange,
-}) => {
-
+export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
     interface SortConfig {
         key: 'value' | 'count';
         ascending: boolean;
     }
     const [sortConfig, setSortConfig] = useState<SortConfig>({
-        key: "count",
-        ascending: true
+        key: 'count',
+        ascending: true,
     });
 
     const { t } = useTranslation('translation');
 
-    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '': '_dsc'}`);
+    const computation = useCompututaion();
+
+    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation);
     const count = stats?.values;
 
     React.useEffect(() => {
         if (count && active && field.rule?.type !== 'one of') {
             onChange({
                 type: 'one of',
-                value: new Set<string | number>(count.map(item => item.value)),
+                value: new Set<string | number>(count.map((item) => item.value)),
             });
         }
     }, [active, onChange, field, count]);
@@ -230,26 +224,22 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         const curSet = field.rule.value;
         onChange({
             type: 'one of',
-            value: new Set<number | string>(
-                curSet.size === count.length ? [] : count.map(c => c.value)
-            ),
+            value: new Set<number | string>(curSet.size === count.length ? [] : count.map((c) => c.value)),
         });
-    }
+    };
     const handleToggleReverseSet = () => {
         if (!field.rule || field.rule.type !== 'one of' || !count) return;
         const curSet = field.rule.value;
         onChange({
             type: 'one of',
-            value: new Set<number | string>(
-                count.map(c => c.value).filter(key => !curSet.has(key))
-            ),
+            value: new Set<number | string>(count.map((c) => c.value).filter((key) => !curSet.has(key))),
         });
-    }
+    };
     const handleSelectValue = (value: any, checked: boolean) => {
         if (!field.rule || field.rule?.type !== 'one of') return;
         const rule: IFilterRule = {
             type: 'one of',
-            value: new Set(field.rule.value)
+            value: new Set(field.rule.value),
         };
         if (checked) {
             rule.value.add(value);
@@ -257,14 +247,14 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             rule.value.delete(value);
         }
         onChange(rule);
-    }
+    };
 
     const selectedValueSum = useMemo(() => {
         if (!field.rule?.value || !count) return 0;
         return [...field.rule.value].reduce<number>((sum, key) => {
-            const s = count.find(c => c.value === key)?.count || 0;
+            const s = count.find((c) => c.value === key)?.count || 0;
             return sum + s;
-        }, 0)
+        }, 0);
     }, [field.rule?.value, count, field.fid]);
 
     if (!stats) {
@@ -275,51 +265,35 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         );
     }
 
-    const SortButton: React.FC<{ currentKey: SortConfig["key"] }> = ({ currentKey }) => {
+    const SortButton: React.FC<{ currentKey: SortConfig['key'] }> = ({ currentKey }) => {
         const isCurrentKey = sortConfig.key === currentKey;
         return (
             <span
-                className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${isCurrentKey ? "text-indigo-600" : "text-gray-500"}`}
-                onClick={() => setSortConfig({ key: currentKey, ascending: (isCurrentKey ? !sortConfig.ascending : true) })}
+                className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${
+                    isCurrentKey ? 'text-indigo-600' : 'text-gray-500'
+                }`}
+                onClick={() => setSortConfig({ key: currentKey, ascending: isCurrentKey ? !sortConfig.ascending : true })}
             >
-                {isCurrentKey && !sortConfig.ascending
-                    ? <ChevronDownIcon className="h-4 w-4" />
-                    : <ChevronUpIcon className="h-4 w-4" />
-                }
+                {isCurrentKey && !sortConfig.ascending ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronUpIcon className="h-4 w-4" />}
             </span>
         );
-    }
+    };
 
     return field.rule?.type === 'one of' ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
             <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
-                <Button
-                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
-                    onClick={() => handleToggleFullOrEmptySet()}
-                    disabled={!count}
-                >
-                    {
-                        field.rule.value.size === count?.length
-                            ? t('filters.btn.unselect_all')
-                            : t('filters.btn.select_all')
-                    }
+                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleFullOrEmptySet()} disabled={!count}>
+                    {field.rule.value.size === count?.length ? t('filters.btn.unselect_all') : t('filters.btn.select_all')}
                 </Button>
-                <Button
-                    className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800"
-                    onClick={() => handleToggleReverseSet()}
-                >
+                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleReverseSet()}>
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
             <Table className="bg-slate-50 dark:bg-gray-800">
                 <div className="flex justify-center items-center">
-                    <StatusCheckbox
-                        currentNum={field.rule.value.size}
-                        totalNum={count?.length ?? 0}
-                        onChange={handleToggleFullOrEmptySet}
-                    />
+                    <StatusCheckbox currentNum={field.rule.value.size} totalNum={count?.length ?? 0} onChange={handleToggleFullOrEmptySet} />
                 </div>
                 <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                     {t('filters.header.value')}
@@ -332,48 +306,34 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
             </Table>
             {/* <hr /> */}
             <Table>
-                {
-                    count?.map(({ value, count }, idx) => {
-                        const id = `rule_checkbox_${idx}`;
+                {count?.map(({ value, count }, idx) => {
+                    const id = `rule_checkbox_${idx}`;
 
-                        return (
-                            <React.Fragment key={idx}>
-                                <div className="flex justify-center items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                        checked={field.rule?.type === 'one of' && field.rule.value.has(value)}
-                                        id={id}
-                                        aria-describedby={`${id}_label`}
-                                        title={String(value)}
-                                        onChange={({ target: { checked } }) => handleSelectValue(value, checked)}
-                                    />
-                                </div>
-                                <label
-                                    id={`${id}_label`}
-                                    htmlFor={id}
+                    return (
+                        <React.Fragment key={idx}>
+                            <div className="flex justify-center items-center">
+                                <input
+                                    type="checkbox"
+                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                    checked={field.rule?.type === 'one of' && field.rule.value.has(value)}
+                                    id={id}
+                                    aria-describedby={`${id}_label`}
                                     title={String(value)}
-                                >
-                                    {`${value}`}
-                                </label>
-                                <label
-                                    htmlFor={id}
-                                >
-                                    {count}
-                                </label>
-                            </React.Fragment>
-                        );
-                    })
-                }
+                                    onChange={({ target: { checked } }) => handleSelectValue(value, checked)}
+                                />
+                            </div>
+                            <label id={`${id}_label`} htmlFor={id} title={String(value)}>
+                                {`${value}`}
+                            </label>
+                            <label htmlFor={id}>{count}</label>
+                        </React.Fragment>
+                    );
+                })}
             </Table>
             <Table className="text-gray-600">
                 <label></label>
-                <label>
-                    {t('filters.selected_keys', { count: field.rule.value.size })}
-                </label>
-                <label>
-                    {selectedValueSum}
-                </label>
+                <label>{t('filters.selected_keys', { count: field.rule.value.size })}</label>
+                <label>{selectedValueSum}</label>
             </Table>
         </Container>
     ) : null;
@@ -386,18 +346,18 @@ interface CalendarInputProps {
     onChange: (value: number) => void;
 }
 
-const CalendarInput: React.FC<CalendarInputProps> = props => {
+const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     const { min, max, value, onChange } = props;
     const dateStringFormatter = (timestamp: number) => {
         const date = new Date(timestamp);
         if (Number.isNaN(date.getTime())) return '';
         return date.toISOString().slice(0, 19);
-    }
+    };
     const handleSubmitDate = (value: string) => {
         if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
-            onChange(new Date(value).getTime())
+            onChange(new Date(value).getTime());
         }
-    }
+    };
     return (
         <input
             className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -407,14 +367,14 @@ const CalendarInput: React.FC<CalendarInputProps> = props => {
             defaultValue={dateStringFormatter(value)}
             onChange={(e) => handleSubmitDate(e.target.value)}
         />
-    )
-}
+    );
+};
 
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
 
     const { t } = useTranslation('translation');
 
-    const computationFunction = useComputationFunc();
+    const computationFunction = useCompututaion();
 
     const [res, setRes] = useState<[number, number, boolean]>(() => [0, 0, false]);
 
@@ -431,16 +391,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                 value: [min, max],
             });
         }
-    }, [onChange, field, min, max, active, loaded]);
-
-    React.useEffect(() => {
-        if (active && loaded && field.rule?.type === 'temporal range' && field.rule.value[0] !== min && field.rule.value[1] !== max) {
-            onChange({
-                type: 'temporal range',
-                value: [min, max],
-            });
-        }
-    }, [field.rule, min, max, active, loaded]);
+    }, [onChange, field, min, max, active]);
 
     const handleChange = React.useCallback((value: readonly [number, number]) => {
         onChange({
@@ -486,14 +437,12 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 });
 
 
-export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({
-    active,
-    field,
-    onChange,
-}) => {
-    const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
-    const stats = useFieldStats(field, { values: false, range: true }, 'none');
+export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
+    const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
+    const computation = useCompututaion();
+
+    const stats = useFieldStats(field, { values: false, range: true }, 'none', computation);
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -524,35 +473,30 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
         <Container>
             <div>{t('range')}</div>
             <div className="text-gray-500">{t('range_desc')}</div>
-            <Slider
-                min={range[0]}
-                max={range[1]}
-                value={field.rule.value}
-                onChange={handleChange}
-            />
+            <Slider min={range[0]} max={range[1]} value={field.rule.value} onChange={handleChange} />
         </Container>
     ) : null;
 });
 
 const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean }>> = {
     'one of': FilterOneOfRule,
-    'range': FilterRangeRule,
+    range: FilterRangeRule,
     'temporal range': FilterTemporalRangeRule,
 };
 
 const tabOptionDict = {
-    "one of": {
-        key: "one_of",
-        descKey: "one_of_desc"
+    'one of': {
+        key: 'one_of',
+        descKey: 'one_of_desc',
     },
-    "range": {
-        key: "range",
-        descKey: "range_desc"
+    range: {
+        key: 'range',
+        descKey: 'range_desc',
     },
-    "temporal range": {
-        key: "temporal_range",
-        descKey: "temporal_range_desc"
-    }
+    'temporal range': {
+        key: 'temporal_range',
+        descKey: 'temporal_range_desc',
+    },
 };
 
 export interface TabsProps extends RuleFormProps {
@@ -560,77 +504,62 @@ export interface TabsProps extends RuleFormProps {
 }
 
 const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const { draggableFieldState } = vizStore;
-    const { currentDataset } = commonStore;
+    const vizStore = useVizStore();
+    const { meta } = vizStore;
 
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
     const [which, setWhich] = React.useState(field.rule?.type ?? tabs[0]!);
     React.useEffect(() => {
         if (!tabs.includes(which)) setWhich(tabs[0]);
-    }, [tabs])
+    }, [tabs]);
 
     return (
         <TabsContainer>
             <div>
-                {
-                    tabs.map((option) => {
-                        return (
-                            <div className="flex my-2" key={option}>
-                                <div className="align-top">
-                                    <input
-                                        type="radio"
-                                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                        id={option}
-                                        checked={option === which}
-                                        onChange={e => setWhich((e.target as HTMLInputElement).value as typeof which)}
-                                        name="filter_type"
-                                        value={option}
-                                    />
-                                </div>
-                                <div className="ml-3">
-                                    <label htmlFor={option}>
-                                        {t(tabOptionDict[option].key)}
-                                    </label>
-                                    <div className="text-gray-500">
-                                        {t(tabOptionDict[option].descKey)}
-                                    </div>
-                                </div>
+                {tabs.map((option) => {
+                    return (
+                        <div className="flex my-2" key={option}>
+                            <div className="align-top">
+                                <input
+                                    type="radio"
+                                    className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                    id={option}
+                                    checked={option === which}
+                                    onChange={(e) => setWhich((e.target as HTMLInputElement).value as typeof which)}
+                                    name="filter_type"
+                                    value={option}
+                                />
                             </div>
-                        )
-                    })
-                }
+                            <div className="ml-3">
+                                <label htmlFor={option}>{t(tabOptionDict[option].key)}</label>
+                                <div className="text-gray-500">{t(tabOptionDict[option].descKey)}</div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
             <hr className="my-0.5" />
             <TabPanel>
-                {
-                    tabs.map((tab, i) => {
-                        const Component = filterTabs[tab];
+                {tabs.map((tab, i) => {
+                    const Component = filterTabs[tab];
 
-                        return draggableFieldState === null ? null : (
-                            <TabItem
-                                key={i}
-                                id={`filter-panel-${tabOptionDict[tab]}`}
-                                aria-labelledby={`filter-tab-${tabOptionDict[tab]}`}
-                                role="tabpanel"
-                                hidden={which !== tab}
-                                tabIndex={0}
-                            >
-                                <Component
-                                    field={field}
-                                    onChange={onChange}
-                                    active={which === tab}
-                                    dataset={currentDataset}
-                                />
-                            </TabItem>
-                        );
-                    })
-                }
+                    return (
+                        <TabItem
+                            key={i}
+                            id={`filter-panel-${tabOptionDict[tab]}`}
+                            aria-labelledby={`filter-tab-${tabOptionDict[tab]}`}
+                            role="tabpanel"
+                            hidden={which !== tab}
+                            tabIndex={0}
+                        >
+                            <Component field={field} onChange={onChange} active={which === tab} rawFields={meta} />
+                        </TabItem>
+                    );
+                })}
             </TabPanel>
         </TabsContainer>
     );
 });
-
 
 export default Tabs;

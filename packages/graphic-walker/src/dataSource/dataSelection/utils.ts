@@ -1,4 +1,4 @@
-import { IDataSetInfo, IRow } from "../../interfaces";
+import { IRow } from "../../interfaces";
 
 export function jsonReader (file: File): Promise<IRow[]> {
     return new Promise((resolve, reject) => {
@@ -17,12 +17,3 @@ export function jsonReader (file: File): Promise<IRow[]> {
         reader.readAsText(file);
     });
 }
-
-// export function jsonArray2DatasetInfo (data: IRow[]): IDataSetInfo {
-//     const fields = Object.keys(data[0]);
-//     return {
-//         name: 'New Dataset',
-//         rawFields: fields.map(f => ({ name: f, type: 'number' })),
-//         dataSource: data
-//     }
-// }

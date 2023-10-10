@@ -1,15 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
-import DatasetTable from "../../components/dataTable";
-import { observer } from "mobx-react-lite";
-import { useGlobalStore } from "../../store";
-import { useComputationFunc } from "../../renderer/hooks";
-import { datasetStatsServer } from "../../computation/serverComputation";
+import React, { useEffect, useRef, useState } from 'react';
+import DatasetTable from '../../components/dataTable';
+import { observer } from 'mobx-react-lite';
+import { useCompututaion, useVizStore } from '../../store';
+import { datasetStats } from '../../computation';
 
 const DatasetConfig: React.FC = () => {
-    const { commonStore } = useGlobalStore();
-    const { currentDataset } = commonStore;
-
-    const computationFunction = useComputationFunc();
+    const vizStore = useVizStore();
+    const computation = useCompututaion();
 
     const [count, setCount] = useState(0);
     const taskIdRef = useRef(0);
@@ -18,32 +15,36 @@ const DatasetConfig: React.FC = () => {
     useEffect(() => {
         const taskId = ++taskIdRef.current;
         setLoading(true);
-        datasetStatsServer(computationFunction).then(res => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            setCount(res.rowCount);
-            setLoading(false);
-        }).catch(err => {
-            if (taskId !== taskIdRef.current) {
-                return;
-            }
-            console.error(err);
-            setLoading(false);
-        });
+        datasetStats(computation)
+            .then((res) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                setCount(res.rowCount);
+                setLoading(false);
+            })
+            .catch((err) => {
+                if (taskId !== taskIdRef.current) {
+                    return;
+                }
+                console.error(err);
+                setLoading(false);
+            });
         return () => {
             taskIdRef.current++;
         };
-    }, [computationFunction]);
+    }, [computation]);
 
     return (
         <div className="relative">
-            <DatasetTable size={100}
+            <DatasetTable
+                size={100}
                 total={count}
-                dataset={currentDataset}
+                metas={vizStore.meta}
                 loading={loading}
+                computation={computation}
                 onMetaChange={(fid, fIndex, diffMeta) => {
-                    commonStore.updateCurrentDatasetMetas(fid, diffMeta)
+                    vizStore.updateCurrentDatasetMetas(fid, diffMeta);
                 }}
             />
         </div>
