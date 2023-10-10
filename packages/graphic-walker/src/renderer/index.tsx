@@ -1,23 +1,24 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfig, IComputationFunction, IChannelScales } from '../interfaces';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
-import { runInAction, toJS } from 'mobx';
-import { useGlobalStore } from '../store';
+import { runInAction } from 'mobx';
+import { useVizStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
 import { unstable_batchedUpdates } from 'react-dom';
 import { useRenderer } from './hooks';
-import { download, initEncoding } from '../utils/save';
+import { download } from '../utils/save';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
-import { initVisualConfig } from '../utils/save';
+import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 import { getMeaAggKey } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
+import { GWGlobalConfig } from '../vis/theme';
 
 interface RendererProps {
     themeKey?: IThemeKey;
-    themeConfig?: any;
+    themeConfig?: GWGlobalConfig;
     dark?: IDarkMode;
     computationFunction: IComputationFunction;
     channelScales?: IChannelScales;
@@ -28,26 +29,28 @@ interface RendererProps {
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationFunction, themeConfig, csvRef, } = props;
-    const { vizStore, commonStore } = useGlobalStore();
+    const { themeKey, dark, computationFunction, themeConfig, csvRef } = props;
+    const vizStore = useVizStore();
     const {
         allFields,
         viewFilters,
         viewDimensions,
         viewMeasures,
-        visualConfig,
-        draggableFieldState,
-        visList,
+        config: visualConfig,
+        layout,
+        currentVis: chart,
         visIndex,
+        visLength,
         sort,
         limit,
     } = vizStore;
-    const chart = visList[visIndex];
+
+    const draggableFieldState = chart.encodings;
 
     const { i18n } = useTranslation();
 
-    const [viewConfig, setViewConfig] = useState<IVisualConfig>(initVisualConfig);
-    const [encodings, setEncodings] = useState<DeepReadonly<DraggableFieldState>>(initEncoding);
+    const [viewConfig, setViewConfig] = useState<IVisualConfigNew>(emptyVisualConfig);
+    const [encodings, setEncodings] = useState<DraggableFieldState>(emptyEncodings);
     const [viewData, setViewData] = useState<IRow[]>([]);
 
     const { viewData: data, loading: waiting } = useRenderer({
@@ -91,13 +94,13 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
         data,
-        draggableFieldState: toJS(draggableFieldState),
-        visualConfig: toJS(visualConfig),
+        draggableFieldState: draggableFieldState,
+        visualConfig: visualConfig,
     });
     latestFromRef.current = {
         data,
-        draggableFieldState: toJS(draggableFieldState),
-        visualConfig: toJS(visualConfig),
+        draggableFieldState: draggableFieldState,
+        visualConfig: visualConfig,
     };
 
     useEffect(() => {
@@ -111,7 +114,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [waiting, data, vizStore]);
 
     useChartIndexControl({
-        count: visList.length,
+        count: visLength,
         index: visIndex,
         onChange: (idx) => vizStore.selectVisualization(idx),
     });
@@ -119,16 +122,16 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const handleGeomClick = useCallback((values: any, e: any) => {
         e.stopPropagation();
         runInAction(() => {
-            commonStore.showEmbededMenu([e.pageX, e.pageY]);
-            commonStore.setFilters(values);
+            vizStore.showEmbededMenu([e.pageX, e.pageY]);
+            vizStore.setFilters(values);
         });
         const selectedMarkObject = values.vlPoint.or[0];
-        commonStore.updateSelectedMarkObject(selectedMarkObject);
+        vizStore.updateSelectedMarkObject(selectedMarkObject);
     }, []);
 
     const handleChartResize = useCallback(
         (width: number, height: number) => {
-            vizStore.setChartLayout({
+            vizStore.setVisualLayout('size',{
                 mode: 'fixed',
                 width,
                 height,
@@ -139,20 +142,20 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     const isSpatial = viewConfig.coordSystem === 'geographic';
 
-    const sizeRef = useRef(viewConfig.size);
-    sizeRef.current = viewConfig.size;
+    const sizeRef = useRef(layout.size);
+    sizeRef.current = layout.size;
 
     useEffect(() => {
         if (isSpatial) {
             const prevSizeConfig = sizeRef.current;
             if (sizeRef.current.width < LEAFLET_DEFAULT_WIDTH || sizeRef.current.height < LEAFLET_DEFAULT_HEIGHT) {
-                vizStore.setChartLayout({
+                vizStore.setVisualLayout('size', {
                     mode: sizeRef.current.mode,
                     width: Math.max(prevSizeConfig.width, LEAFLET_DEFAULT_WIDTH),
                     height: Math.max(prevSizeConfig.height, LEAFLET_DEFAULT_HEIGHT),
                 });
                 return () => {
-                    vizStore.setChartLayout(prevSizeConfig);
+                    vizStore.setVisualLayout('size', prevSizeConfig);
                 };
             }
         }
@@ -172,7 +175,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
-            computationFunction={computationFunction}
+            layout={layout}
             channelScales={props.channelScales}
         />
     );

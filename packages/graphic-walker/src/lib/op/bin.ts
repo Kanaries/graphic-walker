@@ -1,5 +1,5 @@
 import { IRow } from "../../interfaces";
-import { IBinQuery } from "../interfaces";
+import { IBinQuery } from "../../interfaces";
 
 export function bin (dataSource: IRow[], query: IBinQuery): IRow[] {
     const { binBy, newBinCol, binSize } = query;

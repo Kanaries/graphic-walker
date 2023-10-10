@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { runInAction } from 'mobx';
+import { useVizStore } from '../../store';
 import Spinner from '../spinner';
-import { useGlobalStore } from '../../store';
 import Modal from '../modal';
 import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
@@ -14,10 +15,9 @@ import { GeojsonRenderer } from './geojsonRenderer';
 const emptyList = [];
 
 const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showGeoJSONConfigPanel } = commonStore;
-    const { visualConfig } = vizStore;
-    const { geoKey, geojson, geoUrl } = visualConfig;
+    const vizStore = useVizStore();
+    const { layout, showGeoJSONConfigPanel } = vizStore;
+    const { geoKey, geojson, geoUrl } = layout;
     const { t: tGlobal } = useTranslation('translation');
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -79,17 +79,17 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
             if (!item) {
                 vizStore.clearGeographicData();
             } else {
-                vizStore.setGeographicUrl({
+                vizStore.setVisualLayout('geoUrl', {
                     type: item.type,
                     url: item.url,
                 });
             }
-            commonStore.setShowGeoJSONConfigPanel(false);
+            vizStore.setShowGeoJSONConfigPanel(false);
             return;
         }
         try {
             if (!(dataMode === 'GeoJSON' ? geoJSON : topoJSON) && loadedUrl) {
-                commonStore.setShowGeoJSONConfigPanel(false);
+                vizStore.setShowGeoJSONConfigPanel(false);
                 return;
             }
             const json = JSON.parse(dataMode === 'GeoJSON' ? geoJSON : topoJSON);
@@ -113,14 +113,19 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                     loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined
                 );
             }
-            commonStore.setShowGeoJSONConfigPanel(false);
+            vizStore.setShowGeoJSONConfigPanel(false);
         } catch (err) {
             console.error(err);
         }
     };
 
     return (
-        <Modal containerStyle={{ overflow: 'visible' }} show={showGeoJSONConfigPanel} onClose={() => commonStore.setShowGeoJSONConfigPanel(false)}>
+        <Modal
+            containerStyle={{ overflow: 'visible' }} show={showGeoJSONConfigPanel}
+            onClose={() => {
+                vizStore.setShowGeoJSONConfigPanel(false);
+            }}
+        >
             <div>
                 <h2 className="text-lg mb-4">{t('geography')}</h2>
                 <div>
@@ -265,7 +270,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         text={tGlobal('actions.cancel')}
                         className="mr-2"
                         onClick={() => {
-                            commonStore.setShowGeoJSONConfigPanel(false);
+                            vizStore.setShowGeoJSONConfigPanel(false);
                         }}
                     />
                 </div>

@@ -2,7 +2,6 @@ import { Config as VgConfig, View } from 'vega';
 import { Config as VlConfig } from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
 import type { feature } from 'topojson-client';
-import type { IViewQuery } from './lib/viewQuery';
 import { DATE_TIME_DRILL_LEVELS } from './constants';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
@@ -116,8 +115,8 @@ export interface IField {
     aggName?: string;
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
+    cmp?: string;
     geoRole?: IGeoRole;
-    cmp?: (a: any, b: any) => number;
     computed?: boolean;
     expression?: IExpression;
     timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
@@ -160,6 +159,7 @@ export interface IExplainProps {
     metas: IField[];
 }
 
+/** @deprecated */
 export interface IDataSet {
     id: string;
     name: string;
@@ -177,6 +177,8 @@ export interface IDataSetInfo {
 
 export interface IDataSource {
     id: string;
+    metaId?: string;
+    name?: string;
     data: IRow[];
 }
 
@@ -213,6 +215,11 @@ export interface IDraggableStateKey {
     mode: number;
 }
 
+export interface IDraggableViewStateKey {
+    id: keyof Omit<DraggableFieldState, 'filters'>;
+    mode: number;
+}
+
 export type IFilterRule =
     | {
           type: 'range';
@@ -232,11 +239,11 @@ export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 export type ICoordMode = 'generic' | 'geographic';
 
 export type IConfigScale = {
-    rangeMax?: number,
-    rangeMin?: number,
-    domainMin?: number,
-    domainMax?: number,
-}
+    rangeMax?: number;
+    rangeMin?: number;
+    domainMin?: number;
+    domainMax?: number;
+};
 
 export interface IVisualConfig {
     defaultAggregated: boolean;
@@ -258,11 +265,11 @@ export interface IVisualConfig {
         timeFormat?: string;
         normalizedNumberFormat?: string;
     };
-    primaryColor?:string;
+    primaryColor?: string;
     colorPalette?: string;
     scale?: {
-        opacity: IConfigScale,
-        size: IConfigScale
+        opacity: IConfigScale;
+        size: IConfigScale;
     };
     resolve: {
         x?: boolean;
@@ -284,11 +291,60 @@ export interface IVisualConfig {
     folds?: string[];
 }
 
+export interface IVisualLayout {
+    showTableSummary: boolean;
+    format: {
+        numberFormat?: string;
+        timeFormat?: string;
+        normalizedNumberFormat?: string;
+    };
+    primaryColor?: string;
+    colorPalette?: string;
+    scale?: {
+        opacity: IConfigScale;
+        size: IConfigScale;
+    };
+    resolve: {
+        x?: boolean;
+        y?: boolean;
+        color?: boolean;
+        opacity?: boolean;
+        shape?: boolean;
+        size?: boolean;
+    };
+    size: {
+        mode: 'auto' | 'fixed';
+        width: number;
+        height: number;
+    };
+    useSvg?: boolean;
+    geojson?: FeatureCollection;
+    geoKey?: string;
+    geoUrl?: IGeoUrl;
+    interactiveScale: boolean;
+    stack: IStackMode;
+    showActions: boolean;
+    zeroScale: boolean;
+    background?: string;
+    /** @default false */
+    scaleIncludeUnmatchedChoropleth?: boolean;
+}
+
+export interface IVisualConfigNew {
+    defaultAggregated: boolean;
+    geoms: string[];
+    /** @default "generic" */
+    coordSystem?: ICoordMode;
+    limit: number;
+    folds?: string[];
+}
+
 export interface IGeoUrl {
     type: 'GeoJSON' | 'TopoJSON';
     url: string;
 }
 
+/** @deprecated */
 export interface IVisSpec {
     readonly visId: string;
     readonly name?: string;
@@ -435,6 +491,11 @@ export type IVisFieldComputation = {
     type: IVisField['type'];
 };
 
+export type IFieldTransform = {
+    key: IVisFieldComputation['field'];
+    expression: IVisFieldComputation['expression'];
+};
+
 export interface IVisFilter {
     fid: string;
     rule: SetToArray<IFilterRule>;
@@ -447,10 +508,7 @@ export interface IFilterWorkflowStep {
 
 export interface ITransformWorkflowStep {
     type: 'transform';
-    transform: {
-        key: IVisFieldComputation['field'];
-        expression: IVisFieldComputation['expression'];
-    }[];
+    transform: IFieldTransform[];
 }
 
 export interface IViewWorkflowStep {
@@ -494,6 +552,50 @@ export type IResponse<T> =
               options?: Record<string, string>;
           };
       };
+export interface IAggQuery {
+    op: 'aggregate';
+    groupBy: string[];
+    measures: { field: string; agg: IAggregator; asFieldKey: string; format?: string }[];
+}
+
+export interface IFoldQuery {
+    op: 'fold';
+    foldBy: string[];
+    newFoldKeyCol: string;
+    newFoldValueCol: string;
+}
+
+export interface IBinQuery {
+    op: 'bin';
+    binBy: string;
+    newBinCol: string;
+    binSize: number;
+}
+
+export interface IRawQuery {
+    op: 'raw';
+    fields: string[];
+}
+
+export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
+
+export interface IChart {
+    visId: string;
+    name?: string;
+    encodings: DraggableFieldState;
+    config: IVisualConfigNew;
+    layout: IVisualLayout;
+}
+
+export interface PartialChart {
+    visId?: string;
+    name?: string;
+    encodings?: Partial<DraggableFieldState>;
+    config?: Partial<IVisualConfigNew>;
+    layout?: Partial<IVisualLayout>;
+}
+
+export type IChartForExport = SetToArray<IChart>;
 
 export type Topology = Parameters<typeof feature>[0];
 

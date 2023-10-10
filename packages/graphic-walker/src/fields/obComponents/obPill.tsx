@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
-import { IDraggableStateKey } from '../../interfaces';
-import { useGlobalStore } from '../../store';
+import { IAggregator, IDraggableViewStateKey } from '../../interfaces';
+import { useVizStore } from '../../store';
 import { Pill } from '../components';
 import { GLOBAL_CONFIG } from '../../config';
 import DropdownContext from '../../components/dropdownContext';
@@ -14,13 +14,13 @@ import SelectContext, { type ISelectContextOption } from '../../components/selec
 interface PillProps {
     provided: DraggableProvided;
     fIndex: number;
-    dkey: IDraggableStateKey;
+    dkey: IDraggableViewStateKey;
 }
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
-    const { vizStore } = useGlobalStore();
-    const { visualConfig, allFields } = vizStore;
-    const field = vizStore.draggableFieldState[dkey.id][fIndex];
+    const vizStore = useVizStore();
+    const { config, allFields } = vizStore;
+    const field = vizStore.allEncodings[dkey.id][fIndex];
     const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
     const aggregationOptions = useMemo(() => {
@@ -38,7 +38,7 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, [allFields]);
 
-    const folds = field.fid === MEA_KEY_ID ? visualConfig.folds ?? [] : null;
+    const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
 
     return (
         <Pill
@@ -60,11 +60,11 @@ const OBPill: React.FC<PillProps> = (props) => {
             )}
             {!folds && <span className="flex-1 truncate">{field.name}</span>}
             &nbsp;
-            {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
+            {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
                 <DropdownContext
                     options={aggregationOptions}
                     onSelect={(value) => {
-                        vizStore.setFieldAggregator(dkey.id, fIndex, value);
+                        vizStore.setFieldAggregator(dkey.id, fIndex, value as IAggregator);
                     }}
                 >
                     <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">

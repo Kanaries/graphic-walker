@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import SmallModal from '../../components/smallModal';
 import PrimaryButton from '../../components/button/primary';
 import DefaultButton from '../../components/button/default';
@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { ICreateField } from '../../interfaces';
 
 const FieldScalePanel: React.FC = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showBinSettingPanel, setShowBinSettingPanel } = commonStore;
+    const vizStore = useVizStore();
+    const { showBinSettingPanel, setShowBinSettingPanel } = vizStore;
     const { t } = useTranslation();
     const [chosenOption, setChosenOption] = useState<'widths' | 'counts'>('widths');
     const [value, setValue] = useState<string>('');
@@ -24,7 +24,7 @@ const FieldScalePanel: React.FC = (props) => {
         <SmallModal
             show={showBinSettingPanel}
             onClose={() => {
-                commonStore.setShowBinSettingPanel(false);
+                setShowBinSettingPanel(false);
             }}
         >
             <div className="flex flex-col justify-center items-start text-xs">
@@ -71,9 +71,9 @@ const FieldScalePanel: React.FC = (props) => {
                             className="mr-2 px-2 "
                             text="Confirm"
                             onClick={() => {
-                                const field = commonStore.createField as ICreateField;
+                                const field = vizStore.createField as ICreateField;
                                 vizStore.createBinField(field.channel, field.index, chosenOption === 'widths' ? 'bin' : 'binCount', Number(value));
-                                commonStore.setShowBinSettingPanel(false);
+                                vizStore.setShowBinSettingPanel(false);
                                 return;
                             }}
                         />
@@ -81,7 +81,7 @@ const FieldScalePanel: React.FC = (props) => {
                             text={t('actions.cancel')}
                             className="mr-2 px-2"
                             onClick={() => {
-                                commonStore.setShowBinSettingPanel(false);
+                                vizStore.setShowBinSettingPanel(false);
                                 return;
                             }}
                         />

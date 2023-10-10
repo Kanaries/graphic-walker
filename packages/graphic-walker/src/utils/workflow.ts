@@ -48,7 +48,7 @@ export const toWorkflow = (
     allFields: Omit<IViewField, 'dragId'>[],
     viewDimensionsRaw: Omit<IViewField, 'dragId'>[],
     viewMeasuresRaw: Omit<IViewField, 'dragId'>[],
-    defaultAggregated: VizSpecStore['visualConfig']['defaultAggregated'],
+    defaultAggregated: VizSpecStore['config']['defaultAggregated'],
     sort: 'none' | 'ascending' | 'descending',
     folds = [] as string[],
     limit?: number

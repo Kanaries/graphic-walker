@@ -1,52 +1,609 @@
-import { IReactionDisposer, makeAutoObservable, observable, reaction, toJS } from 'mobx';
-import produce from 'immer';
+import { computed, makeAutoObservable, observable } from 'mobx';
+import {
+    VisSpecWithHistory,
+    convertChart,
+    exportFullRaw,
+    exportNow,
+    fromFields,
+    fromSnapshot,
+    importFull,
+    importNow,
+    newChart,
+    performers,
+    redo,
+    undo,
+} from '../models/visSpecHistory';
+import { emptyEncodings, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { feature } from 'topojson-client';
 import type { FeatureCollection } from 'geojson';
 import {
-    DataSet,
     DraggableFieldState,
+    Filters,
+    IAggregator,
+    IChart,
     IFilterRule,
+    IMutField,
+    ISegmentKey,
     IGeographicData,
     ISortMode,
-    IStackMode,
     IViewField,
     IVisSpec,
-    IVisSpecForExport,
-    IFilterFieldForExport,
-    IVisualConfig,
+    IVisualConfigNew,
+    IVisualLayout,
     Specification,
-    IComputationFunction,
+    ICoordMode,
+    IVisSpecForExport,
     IGeoUrl,
+    ICreateField,
     ISemanticType,
+    IChartForExport
 } from '../interfaces';
-import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { GLOBAL_CONFIG } from '../config';
-import { VisSpecWithHistory } from '../models/visSpecHistory';
-import {
-    IStoInfo,
-    dumpsGWPureSpec,
-    parseGWContent,
-    parseGWPureSpec,
-    stringifyGWContent,
-    initVisualConfig,
-    forwardVisualConfigs,
-    visSpecDecoder,
-    initEncoding,
-} from '../utils/save';
-import { CommonStore } from './commonStore';
-import { createCountField, createVirtualFields, getSort } from '../utils';
-import { COUNT_FIELD_ID } from '../constants';
-import { nanoid } from 'nanoid';
-import { toWorkflow } from '../utils/workflow';
-import { Field } from '../models/field';
+import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
 
-function getChannelSizeLimit(channel: string): number {
-    if (typeof GLOBAL_CONFIG.CHANNEL_LIMIT[channel] === 'undefined') return Infinity;
-    return GLOBAL_CONFIG.CHANNEL_LIMIT[channel];
+import { toWorkflow } from '../utils/workflow';
+import { KVTuple, uniqueId } from '../models/utils';
+import { encodeFilterRule } from '../utils/filter';
+import { INestNode } from '../components/pivotTable/inteface';
+
+const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
+const viewEncodingKeys = (geom: string) => {
+    switch (geom) {
+        case 'choropleth':
+            return ['geoId', 'color', 'opacity', 'text', 'details'];
+        case 'poi':
+            return ['longitude', 'latitude', 'color', 'opacity', 'size', 'details'];
+        case 'arc':
+            return ['radius', 'theta', 'color', 'opacity', 'size', 'details', 'text'];
+        case 'bar':
+        case 'tick':
+        case 'line':
+        case 'area':
+        case 'boxplot':
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'text'];
+        case 'text':
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'text'];
+        case 'table':
+            return ['columns', 'rows'];
+        default:
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'shape'];
+    }
+};
+
+export class VizSpecStore {
+    visList: VisSpecWithHistory[];
+    visIndex: number = 0;
+    editingFilterIdx: number | null = null;
+    meta: IMutField[];
+    segmentKey: ISegmentKey = ISegmentKey.data;
+    showInsightBoard: boolean = false;
+    vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
+    showDataConfig: boolean = false;
+    showCodeExportPanel: boolean = false;
+    showVisualConfigPanel: boolean = false;
+    showGeoJSONConfigPanel: boolean = false;
+    removeConfirmIdx: number | null = null;
+    filters: Filters = {};
+    tableCollapsedHeaderMap: Map<string, INestNode['path']> = new Map();
+    selectedMarkObject: Record<string, string | number | undefined> = {};
+    showLogSettingPanel: boolean = false;
+    showBinSettingPanel: boolean = false;
+    createField: ICreateField | undefined = undefined;
+    localGeoJSON: FeatureCollection | undefined = undefined;
+    showErrorResolutionPanel: number = 0;
+
+    private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+
+    constructor(
+        meta: IMutField[],
+        options?: {
+            empty?: boolean;
+            onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+        }
+    ) {
+        this.meta = meta;
+        this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
+        this.onMetaChange = options?.onMetaChange;
+        makeAutoObservable(this, {
+            visList: observable.shallow,
+            allEncodings: computed.struct,
+            filters: observable.ref,
+            tableCollapsedHeaderMap: observable.ref,
+        });
+    }
+
+    get visLength() {
+        return this.visList.length;
+    }
+
+    get vizList() {
+        return this.visList.map((x) => x.now);
+    }
+
+    get currentVis() {
+        return this.visList[this.visIndex].now;
+    }
+
+    get currentEncodings() {
+        return this.currentVis.encodings;
+    }
+
+    get viewFilters() {
+        return this.currentEncodings.filters;
+    }
+
+    get dimensions() {
+        return this.currentEncodings.dimensions;
+    }
+
+    get measures() {
+        return this.currentEncodings.measures;
+    }
+
+    get rows() {
+        return this.currentEncodings.rows;
+    }
+
+    get columns() {
+        return this.currentEncodings.columns;
+    }
+
+    get sort() {
+        const { rows, columns } = this;
+        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+            return rows[rows.length - 1].sort || 'none';
+        }
+        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+            return columns[columns.length - 1].sort || 'none';
+        }
+        return 'none';
+    }
+
+    get allFields() {
+        return [...this.dimensions, ...this.measures];
+    }
+
+    get config() {
+        return this.currentVis.config;
+    }
+
+    get layout() {
+        return {
+            ...this.currentVis.layout,
+            ...(this.localGeoJSON ? {
+                geoJson: this.localGeoJSON
+            }: {})
+        };
+    }
+
+    get allEncodings() {
+        const result: Record<string, IViewField[]> = {};
+        encodingKeys.forEach((k) => {
+            result[k] = this.currentEncodings[k];
+        });
+        return result;
+    }
+
+    get viewEncodings() {
+        const result: Record<string, IViewField[]> = {};
+        viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
+            result[k] = this.currentEncodings[k];
+        });
+        return result;
+    }
+
+    get viewEncodingFields() {
+        return viewEncodingKeys(this.config.geoms[0]).flatMap((k) => this.viewEncodings[k]);
+    }
+
+    get viewDimensions() {
+        return this.viewEncodingFields.filter((x) => x.analyticType === 'dimension');
+    }
+
+    get viewMeasures() {
+        return this.viewEncodingFields.filter((x) => x.analyticType === 'measure');
+    }
+
+    get workflow() {
+        return toWorkflow(
+            this.viewFilters,
+            this.allFields,
+            this.viewDimensions,
+            this.viewMeasures,
+            this.config.defaultAggregated,
+            this.sort,
+            this.config.folds,
+            this.config.limit
+        );
+    }
+
+    get limit() {
+        return this.config.limit;
+    }
+
+    get canUndo() {
+        return this.visList[this.visIndex].cursor > 0;
+    }
+
+    get canRedo() {
+        const viz = this.visList[this.visIndex];
+        return viz.cursor !== viz.timeline.length;
+    }
+
+    private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
+        this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, uniqueId());
+        this.editingFilterIdx = index;
+    }
+
+    undo() {
+        this.visList[this.visIndex] = undo(this.visList[this.visIndex]);
+    }
+
+    redo() {
+        this.visList[this.visIndex] = redo(this.visList[this.visIndex]);
+    }
+
+    setVisName(index: number, name: string) {
+        this.visList[index] = performers.setName(this.visList[index], name);
+    }
+
+    setMeta(meta: IMutField[]) {
+        this.meta = meta;
+    }
+
+    resetVisualization() {
+        this.visList = [fromFields(this.meta, 'Chart 1')];
+    }
+
+    addVisualization(defaultName?: string) {
+        const name = defaultName || 'Chart ' + (this.visList.length + 1);
+        this.visList.push(fromFields(this.meta, name));
+        this.visIndex = this.visList.length - 1;
+    }
+
+    removeVisualization(index: number) {
+        if (this.visLength === 1) return;
+        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
+        this.visList.splice(index, 1);
+    }
+
+    duplicateVisualization(index: number) {
+        this.visList.push(
+            fromSnapshot({
+                ...this.visList[index].now,
+                name: this.visList[index].now.name + ' Copy',
+                visId: uniqueId(),
+            })
+        );
+        this.visIndex = this.visList.length - 1;
+    }
+
+    setFilterEditing(index: number) {
+        this.editingFilterIdx = index;
+    }
+
+    closeFilterEditing() {
+        this.editingFilterIdx = null;
+    }
+
+    setSegmentKey(sk: ISegmentKey) {
+        this.segmentKey = sk;
+    }
+
+    setVisualConfig(...args: KVTuple<IVisualConfigNew>) {
+        this.visList[this.visIndex] = performers.setConfig(this.visList[this.visIndex], ...args);
+    }
+
+    setCoordSystem(mode: ICoordMode) {
+        this.visList[this.visIndex] = performers.setCoordSystem(this.visList[this.visIndex], mode);
+    }
+
+    setVisualLayout(...args: KVTuple<IVisualLayout>);
+    setVisualLayout(...args: KVTuple<IVisualLayout>[]);
+    setVisualLayout(...args: KVTuple<IVisualLayout> | KVTuple<IVisualLayout>[]) {
+        if (typeof args[0] === 'string') {
+            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], [args]);
+        } else {
+            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], args);
+        }
+    }
+
+    reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
+        if (sourceIndex === destinationIndex) return;
+        this.visList[this.visIndex] = performers.reorderField(this.visList[this.visIndex], stateKey, sourceIndex, destinationIndex);
+    }
+
+    moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
+        if (sourceKey === 'filters') {
+            return this.removeField(sourceKey, sourceIndex);
+        } else if (destinationKey === 'filters') {
+            return this.appendFilter(destinationIndex, sourceKey, sourceIndex);
+        }
+        const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
+        const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
+        if (destMeta === sourceMeta) {
+            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex);
+        } else if (destMeta) {
+            this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+        } else {
+            this.visList[this.visIndex] = performers.cloneField(
+                this.visList[this.visIndex],
+                sourceKey,
+                sourceIndex,
+                destinationKey,
+                destinationIndex,
+                uniqueId()
+            );
+        }
+    }
+
+    modFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
+        this.visList[this.visIndex] = performers.modFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex);
+    }
+
+    removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
+        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
+        this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+    }
+
+    writeFilter(index: number, rule: IFilterRule | null) {
+        this.visList[this.visIndex] = performers.writeFilter(this.visList[this.visIndex], index, encodeFilterRule(rule));
+    }
+
+    transpose() {
+        this.visList[this.visIndex] = performers.transpose(this.visList[this.visIndex]);
+    }
+
+    createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount', binNumber = 10): string {
+        const newVarKey = uniqueId();
+        const state = this.currentEncodings;
+        const existedRelatedBinField = state.dimensions.find(
+            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid && f.expression.num === binNumber
+        );
+        if (existedRelatedBinField) {
+            return existedRelatedBinField.fid;
+        }
+        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, binType, newVarKey, binNumber);
+        return newVarKey;
+    }
+
+    createLogField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, scaleType: 'log10' | 'log2' | 'log', logNumber = 10) {
+        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId(), logNumber);
+    }
+
+    public createDateTimeDrilledField(
+        stateKey: keyof Omit<DraggableFieldState, 'filters'>,
+        index: number,
+        drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
+        name: string,
+        format: string
+    ) {
+        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+    }
+
+    public createDateFeatureField(
+        stateKey: keyof Omit<DraggableFieldState, 'filters'>,
+        index: number,
+        drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
+        name: string,
+        format: string
+    ) {
+        this.visList[this.visIndex] = performers.createDateFeatureField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+    }
+
+    setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
+        this.visList[this.visIndex] = performers.setFieldAggregator(this.visList[this.visIndex], stateKey, index, aggName);
+    }
+
+    applyDefaultSort(sortType: ISortMode = 'ascending') {
+        this.visList[this.visIndex] = performers.applySort(this.visList[this.visIndex], sortType);
+    }
+
+    exportCurrentChart() {
+        return exportFullRaw(this.visList[this.visIndex]);
+    }
+
+    exportAllCharts() {
+        return this.visList.map((x) => exportFullRaw(x));
+    }
+
+    exportCode() {
+        return this.visList.map(x => exportNow(x));
+    }
+
+    importCode(data: IChartForExport[]) {
+        this.visList = data.map(x => importNow(x));
+        this.visIndex = 0;
+    }
+
+    appendRaw(data: string) {
+        const newChart = importFull(data);
+        this.visList.push(newChart);
+        this.visIndex = this.visList.length - 1;
+    }
+
+    importRaw(data: string[]) {
+        this.visList = data.map(importFull);
+        this.visIndex = 0;
+    }
+
+    importOld(data: IVisSpecForExport[]) {
+        this.visList = visSpecDecoder(forwardVisualConfigs(data)).map(convertChart).map(fromSnapshot);
+        this.visIndex = 0;
+    }
+
+    appendFromOld(data: IVisSpecForExport) {
+        const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs([data]))[0]));
+        this.visList.push(newChart);
+        this.visIndex = this.visList.length - 1;
+    }
+
+    replaceNow(chart: IChart) {
+        this.visList[this.visIndex] = fromSnapshot(chart);
+    }
+
+    selectVisualization(index: number) {
+        this.visIndex = index;
+    }
+
+    setShowDataConfig(show: boolean) {
+        this.showDataConfig = show;
+    }
+    setShowInsightBoard(show: boolean) {
+        this.showInsightBoard = show;
+    }
+    showEmbededMenu(position: [number, number]) {
+        this.vizEmbededMenu.show = true;
+        this.vizEmbededMenu.position = position;
+    }
+    setShowCodeExportPanel(show: boolean) {
+        this.showCodeExportPanel = show;
+    }
+    setShowVisualConfigPanel(show: boolean) {
+        this.showVisualConfigPanel = show;
+    }
+    closeEmbededMenu() {
+        this.vizEmbededMenu.show = false;
+    }
+    setFilters(props: Filters) {
+        this.filters = props;
+    }
+
+    updateCurrentDatasetMetas(fid: string, diffMeta: Partial<IMutField>) {
+        const field = this.meta.find((f) => f.fid === fid);
+        if (field) {
+            for (let mk in diffMeta) {
+                field[mk] = diffMeta[mk];
+            }
+        }
+        this.onMetaChange?.(fid, diffMeta);
+    }
+
+    openRemoveConfirmModal(index: number) {
+        this.removeConfirmIdx = index;
+    }
+
+    closeRemoveConfirmModal() {
+        this.removeConfirmIdx = null;
+    }
+
+    setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
+        const geoJSON =
+            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
+        if (!('features' in geoJSON)) {
+            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
+            return;
+        }
+        this.localGeoJSON = geoJSON;
+        if (geoUrl) {
+            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, geoKey, geoUrl);
+        } else {
+            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
+        }
+    }
+
+    clearGeographicData() {
+        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, undefined, undefined);
+    }
+
+    changeSemanticType(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, semanticType: ISemanticType) {
+        this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
+    }
+
+    updateGeoKey(key: string) {
+        this.setVisualLayout('geoKey', key);
+    }
+
+    updateTableCollapsedHeader(node: INestNode) {
+        const { uniqueKey, height } = node;
+        if (height < 1) return;
+        const updatedMap = new Map(this.tableCollapsedHeaderMap);
+        // if some child nodes of the incoming node are collapsed, remove them first
+        updatedMap.forEach((existingPath, existingKey) => {
+            if (existingKey.startsWith(uniqueKey) && existingKey.length > uniqueKey.length) {
+                updatedMap.delete(existingKey);
+            }
+        });
+        if (!updatedMap.has(uniqueKey)) {
+            updatedMap.set(uniqueKey, node.path);
+        } else {
+            updatedMap.delete(uniqueKey);
+        }
+        this.tableCollapsedHeaderMap = updatedMap;
+    }
+
+    resetTableCollapsedHeader() {
+        const updatedMap: Map<string, INestNode['path']> = new Map();
+        this.tableCollapsedHeaderMap = updatedMap;
+    }
+
+    setShowGeoJSONConfigPanel(show: boolean) {
+        this.showGeoJSONConfigPanel = show;
+    }
+
+    setShowBinSettingPanel(show: boolean) {
+        this.showBinSettingPanel = show;
+    }
+
+    setShowLogSettingPanel(show: boolean) {
+        this.showLogSettingPanel = show;
+    }
+
+    setCreateField(field: ICreateField) {
+        this.createField = field;
+    }
+
+    updateSelectedMarkObject(newMarkObj: Record<string, string | number | undefined>) {
+        this.selectedMarkObject = newMarkObj;
+    }
+
+    updateShowErrorResolutionPanel(errCode: number) {
+        this.showErrorResolutionPanel = errCode;
+    }
 }
 
-function uniqueId(): string {
-    return 'gw_' + nanoid(4);
+export function renderSpec(spec: Specification, meta: IMutField[], name: string, visId: string) {
+    const chart = newChart(meta, name, visId);
+    const fields = chart.encodings.dimensions.concat(chart.encodings.measures);
+    chart.config.defaultAggregated = Boolean(spec.aggregate);
+    if ((spec.geomType?.length ?? 0) > 0) {
+        chart.config.geoms = spec.geomType?.map((g) => geomAdapter(g)) ?? ['tick'];
+    }
+    if ((spec.facets?.length ?? 0) > 0) {
+        const facets = (spec.facets || []).concat(spec.highFacets || []);
+        for (let facet of facets) {
+            const f = fields.find((f) => f.fid === facet);
+            f && chart.encodings.rows.push(f);
+        }
+    }
+    if (spec.position) {
+        const [cols, rows] = spec.position;
+        if (cols) {
+            const f = fields.find((f) => f.fid === cols);
+            f && chart.encodings.columns.push(f);
+        }
+        if (rows) {
+            const f = fields.find((f) => f.fid === rows);
+            f && chart.encodings.rows.push(f);
+        }
+    }
+    if (spec.color && spec.color.length > 0) {
+        const color = spec.color[0];
+        const f = fields.find((f) => f.fid === color);
+        f && chart.encodings.color.push(f);
+    }
+    if (spec.size && spec.size.length > 0) {
+        const size = spec.size[0];
+        const f = fields.find((f) => f.fid === size);
+        f && chart.encodings.size.push(f);
+    }
+    if (spec.opacity && spec.opacity.length > 0) {
+        const opacity = spec.opacity[0];
+        const f = fields.find((f) => f.fid === opacity);
+        f && chart.encodings.opacity.push(f);
+    }
+    return chart;
 }
 
 function geomAdapter(geom: string) {
@@ -73,954 +630,5 @@ function geomAdapter(geom: string) {
         case 'tick':
         default:
             return 'tick';
-    }
-}
-
-function stackValueTransform(vlValue: string | undefined | null): IStackMode {
-    if (vlValue === 'center') return 'center';
-    if (vlValue === 'normalize') return 'normalize';
-    if (vlValue === 'zero') return 'zero';
-    return 'none';
-}
-
-function sortValueTransform(vlValue: object | string | null): ISortMode {
-    let order: string = 'none';
-    if (typeof vlValue === 'string') {
-        order = vlValue;
-    } else if (vlValue && vlValue instanceof Object) {
-        order = vlValue['order'] ?? 'ascending';
-    }
-    if (order !== 'none') {
-        const channels: string[] = ['x', 'y', 'color', 'size', 'opacity'];
-        // TODO: support all sorting config in vl
-        if (order.startsWith('-') || order === 'descending') return 'descending';
-        if (channels.indexOf(order) > -1 || order === 'ascending') return 'ascending';
-    }
-    return 'none';
-}
-
-type DeepReadonly<T extends Record<keyof any, any>> = {
-    readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
-};
-
-function isDraggableStateEmpty(state: DeepReadonly<DraggableFieldState>): boolean {
-    return Object.values(state).every((value) => value.length === 0);
-}
-
-function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, timeout: number) {
-    return (...args: T) =>
-        Promise.race([
-            f(...args),
-            new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('timeout')), timeout);
-            }),
-        ]);
-}
-
-export class VizSpecStore {
-    // public fields: IViewField[] = [];
-    private commonStore: CommonStore;
-    /**
-     * This segment will always refers to the state of the active tab -
-     * `this.visList[this.visIndex].encodings`.
-     * Notice that observing rule of `this.visList` is `"shallow"`
-     * so mobx will NOT compare every deep value of `this.visList`,
-     * because the active tab is the only item in the list that may change.
-     * @readonly
-     * Assignment or mutable operations applied to ANY members of this segment
-     * is strictly FORBIDDEN.
-     * Members of it can only be got as READONLY objects.
-     *
-     * If you're trying to change the value of it and let mobx catch the action to trigger an update,
-     * please use `this.useMutable()` to access to a writable reference
-     * (an `immer` draft) of `this.visList[this.visIndex]`.
-     */
-    public readonly draggableFieldState: DeepReadonly<DraggableFieldState>;
-    private reactions: IReactionDisposer[] = [];
-    /**
-     * This segment will always refers to the state of the active tab -
-     * `this.visList[this.visIndex].config`.
-     * Notice that observing rule of `this.visList` is `"shallow"`
-     * so mobx will NOT compare every deep value of `this.visList`,
-     * because the active tab is the only item in the list that may change.
-     * @readonly
-     * Assignment or mutable operations applied to ANY members of this segment
-     * is strictly FORBIDDEN.
-     * Members of it can only be got as READONLY objects.
-     *
-     * If you're trying to change the value of it and let mobx catch the action to trigger an update,
-     * please use `this.useMutable()` to access to a writable reference
-     * (an `immer` draft) of `this.visList[this.visIndex]`.
-     */
-    public readonly visualConfig: Readonly<IVisualConfig>;
-    public visList: VisSpecWithHistory[] = [];
-    public visIndex: number = 0;
-    public canUndo = false;
-    public canRedo = false;
-    public editingFilterIdx: number | null = null;
-    public removeConfirmIdx: number | null = null;
-    // TODO
-    public computationFunction: IComputationFunction = async () => [];
-    constructor(commonStore: CommonStore) {
-        this.commonStore = commonStore;
-        this.draggableFieldState = initEncoding();
-        this.visualConfig = initVisualConfig();
-        this.visList.push(
-            new VisSpecWithHistory({
-                name: 'Chart 1',
-                visId: uniqueId(),
-                config: this.visualConfig,
-                encodings: this.draggableFieldState,
-            })
-        );
-        makeAutoObservable(this, {
-            visList: observable.shallow,
-            computationFunction: observable.ref,
-            visualConfig: observable.ref,
-            // @ts-expect-error private fields are not supported
-            reactions: false,
-        });
-        this.reactions.push(
-            reaction(
-                () => this.visList[this.visIndex],
-                (frame) => {
-                    // @ts-ignore Allow assignment here to trigger watch
-                    this.draggableFieldState = frame.encodings;
-                    // @ts-ignore Allow assignment here to trigger watch
-                    this.visualConfig = frame.config;
-                    this.canUndo = frame.canUndo;
-                    this.canRedo = frame.canRedo;
-                }
-            ),
-            reaction(
-                () => commonStore.currentDataset,
-                (dataset) => {
-                    // this.initState();
-                    if (isDraggableStateEmpty(this.draggableFieldState) && dataset.dataSource.length > 0 && dataset.rawFields.length > 0) {
-                        this.initMetaState(dataset);
-                    }
-                }
-            )
-        );
-    }
-    private __dangerous_is_inside_useMutable__ = false;
-    /**
-     * @important NEVER recursively call `useMutable()`
-     * because the state will be overwritten by the root `useMutable()` call,
-     * update caused by recursive `useMutable()` call will be reverted or lead to unexpected behaviors.
-     * Inline your invoking or just use block with IF statement to avoid this in your cases.
-     *
-     * Allow to change any deep member of `encodings` or `config`
-     * in the active tab `this.visList[this.visIndex]`.
-     *
-     * - `tab.encodings`
-     *
-     * A mutable reference of `this.draggableFieldState`
-     *
-     * - `tab.config`
-     *
-     * A mutable reference of `this.visualConfig`
-     */
-    private useMutable(cb: (tab: { encodings: DraggableFieldState; config: IVisualConfig }) => void) {
-        if (this.__dangerous_is_inside_useMutable__) {
-            throw new Error(
-                'A recursive call of useMutable() is detected, ' + 'this is prevented because update will be overwritten by parent execution context.'
-            );
-        }
-
-        this.__dangerous_is_inside_useMutable__ = true;
-
-        const { encodings, config } = produce(
-            {
-                encodings: this.visList[this.visIndex].encodings,
-                config: this.visList[this.visIndex].config,
-            },
-            (draft) => {
-                cb(draft);
-            }
-        ); // notice that cb() may unexpectedly returns a non-nullable value
-
-        this.visList[this.visIndex].encodings = encodings;
-        this.visList[this.visIndex].config = config;
-
-        this.canUndo = this.visList[this.visIndex].canUndo;
-        this.canRedo = this.visList[this.visIndex].canRedo;
-
-        // @ts-ignore Allow assignment here to trigger watch
-        this.visualConfig = config;
-        // @ts-ignore Allow assignment here to trigger watch
-        this.draggableFieldState = encodings;
-
-        this.__dangerous_is_inside_useMutable__ = false;
-    }
-    public undo() {
-        if (this.visList[this.visIndex]?.undo()) {
-            this.canUndo = this.visList[this.visIndex].canUndo;
-            this.canRedo = this.visList[this.visIndex].canRedo;
-            // @ts-ignore Allow assignment here to trigger watch
-            this.visualConfig = this.visList[this.visIndex].config;
-            // @ts-ignore Allow assignment here to trigger watch
-            this.draggableFieldState = this.visList[this.visIndex].encodings;
-        }
-    }
-    public redo() {
-        if (this.visList[this.visIndex]?.redo()) {
-            this.canUndo = this.visList[this.visIndex].canUndo;
-            this.canRedo = this.visList[this.visIndex].canRedo;
-            // @ts-ignore Allow assignment here to trigger watch
-            this.visualConfig = this.visList[this.visIndex].config;
-            // @ts-ignore Allow assignment here to trigger watch
-            this.draggableFieldState = this.visList[this.visIndex].encodings;
-        }
-    }
-    private freezeHistory() {
-        this.visList[this.visIndex]?.rebase();
-        this.canUndo = this.visList[this.visIndex].canUndo;
-        this.canRedo = this.visList[this.visIndex].canRedo;
-    }
-    /**
-     * dimension fields in visualization
-     */
-    public get viewDimensions(): IViewField[] {
-        const { draggableFieldState } = this;
-        const { filters, ...state } = toJS(draggableFieldState);
-        const fields: IViewField[] = [];
-        (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
-            .forEach((dkey) => {
-                fields.push(...state[dkey].filter((f) => f.analyticType === 'dimension'));
-            });
-        return fields;
-    }
-    /**
-     * dimension fields in visualization
-     */
-    public get viewMeasures(): IViewField[] {
-        const { draggableFieldState } = this;
-        const { filters, ...state } = toJS(draggableFieldState);
-        const fields: IViewField[] = [];
-        (Object.keys(state) as (keyof DraggableFieldState)[])
-            .filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey))
-            .forEach((dkey) => {
-                fields.push(...state[dkey].filter((f) => f.analyticType === 'measure'));
-            });
-        return fields;
-    }
-    public get allFields(): IViewField[] {
-        const { draggableFieldState } = this;
-        const dimensions = toJS(draggableFieldState.dimensions);
-        const measures = toJS(draggableFieldState.measures);
-        return [...dimensions, ...measures];
-    }
-    public get viewFilters() {
-        const { draggableFieldState } = this;
-        const state = toJS(draggableFieldState);
-        return state.filters;
-    }
-
-    public addVisualization(defaultName?: string) {
-        const name = defaultName || 'Chart ' + (this.visList.length + 1);
-        this.visList.push(
-            new VisSpecWithHistory({
-                name,
-                visId: uniqueId(),
-                config: initVisualConfig(),
-                encodings: initEncoding(),
-            })
-        );
-        this.visIndex = this.visList.length - 1;
-    }
-    public selectVisualization(visIndex: number) {
-        this.visIndex = visIndex;
-    }
-    public removeVisualization(index: number) {
-        if (this.visList.length === 1) return;
-        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
-        this.visList.splice(index, 1);
-    }
-    public duplicateVisualization(index: number) {
-        const ori = this.visList[index].exportGW();
-        this.visList.push(
-            new VisSpecWithHistory({
-                ...ori,
-                name: ori.name + ' Copy',
-                visId: uniqueId(),
-            })
-        );
-        this.visIndex = this.visList.length - 1;
-    }
-
-    public setVisName(visIndex: number, name: string) {
-        this.visList[visIndex] = this.visList[visIndex].clone();
-        this.visList[visIndex].updateLatest({
-            name,
-        });
-    }
-    public initState() {
-        this.useMutable((tab) => {
-            tab.encodings = initEncoding();
-            this.freezeHistory();
-        });
-    }
-    public initMetaState(dataset: DataSet) {
-        const countField = createCountField();
-        const virtualFields = createVirtualFields();
-        this.useMutable(({ encodings }) => {
-            encodings.dimensions = dataset.rawFields
-                .filter((f) => f.analyticType === 'dimension')
-                .map((f) => ({
-                    dragId: uniqueId(),
-                    fid: f.fid,
-                    name: f.name || f.fid,
-                    basename: f.basename || f.name || f.fid,
-                    semanticType: f.semanticType,
-                    analyticType: f.analyticType,
-                }));
-            encodings.measures = dataset.rawFields
-                .filter((f) => f.analyticType === 'measure')
-                .map((f) => ({
-                    dragId: uniqueId(),
-                    fid: f.fid,
-                    name: f.name || f.fid,
-                    basename: f.basename || f.name || f.fid,
-                    analyticType: f.analyticType,
-                    semanticType: f.semanticType,
-                    aggName: 'sum',
-                }));
-            encodings.measures.push(countField);
-            for (const vf of virtualFields) {
-                encodings[`${vf.analyticType}s`].push(vf);
-            }
-        });
-
-        this.freezeHistory();
-    }
-    /**
-     * clear all config in draggable state
-     */
-    public clearState() {
-        this.useMutable(({ encodings }) => {
-            for (let key in encodings) {
-                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(key as keyof DraggableFieldState)) {
-                    encodings[key] = [];
-                }
-            }
-        });
-    }
-    public setVisualConfig<K extends keyof IVisualConfig>(configKey: K, value: IVisualConfig[K]) {
-        this.useMutable(({ config }) => {
-            switch (true) {
-                case ['defaultAggregated', 'defaultStack', 'showActions', 'interactiveScale', 'scaleIncludeUnmatchedChoropleth', 'useSvg'].includes(
-                    configKey
-                ): {
-                    return ((config as unknown as { [k: string]: boolean })[configKey] = Boolean(value));
-                }
-                case configKey === 'geoms' && Array.isArray(value):
-                case configKey === 'showTableSummary':
-                case configKey === 'coordSystem':
-                case configKey === 'size' && typeof value === 'object':
-                case configKey === 'sorted':
-                case configKey === 'zeroScale':
-                case configKey === 'background':
-                case configKey === 'resolve':
-                case configKey === 'limit':
-                case configKey === 'primaryColor':
-                case configKey === 'colorPalette':
-                case configKey === 'scale':
-                case configKey === 'folds':
-                case configKey === 'stack': {
-                    return (config[configKey] = value);
-                }
-                case configKey === 'format' && typeof value === 'object': {
-                    return (config[configKey] = value);
-                }
-
-                default: {
-                    console.error('[unknown key] ' + configKey + ' You should registered visualConfig at setVisualConfig');
-                }
-            }
-        });
-    }
-    public transformCoord(coord: 'cartesian' | 'polar') {
-        if (coord === 'polar') {
-        }
-    }
-    public setChartLayout(props: { mode: IVisualConfig['size']['mode']; width?: number; height?: number }) {
-        this.useMutable(({ config }) => {
-            const { mode = config.size.mode, width = config.size.width, height = config.size.height } = props;
-
-            config.size.mode = mode;
-            config.size.width = width;
-            config.size.height = height;
-        });
-    }
-    public reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
-        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
-        if (sourceIndex === destinationIndex) return;
-
-        this.useMutable(({ encodings }) => {
-            const fields = encodings[stateKey];
-            const [field] = fields.splice(sourceIndex, 1);
-            fields.splice(destinationIndex, 0, field);
-        });
-    }
-    public moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
-        if (sourceKey === 'filters') {
-            return this.removeField(sourceKey, sourceIndex);
-        } else if (destinationKey === 'filters') {
-            return this.appendFilter(destinationIndex, this.draggableFieldState[sourceKey][sourceIndex]);
-        }
-
-        this.useMutable(({ encodings }) => {
-            let movingField: IViewField;
-            // 来源是不是metafield，是->clone；不是->直接删掉
-            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) {
-                // use a different dragId
-                movingField = {
-                    ...toJS(encodings[sourceKey][sourceIndex]), // toJS will NOT shallow copy a object here
-                    dragId: uniqueId(),
-                };
-            } else {
-                [movingField] = encodings[sourceKey].splice(sourceIndex, 1);
-            }
-            // 目的地是metafields的情况，只有在来源也是metafields时，会执行字段类型转化操作
-            if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) {
-                if (!GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
-                encodings[sourceKey].splice(sourceIndex, 1);
-                movingField = new Field(movingField).switchAnalyticType(destinationKey === 'dimensions' ? 'dimension' : 'measure')
-            }
-            const limitSize = getChannelSizeLimit(destinationKey);
-            const fixedDestinationIndex = Math.min(destinationIndex, limitSize - 1);
-            const overflowSize = Math.max(0, encodings[destinationKey].length + 1 - limitSize);
-            encodings[destinationKey].splice(fixedDestinationIndex, overflowSize, movingField);
-        });
-    }
-    public removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
-        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
-
-        this.useMutable(({ encodings }) => {
-            const fields = encodings[sourceKey];
-            fields.splice(sourceIndex, 1);
-        });
-    }
-    public replaceField(sourceKey: keyof DraggableFieldState, sourceIndex: number, fid: string) {
-        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
-        const enteringField = [...this.draggableFieldState.dimensions, ...this.draggableFieldState.measures].find((which) => which.fid === fid);
-        if (!enteringField) {
-            return;
-        }
-
-        this.useMutable(({ encodings }) => {
-            const fields = encodings[sourceKey];
-            fields.splice(sourceIndex, 1, toJS(enteringField));
-        });
-    }
-    private appendFilter(index: number, data: IViewField) {
-        this.useMutable(({ encodings }) => {
-            encodings.filters.splice(index, 0, {
-                ...toJS(data),
-                dragId: uniqueId(),
-                rule: null,
-            });
-            this.editingFilterIdx = index;
-        });
-    }
-    public writeFilter(index: number, rule: IFilterRule | null) {
-        this.useMutable(({ encodings }) => {
-            encodings.filters[index].rule = rule;
-        });
-    }
-    public setFilterEditing(index: number) {
-        this.editingFilterIdx = index;
-    }
-    public closeFilterEditing() {
-        this.editingFilterIdx = null;
-    }
-    public transpose() {
-        this.useMutable(({ encodings }) => {
-            const fieldsInCup = encodings.columns;
-
-            encodings.columns = encodings.rows;
-            encodings.rows = fieldsInCup as typeof encodings.rows; // assume this as writable
-
-            const fieldsInCup2 = encodings.longitude;
-            encodings.longitude = encodings.latitude;
-            encodings.latitude = fieldsInCup2 as typeof encodings.latitude; // assume this as writable
-        });
-    }
-    public createBinField(stateKey: keyof DraggableFieldState, index: number, binType: 'bin' | 'binCount', num: number | undefined = 10): string {
-        const newVarKey = uniqueId();
-        const state = this.draggableFieldState;
-        const existedRelatedBinField = state.dimensions.find(
-            (f) =>
-                f.computed &&
-                f.expression &&
-                f.expression.op === binType &&
-                f.expression.num === num &&
-                f.expression.params[0].value === state[stateKey][index].fid
-        );
-        if (existedRelatedBinField) {
-            return existedRelatedBinField.fid;
-        }
-        this.useMutable(({ encodings }) => {
-            const originField = encodings[stateKey][index];
-            const binField: IViewField = {
-                fid: newVarKey,
-                dragId: newVarKey,
-                name: `${binType}${num}(${originField.name})`,
-                semanticType: 'ordinal',
-                analyticType: 'dimension',
-                computed: true,
-                expression: {
-                    op: binType,
-                    as: newVarKey,
-                    params: [
-                        {
-                            type: 'field',
-                            value: originField.fid,
-                        },
-                    ],
-                    num: num,
-                },
-            };
-            encodings.dimensions.push(binField);
-        });
-        return newVarKey;
-    }
-    public createLogField(stateKey: keyof DraggableFieldState, index: number, scaleType: 'log', num: number | undefined = 10) {
-        if (stateKey === 'filters') {
-            return;
-        }
-        this.useMutable(({ encodings }) => {
-            const originField = encodings[stateKey][index];
-            const newVarKey = uniqueId();
-            const logField: IViewField = {
-                fid: newVarKey,
-                dragId: newVarKey,
-                name: `${scaleType}${num}(${originField.name})`,
-                semanticType: 'quantitative',
-                analyticType: originField.analyticType,
-                aggName: 'sum',
-                computed: true,
-                expression: {
-                    op: scaleType,
-                    as: newVarKey,
-                    num: num,
-                    params: [
-                        {
-                            type: 'field',
-                            value: originField.fid,
-                        },
-                    ],
-                },
-            };
-            encodings[stateKey].push(logField);
-        });
-    }
-    public changeSemanticType(stateKey: keyof DraggableFieldState, index: number, newSemanticType: ISemanticType) {
-        this.useMutable(({ encodings }) => {
-            const originField = encodings[stateKey][index];
-            encodings[stateKey].splice(index, 1, {
-                ...originField,
-                semanticType: newSemanticType,
-            });
-        });
-    }
-    public createDateTimeDrilledField(
-        stateKey: keyof DraggableFieldState,
-        index: number,
-        op: 'dateTimeDrill',
-        drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
-        name: string | ((originFieldName: string) => string),
-        format: string
-    );
-    public createDateTimeDrilledField(
-        stateKey: keyof DraggableFieldState,
-        index: number,
-        op: 'dateTimeFeature',
-        drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
-        name: string | ((originFieldName: string) => string),
-        format: string
-    );
-    public createDateTimeDrilledField(stateKey, index, op, drillLevel, name, format) {
-        if (stateKey === 'filters') {
-            return;
-        }
-
-        this.useMutable(({ encodings }) => {
-            const originField = encodings[stateKey][index];
-            const newVarKey = uniqueId();
-            const logField: IViewField = {
-                fid: newVarKey,
-                dragId: newVarKey,
-                name: typeof name === 'function' ? name(originField.name) : name,
-                semanticType: op === 'dateTimeDrill' ? 'temporal' : 'ordinal',
-                analyticType: originField.analyticType,
-                aggName: 'sum',
-                computed: true,
-                timeUnit: op === 'dateTimeDrill' ? drillLevel : undefined,
-                expression: {
-                    op,
-                    as: newVarKey,
-                    params: [
-                        {
-                            type: 'field',
-                            value: originField.fid,
-                        },
-                        {
-                            type: 'value',
-                            value: drillLevel,
-                        },
-                        {
-                            type: 'format',
-                            value: format,
-                        },
-                    ],
-                },
-            };
-            encodings[stateKey].push(logField);
-        });
-    }
-    public setFieldAggregator(stateKey: keyof DraggableFieldState, index: number, aggName: string) {
-        this.useMutable(({ encodings }) => {
-            const fields = encodings[stateKey];
-
-            if (fields[index]) {
-                encodings[stateKey][index].aggName = aggName;
-            }
-        });
-    }
-    public openRemoveConfirmModal(index: number) {
-        this.removeConfirmIdx = index;
-    }
-
-    public closeRemoveConfirmModal() {
-        this.removeConfirmIdx = null;
-    }
-
-    public get sortCondition() {
-        const { rows, columns } = this.draggableFieldState;
-        const yField = rows.length > 0 ? rows[rows.length - 1] : null;
-        const xField = columns.length > 0 ? columns[columns.length - 1] : null;
-        if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
-            return true;
-        }
-        if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
-            return true;
-        }
-        return false;
-    }
-    public setFieldSort(stateKey: keyof DraggableFieldState, index: number, sortType: ISortMode) {
-        this.useMutable(({ encodings }) => {
-            encodings[stateKey][index].sort = sortType;
-        });
-    }
-    public applyDefaultSort(sortType: ISortMode = 'ascending') {
-        this.useMutable(({ encodings }) => {
-            const { rows, columns } = encodings;
-            const yField = rows.length > 0 ? rows[rows.length - 1] : null;
-            const xField = columns.length > 0 ? columns[columns.length - 1] : null;
-
-            if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
-                encodings.columns[columns.length - 1].sort = sortType;
-                return;
-            }
-            if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
-                encodings.rows[rows.length - 1].sort = sortType;
-                return;
-            }
-        });
-    }
-    public appendField(destinationKey: keyof DraggableFieldState, field: IViewField | undefined, overrideAttr?: Record<string, any>) {
-        if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey)) return;
-        if (typeof field === 'undefined') return;
-        if (destinationKey === 'filters') {
-            return;
-        }
-
-        this.useMutable(({ encodings }) => {
-            const cloneField = { ...toJS(field), ...overrideAttr };
-            cloneField.dragId = uniqueId();
-            encodings[destinationKey].push(cloneField);
-        });
-    }
-    public setVizFormatConfig(formatKey: keyof IVisualConfig['format'], value?: string) {
-        this.visualConfig[formatKey] = value;
-    }
-    public renderVLSubset(vlStruct: any) {
-        const tab = this.visList[this.visIndex];
-        this.clearState();
-        this.setVisualConfig('defaultAggregated', false);
-        this.setVisualConfig('stack', 'stack');
-        // this.setVisualConfig('sorted', 'none')
-        this.applyDefaultSort('none');
-
-        if (!tab) return;
-        const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
-        const countField = fields.find((f) => f.fid === COUNT_FIELD_ID);
-        const renderVLFacet = (vlFacet: any) => {
-            if (vlFacet.facet) {
-                this.appendField('rows', fields.find((f) => f.fid === vlFacet.facet.field) || countField, { analyticType: 'dimension' });
-            }
-            if (vlFacet.row) {
-                this.appendField('rows', fields.find((f) => f.fid === vlFacet.row.field) || countField, { analyticType: 'dimension' });
-            }
-            if (vlFacet.column) {
-                this.appendField('columns', fields.find((f) => f.fid === vlFacet.column.field) || countField, { analyticType: 'dimension' });
-            }
-        };
-        const isValidAggregate = (aggName: string) => aggName && (GLOBAL_CONFIG.AGGREGATOR_LIST as string[]).includes(aggName);
-        const renderVLSpec = (vlSpec: any) => {
-            if (typeof vlSpec.mark === 'string') {
-                this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark)]);
-            } else {
-                this.setVisualConfig('geoms', [geomAdapter(vlSpec.mark.type)]);
-            }
-            if (vlSpec.encoding.x) {
-                const field = fields.find((f) => f.fid === vlSpec.encoding.x.field) || countField;
-                this.appendField('columns', field, { analyticType: 'dimension' });
-                if (isValidAggregate(vlSpec.encoding.x.aggregate) || field === countField) {
-                    this.setVisualConfig('defaultAggregated', true);
-                    this.setFieldAggregator('columns', this.draggableFieldState.columns.length - 1, vlSpec.encoding.x.aggregate);
-                }
-                if (vlSpec.encoding.x.bin) {
-                    const binFid = this.createBinField('columns', this.draggableFieldState.columns.length - 1, 'bin');
-                    this.replaceField('columns', this.draggableFieldState.columns.length - 1, binFid);
-                }
-                if (vlSpec.encoding.x.stack) {
-                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.x.stack));
-                }
-            }
-            if (vlSpec.encoding.y) {
-                const field = fields.find((f) => f.fid === vlSpec.encoding.y.field) || countField;
-                this.appendField('rows', field, { analyticType: 'measure' });
-                if (isValidAggregate(vlSpec.encoding.y.aggregate) || field === countField) {
-                    this.setVisualConfig('defaultAggregated', true);
-                    this.setFieldAggregator('rows', this.draggableFieldState.rows.length - 1, vlSpec.encoding.y.aggregate);
-                }
-                if (vlSpec.encoding.y.bin) {
-                    const binFid = this.createBinField('rows', this.draggableFieldState.rows.length - 1, 'bin');
-                    this.replaceField('rows', this.draggableFieldState.rows.length - 1, binFid);
-                }
-                if (vlSpec.encoding.y.stack) {
-                    this.setVisualConfig('stack', stackValueTransform(vlSpec.encoding.y.stack));
-                }
-            }
-
-            (['color', 'opacity', 'shape', 'size', 'details', 'theta', 'text', 'radius'] as (keyof DraggableFieldState)[]).forEach((ch) => {
-                if (vlSpec.encoding[ch]) {
-                    const field = fields.find((f) => f.fid === vlSpec.encoding[ch].field) || countField;
-                    this.appendField(
-                        ch,
-                        field,
-                        field !== countField && ['color', 'opacity', 'size', 'radius'].includes(ch)
-                            ? { analyticType: 'dimension' }
-                            : field === countField || ['theta'].includes(ch)
-                            ? { analyticType: 'measure' }
-                            : {}
-                    );
-                    const aggregate = isValidAggregate(vlSpec.encoding[ch].aggregate);
-                    if ((['theta', 'radius'].includes(ch) && aggregate) || field === countField) {
-                        this.setVisualConfig('defaultAggregated', true);
-                        if (aggregate) {
-                            this.setFieldAggregator(ch, this.draggableFieldState[ch].length - 1, vlSpec.encoding[ch].aggregate);
-                        }
-                    }
-                }
-            });
-            ['x', 'y', 'facet'].forEach((ch) => {
-                if (vlSpec.encoding[ch] && vlSpec.encoding[ch].sort) {
-                    this.applyDefaultSort(sortValueTransform(vlSpec.encoding[ch].sort));
-                }
-            });
-            if (vlSpec.encoding.order && vlSpec.encoding.order.sort) {
-                this.applyDefaultSort(sortValueTransform(vlSpec.encoding.order.sort));
-            }
-        };
-        if (vlStruct.encoding && vlStruct.mark) {
-            renderVLFacet(vlStruct.encoding);
-            renderVLSpec(vlStruct);
-        } else if (vlStruct.spec) {
-            if (vlStruct.facet) {
-                renderVLFacet(vlStruct.facet);
-            }
-            renderVLSpec(vlStruct.spec);
-        }
-    }
-    public renderSpec(spec: Specification) {
-        const tab = this.visList[this.visIndex];
-
-        if (tab) {
-            const fields = tab.encodings.dimensions.concat(tab.encodings.measures);
-            // thi
-            // const [xField, yField, ] = spec.position;
-            this.clearState();
-            this.setVisualConfig('defaultAggregated', Boolean(spec.aggregate));
-            if ((spec.geomType?.length ?? 0) > 0) {
-                this.setVisualConfig(
-                    'geoms',
-                    spec.geomType!.map((g) => geomAdapter(g))
-                );
-            }
-            if ((spec.facets?.length ?? 0) > 0) {
-                const facets = (spec.facets || []).concat(spec.highFacets || []);
-                for (let facet of facets) {
-                    this.appendField(
-                        'rows',
-                        fields.find((f) => f.fid === facet)
-                    );
-                }
-            }
-            if (spec.position) {
-                const [cols, rows] = spec.position;
-                if (cols)
-                    this.appendField(
-                        'columns',
-                        fields.find((f) => f.fid === cols)
-                    );
-                if (rows)
-                    this.appendField(
-                        'rows',
-                        fields.find((f) => f.fid === rows)
-                    );
-            }
-            if ((spec.color?.length ?? 0) > 0) {
-                this.appendField(
-                    'color',
-                    fields.find((f) => f.fid === spec.color![0])
-                );
-            }
-            if ((spec.size?.length ?? 0) > 0) {
-                this.appendField(
-                    'size',
-                    fields.find((f) => f.fid === spec.size![0])
-                );
-            }
-            if ((spec.opacity?.length ?? 0) > 0) {
-                this.appendField(
-                    'opacity',
-                    fields.find((f) => f.fid === spec.opacity![0])
-                );
-            }
-        }
-    }
-    public destroy() {
-        this.reactions.forEach((rec) => {
-            rec();
-        });
-    }
-    public exportAsRaw() {
-        const pureVisList = dumpsGWPureSpec(this.visList);
-        return stringifyGWContent({
-            datasets: toJS(this.commonStore.datasets),
-            dataSources: this.commonStore.dataSources,
-            specList: this.visSpecEncoder(pureVisList),
-        });
-    }
-    public exportViewSpec() {
-        const pureVisList = dumpsGWPureSpec(this.visList);
-        return this.visSpecEncoder(pureVisList);
-    }
-    public importStoInfo(stoInfo: IStoInfo) {
-        this.visList = parseGWPureSpec(visSpecDecoder(forwardVisualConfigs(stoInfo.specList)));
-        this.visIndex = 0;
-        this.commonStore.datasets = stoInfo.datasets;
-        this.commonStore.dataSources = stoInfo.dataSources;
-        this.commonStore.dsIndex = Math.max(stoInfo.datasets.length - 1, 0);
-    }
-    public importRaw(raw: string) {
-        const content = parseGWContent(raw);
-        this.importStoInfo(content);
-    }
-
-    public setGeographicUrl(geoUrl: IGeoUrl) {
-        this.useMutable(({ config }) => {
-            config.geoUrl = geoUrl;
-        });
-    }
-
-    public clearGeographicData() {
-        this.useMutable(({ config }) => {
-            config.geojson = undefined;
-            config.geoKey = undefined;
-            config.geoUrl = undefined;
-        });
-    }
-
-    public setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
-        const geoJSON =
-            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
-        if (!('features' in geoJSON)) {
-            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
-            return;
-        }
-        this.useMutable(({ config }) => {
-            config.geojson = geoJSON;
-            config.geoKey = geoKey;
-            config.geoUrl = geoUrl;
-        });
-    }
-    public updateGeoKey(key: string) {
-        this.useMutable(({ config }) => {
-            config.geoKey = key;
-        });
-    }
-
-    private visSpecEncoder(visList: IVisSpec[]): IVisSpecForExport[] {
-        const updatedVisList = visList.map((visSpec) => {
-            const updatedFilters = visSpec.encodings.filters.map((filter) => {
-                if (filter.rule?.type === 'one of') {
-                    const rule = {
-                        ...filter.rule,
-                        value: Array.from(filter.rule.value),
-                    };
-                    return {
-                        ...filter,
-                        rule,
-                    };
-                }
-                return filter as IFilterFieldForExport;
-            });
-            return {
-                ...visSpec,
-                encodings: {
-                    ...visSpec.encodings,
-                    filters: updatedFilters,
-                },
-                config: {
-                    ...visSpec.config,
-                    geojson: visSpec.config.geoUrl ? undefined : visSpec.config.geojson,
-                },
-            };
-        });
-        return updatedVisList;
-    }
-    public get limit() {
-        return this.visualConfig.limit;
-    }
-
-    public setLimit(value: number) {
-        this.setVisualConfig('limit', value);
-    }
-
-    public get sort() {
-        return getSort(this.draggableFieldState);
-    }
-
-    public getWorkflow() {
-        return toWorkflow(
-            this.viewFilters,
-            this.allFields,
-            this.viewDimensions,
-            this.viewMeasures,
-            this.visualConfig.defaultAggregated,
-            this.sort,
-            this.visualConfig.folds ?? [],
-            this.limit > 0 ? this.limit : undefined
-        );
-    }
-
-    public setComputationFunction(f: IComputationFunction, timeout = 60000) {
-        this.computationFunction = withTimeout(f, timeout);
     }
 }

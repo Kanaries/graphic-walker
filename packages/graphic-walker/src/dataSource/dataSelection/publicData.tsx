@@ -12,7 +12,7 @@ interface IPublicDataProps {
 }
 
 const PublicData: React.FC<IPublicDataProps> = props => {
-    const { commonStore } = useGlobalStore();
+    const commonStore= useGlobalStore();
     const { tmpDataSource } = commonStore;
     const { t } = useTranslation('translation', { keyPrefix: 'DataSource.dialog.public' });
 

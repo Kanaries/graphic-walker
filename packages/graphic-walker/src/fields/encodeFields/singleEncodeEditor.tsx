@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { IDraggableStateKey } from '../../interfaces';
+import { DraggableFieldState, IAggregator, IDraggableStateKey } from '../../interfaces';
 import { observer } from 'mobx-react-lite';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
 import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
@@ -18,16 +18,18 @@ const PillActions = styled.div`
 `;
 
 interface SingleEncodeEditorProps {
-    dkey: IDraggableStateKey;
+    dkey: {
+        id: keyof Omit<DraggableFieldState, 'filters'>
+    };
     provided: DroppableProvided;
     snapshot: DroppableStateSnapshot;
 }
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
-    const { vizStore } = useGlobalStore();
-    const { draggableFieldState, visualConfig, allFields } = vizStore;
-    const folds = visualConfig.folds ?? [];
-    const channelItem = draggableFieldState[dkey.id][0];
+    const vizStore = useVizStore();
+    const { allEncodings, config, allFields } = vizStore;
+    const folds = config.folds ?? [];
+    const channelItem = allEncodings[dkey.id][0];
     const { t } = useTranslation();
 
     const aggregationOptions = useMemo(() => {
@@ -48,9 +50,13 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
             <div
+               
                 className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
+                    
                     (channelItem && !snapshot.draggingFromThisWith) || snapshot.isDraggingOver ? 'opacity-0' : 'opacity-100'
+                
                 } relative z-0`}
+            
             >
                 {t('actions.drop_field')}
             </div>
@@ -86,11 +92,11 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                         </SelectContext>
                                     )}
                                     {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}
-                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
+                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
                                         <DropdownContext
                                             options={aggregationOptions}
                                             onSelect={(value) => {
-                                                vizStore.setFieldAggregator(dkey.id, 0, value);
+                                                vizStore.setFieldAggregator(dkey.id, 0, value as IAggregator);
                                             }}
                                         >
                                             <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">

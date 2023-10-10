@@ -1,16 +1,14 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useState } from 'react';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
 import { IViewField } from '../../interfaces';
-import { VisSpecWithHistory } from '../../models/visSpecHistory';
-import { visSpecDecoder, forwardVisualConfigs } from '../../utils/save';
 import { useTranslation } from 'react-i18next';
 
 type VEGALite = any;
 
-const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw'
+const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw';
 
 async function vizQuery(api: string, metas: IViewField[], query: string, headers: Record<string, string>) {
     const res = await fetch(api, {
@@ -42,10 +40,10 @@ async function vizQuery(api: string, metas: IViewField[], query: string, headers
     }
 }
 
-const AskViz: React.FC<{api?: string; headers?: Record<string, string>}> = (props) => {
+const AskViz: React.FC<{ api?: string; headers?: Record<string, string> }> = (props) => {
     const [query, setQuery] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
-    const { vizStore } = useGlobalStore();
+    const vizStore = useVizStore();
     const {t} = useTranslation();
 
     const allFields = vizStore.allFields;
@@ -54,10 +52,7 @@ const AskViz: React.FC<{api?: string; headers?: Record<string, string>}> = (prop
         setLoading(true);
         vizQuery(props.api ?? api, allFields, query, props.headers ?? {})
             .then((data) => {
-                vizStore.visList.push(new VisSpecWithHistory(visSpecDecoder(forwardVisualConfigs([data]))[0]));
-                vizStore.selectVisualization(vizStore.visList.length - 1);
-                // const liteGW = parseGW(spec);
-                // vizStore.renderSpec(liteGW);
+                vizStore.appendFromOld(data);
             })
             .finally(() => {
                 setLoading(false);

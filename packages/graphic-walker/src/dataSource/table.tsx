@@ -11,20 +11,17 @@ interface TableProps {
 
 const Table: React.FC<TableProps> = (props) => {
     const { size = 10 } = props;
-    const { commonStore } = useGlobalStore();
+    const commonStore = useGlobalStore();
     const { tmpDSRawFields, tmpDataSource } = commonStore;
+
+    const metas = React.useMemo(() => toJS(tmpDSRawFields), [ tmpDSRawFields]);
 
     const computation = React.useMemo(() => getComputation(tmpDataSource), [tmpDataSource])
 
     return (
         <DataTable
             size={size}
-            dataset={{
-                id: "tmp",
-                name: "tmp",
-                dataSource: tmpDataSource,
-                rawFields: toJS(tmpDSRawFields),
-            }}
+            metas={metas}
             computation={computation}
             total={tmpDataSource.length}
             onMetaChange={(fid, fIndex, diffMeta) => {

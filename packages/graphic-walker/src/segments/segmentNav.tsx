@@ -1,14 +1,14 @@
 import React, { useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import DefaultTab, { ITabOption } from "../components/tabs/defaultTab";
-import { useGlobalStore } from "../store";
+import { useVizStore } from "../store";
 import { ChartPieIcon, CircleStackIcon } from "@heroicons/react/24/outline";
 import { ISegmentKey } from "../interfaces";
 import { useTranslation } from "react-i18next";
 
 const SegmentNav: React.FC = (props) => {
-    const { vizStore, commonStore } = useGlobalStore();
-    const { segmentKey } = commonStore;
+    const vizStore = useVizStore();
+    const { segmentKey } = vizStore;
     const { t } = useTranslation();
 
     const tabs: ITabOption[] = [
@@ -36,7 +36,7 @@ const SegmentNav: React.FC = (props) => {
             tabs={tabs}
             onEditLabel={editLabelHandler}
             onSelected={(k) => {
-                commonStore.setSegmentKey(k as ISegmentKey)
+                vizStore.setSegmentKey(k as ISegmentKey)
             }}
         />
     );

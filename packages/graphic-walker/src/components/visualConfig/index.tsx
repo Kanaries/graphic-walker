@@ -4,9 +4,9 @@ import { runInAction, toJS } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import { SketchPicker } from 'react-color';
 
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import { GLOBAL_CONFIG } from '../../config';
-import { IConfigScale, IVisualConfig } from '../../interfaces';
+import { IConfigScale, IVisualConfig, IVisualLayout } from '../../interfaces';
 import PrimaryButton from '../button/primary';
 import DefaultButton from '../button/default';
 
@@ -16,6 +16,7 @@ import DropdownSelect from '../dropdownSelect';
 import { ColorSchemes, extractRGBA } from './colorScheme';
 import { RangeScale } from './range-scale';
 import { ConfigItemContainer, ConfigItemContent, ConfigItemHeader, ConfigItemTitle } from './config-item';
+import { KVTuple } from '../../models/utils';
 
 const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
@@ -67,33 +68,32 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
 }
 
 const VisualConfigPanel: React.FC = (props) => {
-    const { commonStore, vizStore } = useGlobalStore();
-    const { showVisualConfigPanel } = commonStore;
-    const { visualConfig } = vizStore;
+    const vizStore = useVizStore();
+    const { config, layout, showVisualConfigPanel } = vizStore;
     const {
         coordSystem,
         geoms: [markType],
-    } = visualConfig;
+    } = config;
     const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
-        numberFormat: visualConfig.format.numberFormat,
-        timeFormat: visualConfig.format.timeFormat,
-        normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
+        numberFormat: layout.format.numberFormat,
+        timeFormat: layout.format.timeFormat,
+        normalizedNumberFormat: layout.format.normalizedNumberFormat,
     });
     const [resolve, setResolve] = useState<IVisualConfig['resolve']>({
-        x: visualConfig.resolve.x,
-        y: visualConfig.resolve.y,
-        color: visualConfig.resolve.color,
-        opacity: visualConfig.resolve.opacity,
-        shape: visualConfig.resolve.shape,
-        size: visualConfig.resolve.size,
+        x: layout.resolve.x,
+        y: layout.resolve.y,
+        color: layout.resolve.color,
+        opacity: layout.resolve.opacity,
+        shape: layout.resolve.shape,
+        size: layout.resolve.size,
     });
-    const [zeroScale, setZeroScale] = useState<boolean>(visualConfig.zeroScale);
-    const [svg, setSvg] = useState<boolean>(visualConfig.useSvg ?? false);
-    const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
-    const [background, setBackground] = useState<string | undefined>(visualConfig.background);
+    const [zeroScale, setZeroScale] = useState<boolean>(layout.zeroScale);
+    const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
+    const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
+    const [background, setBackground] = useState<string | undefined>(layout.background);
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [colorEdited, setColorEdited] = useState(false);
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
@@ -102,27 +102,27 @@ const VisualConfigPanel: React.FC = (props) => {
     const sizeValue = useScale(0, 100);
 
     useEffect(() => {
-        setZeroScale(visualConfig.zeroScale);
-        setBackground(visualConfig.background);
-        setResolve(toJS(visualConfig.resolve));
-        setDefaultColor(extractRGBA(visualConfig.primaryColor));
+        setZeroScale(layout.zeroScale);
+        setBackground(layout.background);
+        setResolve(layout.resolve);
+        setDefaultColor(extractRGBA(layout.primaryColor));
         setColorEdited(false);
-        setScaleIncludeUnmatchedChoropleth(visualConfig.scaleIncludeUnmatchedChoropleth ?? false);
+        setScaleIncludeUnmatchedChoropleth(layout.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
-            numberFormat: visualConfig.format.numberFormat,
-            timeFormat: visualConfig.format.timeFormat,
-            normalizedNumberFormat: visualConfig.format.normalizedNumberFormat,
+            numberFormat: layout.format.numberFormat,
+            timeFormat: layout.format.timeFormat,
+            normalizedNumberFormat: layout.format.normalizedNumberFormat,
         });
-        setColorPalette(visualConfig.colorPalette ?? '');
-        opacityValue.setValue(visualConfig.scale?.opacity ?? {});
-        sizeValue.setValue(visualConfig.scale?.size ?? {});
+        setColorPalette(layout.colorPalette ?? '');
+        opacityValue.setValue(layout.scale?.opacity ?? {});
+        sizeValue.setValue(layout.scale?.size ?? {});
     }, [showVisualConfigPanel]);
 
     return (
         <Modal
             show={showVisualConfigPanel}
             onClose={() => {
-                commonStore.setShowVisualConfigPanel(false);
+                vizStore.setShowVisualConfigPanel(false);
             }}
         >
             <div
@@ -197,7 +197,9 @@ const VisualConfigPanel: React.FC = (props) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium leading-6">{t('config.background')} {t(`config.color`)}</label>
+                                <label className="block text-xs font-medium leading-6">
+                                    {t('config.background')} {t(`config.color`)}
+                                </label>
                                 <input
                                     type="text"
                                     className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
@@ -261,12 +263,6 @@ const VisualConfigPanel: React.FC = (props) => {
                 <ConfigItemContainer>
                     <ConfigItemHeader>
                         <ConfigItemTitle>{t('config.independence')}</ConfigItemTitle>
-                        <p className="text-xs">
-                            {t(`config.formatGuidesDocs`)}:{' '}
-                            <a target="_blank" className="underline text-blue-500" href="https://docs.kanaries.net">
-                                {t(`config.readHere`)}
-                            </a>
-                        </p>
                     </ConfigItemHeader>
                     <ConfigItemContent>
                         <div className="flex space-x-6">
@@ -336,18 +332,25 @@ const VisualConfigPanel: React.FC = (props) => {
                         className="mr-2"
                         onClick={() => {
                             runInAction(() => {
-                                vizStore.setVisualConfig('format', format);
-                                vizStore.setVisualConfig('zeroScale', zeroScale);
-                                vizStore.setVisualConfig('scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth);
-                                vizStore.setVisualConfig('background', background);
-                                vizStore.setVisualConfig('resolve', resolve);
-                                if (colorEdited) {
-                                    vizStore.setVisualConfig('primaryColor', `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`);
-                                }
-                                vizStore.setVisualConfig('colorPalette', colorPalette);
-                                vizStore.setVisualConfig('useSvg', svg);
-                                vizStore.setVisualConfig('scale', { opacity: opacityValue.value, size: sizeValue.value });
-                                commonStore.setShowVisualConfigPanel(false);
+                                vizStore.setVisualLayout(
+                                    ['format', format],
+                                    ['zeroScale', zeroScale],
+                                    ['scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth],
+                                    ['background', background],
+                                    ['resolve', resolve],
+                                    ['colorPalette', colorPalette],
+                                    ['useSvg', svg],
+                                    ['scale', { opacity: opacityValue.value, size: sizeValue.value }],
+                                    ...(colorEdited
+                                        ? [
+                                              [
+                                                  'primaryColor',
+                                                  `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`,
+                                              ] as KVTuple<IVisualLayout>,
+                                          ]
+                                        : [])
+                                );
+                                vizStore.setShowVisualConfigPanel(false);
                             });
                         }}
                     />
@@ -355,7 +358,7 @@ const VisualConfigPanel: React.FC = (props) => {
                         text={t('actions.cancel')}
                         className="mr-2"
                         onClick={() => {
-                            commonStore.setShowVisualConfigPanel(false);
+                            vizStore.setShowVisualConfigPanel(false);
                         }}
                     />
                 </div>

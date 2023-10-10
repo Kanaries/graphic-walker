@@ -5,7 +5,7 @@ import {
     Droppable, DroppableProvided,
 } from "@kanaries/react-beautiful-dnd";
 
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import { FilterFieldContainer, FilterFieldsContainer } from '../components';
 import FilterPill from './filterPill';
 import FilterEditDialog from './filterEditDialog';
@@ -16,8 +16,8 @@ interface FieldContainerProps {
 }
 
 const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided }) => {
-    const { vizStore } = useGlobalStore();
-    const { draggableFieldState: { filters } } = vizStore;
+    const vizStore = useVizStore();
+    const { viewFilters: filters } = vizStore;
 
     return (
         <FilterFieldsContainer

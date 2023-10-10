@@ -1,25 +1,26 @@
 import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import { toJS } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IComputationFunction, IChannelScales } from '../interfaces';
+import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfigNew, IComputationFunction, IVisualLayout, IChannelScales } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
+import { GWGlobalConfig } from '../vis/theme';
 
 type IPureRendererProps =
     | {
           name?: string;
           themeKey?: IThemeKey;
-          themeConfig?: any;
+          themeConfig?: GWGlobalConfig;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
-          visualConfig: IVisualConfig;
+          visualConfig: IVisualConfigNew;
+          visualLayout: IVisualLayout;
           locale?: string;
           channelScales?: IChannelScales;
       } & (
@@ -38,7 +39,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, type, locale, themeConfig, channelScales } = props;
+    const { name, themeKey, dark, visualState, visualConfig, visualLayout, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -55,7 +56,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = toJS(visualState);
+        const { dimensions, measures, filters, ...state } = visualState;
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -103,7 +104,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
             <div className="relative flex flex-col w-full flex-1">
                 {isSpatial && (
                     <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
-                        <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} />
+                        <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
                     </div>
                 )}
                 {isSpatial || (
@@ -117,8 +118,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
                         dark={dark}
                         draggableFieldState={visualState}
                         visualConfig={visualConfig}
+                        layout={visualLayout}
                         locale={locale ?? 'en-US'}
-                        computationFunction={computation}
                         channelScales={channelScales}
                     />
                 )}

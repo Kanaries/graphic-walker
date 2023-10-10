@@ -1,14 +1,14 @@
 import { observer } from 'mobx-react-lite';
-import { useGlobalStore } from '../../store';
+import { useVizStore } from '../../store';
 import React from 'react';
 import Modal from '../smallModal';
 import { useTranslation } from 'react-i18next';
 import DefaultButton from '../button/default';
 
 export default observer(function ErrorPanel() {
-    const { commonStore, vizStore } = useGlobalStore();
+    const vizStore = useVizStore();
     const { t } = useTranslation();
-    switch (commonStore.showErrorResolutionPanel) {
+    switch (vizStore.showErrorResolutionPanel) {
         case 0:
             return null;
         case 500:
@@ -22,8 +22,8 @@ export default observer(function ErrorPanel() {
                             <a
                                 className="mx-2 cursor-pointer font-semibold text-indigo-600 hover:text-indigo-500"
                                 onClick={() => {
-                                    vizStore.setChartLayout({ mode: 'fixed', width: 800, height: 600 });
-                                    commonStore.updateShowErrorResolutionPanel(0);
+                                    vizStore.setVisualLayout('size', { mode: 'fixed', width: 800, height: 600 });
+                                    vizStore.updateShowErrorResolutionPanel(0);
                                 }}
                             >
                                 Set Now
@@ -34,8 +34,8 @@ export default observer(function ErrorPanel() {
                             <a
                                 className="mx-2 cursor-pointer font-semibold text-indigo-600 hover:text-indigo-500"
                                 onClick={() => {
-                                    vizStore.setVisualConfig('useSvg', true);
-                                    commonStore.updateShowErrorResolutionPanel(0);
+                                    vizStore.setVisualLayout('useSvg', true);
+                                    vizStore.updateShowErrorResolutionPanel(0);
                                 }}
                             >
                                 Set Now
@@ -48,7 +48,7 @@ export default observer(function ErrorPanel() {
                                     text={`Close`}
                                     className="mr-2 px-2"
                                     onClick={() => {
-                                        commonStore.updateShowErrorResolutionPanel(0);
+                                        vizStore.updateShowErrorResolutionPanel(0);
                                         return;
                                     }}
                                 />

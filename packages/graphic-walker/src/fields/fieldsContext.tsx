@@ -6,12 +6,12 @@ import {
     ResponderProvided,
     DraggableLocation,
 } from "@kanaries/react-beautiful-dnd";
-import { useGlobalStore } from '../store';
+import { useVizStore } from '../store';
 window['__react-beautiful-dnd-disable-dev-warnings'] = true;
 
 
 export const FieldsContextWrapper: React.FC = props => {
-    const { vizStore } = useGlobalStore();
+    const vizStore = useVizStore();
     const onDragEnd = useCallback((result: DropResult, provided: ResponderProvided) => {
         if (!result.destination) {
             vizStore.removeField(result.source.droppableId as keyof DraggableFieldState, result.source.index)
@@ -28,7 +28,7 @@ export const FieldsContextWrapper: React.FC = props => {
                 .droppableId as keyof DraggableFieldState;
             vizStore.moveField(sourceKey, result.source.index, targetKey, destination.index)
         }
-    }, [])
+    }, [vizStore])
     return <DragDropContext onDragEnd={onDragEnd}
         onDragStart={() => {}}
         onDragUpdate={() => {}}

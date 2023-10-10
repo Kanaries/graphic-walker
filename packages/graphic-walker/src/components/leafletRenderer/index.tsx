@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from "react";
-import type { DeepReadonly, DraggableFieldState, IRow, IVisualConfig, VegaGlobalConfig } from "../../interfaces";
+import type { DraggableFieldState, IRow,  IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from "../../interfaces";
 import POIRenderer from "./POIRenderer";
 import ChoroplethRenderer from "./ChoroplethRenderer";
 
@@ -7,8 +7,9 @@ import ChoroplethRenderer from "./ChoroplethRenderer";
 export interface ILeafletRendererProps {
     name?: string;
     vegaConfig?: VegaGlobalConfig;
-    draggableFieldState: DeepReadonly<DraggableFieldState>;
-    visualConfig: DeepReadonly<IVisualConfig>;
+    draggableFieldState: DraggableFieldState;
+    visualConfig: IVisualConfigNew;
+    visualLayout: IVisualLayout;
     data: IRow[];
 }
 
@@ -18,9 +19,10 @@ export const LEAFLET_DEFAULT_WIDTH = 800;
 export const LEAFLET_DEFAULT_HEIGHT = 600;
 
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
-    const { name, draggableFieldState, data, visualConfig, vegaConfig = {} } = props;
+    const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {} } = props;
     const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
-    const { defaultAggregated, geoms: [markType], geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false } = visualConfig;
+    const { defaultAggregated, geoms: [markType],  } = visualConfig;
+    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false } = visualLayout;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);

@@ -1,5 +1,4 @@
-import { toJS } from 'mobx';
-import { IRow, IMutField, IViewField, Specification, IFilterFiledSimple, IExpression } from './interfaces';
+import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
 import { INestNode } from "./components/pivotTable/inteface";
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
@@ -14,16 +13,6 @@ import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
 import BuildMetricTableWorker from './workers/buildMetricTable.worker?worker&inline';
 import SortWorker from './workers/sort.worker?worker&inline';
-
-import { IViewQuery } from './lib/viewQuery';
-
-// interface WorkerState {
-//     eWorker: Worker | null;
-// }
-
-// const workerState: WorkerState = {
-//     eWorker: null,
-// }
 
 function workerService<T, R>(worker: Worker, data: R): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -114,7 +103,7 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSi
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
-            filters: toJS(filters),
+            filters: filters,
         });
 
         return res;
@@ -147,7 +136,7 @@ export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<I
     try {
         const res: IRow[] = await workerService(worker, {
             dataSource: data,
-            query: toJS(query),
+            query: query,
         });
         return res;
     } catch (err) {
@@ -191,7 +180,7 @@ export const applySort = async (
     try {
         const res: IRow[] = await workerService(worker, {
             data,
-            viewMeasures: viewMeasures.map((x) => toJS(x)),
+            viewMeasures,
             sort,
         });
         return res;
