@@ -36,7 +36,7 @@ import {
     IGeoUrl,
     ICreateField,
     ISemanticType,
-    IChartForExport
+    IChartForExport,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
@@ -170,9 +170,11 @@ export class VizSpecStore {
     get layout() {
         return {
             ...this.currentVis.layout,
-            ...(this.localGeoJSON ? {
-                geoJson: this.localGeoJSON
-            }: {})
+            ...(this.localGeoJSON
+                ? {
+                      geoJson: this.localGeoJSON,
+                  }
+                : {}),
         };
     }
 
@@ -359,7 +361,12 @@ export class VizSpecStore {
         const newVarKey = uniqueId();
         const state = this.currentEncodings;
         const existedRelatedBinField = state.dimensions.find(
-            (f) => f.computed && f.expression && f.expression.op === binType && f.expression.params[0].value === state[stateKey][index].fid && f.expression.num === binNumber
+            (f) =>
+                f.computed &&
+                f.expression &&
+                f.expression.op === binType &&
+                f.expression.params[0].value === state[stateKey][index].fid &&
+                f.expression.num === binNumber
         );
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
@@ -409,11 +416,17 @@ export class VizSpecStore {
     }
 
     exportCode() {
-        return this.visList.map(x => exportNow(x));
+        return this.visList.map((x) => exportNow(x));
     }
 
-    importCode(data: IChartForExport[]) {
-        this.visList = data.map(x => importNow(x));
+    importCode(data: IChartForExport[] | IVisSpecForExport[]) {
+        this.visList = data.map((x: IChartForExport | IVisSpecForExport) => {
+            if ('layout' in x) {
+                return importNow(x);
+            } else {
+                return fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(x))));
+            }
+        });
         this.visIndex = 0;
     }
 
@@ -428,13 +441,8 @@ export class VizSpecStore {
         this.visIndex = 0;
     }
 
-    importOld(data: IVisSpecForExport[]) {
-        this.visList = visSpecDecoder(forwardVisualConfigs(data)).map(convertChart).map(fromSnapshot);
-        this.visIndex = 0;
-    }
-
     appendFromOld(data: IVisSpecForExport) {
-        const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs([data]))[0]));
+        const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
         this.visList.push(newChart);
         this.visIndex = this.visList.length - 1;
     }
