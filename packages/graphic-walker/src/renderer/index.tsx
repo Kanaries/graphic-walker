@@ -14,10 +14,11 @@ import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/lea
 import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 import { getMeaAggKey } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
+import { GWGlobalConfig } from '../vis/theme';
 
 interface RendererProps {
     themeKey?: IThemeKey;
-    themeConfig?: any;
+    themeConfig?: GWGlobalConfig;
     dark?: IDarkMode;
     computationFunction: IComputationFunction;
     channelScales?: IChannelScales;

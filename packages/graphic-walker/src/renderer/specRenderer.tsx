@@ -19,6 +19,7 @@ import {
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { getTheme } from '../utils/useTheme';
+import { GWGlobalConfig } from '../vis/theme';
 
 interface SpecRendererProps {
     name?: string;
@@ -32,7 +33,7 @@ interface SpecRendererProps {
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
-    themeConfig?: VegaGlobalConfig;
+    themeConfig?: GWGlobalConfig;
     channelScales?: IChannelScales;
 }
 /**

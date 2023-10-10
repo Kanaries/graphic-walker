@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { IChannelScales, IDarkMode, IGeoDataItem, IThemeKey } from './interfaces';
+import { IChannelScales, IDarkMode, IGeoDataItem, IGeographicData, IThemeKey } from './interfaces';
 import DataSourceSegment from './dataSource/index';
 import { StoreWrapper, VisContext, useGlobalStore } from './store';
 import { useCurrentMediaTheme } from './utils/media';
@@ -28,6 +28,10 @@ export interface IGWProps {
         };
     };
     storeRef?: React.MutableRefObject<CommonStore | null>;
+    geographicData?: IGeographicData & {
+        key: string;
+    };
+    onError?: (err: Error) => void;
     geoList?: IGeoDataItem[];
     channelScales?: IChannelScales;
 }

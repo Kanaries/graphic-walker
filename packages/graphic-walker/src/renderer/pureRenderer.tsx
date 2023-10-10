@@ -10,12 +10,13 @@ import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
+import { GWGlobalConfig } from '../vis/theme';
 
 type IPureRendererProps =
     | {
           name?: string;
           themeKey?: IThemeKey;
-          themeConfig?: any;
+          themeConfig?: GWGlobalConfig;
           dark?: IDarkMode;
           visualState: DraggableFieldState;
           visualConfig: IVisualConfigNew;
