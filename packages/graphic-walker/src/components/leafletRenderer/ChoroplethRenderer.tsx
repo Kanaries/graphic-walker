@@ -10,6 +10,7 @@ import { TooltipContent } from "./tooltip";
 import { useAppRootContext } from "../appRoot";
 import { useGeoJSON } from "../../hooks/service";
 import { useTranslation } from "react-i18next";
+import { ChangeView } from "./utils";
 
 
 export interface IChoroplethRendererProps {
@@ -145,20 +146,20 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         const allLngLat = lngLat.flat(2);
         if (allLngLat.length > 0) {
             const [bounds, coords] = allLngLat.reduce<[bounds: [[w: number, n: number], [e: number, s: number]], center: [lat: number, lng: number]]>(([bounds, acc], [lat, lng]) => {
-                if (lng < bounds[0][0]) {
-                    bounds[0][0] = lng;
+                if (lat < bounds[0][0]) {
+                    bounds[0][0] = lat;
                 }
-                if (lng > bounds[1][0]) {
-                    bounds[1][0] = lng;
+                if (lat > bounds[1][0]) {
+                    bounds[1][0] = lat;
                 }
-                if (lat < bounds[0][1]) {
-                    bounds[0][1] = lat;
+                if (lng < bounds[0][1]) {
+                    bounds[0][1] = lng;
                 }
-                if (lat > bounds[1][1]) {
-                    bounds[1][1] = lat;
+                if (lng > bounds[1][1]) {
+                    bounds[1][1] = lng;
                 }
                 return [bounds, [acc[0] + lng, acc[1] + lat]];
-            }, [[[-180, -90], [180, 90]], [0, 0]]);
+            }, [[[...allLngLat[0]] ,[...allLngLat[0]]], [0, 0]]);
             return [bounds, [coords[0] / lngLat.length, coords[1] / lngLat.length] as [number, number]];
         }
                 
@@ -215,16 +216,13 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         }
     }, []);
 
-    useEffect(() => {
-        mapRef.current?.flyToBounds(bounds);
-    }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
-
     if (!features && (localFeatures || featuresUrl)) {
         return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>
     }
 
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+            <ChangeView bounds={bounds} />
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
