@@ -1,5 +1,5 @@
 import { computed, makeAutoObservable, toJS } from 'mobx';
-import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISemanticType } from '../interfaces';
+import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISegmentKey, ISemanticType } from '../interfaces';
 import { VizSpecStore } from './visualSpecStore';
 import { getComputation } from '../computation/clientComputation';
 import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl } from '../utils/save';
@@ -41,8 +41,10 @@ export class DataStore {
 
     get visSpecStore() {
         if (!this.metaId || !this.meta.length) return emptyVizStore;
-        if (!this.visDict[this.metaId])
+        if (!this.visDict[this.metaId]) {
             this.visDict[this.metaId] = new VizSpecStore(this.meta, { onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
+            this.visDict[this.metaId].setSegmentKey(ISegmentKey.vis);
+        }
         return this.visDict[this.metaId];
     }
 
@@ -89,6 +91,7 @@ export class DataStore {
                 Object.entries(data.specDict).map(([key, info]) => {
                     const store = new VizSpecStore(data.metaDict[key], { empty: true, onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
                     store.importRaw(info);
+                    store.setSegmentKey(ISegmentKey.vis);
                     return [key, store];
                 })
             );
@@ -121,6 +124,7 @@ export class DataStore {
                     const key = encodeMeta(x.encodings.dimensions.concat(x.encodings.measures).filter((x) => !x.computed));
                     const store = visDict[key] || visDict[defaultId];
                     store.appendFromOld(x);
+                    store.setSegmentKey(ISegmentKey.vis);
                 });
             }
             this.metaDict = metaDict;
