@@ -11,7 +11,7 @@ import type { IGWHandler, IGWHandlerInsider } from './interfaces';
 
 import './empty_sheet.css';
 
-export const GraphicWalker = observer(
+export const FullGraphicWalker = observer(
     forwardRef<IGWHandler, IGWProps>((props, ref) => {
         const { storeRef } = props;
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
@@ -37,7 +37,7 @@ export const GraphicWalker = observer(
     })
 );
 
-export const SimpleGraphicWalker = observer(
+export const GraphicWalker = observer(
     forwardRef<IGWHandler, VizProps>((props, ref) => {
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 

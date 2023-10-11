@@ -10,7 +10,6 @@ import { CommonStore } from './store/commonStore';
 import FieldsContextWrapper from './fields/fieldsContext';
 
 export interface IGWProps {
-    hideDataSourceConfig?: boolean;
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean | string;
@@ -37,7 +36,7 @@ export interface IGWProps {
 }
 
 export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(function App(props) {
-    const { i18nLang = 'en-US', i18nResources, themeKey = 'vega', dark = 'media', toolbar, enhanceAPI } = props;
+    const { i18nLang = 'en-US', i18nResources, themeKey = 'vega', dark = 'media', toolbar, enhanceAPI, geographicData, onError, geoList, channelScales } = props;
     const commonStore = useGlobalStore();
 
     const { dataStore } = commonStore;
@@ -57,6 +56,10 @@ export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(fun
                         i18nResources={i18nResources}
                         themeKey={themeKey}
                         toolbar={toolbar}
+                        geographicData={geographicData}
+                        geoList={geoList}
+                        onError={onError}
+                        channelScales={channelScales}
                     />
                 </div>
             </FieldsContextWrapper>

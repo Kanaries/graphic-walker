@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GraphicWalker } from './index';
+import { FullGraphicWalker, GraphicWalker } from './index';
 
 import { IGWProps } from './FullApp';
 
@@ -20,11 +20,11 @@ export function embedGraphicWalker(dom: HTMLElement | null, props: IGWProps | un
         }
         // @ts-ignore
         const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<GraphicWalker themeKey="g2" {...props} />);
+        root.render(<FullGraphicWalker themeKey="g2" {...props} />);
     } else {
         ReactDOM.render(
             <React.StrictMode>
-                <GraphicWalker themeKey="g2" {...props} />
+                <FullGraphicWalker themeKey="g2" {...props} />
             </React.StrictMode>,
             dom as HTMLElement
         );
