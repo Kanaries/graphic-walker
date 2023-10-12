@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps } from './interfaces';
@@ -36,6 +36,9 @@ import DataBoard from './components/dataBoard';
 import SideReisze from './components/side-resize';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
+import DataViewConfigModal from './dataSource/datasetConfig/dataviewConfig';
+import { transData } from './dataSource/utils';
+import { withDataView } from './utils/workflow';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -100,8 +103,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                     spec,
                     [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
                     vizStore.currentVis.name ?? 'Chart 1',
-                    vizStore.currentVis.visId
-                )
+                    vizStore.currentVis.visId,
+                ),
             );
         }
     }, [vlSpec, vizStore]);
@@ -119,14 +122,55 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 vizStore.updateShowErrorResolutionPanel(code, msg);
             }
         },
-        [vizStore, onError]
+        [vizStore, onError],
     );
 
-    const { segmentKey, vizEmbededMenu } = vizStore;
+    const { segmentKey, vizEmbededMenu, oriMeta, dataviewSql } = vizStore;
+
+    const editDataviewSql = useCallback(
+        (v: string) => {
+            if (!computation) return;
+            if (v === dataviewSql) return;
+            if (v === '') {
+                vizStore.setTempMeta();
+                vizStore.resetVisualization();
+                vizStore.setDataviewSql(v);
+                return;
+            }
+            (async () => {
+                const newComp = withDataView(v, Object.fromEntries(oriMeta.map((x) => [x.name || x.fid, x.fid])))(computation);
+                const sample = await newComp({
+                    workflow: [
+                        {
+                            type: 'view',
+                            query: [
+                                {
+                                    op: 'raw',
+                                    fields: ['*'],
+                                },
+                            ],
+                        },
+                    ],
+                    limit: 5,
+                });
+                const { fields } = transData(sample, false);
+                vizStore.setTempMeta(fields);
+                vizStore.resetVisualization();
+                vizStore.setDataviewSql(v);
+            })();
+        },
+        [vizStore, computation, oriMeta],
+    );
 
     const wrappedComputation = useMemo(
-        () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
-        [reportError, computation, computationTimeout]
+        () =>
+            computation
+                ? withErrorReport(
+                      withTimeout(withDataView(dataviewSql, Object.fromEntries(oriMeta.map((x) => [x.name || x.fid, x.fid])))(computation), computationTimeout),
+                      (err) => reportError(parseErrorMessage(err), 501),
+                  )
+                : async () => [],
+        [computation, computationTimeout, dataviewSql, oriMeta, reportError],
     );
     return (
         <ErrorContext value={{ reportError }}>
@@ -218,7 +262,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 </div>
                             )}
                             {segmentKey === ISegmentKey.data && (
-                                <div className="mx-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
+                                <div className="flex flex-col mx-4 mt-0 border-t-0 p-4 border border-gray-200 dark:border-gray-700">
+                                    {props.enableDataView && <DataViewConfigModal value={dataviewSql} onChange={editDataviewSql} />}
                                     <DatasetConfig />
                                 </div>
                             )}
@@ -258,6 +303,7 @@ export function VizAppWithContext(props: IVizAppProps) {
             <VizStoreWrapper onMetaChange={props.onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
                 <FieldsContextWrapper>
                     <VizApp
+                        enableDataView={props.enableDataView}
                         darkMode={darkMode}
                         enhanceAPI={props.enhanceAPI}
                         i18nLang={props.i18nLang}

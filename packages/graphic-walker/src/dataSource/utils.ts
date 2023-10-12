@@ -2,7 +2,7 @@ import { IRow, IMutField } from '../interfaces';
 import { inferMeta } from '../lib/inferMeta';
 import { flatKeys, guardDataKeys } from '../utils/dataPrep';
 
-export function transData(dataSource: IRow[]): {
+export function transData(dataSource: IRow[], safe = true): {
     dataSource: IRow[];
     fields: IMutField[];
 } {
@@ -29,6 +29,12 @@ export function transData(dataSource: IRow[]): {
             name: k.join('.'),
         })),
     });
+    if (!safe) {
+        return {
+            dataSource,
+            fields: metas
+        }
+    }
     const { safeData, safeMetas } = guardDataKeys(dataSource, metas);
     const finalData: IRow[] = [];
     for (let record of safeData) {

@@ -546,8 +546,19 @@ export interface ISortWorkflowStep {
 
 export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
 
+export interface IDataViewQuery {
+    sql: string;
+    fidMap: Record<string, string>;
+}
+
+export interface IDataView {
+    type: 'sql';
+    query: IDataViewQuery[];
+}
+
 export interface IDataQueryPayload {
     workflow: IDataQueryWorkflowStep[];
+    dataview?: IDataView[];
     limit?: number;
     offset?: number;
 }
@@ -814,6 +825,7 @@ export interface IVizProps {
     };
     geoList?: IGeoDataItem[];
     channelScales?: IChannelScales;
+    enableDataView?: boolean;
 }
 
 export interface IVizStoreProps {

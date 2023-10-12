@@ -76,7 +76,8 @@ export class VizSpecStore {
     visIndex: number = 0;
     createdVis: number = 0;
     editingFilterIdx: number | null = null;
-    meta: IMutField[];
+    oriMeta: IMutField[];
+    tempMeta?: IMutField[];
     segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
     showDataBoard: boolean = false;
@@ -97,6 +98,7 @@ export class VizSpecStore {
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = "";
+    dataviewSql = "";
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -107,7 +109,7 @@ export class VizSpecStore {
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
         }
     ) {
-        this.meta = meta;
+        this.oriMeta = meta;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
         this.createdVis = this.visList.length;
         this.onMetaChange = options?.onMetaChange;
@@ -117,6 +119,10 @@ export class VizSpecStore {
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
+    }
+    
+    get meta() {
+        return this.tempMeta ?? this.oriMeta;
     }
 
     get visLength() {
@@ -258,12 +264,17 @@ export class VizSpecStore {
     }
 
     setMeta(meta: IMutField[]) {
-        this.meta = meta;
+        this.oriMeta = meta;
+    }
+
+    setTempMeta(meta?: IMutField[]) {
+        this.tempMeta = meta;
     }
 
     resetVisualization(name = 'Chart 1') {
         this.visList = [fromFields(this.meta, name)];
         this.createdVis = 1;
+        this.visIndex = 0;
     }
 
     addVisualization(defaultName?: string | ((index: number) => string)) {
@@ -625,6 +636,10 @@ export class VizSpecStore {
 
     updateLastSpec(spec: string) {
         this.lastSpec = spec;
+    }
+
+    setDataviewSql(sql: string) {
+        this.dataviewSql = sql;
     }
 }
 

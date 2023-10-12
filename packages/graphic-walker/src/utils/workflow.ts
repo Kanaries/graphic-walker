@@ -8,6 +8,7 @@ import type {
     IVisFilter,
     ISortWorkflowStep,
     IDataQueryPayload,
+    IComputationFunction,
     IFilterField,
     IChartForExport,
 } from '../interfaces';
@@ -310,5 +311,26 @@ export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
             limit
         ),
         limit: limit > 0 ? limit : undefined
+    };
+}
+
+export function withDataView(sql: string, fidMap: Record<string, string>) {
+    return (f: IComputationFunction) => {
+        if (!sql) return f;
+        return (args: IDataQueryPayload) =>
+            f({
+                ...args,
+                dataview: [
+                    {
+                        type: 'sql',
+                        query: [
+                            {
+                                sql,
+                                fidMap,
+                            },
+                        ],
+                    },
+                ],
+            });
     };
 }

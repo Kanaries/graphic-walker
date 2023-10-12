@@ -20,6 +20,7 @@ export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(fun
             <FieldsContextWrapper>
                 <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                     <VizApp
+                        enableDataView={props.enableDataView}
                         dataSelection={<DataSourceSegment />}
                         computation={dataStore.computation}
                         darkMode={darkMode}
