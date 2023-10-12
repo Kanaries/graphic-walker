@@ -75,7 +75,7 @@ export class VizSpecStore {
     visIndex: number = 0;
     editingFilterIdx: number | null = null;
     meta: IMutField[];
-    segmentKey: ISegmentKey = ISegmentKey.data;
+    segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
     vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     showDataConfig: boolean = false;
