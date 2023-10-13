@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { VizAppWithContext, VizProps } from './App';
 import { App, IGWProps } from './FullApp';
 
-import { StoreWrapper } from './store/index';
 import { ShadowDom } from './shadow-dom';
 import AppRoot from './components/appRoot';
 import type { IGWHandler, IGWHandlerInsider } from './interfaces';
@@ -13,7 +12,6 @@ import './empty_sheet.css';
 
 export const FullGraphicWalker = observer(
     forwardRef<IGWHandler, IGWProps>((props, ref) => {
-        const { storeRef } = props;
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
@@ -24,15 +22,13 @@ export const FullGraphicWalker = observer(
         };
 
         return (
-            <StoreWrapper keepAlive={props.keepAlive} storeRef={storeRef}>
-                <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
-                    <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
-                        <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
-                            <App {...props} />
-                        </DOMProvider>
-                    </ShadowDom>
-                </AppRoot>
-            </StoreWrapper>
+            <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
+                <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                        <App {...props} />
+                    </DOMProvider>
+                </ShadowDom>
+            </AppRoot>
         );
     })
 );

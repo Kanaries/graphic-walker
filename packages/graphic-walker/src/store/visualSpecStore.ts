@@ -73,6 +73,7 @@ const viewEncodingKeys = (geom: string) => {
 export class VizSpecStore {
     visList: VisSpecWithHistory[];
     visIndex: number = 0;
+    createdVis: number = 0;
     editingFilterIdx: number | null = null;
     meta: IMutField[];
     segmentKey: ISegmentKey = ISegmentKey.vis;
@@ -103,6 +104,7 @@ export class VizSpecStore {
     ) {
         this.meta = meta;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
+        this.createdVis = this.visList.length;
         this.onMetaChange = options?.onMetaChange;
         makeAutoObservable(this, {
             visList: observable.shallow,
@@ -253,13 +255,15 @@ export class VizSpecStore {
         this.meta = meta;
     }
 
-    resetVisualization() {
-        this.visList = [fromFields(this.meta, 'Chart 1')];
+    resetVisualization(name = 'Chart 1') {
+        this.visList = [fromFields(this.meta, name)];
+        this.createdVis = 1;
     }
 
-    addVisualization(defaultName?: string) {
-        const name = defaultName || 'Chart ' + (this.visList.length + 1);
+    addVisualization(defaultName?: string | ((index: number) => string)) {
+        const name = defaultName ? (typeof defaultName === 'function' ? defaultName(this.createdVis + 1) : defaultName) : 'Chart ' + (this.createdVis + 1);
         this.visList.push(fromFields(this.meta, name));
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
@@ -277,6 +281,7 @@ export class VizSpecStore {
                 visId: uniqueId(),
             })
         );
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
@@ -427,23 +432,27 @@ export class VizSpecStore {
                 return fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(x))));
             }
         });
+        this.createdVis = this.visList.length;
         this.visIndex = 0;
     }
 
     appendRaw(data: string) {
         const newChart = importFull(data);
         this.visList.push(newChart);
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
     importRaw(data: string[]) {
         this.visList = data.map(importFull);
+        this.createdVis = this.visList.length;
         this.visIndex = 0;
     }
 
     appendFromOld(data: IVisSpecForExport) {
         const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
         this.visList.push(newChart);
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
