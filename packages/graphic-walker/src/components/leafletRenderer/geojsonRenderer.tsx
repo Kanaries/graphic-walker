@@ -91,7 +91,7 @@ function Renderer(props: { data?: FeatureCollection }) {
 function getGeojson(str: string, type: 'GeoJSON' | 'TopoJSON') {
     try {
         const data = JSON.parse(str);
-        const geoJSON = type === 'GeoJSON' ? data : (feature(data, data.data.objects[0]) as unknown as FeatureCollection);
+        const geoJSON = type === 'GeoJSON' ? data : (feature(data, Object.keys(data.objects)[0]) as unknown as FeatureCollection);
         if (!('features' in geoJSON)) {
             console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
             return undefined;
