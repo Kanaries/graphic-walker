@@ -6,6 +6,7 @@ import { getMeaAggKey } from "../../utils";
 import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
 import { TooltipContent } from "./tooltip";
 import { useAppRootContext } from "../appRoot";
+import { ChangeView } from "./utils";
 
 export interface IPOIRendererProps {
     name?: string;
@@ -38,7 +39,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 };
 
 const debugMaxLen = 20;
-
+  
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer (props, ref) {
     const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
     
@@ -52,20 +53,20 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
     const [bounds, center] = useMemo<[bounds: [[n: number, w: number], [s: number, e: number]], center: [lng: number, lat: number]]>(() => {
         if (lngLat.length > 0) {
             const [bounds, coords] = lngLat.reduce<[bounds: [[w: number, n: number], [e: number, s: number]], center: [lat: number, lng: number]]>(([bounds, acc], [lat, lng]) => {
-                if (lng < bounds[0][0]) {
-                    bounds[0][0] = lng;
+                if (lat < bounds[0][0]) {
+                    bounds[0][0] = lat;
                 }
-                if (lng > bounds[1][0]) {
-                    bounds[1][0] = lng;
+                if (lat > bounds[1][0]) {
+                    bounds[1][0] = lat;
                 }
-                if (lat < bounds[0][1]) {
-                    bounds[0][1] = lat;
+                if (lng < bounds[0][1]) {
+                    bounds[0][1] = lng;
                 }
-                if (lat > bounds[1][1]) {
-                    bounds[1][1] = lat;
+                if (lng > bounds[1][1]) {
+                    bounds[1][1] = lng;
                 }
                 return [bounds, [acc[0] + lng, acc[1] + lat]];
-            }, [[[-180, -90], [180, 90]], [0, 0]]);
+            }, [[[...lngLat[0]] ,[...lngLat[0]]], [0, 0]]);
             return [bounds, [coords[0] / lngLat.length, coords[1] / lngLat.length] as [number, number]];
         }
                 
@@ -118,10 +119,6 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         }
     }, []);
 
-    useEffect(() => {
-        mapRef.current?.flyToBounds(bounds);
-    }, [`${bounds[0][0]},${bounds[0][1]},${bounds[1][0]},${bounds[1][1]}`]);
-
     const sizeScale = useSizeScale(data, size, defaultAggregated);
     const opacityScale = useOpacityScale(data, opacity, defaultAggregated);
     const colorScale = useColorScale(data, color, defaultAggregated, vegaConfig);
@@ -137,6 +134,7 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
     
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+            <ChangeView bounds={bounds} />
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
