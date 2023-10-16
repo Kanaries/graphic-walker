@@ -64,7 +64,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="flex items-stretch absolute z-10 top-0 left-0 right-0 bottom-0 m-1"
+                                className={"flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1" + (provided.draggableProps.style?.transform ? ' z-10' : '')}
                             >
                                 <div
                                     onClick={() => {
