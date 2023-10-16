@@ -45,11 +45,11 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
 
     const vizStore = useVizStore();
     const enableCollapse = !!vizStore;
-    const { allFields, viewMeasures } = vizStore;
+    const { allFields, viewMeasures, sort, sortedEncoding } = vizStore;
     const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
     const { rows, columns } = draggableFieldState;
-    const {  defaultAggregated, folds } = visualConfig;
-    const { showTableSummary } = layout
+    const { defaultAggregated, folds } = visualConfig;
+    const { showTableSummary } = layout;
     const aggData = useRef<IRow[]>([]);
     const [topTreeHeaderRowNum, setTopTreeHeaderRowNum] = useState<number>(0);
 
@@ -104,7 +104,21 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
     const generateNewTable = () => {
         appRef.current?.updateRenderStatus('rendering');
         setIsLoading(true);
-        buildPivotTableService(dimsInRow, dimsInColumn, data, aggData.current, Array.from(tableCollapsedHeaderMap.keys()), showTableSummary)
+        buildPivotTableService(
+            dimsInRow,
+            dimsInColumn,
+            data,
+            aggData.current,
+            Array.from(tableCollapsedHeaderMap.keys()),
+            showTableSummary,
+            sort !== 'none' && sortedEncoding !== 'none'
+                ? {
+                      fid: sortedEncoding === 'column' ? `${measInRow[0].fid}_${measInRow[0].aggName}` : `${measInColumn[0].fid}_${measInColumn[0].aggName}`,
+                      mode: sortedEncoding,
+                      type: sort,
+                  }
+                : undefined
+        )
             .then((data) => {
                 const { lt, tt, metric } = data;
                 unstable_batchedUpdates(() => {
@@ -145,7 +159,16 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
-            const workflow = toWorkflow(vizStore.viewFilters, vizStore.allFields, dimComb, vizStore.viewMeasures, defaultAggregated, vizStore.sort, folds ?? [], vizStore.limit > 0 ? vizStore.limit : undefined);
+            const workflow = toWorkflow(
+                vizStore.viewFilters,
+                vizStore.allFields,
+                dimComb,
+                vizStore.viewMeasures,
+                defaultAggregated,
+                vizStore.sort,
+                folds ?? [],
+                vizStore.limit > 0 ? vizStore.limit : undefined
+            );
             return dataQuery(computation, workflow, vizStore.limit > 0 ? vizStore.limit : undefined)
                 .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, dimComb, folds))
                 .catch((err) => {
@@ -212,7 +235,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                             data={leftTree}
                             dimsInRow={dimsInRow}
                             measInRow={measInRow}
-                            onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
+                            onHeaderCollapse={(n) => vizStore?.updateTableCollapsedHeader(n)}
                             enableCollapse={enableCollapse}
                         />
                     )}
@@ -223,7 +246,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                             data={topTree}
                             dimsInCol={dimsInColumn}
                             measInCol={measInColumn}
-                            onHeaderCollapse={n => vizStore?.updateTableCollapsedHeader(n)}
+                            onHeaderCollapse={(n) => vizStore?.updateTableCollapsedHeader(n)}
                             onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
                             enableCollapse={enableCollapse}
                         />
