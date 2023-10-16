@@ -9,6 +9,7 @@ import Tabs, { RuleFormProps } from './tabs';
 import DefaultButton from '../../components/button/default';
 import PrimaryButton from '../../components/button/primary';
 import DropdownSelect from '../../components/dropdownSelect';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 
 const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
     return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
@@ -72,7 +73,7 @@ const FilterEditDialog: React.FC = observer(() => {
     }, [editingFilterIdx, uncontrolledField?.rule, vizStore]);
 
     const allFieldOptions = React.useMemo(() => {
-        return allFields.map((d) => ({
+        return allFields.filter(x => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID].includes(x.fid)).map((d) => ({
             label: d.name,
             value: d.fid,
         }));
