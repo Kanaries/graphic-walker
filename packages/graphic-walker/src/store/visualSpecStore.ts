@@ -329,8 +329,9 @@ export class VizSpecStore {
         }
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
         const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
+        const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
-            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex);
+            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
         } else if (destMeta) {
             this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
         } else {
@@ -340,7 +341,8 @@ export class VizSpecStore {
                 sourceIndex,
                 destinationKey,
                 destinationIndex,
-                uniqueId()
+                uniqueId(),
+                limit,
             );
         }
     }
