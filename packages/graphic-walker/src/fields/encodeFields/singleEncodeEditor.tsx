@@ -50,13 +50,9 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
             <div
-               
                 className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
-                    
-                    (channelItem && !snapshot.draggingFromThisWith) || snapshot.isDraggingOver ? 'opacity-0' : 'opacity-100'
-                
+                    snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
                 } relative z-0`}
-            
             >
                 {t('actions.drop_field')}
             </div>

@@ -177,14 +177,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={
-                size.mode === 'fixed' || isSpatial
-                    ? {
+            size={{
                           width: size.width + 'px',
                           height: size.height + 'px',
-                      }
-                    : undefined
-            }
+            }}
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
