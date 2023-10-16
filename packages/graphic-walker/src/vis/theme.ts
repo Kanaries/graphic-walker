@@ -2,7 +2,7 @@ import { VegaGlobalConfig } from '../interfaces';
 
 export type GWGlobalConfig<
     T extends VegaGlobalConfig = VegaGlobalConfig & {
-        scale: {
+        scale?: {
             continuous: {
                 range: string[];
             };
