@@ -26,7 +26,7 @@ function insertNode(
         child = {
             key,
             value: key,
-            sort: depth === layerKeys.length - 1 && sort ? nodeData[sort.fid] : key,
+            sort: depth === layerKeys.length - 1 && sort ? nodeData[sort.fid] ?? `_${key}` : key,
             uniqueKey: uniqueKey,
             fieldKey: layerKeys[depth],
             children: [],
@@ -93,7 +93,8 @@ export function buildNestTree(
     sort?: {
         fid: string;
         type: 'ascending' | 'descending';
-    }
+    },
+    dataWithoutSort?: IRow[]
 ): INestNode {
     const tree: INestNode = {
         key: ROOT_KEY,
@@ -108,6 +109,11 @@ export function buildNestTree(
     };
     for (let row of data) {
         insertNode(tree, layerKeys, row, 0, collapsedKeyList, sort);
+    }
+    if (dataWithoutSort) {
+        for (let row of dataWithoutSort) {
+            insertNode(tree, layerKeys, row, 0, collapsedKeyList, { fid: '', type: sort?.type ?? 'ascending' });
+        }
     }
     if (showSummary) {
         insertSummaryNode(tree);
