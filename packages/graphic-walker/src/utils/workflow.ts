@@ -66,7 +66,7 @@ export const toWorkflow = (
         viewDimensions.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
         viewMeasures.push(...newFields.filter((x) => x?.analyticType === 'measure'));
     }
-    const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures].map((f) => f.fid));
+    const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures, ...viewFilters].map((f) => f.fid));
 
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;

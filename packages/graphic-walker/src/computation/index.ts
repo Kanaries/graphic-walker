@@ -74,9 +74,9 @@ export const dataQuery = async (service: IComputationFunction, workflow: IDataQu
 
 export const fieldStat = async (service: IComputationFunction, field: IField, options: { values?: boolean; range?: boolean }): Promise<IFieldStats> => {
     const { values = true, range = true } = options;
-    const COUNT_ID = `count_${field}`;
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+    const COUNT_ID = `count_${field.fid}`;
+    const MIN_ID = `min_${field.fid}`;
+    const MAX_ID = `max_${field.fid}`;
     const transformWork: ITransformWorkflowStep[] = field.computed
         ? [
               {
