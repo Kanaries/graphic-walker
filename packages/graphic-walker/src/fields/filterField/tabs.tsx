@@ -160,7 +160,7 @@ const useFieldStats = (
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStat(computation, fid, { values, range })
+        fieldStat(computation, field, { values, range })
             .then((stats) => {
                 if (isCancelled) {
                     return;
