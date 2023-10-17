@@ -8,6 +8,7 @@ import type {
     IVisFilter,
     ISortWorkflowStep,
     IDataQueryPayload,
+    IFilterField,
 } from '../interfaces';
 import type { VizSpecStore } from '../store/visualSpecStore';
 import { getMeaAggKey } from '.';
@@ -69,45 +70,46 @@ export const toWorkflow = (
 
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;
+    let computedWorkflow: IFilterWorkflowStep | null = null;
     let viewQueryWorkflow: IViewWorkflowStep | null = null;
     let sortWorkflow: ISortWorkflowStep | null = null;
 
     // TODO: apply **fold** before filter
 
+    const createFilter = (f: IFilterField): IVisFilter => {
+        viewKeys.add(f.fid);
+        const rule = f.rule!;
+        if (rule.type === 'one of') {
+            return {
+                fid: f.fid,
+                rule: {
+                    type: 'one of',
+                    value: [...rule.value],
+                },
+            };
+        } else if (rule.type === 'temporal range') {
+            const range = [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const;
+            return {
+                fid: f.fid,
+                rule: {
+                    type: 'temporal range',
+                    value: range,
+                },
+            };
+        } else {
+            const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
+            return {
+                fid: f.fid,
+                rule: {
+                    type: 'range',
+                    value: range,
+                },
+            };
+        }
+    };
+
     // First, to apply filters on the detailed data
-    const filters = viewFilters
-        .filter((f) => f.rule)
-        .map<IVisFilter>((f) => {
-            viewKeys.add(f.fid);
-            const rule = f.rule!;
-            if (rule.type === 'one of') {
-                return {
-                    fid: f.fid,
-                    rule: {
-                        type: 'one of',
-                        value: [...rule.value],
-                    },
-                };
-            } else if (rule.type === 'temporal range') {
-                const range = [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const;
-                return {
-                    fid: f.fid,
-                    rule: {
-                        type: 'temporal range',
-                        value: range,
-                    },
-                };
-            } else {
-                const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
-                return {
-                    fid: f.fid,
-                    rule: {
-                        type: 'range',
-                        value: range,
-                    },
-                };
-            }
-        });
+    const filters = viewFilters.filter((f) => !f.computed && f.rule).map<IVisFilter>(createFilter);
     if (filters.length) {
         filterWorkflow = {
             type: 'filter',
@@ -129,6 +131,15 @@ export const toWorkflow = (
         transformWorkflow = {
             type: 'transform',
             transform: computedFields,
+        };
+    }
+
+    // Third, apply filter on the transformed data
+    const computedFilters = viewFilters.filter((f) => f.computed && f.rule).map<IVisFilter>(createFilter);
+    if (computedFilters.length) {
+        computedWorkflow = {
+            type: 'filter',
+            filters: computedFilters,
         };
     }
 
@@ -174,7 +185,7 @@ export const toWorkflow = (
         };
     }
 
-    const steps: IDataQueryWorkflowStep[] = [filterWorkflow!, transformWorkflow!, viewQueryWorkflow!, sortWorkflow!].filter(Boolean);
+    const steps: IDataQueryWorkflowStep[] = [filterWorkflow!, transformWorkflow!, computedWorkflow!, viewQueryWorkflow!, sortWorkflow!].filter(Boolean);
     return steps;
 };
 
