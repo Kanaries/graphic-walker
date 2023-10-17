@@ -196,5 +196,5 @@ export async function getTemporalRange(service: IComputationFunction, field: str
             [MAX_ID]: 0,
         },
     ]  = await service(rangeQueryPayload);
-    return [rangeRes[MIN_ID], rangeRes[MAX_ID]] as [number, number];
+    return [new Date(rangeRes[MIN_ID]).getTime(), new Date(rangeRes[MAX_ID]).getTime()] as [number, number];
 }
