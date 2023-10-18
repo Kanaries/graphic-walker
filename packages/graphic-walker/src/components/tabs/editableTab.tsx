@@ -27,65 +27,68 @@ interface EditableTabsProps {
     onRemove?: (index: number) => void;
 }
 
-const Slider = (props: { className?: string; children: React.ReactNode; safeDistance: number }) => {
+const Slider = (props: { className?: string; children: React.ReactNode }) => {
     const [x, setX] = useState(0);
     const ref = useRef<HTMLDivElement>();
+    const parentDisposeRef = useRef<() => void>();
     const childDisposeRef = useRef<() => void>();
 
-    const onWheel = useCallback(
-        (e: WheelEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const rect = ref.current?.children[0]?.getBoundingClientRect();
-            if (rect) {
-                setX((x) => Math.min(rect.width - props.safeDistance, Math.max(0, x + e.deltaY)));
-            }
-            return false;
-        },
-        [props.safeDistance]
-    );
+    const onWheel = useCallback((e: WheelEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const parentWidth = ref.current?.getBoundingClientRect().width;
+        const childWidth = ref.current?.children[0]?.getBoundingClientRect().width;
+        if (parentWidth && childWidth) {
+            setX((x) => Math.min(Math.max(0, childWidth - parentWidth), Math.max(0, x + e.deltaY + e.deltaX)));
+        }
+        return false;
+    }, []);
 
     const refCB = useCallback(
         (node) => {
+            parentDisposeRef.current?.();
             if (node == null) {
-                if (ref.current != null) {
-                    ref.current.removeEventListener('wheel', onWheel);
-                }
-                return;
-            }
-            ref.current = node;
-            node.addEventListener('wheel', onWheel, { passive: false });
-        },
-        [onWheel]
-    );
-
-    const onResize = useCallback(
-        (rect) => {
-            setX((x) => Math.min(x, rect.width - props.safeDistance));
-        },
-        [props.safeDistance]
-    );
-
-    const childRefCB = useCallback(
-        (node) => {
-            if (node === null) {
-                if (childDisposeRef.current != null) {
-                    childDisposeRef.current();
-                }
                 return;
             }
             const r = new ResizeObserver((es) => {
                 for (const e of es) {
-                    onResize(e.contentRect);
+                    const parentWidth = e.contentRect.width;
+                    const childWidth = ref.current?.children[0]?.getBoundingClientRect().width;
+                    if (parentWidth && childWidth) {
+                        setX((x) => Math.min(Math.max(0, childWidth - parentWidth), x));
+                    }
                 }
             });
-            childDisposeRef.current = () => {
-                r.disconnect();
-            };
             r.observe(node);
+            ref.current = node;
+            node.addEventListener('wheel', onWheel, { passive: false });
+            parentDisposeRef.current = () => {
+                r.disconnect();
+                ref.current?.removeEventListener('wheel', onWheel);
+            };
         },
-        [onResize]
+        [onWheel]
     );
+
+    const childRefCB = useCallback((node: HTMLDivElement) => {
+        childDisposeRef.current?.();
+        if (node === null) {
+            return;
+        }
+        const r = new ResizeObserver((es) => {
+            for (const e of es) {
+                const parentWidth = ref.current?.getBoundingClientRect().width;
+                const childWidth = e.contentRect.width;
+                if (parentWidth && childWidth) {
+                    setX((x) => Math.min(Math.max(0, childWidth - parentWidth), x));
+                }
+            }
+        });
+        childDisposeRef.current = () => {
+            r.disconnect();
+        };
+        r.observe(node);
+    }, []);
 
     return (
         <div
@@ -159,7 +162,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                     </div>
                 </div>
             </Modal>
-            <Slider safeDistance={120}>
+            <Slider>
                 <nav className="-mb-px flex h-8 border-gray-200 dark:border-gray-700" role="tablist" aria-label="Tabs">
                     {tabs.map((tab, tabIndex) => (
                         <span
@@ -174,15 +177,15 @@ export default function EditableTabs(props: EditableTabsProps) {
                             key={tab.key}
                             className={classNames(
                                 tab.key === selectedKey
-                                    ? 'border rounded-t'
+                                    ? 'border'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-50 dark:hover:text-gray-200 dark:hover:bg-gray-800',
-                                'flex whitespace-nowrap group border-gray-200 dark:border-gray-700 py-1 px-2 pr-2 text-sm cursor-default dark:text-white'
+                                'flex whitespace-nowrap rounded-t group border-gray-200 dark:border-gray-700 py-1 px-2 pr-2 text-sm cursor-default dark:text-white'
                             )}
                         >
                             {tab.label}
                             {tab.key === selectedKey && tab.editable && (
                                 <Popover className="relative inline-flex">
-                                    <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
+                                    <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
                                         <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
                                     </Popover.Button>
                                     <Transition
@@ -195,7 +198,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                         leaveTo="opacity-0 translate-y-1"
                                     >
                                         <Popover.Panel className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-min -translate-x-1/4 px-2">
-                                            <div className="shrink rounded p-1 bg-white text-xs font-semibold leading-2 text-gray-900 shadow-lg ring-1 ring-gray-900/5">
+                                            <div className="shrink rounded p-1 bg-white dark:bg-zinc-900 text-xs font-semibold leading-2 text-gray-900 dark:text-white shadow-lg ring-1 ring-gray-900/5">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -204,7 +207,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                             setName(tab.label);
                                                         });
                                                     }}
-                                                    className="block p-1 w-full hover:bg-gray-200 text-left"
+                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
                                                 >
                                                     {'Edit'}
                                                 </button>
@@ -213,7 +216,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                         e.stopPropagation();
                                                         onDuplicate?.(tabIndex);
                                                     }}
-                                                    className="block p-1 w-full hover:bg-gray-200 text-left"
+                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
                                                 >
                                                     {'Duplicate'}
                                                 </button>
@@ -223,7 +226,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                             e.stopPropagation();
                                                             onRemove?.(tabIndex);
                                                         }}
-                                                        className="block p-1 w-full hover:bg-gray-200 text-red-500 text-left"
+                                                        className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-red-500 text-left"
                                                     >
                                                         {'Remove'}
                                                     </button>

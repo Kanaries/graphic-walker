@@ -1,5 +1,5 @@
 import { computed, makeAutoObservable, toJS } from 'mobx';
-import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISemanticType } from '../interfaces';
+import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISegmentKey, ISemanticType } from '../interfaces';
 import { VizSpecStore } from './visualSpecStore';
 import { getComputation } from '../computation/clientComputation';
 import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl } from '../utils/save';
@@ -41,8 +41,9 @@ export class DataStore {
 
     get visSpecStore() {
         if (!this.metaId || !this.meta.length) return emptyVizStore;
-        if (!this.visDict[this.metaId])
+        if (!this.visDict[this.metaId]) {
             this.visDict[this.metaId] = new VizSpecStore(this.meta, { onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
+        }
         return this.visDict[this.metaId];
     }
 

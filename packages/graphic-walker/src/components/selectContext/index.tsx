@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { CheckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { Float } from '@headlessui-float/react';
 
 export interface ISelectContextOption {
     key: string;
@@ -43,7 +44,7 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
 
     return (
         <Listbox multiple value={selected} onChange={setSelected}>
-            <div className={`relative ${className}`}>
+            <Float as="div" className={className}>
                 <div className="relative w-full flex items-center space-x-2">
                     <span className="flex-1 block truncate text-start">{props.children}</span>
                     <Listbox.Button className="grow-0 shrink-0 flex items-center relative">
@@ -85,7 +86,7 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
                         ))}
                     </Listbox.Options>
                 </Transition>
-            </div>
+            </Float>
         </Listbox>
     );
 };

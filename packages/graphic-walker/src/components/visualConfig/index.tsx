@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { runInAction, toJS } from 'mobx';
+import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import { SketchPicker } from 'react-color';
 
@@ -36,7 +36,7 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
         setDomainMax(value.domainMax ?? 100);
         setRangeMax(value.rangeMax ?? defaultMaxRange ?? maxRange);
         setRangeMin(value.rangeMin ?? defaultMinRange ?? minRange);
-    }, []);
+    }, [defaultMaxRange, defaultMinRange, maxRange, minRange]);
 
     const value = useMemo(
         () => ({
@@ -67,14 +67,9 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
     };
 }
 
-const VisualConfigPanel: React.FC = (props) => {
+const VisualConfigPanel: React.FC = () => {
     const vizStore = useVizStore();
-    const { config, layout, showVisualConfigPanel } = vizStore;
-    const {
-        coordSystem,
-        geoms: [markType],
-    } = config;
-    const isChoropleth = coordSystem === 'geographic' && markType === 'choropleth';
+    const { layout, showVisualConfigPanel } = vizStore;
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
@@ -158,7 +153,7 @@ const VisualConfigPanel: React.FC = (props) => {
                                             <SketchPicker
                                                 presetColors={DEFAULT_COLOR_SCHEME}
                                                 color={defaultColor}
-                                                onChange={(color, event) => {
+                                                onChange={(color) => {
                                                     setColorEdited(true);
                                                     setDefaultColor({
                                                         ...color.rgb,

@@ -66,7 +66,7 @@ const CodeExport: React.FC = observer((props) => {
                 setCode("vega code");
             }
         }
-    }, [tabKey, showCodeExportPanel]);
+    }, [tabKey, showCodeExportPanel, vizStore]);
     return (
         <Modal
             show={showCodeExportPanel}

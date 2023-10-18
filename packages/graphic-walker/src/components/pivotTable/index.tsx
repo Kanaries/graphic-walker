@@ -5,6 +5,7 @@ import { dataQuery } from '../../computation';
 import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
+import { observer } from 'mobx-react-lite';
 import {
     DeepReadonly,
     DraggableFieldState,
@@ -34,7 +35,7 @@ interface PivotTableProps {
 
 const emptyMap = new Map();
 
-const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props) {
+const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent(props) {
     const { data, visualConfig, loading, layout, draggableFieldState } = props;
     const computation = useCompututaion();
     const appRef = useAppRootContext();
@@ -85,7 +86,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         } else {
             aggregateThenGenerate();
         }
-    }, [data, enableCollapse]);
+    }, [data, enableCollapse, vizStore]);
 
     useEffect(() => {
         if (!enableCollapse || showTableSummary) {
@@ -233,6 +234,6 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
             </div>
         </div>
     );
-};
+});
 
 export default PivotTable;

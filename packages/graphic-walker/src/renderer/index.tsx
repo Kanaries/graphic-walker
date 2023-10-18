@@ -69,27 +69,27 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         if (csvRef) {
             csvRef.current = {
                 download() {
-                    const headers = viewDimensions.concat(viewMeasures).map(x => {
+                    const headers = viewDimensions.concat(viewMeasures).map((x) => {
                         if (x.fid === COUNT_FIELD_ID) {
                             return {
                                 name: 'Count',
-                                fid: COUNT_FIELD_ID
-                            }
+                                fid: COUNT_FIELD_ID,
+                            };
                         }
                         if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
                             return {
-                                fid: getMeaAggKey(x.fid,x.aggName),
-                                name: `${x.aggName}(${x.name})`
-                            }
+                                fid: getMeaAggKey(x.fid, x.aggName),
+                                name: `${x.aggName}(${x.name})`,
+                            };
                         }
-                        return {fid: x.fid, name: x.name};
+                        return { fid: x.fid, name: x.name };
                     });
-                    const result = `${headers.map(x=>x.name).join(',')}\n${data.map(x => headers.map(f => x[f.fid]).join(',')).join('\n')}`;
+                    const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
                     download(result, `${chart.name}.csv`, 'text/plain');
                 },
-            }
+            };
         }
-    }, [data,viewDimensions,viewMeasures,visualConfig.defaultAggregated]);
+    }, [chart.name, csvRef, data, viewDimensions, viewMeasures, viewConfig.defaultAggregated]);
 
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
@@ -119,19 +119,22 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         onChange: (idx) => vizStore.selectVisualization(idx),
     });
 
-    const handleGeomClick = useCallback((values: any, e: any) => {
-        e.stopPropagation();
-        runInAction(() => {
-            vizStore.showEmbededMenu([e.pageX, e.pageY]);
-            vizStore.setFilters(values);
-        });
-        const selectedMarkObject = values.vlPoint.or[0];
-        vizStore.updateSelectedMarkObject(selectedMarkObject);
-    }, []);
+    const handleGeomClick = useCallback(
+        (values: any, e: any) => {
+            e.stopPropagation();
+            runInAction(() => {
+                vizStore.showEmbededMenu([e.pageX, e.pageY]);
+                vizStore.setFilters(values);
+            });
+            const selectedMarkObject = values.vlPoint.or[0];
+            vizStore.updateSelectedMarkObject(selectedMarkObject);
+        },
+        [vizStore]
+    );
 
     const handleChartResize = useCallback(
         (width: number, height: number) => {
-            vizStore.setVisualLayout('size',{
+            vizStore.setVisualLayout('size', {
                 mode: 'fixed',
                 width,
                 height,

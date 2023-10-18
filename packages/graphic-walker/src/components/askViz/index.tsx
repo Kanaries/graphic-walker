@@ -57,7 +57,7 @@ const AskViz: React.FC<{ api?: string; headers?: Record<string, string> }> = (pr
             .finally(() => {
                 setLoading(false);
             });
-    }, [query, allFields]);
+    }, [props.api, props.headers, allFields, query, vizStore]);
     return (
         <div className="right-0 flex">
             <input

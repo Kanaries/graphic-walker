@@ -53,8 +53,8 @@ type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
     [Methods.removeField]: [keyof DraggableFieldState, number];
     [Methods.reorderField]: [keyof DraggableFieldState, number, number];
-    [Methods.moveField]: [normalKeys, number, normalKeys, number];
-    [Methods.cloneField]: [normalKeys, number, normalKeys, number, string];
+    [Methods.moveField]: [normalKeys, number, normalKeys, number, number | null];
+    [Methods.cloneField]: [normalKeys, number, normalKeys, number, string, number | null];
     [Methods.createBinlogField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2' | 'log', string, number];
     [Methods.appendFilter]: [number, normalKeys, number, string];
     [Methods.modFilter]: [number, normalKeys, number];
@@ -90,7 +90,7 @@ const actions: {
                 return x;
             })
         ),
-    [Methods.moveField]: (data, from, findex, to, tindex) => {
+    [Methods.moveField]: (data, from, findex, to, tindex, limit) => {
         const oriField = data.encodings[from][findex];
         const field =
             to === 'dimensions'
@@ -101,14 +101,14 @@ const actions: {
         return mutPath(data, 'encodings', (e) => ({
             ...e,
             [from]: remove(data.encodings[from], findex),
-            [to]: insert(data.encodings[to], field, tindex),
+            [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
         }));
     },
-    [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey) => {
+    [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit) => {
         const field = { ...data.encodings[from][findex], dragId: newVarKey };
         return mutPath(data, 'encodings', (e) => ({
             ...e,
-            [to]: insert(data.encodings[to], field, tindex),
+            [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
         }));
     },
     [Methods.createBinlogField]: (data, encoding, index, op, newVarKey, num) => {
