@@ -33,7 +33,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
 
     const workflow = useMemo(() => {
         return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined);
-    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, limit]);
+    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
     const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);

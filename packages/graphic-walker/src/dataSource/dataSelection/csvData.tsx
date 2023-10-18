@@ -29,7 +29,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
 
     const onSubmitData = useCallback(() => {
         commonStore.commitTempDS();
-    }, []);
+    }, [commonStore]);
 
     const { t } = useTranslation('translation', { keyPrefix: 'DataSource.dialog.file' });
     const fileLoaded = tmpDataSource.length > 0 && tmpDSRawFields.length > 0;
@@ -55,7 +55,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                 }
             }
         },
-        [fileType, encoding]
+        [commonStore, fileType, encoding]
     );
 
     return (

@@ -138,7 +138,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
 
         return config;
-    }, [themeConfig, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
+    }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
         return (

@@ -28,7 +28,7 @@ const SegmentNav: React.FC = (props) => {
 
     const editLabelHandler = useCallback((content: string, tabIndex: number) => {
         vizStore.setVisName(tabIndex, content)
-    }, [])
+    }, [vizStore])
 
     return (
         <DefaultTab

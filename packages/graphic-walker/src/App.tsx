@@ -75,6 +75,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         geographicData,
         computationTimeout = 60000,
         spec,
+        onError
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -95,16 +96,16 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const vizStore = useVizStore();
 
     useEffect(() => {
-        if (props.geographicData) {
-            vizStore.setGeographicData(props.geographicData, props.geographicData.key);
+        if (geographicData) {
+            vizStore.setGeographicData(geographicData, geographicData.key);
         }
-    }, [geographicData]);
+    }, [vizStore, geographicData]);
 
     useEffect(() => {
         if (spec) {
             vizStore.replaceNow(renderSpec(spec, vizStore.meta, vizStore.currentVis.name ?? 'Chart 1', vizStore.currentVis.visId));
         }
-    }, [spec]);
+    }, [spec, vizStore]);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
@@ -114,12 +115,12 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         (msg: string, code?: number) => {
             const err = new Error(`Error${code ? `(${code})` : ''}: ${msg}`);
             console.error(err);
-            props.onError?.(err);
+            onError?.(err);
             if (code) {
                 vizStore.updateShowErrorResolutionPanel(code);
             }
         },
-        [vizStore, props.onError]
+        [vizStore, onError]
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
