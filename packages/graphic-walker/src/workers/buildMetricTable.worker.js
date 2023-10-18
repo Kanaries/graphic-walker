@@ -15,9 +15,9 @@ import { buildPivotTable } from "./buildPivotTable"
  * @param {MessageEvent<{ dimsInRow: import('../interfaces').IViewField[]; dimsInColumn: import('../interfaces').IViewField[]; allData: import('../interfaces').IRow[]; aggData: import('../interfaces').IRow[]; collapsedKeyList: string[]; showTableSummary: boolean }>} e
  */
 const main = e => {
-    const { dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary } = e.data;
+    const { dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary, sort } = e.data;
     try {
-        const ans = buildPivotTable(dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary);
+        const ans = buildPivotTable(dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary, sort);
         self.postMessage(ans);
     } catch (error) {
         self.postMessage({ error: error.message });

@@ -161,6 +161,17 @@ export class VizSpecStore {
         return 'none';
     }
 
+    get sortedEncoding() {
+        const { rows, columns } = this;
+        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+            return 'row';
+        }
+        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+            return 'column';
+        }
+        return 'none';
+    }
+
     get allFields() {
         return [...this.dimensions, ...this.measures];
     }

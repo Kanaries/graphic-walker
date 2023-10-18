@@ -151,7 +151,12 @@ export const buildPivotTableService = async (dimsInRow: IViewField[],
         allData: IRow[], 
         aggData: IRow[], 
         collapsedKeyList: string[], 
-        showTableSummary: boolean
+        showTableSummary: boolean,
+        sort?: {
+            fid: string,
+            type: 'ascending' | 'descending',
+            mode: 'row' | 'column',
+        }
     ): Promise<{lt: INestNode, tt: INestNode, metric: (IRow | null)[][]}> => {
     const worker = new BuildMetricTableWorker();
     try {
@@ -161,7 +166,8 @@ export const buildPivotTableService = async (dimsInRow: IViewField[],
             allData, 
             aggData, 
             collapsedKeyList, 
-            showTableSummary
+            showTableSummary,
+            sort,
         });
         return res;
     } catch (error) {
