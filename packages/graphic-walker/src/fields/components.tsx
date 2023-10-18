@@ -80,7 +80,6 @@ export const FieldListSegment = styled.div`
     div.fl-container {
         flex-grow: 10;    
         position: relative;
-        z-index: 1;
     }
 `;
 

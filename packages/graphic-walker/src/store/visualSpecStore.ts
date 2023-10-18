@@ -73,9 +73,10 @@ const viewEncodingKeys = (geom: string) => {
 export class VizSpecStore {
     visList: VisSpecWithHistory[];
     visIndex: number = 0;
+    createdVis: number = 0;
     editingFilterIdx: number | null = null;
     meta: IMutField[];
-    segmentKey: ISegmentKey = ISegmentKey.data;
+    segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
     vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     showDataConfig: boolean = false;
@@ -103,6 +104,7 @@ export class VizSpecStore {
     ) {
         this.meta = meta;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
+        this.createdVis = this.visList.length;
         this.onMetaChange = options?.onMetaChange;
         makeAutoObservable(this, {
             visList: observable.shallow,
@@ -253,13 +255,15 @@ export class VizSpecStore {
         this.meta = meta;
     }
 
-    resetVisualization() {
-        this.visList = [fromFields(this.meta, 'Chart 1')];
+    resetVisualization(name = 'Chart 1') {
+        this.visList = [fromFields(this.meta, name)];
+        this.createdVis = 1;
     }
 
-    addVisualization(defaultName?: string) {
-        const name = defaultName || 'Chart ' + (this.visList.length + 1);
+    addVisualization(defaultName?: string | ((index: number) => string)) {
+        const name = defaultName ? (typeof defaultName === 'function' ? defaultName(this.createdVis + 1) : defaultName) : 'Chart ' + (this.createdVis + 1);
         this.visList.push(fromFields(this.meta, name));
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
@@ -277,6 +281,7 @@ export class VizSpecStore {
                 visId: uniqueId(),
             })
         );
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
@@ -324,8 +329,9 @@ export class VizSpecStore {
         }
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
         const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
+        const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
-            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex);
+            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
         } else if (destMeta) {
             this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
         } else {
@@ -335,7 +341,8 @@ export class VizSpecStore {
                 sourceIndex,
                 destinationKey,
                 destinationIndex,
-                uniqueId()
+                uniqueId(),
+                limit,
             );
         }
     }
@@ -427,23 +434,27 @@ export class VizSpecStore {
                 return fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(x))));
             }
         });
+        this.createdVis = this.visList.length;
         this.visIndex = 0;
     }
 
     appendRaw(data: string) {
         const newChart = importFull(data);
         this.visList.push(newChart);
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
     importRaw(data: string[]) {
         this.visList = data.map(importFull);
+        this.createdVis = this.visList.length;
         this.visIndex = 0;
     }
 
     appendFromOld(data: IVisSpecForExport) {
         const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
         this.visList.push(newChart);
+        this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 

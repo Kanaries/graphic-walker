@@ -118,19 +118,23 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   } = props;
   const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
   const mediaTheme = useCurrentMediaTheme(dark);
-  const channelScales = channelScaleRaw ?? {};
-  if (scale?.opacity) {
-    channelScales.opacity = {
-      ...channelScales.opacity ?? {},
-      ...scale.opacity
-    };
-  }
-  if (scale?.size) {
-    channelScales.size = {
-      ...channelScales.size ?? {},
-      ...scale.size
-    };
-  }
+  const channelScales = useMemo(() => {
+    const cs = channelScaleRaw ?? {};
+    if (scale?.opacity) {
+        cs.opacity = {
+            ...(cs.opacity ?? {}),
+            ...scale.opacity,
+        };
+    }
+    if (scale?.size) {
+        cs.size = {
+            ...(cs.size ?? {}),
+            ...scale.size,
+        };
+    }
+    return cs;
+}, [channelScaleRaw, scale]);
+
   // const themeConfig = builtInThemes[themeKey]?.[mediaTheme];
 
   // const vegaConfig = useMemo(() => {
@@ -166,7 +170,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
   const rowFacetFields = useMemo(() => rowDims.slice(0, -1), [rowDims]);
   const colFacetFields = useMemo(() => colDims.slice(0, -1), [colDims]);
   const rowRepeatFields = useMemo(() => rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas, [rowDims, rowMeas]);//rowMeas.slice(0, -1);
-  const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [rowDims, rowMeas]);//colMeas.slice(0, -1);
+  const colRepeatFields = useMemo(() => colMeas.length === 0 ? colDims.slice(-1) : colMeas, [colDims, colMeas]);//colMeas.slice(0, -1);
   const allFieldIds = useMemo(() => [...rows, ...columns, color, opacity, size].filter(f => Boolean(f)).map(f => (f as IViewField).fid), [rows, columns, color, opacity, size]);
 
   const { reportError: reportGWError } = useReporter();

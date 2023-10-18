@@ -69,7 +69,7 @@ const FilterEditDialog: React.FC = observer(() => {
         }
 
         vizStore.closeFilterEditing();
-    }, [editingFilterIdx, uncontrolledField]);
+    }, [editingFilterIdx, uncontrolledField?.rule, vizStore]);
 
     const allFieldOptions = React.useMemo(() => {
         return allFields.map((d) => ({

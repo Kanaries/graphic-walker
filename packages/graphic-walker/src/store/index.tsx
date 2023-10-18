@@ -48,7 +48,7 @@ export const StoreWrapper = (props: StoreWrapperProps) => {
             };
         }
         return noop;
-    }, [props.storeRef]);
+    }, [props.storeRef, store]);
     return <StoreContext.Provider value={store}>{props.children}</StoreContext.Provider>;
 };
 
@@ -72,7 +72,7 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
             store.setMeta(props.meta);
             lastMeta.current = props.meta;
         }
-    }, [props.meta]);
+    }, [props.meta, store]);
     useEffect(() => {
         if (props.storeRef) {
             const ref = props.storeRef;
@@ -82,7 +82,7 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
             };
         }
         return noop;
-    }, [props.storeRef]);
+    }, [props.storeRef, store]);
     return <VisContext.Provider value={store}>{props.children}</VisContext.Provider>;
 };
 

@@ -8,14 +8,15 @@ import type { ToolbarItemProps } from './components/toolbar';
 import { VizApp } from './App';
 import { CommonStore } from './store/commonStore';
 import FieldsContextWrapper from './fields/fieldsContext';
+import { GWGlobalConfig } from './vis/theme';
 
 export interface IGWProps {
-    hideDataSourceConfig?: boolean;
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
     keepAlive?: boolean | string;
     /** @default "vega" */
     themeKey?: IThemeKey;
+    themeConfig?: GWGlobalConfig;
     dark?: IDarkMode;
     toolbar?: {
         extra?: ToolbarItemProps[];
@@ -37,7 +38,7 @@ export interface IGWProps {
 }
 
 export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(function App(props) {
-    const { i18nLang = 'en-US', i18nResources, themeKey = 'vega', dark = 'media', toolbar, enhanceAPI } = props;
+    const { i18nLang = 'en-US', i18nResources, themeKey = 'vega', dark = 'media', themeConfig, toolbar, enhanceAPI, geographicData, onError, geoList, channelScales } = props;
     const commonStore = useGlobalStore();
 
     const { dataStore } = commonStore;
@@ -56,7 +57,12 @@ export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(fun
                         i18nLang={i18nLang}
                         i18nResources={i18nResources}
                         themeKey={themeKey}
+                        themeConfig={themeConfig}
                         toolbar={toolbar}
+                        geographicData={geographicData}
+                        geoList={geoList}
+                        onError={onError}
+                        channelScales={channelScales}
                     />
                 </div>
             </FieldsContextWrapper>

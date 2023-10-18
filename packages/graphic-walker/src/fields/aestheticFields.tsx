@@ -42,7 +42,7 @@ const AestheticFields: React.FC = (props) => {
     return (
         <div>
             {channels.map((dkey, i, { length }) => (
-                <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative', zIndex: length - i }}>
+                <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
                     <Droppable droppableId={dkey.id} direction="horizontal">
                         {(provided, snapshot) => (
                             // <OBFieldContainer dkey={dkey} provided={provided} />

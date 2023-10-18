@@ -26,7 +26,7 @@ const VisNav: React.FC = (props) => {
 
     const visSelectionHandler = useCallback((tabKey: string, tabIndex: number) => {
         if (tabKey === ADD_KEY) {
-            vizStore.addVisualization(t('main.tablist.auto_title', { idx: visLength + 1 }));
+            vizStore.addVisualization(idx => t('main.tablist.auto_title', { idx }));
         } else {
             vizStore.selectVisualization(tabIndex);
         }
@@ -34,15 +34,15 @@ const VisNav: React.FC = (props) => {
 
     const editLabelHandler = useCallback((content: string, tabIndex: number) => {
         vizStore.setVisName(tabIndex, content)
-    }, [])
+    }, [vizStore])
 
     const deleteHandler = useCallback((tabIndex: number) => {
         vizStore.openRemoveConfirmModal(tabIndex);
-    }, [])
+    }, [vizStore])
 
     const dupHandler = useCallback((tabIndex: number) => {
         vizStore.duplicateVisualization(tabIndex);
-    }, [])
+    }, [vizStore])
 
     return (
         <EditableTabs

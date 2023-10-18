@@ -138,7 +138,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         }
 
         return config;
-    }, [themeConfig, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
+    }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
         return (
@@ -177,14 +177,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={
-                size.mode === 'fixed' || isSpatial
-                    ? {
+            size={{
                           width: size.width + 'px',
                           height: size.height + 'px',
-                      }
-                    : undefined
-            }
+            }}
         >
             {loading && <LoadingLayer />}
             {isSpatial && (

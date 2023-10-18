@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { LightBulbIcon } from "@heroicons/react/24/outline";
-import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales } from './interfaces';
+import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales, Specification, IDarkMode } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -22,7 +22,7 @@ import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
 import ClickMenu from './components/clickMenu';
 import AskViz from './components/askViz';
-import { VizSpecStore } from './store/visualSpecStore';
+import { VizSpecStore, renderSpec } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
@@ -32,6 +32,7 @@ import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { GWGlobalConfig } from './vis/theme';
+import { useCurrentMediaTheme } from './utils/media';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -58,6 +59,7 @@ export interface BaseVizProps {
     onError?: (err: Error) => void;
     geoList?: IGeoDataItem[];
     channelScales?: IChannelScales;
+    spec?: Specification;
 }
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
@@ -72,6 +74,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         toolbar,
         geographicData,
         computationTimeout = 60000,
+        spec,
+        onError
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -92,10 +96,16 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const vizStore = useVizStore();
 
     useEffect(() => {
-        if (props.geographicData) {
-            vizStore.setGeographicData(props.geographicData, props.geographicData.key);
+        if (geographicData) {
+            vizStore.setGeographicData(geographicData, geographicData.key);
         }
-    }, [geographicData]);
+    }, [vizStore, geographicData]);
+
+    useEffect(() => {
+        if (spec) {
+            vizStore.replaceNow(renderSpec(spec, vizStore.meta, vizStore.currentVis.name ?? 'Chart 1', vizStore.currentVis.visId));
+        }
+    }, [spec, vizStore]);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
@@ -105,12 +115,12 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         (msg: string, code?: number) => {
             const err = new Error(`Error${code ? `(${code})` : ''}: ${msg}`);
             console.error(err);
-            props.onError?.(err);
+            onError?.(err);
             if (code) {
                 vizStore.updateShowErrorResolutionPanel(code);
             }
         },
-        [vizStore, props.onError]
+        [vizStore, onError]
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
@@ -215,11 +225,15 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 export type VizProps = {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
+    themeConfig?: GWGlobalConfig;
     themeKey?: IThemeKey;
-    darkMode?: 'light' | 'dark';
+    dark?: IDarkMode;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
+    };
+    geographicData?: IGeographicData & {
+        key: string;
     };
     enhanceAPI?: {
         header?: Record<string, string>;
@@ -232,6 +246,11 @@ export type VizProps = {
     rawFields: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     computationTimeout?: number;
+    dataSelection?: React.ReactChild;
+    onError?: (err: Error) => void;
+    geoList?: IGeoDataItem[];
+    channelScales?: IChannelScales;
+    spec?: Specification;
 } & (
     | {
           /**
@@ -268,20 +287,31 @@ export function VizAppWithContext(props: VizProps) {
         };
     }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard]);
 
+    const darkMode = useCurrentMediaTheme(props.dark);
+
     return (
-        <VizStoreWrapper onMetaChange={props.onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
-            <FieldsContextWrapper>
-                <VizApp
-                    darkMode={props.darkMode}
-                    enhanceAPI={props.enhanceAPI}
-                    i18nLang={props.i18nLang}
-                    i18nResources={props.i18nResources}
-                    themeKey={props.themeKey}
-                    toolbar={props.toolbar}
-                    computation={computation}
-                    computationTimeout={props.computationTimeout}
-                />
-            </FieldsContextWrapper>
-        </VizStoreWrapper>
+        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+            <VizStoreWrapper onMetaChange={props.onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
+                <FieldsContextWrapper>
+                    <VizApp
+                        darkMode={darkMode}
+                        enhanceAPI={props.enhanceAPI}
+                        i18nLang={props.i18nLang}
+                        i18nResources={props.i18nResources}
+                        themeKey={props.themeKey}
+                        toolbar={props.toolbar}
+                        computation={computation}
+                        computationTimeout={props.computationTimeout}
+                        channelScales={props.channelScales}
+                        dataSelection={props.dataSelection}
+                        geoList={props.geoList}
+                        geographicData={props.geographicData}
+                        onError={props.onError}
+                        spec={props.spec}
+                        themeConfig={props.themeConfig}
+                    />
+                </FieldsContextWrapper>
+            </VizStoreWrapper>
+        </div>
     );
 }
