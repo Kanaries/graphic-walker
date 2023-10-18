@@ -185,7 +185,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                             {tab.label}
                             {tab.key === selectedKey && tab.editable && (
                                 <Popover className="relative inline-flex">
-                                    <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
+                                    <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
                                         <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
                                     </Popover.Button>
                                     <Transition
@@ -198,7 +198,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                         leaveTo="opacity-0 translate-y-1"
                                     >
                                         <Popover.Panel className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-min -translate-x-1/4 px-2">
-                                            <div className="shrink rounded p-1 bg-white text-xs font-semibold leading-2 text-gray-900 shadow-lg ring-1 ring-gray-900/5">
+                                            <div className="shrink rounded p-1 bg-white dark:bg-zinc-900 text-xs font-semibold leading-2 text-gray-900 dark:text-white shadow-lg ring-1 ring-gray-900/5">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -207,7 +207,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                             setName(tab.label);
                                                         });
                                                     }}
-                                                    className="block p-1 w-full hover:bg-gray-200 text-left"
+                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
                                                 >
                                                     {'Edit'}
                                                 </button>
@@ -216,7 +216,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                         e.stopPropagation();
                                                         onDuplicate?.(tabIndex);
                                                     }}
-                                                    className="block p-1 w-full hover:bg-gray-200 text-left"
+                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
                                                 >
                                                     {'Duplicate'}
                                                 </button>
@@ -226,7 +226,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                             e.stopPropagation();
                                                             onRemove?.(tabIndex);
                                                         }}
-                                                        className="block p-1 w-full hover:bg-gray-200 text-red-500 text-left"
+                                                        className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-red-500 text-left"
                                                     >
                                                         {'Remove'}
                                                     </button>
