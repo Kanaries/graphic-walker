@@ -25,6 +25,7 @@ import {
     RectangleGroupIcon,
     GlobeAmericasIcon,
     HashtagIcon,
+    PaintBrushIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -111,11 +112,10 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
 
     const downloadBase64 = useCallback(
         throttle(() => {
-            rendererHandler?.current?.getCanvasData().then(x => navigator.clipboard.writeText(x.join(',')));
+            rendererHandler?.current?.getCanvasData().then((x) => navigator.clipboard.writeText(x.join(',')));
         }, 200),
         [rendererHandler]
     );
-
 
     const downloadCSV = useCallback(
         throttle(() => {
@@ -396,7 +396,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 label: t('table.summary'),
                 icon: TableCellsIcon,
                 checked: showTableSummary,
-                onChange: checked => {
+                onChange: (checked) => {
                     vizStore.setVisualLayout('showTableSummary', checked);
                 },
             },
@@ -432,14 +432,14 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                                 vizStore.setVisualLayout('size', {
                                     mode: 'fixed',
                                     height: v,
-                                    width: layout.size.width
+                                    width: layout.size.width,
                                 });
                             }}
                             onWidthChange={(v) => {
                                 vizStore.setVisualLayout('size', {
                                     mode: 'fixed',
                                     width: v,
-                                    height: layout.size.height
+                                    height: layout.size.height,
                                 });
                             }}
                         />
@@ -451,28 +451,42 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                 key: 'coord_system',
                 label: tGlobal('constant.coord_system.__enum__'),
                 icon: StopIcon,
-                options: GLOBAL_CONFIG.COORD_TYPES.map(c => ({
+                options: GLOBAL_CONFIG.COORD_TYPES.map((c) => ({
                     key: c,
                     label: tGlobal(`constant.coord_system.${c}`),
                     icon: {
-                        generic: (props: SVGProps<SVGSVGElement>) => <svg stroke="currentColor" fill="none" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2v20" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7h2M12 16h2M7 12v-2M16 12v-2"/></svg>,
+                        generic: (props: SVGProps<SVGSVGElement>) => (
+                            <svg
+                                stroke="currentColor"
+                                fill="none"
+                                strokeWidth="1.5"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                                {...props}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2v20" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 7h2M12 16h2M7 12v-2M16 12v-2" />
+                            </svg>
+                        ),
                         geographic: GlobeAltIcon,
                     }[c],
                 })),
                 value: coordSystem,
-                onSelect: value => {
-                    const coord = value as typeof GLOBAL_CONFIG.COORD_TYPES[number];
+                onSelect: (value) => {
+                    const coord = value as (typeof GLOBAL_CONFIG.COORD_TYPES)[number];
                     vizStore.setCoordSystem(coord);
                 },
             },
-            coordSystem === 'geographic' && markType === 'choropleth' && {
-                key: 'geojson',
-                label: t('button.geojson'),
-                icon: GlobeAmericasIcon,
-                onClick: () => {
-                    vizStore.setShowGeoJSONConfigPanel(true);
+            coordSystem === 'geographic' &&
+                markType === 'choropleth' && {
+                    key: 'geojson',
+                    label: t('button.geojson'),
+                    icon: GlobeAmericasIcon,
+                    onClick: () => {
+                        vizStore.setShowGeoJSONConfigPanel(true);
+                    },
                 },
-            },
             '-',
             {
                 key: 'debug',
@@ -483,44 +497,46 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     vizStore.setVisualLayout('showActions', checked);
                 },
             },
-            ...coordSystem === 'generic' ?[{
-                key: 'export_chart',
-                label: t('button.export_chart'),
-                icon: PhotoIcon,
-                form: (
-                    <FormContainer className={dark ? 'dark' : ''}>
-                        <button
-                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
-                                dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
-                            }`}
-                            aria-label={t('button.export_chart_as', { type: 'png' })}
-                            onClick={() => downloadPNG()}
-                        >
-                            {t('button.export_chart_as', { type: 'png' })}
-                        </button>
-                        <button
-                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
-                                dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
-                            }`}
-                            aria-label={t('button.export_chart_as', { type: 'svg' })}
-                            onClick={() => downloadSVG()}
-                        >
-                            {t('button.export_chart_as', { type: 'svg' })}
-                        </button>
-                        <button
-                            className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
-                                dark
-                                    ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700'
-                                    : 'bg-white hover:bg-gray-200 text-gray-800'
-                            }`}
-                            aria-label={t('button.export_chart_as', { type: 'base64' })}
-                            onClick={() => downloadBase64()}
-                        >
-                            {t('button.export_chart_as', { type: 'base64' })}
-                        </button>
-                    </FormContainer>
-                ),
-            }]:[],
+            ...(coordSystem === 'generic'
+                ? [
+                      {
+                          key: 'export_chart',
+                          label: t('button.export_chart'),
+                          icon: PhotoIcon,
+                          form: (
+                              <FormContainer className={dark ? 'dark' : ''}>
+                                  <button
+                                      className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
+                                          dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
+                                      }`}
+                                      aria-label={t('button.export_chart_as', { type: 'png' })}
+                                      onClick={() => downloadPNG()}
+                                  >
+                                      {t('button.export_chart_as', { type: 'png' })}
+                                  </button>
+                                  <button
+                                      className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
+                                          dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
+                                      }`}
+                                      aria-label={t('button.export_chart_as', { type: 'svg' })}
+                                      onClick={() => downloadSVG()}
+                                  >
+                                      {t('button.export_chart_as', { type: 'svg' })}
+                                  </button>
+                                  <button
+                                      className={`text-xs pt-1 pb-1 pl-6 pr-6 ${
+                                          dark ? 'dark bg-zinc-900 text-gray-100 hover:bg-gray-700' : 'bg-white hover:bg-gray-200 text-gray-800'
+                                      }`}
+                                      aria-label={t('button.export_chart_as', { type: 'base64' })}
+                                      onClick={() => downloadBase64()}
+                                  >
+                                      {t('button.export_chart_as', { type: 'base64' })}
+                                  </button>
+                              </FormContainer>
+                          ),
+                      },
+                  ]
+                : []),
             {
                 key: 'csv',
                 label: t('button.export_chart_as', { type: 'csv' }),
@@ -560,6 +576,15 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     </FormContainer>
                 ),
             },
+            {
+                key: 'painter',
+                label: t('button.painter'),
+                icon: PaintBrushIcon,
+                disabled: vizStore.paintInfo === null,
+                onClick: () => {
+                    vizStore.setShowPainter(true);
+                },
+            },
             '-',
             {
                 key: 'kanaries',
@@ -586,7 +611,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             case 'table':
                 return items;
             default:
-                return items.filter(item => typeof item === 'string' || item.key !== 'table:summary');
+                return items.filter((item) => typeof item === 'string' || item.key !== 'table:summary');
         }
     }, [
         vizStore,

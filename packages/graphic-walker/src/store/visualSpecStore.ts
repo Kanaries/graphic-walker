@@ -37,9 +37,10 @@ import {
     ICreateField,
     ISemanticType,
     IChartForExport,
+    IPaintMap,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
@@ -94,6 +95,7 @@ export class VizSpecStore {
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
     showErrorResolutionPanel: number = 0;
+    showPainterPanel: boolean = false;
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = "";
@@ -234,6 +236,35 @@ export class VizSpecStore {
     get canRedo() {
         const viz = this.visList[this.visIndex];
         return viz.cursor !== viz.timeline.length;
+    }
+
+    get paintInfo() {
+        const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
+        if (existPaintField) {
+            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
+            if (param) {
+                return {
+                    x: param.x,
+                    y: param.y,
+                };
+            }
+        }
+        if (!this.currentVis.config.defaultAggregated) {
+            const { columns, rows } = this.currentEncodings;
+            if (columns.length !== 1 || rows.length !== 1) {
+                return null;
+            }
+            const col = columns[0];
+            const row = rows[0];
+            if (col.semanticType != 'quantitative' || row.semanticType != 'quantitative') {
+                return null;
+            }
+            return {
+                x: row.fid,
+                y: col.fid,
+            };
+        }
+        return null;
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
@@ -639,6 +670,11 @@ export class VizSpecStore {
         this.showErrorResolutionPanel = errCode;
         this.lastErrorMessage = msg;
     }
+
+    setShowPainter(show: boolean) {
+        this.showPainterPanel = show;
+    }
+
 
     updateLastSpec(spec: string) {
         this.lastSpec = spec;

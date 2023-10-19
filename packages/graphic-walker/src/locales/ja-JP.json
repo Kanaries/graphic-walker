@@ -193,7 +193,8 @@
                     "export_chart": "エクスポート",
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート",
-                    "geojson": "地理情報設定"
+                    "geojson": "地理情報設定",
+                    "painter": "データキャンバスを開く"
                 },
                 "limit": "上限",
                 "size": "サイズ変更",

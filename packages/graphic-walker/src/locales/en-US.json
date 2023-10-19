@@ -199,7 +199,8 @@
                     "export_chart": "Export",
                     "export_chart_as": "Export as {{type}}",
                     "export_code": "Export Code",
-                    "geojson": "Geography Configuration"
+                    "geojson": "Geography Configuration",
+                    "painter": "Open Painter"
                 },
                 "limit": "Limit",
                 "size": "Resize",
