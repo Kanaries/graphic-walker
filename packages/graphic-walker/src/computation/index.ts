@@ -1,4 +1,13 @@
-import type { IComputationFunction, IDataQueryPayload, IDataQueryWorkflowStep, IDatasetStats, IFieldStats, IRow } from '../interfaces';
+import type {
+    IComputationFunction,
+    IDataQueryPayload,
+    IDataQueryWorkflowStep,
+    IDatasetStats,
+    IField,
+    IFieldStats,
+    IRow,
+    ITransformWorkflowStep,
+} from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
@@ -63,19 +72,33 @@ export const dataQuery = async (service: IComputationFunction, workflow: IDataQu
     return res;
 };
 
-export const fieldStat = async (service: IComputationFunction, field: string, options: { values?: boolean; range?: boolean }): Promise<IFieldStats> => {
+export const fieldStat = async (service: IComputationFunction, field: IField, options: { values?: boolean; range?: boolean }): Promise<IFieldStats> => {
     const { values = true, range = true } = options;
-    const COUNT_ID = `count_${field}`;
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+    const COUNT_ID = `count_${field.fid}`;
+    const MIN_ID = `min_${field.fid}`;
+    const MAX_ID = `max_${field.fid}`;
+    const transformWork: ITransformWorkflowStep[] = field.computed
+        ? [
+              {
+                  type: 'transform',
+                  transform: [
+                      {
+                          expression: field.expression!,
+                          key: field.fid,
+                      },
+                  ],
+              },
+          ]
+        : [];
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...transformWork,
             {
                 type: 'view',
                 query: [
                     {
                         op: 'aggregate',
-                        groupBy: [field],
+                        groupBy: [field.fid],
                         measures: [
                             {
                                 field: '*',
@@ -91,6 +114,7 @@ export const fieldStat = async (service: IComputationFunction, field: string, op
     const valuesRes = values ? await service(valuesQueryPayload) : [];
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...transformWork,
             {
                 type: 'view',
                 query: [
@@ -99,12 +123,12 @@ export const fieldStat = async (service: IComputationFunction, field: string, op
                         groupBy: [],
                         measures: [
                             {
-                                field,
+                                field: field.fid,
                                 agg: 'min',
                                 asFieldKey: MIN_ID,
                             },
                             {
-                                field,
+                                field: field.fid,
                                 agg: 'max',
                                 asFieldKey: MAX_ID,
                             },
@@ -132,13 +156,12 @@ export const fieldStat = async (service: IComputationFunction, field: string, op
         values: valuesRes
             .sort((a, b) => b[COUNT_ID] - a[COUNT_ID])
             .map((row) => ({
-                value: row[field],
+                value: row[field.fid],
                 count: row[COUNT_ID],
             })),
         range: [rangeRes[MIN_ID], rangeRes[MAX_ID]],
     };
 };
-
 
 export async function getSample(service: IComputationFunction, field: string) {
     const res = await service({
@@ -183,7 +206,7 @@ export async function getTemporalRange(service: IComputationFunction, field: str
                                 field,
                                 agg: 'max',
                                 asFieldKey: MAX_ID,
-                                format
+                                format,
                             },
                         ],
                     },
@@ -196,6 +219,6 @@ export async function getTemporalRange(service: IComputationFunction, field: str
             [MIN_ID]: 0,
             [MAX_ID]: 0,
         },
-    ]  = await service(rangeQueryPayload);
+    ] = await service(rangeQueryPayload);
     return [new Date(rangeRes[MIN_ID]).getTime(), new Date(rangeRes[MAX_ID]).getTime()] as [number, number];
 }
