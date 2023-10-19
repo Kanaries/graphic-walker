@@ -78,6 +78,19 @@ export interface IFieldStats {
     range: [number, number];
 }
 
+export interface IPaintMap {
+    /** fid of x */
+    x: string;
+    /** fid of y */
+    y: string;
+    domainX: [number, number];
+    domainY: [number, number];
+    /** compressed array of UInt8[128][128] */
+    map: string;
+    /** map values */
+    dict: Record<number, { name: string; color: string }>;
+}
+
 export type IExpParameter =
     | {
           type: 'field';
@@ -102,10 +115,14 @@ export type IExpParameter =
     | {
           type: 'offset';
           value: number;
+      }
+    | {
+          type: 'map';
+          value: IPaintMap;
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log' | 'paint';
     params: IExpParameter[];
     as: string;
     num?: number;
