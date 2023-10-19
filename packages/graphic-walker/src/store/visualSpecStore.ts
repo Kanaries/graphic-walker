@@ -39,7 +39,7 @@ import {
     IChartForExport,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
-import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
@@ -246,6 +246,10 @@ export class VizSpecStore {
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
+        const oriF = this.currentEncodings[sourceKey][sourceIndex];
+        if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID) {
+            return;
+        }
         this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, uniqueId());
         this.editingFilterIdx = index;
     }
@@ -338,8 +342,12 @@ export class VizSpecStore {
         } else if (destinationKey === 'filters') {
             return this.appendFilter(destinationIndex, sourceKey, sourceIndex);
         }
+        const oriF = this.currentEncodings[sourceKey][sourceIndex];
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
         const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
+        if (destMeta && (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID)) {
+            return;
+        }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
             this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
