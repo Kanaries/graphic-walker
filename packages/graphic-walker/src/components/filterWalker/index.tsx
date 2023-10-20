@@ -106,7 +106,7 @@ export function createFilterContext(components: {
                     }
                 });
                 const domains = await Promise.all(domainsP);
-                const values = fields.map((x) => {
+                const values = fields.map((x, i) => {
                     const k = `${x.mode}__${x.fid}__${x.type === 'nominal' || x.type === 'ordinal' ? 'n' : 'q'}`;
                     if (valuesRef.current.has(k)) {
                         return valuesRef.current.get(k)!;
@@ -116,7 +116,7 @@ export function createFilterContext(components: {
                         valuesRef.current.set(k, v);
                         return v;
                     }
-                    const v = [0, 0];
+                    const v = domains[i];
                     valuesRef.current.set(k, v);
                     return v;
                 });
@@ -132,6 +132,7 @@ export function createFilterContext(components: {
                         .map(({ mode, type, fid }, i) => {
                             const domain = domains[i];
                             const value = values[i];
+                            if (!domain || !value) return null;
                             if (mode === 'single') {
                                 if (value.length === 0) return null;
                                 return createFilter(fid, value as string[]);
@@ -160,16 +161,18 @@ export function createFilterContext(components: {
         }, [filters, computation]);
         const elements = React.useMemo(
             () =>
-                fields.map(({ mode, type, name }, i) => {
+                fields.map(({ mode, type, name, fid }, i) => {
                     const domain = domains[i];
                     const value = values[i];
+                    if (!domain || !value) return <></>;
                     if (mode === 'single') {
                         return (
-                            <components.MultiSelect
+                            <components.SingleSelect
+                                key={fid}
                                 name={name}
                                 options={domain as string[]}
-                                value={value as string[]}
-                                onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
+                                value={value[0] as string}
+                                onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? [value] : x)))}
                             />
                         );
                     }
@@ -178,6 +181,7 @@ export function createFilterContext(components: {
                         case 'ordinal':
                             return (
                                 <components.MultiSelect
+                                    key={fid}
                                     name={name}
                                     options={domain as string[]}
                                     value={value as string[]}
@@ -188,6 +192,7 @@ export function createFilterContext(components: {
                         case 'quantitative':
                             return (
                                 <components.RangeSelect
+                                    key={fid}
                                     name={name}
                                     domain={domain as [number, number]}
                                     value={value as [number, number]}
@@ -197,6 +202,7 @@ export function createFilterContext(components: {
                         case 'temporal':
                             return (
                                 <components.TemporalSelect
+                                    key={fid}
                                     name={name}
                                     domain={domain as [number, number]}
                                     value={value as [number, number]}
