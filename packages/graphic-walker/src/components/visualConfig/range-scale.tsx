@@ -71,7 +71,7 @@ function Checkbox(props: { inputKey: string; title: string; value: boolean; onCh
     );
 }
 
-const MultiRangeSlider = ({ min, max, minVal, maxVal, setMinVal, setMaxVal, factor }) => {
+export const MultiRangeSlider = ({ min, max, minVal, maxVal, setMinVal, setMaxVal, factor }) => {
     const minValRef = useRef(minVal);
     const maxValRef = useRef(maxVal);
     const range = useRef<HTMLDivElement>(null);

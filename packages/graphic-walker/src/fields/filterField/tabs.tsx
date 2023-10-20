@@ -346,7 +346,7 @@ interface CalendarInputProps {
     onChange: (value: number) => void;
 }
 
-const CalendarInput: React.FC<CalendarInputProps> = (props) => {
+export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     const { min, max, value, onChange } = props;
     const dateStringFormatter = (timestamp: number) => {
         const date = new Date(timestamp);

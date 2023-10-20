@@ -190,11 +190,13 @@ export const toWorkflow = (
 };
 
 export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[]): IDataQueryPayload => {
-    if (query.workflow.find((x) => x.type === 'filter')) {
+    if (filters.length === 0) return query;
+    const existFilter = query.workflow.findIndex((x) => x.type === 'filter');
+    if (existFilter) {
         return {
             ...query,
-            workflow: query.workflow.map((x) => {
-                if (x.type === 'filter') {
+            workflow: query.workflow.map((x, i) => {
+                if (x.type === 'filter' && i === existFilter) {
                     return {
                         type: 'filter',
                         filters: filters.concat(x.filters),

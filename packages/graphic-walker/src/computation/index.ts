@@ -163,6 +163,74 @@ export const fieldStat = async (service: IComputationFunction, field: IField, op
     };
 };
 
+export async function getDistinctValues(service: IComputationFunction, field: string) {
+    const COUNT_ID = `count_${field}`;
+    const valuesQueryPayload: IDataQueryPayload = {
+        workflow: [
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'aggregate',
+                        groupBy: [field],
+                        measures: [
+                            {
+                                field: '*',
+                                agg: 'count',
+                                asFieldKey: COUNT_ID,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    };
+    const valuesRes = await service(valuesQueryPayload);
+    return valuesRes
+        .sort((a, b) => b[COUNT_ID] - a[COUNT_ID])
+        .map((row) => ({
+            value: row[field] as string,
+            count: row[COUNT_ID] as number,
+        }));
+}
+
+export async function getRange(service: IComputationFunction, field: string) {
+    const MIN_ID = `min_${field}`;
+    const MAX_ID = `max_${field}`;
+    const rangeQueryPayload: IDataQueryPayload = {
+        workflow: [
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'aggregate',
+                        groupBy: [],
+                        measures: [
+                            {
+                                field,
+                                agg: 'min',
+                                asFieldKey: MIN_ID,
+                            },
+                            {
+                                field,
+                                agg: 'max',
+                                asFieldKey: MAX_ID,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    };
+    const [
+        rangeRes = {
+            [MIN_ID]: 0,
+            [MAX_ID]: 0,
+        },
+    ] = await service(rangeQueryPayload);
+    return [rangeRes[MIN_ID], rangeRes[MAX_ID]] as [number, number];
+}
+
 export async function getSample(service: IComputationFunction, field: string) {
     const res = await service({
         workflow: [
