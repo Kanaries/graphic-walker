@@ -1,5 +1,5 @@
 // File name: gog represents the Grammar of Graphics  (theory by Wilkinson)
-import { DraggableFieldState } from "../interfaces";
+import { DraggableFieldState, IAnalyticType, ISemanticType } from "../interfaces";
 
 type SpitialEncodings = Pick<DraggableFieldState, 'columns' | 'rows'> | Pick<DraggableFieldState, 'latitude' | 'longitude'>
 type DraggableFieldValues = DraggableFieldState[Exclude<keyof DraggableFieldState, 'filters'>];
@@ -29,12 +29,22 @@ const LR = {
             }, [] as DraggableFieldValues);
         }
     },
-    forceDimension(fields: DraggableFieldValues): DraggableFieldValues {
-        return fields.map(f => ({
-            ...f,
-            analyticType: 'dimension'
-        }))
-    }
+    forceAnalyticType (analyticType: IAnalyticType) {
+        return function (fields: DraggableFieldValues): DraggableFieldValues {
+            return fields.map(f => ({
+                ...f,
+                analyticType
+            }))
+        }
+    },
+    forceSemanticType (semanticType: ISemanticType) {
+        return function (fields: DraggableFieldValues): DraggableFieldValues {
+            return fields.map(f => ({
+                ...f,
+                semanticType
+            }))
+        }
+    },
 }
 type Operator<T> = (value: T) => T;
 function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
@@ -61,8 +71,16 @@ export function algebraLint <T extends SpitialEncodings | DraggableFieldValues>(
     }  else if ('latitude' in encodings && 'longitude' in encodings && (encodings.latitude.length > 0 || encodings.longitude.length > 0)) {
         return {
             ...encodings,
-            latitude: applyOperations(encodings.latitude, [LR.forceDimension, LR.crossLimit(1)]),
-            longitude: applyOperations(encodings.longitude, [LR.forceDimension, LR.crossLimit(1)])
+            latitude: applyOperations(encodings.latitude, [
+                LR.forceAnalyticType('dimension'),
+                LR.forceSemanticType('quantitative'),
+                LR.crossLimit(1)
+            ]),
+            longitude: applyOperations(encodings.longitude, [
+                LR.forceAnalyticType('dimension'),
+                LR.forceSemanticType('quantitative'),
+                LR.crossLimit(1)
+            ])
         };
     }
     return encodings;
