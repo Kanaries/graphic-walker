@@ -24,6 +24,7 @@ import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } fr
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
 import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
+import { algebraLint } from '../lib/gog';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -84,11 +85,11 @@ const actions: {
     [Methods.removeField]: (data, encoding, index) => mutPath(data, `encodings.${encoding}`, (fields) => remove(fields, index)) as IChart,
     [Methods.reorderField]: (data, encoding, from, to) =>
         mutPath(data, `encodings.${encoding}`, (fields) =>
-            fields.map((x, i, a) => {
+            algebraLint(fields.map((x, i, a) => {
                 if (i === from) return a[to];
                 if (i === to) return a[from];
                 return x;
-            })
+            }))
         ),
     [Methods.moveField]: (data, from, findex, to, tindex, limit) => {
         const oriField = data.encodings[from][findex];
@@ -98,7 +99,7 @@ const actions: {
                 : to === 'measures'
                 ? mutPath(oriField, 'analyticType', () => 'measure')
                 : oriField;
-        return mutPath(data, 'encodings', (e) => ({
+        return mutPath(data, 'encodings', (e) => algebraLint({
             ...e,
             [from]: remove(data.encodings[from], findex),
             [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
@@ -106,7 +107,7 @@ const actions: {
     },
     [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit) => {
         const field = { ...data.encodings[from][findex], dragId: newVarKey };
-        return mutPath(data, 'encodings', (e) => ({
+        return mutPath(data, 'encodings', (e) => algebraLint({
             ...e,
             [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
         }));
@@ -182,7 +183,7 @@ const actions: {
         return data;
     },
     [Methods.transpose]: (data) =>
-        mutPath(data, 'encodings', (e) => ({
+        mutPath(data, 'encodings', (e) => algebraLint({
             ...e,
             columns: e.rows,
             rows: e.columns,

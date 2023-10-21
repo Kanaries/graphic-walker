@@ -1,8 +1,7 @@
-import { IDataSetInfo, IMutField, IRow } from '../interfaces';
 import { makeAutoObservable, observable } from 'mobx';
+import { IDataSetInfo, IMutField, IRow } from '../interfaces';
 import { transData } from '../dataSource/utils';
 import { DataStore } from './dataStore';
-import { INestNode } from '../components/pivotTable/inteface';
 
 export class CommonStore {
     public dataStore: DataStore = new DataStore();
@@ -13,6 +12,7 @@ export class CommonStore {
     constructor () {
         makeAutoObservable(this, {
             tmpDataSource: observable.ref,
+            dataStore: false
         });
     }
     public setShowDSPanel (show: boolean) {
