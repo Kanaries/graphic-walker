@@ -1,12 +1,13 @@
-export const DemoDataAssets = true ? {
-    CARS: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-cars-service.json",
-    STUDENTS: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-students-service.json",
-    BTC_GOLD: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds_btc_gold_service.json",
-    BIKE_SHARING: 'https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-bikesharing-service.json',
-    CAR_SALES: 'https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-carsales-service.json',
-    COLLAGE: 'https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-collage-service.json',
-    TITANIC: 'https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-titanic-service.json',
-    KELPER: 'https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-kelper-service.json',
+export const DemoDataAssets = process.env.NODE_ENV === 'production' ? {
+    CARS: "https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-cars-service.json",
+    STUDENTS: "https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-students-service.json",
+    BTC_GOLD: "https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-btcgold-service.json",
+    BIKE_SHARING: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-bikesharing-service.json',
+    CAR_SALES: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-carsales-service.json',
+    COLLAGE: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-collage-service.json',
+    TITANIC: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-titanic-service.json',
+    KELPER: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-kelper-service.json',
+    EARTHQUAKE: 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-earthquake-service.json'
 } : {
     // CARS: "https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-cars-service.json",
     CARS: "/datasets/ds-cars-service.json",
@@ -18,6 +19,7 @@ export const DemoDataAssets = true ? {
     COLLAGE: '/datasets/ds-collage-service.json',
     TITANIC: '/datasets/ds-titanic-service.json',
     KELPER: '/datasets/ds-kelper-service.json',
+    EARTHQUAKE: '/datasets/ds-earthquake-service.json'
 } as const;
 
 interface IPublicData {
@@ -38,6 +40,10 @@ export const PUBLIC_DATA_LIST: IPublicData[] = [
     {
         key: "BIKE_SHARING",
         title: "Bike Sharing"
+    },
+    {
+        key: "EARTHQUAKE",
+        title: "Earthquakes"
     },
     {
         key: "CAR_SALES",
