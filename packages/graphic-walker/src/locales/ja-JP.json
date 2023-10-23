@@ -27,8 +27,9 @@
     },
     "constant": {
         "row_count": "行数",
-        "dim_key": "名",
-        "dim_val": "値",
+        "mea_key": "名",
+        "mea_val": "値",
+        "paint_key": "キャンバス値",
         "analytic_type": {
             "dimension": "ディメンション",
             "measure": "メジャー"

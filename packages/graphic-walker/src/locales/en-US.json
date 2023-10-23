@@ -29,6 +29,7 @@
         "row_count": "Row count",
         "mea_key": "Measure names",
         "mea_val": "Measure values",
+        "paint_key": "Paint Field",
         "analytic_type": {
             "dimension": "dimension",
             "measure": "measure"
