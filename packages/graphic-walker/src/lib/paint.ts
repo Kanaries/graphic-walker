@@ -42,7 +42,7 @@ function resolve(index: number) {
 async function bufferToBase64(buffer: Uint8Array | ArrayBuffer): Promise<string> {
     return await new Promise((r) => {
         const reader = new FileReader();
-        reader.onload = () => r(reader.result as string);
+        reader.onload = () => r((reader.result as string).substring(37));
         reader.readAsDataURL(new Blob([buffer]));
     });
 }
@@ -54,7 +54,7 @@ export async function compressMap(arr: Uint8Array) {
 }
 
 export async function decompressMap(uri: string) {
-    const stream = await fetch(uri).then((res) => res.body!.pipeThrough(new DecompressionStream('deflate-raw')));
+    const stream = await fetch('data:application/octet-stream;base64,' + uri).then((res) => res.body!.pipeThrough(new DecompressionStream('deflate-raw')));
     const result = await new Response(stream).arrayBuffer();
     return new Uint8Array(result);
 }

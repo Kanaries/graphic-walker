@@ -155,14 +155,16 @@ const PainterContent = (props: {
                         const targetColor = props.dict[brushIdRef.current];
                         if (!targetColor) return;
                         const pts = indexesFrom([Math.floor(x / 4), Math.floor((CHART_WIDTH - y) / 4)], brushSizeRef.current);
+                        let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
                                 item['fill'] = targetColor.color;
                                 item.datum![PAINT_FIELD_ID] = targetColor.name;
+                                i++;
                             });
                             props.mapRef.current![x] = brushIdRef.current;
                         });
-                        rerender();
+                        i > 0 && rerender();
                     };
                     if (e instanceof MouseEvent && e.buttons & 1) {
                         paint(e.offsetX - origin[0] - MAGIC_PADDING, e.offsetY - origin[1] - MAGIC_PADDING);
@@ -235,15 +237,16 @@ const Painter = () => {
             show={showPainterPanel}
             onClose={async () => {
                 vizStore.setShowPainter(false);
-                if (fieldX && fieldY) {
+                if (fieldX && fieldY && mapRef.current) {
                     vizStore.updatePaint(
                         {
                             dict,
                             domainX,
                             domainY,
-                            map: await compressMap(mapRef.current!),
-                            x: fieldX?.fid,
-                            y: fieldY?.fid,
+                            map: await compressMap(mapRef.current),
+                            x: fieldX.fid,
+                            y: fieldY.fid,
+                            usedColor: [...new Set(mapRef.current).values()],
                         },
                         t('constant.paint_key')
                     );

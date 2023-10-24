@@ -1,5 +1,5 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
-import { IViewField } from '../../interfaces';
+import { IPaintMap, IViewField } from '../../interfaces';
 import { NULL_FIELD } from './field';
 export interface IEncodeProps {
     geomType: string;
@@ -76,7 +76,15 @@ export function channelEncode(props: IEncodeProps) {
                     encoding[c].type = 'quantitative';
                 }
                 if (props[c].semanticType === 'temporal' && props[c].timeUnit) {
-                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit);
+                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit);;
+                }
+                if (c === 'color' && props[c].expression?.op === 'paint') {
+                    const map: IPaintMap = props[c].expression!.params.find((x) => x.type === 'map')!.value;
+                    const colors = map.usedColor.map((x) => map.dict[x]);
+                    encoding[c].scale = {
+                        domain: colors.map((x) => x.name),
+                        range: colors.map((x) => x.color),
+                    };
                 }
             }
         });

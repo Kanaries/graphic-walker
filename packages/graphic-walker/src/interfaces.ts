@@ -89,6 +89,7 @@ export interface IPaintMap {
     map: string;
     /** map values */
     dict: Record<number, { name: string; color: string }>;
+    usedColor: number[];
 }
 
 export type IExpParameter =
