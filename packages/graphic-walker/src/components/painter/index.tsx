@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
@@ -12,10 +12,21 @@ import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
 import { sceneVisit } from 'vega';
 import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
+import { Cursor, PixelContainer } from './components';
 
+const MAP_WIDTH = 128;
 const MAGIC_PADDING = 5;
-const CHART_WIDTH = 512;
+const FACTOR = 4;
+const CHART_WIDTH = MAP_WIDTH * FACTOR;
 const PIXEL_INDEX = '_gw_pixel_index';
+
+const MouseButtons = {
+    PRIMARY: 1,
+    SECONDARY: 2,
+    WHELL: 4,
+    BACK: 8,
+    FORWARD: 16,
+};
 
 const scheme = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac'];
 
@@ -56,7 +67,7 @@ const PainterContent = (props: {
     const computation = useCompututaion();
     const fields = useMemo(() => [props.x, props.y], [props.x, props.y]);
     const brushSizeRef = useRef(5);
-    const [brushSize, setBrushSize] = useState(5);
+    const [brushSize, setBrushSize] = useState(9);
     brushSizeRef.current = brushSize;
     const brushIdRef = useRef(1);
     const [brushId, setBrushId] = useState(1);
@@ -81,7 +92,8 @@ const PainterContent = (props: {
                 return x[props.y.fid];
             }),
             props.domainX,
-            props.domainY
+            props.domainY,
+            MAP_WIDTH
         );
     }, [viewData, props.x, props.y, props.domainX, props.domainY]);
     const data = useMemo(() => {
@@ -93,6 +105,9 @@ const PainterContent = (props: {
             };
         });
     }, [indexes, viewData, props.dict]);
+
+    const [pixelOffset, setPixelOffset] = useState([0, 0]);
+
     useEffect(() => {
         if (!loading && containerRef.current) {
             const colors = Object.entries(props.dict);
@@ -122,17 +137,18 @@ const PainterContent = (props: {
                         type: 'nominal',
                         title: 'custom feature',
                         scale: {
-                            domain: colors.map((x) => x[1].name),
-                            range: colors.map((x) => x[1].color),
+                            domain: colors.map(([_, x]) => x.name),
+                            range: colors.map(([_, x]) => x.color),
                         },
                     },
                 },
                 width: CHART_WIDTH,
                 height: CHART_WIDTH,
             };
-            embed(containerRef.current, spec).then((res) => {
+            embed(containerRef.current, spec, { actions: false, renderer: 'canvas' }).then((res) => {
                 const scene = res.view.scenegraph() as unknown as { root: Scene };
                 const origin = res.view.origin();
+                setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
                 const itemsMap: Map<number, SceneItem[]> = new Map();
                 const interactive = selectInteractive(scene);
                 interactive.forEach((item) =>
@@ -154,7 +170,7 @@ const PainterContent = (props: {
                     const paint = (x: number, y: number) => {
                         const targetColor = props.dict[brushIdRef.current];
                         if (!targetColor) return;
-                        const pts = indexesFrom([Math.floor(x / 4), Math.floor((CHART_WIDTH - y) / 4)], brushSizeRef.current);
+                        const pts = indexesFrom([Math.floor(x / FACTOR), MAP_WIDTH - Math.floor(y / FACTOR)], brushSizeRef.current, MAP_WIDTH);
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
@@ -166,7 +182,7 @@ const PainterContent = (props: {
                         });
                         i > 0 && rerender();
                     };
-                    if (e instanceof MouseEvent && e.buttons & 1) {
+                    if (e instanceof MouseEvent && e.buttons & MouseButtons.PRIMARY) {
                         paint(e.offsetX - origin[0] - MAGIC_PADDING, e.offsetY - origin[1] - MAGIC_PADDING);
                     } else if (e instanceof TouchEvent) {
                         const rect = containerRef.current!.getBoundingClientRect();
@@ -182,8 +198,16 @@ const PainterContent = (props: {
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
-    }, [loading, viewData, props.dict]);
-    return <div ref={containerRef} id="painter-container"></div>;
+    }, [loading, data, props.dict]);
+
+    return (
+        <div className="flex">
+            <PixelContainer color={props.dict[brushId].color} dia={brushSize} factor={FACTOR} offsetX={pixelOffset[0]} offsetY={pixelOffset[1]}>
+                <div ref={containerRef} id="painter-container"></div>
+            </PixelContainer>
+            <div></div>
+        </div>
+    );
 };
 
 const Painter = () => {
@@ -215,7 +239,7 @@ const Painter = () => {
                         setDomainX(paintInfo.domainX);
                         setDomainY(paintInfo.domainY);
                     } else {
-                        mapRef.current = emptyMap();
+                        mapRef.current = emptyMap(MAP_WIDTH);
                         const xs = fieldStat(compuation, paintInfo.x, { range: true });
                         const ys = fieldStat(compuation, paintInfo.y, { range: true });
                         const { range: domainX } = await xs;
@@ -232,25 +256,29 @@ const Painter = () => {
         }
     }, [showPainterPanel, vizStore, compuation]);
 
+    const saveMap = async () => {
+        if (fieldX && fieldY && mapRef.current) {
+            vizStore.updatePaint(
+                {
+                    dict,
+                    domainX,
+                    domainY,
+                    map: await compressMap(mapRef.current),
+                    x: fieldX.fid,
+                    y: fieldY.fid,
+                    usedColor: [...new Set(mapRef.current).values()],
+                    mapwidth: MAP_WIDTH,
+                },
+                t('constant.paint_key')
+            );
+        }
+    };
+
     return (
         <Modal
             show={showPainterPanel}
-            onClose={async () => {
+            onClose={() => {
                 vizStore.setShowPainter(false);
-                if (fieldX && fieldY && mapRef.current) {
-                    vizStore.updatePaint(
-                        {
-                            dict,
-                            domainX,
-                            domainY,
-                            map: await compressMap(mapRef.current),
-                            x: fieldX.fid,
-                            y: fieldY.fid,
-                            usedColor: [...new Set(mapRef.current).values()],
-                        },
-                        t('constant.paint_key')
-                    );
-                }
             }}
         >
             {loading ? (

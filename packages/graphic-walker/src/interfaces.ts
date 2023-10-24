@@ -85,7 +85,9 @@ export interface IPaintMap {
     y: string;
     domainX: [number, number];
     domainY: [number, number];
-    /** compressed array of UInt8[128][128] */
+    /** width */
+    mapwidth: number;
+    /** compressed array of UInt8[mapwidth][mapwidth] */
     map: string;
     /** map values */
     dict: Record<number, { name: string; color: string }>;
