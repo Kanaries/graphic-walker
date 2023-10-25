@@ -5,7 +5,7 @@
         "color_palette": "Color Palette",
         "opacity": "Opacity",
         "default_color_palette": "Default",
-        "size":"Size",
+        "size": "Size",
         "min_domain": "Domain Min",
         "max_domain": "Domain Max",
         "range": "Range",
@@ -13,8 +13,8 @@
         "numberFormat": "Number format",
         "timeFormat": "Time format",
         "normalizedNumberFormat": "Normalized number format",
-        "background": "Background",        
-        "color":"Color",
+        "background": "Background",
+        "color": "Color",
         "independence": "Independence",
         "x": "x-Axis",
         "y": "y-Axis",
@@ -181,7 +181,7 @@
                 "undo": "Undo",
                 "redo": "Redo"
             },
-            "askviz":{
+            "askviz": {
                 "placeholder": "What visualization your want to draw from the dataset"
             },
             "settings": {
@@ -202,6 +202,16 @@
                     "export_code": "Export Code",
                     "geojson": "Geography Configuration",
                     "painter": "Open Painter"
+                },
+                "paint": {
+                    "palette": "Palette",
+                    "color": "Brush Color",
+                    "label": "Brush Label",
+                    "brush_size": "Brush Size",
+                    "save_paint": "Save Painting",
+                    "reset_paint": "Reset Painting",
+                    "cancel": "Cancel",
+                    "delete_paint": "Delete Painting"
                 },
                 "limit": "Limit",
                 "size": "Resize",

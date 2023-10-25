@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
@@ -12,10 +12,14 @@ import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
 import { sceneVisit } from 'vega';
 import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
-import { Cursor, PixelContainer } from './components';
+import { ClickInput, ColorEditor, Container, PixelContainer } from './components';
+import LoadingLayer from '../loadingLayer';
+import DefaultButton from '../button/default';
+import PrimaryButton from '../button/primary';
 
 const MAP_WIDTH = 128;
 const MAGIC_PADDING = 5;
+const DEFAULT_BRUSH_SIZE = 9;
 const FACTOR = 4;
 const CHART_WIDTH = MAP_WIDTH * FACTOR;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -63,11 +67,15 @@ const PainterContent = (props: {
     dict: typeof defaultScheme;
     onChangeDict: (d: typeof defaultScheme) => void;
     mapRef: React.MutableRefObject<Uint8Array | undefined>;
+    onDelete: () => void;
+    onCancel: () => void;
+    onSave: () => void;
 }) => {
+    const { t } = useTranslation();
     const computation = useCompututaion();
     const fields = useMemo(() => [props.x, props.y], [props.x, props.y]);
     const brushSizeRef = useRef(5);
-    const [brushSize, setBrushSize] = useState(9);
+    const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
     const brushIdRef = useRef(1);
     const [brushId, setBrushId] = useState(1);
@@ -108,6 +116,8 @@ const PainterContent = (props: {
 
     const [pixelOffset, setPixelOffset] = useState([0, 0]);
 
+    const resetRef = useRef(() => {});
+
     useEffect(() => {
         if (!loading && containerRef.current) {
             const colors = Object.entries(props.dict);
@@ -145,7 +155,7 @@ const PainterContent = (props: {
                 width: CHART_WIDTH,
                 height: CHART_WIDTH,
             };
-            embed(containerRef.current, spec, { actions: false, renderer: 'canvas' }).then((res) => {
+            embed(containerRef.current, spec, { actions: false }).then((res) => {
                 const scene = res.view.scenegraph() as unknown as { root: Scene };
                 const origin = res.view.origin();
                 setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
@@ -164,13 +174,26 @@ const PainterContent = (props: {
                 );
                 //@ts-ignore
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
+                resetRef.current = () => {
+                    props.mapRef.current! = emptyMap(MAP_WIDTH);
+                    const { name, color } = props.dict[0];
+                    interactive.forEach((item) =>
+                        sceneVisit(item, (item) => {
+                            if ('datum' in item) {
+                                item['fill'] = color;
+                                item.datum![PAINT_FIELD_ID] = name;
+                            }
+                        })
+                    );
+                    rerender();
+                };
                 const handleDraw = (e: ScenegraphEvent) => {
                     e.stopPropagation();
                     e.preventDefault();
                     const paint = (x: number, y: number) => {
                         const targetColor = props.dict[brushIdRef.current];
                         if (!targetColor) return;
-                        const pts = indexesFrom([Math.floor(x / FACTOR), MAP_WIDTH - Math.floor(y / FACTOR)], brushSizeRef.current, MAP_WIDTH);
+                        const pts = indexesFrom([Math.floor(x / FACTOR), MAP_WIDTH - 1 - Math.floor(y / FACTOR)], brushSizeRef.current, MAP_WIDTH);
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
@@ -193,19 +216,115 @@ const PainterContent = (props: {
                     }
                 };
                 res.view.addEventListener('mousedown', handleDraw);
-                res.view.addEventListener('mouseup', handleDraw);
                 res.view.addEventListener('mousemove', handleDraw);
+                res.view.addEventListener('touchstart', handleDraw);
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
     }, [loading, data, props.dict]);
 
+    const [showCursorPreview, setShowCursorPreview] = React.useState(false);
+
+    const [pixelContainer] = React.useState(true);
+
+    useEffect(() => {
+        setShowCursorPreview(true);
+        const timer = setTimeout(() => {
+            setShowCursorPreview(false);
+        }, 1_000);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [brushSize, brushId]);
+
+    const CursorContainer = pixelContainer ? PixelContainer : Container;
+
     return (
         <div className="flex">
-            <PixelContainer color={props.dict[brushId].color} dia={brushSize} factor={FACTOR} offsetX={pixelOffset[0]} offsetY={pixelOffset[1]}>
-                <div ref={containerRef} id="painter-container"></div>
-            </PixelContainer>
-            <div></div>
+            <CursorContainer
+                color={props.dict[brushId].color}
+                dia={brushSize}
+                factor={FACTOR}
+                offsetX={pixelOffset[0]}
+                offsetY={pixelOffset[1]}
+                showPreview={showCursorPreview}
+            >
+                <div ref={containerRef} id="painter-container" className="!cursor-none"></div>
+            </CursorContainer>
+            <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0">
+                <div className="text-sm font-medium">{t('main.tabpanel.settings.paint.palette')}</div>
+                <div className="grid grid-cols-5 gap-2 p-2">
+                    {Object.entries(props.dict).map(([id, { color }]) => (
+                        <div
+                            key={id}
+                            className={`box-border rounded-full border-black hover:border-gray-200 ${
+                                id === `${brushId}` ? 'border-2' : 'hover:border-2'
+                            } active:ring-black active:ring-1 w-4 h-4`}
+                            style={{
+                                background: color,
+                            }}
+                            onClick={() => setBrushId(Number(id))}
+                        ></div>
+                    ))}
+                </div>
+                <div className="flex space-x-2">
+                    <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
+                    <ColorEditor
+                        color={props.dict[brushId].color}
+                        colors={scheme}
+                        onChangeColor={(color) => {
+                            props.onChangeDict({
+                                ...props.dict,
+                                [brushId]: {
+                                    color,
+                                    name: props.dict[brushId].name,
+                                },
+                            });
+                        }}
+                    />
+                </div>
+                <div className="flex flex-col space-y-2">
+                    <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
+                    <ClickInput
+                        value={props.dict[brushId].name}
+                        onChange={(name) => {
+                            props.onChangeDict({
+                                ...props.dict,
+                                [brushId]: {
+                                    color: props.dict[brushId].color,
+                                    name,
+                                },
+                            });
+                        }}
+                    />
+                </div>
+                <div className="pt-2">
+                    <output className="text-sm">
+                        {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
+                    </output>
+                    <input
+                        className="w-full h-2 bg-blue-100 appearance-none"
+                        type="range"
+                        value={brushSize}
+                        min="1"
+                        max="36"
+                        step="1"
+                        onChange={(e) => {
+                            const v = parseInt(e.target.value);
+                            if (!isNaN(v)) {
+                                setBrushSize(v);
+                            }
+                        }}
+                    />
+                </div>
+                <div className="flex-1 flex flex-col space-y-2 justify-end">
+                    <PrimaryButton className="bg-red-600 hover:bg-red-700" text={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
+                    <DefaultButton text={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
+                    <DefaultButton text={t('main.tabpanel.settings.paint.cancel')} onClick={props.onCancel} />
+                    <PrimaryButton text={t('main.tabpanel.settings.paint.save_paint')} onClick={props.onSave} />
+                </div>
+            </div>
         </div>
     );
 };
@@ -272,6 +391,7 @@ const Painter = () => {
                 t('constant.paint_key')
             );
         }
+        vizStore.setShowPainter(false);
     };
 
     return (
@@ -282,9 +402,25 @@ const Painter = () => {
             }}
         >
             {loading ? (
-                <div></div>
+                <LoadingLayer />
             ) : (
-                <PainterContent x={fieldX!} y={fieldY!} domainX={domainX} domainY={domainY} dict={dict} onChangeDict={setDict} mapRef={mapRef} />
+                <PainterContent
+                    onSave={saveMap}
+                    onDelete={() => {
+                        vizStore.updatePaint(null, '');
+                        vizStore.setShowPainter(false);
+                    }}
+                    onCancel={() => {
+                        vizStore.setShowPainter(false);
+                    }}
+                    x={fieldX!}
+                    y={fieldY!}
+                    domainX={domainX}
+                    domainY={domainY}
+                    dict={dict}
+                    onChangeDict={setDict}
+                    mapRef={mapRef}
+                />
             )}
         </Modal>
     );

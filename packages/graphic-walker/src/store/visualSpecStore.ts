@@ -616,7 +616,7 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
     }
 
-    updatePaint(paintMap: IPaintMap, name: string) {
+    updatePaint(paintMap: IPaintMap | null, name: string) {
         this.visList[this.visIndex] = performers.upsertPaintField(this.visList[this.visIndex], paintMap, name);
     }
 

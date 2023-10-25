@@ -17,6 +17,7 @@ import {
     ISemanticType,
     IPaintMap,
     IExpression,
+    IFilterField,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields } from '../utils';
@@ -77,7 +78,7 @@ type PropsMap = {
     [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
-    [Methods.upsertPaintField]: [IPaintMap, string];
+    [Methods.upsertPaintField]: [IPaintMap | null, string];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -326,31 +327,52 @@ const actions: {
         return actions[Methods.cloneField](data, from, findex, to, tindex, newVarKey, limit);
     },
     [Methods.upsertPaintField]: (data, map, name) => {
-        return mutPath(data, `encodings.dimensions`, (f) => {
-            const expression: IExpression = {
-                op: 'paint',
-                as: PAINT_FIELD_ID,
-                params: [{ type: 'map', value: map }],
-            };
-            const i = f.findIndex((x) => x.fid === PAINT_FIELD_ID);
-            if (i > -1) {
-                return replace(f, i, (x) => ({
-                    ...x,
-                    expression,
-                }));
+        if (!map) {
+            return mutPath(
+                data,
+                'encodings',
+                (encodings) =>
+                    Object.fromEntries(Object.entries(encodings).map(([c, f]) => [c, f.filter((x) => x.fid !== PAINT_FIELD_ID)])) as DraggableFieldState
+            );
+        }
+        const expression: IExpression = {
+            op: 'paint',
+            as: PAINT_FIELD_ID,
+            params: [{ type: 'map', value: map }],
+        };
+        return mutPath(data, 'encodings', (enc) => {
+            let hasPaintField = false;
+            const entries = Object.entries(enc).map(([channel, fields]: [string, IViewField[] | IFilterField[]]) => {
+                const i = fields.findIndex((x) => x.fid === PAINT_FIELD_ID);
+                if (i > -1) {
+                    hasPaintField = true;
+                    return [
+                        channel,
+                        replace(fields, i, (x) => ({
+                            ...x,
+                            expression,
+                        })),
+                    ];
+                }
+                return [channel, fields];
+            });
+            if (hasPaintField) {
+                return Object.fromEntries(entries);
             }
-            return insert(
-                f,
-                {
-                    fid: PAINT_FIELD_ID,
-                    dragId: PAINT_FIELD_ID,
-                    analyticType: 'dimension',
-                    name,
-                    semanticType: 'nominal',
-                    computed: true,
-                    expression,
-                },
-                f.length
+            return mutPath(enc, 'dimensions', (f) =>
+                insert(
+                    f,
+                    {
+                        fid: PAINT_FIELD_ID,
+                        dragId: PAINT_FIELD_ID,
+                        analyticType: 'dimension',
+                        name,
+                        semanticType: 'nominal',
+                        computed: true,
+                        expression,
+                    },
+                    f.length
+                )
             );
         });
     },
