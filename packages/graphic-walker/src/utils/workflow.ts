@@ -150,6 +150,10 @@ export const toWorkflow = (
                 ...exp,
                 params: exp.params.map((x) => {
                     if (x.type === 'map') {
+                        const dict = {
+                            ...x.value.dict,
+                            '255': { name: '' },
+                        };
                         return {
                             type: 'map',
                             value: {
@@ -162,7 +166,7 @@ export const toWorkflow = (
                                     x.value.usedColor.map((i) => [
                                         i,
                                         {
-                                            name: x.value.dict[i].name,
+                                            name: dict[i].name,
                                         },
                                     ])
                                 ),

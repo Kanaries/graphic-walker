@@ -205,6 +205,7 @@
                 },
                 "paint": {
                     "palette": "色板",
+                    "eraser": "橡皮",
                     "color": "颜色",
                     "label": "标签",
                     "brush_size": "笔刷大小",

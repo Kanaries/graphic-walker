@@ -199,6 +199,7 @@
                 },
                 "paint": {
                     "palette": "パレット",
+                    "eraser": "消しゴム",
                     "color": "色",
                     "label": "ラベル",
                     "brush_size": "ブラシサイズ",

@@ -23,6 +23,7 @@ const DEFAULT_BRUSH_SIZE = 9;
 const FACTOR = 4;
 const CHART_WIDTH = MAP_WIDTH * FACTOR;
 const PIXEL_INDEX = '_gw_pixel_index';
+const ERASER = 255;
 
 const MouseButtons = {
     PRIMARY: 1,
@@ -191,7 +192,13 @@ const PainterContent = (props: {
                     e.stopPropagation();
                     e.preventDefault();
                     const paint = (x: number, y: number) => {
-                        const targetColor = props.dict[brushIdRef.current];
+                        const targetColor =
+                            brushIdRef.current === ERASER
+                                ? {
+                                      name: '',
+                                      color: '#00000000',
+                                  }
+                                : props.dict[brushIdRef.current];
                         if (!targetColor) return;
                         const pts = indexesFrom([Math.floor(x / FACTOR), MAP_WIDTH - 1 - Math.floor(y / FACTOR)], brushSizeRef.current, MAP_WIDTH);
                         let i = 0;
@@ -243,7 +250,7 @@ const PainterContent = (props: {
     return (
         <div className="flex">
             <CursorContainer
-                color={props.dict[brushId].color}
+                color={props.dict[brushId]?.color ?? '#333'}
                 dia={brushSize}
                 factor={FACTOR}
                 offsetX={pixelOffset[0]}
@@ -253,52 +260,75 @@ const PainterContent = (props: {
                 <div ref={containerRef} id="painter-container" className="!cursor-none"></div>
             </CursorContainer>
             <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0">
-                <div className="text-sm font-medium">{t('main.tabpanel.settings.paint.palette')}</div>
-                <div className="grid grid-cols-5 gap-2 p-2">
-                    {Object.entries(props.dict).map(([id, { color }]) => (
-                        <div
-                            key={id}
-                            className={`box-border rounded-full border-black hover:border-gray-200 ${
-                                id === `${brushId}` ? 'border-2' : 'hover:border-2'
-                            } active:ring-black active:ring-1 w-4 h-4`}
-                            style={{
-                                background: color,
-                            }}
-                            onClick={() => setBrushId(Number(id))}
-                        ></div>
-                    ))}
+                <div className="flex space-x-4" aria-label="Tabs">
+                    <a
+                        className={
+                            (brushId === ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
+                            ' rounded-md px-3 py-2 text-sm font-medium'
+                        }
+                        onClick={() => setBrushId(1)}
+                    >
+                        {t('main.tabpanel.settings.paint.palette')}
+                    </a>
+                    <a
+                        className={
+                            (brushId !== ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
+                            ' rounded-md px-3 py-2 text-sm font-medium'
+                        }
+                        onClick={() => setBrushId(ERASER)}
+                    >
+                        {t('main.tabpanel.settings.paint.eraser')}
+                    </a>
                 </div>
-                <div className="flex space-x-2">
-                    <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
-                    <ColorEditor
-                        color={props.dict[brushId].color}
-                        colors={scheme}
-                        onChangeColor={(color) => {
-                            props.onChangeDict({
-                                ...props.dict,
-                                [brushId]: {
-                                    color,
-                                    name: props.dict[brushId].name,
-                                },
-                            });
-                        }}
-                    />
-                </div>
-                <div className="flex flex-col space-y-2">
-                    <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
-                    <ClickInput
-                        value={props.dict[brushId].name}
-                        onChange={(name) => {
-                            props.onChangeDict({
-                                ...props.dict,
-                                [brushId]: {
-                                    color: props.dict[brushId].color,
-                                    name,
-                                },
-                            });
-                        }}
-                    />
-                </div>
+                {brushId !== ERASER && (
+                    <>
+                        <div className="grid grid-cols-5 gap-2 p-2">
+                            {Object.entries(props.dict).map(([id, { color }]) => (
+                                <div
+                                    key={id}
+                                    className={`box-border rounded-full border-black hover:border-gray-200 ${
+                                        id === `${brushId}` ? 'border-2' : 'hover:border-2'
+                                    } active:ring-black active:ring-1 w-4 h-4`}
+                                    style={{
+                                        background: color,
+                                    }}
+                                    onClick={() => setBrushId(Number(id))}
+                                ></div>
+                            ))}
+                        </div>
+                        <div className="flex space-x-2">
+                            <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
+                            <ColorEditor
+                                color={props.dict[brushId].color}
+                                colors={scheme}
+                                onChangeColor={(color) => {
+                                    props.onChangeDict({
+                                        ...props.dict,
+                                        [brushId]: {
+                                            color,
+                                            name: props.dict[brushId].name,
+                                        },
+                                    });
+                                }}
+                            />
+                        </div>
+                        <div className="flex flex-col space-y-2">
+                            <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
+                            <ClickInput
+                                value={props.dict[brushId].name}
+                                onChange={(name) => {
+                                    props.onChangeDict({
+                                        ...props.dict,
+                                        [brushId]: {
+                                            color: props.dict[brushId].color,
+                                            name,
+                                        },
+                                    });
+                                }}
+                            />
+                        </div>
+                    </>
+                )}
                 <div className="pt-2">
                     <output className="text-sm">
                         {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}

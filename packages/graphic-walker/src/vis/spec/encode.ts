@@ -80,7 +80,7 @@ export function channelEncode(props: IEncodeProps) {
                 }
                 if (c === 'color' && props[c].expression?.op === 'paint') {
                     const map: IPaintMap = props[c].expression!.params.find((x) => x.type === 'map')!.value;
-                    const colors = map.usedColor.map((x) => map.dict[x]);
+                    const colors = map.usedColor.map((x) => map.dict[x]).filter(Boolean);
                     encoding[c].scale = {
                         domain: colors.map((x) => x.name),
                         range: colors.map((x) => x.color),
