@@ -2,12 +2,14 @@ import {
     DraggableFieldState,
     IDataSet,
     IDataSource,
+    IFilterField,
     IMutField,
     IVisSpec,
     IVisSpecForExport,
     IVisualConfig,
     IVisualConfigNew,
     IVisualLayout,
+    SetToArray,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 
@@ -122,6 +124,21 @@ export const emptyEncodings: DraggableFieldState = {
     filters: [],
     text: [],
 };
+
+export function decodeFilter(filters: SetToArray<IFilterField>[]): IFilterField[] {
+    return filters.map((filter) => {
+        if (filter.rule?.type === 'one of' && Array.isArray(filter.rule.value)) {
+            return {
+                ...filter,
+                rule: {
+                    ...filter.rule,
+                    value: new Set(filter.rule.value),
+                },
+            };
+        }
+        return filter as IFilterField;
+    });
+}
 
 export function visSpecDecoder(visSpec: IVisSpecForExport): IVisSpec {
     const updatedFilters = visSpec.encodings.filters.map((filter) => {
