@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
-import { IComputationFunction, IMutField, IVisFilter } from '../../interfaces';
+import { IComputationFunction, IMutField, IRow, IVisFilter } from '../../interfaces';
 import { getDistinctValues, getRange, getTemporalRange } from '../../computation';
 import { addFilterForQuery } from '../../utils/workflow';
+import { getComputation } from '../../computation/clientComputation';
 
 export interface FilterConfig {
     fid: string;
-    mode: 'single' | 'range';
+    mode: 'single' | 'multi' | 'range';
 }
 
 const emptyArray = [];
@@ -45,12 +46,18 @@ export function createFilterContext(components: {
 }) {
     return function FilterContext(props: {
         configs: FilterConfig[];
-        computation: IComputationFunction;
+        dataSource?: IRow[];
+        computation?: IComputationFunction;
         loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
         rawFields: IMutField[];
-        children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode | Iterable<React.ReactNode>;
+        children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
     }) {
-        const { configs, computation, rawFields, children, loadingContent } = props;
+        const { configs, dataSource, computation: remoteComputation, rawFields, children, loadingContent } = props;
+        const computation = React.useMemo(() => {
+            if (remoteComputation) return remoteComputation;
+            if (dataSource) return getComputation(dataSource);
+            throw new Error('You should provide either dataSource or computation to use FilterContext.');
+        }, [dataSource, remoteComputation]);
         const [loading, setLoading] = React.useState(true);
         const computationRef = React.useRef(computation);
         const valuesRef = React.useRef<Map<string, values>>(new Map());
@@ -111,7 +118,7 @@ export function createFilterContext(components: {
                     if (valuesRef.current.has(k)) {
                         return valuesRef.current.get(k)!;
                     }
-                    if (x.mode === 'single' || x.type === 'nominal' || x.type === 'ordinal') {
+                    if (x.mode === 'single' || x.mode === 'multi') {
                         const v = [];
                         valuesRef.current.set(k, v);
                         return v;
@@ -133,15 +140,11 @@ export function createFilterContext(components: {
                             const domain = domains[i];
                             const value = values[i];
                             if (!domain || !value) return null;
-                            if (mode === 'single') {
+                            if (mode === 'single' || mode === 'multi') {
                                 if (value.length === 0) return null;
                                 return createFilter(fid, value as string[]);
                             }
                             switch (type) {
-                                case 'nominal':
-                                case 'ordinal':
-                                    if (value.length === 0) return null;
-                                    return createFilter(fid, value as string[]);
                                 case 'quantitative':
                                     return value[0] === domain[0] && value[1] === domain[1]
                                         ? null
@@ -150,6 +153,8 @@ export function createFilterContext(components: {
                                     return value[0] === domain[0] && value[1] === domain[1]
                                         ? null
                                         : createDateFilter(fid, value[0] as number, value[1] as number);
+                                default:
+                                    throw new Error('Cannot use range on nominal/ordinal field.');
                             }
                         })
                         .filter((x): x is IVisFilter => !!x),
@@ -177,18 +182,6 @@ export function createFilterContext(components: {
                         );
                     }
                     switch (type) {
-                        case 'nominal':
-                        case 'ordinal':
-                            return (
-                                <components.MultiSelect
-                                    key={fid}
-                                    name={name}
-                                    options={domain as string[]}
-                                    value={value as string[]}
-                                    onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
-                                />
-                            );
-
                         case 'quantitative':
                             return (
                                 <components.RangeSelect
@@ -209,12 +202,16 @@ export function createFilterContext(components: {
                                     onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
                                 />
                             );
+                        default:
+                            throw new Error('Cannot use range on nominal/ordinal field.');
                     }
                 }),
             [fields, values, domains]
         );
-
-        return loading ? <>{loadingContent}</> : <>{children(filteredComputation, elements)}</>;
+        if (loading) {
+            return <>{loadingContent}</>;
+        }
+        return children(filteredComputation, elements);
     };
 }
 
