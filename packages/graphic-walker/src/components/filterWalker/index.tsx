@@ -1,23 +1,18 @@
 import React, { useEffect } from 'react';
-import { IComputationFunction, IMutField, IRow, IVisFilter } from '../../interfaces';
+import { IComputationFunction, IMutField, IRow, ISemanticType, IVisFilter } from '../../interfaces';
 import { getDistinctValues, getRange, getTemporalRange } from '../../computation';
 import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
+
+type rangeValue = [number, number];
+
+type values = rangeValue | string[] | number[];
+type domains = rangeValue | string[];
 
 export interface FilterConfig {
     fid: string;
     mode: 'single' | 'multi' | 'range';
 }
-
-const emptyArray = [];
-
-function wrapArray<T>(arr: T[]): T[] {
-    if (arr.length === 0) return emptyArray;
-    return arr;
-}
-
-type values = [number, number] | string[] | number[];
-type domains = [number, number] | string[];
 
 export interface SingleProps {
     name: string;
@@ -33,9 +28,40 @@ export interface MultiProps {
 }
 export interface RangeProps {
     name: string;
-    domain: [number, number];
-    value: [number, number];
-    onChange?: (v: [number, number]) => void;
+    domain: rangeValue;
+    value: rangeValue;
+    onChange?: (v: rangeValue) => void;
+}
+
+const emptyArray = [];
+
+const isEmptyRange = (a: rangeValue) => a[0] === 0 && a[1] === 0;
+
+const isSameRange = (a: rangeValue, b: rangeValue) => {
+    return a[0] === b[0] && a[1] === b[1];
+};
+
+const isNominalType = (type: ISemanticType) => type === 'nominal' || type === 'ordinal';
+
+function wrapArray<T>(arr: T[]): T[] {
+    if (arr.length === 0) return emptyArray;
+    return arr;
+}
+
+function getDomainAndValue(mode: 'single' | 'multi' | 'range', index: number, domains: domains[], values: values[]) {
+    if (!domains[index] || !values[index]) return null;
+    if (mode === 'range') {
+        return {
+            tag: 'range' as const,
+            domain: domains[index] as rangeValue,
+            value: values[index] as rangeValue,
+        };
+    }
+    return {
+        tag: 'array' as const,
+        domain: domains[index] as string[],
+        value: values[index] as string[],
+    };
 }
 
 export function createFilterContext(components: {
@@ -82,22 +108,16 @@ export function createFilterContext(components: {
                 }
                 setLoading(true);
                 const domainsP = fields.map(async (x) => {
-                    const k = `${x.mode === 'single' ? x.mode : x.type === 'nominal' || x.type === 'ordinal' ? 'nominal' : x.type}__${x.fid}`;
+                    const k = `${x.mode === 'range' ? x.type : x.mode}__${x.fid}`;
                     if (domainsRef.current.has(k)) {
                         return domainsRef.current.get(k)!;
                     }
-                    if (x.mode === 'single') {
+                    if (x.mode === 'single' || x.mode === 'multi') {
                         const p = getDistinctValues(computation, x.fid).then((x) => x.map((i) => i.value));
                         domainsRef.current.set(k, p);
                         return p;
                     }
                     switch (x.type) {
-                        case 'nominal':
-                        case 'ordinal': {
-                            const p = getDistinctValues(computation, x.fid).then((x) => x.map((i) => i.value));
-                            domainsRef.current.set(k, p);
-                            return p;
-                        }
                         case 'quantitative': {
                             const p = getRange(computation, x.fid);
                             domainsRef.current.set(k, p);
@@ -109,12 +129,12 @@ export function createFilterContext(components: {
                             return p;
                         }
                         default:
-                            throw 'unknown type';
+                            throw new Error('Cannot use range on nominal/ordinal field.');
                     }
                 });
                 const domains = await Promise.all(domainsP);
                 const values = fields.map((x, i) => {
-                    const k = `${x.mode}__${x.fid}__${x.type === 'nominal' || x.type === 'ordinal' ? 'n' : 'q'}`;
+                    const k = `${x.mode}__${x.fid}__${isNominalType(x.type) ? 'n' : 'q'}`;
                     if (valuesRef.current.has(k)) {
                         return valuesRef.current.get(k)!;
                     }
@@ -137,22 +157,19 @@ export function createFilterContext(components: {
                 () =>
                     fields
                         .map(({ mode, type, fid }, i) => {
-                            const domain = domains[i];
-                            const value = values[i];
-                            if (!domain || !value) return null;
-                            if (mode === 'single' || mode === 'multi') {
+                            const data = getDomainAndValue(mode, i, domains, values);
+                            if (!data) return null;
+                            const { domain, tag, value } = data;
+                            if (tag === 'array') {
                                 if (value.length === 0) return null;
-                                return createFilter(fid, value as string[]);
+                                return createFilter(fid, value);
                             }
+                            // value and domain is rangeValue
                             switch (type) {
                                 case 'quantitative':
-                                    return value[0] === domain[0] && value[1] === domain[1]
-                                        ? null
-                                        : createRangeFilter(fid, value[0] as number, value[1] as number);
+                                    return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
                                 case 'temporal':
-                                    return value[0] === domain[0] && value[1] === domain[1]
-                                        ? null
-                                        : createDateFilter(fid, value[0] as number, value[1] as number);
+                                    return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1]);
                                 default:
                                     throw new Error('Cannot use range on nominal/ordinal field.');
                             }
@@ -167,44 +184,59 @@ export function createFilterContext(components: {
         const elements = React.useMemo(
             () =>
                 fields.map(({ mode, type, name, fid }, i) => {
-                    const domain = domains[i];
-                    const value = values[i];
-                    if (!domain || !value) return <></>;
-                    if (mode === 'single') {
-                        return (
-                            <components.SingleSelect
-                                key={fid}
-                                name={name}
-                                options={domain as string[]}
-                                value={value[0] as string}
-                                onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? [value] : x)))}
-                            />
-                        );
-                    }
-                    switch (type) {
-                        case 'quantitative':
+                    const data = getDomainAndValue(mode, i, domains, values);
+                    if (!data) return <></>;
+                    const { tag, domain, value } = data;
+                    if (tag === 'array') {
+                        if (mode === 'single') {
                             return (
-                                <components.RangeSelect
+                                <components.SingleSelect
                                     key={fid}
                                     name={name}
-                                    domain={domain as [number, number]}
-                                    value={value as [number, number]}
+                                    options={domain}
+                                    value={value[0]}
+                                    onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? [value] : x)))}
+                                />
+                            );
+                        } else if (mode === 'multi') {
+                            return (
+                                <components.MultiSelect
+                                    key={fid}
+                                    name={name}
+                                    options={domain}
+                                    value={value}
                                     onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
                                 />
                             );
-                        case 'temporal':
-                            return (
-                                <components.TemporalSelect
-                                    key={fid}
-                                    name={name}
-                                    domain={domain as [number, number]}
-                                    value={value as [number, number]}
-                                    onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
-                                />
-                            );
-                        default:
-                            throw new Error('Cannot use range on nominal/ordinal field.');
+                        }
                     }
+                    if (tag === 'range') {
+                        switch (type) {
+                            case 'quantitative':
+                                return (
+                                    <components.RangeSelect
+                                        key={fid}
+                                        name={name}
+                                        domain={domain}
+                                        value={value}
+                                        onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
+                                    />
+                                );
+                            case 'temporal':
+                                return (
+                                    <components.TemporalSelect
+                                        key={fid}
+                                        name={name}
+                                        domain={domain}
+                                        value={value}
+                                        onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? value : x)))}
+                                    />
+                                );
+                            default:
+                                throw new Error('Cannot use range on nominal/ordinal field.');
+                        }
+                    }
+                    return <></>;
                 }),
             [fields, values, domains]
         );
@@ -248,26 +280,23 @@ function createFilter(fid: string, value: string[]): IVisFilter {
 export const useTemporalFilter = (
     computation: IComputationFunction,
     fid: string,
-    initValue?: [number, number] | (() => [number, number])
+    initValue?: rangeValue | (() => rangeValue)
 ): {
     filter: IVisFilter | null;
-    domain: [number, number];
-    value: [number, number];
-    setValue: (v: [number, number]) => void;
+    domain: rangeValue;
+    value: rangeValue;
+    setValue: (v: rangeValue) => void;
 } => {
-    const [value, setValue] = React.useState<[number, number]>(initValue ?? [0, 0]);
-    const [domain, setDomain] = React.useState<[number, number]>([0, 0]);
+    const [value, setValue] = React.useState<rangeValue>(initValue ?? [0, 0]);
+    const [domain, setDomain] = React.useState<rangeValue>([0, 0]);
     useEffect(() => {
         (async () => {
             const domain = await getTemporalRange(computation, fid);
             setDomain(domain);
-            if (value[0] === 0 && value[1] === 0) setValue(domain);
+            if (isEmptyRange(value)) setValue(domain);
         })();
     }, [computation, fid]);
-    const filter = React.useMemo(
-        () => (value[0] === domain[0] && value[1] === domain[1] ? null : createDateFilter(fid, value[0], value[1])),
-        [value, domain, fid]
-    );
+    const filter = React.useMemo(() => (isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1])), [value, domain, fid]);
     return {
         filter,
         domain,
@@ -279,26 +308,23 @@ export const useTemporalFilter = (
 export const useQuantitativeFilter = (
     computation: IComputationFunction,
     fid: string,
-    initValue?: [number, number] | (() => [number, number])
+    initValue?: rangeValue | (() => rangeValue)
 ): {
     filter: IVisFilter | null;
-    domain: [number, number];
-    value: [number, number];
-    setValue: (v: [number, number]) => void;
+    domain: rangeValue;
+    value: rangeValue;
+    setValue: (v: rangeValue) => void;
 } => {
-    const [value, setValue] = React.useState<[number, number]>(initValue ?? [0, 0]);
-    const [domain, setDomain] = React.useState<[number, number]>([0, 0]);
+    const [value, setValue] = React.useState<rangeValue>(initValue ?? [0, 0]);
+    const [domain, setDomain] = React.useState<rangeValue>([0, 0]);
     useEffect(() => {
         (async () => {
             const domain = await getRange(computation, fid);
             setDomain(domain);
-            if (value[0] === 0 && value[1] === 0) setValue(domain);
+            if (isEmptyRange(value)) setValue(domain);
         })();
     }, [computation, fid]);
-    const filter = React.useMemo(
-        () => (value[0] === domain[0] && value[1] === domain[1] ? null : createRangeFilter(fid, value[0], value[1])),
-        [value, domain, fid]
-    );
+    const filter = React.useMemo(() => (isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1])), [value, domain, fid]);
     return {
         filter,
         domain,
