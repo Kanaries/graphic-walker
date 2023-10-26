@@ -25,7 +25,7 @@ export function availableChannels(geomType: string): Set<string> {
     if (geomType === 'arc') {
         return new Set(['opacity', 'color', 'size', 'theta', 'radius']);
     }
-    return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
+    return new Set(['text', 'column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
 }
 function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
     switch(unit) {

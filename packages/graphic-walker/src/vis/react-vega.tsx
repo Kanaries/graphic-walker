@@ -250,7 +250,49 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
       });
       const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
-      spec.mark = singleView.mark;
+      if (text && rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
+        // We can use Layer in vega-lite, but it's incompitable with facet channel.
+        // if chart is x-dimension & y-measure, show text on top of marks.
+        // if chart is x-measure & y-dimension, show text on right of marks.
+        // if chart is x-measure & y-measure, show text on right of marks.
+        // if chart is x-dimension & y-dimension(e.g. hotmap), show text on center of marks.
+        // TODO: this will not work with negative
+        let textPos: 'center' | 'right' | 'top';
+        if (colDims.length > 0 && rowDims.length > 0) {
+          textPos = 'center';
+        } else if (colDims.length > 0 && rowDims.length === 0) {
+          textPos = 'top';
+        } else {
+          textPos = 'right';
+        }
+        spec.layer = [
+            {
+                mark: singleView.mark,
+                params: spec.params,
+            },
+            {
+                mark: {
+                    type: 'text',
+                    align: textPos === 'right' ? 'left' : 'center',
+                    dx: textPos === 'right' ? 5 : 0,
+                    baseline: textPos === 'top' ? 'bottom' : 'middle',
+                    dy: textPos === 'top' ? -5 : 0,
+                },
+                ...(textPos === 'center'
+                    ? {
+                          encoding: {
+                              color: {
+                                  value: 'white',
+                              },
+                          },
+                      }
+                    : {}),
+            },
+        ];
+        delete spec.params;
+      } else {
+        spec.mark = singleView.mark;
+      }
       if ('encoding' in singleView) {
         spec.encoding = singleView.encoding;
       }
