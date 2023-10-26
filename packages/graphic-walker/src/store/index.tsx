@@ -105,3 +105,11 @@ export function withTimeout<T extends any[], U>(f: (...args: T) => Promise<U>, t
             }),
         ]);
 }
+
+export function withErrorReport<T extends any[], U>(f: (...args: T) => Promise<U>, onError: (err: string | Error) => void) {
+    return (...args: T) =>
+        f(...args).catch((err) => {
+            onError(err);
+            throw err;
+        });
+}

@@ -315,3 +315,13 @@ const defaultValueComparator = (a: any, b: any) => {
 export function parseCmpFunction(str?: string): (a: any, b: any) => number {
     return defaultValueComparator;
 }
+
+export function parseErrorMessage(errorLike: any): string {
+    if (errorLike instanceof Error) {
+        return errorLike.message;
+    }
+    if (typeof errorLike === 'string') {
+        return errorLike;
+    }
+    return String(errorLike);
+}
