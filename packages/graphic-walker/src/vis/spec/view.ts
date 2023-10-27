@@ -1,4 +1,4 @@
-import { IChannelScales, ISemanticType, IStackMode, IViewField } from '../../interfaces';
+import { IChannelScales, IField, IFieldInfos, IRow, ISemanticType, IStackMode, IViewField } from '../../interfaces';
 import { autoMark } from './mark';
 import { NULL_FIELD } from './field';
 import { channelAggregate } from './aggregate';
@@ -62,7 +62,7 @@ export function getSingleView(props: SingleViewProps) {
         theta,
         radius,
         details,
-        text
+        text,
     });
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
@@ -72,7 +72,7 @@ export function getSingleView(props: SingleViewProps) {
     const mark = {
         type: markType,
         opacity: 0.96,
-        tooltip: { content: 'data' }
+        tooltip: { content: 'data' },
     };
     return {
         config,
@@ -81,22 +81,32 @@ export function getSingleView(props: SingleViewProps) {
     };
 }
 
-export function resolveScales(scale: IChannelScales, view: any, data: readonly any[], theme: 'dark' | 'light') {
-    const newEncoding = {...view.encoding};
+export function resolveScale<T extends Object>(scale: T | ((info: IFieldInfos) => T), field: IField, data: readonly IRow[], theme: 'dark' | 'light') {
+    if (typeof scale === 'function') {
+        const values = data.map((x) => x[field.fid]);
+        return scale({
+            semanticType: field.semanticType,
+            theme,
+            values,
+        });
+    }
+}
+
+export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {
+    const newEncoding = { ...view.encoding };
     function addScale(c: string) {
         if (scale[c] && newEncoding[c]) {
             if (typeof scale[c] === 'function') {
                 const field = newEncoding[c].field;
-                const values = data.map(x => x[field]);
+                const values = data.map((x) => x[field]);
                 newEncoding[c].scale = scale[c]({
                     semanticType: newEncoding[c].type,
                     theme,
                     values,
-                })
+                });
             } else {
                 newEncoding[c].scale = scale[c];
             }
-
         }
     }
     addScale('color');
@@ -107,6 +117,6 @@ export function resolveScales(scale: IChannelScales, view: any, data: readonly a
 
     return {
         ...view,
-        encoding: newEncoding
+        encoding: newEncoding,
     };
 }

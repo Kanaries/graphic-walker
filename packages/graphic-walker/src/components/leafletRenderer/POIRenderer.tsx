@@ -1,12 +1,13 @@
-import React, { forwardRef, useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Tooltip, CircleMarker, AttributionControl } from "react-leaflet";
-import type { Map } from "leaflet";
-import type { DeepReadonly, IRow, IViewField, VegaGlobalConfig } from "../../interfaces";
-import { getMeaAggKey } from "../../utils";
-import { useColorScale, useOpacityScale, useSizeScale } from "./encodings";
-import { TooltipContent } from "./tooltip";
-import { useAppRootContext } from "../appRoot";
-import { ChangeView } from "./utils";
+import React, { forwardRef, useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, Tooltip, CircleMarker, AttributionControl, Pane } from 'react-leaflet';
+import { type Map } from 'leaflet';
+import type { DeepReadonly, IChannelScales, IRow, IViewField, VegaGlobalConfig } from '../../interfaces';
+import { getMeaAggKey } from '../../utils';
+import { useColorScale, useOpacityScale, useSizeScale } from './encodings';
+import { TooltipContent } from './tooltip';
+import { useAppRootContext } from '../appRoot';
+import { ChangeView } from './utils';
+import ColorPanel from './color';
 
 export interface IPOIRendererProps {
     name?: string;
@@ -20,6 +21,7 @@ export interface IPOIRendererProps {
     size: DeepReadonly<IViewField> | undefined;
     details: readonly DeepReadonly<IViewField>[];
     vegaConfig: VegaGlobalConfig;
+    channelScales: IChannelScales;
 }
 
 export interface IPOIRendererRef {}
@@ -31,46 +33,56 @@ export const isValidLatLng = (latRaw: unknown, lngRaw: unknown) => {
 };
 
 const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
-    return `${
-        typeof latRaw === 'number' ? latRaw : JSON.stringify(latRaw)
-    }, ${
-        typeof lngRaw === 'number' ? lngRaw : JSON.stringify(lngRaw)
-    }`;
+    return `${typeof latRaw === 'number' ? latRaw : JSON.stringify(latRaw)}, ${typeof lngRaw === 'number' ? lngRaw : JSON.stringify(lngRaw)}`;
 };
 
 const debugMaxLen = 20;
-  
-const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer (props, ref) {
-    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig } = props;
-    
+
+const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer(props, ref) {
+    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, channelScales } = props;
+
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
-            return data.map<[lat: number, lng: number]>(row => [Number(row[latitude.fid]), Number(row[longitude.fid])]).filter(v => isValidLatLng(v[0], v[1]));
+            return data
+                .map<[lat: number, lng: number]>((row) => [Number(row[latitude.fid]), Number(row[longitude.fid])])
+                .filter((v) => isValidLatLng(v[0], v[1]));
         }
         return [];
     }, [longitude, latitude, data]);
 
     const [bounds, center] = useMemo<[bounds: [[n: number, w: number], [s: number, e: number]], center: [lng: number, lat: number]]>(() => {
         if (lngLat.length > 0) {
-            const [bounds, coords] = lngLat.reduce<[bounds: [[w: number, n: number], [e: number, s: number]], center: [lat: number, lng: number]]>(([bounds, acc], [lat, lng]) => {
-                if (lat < bounds[0][0]) {
-                    bounds[0][0] = lat;
-                }
-                if (lat > bounds[1][0]) {
-                    bounds[1][0] = lat;
-                }
-                if (lng < bounds[0][1]) {
-                    bounds[0][1] = lng;
-                }
-                if (lng > bounds[1][1]) {
-                    bounds[1][1] = lng;
-                }
-                return [bounds, [acc[0] + lng, acc[1] + lat]];
-            }, [[[...lngLat[0]] ,[...lngLat[0]]], [0, 0]]);
+            const [bounds, coords] = lngLat.reduce<[bounds: [[w: number, n: number], [e: number, s: number]], center: [lat: number, lng: number]]>(
+                ([bounds, acc], [lat, lng]) => {
+                    if (lat < bounds[0][0]) {
+                        bounds[0][0] = lat;
+                    }
+                    if (lat > bounds[1][0]) {
+                        bounds[1][0] = lat;
+                    }
+                    if (lng < bounds[0][1]) {
+                        bounds[0][1] = lng;
+                    }
+                    if (lng > bounds[1][1]) {
+                        bounds[1][1] = lng;
+                    }
+                    return [bounds, [acc[0] + lng, acc[1] + lat]];
+                },
+                [
+                    [[...lngLat[0]], [...lngLat[0]]],
+                    [0, 0],
+                ]
+            );
             return [bounds, [coords[0] / lngLat.length, coords[1] / lngLat.length] as [number, number]];
         }
-                
-        return [[[-180, -90], [180, 90]], [0, 0]];
+
+        return [
+            [
+                [-180, -90],
+                [180, 90],
+            ],
+            [0, 0],
+        ];
     }, [lngLat]);
 
     const failedLatLngListRef = useRef<[index: number, lng: unknown, lat: unknown][]>([]);
@@ -78,12 +90,17 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
 
     useEffect(() => {
         if (failedLatLngListRef.current.length > 0) {
-            console.warn(`Failed to render ${failedLatLngListRef.current.length.toLocaleString()} markers of ${data.length.toLocaleString()} rows due to invalid lat/lng.\n--------\n${
-                `${failedLatLngListRef.current.slice(0, debugMaxLen).map(([idx, lng, lat]) =>
-                    `[${idx + 1}] ${formatCoerceLatLng(lat, lng)}`
-                ).join('\n')}`
-                + (failedLatLngListRef.current.length > debugMaxLen ? `\n\t... and ${(failedLatLngListRef.current.length - debugMaxLen).toLocaleString()} more` : '')
-            }\n`);
+            console.warn(
+                `Failed to render ${failedLatLngListRef.current.length.toLocaleString()} markers of ${data.length.toLocaleString()} rows due to invalid lat/lng.\n--------\n${
+                    `${failedLatLngListRef.current
+                        .slice(0, debugMaxLen)
+                        .map(([idx, lng, lat]) => `[${idx + 1}] ${formatCoerceLatLng(lat, lng)}`)
+                        .join('\n')}` +
+                    (failedLatLngListRef.current.length > debugMaxLen
+                        ? `\n\t... and ${(failedLatLngListRef.current.length - debugMaxLen).toLocaleString()} more`
+                        : '')
+                }\n`
+            );
         }
     });
 
@@ -113,25 +130,22 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                 nCols: 0,
                 nRows: 0,
                 charts: [],
-                container: () => mapRef.current?.getContainer() as HTMLDivElement ?? null,
+                container: () => (mapRef.current?.getContainer() as HTMLDivElement) ?? null,
                 chartType: 'map',
-            })
+            });
         }
     }, []);
 
-    const sizeScale = useSizeScale(data, size, defaultAggregated);
-    const opacityScale = useOpacityScale(data, opacity, defaultAggregated);
-    const colorScale = useColorScale(data, color, defaultAggregated, vegaConfig);
+    const sizeScale = useSizeScale(data, size, defaultAggregated, channelScales);
+    const opacityScale = useOpacityScale(data, opacity, defaultAggregated, channelScales);
+    const { mapper: colorScale, display: colorDisplay } = useColorScale(data, color, defaultAggregated, vegaConfig);
 
     const tooltipFields = useMemo(() => {
-        return details.concat(
-            [size!, color!, opacity!].filter(Boolean)
-        ).map(f => ({
+        return details.concat([size!, color!, opacity!].filter(Boolean)).map((f) => ({
             ...f,
             key: defaultAggregated && f.analyticType === 'measure' && f.aggName ? getMeaAggKey(f.fid, f.aggName) : f.fid,
         }));
     }, [defaultAggregated, details, size, color, opacity]);
-    
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <ChangeView bounds={bounds} />
@@ -140,48 +154,43 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <AttributionControl prefix="Leaflet" />
-            {Boolean(latitude && longitude) && data.map((row, i) => {
-                const lat = row[latitude!.fid];
-                const lng = row[longitude!.fid];
-                if (!isValidLatLng(lat, lng)) {
-                    failedLatLngListRef.current.push([i, lat, lng]);
-                    return null;
-                }
-                const radius = sizeScale(row);
-                const opacity = opacityScale(row);
-                const color = colorScale(row);
-                return (
-                    <CircleMarker
-                        key={`${i}-${radius}-${opacity}-${color}`}
-                        center={[Number(lat), Number(lng)]}
-                        radius={radius}
-                        opacity={0.8}
-                        fillOpacity={opacity}
-                        fillColor={color}
-                        color="#00000022"
-                        stroke
-                        weight={1}
-                        fill
-                    >
-                        {tooltipFields.length > 0 && (
-                            <Tooltip>
-                                {tooltipFields.map((f, j) => (
-                                    <TooltipContent
-                                        key={j}
-                                        allFields={allFields}
-                                        vegaConfig={vegaConfig}
-                                        field={f}
-                                        value={row[f.key]}
-                                    />
-                                ))}
-                            </Tooltip>
-                        )}
-                    </CircleMarker>
-                );
-            })}
+            {Boolean(latitude && longitude) &&
+                data.map((row, i) => {
+                    const lat = row[latitude!.fid];
+                    const lng = row[longitude!.fid];
+                    if (!isValidLatLng(lat, lng)) {
+                        failedLatLngListRef.current.push([i, lat, lng]);
+                        return null;
+                    }
+                    const radius = sizeScale(row);
+                    const opacity = opacityScale(row);
+                    const color = colorScale(row);
+                    return (
+                        <CircleMarker
+                            key={`${i}-${radius}-${opacity}-${color}`}
+                            center={[Number(lat), Number(lng)]}
+                            radius={radius}
+                            opacity={0.8}
+                            fillOpacity={opacity}
+                            fillColor={color}
+                            color="#00000022"
+                            stroke
+                            weight={1}
+                            fill
+                        >
+                            {tooltipFields.length > 0 && (
+                                <Tooltip>
+                                    {tooltipFields.map((f, j) => (
+                                        <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                    ))}
+                                </Tooltip>
+                            )}
+                        </CircleMarker>
+                    );
+                })}
+            {colorDisplay && <ColorPanel display={colorDisplay} field={color!} />}
         </MapContainer>
     );
 });
-
 
 export default POIRenderer;
