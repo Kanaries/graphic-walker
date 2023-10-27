@@ -17,7 +17,7 @@ export const ImageWithFallback = (
     return (
         <img
             {...rest}
-            src={failed ? src : fallbackSrc}
+            src={failed ? fallbackSrc : src}
             onError={() => {
                 setFailed(true);
             }}
