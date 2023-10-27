@@ -35,15 +35,15 @@ export default function ColorPanel(props: { display: ColorDisplay; field: IField
                         <div
                             className="w-4 h-48"
                             style={{
-                                background: `linear-gradient(${display.color.toReversed().join(',')})`,
+                                background: `linear-gradient(${[...display.color].reverse().join(',')})`,
                             }}
                         ></div>
                         <div className="font-xs flex flex-col justify-between">
-                            <div>{display.domain[1]}</div>
-                            <div>{display.domain[1] * 0.75 + display.domain[0] * 0.25}</div>
-                            <div>{display.domain[1] * 0.5 + display.domain[0] * 0.5}</div>
-                            <div>{display.domain[1] * 0.25 + display.domain[0] * 0.75}</div>
-                            <div>{display.domain[0]}</div>
+                            <div>{Math.floor(display.domain[1])}</div>
+                            <div>{Math.floor(display.domain[1] * 0.75 + display.domain[0] * 0.25)}</div>
+                            <div>{Math.floor(display.domain[1] * 0.5 + display.domain[0] * 0.5)}</div>
+                            <div>{Math.floor(display.domain[1] * 0.25 + display.domain[0] * 0.75)}</div>
+                            <div>{Math.floor(display.domain[0])}</div>
                         </div>
                     </div>
                 </div>

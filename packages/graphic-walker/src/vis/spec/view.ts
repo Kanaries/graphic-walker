@@ -81,8 +81,9 @@ export function getSingleView(props: SingleViewProps) {
     };
 }
 
-export function resolveScale<T extends Object>(scale: T | ((info: IFieldInfos) => T), field: IField, data: readonly IRow[], theme: 'dark' | 'light') {
+export function resolveScale<T extends Object>(scale: T | ((info: IFieldInfos) => T), field: IField | null | undefined, data: readonly IRow[], theme: 'dark' | 'light') {
     if (typeof scale === 'function') {
+        if (!field) return undefined;
         const values = data.map((x) => x[field.fid]);
         return scale({
             semanticType: field.semanticType,
@@ -90,6 +91,7 @@ export function resolveScale<T extends Object>(scale: T | ((info: IFieldInfos) =
             values,
         });
     }
+    return scale;
 }
 
 export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {

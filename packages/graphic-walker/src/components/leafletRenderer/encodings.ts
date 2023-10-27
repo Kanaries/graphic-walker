@@ -178,7 +178,7 @@ export const useSizeScale = (data: IRow[], field: IViewField | null | undefined,
     }, [field, defaultAggregate]);
 
     const resolvedScale = useMemo(() => {
-        if (!field || !scaleConfig.size) return undefined;
+        if (!scaleConfig.size) return undefined;
         return resolveScale(scaleConfig.size, field, data, 'light');
     }, [scaleConfig, data, field]);
 
@@ -196,8 +196,8 @@ export const useSizeScale = (data: IRow[], field: IViewField | null | undefined,
             if (isNaN(val)) {
                 return defaultSize;
             }
-            const size = (val - domainMin) / (domainMax - domainMin);
-            return minSize + Math.sqrt(size) * (maxSize - minSize);
+            const percent = Math.max(Math.min((val - domainMin) / (domainMax - domainMin), 1), 0);
+            return minSize + Math.sqrt(percent) * (maxSize - minSize);
         },
         [key, domainMin, domainMax, minSize, maxSize, defaultAggregate]
     );
@@ -219,8 +219,8 @@ export const useOpacityScale = (data: IRow[], field: IViewField | null | undefin
     }, [field, defaultAggregate]);
 
     const resolvedScale = useMemo(() => {
-        if (!field || !scaleConfig.size) return undefined;
-        return resolveScale(scaleConfig.size, field, data, 'light');
+        if (!scaleConfig.opacity) return undefined;
+        return resolveScale(scaleConfig.opacity, field, data, 'light');
     }, [scaleConfig, data, field]);
 
     const [domainMin, domainMax] = useDomain(key, data, resolvedScale);
@@ -236,8 +236,8 @@ export const useOpacityScale = (data: IRow[], field: IViewField | null | undefin
             if (isNaN(val)) {
                 return 0;
             }
-            const size = (val - domainMin) / (domainMax - domainMin);
-            return minOpacity + size * (maxOpacity - minOpacity);
+            const percent = Math.max(Math.min((val - domainMin) / (domainMax - domainMin), 1), 0);
+            return minOpacity + percent * (maxOpacity - minOpacity);
         },
         [key, domainMin, domainMax, minOpacity, maxOpacity, defaultAggregate]
     );
