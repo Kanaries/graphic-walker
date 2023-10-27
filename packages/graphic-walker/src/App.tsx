@@ -9,7 +9,7 @@ import PosFields from './fields/posFields';
 import AestheticFields from './fields/aestheticFields';
 import DatasetFields from './fields/datasetFields/index';
 import ReactiveRenderer from './renderer/index';
-import { ComputationContext, VizStoreWrapper, useVizStore, withTimeout } from './store';
+import { ComputationContext, VizStoreWrapper, useVizStore, withErrorReport, withTimeout } from './store';
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
@@ -33,6 +33,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { GWGlobalConfig } from './vis/theme';
 import { useCurrentMediaTheme } from './utils/media';
+import { parseErrorMessage } from './utils';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -117,7 +118,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             console.error(err);
             onError?.(err);
             if (code) {
-                vizStore.updateShowErrorResolutionPanel(code);
+                vizStore.updateShowErrorResolutionPanel(code, msg);
             }
         },
         [vizStore, onError]
@@ -125,11 +126,17 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const { segmentKey, vizEmbededMenu } = vizStore;
 
-    const c = useMemo(() => (computation ? withTimeout(computation, computationTimeout) : async () => []), [computation, computationTimeout]);
+    const wrappedComputation = useMemo(
+        () =>
+            computation
+                ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501))
+                : async () => [],
+        [reportError, computation, computationTimeout]
+    );
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <ComputationContext.Provider value={c}>
+                <ComputationContext.Provider value={wrappedComputation}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
                             {props.dataSelection}
@@ -186,7 +193,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                         themeKey={themeKey}
                                                         dark={darkMode}
                                                         themeConfig={themeConfig}
-                                                        computationFunction={computation}
+                                                        computationFunction={wrappedComputation}
                                                         channelScales={props.channelScales}
                                                     />
                                                 )}
