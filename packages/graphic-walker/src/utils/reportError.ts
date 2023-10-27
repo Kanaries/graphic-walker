@@ -2,6 +2,7 @@ import React from 'react';
 
 export const Errors = {
     canvasExceedSize: 500,
+    computationError: 501,
 } as const;
 
 export const errorContext = React.createContext({

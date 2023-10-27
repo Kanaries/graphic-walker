@@ -92,6 +92,7 @@ export class VizSpecStore {
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
     showErrorResolutionPanel: number = 0;
+    lastErrorMessage: string = "";
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -596,8 +597,9 @@ export class VizSpecStore {
         this.selectedMarkObject = newMarkObj;
     }
 
-    updateShowErrorResolutionPanel(errCode: number) {
+    updateShowErrorResolutionPanel(errCode: number, msg = "") {
         this.showErrorResolutionPanel = errCode;
+        this.lastErrorMessage = msg;
     }
 }
 
