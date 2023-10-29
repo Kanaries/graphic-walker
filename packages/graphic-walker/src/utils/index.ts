@@ -304,6 +304,16 @@ export function getSort({ rows, columns }: { rows: readonly IViewField[]; column
     return 'none';
 }
 
+export function getSortedEncoding({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
+    if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        return 'row';
+    }
+    if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        return 'column';
+    }
+    return 'none';
+}
+
 const defaultValueComparator = (a: any, b: any) => {
     if (typeof a === 'number' && typeof b === 'number') {
         return a - b;

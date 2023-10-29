@@ -45,6 +45,7 @@ import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
 import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
+import { getSort, getSortedEncoding } from '../utils';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 const viewEncodingKeys = (geom: string) => {
@@ -151,25 +152,11 @@ export class VizSpecStore {
     }
 
     get sort() {
-        const { rows, columns } = this;
-        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-            return rows[rows.length - 1].sort || 'none';
-        }
-        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-            return columns[columns.length - 1].sort || 'none';
-        }
-        return 'none';
+        return getSort({ columns: this.columns, rows: this.rows });
     }
 
     get sortedEncoding() {
-        const { rows, columns } = this;
-        if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-            return 'row';
-        }
-        if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-            return 'column';
-        }
-        return 'none';
+        return getSortedEncoding({ columns: this.columns, rows: this.rows });
     }
 
     get allFields() {
