@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { LightBulbIcon } from "@heroicons/react/24/outline";
 import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales, Specification, IDarkMode } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
@@ -20,7 +19,6 @@ import VisualConfig from './components/visualConfig';
 import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import type { ToolbarItemProps } from './components/toolbar';
-import ClickMenu from './components/clickMenu';
 import AskViz from './components/askViz';
 import { VizSpecStore, renderSpec } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
@@ -34,6 +32,7 @@ import Errorpanel from './components/errorpanel';
 import { GWGlobalConfig } from './vis/theme';
 import { useCurrentMediaTheme } from './utils/media';
 import { parseErrorMessage } from './utils';
+import { VizEmbedMenu } from './components/embedMenu';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -197,20 +196,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                         channelScales={props.channelScales}
                                                     />
                                                 )}
-                                                {vizEmbededMenu.show && (
-                                                    <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
-                                                        <div
-                                                            className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                                                            onClick={() => {
-                                                                vizStore.closeEmbededMenu();
-                                                                vizStore.setShowInsightBoard(true);
-                                                            }}
-                                                        >
-                                                            <span className="flex-1 pr-2">{t('App.labels.data_interpretation')}</span>
-                                                            <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
-                                                        </div>
-                                                    </ClickMenu>
-                                                )}
+                                                <VizEmbedMenu />
                                             </div>
                                         </div>
                                     </div>

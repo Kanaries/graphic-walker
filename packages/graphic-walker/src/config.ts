@@ -1,4 +1,4 @@
-import { DraggableFieldState, IAggregator, ICoordMode, IStackMode, IVisualConfig } from './interfaces';
+import { DraggableFieldState, IAggregator, ICoordMode, IEmbedMenuItem, IStackMode, IVisualConfig } from './interfaces';
 
 const GEOM_TYPES: Record<ICoordMode, string[]> = {
     generic: ['auto', 'bar', 'line', 'area', 'trail', 'point', 'circle', 'tick', 'rect', 'arc', 'text', 'boxplot', 'table'],
@@ -44,6 +44,8 @@ const NON_POSITION_CHANNEL_CONFIG_LIST: Array<keyof IVisualConfig['resolve']> = 
 
 const AGGREGATOR_LIST: IAggregator[] = ['sum', 'mean', 'median', 'count', 'min', 'max', 'variance', 'stdev'];
 
+const EMBEDED_MENU_LIST: IEmbedMenuItem[] = ['data_interpretation'];
+
 export const GLOBAL_CONFIG = {
     AGGREGATOR_LIST,
     CHART_LAYOUT_TYPE,
@@ -56,6 +58,7 @@ export const GLOBAL_CONFIG = {
     CHANNEL_LIMIT,
     POSITION_CHANNEL_CONFIG_LIST,
     NON_POSITION_CHANNEL_CONFIG_LIST,
+    EMBEDED_MENU_LIST,
 };
 
 export function getGlobalConfig() {
