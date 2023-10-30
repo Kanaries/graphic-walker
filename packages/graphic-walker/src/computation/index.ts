@@ -164,7 +164,7 @@ export const fieldStat = async (service: IComputationFunction, field: IField, op
 };
 
 export async function getDistinctValues(service: IComputationFunction, field: string) {
-    const COUNT_ID = `count_${field}`;
+    const COUNT_ID = `distinct_count_${field}`;
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
             {
