@@ -191,6 +191,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     visualConfig={visualConfig}
                     visualLayout={layout}
                     vegaConfig={vegaConfig}
+                    channelScales={channelScales}
+                    scale={scale}
                 />
             )}
             {isSpatial || (

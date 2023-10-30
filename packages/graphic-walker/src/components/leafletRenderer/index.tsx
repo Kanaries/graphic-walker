@@ -1,8 +1,7 @@
-import React, { forwardRef, useMemo } from "react";
-import type { DraggableFieldState, IRow,  IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from "../../interfaces";
-import POIRenderer from "./POIRenderer";
-import ChoroplethRenderer from "./ChoroplethRenderer";
-
+import React, { forwardRef, useMemo } from 'react';
+import type { DraggableFieldState, IChannelScales, IConfigScale, IRow, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../../interfaces';
+import POIRenderer from './POIRenderer';
+import ChoroplethRenderer from './ChoroplethRenderer';
 
 export interface ILeafletRendererProps {
     name?: string;
@@ -11,6 +10,11 @@ export interface ILeafletRendererProps {
     visualConfig: IVisualConfigNew;
     visualLayout: IVisualLayout;
     data: IRow[];
+    channelScales?: IChannelScales;
+    scale?: {
+        opacity: IConfigScale;
+        size: IConfigScale;
+    };
 }
 
 export interface ILeafletRendererRef {}
@@ -18,16 +22,47 @@ export interface ILeafletRendererRef {}
 export const LEAFLET_DEFAULT_WIDTH = 800;
 export const LEAFLET_DEFAULT_HEIGHT = 600;
 
-const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer (props, ref) {
-    const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {} } = props;
-    const { latitude: [lat], longitude: [lng], geoId: [geoId], dimensions, measures, size: [size], color: [color], opacity: [opacity], text: [text], details } = draggableFieldState;
-    const { defaultAggregated, geoms: [markType],  } = visualConfig;
+const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer(props, ref) {
+    const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {}, channelScales: channelScaleRaw, scale } = props;
+    const {
+        latitude: [lat],
+        longitude: [lng],
+        geoId: [geoId],
+        dimensions,
+        measures,
+        size: [size],
+        color: [color],
+        opacity: [opacity],
+        text: [text],
+        details,
+    } = draggableFieldState;
+    const {
+        defaultAggregated,
+        geoms: [markType],
+    } = visualConfig;
     const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false } = visualLayout;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);
     const latitude = useMemo(() => lat ?? latField, [lat, latField]);
     const longitude = useMemo(() => lng ?? lngField, [lng, lngField]);
+    const channelScales = useMemo(() => {
+        const cs = channelScaleRaw ?? {};
+        if (scale?.opacity) {
+            cs.opacity = {
+                ...(cs.opacity ?? {}),
+                ...scale.opacity,
+            };
+        }
+        if (scale?.size) {
+            cs.size = {
+                ...(cs.size ?? {}),
+                ...scale.size,
+            };
+        }
+        return cs;
+    }, [channelScaleRaw, scale]);
+    
 
     if (markType === 'poi') {
         return (
@@ -43,6 +78,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 size={size}
                 details={details}
                 vegaConfig={vegaConfig}
+                channelScales={channelScales}
             />
         );
     } else if (markType === 'choropleth') {
@@ -62,12 +98,12 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 details={details}
                 vegaConfig={vegaConfig}
                 scaleIncludeUnmatchedChoropleth={scaleIncludeUnmatchedChoropleth}
+                channelScales={channelScales}
             />
         );
     }
 
     return null;
 });
-
 
 export default LeafletRenderer;
