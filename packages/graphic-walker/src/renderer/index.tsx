@@ -15,6 +15,7 @@ import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 import { getMeaAggKey } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
+import { GLOBAL_CONFIG } from '../config';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -122,12 +123,14 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const handleGeomClick = useCallback(
         (values: any, e: any) => {
             e.stopPropagation();
-            runInAction(() => {
-                vizStore.showEmbededMenu([e.pageX, e.pageY]);
-                vizStore.setFilters(values);
-            });
-            const selectedMarkObject = values.vlPoint.or[0];
-            vizStore.updateSelectedMarkObject(selectedMarkObject);
+            if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
+                runInAction(() => {
+                    vizStore.showEmbededMenu([e.pageX, e.pageY]);
+                    vizStore.setFilters(values);
+                });
+                const selectedMarkObject = values.vlPoint.or[0];
+                vizStore.updateSelectedMarkObject(selectedMarkObject);    
+            }
         },
         [vizStore]
     );
