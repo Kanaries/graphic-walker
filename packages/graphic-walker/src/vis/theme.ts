@@ -13,7 +13,7 @@ export type GWGlobalConfig<
     dark: T;
 };
 
-const DEFAULT_COLOR = '#5B8FF9';
+export const DEFAULT_COLOR = '#5B8FF9';
 const DARK_COMMON_DESIGN = {
     background: 'transparent',
     header: {
