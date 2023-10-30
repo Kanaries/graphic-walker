@@ -8,7 +8,7 @@ import Tabs, { RuleFormProps } from './tabs';
 import DefaultButton from '../../components/button/default';
 import PrimaryButton from '../../components/button/primary';
 import DropdownSelect, { IDropdownSelectOption } from '../../components/dropdownSelect';
-import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { GLOBAL_CONFIG } from '../../config';
 import { toWorkflow } from '../../utils/workflow';
 import { useRefControledState } from '../../hooks';
