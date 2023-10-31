@@ -10,7 +10,7 @@ The computation workflow contains 4 types of queries: filter query, transform qu
 
 The filter query is used to filter the raw data. It contains a list of filter fields, each of which contains a filter rule.
 
-``` ts
+```ts
 type IFilterRule = (
     | {
         type: 'range';
@@ -297,7 +297,7 @@ At the moment, there are 3 view-level operations: aggregate, fold, and raw.
 
 Use the aggregate operation in the view query when you want the data to be aggregated. The aggregate operation contains a list of measures to be aggregated by a specified aggregation function with the group-by fields.
 
-``` ts
+```ts
 type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
 
 interface IAggQuery {
@@ -315,7 +315,7 @@ interface IAggQuery {
 
 Use the raw operation in the view query when you want the data not to be aggregated. The raw operation contains a list of fields to be included in the view data.
 
-``` ts
+```ts
 interface IRawQuery {
     op: 'raw';
     fields: string[];
@@ -324,7 +324,7 @@ interface IRawQuery {
 
 An aggregate query will be
 
-``` ts
+```ts
 type IViewQuery = IAggQuery | IRawQuery;
 
 interface IViewQuery {
