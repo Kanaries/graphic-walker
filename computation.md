@@ -1,16 +1,16 @@
 # GraphicWalker View Data Computation
 
-Before the renderer generates the visualization, GraphicWalker will apply an asynchronous workflow to compute the data to the view data which is directly used by the renderer. The computation workflow is formed by a series of data queries, which describe how to compute the view data from the raw data. The computation workflow is not only used in the rendering phase, but also used in cases such as preview table, and filter editor when GraphicWalker needs to get the necessary statistics from the raw data.
+Before the renderer generates the visualization, GraphicWalker  applies an asynchronous workflow to compute the data to the view data which is directly used by the renderer. The computation workflow consists of a series of data queries, that describe how to compute the view data from the raw data. The computation workflow is not only used in the rendering phase, but also used in cases such as preview table, and filter editor when GraphicWalker requires the necessary statistics from the raw data.
 
 ## Computation Workflow
 
-The computation workflow contains 4 types of queries: filter query, transform query, view query and sort query.
+The computation workflow contains 4 types of queries: filter query, transform query, view query, and sort query.
 
 ### Filter Query (optional)
 
 The filter query is used to filter the raw data. It contains a list of filter fields, each of which contains a filter rule.
 
-```ts
+``` ts
 type IFilterRule = (
     | {
         type: 'range';
@@ -297,7 +297,7 @@ At the moment, there are 3 view-level operations: aggregate, fold, and raw.
 
 Use the aggregate operation in the view query when you want the data to be aggregated. The aggregate operation contains a list of measures to be aggregated by a specified aggregation function with the group-by fields.
 
-```ts
+``` ts
 type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
 
 interface IAggQuery {
@@ -315,7 +315,7 @@ interface IAggQuery {
 
 Use the raw operation in the view query when you want the data not to be aggregated. The raw operation contains a list of fields to be included in the view data.
 
-```ts
+``` ts
 interface IRawQuery {
     op: 'raw';
     fields: string[];
@@ -324,7 +324,7 @@ interface IRawQuery {
 
 An aggregate query will be
 
-```ts
+``` ts
 type IViewQuery = IAggQuery | IRawQuery;
 
 interface IViewQuery {
