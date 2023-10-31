@@ -1,10 +1,10 @@
 # GraphicWalker View Data Computation
 
-Before the renderer generates the visualization, GraphicWalker will apply an asynchronous workflow to compute the data to the view data which is directly used by the renderer. The computation workflow is formed by a series of data queries, which describe how to compute the view data from the raw data. The computation workflow is not only used in the rendering phase, but also used in cases such as preview table, and filter editor when GraphicWalker needs to get the necessary statistics from the raw data.
+Before the renderer generates the visualization, GraphicWalker  applies an asynchronous workflow to compute the data to the view data which is directly used by the renderer. The computation workflow consists of a series of data queries, that describe how to compute the view data from the raw data. The computation workflow is not only used in the rendering phase, but also used in cases such as preview table, and filter editor when GraphicWalker requires the necessary statistics from the raw data.
 
 ## Computation Workflow
 
-The computation workflow contains 4 types of queries: filter query, transform query, view query and sort query.
+The computation workflow contains 4 types of queries: filter query, transform query, view query, and sort query.
 
 ### Filter Query (optional)
 
