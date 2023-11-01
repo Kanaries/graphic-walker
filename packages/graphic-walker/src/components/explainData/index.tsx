@@ -20,7 +20,7 @@ const TabsList = styled.div`
   align-items: stretch;
   justify-content: stretch;
   height: 100%;
-  overflow-y: scroll
+  overflow-y: scroll;
 `;
 
 const Tab = styled.div`
