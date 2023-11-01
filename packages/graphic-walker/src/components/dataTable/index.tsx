@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { observer } from 'mobx-react-lite';
-import type { IMutField, IRow, IComputationFunction } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IVisFilter } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -135,10 +135,16 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const [dataLoading, setDataLoading] = useState(false);
     const taskIdRef = useRef(0);
 
+    const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
+    const [filters, setFilters] = useState<IVisFilter[]>([]);
+
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
-        dataReadRaw(computationFunction, size, pageIndex)
+        dataReadRaw(computationFunction, size, pageIndex, {
+            sorting,
+            filters,
+        })
             .then((data) => {
                 if (taskId === taskIdRef.current) {
                     setDataLoading(false);
@@ -155,7 +161,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         return () => {
             taskIdRef.current++;
         };
-    }, [computationFunction, pageIndex, size]);
+    }, [computationFunction, pageIndex, size, sorting, filters]);
 
     const loading = statLoading || dataLoading;
 
@@ -163,10 +169,8 @@ const DataTable: React.FC<DataTableProps> = (props) => {
 
     return (
         <Container className="relative">
-            <nav
-                className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2"
-                aria-label="Pagination"
-            >
+            <div>{/** TODO: Filter puts in here */}</div>
+            <nav className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2" aria-label="Pagination">
                 <div className="hidden sm:block">
                     <p className="text-sm text-gray-800 dark:text-gray-100">
                         Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}

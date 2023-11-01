@@ -5,8 +5,11 @@ import type {
     IDatasetStats,
     IField,
     IFieldStats,
+    IFilterWorkflowStep,
     IRow,
+    ISortWorkflowStep,
     ITransformWorkflowStep,
+    IVisFilter,
 } from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
 
@@ -36,9 +39,25 @@ export const datasetStats = async (service: IComputationFunction): Promise<IData
     };
 };
 
-export const dataReadRaw = async (service: IComputationFunction, pageSize: number, pageOffset = 0): Promise<IRow[]> => {
+export const dataReadRaw = async (
+    service: IComputationFunction,
+    pageSize: number,
+    pageOffset = 0,
+    option?: {
+        sorting?: { fid: string; sort: 'ascending' | 'descending' };
+        filters?: IVisFilter[];
+    }
+): Promise<IRow[]> => {
     const res = await service({
         workflow: [
+            ...(option?.filters && option.filters.length > 0
+                ? [
+                      {
+                          type: 'filter',
+                          filters: option.filters,
+                      } as IFilterWorkflowStep,
+                  ]
+                : []),
             {
                 type: 'view',
                 query: [
@@ -48,6 +67,15 @@ export const dataReadRaw = async (service: IComputationFunction, pageSize: numbe
                     },
                 ],
             },
+            ...(option?.sorting
+                ? [
+                      {
+                          type: 'sort',
+                          by: [option.sorting.fid],
+                          sort: option.sorting.sort,
+                      } as ISortWorkflowStep,
+                  ]
+                : []),
         ],
         limit: pageSize,
         offset: pageOffset * pageSize,
