@@ -1,23 +1,23 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { observer } from 'mobx-react-lite';
-import type { IMutField, IRow, IComputationFunction, IVisFilter } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
 import Pagination from './pagination';
 import DropdownContext from '../dropdownContext';
 import DataTypeIcon from '../dataTypeIcon';
+import { encodeFilterRule } from '../../utils/filter';
+import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog';
+import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { ComputationContext } from '../../store';
 
 interface DataTableProps {
     /** page limit */
     size?: number;
-    /** total count of rows */
-    total: number;
     metas: IMutField[];
     computation: IComputationFunction;
-    onMetaChange: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
-    loading?: boolean;
+    onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -115,8 +115,52 @@ const getHeaderKey = (f: wrapMutField) => {
     return f.value.name ?? f.value.fid;
 };
 
+function useFilters(metas: IMutField[]) {
+    const [filters, setFilters] = useState<IFilterField[]>([]);
+    const [editingFilterIdx, setEditingFilterIdx] = useState<number | null>(null);
+    const options = useMemo(() => {
+        return metas.map((x) => ({ label: x.name ?? x.fid, value: x.fid }));
+    }, [metas]);
+    const onSelectFilter = useCallback(
+        (fid: string) => {
+            const i = filters.findIndex((x) => x.fid === fid);
+            if (i > -1) {
+                setEditingFilterIdx(i);
+            } else {
+                const meta = metas.find((x) => x.fid === fid);
+                if (!meta) return;
+                const newFilter: IFilterField = {
+                    fid,
+                    rule: null,
+                    analyticType: meta.analyticType,
+                    dragId: '',
+                    name: meta.name ?? meta.fid,
+                    semanticType: meta.semanticType,
+                };
+                if (editingFilterIdx === null) {
+                    setFilters(filters.concat(newFilter));
+                    setEditingFilterIdx(filters.length);
+                } else {
+                    setFilters(filters.map((x, i) => (i === editingFilterIdx ? newFilter : x)));
+                }
+            }
+        },
+        [filters, editingFilterIdx]
+    );
+    const onWriteFilter = useCallback((index: number, rule: IFilterRule | null) => {
+        setFilters((f) => f.map((x, i) => (i === index ? { ...x, rule } : x)));
+    }, []);
+    const onDeleteFilter = useCallback((index: number) => {
+        setFilters((f) => f.filter((_, i) => i !== index));
+    }, []);
+    const onClose = useCallback(() => {
+        setEditingFilterIdx(null);
+    }, []);
+    return { filters, options, editingFilterIdx, onSelectFilter, onDeleteFilter, onWriteFilter, onClose };
+}
+
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, metas, computation, total, loading: statLoading } = props;
+    const { size = 10, onMetaChange, metas, computation } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
     const computationFunction = computation;
@@ -128,22 +172,69 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         }));
     }, []);
 
-    const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
-
     const [rows, setRows] = useState<IRow[]>([]);
     const [dataLoading, setDataLoading] = useState(false);
     const taskIdRef = useRef(0);
 
     const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
-    const [filters, setFilters] = useState<IVisFilter[]>([]);
+
+    const { filters, editingFilterIdx, onClose, onDeleteFilter, onSelectFilter, onWriteFilter, options } = useFilters(metas);
+
+    const [total, setTotal] = useState(0);
+    const [statLoading, setStatLoading] = useState(false);
+
+    // Get count when filter changed
+    useEffect(() => {
+        const f = filters.filter((x) => x.rule).map((x) => ({ ...x, rule: encodeFilterRule(x.rule)! }));
+        setStatLoading(true);
+        computation({
+            workflow: [
+                ...(f && f.length > 0
+                    ? [
+                          {
+                              type: 'filter',
+                              filters: f,
+                          } as IFilterWorkflowStep,
+                      ]
+                    : []),
+                {
+                    type: 'view',
+                    query: [
+                        {
+                            op: 'aggregate',
+                            groupBy: [],
+                            measures: [
+                                {
+                                    field: '*',
+                                    agg: 'count',
+                                    asFieldKey: 'count',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        }).then((v) => {
+            setTotal(v[0]?.count ?? 0);
+            setStatLoading(false);
+        });
+    }, [filters, computation]);
+
+    const from = pageIndex * size;
+    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
+
+    useEffect(() => {
+        if (from > total) {
+            setPageIndex(0);
+        }
+    }, [from, total]);
 
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
         dataReadRaw(computationFunction, size, pageIndex, {
             sorting,
-            filters,
+            filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: encodeFilterRule(x.rule)! })),
         })
             .then((data) => {
                 if (taskId === taskIdRef.current) {
@@ -169,7 +260,14 @@ const DataTable: React.FC<DataTableProps> = (props) => {
 
     return (
         <Container className="relative">
-            <div>{/** TODO: Filter puts in here */}</div>
+            {filters.length > 0 && (
+                <div className="flex items-center p-2 space-x-2">
+                    <span>Filters: </span>
+                    {filters.map((x, i) => (
+                        <FilterPill key={x.fid} name={x.name} onClick={() => onSelectFilter(x.fid)} onRemove={() => onDeleteFilter(i)} />
+                    ))}
+                </div>
+            )}
             <nav className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2" aria-label="Pagination">
                 <div className="hidden sm:block">
                     <p className="text-sm text-gray-800 dark:text-gray-100">
@@ -219,30 +317,67 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                 <div
                                                     className={
                                                         getHeaderClassNames(f.value) +
-                                                        ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1'
+                                                        ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1 group'
                                                     }
                                                 >
                                                     <div className="font-normal inline-block">
-                                                        <DropdownContext
-                                                            position="right-0"
-                                                            options={semanticTypeList}
-                                                            onSelect={(value) => {
-                                                                onMetaChange(f.value.fid, f.fIndex, {
-                                                                    semanticType: value as IMutField['semanticType'],
-                                                                });
-                                                            }}
-                                                        >
-                                                            <span
-                                                                className={
-                                                                    'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
-                                                                    getSemanticColors(f.value)
-                                                                }
-                                                            >
+                                                        {!onMetaChange && (
+                                                            <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
                                                                 <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
                                                             </span>
-                                                        </DropdownContext>
+                                                        )}
+                                                        {onMetaChange && (
+                                                            <DropdownContext
+                                                                position="right-0"
+                                                                options={semanticTypeList}
+                                                                onSelect={(value) => {
+                                                                    onMetaChange(f.value.fid, f.fIndex, {
+                                                                        semanticType: value as IMutField['semanticType'],
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <span
+                                                                    className={
+                                                                        'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
+                                                                        getSemanticColors(f.value)
+                                                                    }
+                                                                >
+                                                                    <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
+                                                                </span>
+                                                            </DropdownContext>
+                                                        )}
                                                     </div>
-                                                    <b className="inline-block">{f.value.basename || f.value.name || f.value.fid}</b>
+                                                    <b
+                                                        className="inline-block"
+                                                        onClick={() =>
+                                                            setSorting((s) => {
+                                                                if (s?.fid === f.value.fid && s.sort === 'descending') {
+                                                                    return {
+                                                                        fid: f.value.fid,
+                                                                        sort: 'ascending',
+                                                                    };
+                                                                }
+                                                                return {
+                                                                    fid: f.value.fid,
+                                                                    sort: 'descending',
+                                                                };
+                                                            })
+                                                        }
+                                                    >
+                                                        {f.value.basename || f.value.name || f.value.fid}
+                                                    </b>
+                                                    {sorting?.fid === f.value.fid && (
+                                                        <div className="mx-1">
+                                                            {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
+                                                            {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
+                                                        </div>
+                                                    )}
+                                                    <div
+                                                        className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
+                                                        onClick={() => onSelectFilter(f.value.fid)}
+                                                    >
+                                                        <FunnelIcon className="w-4 inline-block" />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -269,8 +404,42 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             </div>
 
             {loading && <LoadingLayer />}
+            <ComputationContext.Provider value={computation}>
+                <div className="text-xs">
+                    <PureFilterEditDialog
+                        editingFilterIdx={editingFilterIdx}
+                        meta={metas}
+                        onClose={onClose}
+                        onSelectFilter={onSelectFilter}
+                        onWriteFilter={onWriteFilter}
+                        options={options}
+                        viewFilters={filters}
+                    />
+                </div>
+            </ComputationContext.Provider>
         </Container>
     );
 };
 
-export default observer(DataTable);
+export default DataTable;
+
+const FilterPill = (props: { name: string; onRemove?: () => void; onClick?: () => void }) => {
+    return (
+        <span
+            onClick={props.onClick}
+            className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10"
+        >
+            {props.name}
+            <button onClick={props.onRemove} type="button" className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20">
+                <span className="sr-only">Remove</span>
+                <svg
+                    viewBox="0 0 14 14"
+                    className="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75 dark:stroke-gray-200/50 dark:group-hover:stroke-gray-200/75"
+                >
+                    <path d="M4 4l6 6m0-6l-6 6" />
+                </svg>
+                <span className="absolute -inset-1"></span>
+            </button>
+        </span>
+    );
+};
