@@ -20,7 +20,7 @@ export default function Default(props: DefaultProps) {
     const { tabs, selectedKey, onSelected } = props;
 
     return (
-        <div className="border-b border-gray-200 dark:border-gray-700 mb-2" >
+        <div className="border-b border-gray-200 dark:border-gray-700" >
             <nav className="-mb-px flex space-x-8" role="tablist" aria-label="Tabs">
                 {tabs.map((tab, tabIndex) => (
                     <span

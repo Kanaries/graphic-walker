@@ -6,8 +6,8 @@ const DataTypeIcon: React.FC<{ dataType: IMutField["semanticType"]; analyticType
     props
 ) => {
     const { dataType, analyticType } = props;
-    const color = analyticType === "dimension" ? "text-blue-500" : "text-purple-500";
-    const iconClassName = `w-3 inline-block mr-0.5 ${color}`;
+    const color = analyticType === "dimension" ? "text-blue-500 dark:text-blue-400" : "text-purple-500 dark:text-purple-400";
+    const iconClassName = `w-3 inline-block ${color}`;
     switch (dataType) {
         case "quantitative":
         case "ordinal":

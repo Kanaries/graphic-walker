@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { IGeographicData, IComputationFunction, ISegmentKey, IThemeKey, IMutField, IGeoDataItem, VegaGlobalConfig, IChannelScales, Specification, IDarkMode } from './interfaces';
+import {
+    IGeographicData,
+    IComputationFunction,
+    ISegmentKey,
+    IThemeKey,
+    IMutField,
+    IGeoDataItem,
+    VegaGlobalConfig,
+    IChannelScales,
+    Specification,
+    IDarkMode,
+} from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -75,7 +86,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         geographicData,
         computationTimeout = 60000,
         spec,
-        onError
+        onError,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -109,7 +120,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
-    const downloadCSVRef = useRef<{ download: () => void }>({download() {}});
+    const downloadCSVRef = useRef<{ download: () => void }>({ download() {} });
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
@@ -126,10 +137,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const { segmentKey, vizEmbededMenu } = vizStore;
 
     const wrappedComputation = useMemo(
-        () =>
-            computation
-                ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501))
-                : async () => [],
+        () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
     return (
@@ -141,8 +149,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                             {props.dataSelection}
                             <div className="px-2 mx-2">
                                 <SegmentNav />
-                                {segmentKey === ISegmentKey.vis && <VisNav />}
                             </div>
+                            {segmentKey === ISegmentKey.vis && (
+                                <div className="px-2 mx-2 mt-2">
+                                    <VisNav />
+                                </div>
+                            )}
+
                             {segmentKey === ISegmentKey.vis && (
                                 <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
                                     {enhanceAPI?.features?.askviz && (
@@ -152,7 +165,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         />
                                     )}
                                     <VisualSettings
-                                        csvHandler={downloadCSVRef} rendererHandler={rendererRef}
+                                        csvHandler={downloadCSVRef}
+                                        rendererHandler={rendererRef}
                                         darkModePreference={darkMode}
                                         exclude={toolbar?.exclude}
                                         extra={toolbar?.extra}
@@ -187,7 +201,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 }}
                                             >
                                                 {computation && (
-                                                    <ReactiveRenderer csvRef={downloadCSVRef}
+                                                    <ReactiveRenderer
+                                                        csvRef={downloadCSVRef}
                                                         ref={rendererRef}
                                                         themeKey={themeKey}
                                                         dark={darkMode}
@@ -203,7 +218,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 </div>
                             )}
                             {segmentKey === ISegmentKey.data && (
-                                <div className="m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
+                                <div className="mx-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
                                     <DatasetConfig />
                                 </div>
                             )}
