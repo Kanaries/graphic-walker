@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { observer } from 'mobx-react-lite';
-import type { IMutField, IRow, DataSet, IComputationFunction } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
-import LoadingLayer from "../loadingLayer";
-import { dataReadRaw } from "../../computation";
+import LoadingLayer from '../loadingLayer';
+import { dataReadRaw } from '../../computation';
 import Pagination from './pagination';
-import { ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import DropdownContext from '../dropdownContext';
+import DataTypeIcon from '../dataTypeIcon';
 
 interface DataTableProps {
     /** page limit */
@@ -22,7 +22,6 @@ interface DataTableProps {
 const Container = styled.div`
     overflow-x: auto;
     max-height: 660px;
-    overflow-y: auto;
     table {
         box-sizing: content-box;
         border-collapse: collapse;
@@ -39,7 +38,7 @@ const Container = styled.div`
         }
     }
 `;
-const ANALYTIC_TYPE_LIST = ['dimension', 'measure'];
+// const ANALYTIC_TYPE_LIST = ['dimension', 'measure'];
 const SEMANTIC_TYPE_LIST = ['nominal', 'ordinal', 'quantitative', 'temporal'];
 // function getCellType(field: IMutField): 'number' | 'text' {
 //     return field.dataType === 'number' || field.dataType === 'integer' ? 'number' : 'text';
@@ -49,7 +48,7 @@ function getHeaderType(field: IMutField): 'number' | 'text' {
 }
 
 function getHeaderClassNames(field: IMutField) {
-    return field.analyticType === 'dimension' ? 'border-t-4 border-blue-400' : 'border-t-4 border-purple-400';
+    return field.analyticType === 'dimension' ? 'border-t-2 border-blue-400' : 'border-t-2 border-purple-400';
 }
 
 function getSemanticColors(field: IMutField): string {
@@ -122,13 +121,6 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const { t } = useTranslation();
     const computationFunction = computation;
 
-    const analyticTypeList = useMemo<{ value: string; label: string }[]>(() => {
-        return ANALYTIC_TYPE_LIST.map((at) => ({
-            value: at,
-            label: t(`constant.analytic_type.${at}`),
-        }));
-    }, []);
-
     const semanticTypeList = useMemo<{ value: string; label: string }[]>(() => {
         return SEMANTIC_TYPE_LIST.map((st) => ({
             value: st,
@@ -146,18 +138,20 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
-        dataReadRaw(computationFunction, size, pageIndex).then(data => {
-            if (taskId === taskIdRef.current) {
-                setDataLoading(false);
-                setRows(data);
-            }
-        }).catch(err => {
-            if (taskId === taskIdRef.current) {
-                console.error(err);
-                setDataLoading(false);
-                setRows([]);
-            }
-        });
+        dataReadRaw(computationFunction, size, pageIndex)
+            .then((data) => {
+                if (taskId === taskIdRef.current) {
+                    setDataLoading(false);
+                    setRows(data);
+                }
+            })
+            .catch((err) => {
+                if (taskId === taskIdRef.current) {
+                    console.error(err);
+                    setDataLoading(false);
+                    setRows([]);
+                }
+            });
         return () => {
             taskIdRef.current++;
         };
@@ -168,122 +162,108 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const headers = useMemo(() => getHeaders(metas), [metas]);
 
     return (
-        <Container className="rounded border-gray-200 dark:border-gray-700 border relative">
-            <Pagination
-                total={total}
-                from={from + 1}
-                to={to + 1}
-                onNext={() => {
-                    setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
-                }}
-                onPrev={() => {
-                    setPageIndex(Math.max(0, pageIndex - 1));
-                }}
-            />
-            <table className="min-w-full divide-y">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                    {headers.map((row) => (
-                        <tr
-                            className="divide-x divide-gray-200 dark:divide-gray-700"
-                            key={`row_${getHeaderKey(row[0])}`}
-                        >
-                            {row.map((f) => (
-                                <th
-                                    colSpan={f.colSpan}
-                                    rowSpan={f.rowSpan}
-                                    key={getHeaderKey(f)}
-                                    className={'align-top'}
-                                >
-                                    {f.type === 'name' && (
-                                        <div
-                                            className={
-                                                'border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-semibold text-gray-900 dark:text-gray-50'
-                                            }
-                                        >
-                                            <b className="sticky inset-x-0 w-fit px-6 sm:pl-6">{f.value}</b>
-                                        </div>
-                                    )}
-                                    {f.type === 'field' && (
-                                        <div
-                                            className={
-                                                getHeaderClassNames(f.value) +
-                                                ' whitespace-nowrap py-3.5 px-6 text-left text-xs font-semibold text-gray-900 dark:text-gray-50 sm:pl-6'
-                                            }
-                                        >
-                                            <b>{f.value.basename || f.value.name || f.value.fid}</b>
-                                            <div>
-                                                <DropdownContext
-                                                    options={analyticTypeList}
-                                                    onSelect={(value) => {
-                                                        onMetaChange(f.value.fid, f.fIndex, {
-                                                            analyticType: value as IMutField['analyticType'],
-                                                        });
-                                                    }}
+        <Container className="relative">
+            <nav
+                className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2"
+                aria-label="Pagination"
+            >
+                <div className="hidden sm:block">
+                    <p className="text-sm text-gray-800 dark:text-gray-100">
+                        Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
+                        <span className="font-medium">{total}</span> results
+                    </p>
+                </div>
+                <Pagination
+                    total={total}
+                    pageIndex={pageIndex}
+                    onNext={() => {
+                        setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
+                    }}
+                    onPrev={() => {
+                        setPageIndex(Math.max(0, pageIndex - 1));
+                    }}
+                    onPageChange={(index) => {
+                        setPageIndex(Math.max(0, Math.min(Math.ceil(total / size) - 1, index)));
+                    }}
+                />
+            </nav>
+
+            <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
+                <table className="min-w-full divide-y relative border-x border-gray-200 dark:border-gray-700">
+                    <thead className="">
+                        {headers.map((row) => (
+                            <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={`row_${getHeaderKey(row[0])}`}>
+                                {row.map((f) => (
+                                    <th
+                                        colSpan={f.colSpan}
+                                        rowSpan={f.rowSpan}
+                                        key={getHeaderKey(f)}
+                                        className="align-top sticky top-0 bg-white dark:bg-zinc-900"
+                                        // style={{ zIndex: -100 }}
+                                    >
+                                        <div className="border-b border-gray-200 dark:border-gray-700">
+                                            {f.type === 'name' && (
+                                                <div
+                                                    className={
+                                                        'border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-gray-900 dark:text-gray-50'
+                                                    }
                                                 >
-                                                    <span
-                                                        className={
-                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full text-white ' +
-                                                            (f.value.analyticType === 'dimension'
-                                                                ? 'bg-blue-500'
-                                                                : 'bg-purple-500')
-                                                        }
-                                                    >
-                                                        {f.value.analyticType}
-                                                        <ChevronUpDownIcon className="ml-2 w-3" />
-                                                    </span>
-                                                </DropdownContext>
-                                            </div>
-                                            <div>
-                                                <DropdownContext
-                                                    options={semanticTypeList}
-                                                    onSelect={(value) => {
-                                                        onMetaChange(f.value.fid, f.fIndex, {
-                                                            semanticType: value as IMutField['semanticType'],
-                                                        });
-                                                    }}
+                                                    <b className="sticky inset-x-0 w-fit px-4 sm:pl-6">{f.value}</b>
+                                                </div>
+                                            )}
+                                            {f.type === 'field' && (
+                                                <div
+                                                    className={
+                                                        getHeaderClassNames(f.value) +
+                                                        ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1'
+                                                    }
                                                 >
-                                                    <span
-                                                        className={
-                                                            'cursor-pointer inline-flex px-2.5 py-0.5 text-xs font-medium mt-1 rounded-full ' +
-                                                            getSemanticColors(f.value)
-                                                        }
-                                                    >
-                                                        {f.value.semanticType}
-                                                        <ChevronUpDownIcon className="ml-2 w-3" />
-                                                    </span>
-                                                </DropdownContext>
-                                            </div>
+                                                    <div className="font-normal inline-block">
+                                                        <DropdownContext
+                                                            position="right-0"
+                                                            options={semanticTypeList}
+                                                            onSelect={(value) => {
+                                                                onMetaChange(f.value.fid, f.fIndex, {
+                                                                    semanticType: value as IMutField['semanticType'],
+                                                                });
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
+                                                                    getSemanticColors(f.value)
+                                                                }
+                                                            >
+                                                                <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
+                                                            </span>
+                                                        </DropdownContext>
+                                                    </div>
+                                                    <b className="inline-block">{f.value.basename || f.value.name || f.value.fid}</b>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900">
-                    {rows.map((row, index) => (
-                        <tr
-                            className={
-                                'divide-x divide-gray-200 dark:divide-gray-700 ' +
-                                (index % 2 ? 'bg-gray-50 dark:bg-gray-900' : '')
-                            }
-                            key={index}
-                        >
-                            {metas.map((field) => (
-                                <td
-                                    key={field.fid + index}
-                                    className={
-                                        getHeaderType(field) +
-                                        ' whitespace-nowrap py-2 pl-4 pr-3 text-xs text-gray-500 dark:text-gray-300 sm:pl-6'
-                                    }
-                                >
-                                    {`${row[field.fid]}`}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900 font-mono">
+                        {rows.map((row, index) => (
+                            <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={index}>
+                                {metas.map((field) => (
+                                    <td
+                                        key={field.fid + index}
+                                        className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-gray-500 dark:text-gray-300'}
+                                    >
+                                        {`${row[field.fid]}`}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
             {loading && <LoadingLayer />}
         </Container>
     );

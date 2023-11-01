@@ -14,9 +14,11 @@ interface IDropdownContextProps {
     options?: IDropdownContextOption[];
     disable?: boolean;
     onSelect?: (value: string, index: number) => void;
+    // left-0 right-0
+    position?: string;
 }
 const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
-    const { options = [], disable } = props;
+    const { options = [], disable, position = 'left-0' } = props;
 
     if (disable) {
         return <Fragment>{props.children}</Fragment>;
@@ -35,7 +37,7 @@ const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
             >
-                <Menu.Items className="absolute left-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-zinc-900  shadow-lg border border-gray-50 dark:border-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <Menu.Items className={`absolute ${position} z-50 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-zinc-900  shadow-lg border border-gray-50 dark:border-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none`}>
                     <div className="py-1">
                         {options.map((option, index) => (
                             <Menu.Item key={option.value}>
