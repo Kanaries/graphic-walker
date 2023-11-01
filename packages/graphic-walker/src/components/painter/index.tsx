@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
-import { fieldStat } from '../../computation';
+import { fieldStat, getRange } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
 import { IViewField } from '../../interfaces';
 import embed from 'vega-embed';
@@ -389,10 +389,10 @@ const Painter = () => {
                         setDomainY(paintInfo.domainY);
                     } else {
                         mapRef.current = emptyMap(MAP_WIDTH);
-                        const xs = fieldStat(compuation, paintInfo.x, { range: true });
-                        const ys = fieldStat(compuation, paintInfo.y, { range: true });
-                        const { range: domainX } = await xs;
-                        const { range: domainY } = await ys;
+                        const xs = getRange(compuation, paintInfo.x);
+                        const ys = getRange(compuation, paintInfo.y);
+                        const domainX = await xs;
+                        const domainY = await ys;
                         setDict(defaultScheme);
                         setDomainX(domainX);
                         setDomainY(domainY);
