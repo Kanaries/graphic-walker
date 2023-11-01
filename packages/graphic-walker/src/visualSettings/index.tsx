@@ -562,7 +562,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             '-',
             {
                 key: 'kanaries',
-                label: 'kanaries',
+                label: 'kanaries docs',
                 icon: () => (
                     // Kanaries brand info is not allowed to be removed or changed unless you are granted with special permission.
                     <a href="https://docs.kanaries.net" target="_blank">
@@ -572,7 +572,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                             src="https://imagedelivery.net/tSvh1MGEu9IgUanmf58srQ/b6bc899f-a129-4c3a-d08f-d406166d0c00/public"
                             fallbackSrc={KanariesLogo}
                             timeout={1000}
-                            alt="kanaries"
+                            alt="kanaries documents"
                         />
                     </a>
                 ),
