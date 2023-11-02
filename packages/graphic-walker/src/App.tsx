@@ -44,6 +44,7 @@ import { GWGlobalConfig } from './vis/theme';
 import { useCurrentMediaTheme } from './utils/media';
 import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
+import SideReisze from './components/side-resize';
 
 export interface BaseVizProps {
     i18nLang?: string;
@@ -178,15 +179,15 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <LogPanel />
                                     <BinPanel />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                    <div className="sm:grid sm:grid-cols-12 xl:grid-cols-6">
-                                        <div className="sm:col-span-3 xl:col-span-1">
+                                    <div className="sm:flex">
+                                        <SideReisze defaultWidth={240} handleWidth={4} className="min-w-[100%] sm:min-w-[240px]">
                                             <DatasetFields />
-                                        </div>
-                                        <div className="sm:col-span-2 xl:col-span-1">
+                                        </SideReisze>
+                                        <SideReisze defaultWidth={180} handleWidth={4} className="min-w-[100%] sm:min-w-[180px]">
                                             <FilterField />
                                             <AestheticFields />
-                                        </div>
-                                        <div className="sm:col-span-7 xl:col-span-4">
+                                        </SideReisze>
+                                        <div className="flex-1">
                                             <div>
                                                 <PosFields />
                                             </div>
