@@ -137,7 +137,7 @@ function useFilters(metas: IMutField[]) {
                     name: meta.name ?? meta.fid,
                     semanticType: meta.semanticType,
                 };
-                if (editingFilterIdx === null) {
+                if (editingFilterIdx === null || !filters[editingFilterIdx]) {
                     setFilters(filters.concat(newFilter));
                     setEditingFilterIdx(filters.length);
                 } else {
@@ -430,7 +430,10 @@ const FilterPill = (props: { name: string; onRemove?: () => void; onClick?: () =
             className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10"
         >
             {props.name}
-            <button onClick={props.onRemove} type="button" className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20">
+            <button onClick={e => {
+                e.stopPropagation();
+                props.onRemove?.();
+            }} type="button" className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20">
                 <span className="sr-only">Remove</span>
                 <svg
                     viewBox="0 0 14 14"
