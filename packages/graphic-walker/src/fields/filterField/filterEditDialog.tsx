@@ -1,15 +1,25 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toJS } from 'mobx';
 import Modal from '../../components/modal';
-import type { IFilterField, IFilterRule, IMutField, IViewField } from '../../interfaces';
-import { useVizStore } from '../../store';
+import type { IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
+import { ComputationContext, useCompututaion, useVizStore } from '../../store';
 import Tabs, { RuleFormProps } from './tabs';
 import DefaultButton from '../../components/button/default';
 import PrimaryButton from '../../components/button/primary';
-import DropdownSelect from '../../components/dropdownSelect';
+import DropdownSelect, { IDropdownSelectOption } from '../../components/dropdownSelect';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { GLOBAL_CONFIG } from '../../config';
+import { toWorkflow } from '../../utils/workflow';
+import { useRefControledState } from '../../hooks';
+import { getFilterMeaAggKey, getMeaAggKey } from '../../utils';
+
+const aggregationList = GLOBAL_CONFIG.AGGREGATOR_LIST.map(
+    (x): IDropdownSelectOption => ({
+        label: x,
+        value: x,
+    })
+).concat([{ label: '-', value: '' }]);
 
 const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
     return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
@@ -36,24 +46,16 @@ export const PureFilterEditDialog = (props: {
     editingFilterIdx: number | null;
     onSelectFilter: (field: string) => void;
     onWriteFilter: (index: number, rule: IFilterRule | null) => void;
+    onSelectAgg?: (index: number, aggName: IAggregator | null) => void;
     onClose: () => void;
 }) => {
-    const { editingFilterIdx, viewFilters, meta, options, onSelectFilter, onWriteFilter, onClose } = props;
+    const { editingFilterIdx, viewFilters, meta, options, onSelectFilter, onWriteFilter, onClose, onSelectAgg } = props;
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
     const field = React.useMemo(() => {
         return editingFilterIdx !== null ? viewFilters[editingFilterIdx] : null;
     }, [editingFilterIdx, viewFilters]);
 
-    const [uncontrolledField, setUncontrolledField] = React.useState(field as IFilterField | null);
-    const ufRef = React.useRef(uncontrolledField);
-    ufRef.current = uncontrolledField;
-
-    React.useEffect(() => {
-        if (field !== ufRef.current) {
-            setUncontrolledField(field as IFilterField);
-        }
-    }, [field]);
-
+    const [uncontrolledField, setUncontrolledField] = useRefControledState<IFilterField | null>(field);
     const handleChange = React.useCallback(
         (r: IFilterRule) => {
             if (editingFilterIdx !== null) {
@@ -89,9 +91,31 @@ export const PureFilterEditDialog = (props: {
     return uncontrolledField ? (
         <Modal show={Boolean(uncontrolledField)} title={t('editing')} onClose={onClose}>
             <div className="px-4 py-1">
-                <div className="py-1">{t('form.name')}</div>
-                <DropdownSelect buttonClassName="w-96" className="mb-2" options={options} selectedKey={uncontrolledField.fid} onSelect={onSelectFilter} />
-                <Form rawFields={meta} key={uncontrolledField.fid} field={uncontrolledField} onChange={handleChange} />
+                <div className="flex space-x-2">
+                    <div>
+                        <div className="py-1">{t('form.name')}</div>
+                        <DropdownSelect
+                            buttonClassName="w-96"
+                            className="mb-2"
+                            options={options}
+                            selectedKey={uncontrolledField.fid}
+                            onSelect={onSelectFilter}
+                        />
+                    </div>
+                    {onSelectAgg && editingFilterIdx !== null && uncontrolledField.analyticType === 'measure' && (
+                        <div>
+                            <div className="py-1">{t('form.aggregation')}</div>
+                            <DropdownSelect
+                                buttonClassName="w-96"
+                                className="mb-2"
+                                options={aggregationList}
+                                selectedKey={uncontrolledField.enableAgg ? uncontrolledField.aggName ?? '' : ''}
+                                onSelect={(v) => onSelectAgg(editingFilterIdx, v === '' ? null : (v as IAggregator))}
+                            />
+                        </div>
+                    )}
+                </div>
+                <Form rawFields={meta} key={getFilterMeaAggKey(uncontrolledField)} field={uncontrolledField} onChange={handleChange} />
                 <div className="mt-4">
                     <PrimaryButton onClick={handleSubmit} text={t('btn.confirm')} />
                     <DefaultButton className="ml-2" onClick={onClose} text={t('btn.cancel')} />
@@ -103,7 +127,44 @@ export const PureFilterEditDialog = (props: {
 
 const FilterEditDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields } = vizStore;
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions } = vizStore;
+
+    const computation = useCompututaion();
+
+    const originalField =
+        editingFilterIdx !== null
+            ? viewFilters[editingFilterIdx]?.enableAgg
+                ? allFields.find((x) => x.fid === viewFilters[editingFilterIdx].fid)
+                : undefined
+            : undefined;
+    const filterAggName =
+        editingFilterIdx !== null ? (viewFilters[editingFilterIdx]?.enableAgg ? viewFilters[editingFilterIdx].aggName : undefined) : undefined;
+
+    const transformedComputation = useMemo((): IComputationFunction => {
+        if (originalField && viewDimensions.length > 0) {
+            const preWorkflow = toWorkflow([], allFields, viewDimensions, [{ ...originalField, aggName: filterAggName }], true, 'none').map((x) => {
+                if (x.type === 'view') {
+                    return {
+                        ...x,
+                        query: x.query.map((q) => {
+                            if (q.op === 'aggregate') {
+                                return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
+                            }
+                            return q;
+                        }),
+                    };
+                }
+                return x;
+            });
+            return (query) =>
+                computation({
+                    ...query,
+                    workflow: preWorkflow.concat(query.workflow.filter((x) => x.type !== 'transform')),
+                });
+        } else {
+            return computation;
+        }
+    }, [computation, viewDimensions, originalField, filterAggName]);
 
     const handelClose = React.useCallback(() => vizStore.closeFilterEditing(), [vizStore]);
 
@@ -139,16 +200,23 @@ const FilterEditDialog: React.FC = observer(() => {
             }));
     }, [allFields]);
 
+    const handleChangeAgg = (index: number, agg: IAggregator | null) => {
+        vizStore.setFilterAggregator(index, agg ?? '');
+    };
+
     return (
-        <PureFilterEditDialog
-            options={allFieldOptions}
-            editingFilterIdx={editingFilterIdx}
-            meta={meta}
-            onClose={handelClose}
-            onSelectFilter={handleSelectFilterField}
-            onWriteFilter={handleWriteFilter}
-            viewFilters={viewFilters}
-        />
+        <ComputationContext.Provider value={transformedComputation}>
+            <PureFilterEditDialog
+                options={allFieldOptions}
+                editingFilterIdx={editingFilterIdx}
+                meta={meta}
+                onClose={handelClose}
+                onSelectFilter={handleSelectFilterField}
+                onWriteFilter={handleWriteFilter}
+                viewFilters={viewFilters}
+                onSelectAgg={handleChangeAgg}
+            />
+        </ComputationContext.Provider>
     );
 });
 

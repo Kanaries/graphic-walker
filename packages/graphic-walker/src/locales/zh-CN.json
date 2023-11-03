@@ -227,6 +227,7 @@
         "editing": "筛选器规则设定",
         "form": {
             "name": "字段",
+            "aggregation": "聚合",
             "rule": "规则"
         },
         "header": {

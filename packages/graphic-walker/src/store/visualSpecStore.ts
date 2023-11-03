@@ -418,6 +418,10 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.setFieldAggregator(this.visList[this.visIndex], stateKey, index, aggName);
     }
 
+    setFilterAggregator(index: number, aggName: IAggregator | '') {
+        this.visList[this.visIndex] = performers.setFilterAggregator(this.visList[this.visIndex], index, aggName);
+    }
+
     applyDefaultSort(sortType: ISortMode = 'ascending') {
         this.visList[this.visIndex] = performers.applySort(this.visList[this.visIndex], sortType);
     }

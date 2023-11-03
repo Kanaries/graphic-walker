@@ -227,6 +227,7 @@
         "editing": "Filter Rule Settings",
         "form": {
             "name": "Field",
+            "aggregation": "Aggregation",
             "rule": "Rule"
         },
         "header": {
