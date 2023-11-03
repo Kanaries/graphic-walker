@@ -31,6 +31,19 @@ export const VizEmbedMenu = observer(function VizEmbedMenu() {
                                 <LightBulbIcon className="ml-1 w-3 flex-grow-0 flex-shrink-0" />
                             </div>
                         );
+                    case 'data_view':
+                        return (
+                            <div
+                                key={key}
+                                className="flex items-center whitespace-nowrap py-1 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                onClick={() => {
+                                    vizStore.closeEmbededMenu();
+                                    vizStore.setShowDataBoard(true);
+                                }}
+                            >
+                                <span className="flex-1 pr-2">{t('App.labels.data_view')}</span>
+                            </div>
+                        ); 
                     default:
                         const unexceptedKey: never = key;
                         console.error('Unknown item', unexceptedKey);

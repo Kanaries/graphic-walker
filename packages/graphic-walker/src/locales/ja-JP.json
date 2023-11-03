@@ -119,7 +119,8 @@
     },
     "App": {
         "labels": {
-            "data_interpretation": "データ解釈"
+            "data_interpretation": "データ解釈",
+            "data_view": "データ一覧"
         },
         "segments": {
             "vis": "可視化",
