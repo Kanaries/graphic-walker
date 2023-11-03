@@ -183,7 +183,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <SideReisze
                                             defaultWidth={240}
                                             handleWidth={4}
-                                            className="min-w-[100%] max-w-full sm:min-w-[240px]"
+                                            className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
                                             handlerClassName="hidden sm:block"
                                         >
                                             <DatasetFields />
@@ -191,7 +191,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <SideReisze
                                             defaultWidth={180}
                                             handleWidth={4}
-                                            className="min-w-[100%] max-w-full sm:min-w-[180px]"
+                                            className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
                                             handlerClassName="hidden sm:block"
                                         >
                                             <FilterField />
