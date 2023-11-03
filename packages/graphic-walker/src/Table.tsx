@@ -61,11 +61,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <ComputationContext.Provider value={wrappedComputation}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            <div className="m-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
-                                <div className="relative">
-                                    <DatasetTable size={pageSize} metas={vizStore.meta} computation={wrappedComputation} />
-                                </div>
-                            </div>
+                            <DatasetTable size={pageSize} metas={vizStore.meta} computation={wrappedComputation} />
                         </div>
                     </div>
                 </ComputationContext.Provider>
