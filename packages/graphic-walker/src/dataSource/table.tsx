@@ -24,7 +24,6 @@ const Table: React.FC<TableProps> = (props) => {
                 size={size}
                 metas={metas}
                 computation={computation}
-                total={tmpDataSource.length}
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     commonStore.updateTempDatasetMetas(fid, diffMeta);
                 }}
