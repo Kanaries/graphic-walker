@@ -40,6 +40,7 @@ import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
 import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
+import DataBoard from './components/dataBoard';
 import SideReisze from './components/side-resize';
 
 export type BaseVizProps = IAppI18nProps &
@@ -151,6 +152,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     />
                                     <CodeExport />
                                     <ExplainData themeKey={themeKey} dark={darkMode} />
+                                    <DataBoard />
                                     <VisualConfig />
                                     <Errorpanel />
                                     <LogPanel />

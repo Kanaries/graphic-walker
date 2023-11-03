@@ -125,7 +125,8 @@
     },
     "App": {
         "labels": {
-            "data_interpretation": "数据解读"
+            "data_interpretation": "数据解读",
+            "data_view": "查看数据"
         },
         "segments": {
             "vis": "可视化",

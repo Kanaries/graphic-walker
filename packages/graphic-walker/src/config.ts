@@ -44,7 +44,7 @@ const NON_POSITION_CHANNEL_CONFIG_LIST: Array<keyof IVisualConfig['resolve']> = 
 
 const AGGREGATOR_LIST: IAggregator[] = ['sum', 'mean', 'median', 'count', 'min', 'max', 'variance', 'stdev'];
 
-const EMBEDED_MENU_LIST: IEmbedMenuItem[] = ['data_interpretation'];
+const EMBEDED_MENU_LIST: IEmbedMenuItem[] = ['data_interpretation', 'data_view'];
 
 export const GLOBAL_CONFIG = {
     AGGREGATOR_LIST,

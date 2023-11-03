@@ -18,6 +18,7 @@ interface DataTableProps {
     metas: IMutField[];
     computation: IComputationFunction;
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
+    disableFilter?: boolean;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -144,7 +145,7 @@ function useFilters(metas: IMutField[]) {
                 }
             }
         },
-        [filters, editingFilterIdx]
+        [metas, filters, editingFilterIdx]
     );
     const onWriteFilter = useCallback((index: number, rule: IFilterRule | null) => {
         setFilters((f) => f.map((x, i) => (i === index ? { ...x, rule } : x)));
@@ -159,7 +160,7 @@ function useFilters(metas: IMutField[]) {
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, metas, computation } = props;
+    const { size = 10, onMetaChange, metas, computation, disableFilter } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
     const computationFunction = computation;
@@ -188,7 +189,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         setStatLoading(true);
         computation({
             workflow: [
-                ...(f && f.length > 0
+                ...(!disableFilter && f && f.length > 0
                     ? [
                           {
                               type: 'filter',
@@ -217,7 +218,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             setTotal(v[0]?.count ?? 0);
             setStatLoading(false);
         });
-    }, [filters, computation]);
+    }, [disableFilter, filters, computation]);
 
     const from = pageIndex * size;
     const to = Math.min((pageIndex + 1) * size - 1, total - 1);
@@ -259,7 +260,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
 
     return (
         <Container className="relative">
-            {filters.length > 0 && (
+            {!disableFilter && filters.length > 0 && (
                 <div className="flex items-center p-2 space-x-2">
                     <span>Filters: </span>
                     {filters.map((x, i) => (
@@ -276,6 +277,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                 </div>
                 <Pagination
                     total={total}
+                    pageSize={size}
                     pageIndex={pageIndex}
                     onNext={() => {
                         setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
@@ -371,12 +373,14 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                             {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
                                                         </div>
                                                     )}
-                                                    <div
-                                                        className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
-                                                        onClick={() => onSelectFilter(f.value.fid)}
-                                                    >
-                                                        <FunnelIcon className="w-4 inline-block" />
-                                                    </div>
+                                                    {!disableFilter && (
+                                                        <div
+                                                            className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
+                                                            onClick={() => onSelectFilter(f.value.fid)}
+                                                        >
+                                                            <FunnelIcon className="w-4 inline-block" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -403,19 +407,21 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             </div>
 
             {loading && <LoadingLayer />}
-            <ComputationContext.Provider value={computation}>
-                <div className="text-xs">
-                    <PureFilterEditDialog
-                        editingFilterIdx={editingFilterIdx}
-                        meta={metas}
-                        onClose={onClose}
-                        onSelectFilter={onSelectFilter}
-                        onWriteFilter={onWriteFilter}
-                        options={options}
-                        viewFilters={filters}
-                    />
-                </div>
-            </ComputationContext.Provider>
+            {!disableFilter && (
+                <ComputationContext.Provider value={computation}>
+                    <div className="text-xs">
+                        <PureFilterEditDialog
+                            editingFilterIdx={editingFilterIdx}
+                            meta={metas}
+                            onClose={onClose}
+                            onSelectFilter={onSelectFilter}
+                            onWriteFilter={onWriteFilter}
+                            options={options}
+                            viewFilters={filters}
+                        />
+                    </div>
+                </ComputationContext.Provider>
+            )}
         </Container>
     );
 };
@@ -429,10 +435,14 @@ const FilterPill = (props: { name: string; onRemove?: () => void; onClick?: () =
             className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10"
         >
             {props.name}
-            <button onClick={e => {
-                e.stopPropagation();
-                props.onRemove?.();
-            }} type="button" className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20">
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    props.onRemove?.();
+                }}
+                type="button"
+                className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
+            >
                 <span className="sr-only">Remove</span>
                 <svg
                     viewBox="0 0 14 14"

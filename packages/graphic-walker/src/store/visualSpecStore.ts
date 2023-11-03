@@ -79,6 +79,7 @@ export class VizSpecStore {
     meta: IMutField[];
     segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
+    showDataBoard: boolean = false;
     vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     showDataConfig: boolean = false;
     showCodeExportPanel: boolean = false;
@@ -478,6 +479,9 @@ export class VizSpecStore {
     }
     setShowInsightBoard(show: boolean) {
         this.showInsightBoard = show;
+    }
+    setShowDataBoard(show: boolean) {
+        this.showDataBoard = show;
     }
     showEmbededMenu(position: [number, number]) {
         this.vizEmbededMenu.show = true;
