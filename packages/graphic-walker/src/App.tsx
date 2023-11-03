@@ -2,16 +2,13 @@ import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import {
-    IGeographicData,
-    IComputationFunction,
     ISegmentKey,
-    IThemeKey,
-    IMutField,
-    IGeoDataItem,
-    VegaGlobalConfig,
-    IChannelScales,
-    Specification,
-    IDarkMode,
+    IAppI18nProps,
+    IVizProps,
+    IErrorHandlerProps,
+    IVizAppProps,
+    ISpecProps,
+    IComputationContextProps,
 } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
@@ -40,38 +37,18 @@ import BinPanel from './fields/datasetFields/binPanel';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
-import { GWGlobalConfig } from './vis/theme';
 import { useCurrentMediaTheme } from './utils/media';
 import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 
-export interface BaseVizProps {
-    i18nLang?: string;
-    i18nResources?: { [lang: string]: Record<string, string | any> };
-    themeKey?: IThemeKey;
-    darkMode?: 'light' | 'dark';
-    themeConfig?: GWGlobalConfig;
-    toolbar?: {
-        extra?: ToolbarItemProps[];
-        exclude?: string[];
+export type BaseVizProps = IAppI18nProps &
+    IVizProps &
+    IErrorHandlerProps &
+    ISpecProps &
+    IComputationContextProps & {
+        darkMode?: 'light' | 'dark';
+        dataSelection?: React.ReactChild;
     };
-    geographicData?: IGeographicData & {
-        key: string;
-    };
-    enhanceAPI?: {
-        header?: Record<string, string>;
-        features?: {
-            askviz?: string | boolean;
-        };
-    };
-    dataSelection?: React.ReactChild;
-    computation?: IComputationFunction;
-    computationTimeout?: number;
-    onError?: (err: Error) => void;
-    geoList?: IGeoDataItem[];
-    channelScales?: IChannelScales;
-    spec?: Specification;
-}
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const {
@@ -230,51 +207,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 });
 
-export type VizProps = {
-    i18nLang?: string;
-    i18nResources?: { [lang: string]: Record<string, string | any> };
-    themeConfig?: GWGlobalConfig;
-    themeKey?: IThemeKey;
-    dark?: IDarkMode;
-    toolbar?: {
-        extra?: ToolbarItemProps[];
-        exclude?: string[];
-    };
-    geographicData?: IGeographicData & {
-        key: string;
-    };
-    enhanceAPI?: {
-        header?: Record<string, string>;
-        features?: {
-            askviz?: string | boolean;
-        };
-    };
-    keepAlive?: boolean | string;
-    storeRef?: React.MutableRefObject<VizSpecStore | null>;
-    rawFields: IMutField[];
-    onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
-    computationTimeout?: number;
-    dataSelection?: React.ReactChild;
-    onError?: (err: Error) => void;
-    geoList?: IGeoDataItem[];
-    channelScales?: IChannelScales;
-    spec?: Specification;
-} & (
-    | {
-          /**
-           * auto parse field key into a safe string. default is true
-           */
-          fieldKeyGuard?: boolean;
-          dataSource: any[];
-      }
-    | {
-          fieldKeyGuard?: undefined;
-          dataSource?: undefined;
-          computation: IComputationFunction;
-      }
-);
-
-export function VizAppWithContext(props: VizProps) {
+export function VizAppWithContext(props: IVizAppProps) {
     const { computation, safeMetas } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
@@ -311,7 +244,6 @@ export function VizAppWithContext(props: VizProps) {
                         computation={computation}
                         computationTimeout={props.computationTimeout}
                         channelScales={props.channelScales}
-                        dataSelection={props.dataSelection}
                         geoList={props.geoList}
                         geographicData={props.geographicData}
                         onError={props.onError}

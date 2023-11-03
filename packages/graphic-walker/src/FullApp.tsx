@@ -1,41 +1,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { IChannelScales, IDarkMode, IGeoDataItem, IGeographicData, IThemeKey } from './interfaces';
+import { IGWProps } from './interfaces';
 import DataSourceSegment from './dataSource/index';
 import { StoreWrapper, VisContext, useGlobalStore } from './store';
 import { useCurrentMediaTheme } from './utils/media';
-import type { ToolbarItemProps } from './components/toolbar';
 import { VizApp } from './App';
-import { CommonStore } from './store/commonStore';
 import FieldsContextWrapper from './fields/fieldsContext';
-import { GWGlobalConfig } from './vis/theme';
-
-export interface IGWProps {
-    i18nLang?: string;
-    i18nResources?: { [lang: string]: Record<string, string | any> };
-    keepAlive?: boolean | string;
-    /** @default "vega" */
-    themeKey?: IThemeKey;
-    themeConfig?: GWGlobalConfig;
-    dark?: IDarkMode;
-    toolbar?: {
-        extra?: ToolbarItemProps[];
-        exclude?: string[];
-    };
-    enhanceAPI?: {
-        header?: Record<string, string>;
-        features?: {
-            askviz?: string | boolean;
-        };
-    };
-    storeRef?: React.MutableRefObject<CommonStore | null>;
-    geographicData?: IGeographicData & {
-        key: string;
-    };
-    onError?: (err: Error) => void;
-    geoList?: IGeoDataItem[];
-    channelScales?: IChannelScales;
-}
 
 export const AppContent = observer<Omit<IGWProps, 'storeRef' | 'keepAlive'>>(function App(props) {
     const { i18nLang = 'en-US', i18nResources, themeKey = 'vega', dark = 'media', themeConfig, toolbar, enhanceAPI, geographicData, onError, geoList, channelScales } = props;
