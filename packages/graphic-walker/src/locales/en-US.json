@@ -201,7 +201,8 @@
                     "export_chart_as": "Export as {{type}}",
                     "export_code": "Export Code",
                     "geojson": "Geography Configuration",
-                    "painter": "Open Painter"
+                    "painter": "Open Painter",
+                    "disabled_painter": "Use quantitative fields on XY and disable aggregation to create a paint"
                 },
                 "paint": {
                     "palette": "Palette",

@@ -74,7 +74,19 @@ const PainterContent = (props: {
 }) => {
     const { t } = useTranslation();
     const computation = useCompututaion();
-    const fields = useMemo(() => [props.x, props.y], [props.x, props.y]);
+    const fields = useMemo(
+        () => [
+            {
+                ...props.x,
+                analyticType: 'measure' as const,
+            },
+            {
+                ...props.y,
+                analyticType: 'measure' as const,
+            },
+        ],
+        [props.x, props.y]
+    );
     const brushSizeRef = useRef(5);
     const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
@@ -377,11 +389,11 @@ const Painter = () => {
         if (showPainterPanel) {
             setLoading(true);
             (async () => {
-                const { paintInfo, measures } = vizStore;
+                const { paintInfo, allFields } = vizStore;
                 if (paintInfo) {
                     const { x, y } = paintInfo;
-                    const xf = measures.find((a) => a.fid === x);
-                    const yf = measures.find((a) => a.fid === y);
+                    const xf = allFields.find((a) => a.fid === x);
+                    const yf = allFields.find((a) => a.fid === y);
                     if ('map' in paintInfo) {
                         mapRef.current = await decompressMap(paintInfo.map);
                         setDict(paintInfo.dict);

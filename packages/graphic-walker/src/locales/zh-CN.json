@@ -201,7 +201,8 @@
                     "export_chart_as": "导出 {{type}}",
                     "export_code": "导出代码",
                     "geojson": "地理信息配置",
-                    "painter": "打开数据绘板"
+                    "painter": "打开数据绘板",
+                    "disabled_painter": "创建绘制字段需要在XY轴使用数据类型并关闭聚合"
                 },
                 "paint": {
                     "palette": "色板",

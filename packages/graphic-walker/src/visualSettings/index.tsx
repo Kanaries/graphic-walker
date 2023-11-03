@@ -578,7 +578,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             {
                 key: 'painter',
-                label: t('button.painter'),
+                label: vizStore.paintInfo === null ? t('button.disabled_painter') : t('button.painter'),
                 icon: PaintBrushIcon,
                 disabled: vizStore.paintInfo === null,
                 onClick: () => {

@@ -195,7 +195,8 @@
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート",
                     "geojson": "地理情報設定",
-                    "painter": "データキャンバスを開く"
+                    "painter": "データキャンバスを開く",
+                    "disabled_painter": "データキャンバスを作るには数量尺度フィールドをXY軸に設置して集計をオフにするが必要"
                 },
                 "paint": {
                     "palette": "パレット",
