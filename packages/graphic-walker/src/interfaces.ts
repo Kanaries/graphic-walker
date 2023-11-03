@@ -21,7 +21,7 @@ export interface IRow {
 
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
 
-export type IEmbedMenuItem = 'data_interpretation';
+export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
 export interface Specification {
     position?: string[];
     color?: string[];

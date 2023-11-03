@@ -125,7 +125,8 @@
     },
     "App": {
         "labels": {
-            "data_interpretation": "Interpret Data"
+            "data_interpretation": "Interpret Data",
+            "data_view": "View Data"
         },
         "segments": {
             "vis": "Visualization",

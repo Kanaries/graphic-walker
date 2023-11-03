@@ -189,6 +189,34 @@ export const toWorkflow = (
     return steps;
 };
 
+export const addTransformForQuery = (
+    query: IDataQueryPayload,
+    transform: {
+        key: string;
+        expression: IExpression;
+    }[]
+): IDataQueryPayload => {
+    if (transform.length === 0) return query;
+    const existTransform = query.workflow.findIndex((x) => x.type === 'transform');
+    if (existTransform > -1) {
+        return {
+            ...query,
+            workflow: query.workflow.map((x, i) => {
+                if (x.type === 'transform' && i === existTransform) {
+                    const transforms = new Set(x.transform.map((t) => t.key));
+                    return {
+                        type: 'transform',
+                        transform: x.transform.concat(transform.filter((t) => !transforms.has(t.key))),
+                    };
+                }
+                return x;
+            }),
+        };
+    }
+    const transformQuery: ITransformWorkflowStep = { type: 'transform', transform };
+    return { ...query, workflow: [transformQuery, ...query.workflow] };
+};
+
 export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[]): IDataQueryPayload => {
     if (filters.length === 0) return query;
     const existFilter = query.workflow.findIndex((x) => x.type === 'filter');

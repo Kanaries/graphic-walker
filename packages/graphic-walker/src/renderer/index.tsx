@@ -121,11 +121,11 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     const handleGeomClick = useCallback(
-        (values: any, e: any) => {
+        (values: any, e: MouseEvent) => {
             e.stopPropagation();
             if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
-                    vizStore.showEmbededMenu([e.pageX, e.pageY]);
+                    vizStore.showEmbededMenu([e.clientX, e.clientY]);
                     vizStore.setFilters(values);
                 });
                 const selectedMarkObject = values.vlPoint.or[0];
