@@ -21,7 +21,6 @@ interface DataTableProps {
 }
 const Container = styled.div`
     overflow-x: auto;
-    max-height: 660px;
     table {
         box-sizing: content-box;
         border-collapse: collapse;

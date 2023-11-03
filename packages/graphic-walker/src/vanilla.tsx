@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { FullGraphicWalker, GraphicWalker } from './index';
+import { FullGraphicWalker, IGWProps } from './index';
 
-import { IGWProps } from './FullApp';
 
 export function embedGraphicWalker(dom: HTMLElement | null, props: IGWProps | undefined = {}) {
     if (!dom) {

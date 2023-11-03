@@ -17,8 +17,8 @@ export interface FilterConfig {
 export interface SingleProps {
     name: string;
     options: string[];
-    value: string;
-    onChange?: (v: string) => void;
+    value: string | undefined;
+    onChange?: (v: string | undefined) => void;
 }
 export interface MultiProps {
     name: string;
@@ -162,6 +162,12 @@ export function createFilterContext(components: {
                             const { domain, tag, value } = data;
                             if (tag === 'array') {
                                 if (value.length === 0) return null;
+                                if (type === 'quantitative' || (type === 'temporal' && value.every((x) => !isNaN(Number(x))))) {
+                                    return createFilter(
+                                        fid,
+                                        value.map((x) => Number(x))
+                                    );
+                                }
                                 return createFilter(fid, value);
                             }
                             // value and domain is rangeValue
@@ -195,7 +201,16 @@ export function createFilterContext(components: {
                                     name={name}
                                     options={domain}
                                     value={value[0]}
-                                    onChange={(value) => setValues((v) => v.map((x, index) => (index === i ? [value] : x)))}
+                                    onChange={(value) =>
+                                        setValues((v) =>
+                                            v.map((x, index) => {
+                                                if (index === i) {
+                                                    return value === undefined ? [] : [value];
+                                                }
+                                                return x;
+                                            })
+                                        )
+                                    }
                                 />
                             );
                         } else if (mode === 'multi') {
@@ -267,7 +282,7 @@ function createRangeFilter(fid: string, from: number, to: number): IVisFilter {
     };
 }
 
-function createFilter(fid: string, value: string[]): IVisFilter {
+function createFilter(fid: string, value: (string | number)[]): IVisFilter {
     return {
         fid,
         rule: {
