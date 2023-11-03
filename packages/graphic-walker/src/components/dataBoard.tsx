@@ -20,7 +20,7 @@ const DataBoard = observer(function DataBoardModal() {
         }
         return entries.map(([k, v]): IVisFilter => ({ fid: k, rule: { type: 'one of', value: [v] } }));
     }, [selectedMarkObject]);
-    const computedFileds = useMemo(() => allFields.filter((x) => x.computed && x.expression), [allFields]);
+    const computedFileds = useMemo(() => allFields.filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression), [allFields]);
 
     const filteredComputation = useMemo((): IComputationFunction => {
         return (query) =>
