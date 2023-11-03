@@ -82,7 +82,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             onSelect={(keys) => {
                                                 vizStore.setVisualConfig('folds', keys);
                                             }}
-                                            className="flex-1"
+                                            className="flex-1 truncate"
                                         >
                                             <span className="flex-1 truncate" title={channelItem.name}>{channelItem.name}</span>
                                         </SelectContext>
