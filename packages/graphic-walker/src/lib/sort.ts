@@ -1,10 +1,13 @@
 import { IRow } from '../interfaces';
+import { parseCmpFunction } from '../utils';
 
-function compareMulti(a: number[], b: number[]): number {
+const cmp = parseCmpFunction('');
+
+function compareMulti(a: (number | string)[], b: (number | string)[]): number {
     if (a.length < b.length) return -compareMulti(b, a);
     for (let i = 0; i < a.length; i++) {
         if (!b[i]) return 1;
-        const c = a[i] - b[i];
+        const c = cmp(a[i], b[i]);
         if (c !== 0) return c;
     }
     return 0;
