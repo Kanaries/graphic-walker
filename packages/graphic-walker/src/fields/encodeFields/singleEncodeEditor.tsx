@@ -84,7 +84,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             }}
                                             className="flex-1 truncate"
                                         >
-                                            {channelItem.name}
+                                            <span className="flex-1 truncate" title={channelItem.name}>{channelItem.name}</span>
                                         </SelectContext>
                                     )}
                                     {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}

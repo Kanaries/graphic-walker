@@ -37,7 +37,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                         {...provided.dragHandleProps}
                                     >
                                         <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
-                                        <span className="ml-0.5">{f.name}</span>
+                                        <span className="ml-0.5" title={f.name}>{f.name}</span>
                                         <ActionMenu.Button as="div">
                                             <EllipsisVerticalIcon className="w-4 h-4" />
                                         </ActionMenu.Button>
@@ -50,7 +50,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                             isDragging={snapshot.isDragging}
                                         >
                                             <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
-                                            <span className="ml-0.5">{f.name}</span>
+                                            <span className="ml-0.5" title={f.name}>{f.name}</span>
                                             <ActionMenu.Button as="div">
                                                 <EllipsisVerticalIcon className="w-4 h-4" />
                                             </ActionMenu.Button>
