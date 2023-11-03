@@ -3,6 +3,10 @@ import { Config as VlConfig } from 'vega-lite';
 import type { FeatureCollection } from 'geojson';
 import type { feature } from 'topojson-client';
 import { DATE_TIME_DRILL_LEVELS } from './constants';
+import { ToolbarItemProps } from './components/toolbar';
+import { GWGlobalConfig } from './vis/theme';
+import { VizSpecStore } from './store/visualSpecStore';
+import { CommonStore } from './store/commonStore';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -757,3 +761,86 @@ export interface IChannelScales {
     radius?: IScale | ((info: IFieldInfos) => IScale);
     theta?: IScale | ((info: IFieldInfos) => IScale);
 }
+
+export interface IAppI18nProps {
+    i18nLang?: string;
+    i18nResources?: { [lang: string]: Record<string, string | any> };
+}
+
+export interface IThemeProps {
+    dark?: IDarkMode;
+}
+
+export interface IErrorHandlerProps {
+    onError?: (err: Error) => void;
+}
+
+export interface IVizProps {
+    themeConfig?: GWGlobalConfig;
+    /** @default "vega" */
+    themeKey?: IThemeKey;
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
+    };
+    geographicData?: IGeographicData & {
+        key: string;
+    };
+    enhanceAPI?: {
+        header?: Record<string, string>;
+        features?: {
+            askviz?: string | boolean;
+        };
+    };
+    geoList?: IGeoDataItem[];
+    channelScales?: IChannelScales;
+}
+
+export interface IVizStoreProps {
+    storeRef?: React.MutableRefObject<VizSpecStore | null>;
+    keepAlive?: boolean | string;
+    rawFields: IMutField[];
+    onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+}
+
+export type IComputationProps = {
+    computationTimeout?: number;
+} & (
+    | {
+          /**
+           * auto parse field key into a safe string. default is true
+           */
+          fieldKeyGuard?: boolean;
+          dataSource: any[];
+      }
+    | {
+          fieldKeyGuard?: undefined;
+          dataSource?: undefined;
+          computation: IComputationFunction;
+      }
+);
+
+export interface IComputationContextProps {
+    computation?: IComputationFunction;
+    computationTimeout?: number;
+}
+
+export type IGWProps = IAppI18nProps &
+    IVizProps &
+    IThemeProps &
+    IErrorHandlerProps & {
+        storeRef?: React.MutableRefObject<CommonStore | null>;
+        keepAlive?: boolean | string;
+    };
+
+export interface ISpecProps {
+    spec?: Specification;
+}
+
+export interface ITableSpecProps {
+    pageSize?: number;
+}
+
+export type IVizAppProps = IAppI18nProps & IVizProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ISpecProps;
+
+export type ITableProps = IAppI18nProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ITableSpecProps;
