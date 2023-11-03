@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField } from '../interfaces';
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -293,6 +293,9 @@ export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
         return meaKey;
     }
     return `${meaKey}_${agg}`;
+}
+export function getFilterMeaAggKey(field: IFilterField) {
+    return field.enableAgg && field.aggName ? getMeaAggKey(field.fid, field.aggName) : field.fid;
 }
 export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {

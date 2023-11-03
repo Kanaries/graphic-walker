@@ -64,9 +64,11 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
+    const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
+
     return (
         <Pill className="text-gray-900" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
-            <header className="bg-indigo-50">{field.name}</header>
+            <header className="bg-indigo-50">{fieldName}</header>
             <div
                 className="bg-white dark:bg-zinc-900  text-gray-500 hover:bg-gray-100 flex flex-row output"
                 onClick={() => vizStore.setFilterEditing(fIndex)}
