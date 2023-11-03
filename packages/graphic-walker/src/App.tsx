@@ -180,10 +180,20 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <BinPanel />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="sm:flex">
-                                        <SideReisze defaultWidth={240} handleWidth={4} className="min-w-[100%] sm:min-w-[240px]">
+                                        <SideReisze
+                                            defaultWidth={240}
+                                            handleWidth={4}
+                                            className="min-w-[100%] max-w-full sm:min-w-[240px]"
+                                            handlerClassName="hidden sm:block"
+                                        >
                                             <DatasetFields />
                                         </SideReisze>
-                                        <SideReisze defaultWidth={180} handleWidth={4} className="min-w-[100%] sm:min-w-[180px]">
+                                        <SideReisze
+                                            defaultWidth={180}
+                                            handleWidth={4}
+                                            className="min-w-[100%] max-w-full sm:min-w-[180px]"
+                                            handlerClassName="hidden sm:block"
+                                        >
                                             <FilterField />
                                             <AestheticFields />
                                         </SideReisze>

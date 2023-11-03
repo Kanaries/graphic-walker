@@ -4,6 +4,7 @@ export default function SideReisze(props: {
     defaultWidth: number;
     handleWidth?: number;
     className?: string;
+    handlerClassName?: string;
     children?: React.ReactNode | Iterable<React.ReactNode>;
 }) {
     const sidebarRef = useRef<HTMLDivElement>(null);
@@ -38,7 +39,7 @@ export default function SideReisze(props: {
     return (
         <div className={`relative ${props.className}`} style={{ width: sidebarWidth }} ref={sidebarRef}>
             {props.children}
-            <div className="absolute right-0 inset-y-0 cursor-col-resize" style={{ width: props.handleWidth ?? 6 }} onMouseDown={startResizing}></div>
+            <div className={`absolute right-0 inset-y-0 cursor-col-resize ${props.handlerClassName}`} style={{ width: props.handleWidth ?? 6 }} onMouseDown={startResizing}></div>
         </div>
     );
 }
