@@ -797,6 +797,7 @@ export interface IVizProps {
         header?: Record<string, string>;
         features?: {
             askviz?: string | boolean;
+            feedbackAskviz?: string | boolean;
         };
     };
     geoList?: IGeoDataItem[];
@@ -851,3 +852,9 @@ export interface ITableSpecProps {
 export type IVizAppProps = IAppI18nProps & IVizProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ISpecProps;
 
 export type ITableProps = IAppI18nProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ITableSpecProps;
+
+export interface IAskVizFeedback {
+    action: 'voteup' | 'votedown' | 'report';
+    question: string;
+    spec: string;
+}

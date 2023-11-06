@@ -140,6 +140,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     {enhanceAPI?.features?.askviz && (
                                         <AskViz
                                             api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''}
+                                            feedbackApi={typeof enhanceAPI.features.feedbackAskviz === 'string' ? enhanceAPI.features.feedbackAskviz : ''}
                                             headers={enhanceAPI?.header}
                                         />
                                     )}

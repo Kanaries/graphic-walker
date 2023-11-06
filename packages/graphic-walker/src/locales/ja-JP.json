@@ -125,6 +125,13 @@
         "segments": {
             "vis": "可視化",
             "data": "データ"
+        },
+        "feedback": {
+            "vote": "Askvizの結果はどうですか？",
+            "voteup": "いいね",
+            "votedown": "ダメかも",
+            "report": "Askvizを改善することに手伝って、正しいチャットを教えてもよろしいですか？",
+            "report_button": "フィードバック"
         }
     },
     "DataSource": {
