@@ -34,6 +34,8 @@ import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
 import SideReisze from './components/side-resize';
+import { VegaliteMapper } from './lib/vl2gw';
+import { newChart } from './models/visSpecHistory';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -57,6 +59,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         geographicData,
         computationTimeout = 60000,
         spec,
+        vlSpec,
         onError,
     } = props;
 
@@ -88,6 +91,20 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             vizStore.replaceNow(renderSpec(spec, vizStore.meta, vizStore.currentVis.name ?? 'Chart 1', vizStore.currentVis.visId));
         }
     }, [spec, vizStore]);
+
+    useEffect(() => {
+        if (vlSpec) {
+            const emptyChart = newChart(vizStore.meta, '');
+            vizStore.replaceNow(
+                VegaliteMapper(
+                    spec,
+                    [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
+                    vizStore.currentVis.name ?? 'Chart 1',
+                    vizStore.currentVis.visId
+                )
+            );
+        }
+    }, [vlSpec, vizStore]);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
@@ -254,6 +271,7 @@ export function VizAppWithContext(props: IVizAppProps) {
                         geographicData={props.geographicData}
                         onError={props.onError}
                         spec={props.spec}
+                        vlSpec={props.vlSpec}
                         themeConfig={props.themeConfig}
                     />
                 </FieldsContextWrapper>
