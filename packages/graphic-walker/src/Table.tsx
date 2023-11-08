@@ -11,6 +11,7 @@ import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import DatasetTable from './components/dataTable';
 import { useCurrentMediaTheme } from './utils/media';
+import { toJS } from 'mobx';
 
 export type BaseTableProps = IAppI18nProps &
     IErrorHandlerProps &
@@ -55,13 +56,16 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
+
+    const metas = React.useMemo(() => toJS(vizStore.meta), [vizStore.meta])
+    
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
                 <ComputationContext.Provider value={wrappedComputation}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            <DatasetTable size={pageSize} metas={vizStore.meta} computation={wrappedComputation} />
+                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} />
                         </div>
                     </div>
                 </ComputationContext.Provider>
