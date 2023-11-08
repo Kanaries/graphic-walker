@@ -2,17 +2,14 @@ import { observer } from 'mobx-react-lite';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import {
-    ChevronDownIcon,
-    ChevronUpIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 import type { IFilterField, IFilterRule, IFieldStats, IField, IViewField, IMutField, IComputationFunction } from '../../interfaces';
 import { useCompututaion, useVizStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
-import { parseCmpFunction } from '../../utils';
+import { formatDate, parseCmpFunction } from '../../utils';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -351,8 +348,8 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     const dateStringFormatter = (timestamp: number) => {
         const date = new Date(timestamp);
         if (Number.isNaN(date.getTime())) return '';
-        return date.toISOString().slice(0, 19);
-    };
+        return formatDate(date);
+    };  
     const handleSubmitDate = (value: string) => {
         if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
             onChange(new Date(value).getTime());
@@ -371,7 +368,6 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
 };
 
 export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
-
     const { t } = useTranslation('translation');
 
     const computationFunction = useCompututaion();
@@ -435,8 +431,6 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         </Container>
     ) : null;
 });
-
-
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
