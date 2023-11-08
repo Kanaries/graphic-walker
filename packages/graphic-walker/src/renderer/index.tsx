@@ -202,6 +202,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             onChartResize={handleChartResize}
             layout={layout}
             channelScales={props.channelScales}
+            onReportSpec={(spec) => {
+                vizStore.updateLastSpec(spec);
+            }}
         />
     );
 });

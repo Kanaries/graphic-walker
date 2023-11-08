@@ -96,6 +96,7 @@ export class VizSpecStore {
     showErrorResolutionPanel: number = 0;
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
+    lastSpec: string = "";
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -620,6 +621,10 @@ export class VizSpecStore {
     updateShowErrorResolutionPanel(errCode: number, msg = '') {
         this.showErrorResolutionPanel = errCode;
         this.lastErrorMessage = msg;
+    }
+
+    updateLastSpec(spec: string) {
+        this.lastSpec = spec;
     }
 }
 
