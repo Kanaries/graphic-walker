@@ -3,10 +3,8 @@ import React, { useCallback, useState } from 'react';
 import { useVizStore } from '../../store';
 import { HandThumbDownIcon, HandThumbUpIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
-import { IAskVizFeedback, IViewField } from '../../interfaces';
+import { IAskVizFeedback, IChartForExport, IViewField, IVisSpecForExport } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
-
-type VEGALite = any;
 
 const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw';
 
@@ -30,7 +28,7 @@ async function vizQuery(api: string, metas: IViewField[], query: string, headers
     });
     const result: {
         success: boolean;
-        data: VEGALite;
+        data: IVisSpecForExport | IChartForExport;
         message?: string;
     } = await res.json();
     if (result.success) {
@@ -40,7 +38,10 @@ async function vizQuery(api: string, metas: IViewField[], query: string, headers
     }
 }
 
-async function reportVizQuery(api: string, data: IAskVizFeedback, headers: Record<string, string>) {
+async function reportVizQuery(api: string | ((data: IAskVizFeedback) => void), data: IAskVizFeedback, headers: Record<string, string>) {
+    if (typeof api === 'function') {
+        return api(data);
+    }
     const res = await fetch(api, {
         headers: {
             'Content-Type': 'application/json',
@@ -52,13 +53,17 @@ async function reportVizQuery(api: string, data: IAskVizFeedback, headers: Recor
     });
     const result = await res.json();
     if (result.success) {
-        return result.data;
+        return;
     } else {
         throw new Error(result.message);
     }
 }
 
-const AskViz: React.FC<{ api?: string; feedbackApi?: string; headers?: Record<string, string> }> = (props) => {
+const AskViz: React.FC<{
+    api?: string | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+    feedbackApi?: string | ((data: IAskVizFeedback) => void);
+    headers?: Record<string, string>;
+}> = (props) => {
     const { feedbackApi } = props;
 
     const [query, setQuery] = useState<string>('');
@@ -73,7 +78,9 @@ const AskViz: React.FC<{ api?: string; feedbackApi?: string; headers?: Record<st
 
     const startQuery = useCallback(() => {
         setLoading(true);
-        vizQuery(props.api || api, allFields, query, props.headers ?? {})
+        const request =
+            typeof props.api === 'function' ? Promise.resolve(props.api(allFields, query)) : vizQuery(props.api || api, allFields, query, props.headers ?? {});
+        request
             .then((data) => {
                 vizStore.appendFromCode(data);
                 vizStore.setAskvizFeedback(true);
@@ -84,6 +91,7 @@ const AskViz: React.FC<{ api?: string; feedbackApi?: string; headers?: Record<st
                 setLoading(false);
             });
     }, [props.api, props.headers, allFields, query, vizStore]);
+
     const showFeedback = feedbackApi && lastData && vizStore.showAskvizFeedbackIndex === vizStore.visIndex;
 
     return (

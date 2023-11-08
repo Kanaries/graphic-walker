@@ -1,15 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import {
-    ISegmentKey,
-    IAppI18nProps,
-    IVizProps,
-    IErrorHandlerProps,
-    IVizAppProps,
-    ISpecProps,
-    IComputationContextProps,
-} from './interfaces';
+import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -139,8 +131,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
                                     {enhanceAPI?.features?.askviz && (
                                         <AskViz
-                                            api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''}
-                                            feedbackApi={typeof enhanceAPI.features.feedbackAskviz === 'string' ? enhanceAPI.features.feedbackAskviz : ''}
+                                            api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}
+                                            feedbackApi={typeof enhanceAPI.features.feedbackAskviz === 'boolean' ? '' : enhanceAPI.features.feedbackAskviz}
                                             headers={enhanceAPI?.header}
                                         />
                                     )}

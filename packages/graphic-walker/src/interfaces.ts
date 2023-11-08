@@ -796,8 +796,11 @@ export interface IVizProps {
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
-            askviz?: string | boolean;
-            feedbackAskviz?: string | boolean;
+            askviz?:
+                | string
+                | boolean
+                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+            feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
         };
     };
     geoList?: IGeoDataItem[];
