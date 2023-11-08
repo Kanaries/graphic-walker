@@ -3,19 +3,9 @@ import { Resizable } from 're-resizable';
 import React, { forwardRef, useMemo } from 'react';
 
 import PivotTable from '../components/pivotTable';
-import LeafletRenderer from '../components/leafletRenderer';
+import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import {
-   
-    DraggableFieldState,
-    IDarkMode,
-    IRow,
-    IThemeKey,
-    IVisualConfigNew, IVisualLayout,
-    VegaGlobalConfig,
-   
-    IChannelScales,
-} from '../interfaces';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
 import { useCurrentMediaTheme } from '../utils/media';
 import { getTheme } from '../utils/useTheme';
@@ -42,7 +32,8 @@ interface SpecRendererProps {
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     {
-        name,layout,
+        name,
+        layout,
         themeKey,
         dark,
         data,
@@ -52,19 +43,17 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         onGeomClick,
         onChartResize,
         locale,
-       
+
         themeConfig: customizedThemeConfig,
         channelScales,
-     },
+    },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const {
-        geoms, defaultAggregated,
-        coordSystem } = visualConfig;
+    const { geoms, defaultAggregated, coordSystem } = visualConfig;
     const {
         interactiveScale,
-       
+
         stack,
         showActions,
         size,
@@ -75,7 +64,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         useSvg,
         primaryColor,
         colorPalette,
-        scale  
+        scale,
     } = layout;
 
     const rows = draggableFieldState.rows;
@@ -158,7 +147,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     return (
         <Resizable
-            className={enableResize ? 'border-blue-400 border-2 overflow-hidden' : ''}
+            className={enableResize ? 'border-blue-400 border-2 overflow-hidden inline-block' : 'inline-block'}
             style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
                 onChartResize?.(size.width + d.width, size.height + d.height);
@@ -177,10 +166,20 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           topLeft: false,
                       }
             }
-            size={{
+            size={
+                // ensure PureRenderer with Auto size is correct
+                size.mode === 'fixed'
+                    ? {
                           width: size.width + 'px',
                           height: size.height + 'px',
-            }}
+                      }
+                    : isSpatial
+                    ? {
+                          width: LEAFLET_DEFAULT_WIDTH + 'px',
+                          height: LEAFLET_DEFAULT_HEIGHT + 'px',
+                      }
+                    : undefined
+            }
         >
             {loading && <LoadingLayer />}
             {isSpatial && (
