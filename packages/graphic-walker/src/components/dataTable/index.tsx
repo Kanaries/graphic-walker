@@ -292,17 +292,17 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             </nav>
 
             <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
-                <table className="min-w-full divide-y relative border-x border-gray-200 dark:border-gray-700">
+                <table className="min-w-full relative border-x border-gray-200 dark:border-gray-700">
                     <thead className="">
                         {headers.map((row) => (
                             <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={`row_${getHeaderKey(row[0])}`}>
-                                {row.map((f) => (
+                                {row.map((f, i) => (
                                     <th
                                         colSpan={f.colSpan}
                                         rowSpan={f.rowSpan}
                                         key={getHeaderKey(f)}
-                                        className="align-top sticky top-0 bg-white dark:bg-zinc-900"
-                                        // style={{ zIndex: -100 }}
+                                        className="align-top sticky top-0 bg-white dark:bg-zinc-900 p-0"
+                                        style={{ zIndex: row.length - i }}
                                     >
                                         <div className="border-b border-gray-200 dark:border-gray-700">
                                             {f.type === 'name' && (
@@ -329,7 +329,6 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                         )}
                                                         {onMetaChange && (
                                                             <DropdownContext
-                                                                position="right-0"
                                                                 options={semanticTypeList}
                                                                 onSelect={(value) => {
                                                                     onMetaChange(f.value.fid, f.fIndex, {
