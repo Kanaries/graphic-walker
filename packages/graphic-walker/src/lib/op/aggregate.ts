@@ -1,7 +1,7 @@
 import { IRow } from "../../interfaces";
 import { getMeaAggKey } from "../../utils";
 import { IAggQuery } from "../../interfaces";
-import { sum, mean, median, stdev, variance, max, min, count } from "./stat";
+import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from "./stat";
 
 const aggregatorMap = {
     sum,
@@ -12,6 +12,7 @@ const aggregatorMap = {
     max,
     min,
     count,
+    distinctCount,
 };
 
 const KEY_JOINER = '___';

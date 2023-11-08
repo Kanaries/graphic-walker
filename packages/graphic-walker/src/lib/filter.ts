@@ -14,6 +14,12 @@ export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
                         return false;
                     }
                 }
+                case 'not in': {
+                    if (rule.value.has(which[fid])) {
+                    } else {
+                        break;
+                    }
+                }
                 case 'range': {
                     if (rule.value[0] <= which[fid] && which[fid] <= rule.value[1]) {
                         break;

@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
@@ -9,7 +9,8 @@ import { useCompututaion, useVizStore } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
-import { formatDate, parseCmpFunction } from '../../utils';
+import { formatDate } from '../../utils';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -50,11 +51,18 @@ export const Button = styled.button`
 `;
 
 const Table = styled.div`
-    display: grid;
-    grid-template-columns: 4em auto max-content;
+    display: flex;
+    flex-direction: column;
     max-height: 30vh;
     overflow-y: scroll;
+`;
 
+const TableRow = styled.div`
+    display: flex;
+    & > input,
+    & > *[for] {
+        cursor: pointer;
+    }
     & > * {
         padding-block: 0.6em;
         padding-inline: 0.2em;
@@ -63,11 +71,16 @@ const Table = styled.div`
         text-overflow: ellipsis;
         user-select: none;
         border-bottom: 0.8px solid rgb(226 232 240);
+        flex-shink: 0;
     }
-
-    & > input,
-    & > *[for] {
-        cursor: pointer;
+    & > *:first-child {
+        width: 4em;
+    }
+    & > *:last-child {
+        width: max-content;
+    }
+    & > *:first-child + * {
+        flex: 1;
     }
 `;
 
@@ -128,36 +141,21 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
     );
 };
 
-type FieldDistributionEntry = IFieldStats['values'][number];
-
-const countCmp = (a: FieldDistributionEntry, b: FieldDistributionEntry) => {
-    return a.count - b.count;
-};
-
 const useFieldStats = (
     field: IField,
-    attributes: { values: boolean; range: boolean },
+    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number> },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction
 ): IFieldStats | null => {
-    const { values, range } = attributes;
-    const { fid, cmp: cmpRaw } = field;
-    const cmp = parseCmpFunction(cmpRaw);
-    const valueCmp = React.useCallback<typeof countCmp>(
-        (a, b) => {
-            return cmp(a.value, b.value);
-        },
-        [cmp]
-    );
-    const comparator = sortBy === 'none' ? null : sortBy.startsWith('value') ? valueCmp : countCmp;
-    const sortMulti = sortBy.endsWith('dsc') ? -1 : 1;
+    const { values, range, valuesMeta, selectedCount } = attributes;
+    const { fid } = field;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
 
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStat(computation, field, { values, range })
+        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount })
             .then((stats) => {
                 if (isCancelled) {
                     return;
@@ -176,18 +174,175 @@ const useFieldStats = (
         return () => {
             isCancelled = true;
         };
-    }, [fid, computation, values, range]);
+    }, [fid, computation, values, range, valuesMeta, sortBy, selectedCount]);
 
-    const sortedStats = React.useMemo<typeof stats>(() => {
-        if (!stats || !comparator) {
-            return stats;
+    return loading ? null : stats;
+};
+
+const PAGE_SIZE = 20;
+const emptyArray = [];
+type RowCount = {
+    value: string | number;
+    count: number;
+};
+
+function putDataInArray<T>(arr: T[], dataToPut: T[], fromIndex: number, emptyFill: T) {
+    const putin = (array: T[]) =>
+        array.map((x, i) => {
+            const targetIndex = i - fromIndex;
+            if (targetIndex >= 0 && targetIndex < dataToPut.length) {
+                return dataToPut[targetIndex];
+            }
+            return x;
+        });
+
+    const requiredLength = dataToPut.length + fromIndex;
+    if (arr.length >= requiredLength) {
+        return putin(arr);
+    }
+    const filledArray = arr.concat(new Array<T>(requiredLength - arr.length).fill(emptyFill));
+    return putin(filledArray);
+}
+
+const useVisualCount = (
+    field: IFilterField,
+    sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
+    computation: IComputationFunction,
+    onChange: (rule: IFilterRule) => void
+) => {
+    // fetch metaData of filter field, only fetch once per fid.
+    const initRuleValue = useMemo(
+        () => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : new Set<string | number>()),
+        [field.fid, computation]
+    );
+    const metaData = useFieldStats(field, { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true }, 'none', computation);
+    // sum of count of rule.
+    const [selectedValueSum, setSelectedValueSum] = useState(0);
+    useEffect(() => {
+        if (metaData) {
+            setSelectedValueSum(metaData.selectedCount);
         }
-        const copy = { ...stats };
-        copy.values = copy.values.slice().sort((a, b) => sortMulti * comparator(a, b));
-        return copy;
-    }, [stats, comparator, sortMulti]);
+    }, [metaData]);
 
-    return loading ? null : sortedStats;
+    // unfetched RowCount will be null
+    const [loadedPageData, setLoadedPageDataRaw] = useState<(RowCount | null)[]>(emptyArray);
+    const loadedRef = useRef(loadedPageData);
+    const setLoadedPageData = useCallback((data: (RowCount | null)[] | ((prev: (RowCount | null)[]) => (RowCount | null)[])) => {
+        if (typeof data === 'function') {
+            loadedRef.current = data(loadedRef.current);
+        } else {
+            loadedRef.current = data;
+        }
+        setLoadedPageDataRaw(loadedRef.current);
+    }, []);
+
+    const loadingRef = useRef<Record<number, Promise<any>>>({});
+    // load actual RowCount when encounter null in data, fetch by its page.
+    const loadData = useCallback(
+        (index: number) => {
+            const page = Math.floor(index / PAGE_SIZE);
+            if (loadedRef.current.length <= index || loadedRef.current[index] === null) {
+                if (loadingRef.current[page] === undefined) {
+                    const promise = fieldStat(computation, field, {
+                        range: false,
+                        values: true,
+                        valuesMeta: false,
+                        sortBy,
+                        valuesLimit: PAGE_SIZE,
+                        valuesOffset: PAGE_SIZE * page,
+                    });
+                    loadingRef.current[page] = promise;
+                    promise.then((stats) => {
+                        // check that the list is not cleared
+                        if (loadingRef.current[page] === promise) {
+                            const { values } = stats;
+                            setLoadedPageData((data) => putDataInArray(data, values, page * PAGE_SIZE, null));
+                        }
+                    });
+                }
+                // already fetching, skip
+            }
+        },
+        [computation, sortBy]
+    );
+    // clear data when field or sort changes
+    useEffect(() => {
+        loadingRef.current = {};
+        setLoadedPageData(emptyArray);
+    }, [field.fid, computation, sortBy]);
+
+    useEffect(() => {
+        loadData(0);
+    }, []);
+
+    const data = useMemo(() => {
+        if (!metaData?.valuesMeta.distinctTotal) return [];
+        return loadedPageData.concat(new Array<null>(Math.max(metaData.valuesMeta.distinctTotal - loadedPageData.length, 0)).fill(null));
+    }, [loadedPageData, metaData?.valuesMeta.distinctTotal]);
+
+    const currentCount =
+        field.rule?.type === 'one of'
+            ? field.rule.value.size
+            : metaData && field.rule?.type === 'not in'
+            ? metaData.valuesMeta.distinctTotal - field.rule.value.size
+            : 0;
+
+    const currentSum =
+        field.rule?.type === 'one of' ? selectedValueSum : metaData && field.rule?.type === 'not in' ? metaData.valuesMeta.total - selectedValueSum : 0;
+
+    const handleToggleFullOrEmptySet = useCallback(() => {
+        if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
+        setSelectedValueSum(0);
+        onChange({
+            type: currentSum === metaData.valuesMeta.total ? 'one of' : 'not in',
+            value: new Set(),
+        });
+    }, [field.rule, onChange, metaData]);
+    const handleToggleReverseSet = useCallback(() => {
+        if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
+        onChange({
+            type: field.rule.type === 'one of' ? 'not in' : 'one of',
+            value: field.rule.value,
+        });
+    }, [field.rule, onChange, metaData]);
+    const handleSelect = useCallback(
+        (value: string | number, checked: boolean, itemNum: number) => {
+            if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in')) return;
+            const newValue = new Set(field.rule.value);
+            if (checked === (field.rule.type === 'one of')) {
+                setSelectedValueSum((x) => x + itemNum);
+                newValue.add(value);
+            } else {
+                setSelectedValueSum((x) => x - itemNum);
+                newValue.delete(value);
+            }
+            onChange({
+                type: field.rule.type,
+                value: newValue,
+            });
+        },
+        [field.rule, onChange]
+    );
+
+    return {
+        total: metaData?.valuesMeta.total,
+        distinctTotal: metaData?.valuesMeta.distinctTotal,
+        currentCount,
+        currentSum,
+        handleToggleFullOrEmptySet,
+        handleToggleReverseSet,
+        handleSelect,
+        data,
+        loadData,
+        loading: !metaData,
+    };
+};
+
+const Effecter = (props: { effect: () => void; effectId: any }) => {
+    useEffect(() => {
+        props.effect();
+    }, [props.effectId]);
+    return null;
 };
 
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = observer(({ active, field, onChange }) => {
@@ -204,57 +359,28 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
     const computation = useCompututaion();
 
-    const stats = useFieldStats(field, { values: true, range: false }, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation);
-    const count = stats?.values;
-
     React.useEffect(() => {
-        if (count && active && field.rule?.type !== 'one of') {
+        if (active && field.rule?.type !== 'one of' && field.rule?.type !== 'not in') {
             onChange({
-                type: 'one of',
-                value: new Set<string | number>(count.map((item) => item.value)),
+                type: 'not in',
+                value: new Set(),
             });
         }
-    }, [active, onChange, field, count]);
+    }, [active, onChange, field]);
 
-    const handleToggleFullOrEmptySet = () => {
-        if (!field.rule || field.rule.type !== 'one of' || !count) return;
-        const curSet = field.rule.value;
-        onChange({
-            type: 'one of',
-            value: new Set<number | string>(curSet.size === count.length ? [] : count.map((c) => c.value)),
-        });
-    };
-    const handleToggleReverseSet = () => {
-        if (!field.rule || field.rule.type !== 'one of' || !count) return;
-        const curSet = field.rule.value;
-        onChange({
-            type: 'one of',
-            value: new Set<number | string>(count.map((c) => c.value).filter((key) => !curSet.has(key))),
-        });
-    };
-    const handleSelectValue = (value: any, checked: boolean) => {
-        if (!field.rule || field.rule?.type !== 'one of') return;
-        const rule: IFilterRule = {
-            type: 'one of',
-            value: new Set(field.rule.value),
-        };
-        if (checked) {
-            rule.value.add(value);
-        } else {
-            rule.value.delete(value);
-        }
-        onChange(rule);
-    };
+    const { currentCount, currentSum, data, distinctTotal, handleSelect, handleToggleFullOrEmptySet, handleToggleReverseSet, loadData, loading } =
+        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange);
 
-    const selectedValueSum = useMemo(() => {
-        if (!field.rule?.value || !count) return 0;
-        return [...field.rule.value].reduce<number>((sum, key) => {
-            const s = count.find((c) => c.value === key)?.count || 0;
-            return sum + s;
-        }, 0);
-    }, [field.rule?.value, count, field.fid]);
+    const parentRef = React.useRef<HTMLDivElement>(null);
 
-    if (!stats) {
+    const rowVirtualizer = useVirtualizer({
+        count: distinctTotal ?? 0,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 32,
+        overscan: 10,
+    });
+
+    if (loading) {
         return (
             <div className="h-24 w-full relative">
                 <LoadingLayer />
@@ -276,61 +402,117 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ob
         );
     };
 
-    return field.rule?.type === 'one of' ? (
+    return field.rule?.type === 'one of' || field.rule?.type === 'not in' ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
             <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
-                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleFullOrEmptySet()} disabled={!count}>
-                    {field.rule.value.size === count?.length ? t('filters.btn.unselect_all') : t('filters.btn.select_all')}
+                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleFullOrEmptySet()}>
+                    {currentCount === distinctTotal ? t('filters.btn.unselect_all') : t('filters.btn.select_all')}
                 </Button>
                 <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleReverseSet()}>
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
             <Table className="bg-slate-50 dark:bg-gray-800">
-                <div className="flex justify-center items-center">
-                    <StatusCheckbox currentNum={field.rule.value.size} totalNum={count?.length ?? 0} onChange={handleToggleFullOrEmptySet} />
-                </div>
-                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
-                    {t('filters.header.value')}
-                    <SortButton currentKey="value" />
-                </label>
-                <label className="header text-gray-500 dark:text-gray-300 flex items-center">
-                    {t('filters.header.count')}
-                    <SortButton currentKey="count" />
-                </label>
+                <TableRow>
+                    <div className="flex justify-center items-center">
+                        <StatusCheckbox currentNum={currentCount} totalNum={distinctTotal ?? 0} onChange={handleToggleFullOrEmptySet} />
+                    </div>
+                    <label className="header text-gray-500 dark:text-gray-300 flex items-center">
+                        {t('filters.header.value')}
+                        <SortButton currentKey="value" />
+                    </label>
+                    <label className="header text-gray-500 dark:text-gray-300 flex items-center">
+                        {t('filters.header.count')}
+                        <SortButton currentKey="count" />
+                    </label>
+                </TableRow>
             </Table>
             {/* <hr /> */}
-            <Table>
-                {count?.map(({ value, count }, idx) => {
-                    const id = `rule_checkbox_${idx}`;
-
-                    return (
-                        <React.Fragment key={idx}>
-                            <div className="flex justify-center items-center">
-                                <input
-                                    type="checkbox"
-                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    checked={field.rule?.type === 'one of' && field.rule.value.has(value)}
-                                    id={id}
-                                    aria-describedby={`${id}_label`}
-                                    title={String(value)}
-                                    onChange={({ target: { checked } }) => handleSelectValue(value, checked)}
-                                />
-                            </div>
-                            <label id={`${id}_label`} htmlFor={id} title={String(value)}>
-                                {`${value}`}
-                            </label>
-                            <label htmlFor={id}>{count}</label>
-                        </React.Fragment>
-                    );
-                })}
+            <Table ref={parentRef}>
+                <div
+                    style={{
+                        paddingBottom: `${rowVirtualizer.getTotalSize()}px`,
+                        width: '100%',
+                        position: 'relative',
+                    }}
+                >
+                    {rowVirtualizer.getVirtualItems().map((vItem) => {
+                        const idx = vItem.index;
+                        const item = data?.[idx];
+                        if (!item) {
+                            return (
+                                <TableRow
+                                    key={idx}
+                                    className="animate-pulse"
+                                    style={{
+                                        height: `${vItem.size}px`,
+                                        transform: `translateY(${vItem.start}px)`,
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                    }}
+                                >
+                                    <div className="flex justify-center items-center">
+                                        <div className="h-4 w-4 bg-slate-200 rounded"></div>
+                                    </div>
+                                    <div className="flex justify-left items-center">
+                                        <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                    </div>
+                                    <div className="flex justify-right items-center">
+                                        <div className="h-3 w-6 bg-slate-200 rounded"></div>
+                                    </div>
+                                    <Effecter
+                                        effect={() => loadData(idx)}
+                                        effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
+                                    />
+                                </TableRow>
+                            );
+                        }
+                        const { value, count } = item;
+                        const id = `rule_checkbox_${idx}`;
+                        const checked =
+                            (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                        return (
+                            <TableRow
+                                key={idx}
+                                style={{
+                                    height: `${vItem.size}px`,
+                                    transform: `translateY(${vItem.start}px)`,
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                }}
+                            >
+                                <div className="flex justify-center items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                        checked={checked}
+                                        id={id}
+                                        aria-describedby={`${id}_label`}
+                                        title={String(value)}
+                                        onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
+                                    />
+                                </div>
+                                <label id={`${id}_label`} htmlFor={id} title={String(value)}>
+                                    {`${value}`}
+                                </label>
+                                <label htmlFor={id}>{count}</label>
+                            </TableRow>
+                        );
+                    })}
+                </div>
             </Table>
             <Table className="text-gray-600">
-                <label></label>
-                <label>{t('filters.selected_keys', { count: field.rule.value.size })}</label>
-                <label>{selectedValueSum}</label>
+                <TableRow>
+                    <label></label>
+                    <label>{t('filters.selected_keys', { count: currentCount })}</label>
+                    <label>{currentSum}</label>
+                </TableRow>
             </Table>
         </Container>
     ) : null;
@@ -349,7 +531,7 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
         const date = new Date(timestamp);
         if (Number.isNaN(date.getTime())) return '';
         return formatDate(date);
-    };  
+    };
     const handleSubmitDate = (value: string) => {
         if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
             onChange(new Date(value).getTime());
@@ -436,7 +618,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
     const computation = useCompututaion();
 
-    const stats = useFieldStats(field, { values: false, range: true }, 'none', computation);
+    const stats = useFieldStats(field, { values: false, range: true, valuesMeta: false }, 'none', computation);
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -474,6 +656,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ob
 
 const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean }>> = {
     'one of': FilterOneOfRule,
+    'not in': FilterOneOfRule,
     range: FilterRangeRule,
     'temporal range': FilterTemporalRangeRule,
 };
@@ -497,13 +680,20 @@ export interface TabsProps extends RuleFormProps {
     tabs: IFilterRule['type'][];
 }
 
+const getType = (type?: 'range' | 'temporal range' | 'one of' | 'not in') => {
+    if (type === 'not in') {
+        return 'one of';
+    }
+    return type;
+};
+
 const Tabs: React.FC<TabsProps> = observer(({ field, onChange, tabs }) => {
     const vizStore = useVizStore();
     const { meta } = vizStore;
 
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
-    const [which, setWhich] = React.useState(field.rule?.type ?? tabs[0]!);
+    const [which, setWhich] = React.useState(getType(field.rule?.type) ?? tabs[0]!);
     React.useEffect(() => {
         if (!tabs.includes(which)) setWhich(tabs[0]);
     }, [tabs]);
