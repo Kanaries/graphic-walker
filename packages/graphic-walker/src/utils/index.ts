@@ -335,3 +335,14 @@ export function parseErrorMessage(errorLike: any): string {
     }
     return String(errorLike);
 }
+
+export const formatDate = (date: Date) => {
+    const Y = date.getFullYear();
+    const M = date.getMonth() + 1;
+    const D = date.getDate();
+    const H = date.getHours();
+    const m = date.getMinutes();
+    const s = date.getSeconds();
+    const pad = (x: number) => `${x}`.padStart(2, '0');
+    return `${Y}-${pad(M)}-${pad(D)} ${pad(H)}:${pad(m)}:${pad(s)}`;
+};
