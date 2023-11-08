@@ -15,9 +15,12 @@ interface PaginationProps {
     pageSize?: number;
     extendPageNumber?: number;
 }
-function btnStylePrefix(className?: string) {
-    return `rounded-md border border-gray-300 bg-white dark:bg-zinc-900  px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${className}`;
+function btnStylePrefix(...className: string[]) {
+    return `rounded-md px-2.5 py-1.5 text-xs font-medium ${className?.join(' ')}`;
 }
+
+const defaultColor = 'ring-1 ring-inset ring-gray-300 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800';
+
 export default function Pagination(props: PaginationProps) {
     const { total, onNext, onPrev, pageIndex, onPageChange, pageSize = 100, extendPageNumber = 1 } = props;
     const { t } = useTranslation();
@@ -50,6 +53,21 @@ export default function Pagination(props: PaginationProps) {
         }
         return pagesUnique;
     }, [pageIndex, pageSize, extendPageNumber, total, pageIndex]);
+
+    const pageButton = (index: number) => {
+        return (
+            <button
+                key={index}
+                className={btnStylePrefix('inline-block', index === pageIndex ? 'bg-indigo-600 text-white' : defaultColor)}
+                onClick={() => {
+                    onPageChange && onPageChange(index);
+                }}
+            >
+                {index + 1}
+            </button>
+        );
+    };
+
     return showIndices.length > 0 ? (
         <div className="flex flex-1 justify-between sm:justify-end gap-2">
             <button
@@ -60,45 +78,19 @@ export default function Pagination(props: PaginationProps) {
             >
                 {t('actions.prev')}
             </button>
-            <button
-                className={btnStylePrefix('inline-block')}
-                onClick={() => {
-                    onPageChange && onPageChange(showIndices[0].index);
-                }}
-            >
-                {showIndices[0].index + 1}
-            </button>
+            {pageButton(showIndices[0].index)}
             {showIndices.length > 2 && showIndices[1].index > showIndices[0].index + 1 && (
-                <div className={btnStylePrefix('inline-block')} aria-hidden>
+                <div className={btnStylePrefix('inline-block', defaultColor)} aria-hidden>
                     ...
                 </div>
             )}
-            {showIndices.slice(1, -1).map((page) => (
-                <button
-                    key={page.index}
-                    className={btnStylePrefix('inline-block')}
-                    onClick={() => {
-                        onPageChange && onPageChange(page.index);
-                    }}
-                >
-                    {page.index + 1}
-                </button>
-            ))}
+            {showIndices.slice(1, -1).map((page) => pageButton(page.index))}
             {showIndices.length > 2 && showIndices[showIndices.length - 1].index > showIndices[showIndices.length - 2].index + 1 && (
-                <div className={btnStylePrefix('inline-block')} aria-hidden>
+                <div className={btnStylePrefix('inline-block', defaultColor)} aria-hidden>
                     ...
                 </div>
             )}
-            {showIndices.length > 2 && (
-                <button
-                    className={btnStylePrefix('inline-block')}
-                    onClick={() => {
-                        onPageChange && onPageChange(showIndices[showIndices.length - 1].index);
-                    }}
-                >
-                    {showIndices[showIndices.length - 1].index + 1}
-                </button>
-            )}
+            {showIndices.length > 2 && pageButton(showIndices[showIndices.length - 1].index)}
             <button
                 onClick={() => {
                     onNext();
