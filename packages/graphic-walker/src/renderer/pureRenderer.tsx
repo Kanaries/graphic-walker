@@ -14,6 +14,7 @@ import { GWGlobalConfig } from '../vis/theme';
 
 type IPureRendererProps =
     | {
+          className?: string;
           name?: string;
           themeKey?: IThemeKey;
           themeConfig?: GWGlobalConfig;
@@ -39,7 +40,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, themeKey, dark, visualState, visualConfig, visualLayout: layout, locale, type, themeConfig, channelScales } = props;
+    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -102,8 +103,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom className="flex w-full" style={{ height: '100%' }}>
-            <div className="relative flex flex-col w-full flex-1">
+        <ShadowDom className={className}>
+            <div className="relative">
                 {isSpatial && (
                     <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
