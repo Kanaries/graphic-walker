@@ -96,7 +96,15 @@ export const toWorkflow = (
                     value: range,
                 },
             };
-        } else {
+        } else if (rule.type === 'not in') {
+            return {
+                fid: f.fid,
+                rule: {
+                    type: 'not in',
+                    value: [...rule.value],
+                },
+            };
+        } else if (rule.type === 'range') {
             const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
             return {
                 fid: f.fid,
@@ -104,6 +112,13 @@ export const toWorkflow = (
                     type: 'range',
                     value: range,
                 },
+            };
+        } else {
+            const neverRule: never = rule;
+            console.error('unknown rule', neverRule);
+            return {
+                fid: f.fid,
+                rule,
             };
         }
     };

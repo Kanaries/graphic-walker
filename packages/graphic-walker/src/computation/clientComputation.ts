@@ -19,9 +19,9 @@ export const dataQueryClient = async (
                         fid: filter.fid,
                         rule: null,
                     };
-                    if (filter.rule.type === 'one of') {
+                    if (filter.rule.type === 'one of' || filter.rule.type === 'not in') {
                         res.rule = {
-                            type: 'one of',
+                            type: filter.rule.type,
                             value: new Set(filter.rule.value),
                         };
                     } else {

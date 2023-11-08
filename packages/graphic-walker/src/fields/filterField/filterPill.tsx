@@ -12,46 +12,46 @@ interface FilterPillProps {
 }
 
 const Pill = styled.div`
-  user-select: none;
-  align-items: stretch;
-  border-style: solid;
-  border-width: 1px;
-  box-sizing: border-box;
-  cursor: default;
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  min-width: 150px;
-  overflow-y: hidden;
-  padding: 0;
+    user-select: none;
+    align-items: stretch;
+    border-style: solid;
+    border-width: 1px;
+    box-sizing: border-box;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    min-width: 150px;
+    overflow-y: hidden;
+    padding: 0;
 
-  > * {
-    flex-grow: 1;
-    padding-block: 0.2em;
-    padding-inline: 0.5em;
-  }
-
-  > header {
-    height: 20px;
-    border-bottom-width: 1px;
-  }
-
-  > div.output {
-    min-height: 20px;
-
-    > span {
-      overflow-y: hidden;
-      max-height: 4em;
+    > * {
+        flex-grow: 1;
+        padding-block: 0.2em;
+        padding-inline: 0.5em;
     }
 
-    .icon {
-      display: none;
-
-      &:hover {
-        display: unset;
-      }
+    > header {
+        height: 20px;
+        border-bottom-width: 1px;
     }
-  }
+
+    > div.output {
+        min-height: 20px;
+
+        > span {
+            overflow-y: hidden;
+            max-height: 4em;
+        }
+
+        .icon {
+            display: none;
+
+            &:hover {
+                display: unset;
+            }
+        }
+    }
 `;
 
 const FilterPill: React.FC<FilterPillProps> = observer((props) => {
@@ -80,6 +80,8 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
                             ? `range: [${field.rule.value[0]}, ${field.rule.value[1]}]`
                             : field.rule.type === 'temporal range'
                             ? `range: [${new Date(field.rule.value[0])}, ${new Date(field.rule.value[1])}]`
+                            : field.rule.type === 'not in'
+                            ? `notIn: [${[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]`
                             : null}
                     </span>
                 ) : (

@@ -24,6 +24,10 @@ type IFilterRule = (
         type: 'one of';
         value: Array<string | number>;
     }
+    | {
+        type: 'not in';
+        value: Array<string | number>;
+    }
 );
 
 interface IFilterField {
@@ -89,7 +93,8 @@ The schema of the filter query is
                                     "type": {
                                         "type": "string",
                                         "enum": [
-                                            "one of"
+                                            "one of",
+                                            "not in"
                                         ]
                                     },
                                     "value": {
