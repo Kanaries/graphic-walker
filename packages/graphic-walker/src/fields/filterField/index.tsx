@@ -9,6 +9,7 @@ import { useVizStore } from '../../store';
 import { FilterFieldContainer, FilterFieldsContainer } from '../components';
 import FilterPill from './filterPill';
 import FilterEditDialog from './filterEditDialog';
+import { refMapper } from '../fieldsContext';
 
 
 interface FieldContainerProps {
@@ -22,7 +23,7 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
     return (
         <FilterFieldsContainer
             {...provided.droppableProps}
-            ref={provided.innerRef}
+            ref={refMapper(provided.innerRef)}
         >
             {filters.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>

@@ -5,6 +5,7 @@ import { useVizStore } from '../../store';
 import { Draggable, DroppableProvided } from '@kanaries/react-beautiful-dnd';
 import { IDraggableViewStateKey } from '../../interfaces';
 import OBPill from './obPill';
+import { refMapper } from '../fieldsContext';
 
 interface FieldContainerProps {
     provided: DroppableProvided;
@@ -18,7 +19,7 @@ const OBFieldContainer: React.FC<FieldContainerProps> = (props) => {
     const vizStore = useVizStore();
     const { allEncodings } = vizStore;
     return (
-        <FieldsContainer {...provided.droppableProps} ref={provided.innerRef}>
+        <FieldsContainer {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {/* {provided.placeholder} */}
             {allEncodings[dkey.id].map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
