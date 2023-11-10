@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useVizStore } from '../../store';
+import { refMapper } from '../fieldsContext';
 
 interface FilterPillProps {
     provided: DraggableProvided;
@@ -64,7 +65,7 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
     return (
-        <Pill className="text-gray-900" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <Pill className="text-gray-900" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
             <header className="bg-indigo-50">{field.name}</header>
             <div
                 className="bg-white dark:bg-zinc-900  text-gray-500 hover:bg-gray-100 flex flex-row output"

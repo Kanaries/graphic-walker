@@ -11,6 +11,7 @@ import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
+import { refMapper } from '../fieldsContext';
 
 const PillActions = styled.div`
     overflow: visible !important;
@@ -48,7 +49,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     }, [allFields]);
 
     return (
-        <div className="p-1 select-none relative" {...provided.droppableProps} ref={provided.innerRef}>
+        <div className="p-1 select-none relative" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             <div
                 className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
                     snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
@@ -61,7 +62,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                     {(provided, snapshot) => {
                         return (
                             <div
-                                ref={provided.innerRef}
+                                ref={refMapper(provided.innerRef)}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 className={"flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1" + (provided.draggableProps.style?.transform ? ' z-10' : '')}
