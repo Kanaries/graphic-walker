@@ -41,6 +41,10 @@ export function min(nums: number[]): number {
     return ans;
 }
 
-export function count(nums: number[]): number {
+export function count(nums: any[]): number {
     return nums.length;
+}
+
+export function distinctCount(datas: any[]) {
+    return new Set(datas).size;
 }

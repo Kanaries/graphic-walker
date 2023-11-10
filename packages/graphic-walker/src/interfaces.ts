@@ -19,7 +19,7 @@ export interface IRow {
     [key: string]: any;
 }
 
-export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
+export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
 export interface Specification {
@@ -72,6 +72,8 @@ export interface IDatasetStats {
 
 export interface IFieldStats {
     values: { value: number | string; count: number }[];
+    valuesMeta: { total: number; distinctTotal: number };
+    selectedCount: number;
     range: [number, number];
 }
 
@@ -237,6 +239,10 @@ export type IFilterRule =
       }
     | {
           type: 'one of';
+          value: Set<string | number>;
+      }
+    | {
+          type: 'not in';
           value: Set<string | number>;
       };
 
