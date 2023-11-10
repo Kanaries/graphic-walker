@@ -100,7 +100,7 @@ export const toWorkflow = (
             };
         } else if (rule.type === 'not in') {
             return {
-                fid: f.fid,
+                fid,
                 rule: {
                     type: 'not in',
                     value: [...rule.value],
@@ -119,7 +119,7 @@ export const toWorkflow = (
             const neverRule: never = rule;
             console.error('unknown rule', neverRule);
             return {
-                fid: f.fid,
+                fid,
                 rule,
             };
         }
