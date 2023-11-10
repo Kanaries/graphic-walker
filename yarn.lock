@@ -1175,6 +1175,19 @@
     redux "^4.0.4"
     use-memo-one "^1.1.1"
 
+"@kanaries/react-beautiful-dnd@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npmmirror.com/@kanaries/react-beautiful-dnd/-/react-beautiful-dnd-0.1.0.tgz#6ee065918b9e93fa7d1dd6e5f73f51ae0c5b5ea0"
+  integrity sha512-L7O8SpztNDeD3ZL7BUjjwBBz45uhVoY9gFbp8a3UOsN1djbhnmynny/6M1LwhtNEQhaOTcIBIaLFOYKCUzgVlA==
+  dependencies:
+    "@babel/runtime" "^7.9.2"
+    css-box-model "^1.2.0"
+    memoize-one "^5.1.1"
+    raf-schd "^4.0.2"
+    react-redux "^7.2.0"
+    redux "^4.0.4"
+    use-memo-one "^1.1.1"
+
 "@kanaries/web-data-loader@^0.1.7":
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/@kanaries/web-data-loader/-/web-data-loader-0.1.7.tgz#ce322bc4028f00a433a655fe631a148c51c875bc"

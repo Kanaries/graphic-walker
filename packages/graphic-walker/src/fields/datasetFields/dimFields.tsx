@@ -7,6 +7,7 @@ import DataTypeIcon from '../../components/dataTypeIcon';
 import ActionMenu from "../../components/actionMenu";
 import { FieldPill } from './fieldPill';
 import { useMenuActions } from "./utils";
+import { refMapper } from '../fieldsContext';
 
 interface Props {
     provided: DroppableProvided;
@@ -17,7 +18,7 @@ const DimFields: React.FC<Props> = (props) => {
     const { dimensions } = vizStore;
     const menuActions = useMenuActions('dimensions');
     return (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
+        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {dimensions.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {
@@ -32,7 +33,7 @@ const DimFields: React.FC<Props> = (props) => {
                                     className={`flex dark:text-white pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full truncate border border-transparent ${
                                         snapshot.isDragging ? 'bg-blue-100 dark:bg-blue-800' : ''
                                     }`}
-                                    ref={provided.innerRef}
+                                    ref={refMapper(provided.innerRef)}
                                     isDragging={snapshot.isDragging}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}

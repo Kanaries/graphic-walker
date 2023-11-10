@@ -10,6 +10,7 @@ import { Pill } from '../components';
 import { GLOBAL_CONFIG } from '../../config';
 import DropdownContext from '../../components/dropdownContext';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
+import { refMapper } from '../fieldsContext';
 
 interface PillProps {
     provided: DraggableProvided;
@@ -42,7 +43,7 @@ const OBPill: React.FC<PillProps> = (props) => {
 
     return (
         <Pill
-            ref={provided.innerRef}
+            ref={refMapper(provided.innerRef)}
             colType={field.analyticType === 'dimension' ? 'discrete' : 'continuous'}
             {...provided.draggableProps}
             {...provided.dragHandleProps}

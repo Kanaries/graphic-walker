@@ -8,6 +8,7 @@ import ActionMenu from '../../components/actionMenu';
 import { useMenuActions } from './utils';
 import { FieldPill } from './fieldPill';
 import { MEA_KEY_ID } from '../../constants';
+import { refMapper } from '../fieldsContext';
 
 interface Props {
     provided: DroppableProvided;
@@ -20,7 +21,7 @@ const MeaFields: React.FC<Props> = (props) => {
     const menuActions = useMenuActions('measures');
 
     return (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
+        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {measures.map((f, index) => (
                 <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                     {(provided, snapshot) => {
@@ -32,7 +33,7 @@ const MeaFields: React.FC<Props> = (props) => {
                                             snapshot.isDragging ? 'bg-purple-100 dark:bg-purple-800' : ''
                                         }`}
                                         isDragging={snapshot.isDragging}
-                                        ref={provided.innerRef}
+                                        ref={refMapper(provided.innerRef)}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                     >
