@@ -192,6 +192,7 @@ export interface IDataSource {
 
 export interface IFilterField extends IViewField {
     rule: IFilterRule | null;
+    enableAgg?: boolean;
 }
 
 export interface IFilterFiledSimple {

@@ -221,6 +221,7 @@
         "editing": "フィルターの設定",
         "form": {
             "name": "フィールド",
+            "aggregation": "集計",
             "rule": "ルール"
         },
         "header": {
