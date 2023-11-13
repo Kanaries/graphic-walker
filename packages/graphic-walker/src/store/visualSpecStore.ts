@@ -402,7 +402,16 @@ export class VizSpecStore {
         name: string,
         format: string
     ) {
-        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+        this.visList[this.visIndex] = performers.createDateDrillField(
+            this.visList[this.visIndex],
+            stateKey,
+            index,
+            drillLevel,
+            uniqueId(),
+            name,
+            format,
+            new Date().getTimezoneOffset()
+        );
     }
 
     public createDateFeatureField(
@@ -412,7 +421,16 @@ export class VizSpecStore {
         name: string,
         format: string
     ) {
-        this.visList[this.visIndex] = performers.createDateFeatureField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+        this.visList[this.visIndex] = performers.createDateFeatureField(
+            this.visList[this.visIndex],
+            stateKey,
+            index,
+            drillLevel,
+            uniqueId(),
+            name,
+            format,
+            new Date().getTimezoneOffset()
+        );
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {

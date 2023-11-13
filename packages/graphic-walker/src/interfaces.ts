@@ -97,6 +97,10 @@ export type IExpParameter =
     | {
           type: 'format';
           value: string;
+      }
+    | {
+          type: 'offset';
+          value: number;
       };
 
 export interface IExpression {

@@ -1,12 +1,14 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
 import type { IExpParameter } from '../../interfaces';
 import type { IDataFrame } from '../execExp';
+import { getOffsetDate } from './offset';
 
 const formatDate = (date: Date) => date.getTime();
 
 function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const fieldKey = params.find((p) => p.type === 'field')?.value;
     const drillLevel = params.find((p) => p.type === 'value')?.value as (typeof DATE_TIME_DRILL_LEVELS)[number] | undefined;
+    const offset = params.find((p) => p.type === 'offset')?.value ?? (new Date().getTimezoneOffset());
     if (!fieldKey || !drillLevel) {
         return data;
     }
@@ -14,7 +16,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
     switch (drillLevel) {
         case 'year': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 return formatDate(new Date(Y, 0, 1));
             });
@@ -25,7 +27,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'quarter': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const Q = Math.floor(date.getMonth() / 3);
                 return formatDate(new Date(Y, Q * 3, 1));
@@ -37,7 +39,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'month': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 return formatDate(new Date(Y, M, 1));
@@ -49,7 +51,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'week': {
             const newValues = fieldValues.map((v) => {
-                const today = new Date(v);
+                const today = getOffsetDate(new Date(v), offset);
                 const date = new Date(today.setDate(today.getDate() - today.getDay()));
                 const Y = date.getFullYear();
                 const M = date.getMonth();
@@ -63,7 +65,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'day': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();
@@ -76,7 +78,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'hour': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();
@@ -90,7 +92,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'minute': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();
@@ -105,7 +107,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'second': {
             const newValues = fieldValues.map((v) => {
-                const date = new Date(v);
+                const date = getOffsetDate(new Date(v), offset);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();

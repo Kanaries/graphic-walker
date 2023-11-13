@@ -68,8 +68,8 @@ type PropsMap = {
     [Methods.setFieldAggregator]: [normalKeys, number, IAggregator];
     [Methods.setGeoData]: [FeatureCollection | undefined, string | undefined, IGeoUrl | undefined];
     [Methods.setCoordSystem]: [ICoordMode];
-    [Methods.createDateDrillField]: [normalKeys, number, (typeof DATE_TIME_DRILL_LEVELS)[number], string, string, string | undefined];
-    [Methods.createDateFeatureField]: [normalKeys, number, (typeof DATE_TIME_FEATURE_LEVELS)[number], string, string, string | undefined];
+    [Methods.createDateDrillField]: [normalKeys, number, (typeof DATE_TIME_DRILL_LEVELS)[number], string, string, string | undefined, number | undefined];
+    [Methods.createDateFeatureField]: [normalKeys, number, (typeof DATE_TIME_FEATURE_LEVELS)[number], string, string, string | undefined, number | undefined];
     [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
 };
@@ -200,7 +200,7 @@ const actions: {
             coordSystem: system,
             geoms: [GLOBAL_CONFIG.GEOM_TYPES[system][0]],
         })),
-    [Methods.createDateDrillField]: (data, channel, index, drillLevel, newVarKey, newName, format) => {
+    [Methods.createDateDrillField]: (data, channel, index, drillLevel, newVarKey, newName, format, offset) => {
         const originField = data.encodings[channel][index];
         const newField: IViewField = {
             fid: newVarKey,
@@ -231,12 +231,20 @@ const actions: {
                               } as const,
                           ]
                         : []),
+                    ...(offset !== undefined
+                        ? [
+                              {
+                                  type: 'offset',
+                                  value: offset,
+                              } as const,
+                          ]
+                        : []),
                 ],
             },
         };
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
-    [Methods.createDateFeatureField]: (data, channel, index, drillLevel, newVarKey, newName, format) => {
+    [Methods.createDateFeatureField]: (data, channel, index, drillLevel, newVarKey, newName, format, offset) => {
         const originField = data.encodings[channel][index];
         const newField: IViewField = {
             fid: newVarKey,
@@ -263,6 +271,14 @@ const actions: {
                               {
                                   type: 'format',
                                   value: format,
+                              } as const,
+                          ]
+                        : []),
+                    ...(offset !== undefined
+                        ? [
+                              {
+                                  type: 'offset',
+                                  value: offset,
                               } as const,
                           ]
                         : []),
