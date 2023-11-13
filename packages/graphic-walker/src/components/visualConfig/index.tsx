@@ -98,6 +98,7 @@ const VisualConfigPanel: React.FC = () => {
 
     useEffect(() => {
         setZeroScale(layout.zeroScale);
+        setSvg(layout.useSvg ?? false);
         setBackground(layout.background);
         setResolve(layout.resolve);
         setDefaultColor(extractRGBA(layout.primaryColor));
