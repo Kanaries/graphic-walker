@@ -23,7 +23,7 @@ import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/s
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
-import { DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { algebraLint } from '../lib/gog';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
@@ -87,13 +87,11 @@ const actions: {
     [Methods.removeField]: (data, encoding, index) => mutPath(data, `encodings.${encoding}`, (fields) => remove(fields, index)) as IChart,
     [Methods.reorderField]: (data, encoding, from, to) =>
         mutPath(data, `encodings.${encoding}`, (fields) =>
-            algebraLint(
-                fields.map((x, i, a) => {
-                    if (i === from) return a[to];
-                    if (i === to) return a[from];
-                    return x;
-                })
-            )
+            fields.map((x, i, a) => {
+                if (i === from) return a[to];
+                if (i === to) return a[from];
+                return x;
+            })
         ),
     [Methods.moveField]: (data, from, findex, to, tindex, limit) => {
         const oriField = data.encodings[from][findex];
@@ -103,22 +101,18 @@ const actions: {
                 : to === 'measures'
                 ? mutPath(oriField, 'analyticType', () => 'measure')
                 : oriField;
-        return mutPath(data, 'encodings', (e) =>
-            algebraLint({
-                ...e,
-                [from]: remove(data.encodings[from], findex),
-                [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
-            })
-        );
+        return mutPath(data, 'encodings', (e) => ({
+            ...e,
+            [from]: remove(data.encodings[from], findex),
+            [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
+        }));
     },
     [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit) => {
         const field = { ...data.encodings[from][findex], dragId: newVarKey };
-        return mutPath(data, 'encodings', (e) =>
-            algebraLint({
-                ...e,
-                [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
-            })
-        );
+        return mutPath(data, 'encodings', (e) => ({
+            ...e,
+            [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
+        }));
     },
     [Methods.createBinlogField]: (data, encoding, index, op, newVarKey, num) => {
         const originField = data.encodings[encoding][index];
@@ -191,13 +185,11 @@ const actions: {
         return data;
     },
     [Methods.transpose]: (data) =>
-        mutPath(data, 'encodings', (e) =>
-            algebraLint({
-                ...e,
-                columns: e.rows,
-                rows: e.columns,
-            })
-        ),
+        mutPath(data, 'encodings', (e) => ({
+            ...e,
+            columns: e.rows,
+            rows: e.columns,
+        })),
     [Methods.setLayout]: (data, kvs) => mutPath(data, 'layout', (l) => Object.assign({}, l, Object.fromEntries(kvs))),
     [Methods.setFieldAggregator]: (data, encoding, index, aggName) =>
         mutPath(data, `encodings.${encoding}`, (f) => replace(f, index, (x) => ({ ...x, aggName }))),
@@ -283,14 +275,61 @@ const actions: {
         return mutPath(data, `encodings.${channel}`, (f) => replace(f, index, (x) => ({ ...x, semanticType })));
     },
     [Methods.setFilterAggregator]: (data, index, aggName) => {
-        return mutPath(data, `encodings.filters`, (f) => replace(f, index, (x) => ({ ...x, aggName: aggName || 'sum', enableAgg: aggName ? true : false, rule: null })));
+        return mutPath(data, `encodings.filters`, (f) =>
+            replace(f, index, (x) => ({ ...x, aggName: aggName || 'sum', enableAgg: aggName ? true : false, rule: null }))
+        );
     },
 };
 
+const diffChangedEncodings = (prev: IChart, next: IChart) => {
+    const result: Partial<DraggableFieldState> = {};
+    Object.keys(next.encodings).forEach((k) => {
+        if (next.encodings[k] !== prev.encodings[k]) {
+            result[k] = next.encodings[k];
+        }
+    });
+    return result;
+};
+
+function makeFieldAtLast<T>(arr: T[], lasts: ((item: T) => boolean)[]): T[] {
+    const result: T[] = [];
+    const found: T[][] = new Array(lasts.length).fill(null).map(() => []);
+    arr.forEach((x) => {
+        const i = lasts.findIndex((f) => f(x));
+        if (i >= 0) {
+            found[i].push(x);
+        } else {
+            result.push(x);
+        }
+    });
+    return result.concat(found.flat());
+}
+
+function lintExtraFields<T extends Partial<DraggableFieldState>>(encodings: T): Partial<T> {
+    const result: Partial<T> = {};
+    if (encodings.dimensions && encodings.dimensions.length > 0) {
+        result.dimensions = makeFieldAtLast(encodings.dimensions, [(i) => i.fid === MEA_KEY_ID]);
+    }
+    if (encodings.measures && encodings.measures.length > 0) {
+        result.measures = makeFieldAtLast(encodings.measures, [(i) => i.fid === COUNT_FIELD_ID, (i) => i.fid === MEA_VAL_ID]);
+    }
+    return result;
+}
+
+type reducerMiddleware<T> = (item: T, original: T) => T;
+
+const diffLinter: reducerMiddleware<IChart> = (item, original) => {
+    const diffs = diffChangedEncodings(original, item);
+    return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(diffs), ...lintExtraFields(diffs) }));
+};
+
+const reducerMiddleWares: reducerMiddleware<IChart>[] = [diffLinter];
 function reducerT<T>(data: IChart, action: VisActionOf<T>): IChart {
     const [type, ...props] = action;
-    return actions[type](data, ...props);
+    const result = actions[type](data, ...props);
+    return reducerMiddleWares.reduce((item, f) => f(item, data), result);
 }
+
 export type VisSpecWithHistory = WithHistory<IChart, VisAction>;
 export const reducer: (data: IChart, action: VisAction) => IChart = reducerT;
 export const perform: (data: VisSpecWithHistory, action: VisAction) => VisSpecWithHistory = performWith(reducerT);
@@ -336,7 +375,7 @@ function emptyChart(visId: string, name: string): IChart {
 }
 export function newChart(fields: IMutField[], name: string, visId?: string): IChart {
     if (fields.length === 0) return emptyChart(visId || uniqueId(), name);
-    const extraFields = [...createVirtualFields(), createCountField()];
+    const extraFields = [createCountField(), ...createVirtualFields()];
     const extraDimensions = extraFields.filter((x) => x.analyticType === 'dimension');
     const extraMeasures = extraFields.filter((x) => x.analyticType === 'measure');
     return mutPath(emptyChart(visId || uniqueId(), name), 'encodings', (e) => ({
