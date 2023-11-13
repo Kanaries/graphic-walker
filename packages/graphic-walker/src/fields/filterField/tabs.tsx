@@ -260,6 +260,9 @@ const useVisualCount = (
                             setLoadedPageData((data) => putDataInArray(data, values, page * PAGE_SIZE, null));
                         }
                     });
+                    promise.catch(() => {
+                        delete loadingRef.current[page];
+                    });
                 }
                 // already fetching, skip
             }
@@ -341,7 +344,7 @@ const useVisualCount = (
 
 const Effecter = (props: { effect: () => void; effectId: any }) => {
     useEffect(() => {
-        props.effect();
+        return props.effect();
     }, [props.effectId]);
     return null;
 };
@@ -466,7 +469,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                         <div className="h-3 w-6 bg-slate-200 rounded"></div>
                                     </div>
                                     <Effecter
-                                        effect={() => loadData(idx)}
+                                        effect={() => {
+                                            const handler = setTimeout(() => loadData(idx), 100);
+                                            return () => clearTimeout(handler);
+                                        }}
                                         effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
                                     />
                                 </TableRow>
