@@ -6,7 +6,11 @@ module.exports = {
     minWidth: {
       '96': '96px'
     },
-    extend: {},
+    extend: {
+      filter: {
+        'darkmap': 'var(--map-tiles-filter)'
+      }
+    },
   },
   darkMode: 'class', // or 'media' or 'class
   variants: {
