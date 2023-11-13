@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -11,6 +11,7 @@ import { encodeFilterRule } from '../../utils/filter';
 import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog';
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
+import { field } from 'vega';
 
 interface DataTableProps {
     /** page limit */
@@ -157,6 +158,14 @@ function useFilters(metas: IMutField[]) {
         setEditingFilterIdx(null);
     }, []);
     return { filters, options, editingFilterIdx, onSelectFilter, onDeleteFilter, onWriteFilter, onClose };
+}
+
+function FieldValue(props: { field: IMutField; item: IRow }) {
+    const { field, item } = props;
+    if (field.semanticType === 'temporal') {
+        return new Date(item[field.fid]).toLocaleString();
+    }
+    return item[field.fid];
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
@@ -396,7 +405,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         key={field.fid + index}
                                         className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-gray-500 dark:text-gray-300'}
                                     >
-                                        {`${row[field.fid]}`}
+                                        <FieldValue field={field} item={row} />
                                     </td>
                                 ))}
                             </tr>

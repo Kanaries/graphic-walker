@@ -1,7 +1,8 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
 import type { IExpParameter } from '../../interfaces';
-import { formatDate } from '../../utils';
 import type { IDataFrame } from '../execExp';
+
+const formatDate = (date: Date) => date.getTime();
 
 function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const fieldKey = params.find((p) => p.type === 'field')?.value;
