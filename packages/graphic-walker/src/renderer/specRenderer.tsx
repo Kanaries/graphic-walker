@@ -178,7 +178,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           width: LEAFLET_DEFAULT_WIDTH + 'px',
                           height: LEAFLET_DEFAULT_HEIGHT + 'px',
                       }
-                    : undefined
+                    : { width: 'auto', height: 'auto' }
             }
         >
             {loading && <LoadingLayer />}
