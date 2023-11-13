@@ -334,7 +334,7 @@ export class VizSpecStore {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
         const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
-        if (destMeta && (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID)) {
+        if (sourceMeta && destMeta && (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID)) {
             return;
         }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
