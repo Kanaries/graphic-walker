@@ -8,7 +8,7 @@ export default function ColorPanel(props: { display: ColorDisplay; field: IField
     const { display, field, aggerated } = props;
     const fieldName = aggerated && field.analyticType === 'measure' && field.aggName ? `${field.aggName}(${field.name})` : field.name;
     return (
-        <div className="absolute right-5 top-5 bg-white/30 rounded p-2" style={{ zIndex: 999 }}>
+        <div className="absolute right-5 top-5 bg-white/30 dark:bg-zinc-900/30 rounded p-2" style={{ zIndex: 999 }}>
             {display.type === 'nominal' && (
                 <div className="font-xs flex flex-col space-y-1">
                     <div className="font-medium max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">{fieldName}</div>
