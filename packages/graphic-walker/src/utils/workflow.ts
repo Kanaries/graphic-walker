@@ -24,6 +24,12 @@ const walkExpression = (expression: IExpression, each: (field: string) => void):
     }
 };
 
+const deduper = <T>(items: T[], keyF: (k: T) => string) => {
+    const map = new Map<string, T>();
+    items.forEach((x) => map.set(keyF(x), x));
+    return [...map.values()];
+};
+
 const treeShake = (
     computedFields: readonly { key: string; expression: IExpression }[],
     viewKeys: readonly string[]
@@ -165,7 +171,10 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggergatedFilter = viewFilters.filter((f) => f.enableAgg && f.aggName && f.rule);
-    const aggregateOn = viewMeasures.filter((f) => f.aggName).map((f) => [f.fid, f.aggName as string]).concat(aggergatedFilter.map(f => [f.fid, f.aggName as string]));
+    const aggregateOn = viewMeasures
+        .filter((f) => f.aggName)
+        .map((f) => [f.fid, f.aggName as string])
+        .concat(aggergatedFilter.map((f) => [f.fid, f.aggName as string]));
     const aggergated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
 
     if (aggergated) {
@@ -174,12 +183,15 @@ export const toWorkflow = (
             query: [
                 {
                     op: 'aggregate',
-                    groupBy: viewDimensions.map((f) => f.fid),
-                    measures: viewMeasures.concat(aggergatedFilter).map((f) => ({
-                        field: f.fid,
-                        agg: f.aggName as any,
-                        asFieldKey: getMeaAggKey(f.fid, f.aggName!),
-                    })),
+                    groupBy: deduper(viewDimensions.map((f) => f.fid), x => x),
+                    measures: deduper(
+                        viewMeasures.concat(aggergatedFilter).map((f) => ({
+                            field: f.fid,
+                            agg: f.aggName as any,
+                            asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                        })),
+                        (x) => x.asFieldKey
+                    ),
                 },
             ],
         };
@@ -211,7 +223,14 @@ export const toWorkflow = (
         };
     }
 
-    const steps: IDataQueryWorkflowStep[] = [filterWorkflow!, transformWorkflow!, computedWorkflow!, viewQueryWorkflow!, aggFilterWorkflow!, sortWorkflow!].filter(Boolean);
+    const steps: IDataQueryWorkflowStep[] = [
+        filterWorkflow!,
+        transformWorkflow!,
+        computedWorkflow!,
+        viewQueryWorkflow!,
+        aggFilterWorkflow!,
+        sortWorkflow!,
+    ].filter(Boolean);
     return steps;
 };
 
