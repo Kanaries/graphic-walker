@@ -359,20 +359,20 @@ const actions: {
             if (hasPaintField) {
                 return Object.fromEntries(entries);
             }
-            return mutPath(enc, 'dimensions', (f) =>
-                insert(
-                    f,
-                    {
-                        fid: PAINT_FIELD_ID,
-                        dragId: PAINT_FIELD_ID,
-                        analyticType: 'dimension',
-                        name,
-                        semanticType: 'nominal',
-                        computed: true,
-                        expression,
-                    },
-                    f.length
-                )
+            // if is creating paint field, add it to color encoding.
+            const field: IViewField = {
+                fid: PAINT_FIELD_ID,
+                dragId: PAINT_FIELD_ID,
+                analyticType: 'dimension',
+                name,
+                semanticType: 'nominal',
+                computed: true,
+                expression,
+            };
+            return mutPath(
+                mutPath(enc, 'dimensions', (f) => insert(f, field, f.length)),
+                'color',
+                () => [{ ...field, dragId: `auto_${PAINT_FIELD_ID}` }]
             );
         });
     },
