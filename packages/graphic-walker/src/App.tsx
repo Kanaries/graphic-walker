@@ -131,7 +131,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
                                     {enhanceAPI?.features?.askviz && (
                                         <AskViz
-                                            api={typeof enhanceAPI.features.askviz === 'string' ? enhanceAPI.features.askviz : ''}
+                                            api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}
+                                            feedbackApi={typeof enhanceAPI.features.feedbackAskviz === 'boolean' ? '' : enhanceAPI.features.feedbackAskviz}
                                             headers={enhanceAPI?.header}
                                         />
                                     )}
