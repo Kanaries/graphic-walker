@@ -405,7 +405,7 @@ function makeFieldAtLast<T>(arr: T[], lasts: ((item: T) => boolean)[]): T[] {
 function lintExtraFields<T extends Partial<DraggableFieldState>>(encodings: T): Partial<T> {
     const result: Partial<T> = {};
     if (encodings.dimensions && encodings.dimensions.length > 0) {
-        result.dimensions = makeFieldAtLast(encodings.dimensions, [(i) => i.fid === MEA_KEY_ID]);
+        result.dimensions = makeFieldAtLast(encodings.dimensions, [(i) => i.fid === PAINT_FIELD_ID, (i) => i.fid === MEA_KEY_ID]);
     }
     if (encodings.measures && encodings.measures.length > 0) {
         result.measures = makeFieldAtLast(encodings.measures, [(i) => i.fid === COUNT_FIELD_ID, (i) => i.fid === MEA_VAL_ID]);
