@@ -5,6 +5,8 @@ import { HandThumbDownIcon, HandThumbUpIcon, PaperAirplaneIcon } from '@heroicon
 import Spinner from '../spinner';
 import { IAskVizFeedback, IChartForExport, IViewField, IVisSpecForExport } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
+import { useReporter } from '../../utils/reportError';
+import { parseErrorMessage } from '../../utils';
 
 const api = import.meta.env.DEV ? 'http://localhost:2023/api/vis/text2gw' : 'https://enhanceai.kanaries.net/api/vis/text2gw';
 
@@ -74,6 +76,8 @@ const AskViz: React.FC<{
 
     const allFields = vizStore.allFields;
 
+    const { reportError } = useReporter();
+
     const [lastData, setLastData] = useState<{ question: string; data: string } | null>(null);
 
     const startQuery = useCallback(() => {
@@ -86,6 +90,9 @@ const AskViz: React.FC<{
                 vizStore.setAskvizFeedback(true);
                 setLastData({ question: query, data: JSON.stringify(data) });
                 setAskVizFeedback('vote');
+            })
+            .catch((err) => {
+                reportError(parseErrorMessage(err), 502);
             })
             .finally(() => {
                 setLoading(false);

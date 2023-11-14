@@ -78,6 +78,26 @@ export default observer(function ErrorPanel() {
                     </div>
                 </Modal>
             );
+        case 502:
+            return (
+                <Modal show={true}>
+                    <div className="flex flex-col justify-center items-start">
+                        <h2 className="font-medium text-xl my-2">Oops!</h2>
+                        <p className="font-normal my-2">There is some error with Askviz service. Here is the Error message:</p>
+                        <p className="font-normal my-2">{vizStore.lastErrorMessage}</p>
+
+                        <fieldset className="mt-2 gap-1 flex flex-col justify-center items-end w-full">
+                            <div className="mt-2">
+                                <DefaultButton
+                                    text={`Close`}
+                                    className="mr-2 px-2"
+                                    onClick={closeModal}
+                                />
+                            </div>
+                        </fieldset>
+                    </div>
+                </Modal>
+            );
     }
     return null;
 });
