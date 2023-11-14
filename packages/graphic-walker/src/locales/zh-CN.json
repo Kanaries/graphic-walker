@@ -131,6 +131,13 @@
         "segments": {
             "vis": "可视化",
             "data": "数据"
+        },
+        "feedback": {
+            "vote": "对Askviz的结果满意吗？",
+            "voteup": "满意",
+            "votedown": "不满意",
+            "report": "为了改进AskViz，请将正确的图表反馈给我们",
+            "report_button": "反馈"
         }
     },
     "DataSource": {

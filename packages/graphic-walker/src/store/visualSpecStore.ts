@@ -94,7 +94,8 @@ export class VizSpecStore {
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
     showErrorResolutionPanel: number = 0;
-    lastErrorMessage: string = "";
+    lastErrorMessage: string = '';
+    showAskvizFeedbackIndex: number | undefined = 0;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -350,7 +351,7 @@ export class VizSpecStore {
                 destinationKey,
                 destinationIndex,
                 uniqueId(),
-                limit,
+                limit
             );
         }
     }
@@ -463,11 +464,15 @@ export class VizSpecStore {
         this.visIndex = 0;
     }
 
-    appendFromOld(data: IVisSpecForExport) {
-        const newChart = fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
+    appendFromCode(data: IVisSpecForExport | IChartForExport) {
+        const newChart = 'layout' in data ? importNow(data) : fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
         this.visList.push(newChart);
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+    }
+
+    setAskvizFeedback(show: boolean) {
+        this.showAskvizFeedbackIndex = show ? this.visIndex : undefined;
     }
 
     replaceNow(chart: IChart) {
@@ -592,7 +597,7 @@ export class VizSpecStore {
         this.selectedMarkObject = newMarkObj;
     }
 
-    updateShowErrorResolutionPanel(errCode: number, msg = "") {
+    updateShowErrorResolutionPanel(errCode: number, msg = '') {
         this.showErrorResolutionPanel = errCode;
         this.lastErrorMessage = msg;
     }

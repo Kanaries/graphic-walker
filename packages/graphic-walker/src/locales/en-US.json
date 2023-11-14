@@ -131,6 +131,13 @@
         "segments": {
             "vis": "Visualization",
             "data": "Data"
+        }, 
+        "feedback": {
+            "vote": "Is the result of Askviz good?",
+            "voteup": "Yes",
+            "votedown": "No",
+            "report": "Please help us improving Askviz with correct Chart",
+            "report_button": "Report correct chart"
         }
     },
     "DataSource": {

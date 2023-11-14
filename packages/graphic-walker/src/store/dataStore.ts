@@ -121,7 +121,7 @@ export class DataStore {
                 data.specList.forEach((x) => {
                     const key = encodeMeta(x.encodings.dimensions.concat(x.encodings.measures).filter((x) => !x.computed));
                     const store = visDict[key] || visDict[defaultId];
-                    store.appendFromOld(x);
+                    store.appendFromCode(x);
                 });
             }
             this.metaDict = metaDict;
