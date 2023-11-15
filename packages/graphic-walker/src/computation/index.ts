@@ -139,16 +139,32 @@ export const fieldStat = async (
                 query: [
                     {
                         op: 'aggregate',
-                        groupBy: [],
+                        groupBy: [field.fid],
                         measures: [
-                            {
-                                field: field.fid,
-                                agg: 'distinctCount',
-                                asFieldKey: TOTAL_DISTINCT_ID,
-                            },
                             {
                                 field: '*',
                                 agg: 'count',
+                                asFieldKey: COUNT_ID,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'aggregate',
+                        groupBy: [],
+                        measures: [
+                            {
+                                field: '*',
+                                agg: 'count',
+                                asFieldKey: TOTAL_DISTINCT_ID,
+                            },
+                            {
+                                field: COUNT_ID,
+                                agg: 'sum',
                                 asFieldKey: 'count',
                             },
                         ],
