@@ -295,7 +295,7 @@ const useVisualCount = (
         if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
         setSelectedValueSum(0);
         onChange({
-            type: currentSum === metaData.valuesMeta.total ? 'one of' : 'not in',
+            type: currentCount === metaData.valuesMeta.distinctTotal ? 'one of' : 'not in',
             value: new Set(),
         });
     }, [field.rule, onChange, metaData]);
