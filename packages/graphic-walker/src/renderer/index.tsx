@@ -86,7 +86,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 },
             }
         }
-    }, [data,viewDimensions,viewMeasures,visualConfig.defaultAggregated]);
+    }, [data,viewDimensions,viewMeasures,viewConfig.defaultAggregated]);
 
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
