@@ -15,6 +15,10 @@
     "src"
   ],
   "license": "Apache-2.0",
+  "author": {
+    "name": "Kanaries Data Inc.",
+    "email": "support@kanaries.net"
+  },
   "main": "./dist/graphic-walker.umd.js",
   "module": "./dist/graphic-walker.es.js",
   "exports": {

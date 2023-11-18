@@ -6,7 +6,8 @@
   "dependencies": {},
   "devDependencies": {},
   "scripts": {
-    "build": "yarn workspace @kanaries/graphic-walker build"
+    "build": "yarn workspace @kanaries/graphic-walker build",
+    "deploy": "yarn workspace playground deploy"
   },
   "workspaces": {
     "packages": ["packages/*"]
@@ -16,7 +17,7 @@
     "url": "git+https://github.com/Kanaries/graphic-walker.git"
   },
   "keywords": ["visualization", "EDA", "data-analysis"],
-  "author": "",
+  "author": "Kanaries Data Inc.",
   "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/Kanaries/graphic-walker/issues"
