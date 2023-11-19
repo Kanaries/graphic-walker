@@ -54,7 +54,7 @@ const Callout = memo<CalloutProps>(function Callout({ target, children, darkMode
         root &&
         pos &&
         createPortal(
-            <Bubble role="dialog" dark={darkMode === 'dark'} className="fixed bg-white dark:bg-zinc-900  z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
+            <Bubble role="dialog" dark={darkMode === 'dark'} className="fixed font-sans text-xs bg-white dark:bg-zinc-900 z-50" style={{ left: pos[0], top: pos[1] + 4 }}>
                 {children}
             </Bubble>,
             root
