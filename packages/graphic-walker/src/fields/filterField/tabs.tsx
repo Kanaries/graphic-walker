@@ -476,6 +476,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         const id = `rule_checkbox_${idx}`;
                         const checked =
                             (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                        const displayValue = field.semanticType === 'temporal' ? new Date(value).toLocaleString() : `${value}`;
                         return (
                             <TableRow
                                 key={idx}
@@ -495,12 +496,12 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                         checked={checked}
                                         id={id}
                                         aria-describedby={`${id}_label`}
-                                        title={String(value)}
+                                        title={displayValue}
                                         onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
                                     />
                                 </div>
-                                <label id={`${id}_label`} htmlFor={id} title={String(value)}>
-                                    {`${value}`}
+                                <label id={`${id}_label`} htmlFor={id} title={displayValue}>
+                                    {displayValue}
                                 </label>
                                 <label htmlFor={id}>{count}</label>
                             </TableRow>
