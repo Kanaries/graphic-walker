@@ -33,3 +33,7 @@ export function useGeoJSON(geojson?: FeatureCollection, url?: IGeoUrl) {
     }, [data]);
     return data === url ? undefined : (data as FeatureCollection);
 }
+
+export function useOffset() {
+    return new Date().getTimezoneOffset();
+}

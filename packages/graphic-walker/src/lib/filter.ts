@@ -1,4 +1,5 @@
 import { IRow, IFilterFiledSimple } from '../interfaces';
+import { newOffsetDate } from './op/offset';
 
 export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
     return dataSource.filter((which) => {
@@ -29,7 +30,7 @@ export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
                 }
                 case 'temporal range': {
                     try {
-                        const time = new Date(which[fid]).getTime();
+                        const time = rule.offset ? newOffsetDate(rule.offset)(which[fid]).getTime() : new Date(which[fid]).getTime();
                         if (rule.value[0] <= time && time <= rule.value[1]) {
                             break;
                         } else {

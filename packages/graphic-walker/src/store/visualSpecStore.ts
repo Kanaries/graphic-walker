@@ -400,7 +400,8 @@ export class VizSpecStore {
         index: number,
         drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
         name: string,
-        format: string
+        format: string,
+        offset: number
     ) {
         this.visList[this.visIndex] = performers.createDateDrillField(
             this.visList[this.visIndex],
@@ -410,7 +411,7 @@ export class VizSpecStore {
             uniqueId(),
             name,
             format,
-            new Date().getTimezoneOffset()
+            offset
         );
     }
 
@@ -419,7 +420,8 @@ export class VizSpecStore {
         index: number,
         drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
         name: string,
-        format: string
+        format: string,
+        offset: number
     ) {
         this.visList[this.visIndex] = performers.createDateFeatureField(
             this.visList[this.visIndex],
@@ -429,7 +431,7 @@ export class VizSpecStore {
             uniqueId(),
             name,
             format,
-            new Date().getTimezoneOffset()
+            offset
         );
     }
 

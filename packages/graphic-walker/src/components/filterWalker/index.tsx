@@ -5,9 +5,10 @@ import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
 
 type rangeValue = [number, number];
+type temporalRangeValue = [number, number, string];
 
 type values = rangeValue | string[] | number[];
-type domains = rangeValue | string[];
+type domains = rangeValue | temporalRangeValue | string[];
 
 export interface FilterConfig {
     fid: string;
@@ -77,8 +78,17 @@ export function createFilterContext(components: {
         loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
         rawFields: IMutField[];
         children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
+        timezoneOffset?: number;
     }) {
-        const { configs, dataSource, computation: remoteComputation, rawFields, children, loadingContent } = props;
+        const {
+            configs,
+            dataSource,
+            computation: remoteComputation,
+            rawFields,
+            children,
+            loadingContent,
+            timezoneOffset = new Date().getTimezoneOffset(),
+        } = props;
         const computation = React.useMemo(() => {
             if (remoteComputation) return remoteComputation;
             if (dataSource) return getComputation(dataSource);
@@ -143,7 +153,8 @@ export function createFilterContext(components: {
                         valuesRef.current.set(k, v);
                         return v;
                     }
-                    const v = domains[i];
+                    const [min, max] = domains[i] as [number, number] | [number, number, string];
+                    const v: [number, number] = [min, max];
                     valuesRef.current.set(k, v);
                     return v;
                 });
@@ -175,7 +186,8 @@ export function createFilterContext(components: {
                                 case 'quantitative':
                                     return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
                                 case 'temporal':
-                                    return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1]);
+                                    const d = domain as unknown as temporalRangeValue;
+                                    return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], d[2], timezoneOffset);
                                 default:
                                     throw new Error('Cannot use range on nominal/ordinal field.');
                             }
@@ -262,12 +274,14 @@ export function createFilterContext(components: {
     };
 }
 
-function createDateFilter(fid: string, from: number, to: number): IVisFilter {
+function createDateFilter(fid: string, from: number, to: number, format: string, offset: number): IVisFilter {
     return {
         fid,
         rule: {
             type: 'temporal range',
             value: [from, to],
+            format,
+            offset,
         },
     };
 }
@@ -295,7 +309,8 @@ function createFilter(fid: string, value: (string | number)[]): IVisFilter {
 export const useTemporalFilter = (
     computation: IComputationFunction,
     fid: string,
-    initValue?: rangeValue | (() => rangeValue)
+    initValue?: rangeValue | (() => rangeValue),
+    offset?: number
 ): {
     filter: IVisFilter | null;
     domain: rangeValue;
@@ -304,14 +319,20 @@ export const useTemporalFilter = (
 } => {
     const [value, setValue] = React.useState<rangeValue>(initValue ?? [0, 0]);
     const [domain, setDomain] = React.useState<rangeValue>([0, 0]);
+    const [format, setFormat] = React.useState('');
     useEffect(() => {
         (async () => {
-            const domain = await getTemporalRange(computation, fid);
-            setDomain(domain);
-            if (isEmptyRange(value)) setValue(domain);
+            const [min, max, format] = await getTemporalRange(computation, fid);
+            const newDomain: rangeValue = [min, max];
+            setDomain(newDomain);
+            setFormat(format);
+            if (isEmptyRange(value)) setValue(newDomain);
         })();
     }, [computation, fid]);
-    const filter = React.useMemo(() => (isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1])), [value, domain, fid]);
+    const filter = React.useMemo(
+        () => (isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], format, offset ?? new Date().getTimezoneOffset())),
+        [value, domain, fid]
+    );
     return {
         filter,
         domain,

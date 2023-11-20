@@ -5,6 +5,7 @@ import type { IActionMenuItem } from '../../components/actionMenu/list';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { getSample } from '../../computation';
 import { getTimeFormat } from '../../lib/inferMeta';
+import { useOffset } from '../../hooks/service';
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
     return array.filter(Boolean) as T[];
@@ -15,6 +16,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
     const fields = vizStore.currentVis.encodings[channel];
     const { t } = useTranslation('translation', { keyPrefix: 'field_menu' });
     const computation = useCompututaion();
+    const offset = useOffset();
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
@@ -117,7 +119,8 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                         originIndex,
                                         level,
                                         `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`,
-                                        format
+                                        format,
+                                        offset
                                     )
                                 );
                         },
@@ -144,7 +147,8 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                         originIndex,
                                         level,
                                         `${t(`drill.levels.${level}`)} [${originField.name || originField.fid}]`,
-                                        format
+                                        format,
+                                        offset
                                     )
                                 );
                         },

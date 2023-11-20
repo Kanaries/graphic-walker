@@ -241,6 +241,8 @@ export type IFilterRule =
     | {
           type: 'temporal range';
           value: readonly [number, number];
+          offset?: number;
+          format?: string;
       }
     | {
           type: 'one of';

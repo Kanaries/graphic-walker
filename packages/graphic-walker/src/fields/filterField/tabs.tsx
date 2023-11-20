@@ -10,6 +10,7 @@ import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
 import { getFilterMeaAggKey, formatDate } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useOffset } from '../../hooks/service';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -556,29 +557,38 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
     const computationFunction = useCompututaion();
 
-    const [res, setRes] = useState<[number, number, boolean]>(() => [0, 0, false]);
+    const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        getTemporalRange(computationFunction, field.fid).then(([min, max]) => setRes([min, max, true]));
+        getTemporalRange(computationFunction, field.fid).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 
-    const [min, max, loaded] = res;
+    const [min, max, format, loaded] = res;
+
+    const offset = useOffset();
 
     React.useEffect(() => {
         if (active && field.rule?.type !== 'temporal range' && loaded) {
             onChange({
                 type: 'temporal range',
                 value: [min, max],
+                format,
+                offset,
             });
         }
-    }, [onChange, field, min, max, active]);
+    }, [onChange, field, min, max, format, offset, active]);
 
-    const handleChange = React.useCallback((value: readonly [number, number]) => {
-        onChange({
-            type: 'temporal range',
-            value,
-        });
-    }, []);
+    const handleChange = React.useCallback(
+        (value: readonly [number, number]) => {
+            onChange({
+                type: 'temporal range',
+                value,
+                format,
+                offset,
+            });
+        },
+        [format, offset]
+    );
 
     if (!loaded) {
         return (
