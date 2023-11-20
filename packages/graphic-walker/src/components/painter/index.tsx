@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
-import { fieldStat, getRange } from '../../computation';
+import { getRange } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
 import { IViewField } from '../../interfaces';
 import embed from 'vega-embed';
@@ -16,12 +16,9 @@ import { ClickInput, ColorEditor, Container, PixelContainer } from './components
 import LoadingLayer from '../loadingLayer';
 import DefaultButton from '../button/default';
 import PrimaryButton from '../button/primary';
+import { GLOBAL_CONFIG } from '../../config';
 
-const MAP_WIDTH = 128;
 const MAGIC_PADDING = 5;
-const DEFAULT_BRUSH_SIZE = 9;
-const FACTOR = 4;
-const CHART_WIDTH = MAP_WIDTH * FACTOR;
 const PIXEL_INDEX = '_gw_pixel_index';
 const ERASER = 255;
 
@@ -87,8 +84,8 @@ const PainterContent = (props: {
         ],
         [props.x, props.y]
     );
-    const brushSizeRef = useRef(5);
-    const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
+    const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
+    const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
     const brushIdRef = useRef(1);
     const [brushId, setBrushId] = useState(1);
@@ -114,7 +111,7 @@ const PainterContent = (props: {
             }),
             props.domainX,
             props.domainY,
-            MAP_WIDTH
+            GLOBAL_CONFIG.PAINT_MAP_SIZE
         );
     }, [viewData, props.x, props.y, props.domainX, props.domainY]);
     const data = useMemo(() => {
@@ -165,8 +162,8 @@ const PainterContent = (props: {
                         },
                     },
                 },
-                width: CHART_WIDTH,
-                height: CHART_WIDTH,
+                width: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
+                height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
             };
             embed(containerRef.current, spec, { actions: false }).then((res) => {
                 const scene = res.view.scenegraph() as unknown as { root: Scene };
@@ -188,7 +185,7 @@ const PainterContent = (props: {
                 //@ts-ignore
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
-                    props.mapRef.current! = emptyMap(MAP_WIDTH);
+                    props.mapRef.current! = emptyMap(GLOBAL_CONFIG.PAINT_MAP_SIZE);
                     const { name, color } = props.dict[0];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
@@ -212,7 +209,14 @@ const PainterContent = (props: {
                                   }
                                 : props.dict[brushIdRef.current];
                         if (!targetColor) return;
-                        const pts = indexesFrom([Math.floor(x / FACTOR), MAP_WIDTH - 1 - Math.floor(y / FACTOR)], brushSizeRef.current, MAP_WIDTH);
+                        const pts = indexesFrom(
+                            [
+                                Math.floor(x / GLOBAL_CONFIG.PAINT_SIZE_FACTOR),
+                                GLOBAL_CONFIG.PAINT_MAP_SIZE - 1 - Math.floor(y / GLOBAL_CONFIG.PAINT_SIZE_FACTOR),
+                            ],
+                            brushSizeRef.current,
+                            GLOBAL_CONFIG.PAINT_MAP_SIZE
+                        );
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
@@ -264,7 +268,7 @@ const PainterContent = (props: {
             <CursorContainer
                 color={props.dict[brushId]?.color ?? '#333'}
                 dia={brushSize}
-                factor={FACTOR}
+                factor={GLOBAL_CONFIG.PAINT_SIZE_FACTOR}
                 offsetX={pixelOffset[0]}
                 offsetY={pixelOffset[1]}
                 showPreview={showCursorPreview}
@@ -349,8 +353,8 @@ const PainterContent = (props: {
                         className="w-full h-2 bg-blue-100 appearance-none"
                         type="range"
                         value={brushSize}
-                        min="1"
-                        max="36"
+                        min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
+                        max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
                         step="1"
                         onChange={(e) => {
                             const v = parseInt(e.target.value);
@@ -400,7 +404,7 @@ const Painter = () => {
                         setDomainX(paintInfo.domainX);
                         setDomainY(paintInfo.domainY);
                     } else {
-                        mapRef.current = emptyMap(MAP_WIDTH);
+                        mapRef.current = emptyMap(GLOBAL_CONFIG.PAINT_MAP_SIZE);
                         const xs = getRange(compuation, paintInfo.x);
                         const ys = getRange(compuation, paintInfo.y);
                         const domainX = await xs;
@@ -428,7 +432,7 @@ const Painter = () => {
                     x: fieldX.fid,
                     y: fieldY.fid,
                     usedColor: [...new Set(mapRef.current).values()],
-                    mapwidth: MAP_WIDTH,
+                    mapwidth: GLOBAL_CONFIG.PAINT_MAP_SIZE,
                 },
                 t('constant.paint_key')
             );
