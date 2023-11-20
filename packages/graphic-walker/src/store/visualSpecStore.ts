@@ -48,7 +48,7 @@ import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
-const viewEncodingKeys = (geom: string) => {
+export const viewEncodingKeys = (geom: string) => {
     switch (geom) {
         case 'choropleth':
             return ['geoId', 'color', 'opacity', 'text', 'details'];

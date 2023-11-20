@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales } from '../interfaces';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales, IViewField } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction } from 'mobx';
@@ -16,6 +16,8 @@ import { getMeaAggKey } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
+import { Item } from 'vega';
+import { viewEncodingKeys } from '../store/visualSpecStore';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -121,7 +123,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent) => {
+        (values: any, e: MouseEvent & { item: Item }) => {
             e.stopPropagation();
             if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
@@ -129,10 +131,27 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                     vizStore.setFilters(values);
                 });
                 const selectedMarkObject = values.vlPoint.or[0];
-                vizStore.updateSelectedMarkObject(selectedMarkObject);    
+                // check selected fields include temporal, and return temporal timestamp to original data
+                const allFields = viewEncodingKeys(visualConfig.geoms[0]).flatMap((k) => encodings[k] as IViewField[]);
+                const selectedTemporalFields = Object.keys(selectedMarkObject)
+                    .map((k) => allFields.find((x) => x.fid === k))
+                    .filter((x): x is IViewField => !!x && x.semanticType === 'temporal');
+                if (selectedTemporalFields.length > 0) {
+                    selectedTemporalFields.forEach((f) => {
+                        const set = new Set(viewData.map((x) => x[f.fid] as string | number));
+                        selectedMarkObject[f.fid] = [...set.values()].find((x) => new Date(x).getTime() === selectedMarkObject[f.fid]);
+                    });
+                }
+                if (e.item.mark.marktype === 'line') {
+                    // use the filter in mark group
+                    const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}));
+                    vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries<string | number>(selectedMarkObject).filter(([k]) => keys.has(k))));
+                } else {
+                    vizStore.updateSelectedMarkObject(selectedMarkObject);
+                }
             }
         },
-        [vizStore]
+        [vizStore, viewData, encodings, visualConfig]
     );
 
     const handleChartResize = useCallback(
