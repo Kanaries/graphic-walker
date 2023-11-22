@@ -163,9 +163,9 @@ function useFilters(metas: IMutField[]) {
 function FieldValue(props: { field: IMutField; item: IRow }) {
     const { field, item } = props;
     if (field.semanticType === 'temporal') {
-        return new Date(item[field.fid]).toLocaleString();
+        return <>{new Date(item[field.fid]).toLocaleString()}</>;
     }
-    return item[field.fid];
+    return <>{`${item[field.fid]}`}</>;
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
