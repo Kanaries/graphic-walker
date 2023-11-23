@@ -19,7 +19,7 @@ export function getOffsetDate(date: Date, offset: number): OffsetDate {
     }) as OffsetDate;
 }
 
-export function newOffsetDate(offset: number) {
+export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
     function creator(): OffsetDate;
     function creator(value: number | string | Date): OffsetDate;
     function creator(year: number, monthIndex: number, date?: number, hours?: number, minutes?: number, seconds?: number, ms?: number): OffsetDate;

@@ -12,6 +12,7 @@ import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog'
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
 import { field } from 'vega';
+import { newOffsetDate } from '../../lib/op/offset';
 
 interface DataTableProps {
     /** page limit */
@@ -163,7 +164,7 @@ function useFilters(metas: IMutField[]) {
 function FieldValue(props: { field: IMutField; item: IRow }) {
     const { field, item } = props;
     if (field.semanticType === 'temporal') {
-        return <>{new Date(item[field.fid]).toLocaleString()}</>;
+        return <>{newOffsetDate(field.offset)(item[field.fid]).toLocaleString()}</>;
     }
     return <>{`${item[field.fid]}`}</>;
 }

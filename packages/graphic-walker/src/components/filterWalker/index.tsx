@@ -78,17 +78,8 @@ export function createFilterContext(components: {
         loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
         rawFields: IMutField[];
         children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
-        timezoneOffset?: number;
     }) {
-        const {
-            configs,
-            dataSource,
-            computation: remoteComputation,
-            rawFields,
-            children,
-            loadingContent,
-            timezoneOffset = new Date().getTimezoneOffset(),
-        } = props;
+        const { configs, dataSource, computation: remoteComputation, rawFields, children, loadingContent } = props;
         const computation = React.useMemo(() => {
             if (remoteComputation) return remoteComputation;
             if (dataSource) return getComputation(dataSource);
@@ -105,7 +96,7 @@ export function createFilterContext(components: {
                 configs.flatMap((x) => {
                     const f = rawFields.find((a) => a.fid === x.fid);
                     if (!f) return [];
-                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType }];
+                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset }];
                 }),
             [configs, rawFields]
         );
@@ -164,37 +155,36 @@ export function createFilterContext(components: {
             })();
         }, [computation, fields]);
         const filters = wrapArray(
-            React.useMemo(
-                () =>
-                    fields
-                        .map(({ mode, type, fid }, i) => {
-                            const data = getDomainAndValue(mode, i, domains, values);
-                            if (!data) return null;
-                            const { domain, tag, value } = data;
-                            if (tag === 'array') {
-                                if (value.length === 0) return null;
-                                if (type === 'quantitative' || (type === 'temporal' && value.every((x) => !isNaN(Number(x))))) {
-                                    return createFilter(
-                                        fid,
-                                        value.map((x) => Number(x))
-                                    );
-                                }
-                                return createFilter(fid, value);
+            React.useMemo(() => {
+                const defaultOffset = new Date().getTimezoneOffset();
+                return fields
+                    .map(({ mode, type, fid, offset }, i) => {
+                        const data = getDomainAndValue(mode, i, domains, values);
+                        if (!data) return null;
+                        const { domain, tag, value } = data;
+                        if (tag === 'array') {
+                            if (value.length === 0) return null;
+                            if (type === 'quantitative' || (type === 'temporal' && value.every((x) => !isNaN(Number(x))))) {
+                                return createFilter(
+                                    fid,
+                                    value.map((x) => Number(x))
+                                );
                             }
-                            // value and domain is rangeValue
-                            switch (type) {
-                                case 'quantitative':
-                                    return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
-                                case 'temporal':
-                                    const d = domain as unknown as temporalRangeValue;
-                                    return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], d[2], timezoneOffset);
-                                default:
-                                    throw new Error('Cannot use range on nominal/ordinal field.');
-                            }
-                        })
-                        .filter((x): x is IVisFilter => !!x),
-                [values, fields]
-            )
+                            return createFilter(fid, value);
+                        }
+                        // value and domain is rangeValue
+                        switch (type) {
+                            case 'quantitative':
+                                return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
+                            case 'temporal':
+                                const d = domain as unknown as temporalRangeValue;
+                                return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], d[2], offset ?? defaultOffset);
+                            default:
+                                throw new Error('Cannot use range on nominal/ordinal field.');
+                        }
+                    })
+                    .filter((x): x is IVisFilter => !!x);
+            }, [values, fields])
         );
         const filteredComputation = React.useMemo<IComputationFunction>(() => {
             return (query) => computation(addFilterForQuery(query, filters));

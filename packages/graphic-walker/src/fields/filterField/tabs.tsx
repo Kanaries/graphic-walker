@@ -10,7 +10,6 @@ import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
 import { getFilterMeaAggKey, formatDate } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useOffset } from '../../hooks/service';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -565,7 +564,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
     const [min, max, format, loaded] = res;
 
-    const offset = useOffset();
+    const offset = field.offset ?? new Date().getTimezoneOffset();
 
     React.useEffect(() => {
         if (active && field.rule?.type !== 'temporal range' && loaded) {
