@@ -10,6 +10,7 @@ import { fieldStat, getTemporalRange } from '../../computation';
 import Slider from './slider';
 import { getFilterMeaAggKey, formatDate } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { newOffsetDate } from '../../lib/op/offset';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -476,6 +477,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         const id = `rule_checkbox_${idx}`;
                         const checked =
                             (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                        const displayValue = field.semanticType === 'temporal' ? formatDate(newOffsetDate(field.offset)(value)) : `${value}`;
                         return (
                             <TableRow
                                 key={idx}
@@ -495,12 +497,12 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                         checked={checked}
                                         id={id}
                                         aria-describedby={`${id}_label`}
-                                        title={String(value)}
+                                        title={displayValue}
                                         onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
                                     />
                                 </div>
-                                <label id={`${id}_label`} htmlFor={id} title={String(value)}>
-                                    {`${value}`}
+                                <label id={`${id}_label`} htmlFor={id} title={displayValue}>
+                                    {displayValue}
                                 </label>
                                 <label htmlFor={id}>{count}</label>
                             </TableRow>
@@ -555,29 +557,38 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
     const computationFunction = useCompututaion();
 
-    const [res, setRes] = useState<[number, number, boolean]>(() => [0, 0, false]);
+    const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        getTemporalRange(computationFunction, field.fid).then(([min, max]) => setRes([min, max, true]));
+        getTemporalRange(computationFunction, field.fid, field.offset).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 
-    const [min, max, loaded] = res;
+    const [min, max, format, loaded] = res;
+
+    const offset = field.offset ?? new Date().getTimezoneOffset();
 
     React.useEffect(() => {
         if (active && field.rule?.type !== 'temporal range' && loaded) {
             onChange({
                 type: 'temporal range',
                 value: [min, max],
+                format,
+                offset,
             });
         }
-    }, [onChange, field, min, max, active]);
+    }, [onChange, field, min, max, format, offset, active]);
 
-    const handleChange = React.useCallback((value: readonly [number, number]) => {
-        onChange({
-            type: 'temporal range',
-            value,
-        });
-    }, []);
+    const handleChange = React.useCallback(
+        (value: readonly [number, number]) => {
+            onChange({
+                type: 'temporal range',
+                value,
+                format,
+                offset,
+            });
+        },
+        [format, offset]
+    );
 
     if (!loaded) {
         return (

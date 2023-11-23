@@ -12,6 +12,7 @@ import type {
     IVisFilter,
 } from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
+import { newOffsetDate } from '../lib/op/offset';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -385,9 +386,11 @@ export async function getSample(service: IComputationFunction, field: string) {
     return res?.[0]?.[field];
 }
 
-export async function getTemporalRange(service: IComputationFunction, field: string) {
+export async function getTemporalRange(service: IComputationFunction, field: string, offset?: number) {
     const sample = await getSample(service, field);
     const format = getTimeFormat(sample);
+    const defaultOffset = new Date().getTimezoneOffset();
+    const newDate = newOffsetDate(offset ?? defaultOffset);
     const MIN_ID = `min_${field}`;
     const MAX_ID = `max_${field}`;
     const rangeQueryPayload: IDataQueryPayload = {
@@ -423,5 +426,5 @@ export async function getTemporalRange(service: IComputationFunction, field: str
             [MAX_ID]: 0,
         },
     ] = await service(rangeQueryPayload);
-    return [new Date(rangeRes[MIN_ID]).getTime(), new Date(rangeRes[MAX_ID]).getTime()] as [number, number];
+    return [newDate(rangeRes[MIN_ID]).getTime(), newDate(rangeRes[MAX_ID]).getTime(), format] as [number, number, string];
 }

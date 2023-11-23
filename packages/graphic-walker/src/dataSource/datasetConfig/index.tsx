@@ -7,7 +7,7 @@ import { toJS } from 'mobx';
 const DatasetConfig: React.FC = () => {
     const vizStore = useVizStore();
     const computation = useCompututaion();
-    const metas = React.useMemo(() => toJS(vizStore.meta), [vizStore.meta]);
+    const metas = toJS(vizStore.meta);
 
     return (
         <div className="relative">

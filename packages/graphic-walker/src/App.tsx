@@ -145,7 +145,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     />
                                     <CodeExport />
                                     <ExplainData themeKey={themeKey} dark={darkMode} />
-                                    <DataBoard />
+                                    {vizStore.showDataBoard && <DataBoard />}
                                     <VisualConfig />
                                     <Errorpanel />
                                     <LogPanel />

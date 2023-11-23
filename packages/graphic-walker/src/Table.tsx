@@ -57,7 +57,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
         [reportError, computation, computationTimeout]
     );
 
-    const metas = React.useMemo(() => toJS(vizStore.meta), [vizStore.meta])
+    const metas = toJS(vizStore.meta);
     
     return (
         <ErrorContext value={{ reportError }}>
