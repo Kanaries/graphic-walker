@@ -1,30 +1,56 @@
 {
-  "name": "graphic-walker-home",
-  "version": "1.0.0",
-  "description": "![](https://img.shields.io/github/license/kanaries/graphic-walker) ![](https://img.shields.io/npm/v/@kanaries/graphic-walker) ![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/auto-build.yml)",
-  "private": true,
-  "dependencies": {},
-  "devDependencies": {},
-  "scripts": {
-    "build": "yarn workspace @kanaries/graphic-walker build",
-    "deploy": "yarn workspace playground deploy"
-  },
-  "workspaces": {
-    "packages": ["packages/*"]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Kanaries/graphic-walker.git"
-  },
-  "keywords": ["visualization", "EDA", "data-analysis"],
-  "author": "Kanaries Data Inc.",
-  "license": "Apache 2.0",
-  "bugs": {
-    "url": "https://github.com/Kanaries/graphic-walker/issues"
-  },
-  "resolutions": {
-    "@types/react": "^17.x",
-    "@types/react-dom": "^17.x"
-  },
-  "homepage": "https://github.com/Kanaries/graphic-walker#readme"
+    "name": "graphic-walker-home",
+    "version": "1.0.0",
+    "description": "![](https://img.shields.io/github/license/kanaries/graphic-walker) ![](https://img.shields.io/npm/v/@kanaries/graphic-walker) ![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/auto-build.yml)",
+    "private": true,
+    "dependencies": {},
+    "devDependencies": {
+        "husky": "^8.0.3",
+        "lint-staged": "^15.1.0",
+        "prettier": "^3.1.0",
+        "prettier-plugin-tailwindcss": "^0.5.7"
+    },
+    "scripts": {
+        "build": "yarn workspace @kanaries/graphic-walker build",
+        "deploy": "yarn workspace playground deploy",
+        "prettier": "prettier --write .",
+        "prepare": "husky install"
+    },
+    "workspaces": {
+        "packages": [
+            "packages/*"
+        ]
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 160,
+        "singleQuote": true
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "*.{html,json,ts,js,tsx,cjs,css,md}": "prettier --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Kanaries/graphic-walker.git"
+    },
+    "keywords": [
+        "visualization",
+        "EDA",
+        "data-analysis"
+    ],
+    "author": "Kanaries Data Inc.",
+    "license": "Apache 2.0",
+    "bugs": {
+        "url": "https://github.com/Kanaries/graphic-walker/issues"
+    },
+    "resolutions": {
+        "@types/react": "^17.x",
+        "@types/react-dom": "^17.x"
+    },
+    "homepage": "https://github.com/Kanaries/graphic-walker#readme"
 }
