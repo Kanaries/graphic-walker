@@ -1,3 +1,4 @@
+import { formatDate } from '../../utils';
 import { newOffsetDate } from './offset';
 
 describe('getOffsetDate', () => {
@@ -12,6 +13,8 @@ describe('getOffsetDate', () => {
         expect(date.getSeconds()).toBe(11);
         expect(date.getTime()).toBe(new Date('2023-11-20T07:35:11.830Z').getTime());
         expect(date.getTime()).toBe(offsetDate(date).getTime());
+        expect(formatDate(date)).toBe("2023-11-20 15:35:11");
+
     });
     test('test set', () => {
         const getDate = () => offsetDate('2023-11-20T07:35:11.830Z');
