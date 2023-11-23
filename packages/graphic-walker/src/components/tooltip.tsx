@@ -131,7 +131,7 @@ const Tooltip = memo<TooltipProps>(function Tooltip({
                 root &&
                 createPortal(
                     <Bubble
-                        className={`${darkMode === 'dark' ? 'dark bg-zinc-900' : 'bg-white'} fixed text-xs p-1 px-3 text-gray-500 z-50`}
+                        className={`${darkMode === 'dark' ? 'dark bg-zinc-900' : 'bg-white'} font-sans fixed text-xs p-1 px-3 text-gray-500 z-50`}
                         dark={darkMode === 'dark'}
                         onMouseOver={() => setHover(true)}
                         onMouseOut={() => setHover(false)}
