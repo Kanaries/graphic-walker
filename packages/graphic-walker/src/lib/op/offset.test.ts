@@ -3,6 +3,54 @@ import { newOffsetDate } from './offset';
 
 describe('getOffsetDate', () => {
     const offsetDate = newOffsetDate(-480);
+    const offsetDate2 = newOffsetDate(-480);
+    const utcOffsetDate = newOffsetDate(0);
+    test('utc-parsed-fix', () => {
+        const date = offsetDate('2023-11-20');
+        expect(date.getFullYear()).toBe(2023);
+        expect(date.getMonth()).toBe(10);
+        expect(date.getDate()).toBe(20);
+        expect(date.getHours()).toBe(0);
+        expect(date.getMinutes()).toBe(0);
+        expect(date.getSeconds()).toBe(0);
+        const date2 = offsetDate2('2023-11-20');
+        expect(date2.getFullYear()).toBe(2023);
+        expect(date2.getMonth()).toBe(10);
+        expect(date2.getDate()).toBe(20);
+        expect(date2.getHours()).toBe(0);
+        expect(date2.getMinutes()).toBe(0);
+        expect(date2.getSeconds()).toBe(0);
+        const utcDate = utcOffsetDate('2023-11-20');
+        expect(utcDate.getFullYear()).toBe(2023);
+        expect(utcDate.getMonth()).toBe(10);
+        expect(utcDate.getDate()).toBe(20);
+        expect(utcDate.getHours()).toBe(0);
+        expect(utcDate.getMinutes()).toBe(0);
+        expect(utcDate.getSeconds()).toBe(0);
+    })
+    test('no-timezone', () => {
+        const date = offsetDate('2023-11-20 08:12:30');
+        expect(date.getFullYear()).toBe(2023);
+        expect(date.getMonth()).toBe(10);
+        expect(date.getDate()).toBe(20);
+        expect(date.getHours()).toBe(8);
+        expect(date.getMinutes()).toBe(12);
+        expect(date.getSeconds()).toBe(30);
+        const utcDate = utcOffsetDate('2023-11-20 08:12:30');
+        expect(utcDate.getFullYear()).toBe(2023);
+        expect(utcDate.getMonth()).toBe(10);
+        expect(utcDate.getDate()).toBe(20);
+        expect(utcDate.getHours()).toBe(8);
+        expect(utcDate.getMinutes()).toBe(12);
+        expect(utcDate.getSeconds()).toBe(30);
+        const date2 = offsetDate(utcDate);
+        expect(date2.getFullYear()).toBe(2023);
+        expect(date2.getMonth()).toBe(10);
+        expect(date2.getDate()).toBe(20);
+        expect(date2.getHours()).toBe(16);
+        expect(date2.getMinutes()).toBe(12);
+        expect(date2.getSeconds()).toBe(30);
+    });
     test('test get', () => {
         const date = offsetDate('2023-11-20T07:35:11.830Z');
         expect(date.getFullYear()).toBe(2023);
@@ -13,8 +61,7 @@ describe('getOffsetDate', () => {
         expect(date.getSeconds()).toBe(11);
         expect(date.getTime()).toBe(new Date('2023-11-20T07:35:11.830Z').getTime());
         expect(date.getTime()).toBe(offsetDate(date).getTime());
-        expect(formatDate(date)).toBe("2023-11-20 15:35:11");
-
+        expect(formatDate(date)).toBe('2023-11-20 15:35:11');
     });
     test('test set', () => {
         const getDate = () => offsetDate('2023-11-20T07:35:11.830Z');

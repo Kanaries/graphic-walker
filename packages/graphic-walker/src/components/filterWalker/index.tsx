@@ -125,7 +125,7 @@ export function createFilterContext(components: {
                             return p;
                         }
                         case 'temporal': {
-                            const p = getTemporalRange(computation, x.fid);
+                            const p = getTemporalRange(computation, x.fid, x.offset);
                             domainsRef.current.set(k, p);
                             return p;
                         }

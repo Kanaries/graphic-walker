@@ -560,7 +560,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        getTemporalRange(computationFunction, field.fid).then(([min, max, format]) => setRes([min, max, format, true]));
+        getTemporalRange(computationFunction, field.fid, field.offset).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 
     const [min, max, format, loaded] = res;
