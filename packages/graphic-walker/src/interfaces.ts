@@ -53,6 +53,7 @@ export interface IMutField {
     semanticType: ISemanticType;
     analyticType: IAnalyticType;
     path?: string[];
+    offset?: number;
 }
 
 export interface IUncertainMutField {
@@ -97,6 +98,10 @@ export type IExpParameter =
     | {
           type: 'format';
           value: string;
+      }
+    | {
+          type: 'offset';
+          value: number;
       };
 
 export interface IExpression {
@@ -130,6 +135,7 @@ export interface IField {
     timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
     basename?: string;
     path?: string[];
+    offset?: number;
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
@@ -237,6 +243,8 @@ export type IFilterRule =
     | {
           type: 'temporal range';
           value: readonly [number, number];
+          offset?: number;
+          format?: string;
       }
     | {
           type: 'one of';

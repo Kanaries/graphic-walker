@@ -1,19 +1,21 @@
-import { DATE_TIME_FEATURE_LEVELS } from "../../constants";
-import type { IExpParameter } from "../../interfaces";
-import type { IDataFrame } from "../execExp";
-
+import { DATE_TIME_FEATURE_LEVELS } from '../../constants';
+import type { IExpParameter } from '../../interfaces';
+import type { IDataFrame } from '../execExp';
+import { newOffsetDate } from './offset';
 
 function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
-    const fieldKey = params.find(p => p.type === 'field')?.value;
-    const drillLevel = params.find(p => p.type === 'value')?.value as typeof DATE_TIME_FEATURE_LEVELS[number] | undefined;
+    const fieldKey = params.find((p) => p.type === 'field')?.value;
+    const drillLevel = params.find((p) => p.type === 'value')?.value as (typeof DATE_TIME_FEATURE_LEVELS)[number] | undefined;
+    const offset = params.find((p) => p.type === 'offset')?.value ?? new Date().getTimezoneOffset();
     if (!fieldKey || !drillLevel) {
         return data;
     }
     const fieldValues = data[fieldKey];
+    const newDate = newOffsetDate(offset);
     switch (drillLevel) {
         case 'year': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getFullYear();
             });
             return {
@@ -22,8 +24,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'quarter': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 const Q = Math.floor(date.getMonth() / 3) + 1;
                 return Q;
             });
@@ -33,8 +35,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'month': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getMonth() + 1;
             });
             return {
@@ -43,18 +45,14 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'week': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 const _Y = date.getFullYear();
-                const _firstDayOfYear = new Date(_Y, 0, 1);
-                const _SundayOfFirstWeek = new Date(
-                    new Date(_firstDayOfYear).setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay())
-                );
+                const _firstDayOfYear = newDate(_Y, 0, 1);
+                const _SundayOfFirstWeek = newDate(newDate(_firstDayOfYear).setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay()));
                 const Y = date.getTime() - _SundayOfFirstWeek.getTime() > 1_000 * 60 * 60 * 24 * 7 ? _Y : _SundayOfFirstWeek.getFullYear();
-                const firstDayOfYear = new Date(Y, 0, 1);
-                const SundayOfFirstWeek = new Date(
-                    new Date(firstDayOfYear).setDate(firstDayOfYear.getDate() - firstDayOfYear.getDay())
-                );
+                const firstDayOfYear = newDate(Y, 0, 1);
+                const SundayOfFirstWeek = newDate(newDate(firstDayOfYear).setDate(firstDayOfYear.getDate() - firstDayOfYear.getDay()));
                 const W = Math.floor((date.getTime() - SundayOfFirstWeek.getTime()) / (7 * 24 * 60 * 60 * 1_000)) + 1;
                 return W;
             });
@@ -64,8 +62,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'weekday': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getDay();
             });
             return {
@@ -74,8 +72,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'day': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getDate();
             });
             return {
@@ -84,8 +82,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'hour': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getHours();
             });
             return {
@@ -94,8 +92,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'minute': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getMinutes();
             });
             return {
@@ -104,8 +102,8 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             };
         }
         case 'second': {
-            const newValues = fieldValues.map(v => {
-                const date = new Date(v);
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
                 return date.getSeconds();
             });
             return {
@@ -118,6 +116,5 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
     }
 }
-
 
 export default dateTimeDrill;

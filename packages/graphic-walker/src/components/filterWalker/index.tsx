@@ -5,9 +5,10 @@ import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
 
 type rangeValue = [number, number];
+type temporalRangeValue = [number, number, string];
 
 type values = rangeValue | string[] | number[];
-type domains = rangeValue | string[];
+type domains = rangeValue | temporalRangeValue | string[];
 
 export interface FilterConfig {
     fid: string;
@@ -95,7 +96,7 @@ export function createFilterContext(components: {
                 configs.flatMap((x) => {
                     const f = rawFields.find((a) => a.fid === x.fid);
                     if (!f) return [];
-                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType }];
+                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset }];
                 }),
             [configs, rawFields]
         );
@@ -124,7 +125,7 @@ export function createFilterContext(components: {
                             return p;
                         }
                         case 'temporal': {
-                            const p = getTemporalRange(computation, x.fid);
+                            const p = getTemporalRange(computation, x.fid, x.offset);
                             domainsRef.current.set(k, p);
                             return p;
                         }
@@ -143,7 +144,8 @@ export function createFilterContext(components: {
                         valuesRef.current.set(k, v);
                         return v;
                     }
-                    const v = domains[i];
+                    const [min, max] = domains[i] as [number, number] | [number, number, string];
+                    const v: [number, number] = [min, max];
                     valuesRef.current.set(k, v);
                     return v;
                 });
@@ -153,36 +155,36 @@ export function createFilterContext(components: {
             })();
         }, [computation, fields]);
         const filters = wrapArray(
-            React.useMemo(
-                () =>
-                    fields
-                        .map(({ mode, type, fid }, i) => {
-                            const data = getDomainAndValue(mode, i, domains, values);
-                            if (!data) return null;
-                            const { domain, tag, value } = data;
-                            if (tag === 'array') {
-                                if (value.length === 0) return null;
-                                if (type === 'quantitative' || (type === 'temporal' && value.every((x) => !isNaN(Number(x))))) {
-                                    return createFilter(
-                                        fid,
-                                        value.map((x) => Number(x))
-                                    );
-                                }
-                                return createFilter(fid, value);
+            React.useMemo(() => {
+                const defaultOffset = new Date().getTimezoneOffset();
+                return fields
+                    .map(({ mode, type, fid, offset }, i) => {
+                        const data = getDomainAndValue(mode, i, domains, values);
+                        if (!data) return null;
+                        const { domain, tag, value } = data;
+                        if (tag === 'array') {
+                            if (value.length === 0) return null;
+                            if (type === 'quantitative' || (type === 'temporal' && value.every((x) => !isNaN(Number(x))))) {
+                                return createFilter(
+                                    fid,
+                                    value.map((x) => Number(x))
+                                );
                             }
-                            // value and domain is rangeValue
-                            switch (type) {
-                                case 'quantitative':
-                                    return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
-                                case 'temporal':
-                                    return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1]);
-                                default:
-                                    throw new Error('Cannot use range on nominal/ordinal field.');
-                            }
-                        })
-                        .filter((x): x is IVisFilter => !!x),
-                [values, fields]
-            )
+                            return createFilter(fid, value);
+                        }
+                        // value and domain is rangeValue
+                        switch (type) {
+                            case 'quantitative':
+                                return isSameRange(value, domain) ? null : createRangeFilter(fid, value[0], value[1]);
+                            case 'temporal':
+                                const d = domain as unknown as temporalRangeValue;
+                                return isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], d[2], offset ?? defaultOffset);
+                            default:
+                                throw new Error('Cannot use range on nominal/ordinal field.');
+                        }
+                    })
+                    .filter((x): x is IVisFilter => !!x);
+            }, [values, fields])
         );
         const filteredComputation = React.useMemo<IComputationFunction>(() => {
             return (query) => computation(addFilterForQuery(query, filters));
@@ -262,12 +264,14 @@ export function createFilterContext(components: {
     };
 }
 
-function createDateFilter(fid: string, from: number, to: number): IVisFilter {
+function createDateFilter(fid: string, from: number, to: number, format: string, offset: number): IVisFilter {
     return {
         fid,
         rule: {
             type: 'temporal range',
             value: [from, to],
+            format,
+            offset,
         },
     };
 }
@@ -295,7 +299,8 @@ function createFilter(fid: string, value: (string | number)[]): IVisFilter {
 export const useTemporalFilter = (
     computation: IComputationFunction,
     fid: string,
-    initValue?: rangeValue | (() => rangeValue)
+    initValue?: rangeValue | (() => rangeValue),
+    offset?: number
 ): {
     filter: IVisFilter | null;
     domain: rangeValue;
@@ -304,14 +309,20 @@ export const useTemporalFilter = (
 } => {
     const [value, setValue] = React.useState<rangeValue>(initValue ?? [0, 0]);
     const [domain, setDomain] = React.useState<rangeValue>([0, 0]);
+    const [format, setFormat] = React.useState('');
     useEffect(() => {
         (async () => {
-            const domain = await getTemporalRange(computation, fid);
-            setDomain(domain);
-            if (isEmptyRange(value)) setValue(domain);
+            const [min, max, format] = await getTemporalRange(computation, fid);
+            const newDomain: rangeValue = [min, max];
+            setDomain(newDomain);
+            setFormat(format);
+            if (isEmptyRange(value)) setValue(newDomain);
         })();
     }, [computation, fid]);
-    const filter = React.useMemo(() => (isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1])), [value, domain, fid]);
+    const filter = React.useMemo(
+        () => (isSameRange(value, domain) ? null : createDateFilter(fid, value[0], value[1], format, offset ?? new Date().getTimezoneOffset())),
+        [value, domain, fid]
+    );
     return {
         filter,
         domain,

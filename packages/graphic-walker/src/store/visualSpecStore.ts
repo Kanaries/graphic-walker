@@ -48,7 +48,7 @@ import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
-const viewEncodingKeys = (geom: string) => {
+export const viewEncodingKeys = (geom: string) => {
     switch (geom) {
         case 'choropleth':
             return ['geoId', 'color', 'opacity', 'text', 'details'];
@@ -400,9 +400,19 @@ export class VizSpecStore {
         index: number,
         drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
         name: string,
-        format: string
+        format: string,
+        offset: number
     ) {
-        this.visList[this.visIndex] = performers.createDateDrillField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+        this.visList[this.visIndex] = performers.createDateDrillField(
+            this.visList[this.visIndex],
+            stateKey,
+            index,
+            drillLevel,
+            uniqueId(),
+            name,
+            format,
+            offset
+        );
     }
 
     public createDateFeatureField(
@@ -410,9 +420,19 @@ export class VizSpecStore {
         index: number,
         drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
         name: string,
-        format: string
+        format: string,
+        offset: number
     ) {
-        this.visList[this.visIndex] = performers.createDateFeatureField(this.visList[this.visIndex], stateKey, index, drillLevel, uniqueId(), name, format);
+        this.visList[this.visIndex] = performers.createDateFeatureField(
+            this.visList[this.visIndex],
+            stateKey,
+            index,
+            drillLevel,
+            uniqueId(),
+            name,
+            format,
+            offset
+        );
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
