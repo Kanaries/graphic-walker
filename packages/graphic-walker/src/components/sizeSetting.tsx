@@ -32,11 +32,11 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
                         setInnerWidth(Math.round(Number(e.target.value) ** 2 * 1000));
                     }}
                 />
-                <output className="text-sm ml-1" htmlFor="width">
+                <output className="ml-1" htmlFor="width">
                     {`${t("width")}: ${innerWidth}`}
                 </output>
             </div>
-            <div className=" mt-2">
+            <div className="mt-2">
                 <input
                     className="w-full h-2 bg-blue-100 appearance-none"
                     style={{ cursor: "ew-resize" }}
@@ -50,7 +50,7 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
                         setInnerHeight(Math.round(Number(e.target.value) ** 2 * 1000));
                     }}
                 />
-                <output className="text-sm ml-1" htmlFor="height">
+                <output className="ml-1" htmlFor="height">
                     {`${t("height")}: ${innerHeight}`}
                 </output>
             </div>

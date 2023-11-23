@@ -24,7 +24,7 @@ export default function LimitSetting(props: { value: number; setValue: (v: numbe
                     }
                 }}
             />
-            <output className="text-sm ml-1" htmlFor="height">
+            <output className="ml-1" htmlFor="height">
                 <input
                     type="checkbox"
                     className="h-4 w-4 mr-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
