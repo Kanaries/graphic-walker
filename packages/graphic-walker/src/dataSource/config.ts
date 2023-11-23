@@ -22,7 +22,7 @@ export const DemoDataAssets = process.env.NODE_ENV === 'production' ? {
     EARTHQUAKE: '/datasets/ds-earthquake-service.json'
 } as const;
 
-interface IPublicData {
+export interface IPublicData {
     key: string;
     title: string;
     desc?: string;
