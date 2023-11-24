@@ -1,14 +1,12 @@
 import {
-    IChart,
     IMutField,
     DraggableFieldState,
     IFilterRule,
     IViewField,
     ISortMode,
     IAggregator,
-    SetToArray,
     IVisualLayout,
-    IChartForExport,
+    IChart,
     IVisualConfigNew,
     IVisSpec,
     PartialChart,
@@ -18,7 +16,6 @@ import {
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields } from '../utils';
-import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
@@ -60,7 +57,7 @@ type PropsMap = {
     [Methods.createBinlogField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2' | 'log', string, number];
     [Methods.appendFilter]: [number, normalKeys, number, string];
     [Methods.modFilter]: [number, normalKeys, number];
-    [Methods.writeFilter]: [number, SetToArray<IFilterRule> | null];
+    [Methods.writeFilter]: [number, IFilterRule | null];
     [Methods.setName]: [string];
     [Methods.applySort]: [ISortMode];
     [Methods.transpose]: [];
@@ -167,7 +164,7 @@ const actions: {
             }));
         }),
     [Methods.writeFilter]: (data, index, rule) =>
-        mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule: decodeFilterRule(rule) }))),
+        mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule }))),
     [Methods.setName]: (data, name) => ({
         ...data,
         name,
@@ -360,26 +357,6 @@ export const performers = Object.fromEntries(
     [K in keyof typeof Methods]: (data: VisSpecWithHistory, ...args: PropsMap[(typeof Methods)[K]]) => VisSpecWithHistory;
 };
 
-export function encodeVisSpec(data: IChart): IChartForExport {
-    return mutPath(data, 'encodings.filters', (f) =>
-        f.map((x) => ({
-            ...x,
-            rule: encodeFilterRule(x.rule),
-        }))
-    );
-}
-export function decodeVisSpec(snapshot: Partial<IChartForExport>): PartialChart {
-    return mutPath(snapshot, 'encodings', (e) => {
-        const filters = e?.filters?.map((x) => ({
-            ...x,
-            rule: decodeFilterRule(x.rule),
-        }));
-        return {
-            ...e,
-            filters,
-        };
-    });
-}
 function emptyChart(visId: string, name: string): IChart {
     return {
         config: emptyVisualConfig,
@@ -452,34 +429,34 @@ export function fromFields(fields: IMutField[], name: string): VisSpecWithHistor
     return create(newChart(fields, name));
 }
 type VisSpecHistoryInfoForExport = {
-    base: Partial<IChartForExport>;
+    base: Partial<IChart>;
     timeline: VisAction[];
 };
 export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string {
     const result: VisSpecHistoryInfoForExport = {
-        base: encodeVisSpec(data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base),
+        base: data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base,
         timeline: data.timeline.slice(Math.max(0, data.cursor - maxHistory)),
     };
     return JSON.stringify(result);
 }
 
 export function exportNow(data: VisSpecWithHistory) {
-    return encodeVisSpec(data.now);
+    return data.now;
 }
 
-export function importNow(data: IChartForExport) {
-    return fromSnapshot(decodeVisSpec(data));
+export function importNow(data: IChart) {
+    return fromSnapshot(data);
 }
 
 export function importFull(data: string): VisSpecWithHistory {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
-    const base = fromSnapshot(decodeVisSpec(result.base));
+    const base = fromSnapshot(result.base);
     return result.timeline.reduce(perform, base);
 }
 
 export function resolveChart(data: string): IChart {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
-    const base = fillChart(decodeVisSpec(result.base));
+    const base = fillChart(result.base);
     return result.timeline.reduce(reducer, base);
 }
 

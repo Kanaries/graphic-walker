@@ -1,34 +1,26 @@
-import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IRow } from "../interfaces";
-import { applyFilter, applySort, applyViewQuery, transformDataService } from "../services";
+import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IRow } from '../interfaces';
+import { applyFilter, applySort, applyViewQuery, transformDataService } from '../services';
 
-export const dataQueryClient = async (
-    rawData: IRow[],
-    workflow: IDataQueryWorkflowStep[],
-    offset?: number,
-    limit?: number,
-): Promise<IRow[]> => {
-    if (process.env.NODE_ENV !== "production") {
+export const dataQueryClient = async (rawData: IRow[], workflow: IDataQueryWorkflowStep[], offset?: number, limit?: number): Promise<IRow[]> => {
+    if (process.env.NODE_ENV !== 'production') {
         console.log('local query triggered', workflow);
     }
     let res = rawData;
     for await (const step of workflow) {
         switch (step.type) {
             case 'filter': {
-                res = await applyFilter(res, step.filters.map(filter => {
-                    const res: IFilterFiledSimple = {
-                        fid: filter.fid,
-                        rule: null,
-                    };
-                    if (filter.rule.type === 'one of' || filter.rule.type === 'not in') {
-                        res.rule = {
-                            type: filter.rule.type,
-                            value: new Set(filter.rule.value),
-                        };
-                    } else {
-                        res.rule = filter.rule;
-                    }
-                    return res;
-                }).filter(Boolean));
+                res = await applyFilter(
+                    res,
+                    step.filters
+                        .map((filter) => {
+                            const res: IFilterFiledSimple = {
+                                fid: filter.fid,
+                                rule: filter.rule,
+                            };
+                            return res;
+                        })
+                        .filter(Boolean)
+                );
                 break;
             }
             case 'transform': {
@@ -52,7 +44,7 @@ export const dataQueryClient = async (
             }
         }
     }
-    return res.slice(offset ?? 0, limit ? ((offset ?? 0) + limit) : undefined);
+    return res.slice(offset ?? 0, limit ? (offset ?? 0) + limit : undefined);
 };
 
-export const getComputation = (rawData: IRow[]) => (payload: IDataQueryPayload) => dataQueryClient(rawData, payload.workflow, payload.offset, payload.limit)
+export const getComputation = (rawData: IRow[]) => (payload: IDataQueryPayload) => dataQueryClient(rawData, payload.workflow, payload.offset, payload.limit);

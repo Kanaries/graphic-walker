@@ -1,7 +1,7 @@
-import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
+import React, { useContext, useMemo, useEffect, createContext, useRef, useCallback } from 'react';
 import { CommonStore } from './commonStore';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IMutField, IRow } from '../interfaces';
+import { IComputationFunction, IMutField, ISpecChange } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -22,6 +22,7 @@ const getVizStore = createKeepAliveContext(
         opts?: {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            onSpecChange?: (change: ISpecChange) => void;
         }
     ) => new VizSpecStore(meta, opts)
 );
@@ -61,18 +62,27 @@ interface VizStoreWrapperProps {
     children?: React.ReactNode;
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    onSpecChange?: (change: ISpecChange) => void;
+}
+
+function useRefSyncer<T>(item: T, sync: (item: T) => void, syncDeps: any[]) {
+    const ref = useRef(item);
+    const syncF = useCallback(sync, syncDeps);
+    useEffect(() => {
+        if (ref.current !== item) {
+            syncF(item);
+            ref.current = item;
+        }
+    }, [item, syncF]);
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
-    const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange }), [storeKey]);
-    const lastMeta = useRef(props.meta);
-    useEffect(() => {
-        if (lastMeta.current !== props.meta) {
-            store.setMeta(props.meta);
-            lastMeta.current = props.meta;
-        }
-    }, [props.meta, store]);
+    const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, onSpecChange: props.onSpecChange }), [storeKey]);
+    useRefSyncer(props.meta, (x) => store.setMeta(x), [store]);
+    useRefSyncer(props.onMetaChange, (x) => store.setOnMetaChange(x), [store]);
+    useRefSyncer(props.onSpecChange, (x) => store.setOnSpecChange(x), [store]);
+
     useEffect(() => {
         if (props.storeRef) {
             const ref = props.storeRef;

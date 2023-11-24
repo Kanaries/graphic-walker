@@ -7,7 +7,6 @@ import { dataReadRaw } from '../../computation';
 import Pagination from './pagination';
 import DropdownContext from '../dropdownContext';
 import DataTypeIcon from '../dataTypeIcon';
-import { encodeFilterRule } from '../../utils/filter';
 import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog';
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
@@ -195,7 +194,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
 
     // Get count when filter changed
     useEffect(() => {
-        const f = filters.filter((x) => x.rule).map((x) => ({ ...x, rule: encodeFilterRule(x.rule)! }));
+        const f = filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule }));
         setStatLoading(true);
         computation({
             workflow: [
@@ -244,7 +243,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         const taskId = ++taskIdRef.current;
         dataReadRaw(computationFunction, size, pageIndex, {
             sorting,
-            filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: encodeFilterRule(x.rule)! })),
+            filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
         })
             .then((data) => {
                 if (taskId === taskIdRef.current) {

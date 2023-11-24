@@ -1,14 +1,4 @@
-import {
-    DraggableFieldState,
-    IDataSet,
-    IDataSource,
-    IMutField,
-    IVisSpec,
-    IVisSpecForExport,
-    IVisualConfig,
-    IVisualConfigNew,
-    IVisualLayout,
-} from '../interfaces';
+import { DraggableFieldState, IDataSet, IDataSource, IMutField, IVisSpec, IVisualConfig, IVisualConfigNew, IVisualLayout } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 
 export function initEncoding(): DraggableFieldState {
@@ -123,30 +113,17 @@ export const emptyEncodings: DraggableFieldState = {
     text: [],
 };
 
-export function visSpecDecoder(visSpec: IVisSpecForExport): IVisSpec {
-    const updatedFilters = visSpec.encodings.filters.map((filter) => {
-        if (filter.rule?.type === 'one of' && Array.isArray(filter.rule.value)) {
-            return {
-                ...filter,
-                rule: {
-                    ...filter.rule,
-                    value: new Set(filter.rule.value),
-                },
-            };
-        }
-        return filter;
-    });
+export function visSpecDecoder(visSpec: IVisSpec): IVisSpec {
     return {
         ...visSpec,
         encodings: {
             ...initEncoding(),
             ...visSpec.encodings,
-            filters: updatedFilters,
         },
     } as IVisSpec;
 }
 
-export const forwardVisualConfigs = (content: IStoInfoOld['specList'][number]): IVisSpecForExport => {
+export const forwardVisualConfigs = (content: IStoInfoOld['specList'][number]): IVisSpec => {
     return {
         ...content,
         config: {
@@ -158,7 +135,7 @@ export const forwardVisualConfigs = (content: IStoInfoOld['specList'][number]): 
 export interface IStoInfoOld {
     $schema: undefined;
     datasets: IDataSet[];
-    specList: IVisSpecForExport[];
+    specList: IVisSpec[];
     dataSources: IDataSource[];
 }
 

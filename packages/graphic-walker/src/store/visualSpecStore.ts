@@ -32,18 +32,16 @@ import {
     IVisualLayout,
     Specification,
     ICoordMode,
-    IVisSpecForExport,
     IGeoUrl,
     ICreateField,
     ISemanticType,
-    IChartForExport,
+    ISpecChange,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
-import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 
@@ -98,24 +96,46 @@ export class VizSpecStore {
     showAskvizFeedbackIndex: number | undefined = 0;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+    private onSpecChange?: (change: ISpecChange) => void;
 
+    setOnMetaChange(f?: (fid: string, diffMeta: Partial<IMutField>) => void) {
+        this.onMetaChange = f;
+    }
+    setOnSpecChange(f?: (change: ISpecChange) => void) {
+        this.onSpecChange = f;
+    }
     constructor(
         meta: IMutField[],
         options?: {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            onSpecChange?: (change: ISpecChange) => void;
         }
     ) {
         this.meta = meta;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
         this.createdVis = this.visList.length;
         this.onMetaChange = options?.onMetaChange;
+        this.onSpecChange = options?.onSpecChange;
         makeAutoObservable(this, {
             visList: observable.shallow,
             allEncodings: computed.struct,
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
+    }
+
+    private mutVisSpec(index: number, f: (spec: VisSpecWithHistory) => VisSpecWithHistory) {
+        this.visList[index] = f(this.visList[index]);
+        this.onSpecChange?.({
+            index,
+            spec: this.visList[index].now,
+            type: 'replace',
+        });
+    }
+
+    private mutCurrentVisSpec(f: (spec: VisSpecWithHistory) => VisSpecWithHistory) {
+        this.mutVisSpec(this.visIndex, f);
     }
 
     get visLength() {
@@ -240,20 +260,20 @@ export class VizSpecStore {
         if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID) {
             return;
         }
-        this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, uniqueId());
+        this.mutCurrentVisSpec((x) => performers.appendFilter(x, index, sourceKey, sourceIndex, uniqueId()));
         this.editingFilterIdx = index;
     }
 
     undo() {
-        this.visList[this.visIndex] = undo(this.visList[this.visIndex]);
+        this.mutCurrentVisSpec(undo);
     }
 
     redo() {
-        this.visList[this.visIndex] = redo(this.visList[this.visIndex]);
+        this.mutCurrentVisSpec(redo);
     }
 
     setVisName(index: number, name: string) {
-        this.visList[index] = performers.setName(this.visList[index], name);
+        this.mutVisSpec(index, (x) => performers.setName(x, name));
     }
 
     setMeta(meta: IMutField[]) {
@@ -263,6 +283,7 @@ export class VizSpecStore {
     resetVisualization(name = 'Chart 1') {
         this.visList = [fromFields(this.meta, name)];
         this.createdVis = 1;
+        this.onSpecChange?.({ type: 'reset', specs: this.visList.map((x) => x.now) });
     }
 
     addVisualization(defaultName?: string | ((index: number) => string)) {
@@ -270,12 +291,14 @@ export class VizSpecStore {
         this.visList.push(fromFields(this.meta, name));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        this.onSpecChange?.({ type: 'insert', index: this.visIndex, spec: this.visList[this.visIndex].now });
     }
 
     removeVisualization(index: number) {
         if (this.visLength === 1) return;
         if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
         this.visList.splice(index, 1);
+        this.onSpecChange?.({ type: 'remove', index });
     }
 
     duplicateVisualization(index: number) {
@@ -288,6 +311,7 @@ export class VizSpecStore {
         );
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        this.onSpecChange?.({ type: 'insert', index: this.visIndex, spec: this.visList[this.visIndex].now });
     }
 
     setFilterEditing(index: number) {
@@ -303,27 +327,27 @@ export class VizSpecStore {
     }
 
     setVisualConfig(...args: KVTuple<IVisualConfigNew>) {
-        this.visList[this.visIndex] = performers.setConfig(this.visList[this.visIndex], ...args);
+        this.mutCurrentVisSpec((v) => performers.setConfig(v, ...args));
     }
 
     setCoordSystem(mode: ICoordMode) {
-        this.visList[this.visIndex] = performers.setCoordSystem(this.visList[this.visIndex], mode);
+        this.mutCurrentVisSpec((v) => performers.setCoordSystem(v, mode));
     }
 
     setVisualLayout(...args: KVTuple<IVisualLayout>);
     setVisualLayout(...args: KVTuple<IVisualLayout>[]);
     setVisualLayout(...args: KVTuple<IVisualLayout> | KVTuple<IVisualLayout>[]) {
         if (typeof args[0] === 'string') {
-            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], [args]);
+            this.mutCurrentVisSpec((v) => performers.setLayout(v, [args]));
         } else {
-            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], args);
+            this.mutCurrentVisSpec((v) => performers.setLayout(v, args));
         }
     }
 
     reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
         if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
-        this.visList[this.visIndex] = performers.reorderField(this.visList[this.visIndex], stateKey, sourceIndex, destinationIndex);
+        this.mutCurrentVisSpec((v) => performers.reorderField(v, stateKey, sourceIndex, destinationIndex));
     }
 
     moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
@@ -340,37 +364,29 @@ export class VizSpecStore {
         }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
-            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
+            this.mutCurrentVisSpec((v) => performers.moveField(v, sourceKey, sourceIndex, destinationKey, destinationIndex, limit));
         } else if (destMeta) {
-            this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+            this.mutCurrentVisSpec((v) => performers.removeField(v, sourceKey, sourceIndex));
         } else {
-            this.visList[this.visIndex] = performers.cloneField(
-                this.visList[this.visIndex],
-                sourceKey,
-                sourceIndex,
-                destinationKey,
-                destinationIndex,
-                uniqueId(),
-                limit
-            );
+            this.mutCurrentVisSpec((v) => performers.cloneField(v, sourceKey, sourceIndex, destinationKey, destinationIndex, uniqueId(), limit));
         }
     }
 
     modFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
-        this.visList[this.visIndex] = performers.modFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex);
+        this.mutCurrentVisSpec((v) => performers.modFilter(v, index, sourceKey, sourceIndex));
     }
 
     removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
         if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
-        this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+        this.mutCurrentVisSpec((v) => performers.removeField(v, sourceKey, sourceIndex));
     }
 
     writeFilter(index: number, rule: IFilterRule | null) {
-        this.visList[this.visIndex] = performers.writeFilter(this.visList[this.visIndex], index, encodeFilterRule(rule));
+        this.mutCurrentVisSpec((v) => performers.writeFilter(v, index, rule));
     }
 
     transpose() {
-        this.visList[this.visIndex] = performers.transpose(this.visList[this.visIndex]);
+        this.mutCurrentVisSpec((v) => performers.transpose(v));
     }
 
     createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount', binNumber = 10): string {
@@ -387,12 +403,12 @@ export class VizSpecStore {
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
         }
-        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, binType, newVarKey, binNumber);
+        this.mutCurrentVisSpec((v) => performers.createBinlogField(v, stateKey, index, binType, newVarKey, binNumber));
         return newVarKey;
     }
 
     createLogField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, scaleType: 'log10' | 'log2' | 'log', logNumber = 10) {
-        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId(), logNumber);
+        this.mutCurrentVisSpec((v) => performers.createBinlogField(v, stateKey, index, scaleType, uniqueId(), logNumber));
     }
 
     public createDateTimeDrilledField(
@@ -403,16 +419,7 @@ export class VizSpecStore {
         format: string,
         offset: number
     ) {
-        this.visList[this.visIndex] = performers.createDateDrillField(
-            this.visList[this.visIndex],
-            stateKey,
-            index,
-            drillLevel,
-            uniqueId(),
-            name,
-            format,
-            offset
-        );
+        this.mutCurrentVisSpec((v) => performers.createDateDrillField(v, stateKey, index, drillLevel, uniqueId(), name, format, offset));
     }
 
     public createDateFeatureField(
@@ -423,28 +430,19 @@ export class VizSpecStore {
         format: string,
         offset: number
     ) {
-        this.visList[this.visIndex] = performers.createDateFeatureField(
-            this.visList[this.visIndex],
-            stateKey,
-            index,
-            drillLevel,
-            uniqueId(),
-            name,
-            format,
-            offset
-        );
+        this.mutCurrentVisSpec((v) => performers.createDateFeatureField(v, stateKey, index, drillLevel, uniqueId(), name, format, offset));
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
-        this.visList[this.visIndex] = performers.setFieldAggregator(this.visList[this.visIndex], stateKey, index, aggName);
+        this.mutCurrentVisSpec((v) => performers.setFieldAggregator(v, stateKey, index, aggName));
     }
 
     setFilterAggregator(index: number, aggName: IAggregator | '') {
-        this.visList[this.visIndex] = performers.setFilterAggregator(this.visList[this.visIndex], index, aggName);
+        this.mutCurrentVisSpec((v) => performers.setFilterAggregator(v, index, aggName));
     }
 
     applyDefaultSort(sortType: ISortMode = 'ascending') {
-        this.visList[this.visIndex] = performers.applySort(this.visList[this.visIndex], sortType);
+        this.mutCurrentVisSpec((v) => performers.applySort(v, sortType));
     }
 
     exportCurrentChart() {
@@ -459,8 +457,8 @@ export class VizSpecStore {
         return this.visList.map((x) => exportNow(x));
     }
 
-    importCode(data: IChartForExport[] | IVisSpecForExport[]) {
-        this.visList = data.map((x: IChartForExport | IVisSpecForExport) => {
+    importCode(data: IChart[] | IVisSpec[]) {
+        this.visList = data.map((x: IChart | IVisSpec) => {
             if ('layout' in x) {
                 return importNow(x);
             } else {
@@ -469,6 +467,7 @@ export class VizSpecStore {
         });
         this.createdVis = this.visList.length;
         this.visIndex = 0;
+        this.onSpecChange?.({ type: 'reset', specs: this.visList.map((x) => x.now) });
     }
 
     appendRaw(data: string) {
@@ -476,19 +475,22 @@ export class VizSpecStore {
         this.visList.push(newChart);
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        this.onSpecChange?.({ type: 'insert', index: this.visIndex, spec: this.visList[this.visIndex].now });
     }
 
     importRaw(data: string[]) {
         this.visList = data.map(importFull);
         this.createdVis = this.visList.length;
         this.visIndex = 0;
+        this.onSpecChange?.({ type: 'reset', specs: this.visList.map((x) => x.now) });
     }
 
-    appendFromCode(data: IVisSpecForExport | IChartForExport) {
+    appendFromCode(data: IVisSpec | IChart) {
         const newChart = 'layout' in data ? importNow(data) : fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
         this.visList.push(newChart);
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        this.onSpecChange?.({ type: 'insert', index: this.visIndex, spec: this.visList[this.visIndex].now });
     }
 
     setAskvizFeedback(show: boolean) {
@@ -497,6 +499,11 @@ export class VizSpecStore {
 
     replaceNow(chart: IChart) {
         this.visList[this.visIndex] = fromSnapshot(chart);
+        this.onSpecChange?.({
+            index: this.visIndex,
+            spec: chart,
+            type: 'replace',
+        });
     }
 
     selectVisualization(index: number) {
@@ -556,18 +563,18 @@ export class VizSpecStore {
         }
         this.localGeoJSON = geoJSON;
         if (geoUrl) {
-            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, geoKey, geoUrl);
+            this.mutCurrentVisSpec((v) => performers.setGeoData(v, undefined, geoKey, geoUrl));
         } else {
-            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
+            this.mutCurrentVisSpec((v) => performers.setGeoData(v, geoJSON, geoKey, undefined));
         }
     }
 
     clearGeographicData() {
-        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, undefined, undefined);
+        this.mutCurrentVisSpec((v) => performers.setGeoData(v, undefined, undefined, undefined));
     }
 
     changeSemanticType(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, semanticType: ISemanticType) {
-        this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
+        this.mutCurrentVisSpec((v) => performers.changeSemanticType(v, stateKey, index, semanticType));
     }
 
     updateGeoKey(key: string) {

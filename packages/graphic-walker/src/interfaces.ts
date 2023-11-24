@@ -248,11 +248,11 @@ export type IFilterRule =
       }
     | {
           type: 'one of';
-          value: Set<string | number>;
+          value: (string | number)[];
       }
     | {
           type: 'not in';
-          value: Set<string | number>;
+          value: (string | number)[];
       };
 
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
@@ -372,12 +372,6 @@ export interface IVisSpec {
     readonly encodings: DeepReadonly<DraggableFieldState>;
     readonly config: DeepReadonly<IVisualConfig>;
 }
-
-export type SetToArray<T> = T extends object ? (T extends Set<infer U> ? Array<U> : { [K in keyof T]: SetToArray<T[K]> }) : T;
-
-export type IVisSpecForExport = SetToArray<IVisSpec>;
-
-export type IFilterFieldForExport = SetToArray<IFilterField>;
 
 export enum ISegmentKey {
     vis = 'vis',
@@ -519,7 +513,7 @@ export type IFieldTransform = {
 
 export interface IVisFilter {
     fid: string;
-    rule: SetToArray<IFilterRule>;
+    rule: IFilterRule;
 }
 
 export interface IFilterWorkflowStep {
@@ -615,8 +609,6 @@ export interface PartialChart {
     config?: Partial<IVisualConfigNew>;
     layout?: Partial<IVisualLayout>;
 }
-
-export type IChartForExport = SetToArray<IChart>;
 
 export type Topology = Parameters<typeof feature>[0];
 
@@ -807,7 +799,7 @@ export interface IVizProps {
             askviz?:
                 | string
                 | boolean
-                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
             feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
         };
     };
@@ -854,6 +846,7 @@ export type IGWProps = IAppI18nProps &
 
 export interface ISpecProps {
     spec?: Specification;
+    onSpecChange?: (change: ISpecChange) => void;
 }
 
 export interface ITableSpecProps {
@@ -869,3 +862,23 @@ export interface IAskVizFeedback {
     question: string;
     spec: string;
 }
+
+export type ISpecChange =
+    | {
+          type: 'replace';
+          index: number;
+          spec: IChart;
+      }
+    | {
+          type: 'insert';
+          index: number;
+          spec: IChart;
+      }
+    | {
+          type: 'remove';
+          index: number;
+      }
+    | {
+          type: 'reset';
+          specs: IChart[];
+      };

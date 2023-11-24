@@ -143,7 +143,7 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
 
 const useFieldStats = (
     field: IFilterField,
-    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number> },
+    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: (string | number)[] },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction
 ): IFieldStats | null => {
@@ -213,10 +213,7 @@ const useVisualCount = (
     onChange: (rule: IFilterRule) => void
 ) => {
     // fetch metaData of filter field, only fetch once per fid.
-    const initRuleValue = useMemo(
-        () => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : new Set<string | number>()),
-        [field.fid, computation]
-    );
+    const initRuleValue = useMemo(() => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : []), [field.fid, computation]);
     const metaData = useFieldStats(field, { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true }, 'none', computation);
     // sum of count of rule.
     const [selectedValueSum, setSelectedValueSum] = useState(0);
@@ -284,9 +281,9 @@ const useVisualCount = (
 
     const currentCount =
         field.rule?.type === 'one of'
-            ? field.rule.value.size
+            ? field.rule.value.length
             : metaData && field.rule?.type === 'not in'
-            ? metaData.valuesMeta.distinctTotal - field.rule.value.size
+            ? metaData.valuesMeta.distinctTotal - field.rule.value.length
             : 0;
 
     const currentSum =
@@ -297,7 +294,7 @@ const useVisualCount = (
         setSelectedValueSum(0);
         onChange({
             type: currentCount === metaData.valuesMeta.distinctTotal ? 'one of' : 'not in',
-            value: new Set(),
+            value: [],
         });
     }, [field.rule, onChange, metaData]);
     const handleToggleReverseSet = useCallback(() => {
@@ -320,7 +317,7 @@ const useVisualCount = (
             }
             onChange({
                 type: field.rule.type,
-                value: newValue,
+                value: [...newValue.values()],
             });
         },
         [field.rule, onChange]
@@ -365,7 +362,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         if (active && field.rule?.type !== 'one of' && field.rule?.type !== 'not in') {
             onChange({
                 type: 'not in',
-                value: new Set(),
+                value: [],
             });
         }
     }, [active, onChange, field]);
@@ -381,6 +378,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         estimateSize: () => 32,
         overscan: 10,
     });
+
+    const ruleSet = useMemo(() => {
+        return field.rule ? new Set(field.rule.value) : new Set();
+    }, [field.rule]);
 
     if (loading) {
         return (
@@ -475,8 +476,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         }
                         const { value, count } = item;
                         const id = `rule_checkbox_${idx}`;
-                        const checked =
-                            (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                        const checked = (field.rule?.type === 'one of' && ruleSet.has(value)) || (field.rule?.type === 'not in' && !ruleSet.has(value));
                         const displayValue = field.semanticType === 'temporal' ? formatDate(newOffsetDate(field.offset)(value)) : `${value}`;
                         return (
                             <TableRow
@@ -598,32 +598,28 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
         );
     }
 
-    return field.rule?.type === 'temporal range' ? (
+    const rule = field.rule;
+
+    if (!rule || rule.type !== 'temporal range') {
+        return null;
+    }
+
+    return (
         <Container className="overflow-visible">
             <div>{t('constant.filter_type.temporal_range')}</div>
             <div className="text-gray-500">{t('constant.filter_type.temporal_range_desc')}</div>
             <CalendarInputContainer>
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
-                    <CalendarInput
-                        min={min}
-                        max={field.rule.value[1]}
-                        value={field.rule.value[0]}
-                        onChange={(value) => handleChange([value, field.rule?.value[1]])}
-                    />
+                    <CalendarInput min={min} max={rule.value[1]} value={rule.value[0]} onChange={(value) => handleChange([value, rule.value[1]])} />
                 </div>
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.end_value')}</div>
-                    <CalendarInput
-                        min={field.rule.value[0]}
-                        max={max}
-                        value={field.rule.value[1]}
-                        onChange={(value) => handleChange([field.rule?.value[0], value])}
-                    />
+                    <CalendarInput min={rule.value[0]} max={max} value={rule.value[1]} onChange={(value) => handleChange([rule.value[0], value])} />
                 </div>
             </CalendarInputContainer>
         </Container>
-    ) : null;
+    );
 };
 
 export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange }) => {

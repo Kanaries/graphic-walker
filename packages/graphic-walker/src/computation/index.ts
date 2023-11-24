@@ -108,7 +108,7 @@ export const fieldStat = async (
         values?: boolean;
         range?: boolean;
         valuesMeta?: boolean;
-        selectedCount?: Set<string | number>;
+        selectedCount?: (string | number)[];
         valuesLimit?: number;
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
@@ -248,7 +248,7 @@ export const fieldStat = async (
               },
           ];
 
-    const selectedCountWork: IDataQueryPayload | null = options.selectedCount?.size
+    const selectedCountWork: IDataQueryPayload | null = options.selectedCount?.length
         ? {
               workflow: [
                   ...transformWork,
@@ -259,7 +259,7 @@ export const fieldStat = async (
                               fid: field.fid,
                               rule: {
                                   type: 'one of',
-                                  value: [...options.selectedCount],
+                                  value: options.selectedCount,
                               },
                           },
                       ],
