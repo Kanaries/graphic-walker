@@ -102,6 +102,7 @@ export function DataSourceSegmentComponent(props: {
         computation: IComputationFunction;
         storeRef: React.RefObject<VizSpecStore>;
         datasetName: string;
+        syncSpecs: () => void;
     }) => JSX.Element;
 }) {
     const [selectedId, setSelectedId] = useState('');
@@ -199,6 +200,13 @@ export function DataSourceSegmentComponent(props: {
         }
     }, [selectedId, props.provider]);
 
+    const syncSpecs = useCallback(() => {
+        const data = vizSpecStoreRef.current?.exportAllCharts();
+        if (data) {
+            props.provider.saveSpecs(selectedId, JSON.stringify(data));
+        }
+    }, [selectedId, props.provider]);
+
     return (
         <>
             <ShadowDom>
@@ -211,7 +219,14 @@ export function DataSourceSegmentComponent(props: {
                     onSave={onSave}
                 />
             </ShadowDom>
-            <props.children computation={computation} datasetName={dataset?.name ?? ''} meta={meta} onMetaChange={onMetaChange} storeRef={vizSpecStoreRef} />
+            <props.children
+                computation={computation}
+                datasetName={dataset?.name ?? ''}
+                meta={meta}
+                onMetaChange={onMetaChange}
+                storeRef={vizSpecStoreRef}
+                syncSpecs={syncSpecs}
+            />
         </>
     );
 }

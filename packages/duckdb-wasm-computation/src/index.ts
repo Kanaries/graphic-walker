@@ -31,7 +31,7 @@ let db: duckdb.AsyncDuckDB;
 
 export async function init() {
   if (inited) return;
-
+  inited = true;
   // Select a bundle based on browser checks
   const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
 
@@ -48,7 +48,6 @@ export async function init() {
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
   URL.revokeObjectURL(worker_url);
   await initWasm(dslWasm);
-  inited = true;
 }
 
 export async function getMemoryProvider(): Promise<IDataSourceProvider> {
@@ -58,8 +57,6 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
   const metaDict = new Map<string, IMutField[]>();
   const specDict = new Map<string, string>();
   const listeners: IDataSourceListener[] = [];
-  //@ts-ignore
-  window["db"] = db;
 
   return {
     async getDataSourceList() {
@@ -102,11 +99,12 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     },
     async queryData(query, datasetIds) {
       const sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
-      console.debug(query, sql);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(query, sql);
+      }
       const res = await conn
         .query(sql)
         .then((x) => x.toArray().map((r) => JSON.parse(r.toString())));
-      console.debug(res);
       return res;
     },
     registerCallback(cb) {
@@ -137,23 +135,13 @@ export async function getComutation(data: Record<string, number>[]) {
     },
     computation: async (query: any) => {
       const sql = parser_dsl_with_table(tableName, JSON.stringify(query));
-      console.log(query, sql);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(query, sql);
+      }
       const res = await conn
         .query(sql)
         .then((x) => x.toArray().map((r) => JSON.parse(r.toString())));
-      console.log(res);
       return res;
     },
   };
-}
-
-const nowComputation = {
-  current: null as null | ReturnType<typeof getComutation>,
-};
-
-export function getComutationSingleton(data: Record<string, number>[]) {
-  nowComputation.current?.then((x) => x.close());
-  nowComputation.current = getComutation(data);
-  return async (query: any) =>
-    (await nowComputation.current)!.computation(query);
 }
