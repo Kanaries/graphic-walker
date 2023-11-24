@@ -1,79 +1,24 @@
-import { computed, makeAutoObservable, toJS } from 'mobx';
-import { VizSpecStore } from './visualSpecStore';
 import { DataSet, IAnalyticType, IDataSource, IMutField, IRow, ISemanticType } from '../interfaces';
 import { getComputation } from '../computation/clientComputation';
-import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl } from '../utils/save';
+import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { uniqueId } from '../models/utils';
+import { convertChart, exportFullRaw, fromFields, fromSnapshot } from '../models/visSpecHistory';
 
 const emptyMeta: IMutField[] = [];
-
-const emptyVizStore = new VizSpecStore([]);
 
 export class DataStore {
     metaDict: Record<string, IMutField[]> = {};
     metaMap: Record<string, string> = {};
-    visDict: Record<string, VizSpecStore> = {};
+    visDict: Record<string, string[]> = {};
     dataSources: Required<IDataSource>[] = [];
-    dsIndex = 0;
 
-    constructor() {
-        makeAutoObservable(this, {
-            dataSource: computed.struct,
-        });
-    }
-
-    get dataSource(): Required<IDataSource> | undefined {
-        return this.dataSources[this.dsIndex];
-    }
-
-    get metaId() {
-        return this.dataSource?.metaId;
-    }
-
-    get meta() {
-        if (!this.metaId) return emptyMeta;
-        return this.metaDict[this.metaId] ?? emptyMeta;
-    }
-
-    get computation() {
-        return this.dataSource?.data ? getComputation(toJS(this.dataSource.data)) : async () => [];
-    }
-
-    get visSpecStore() {
-        if (!this.metaId || !this.meta.length) return emptyVizStore;
-        if (!this.visDict[this.metaId]) {
-            this.visDict[this.metaId] = new VizSpecStore(this.meta, { onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
-        }
-        return this.visDict[this.metaId];
-    }
-
-    get currentDataset(): DataSet {
-        return {
-            dataSource: this.dataSource?.data ?? [],
-            id: this.dataSource?.id ?? '',
-            name: this.dataSource?.name ?? '',
-            rawFields: this.meta,
-        };
-    }
-
-    updateCurrentDatasetMetas(fid: string, diffMeta: Partial<IMutField>) {
-        const field = this.meta.find((f) => f.fid === fid);
+    updateDatasetMetas(id: string, fid: string, diffMeta: Partial<IMutField>) {
+        const field = this.metaDict[id].find((f) => f.fid === fid);
         if (field) {
             for (let mk in diffMeta) {
                 field[mk] = diffMeta[mk];
             }
         }
-    }
-
-    useDS(dsid: string) {
-        const index = this.dataSources.findIndex((x) => x.id === dsid);
-        if (index > -1) {
-            this.setDatasetIndex(index);
-        }
-    }
-
-    setDatasetIndex(i: number) {
-        this.dsIndex = i;
     }
 
     importData(data: IStoInfo) {
@@ -86,19 +31,13 @@ export class DataStore {
             });
             this.metaMap = metaMap;
             this.dataSources = data.datasets;
-            this.visDict = Object.fromEntries(
-                Object.entries(data.specDict).map(([key, info]) => {
-                    const store = new VizSpecStore(data.metaDict[key], { empty: true, onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
-                    store.importRaw(info);
-                    return [key, store];
-                })
-            );
+            this.visDict = data.specDict;
         } else {
             const metaDict: Record<string, IMutField[]> = {};
             const dsDict = Object.fromEntries(data.dataSources.map((x) => [x.id, x]));
             const dataSources: Required<IDataSource>[] = [];
             const metaMap: Record<string, string> = {};
-            const visDict: Record<string, VizSpecStore> = {};
+            const visDict: Record<string, string[]> = {};
             data.datasets.forEach(({ dsId, id, name, rawFields }) => {
                 const key = encodeMeta(rawFields);
                 if (metaMap[key]) {
@@ -106,7 +45,7 @@ export class DataStore {
                 } else {
                     metaMap[key] = id;
                     metaDict[id] = rawFields;
-                    visDict[id] = new VizSpecStore(rawFields, { empty: true, onMetaChange: (f, d) => this.updateCurrentDatasetMetas(f, d) });
+                    visDict[id] = [];
                 }
                 const ds = dsDict[dsId]!;
                 dataSources.push({
@@ -121,25 +60,24 @@ export class DataStore {
                 data.specList.forEach((x) => {
                     const key = encodeMeta(x.encodings.dimensions.concat(x.encodings.measures).filter((x) => !x.computed));
                     const store = visDict[key] || visDict[defaultId];
-                    store.appendFromCode(x);
+                    store.push(exportFullRaw(fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(x))))));
                 });
             }
             this.metaDict = metaDict;
             this.visDict = visDict;
             this.dataSources = dataSources;
-            this.dsIndex = 0;
         }
     }
 
     exportData(): IStoInfoV2 {
         const resultSpecList: Record<string, string[]> = {};
         Object.keys(this.visDict).forEach((k) => {
-            resultSpecList[k] = this.visDict[k].exportAllCharts();
+            resultSpecList[k] = this.visDict[k];
         });
         return {
             $schema: IStoInfoV2SchemaUrl,
-            datasets: toJS(this.dataSources),
-            metaDict: toJS(this.metaDict),
+            datasets: this.dataSources,
+            metaDict: this.metaDict,
             specDict: resultSpecList,
         };
     }
@@ -149,15 +87,19 @@ export class DataStore {
         if (!this.metaMap[metaKey]) {
             this.metaMap[metaKey] = uniqueId();
         }
-        const id = this.metaMap[metaKey];
-        this.metaDict[id] = data.fields;
+        const metaId = this.metaMap[metaKey];
+        this.metaDict[metaId] = data.fields;
+        const id = uniqueId();
         this.dataSources.push({
             data: data.data,
-            id: uniqueId(),
-            metaId: id,
+            id,
+            metaId,
             name: data.name,
         });
-        this.dsIndex = this.dataSources.length - 1;
+        if (!this.visDict[metaId]) {
+            this.visDict[metaId] = [exportFullRaw(fromFields(data.fields, 'Chart 1'))];
+        }
+        return id;
     }
 }
 

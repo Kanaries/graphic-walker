@@ -3,7 +3,6 @@ import { FileReader } from '@kanaries/web-data-loader';
 import { IRow } from '../../interfaces';
 import Table from '../table';
 import styled from 'styled-components';
-import { useGlobalStore } from '../../store';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import DefaultButton from '../../components/button/default';
@@ -13,16 +12,18 @@ import { SUPPORTED_FILE_TYPES, charsetOptions } from './config';
 import { classNames } from '../../utils';
 import { RadioGroup } from '@headlessui/react';
 import { jsonReader } from './utils';
+import { CommonStore } from '../../store/commonStore';
 
 const Container = styled.div`
     overflow-x: auto;
     min-height: 300px;
 `;
 
-interface ICSVData {}
-const CSVData: React.FC<ICSVData> = (props) => {
+interface ICSVData {
+    commonStore: CommonStore;
+}
+const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
     const fileRef = useRef<HTMLInputElement>(null);
-    const commonStore = useGlobalStore();
     const { tmpDSName, tmpDataSource, tmpDSRawFields } = commonStore;
     const [encoding, setEncoding] = useState<string>('utf-8');
     const [fileType, setFileType] = useState<string>('csv');
@@ -146,7 +147,7 @@ const CSVData: React.FC<ICSVData> = (props) => {
                     />
                 </div>
             )}
-            {fileLoaded && <Table />}
+            {fileLoaded && <Table commonStore={commonStore} />}
         </Container>
     );
 };

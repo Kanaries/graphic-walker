@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Modal from "../modal";
 import { observer } from "mobx-react-lite";
-import { useCompututaion, useGlobalStore, useVizStore } from "../../store";
+import { useCompututaion, useVizStore } from "../../store";
 import { useTranslation } from "react-i18next";
 import { getMeaAggKey } from '../../utils';
 import styled from 'styled-components';

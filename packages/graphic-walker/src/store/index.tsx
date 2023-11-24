@@ -1,5 +1,4 @@
 import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
-import { CommonStore } from './commonStore';
 import { VizSpecStore } from './visualSpecStore';
 import { IComputationFunction, IMutField, IRow } from '../interfaces';
 
@@ -15,7 +14,6 @@ function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     };
 }
 
-const getCommonStore = createKeepAliveContext(() => new CommonStore());
 const getVizStore = createKeepAliveContext(
     (
         meta: IMutField[],
@@ -26,35 +24,10 @@ const getVizStore = createKeepAliveContext(
     ) => new VizSpecStore(meta, opts)
 );
 
-const StoreContext = React.createContext<CommonStore>(null!);
 export const VisContext = React.createContext<VizSpecStore>(null!);
-interface StoreWrapperProps {
-    keepAlive?: boolean | string;
-    storeRef?: React.MutableRefObject<CommonStore | null>;
-    children?: React.ReactNode;
-}
 
 const noop = () => {};
 
-export const StoreWrapper = (props: StoreWrapperProps) => {
-    const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
-    const store = useMemo(() => getCommonStore(storeKey), [storeKey]);
-    useEffect(() => {
-        if (props.storeRef) {
-            const ref = props.storeRef;
-            ref.current = store;
-            return () => {
-                ref.current = null;
-            };
-        }
-        return noop;
-    }, [props.storeRef, store]);
-    return <StoreContext.Provider value={store}>{props.children}</StoreContext.Provider>;
-};
-
-export function useGlobalStore() {
-    return useContext(StoreContext);
-}
 interface VizStoreWrapperProps {
     keepAlive?: boolean | string;
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
@@ -73,6 +46,14 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
             lastMeta.current = props.meta;
         }
     }, [props.meta, store]);
+    const lastOnMetaChange = useRef(props.onMetaChange);
+    useEffect(() => {
+        if (lastOnMetaChange.current !== props.onMetaChange) {
+            store.setOnMetaChange(props.onMetaChange);
+            lastOnMetaChange.current = props.onMetaChange;
+        }
+    }, [props.meta, store]);
+
     useEffect(() => {
         if (props.storeRef) {
             const ref = props.storeRef;
