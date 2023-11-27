@@ -9,10 +9,13 @@ import type {
     ISortWorkflowStep,
     IDataQueryPayload,
     IFilterField,
+    IChartForExport,
 } from '../interfaces';
-import type { VizSpecStore } from '../store/visualSpecStore';
-import { getFilterMeaAggKey, getMeaAggKey } from '.';
+import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
+import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { encodeFilterRule } from './filter';
+import { decodeVisSpec } from '../models/visSpecHistory';
 
 const walkExpression = (expression: IExpression, each: (field: string) => void): void => {
     for (const param of expression.params) {
@@ -183,7 +186,10 @@ export const toWorkflow = (
             query: [
                 {
                     op: 'aggregate',
-                    groupBy: deduper(viewDimensions.map((f) => f.fid), x => x),
+                    groupBy: deduper(
+                        viewDimensions.map((f) => f.fid),
+                        (x) => x
+                    ),
                     measures: deduper(
                         viewMeasures.concat(aggergatedFilter).map((f) => ({
                             field: f.fid,
@@ -215,7 +221,7 @@ export const toWorkflow = (
         };
     }
 
-    if (sort !== 'none' && limit) {
+    if (sort !== 'none' && limit && limit !== -1) {
         sortWorkflow = {
             type: 'sort',
             by: viewMeasures.map((f) => (aggergated ? getMeaAggKey(f.fid, f.aggName) : f.fid)),
@@ -285,3 +291,24 @@ export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[
         workflow: [filterQuery, ...query.workflow],
     };
 };
+
+export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
+    const c = decodeVisSpec(chart);
+    const viewEncodingFields = viewEncodingKeys(c.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => c.encodings?.[k] ?? []);
+    const rows = c.encodings?.rows ?? [];
+    const columns = c.encodings?.columns ?? [];
+    const limit = c.config?.limit ?? -1;
+    return {
+        workflow: toWorkflow(
+            c.encodings?.filters ?? [],
+            [...(c.encodings?.dimensions ?? []), ...(c.encodings?.measures ?? [])],
+            viewEncodingFields.filter((x) => x.analyticType === 'dimension'),
+            viewEncodingFields.filter((x) => x.analyticType === 'measure'),
+            c.config?.defaultAggregated ?? true,
+            getSort({ rows, columns }),
+            c.config?.folds ?? [],
+            limit
+        ),
+        limit: limit > 0 ? limit : undefined
+    };
+}
