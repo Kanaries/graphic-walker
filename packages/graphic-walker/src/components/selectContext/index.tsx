@@ -1,7 +1,8 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState, useContext, useMemo } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { CheckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Float } from '@headlessui-float/react';
+import { blockContext } from '../../fields/fieldsContext';
 
 export interface ISelectContextOption {
     key: string;
@@ -38,13 +39,31 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
         }
     }, [selected]);
 
+    const block = useContext(blockContext);
+
+    const middleware = useMemo(() => {
+        return [
+            {
+                name: 'blockContextTransform',
+                fn({ x, y }) {
+                    const blockRect = block.current?.getBoundingClientRect();
+                    const { x: offsetx, y: offsety } = blockRect ?? { x: 0, y: 0 };
+                    return {
+                        x: x - offsetx,
+                        y: y - offsety,
+                    };
+                },
+            },
+        ];
+    }, [block]);
+
     if (disable) {
         return <Fragment>{props.children}</Fragment>;
     }
 
     return (
         <Listbox multiple value={selected} onChange={setSelected}>
-            <Float as="div" className={className}>
+            <Float as="div" middleware={middleware} className={className}>
                 <div className="relative w-full flex items-center space-x-2">
                     <span className="flex-1 block truncate text-start">{props.children}</span>
                     <Listbox.Button className="grow-0 shrink-0 flex items-center relative">
