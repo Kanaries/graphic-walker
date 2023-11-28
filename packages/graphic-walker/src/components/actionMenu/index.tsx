@@ -1,8 +1,19 @@
-import React, { Fragment, type HTMLAttributes, memo, type ReactElement, createContext, useState, useContext, useRef, useCallback, type ComponentPropsWithoutRef } from "react";
-import { Menu, Transition } from "@headlessui/react";
+import React, {
+    Fragment,
+    type HTMLAttributes,
+    memo,
+    type ReactElement,
+    createContext,
+    useState,
+    useContext,
+    useRef,
+    useCallback,
+    type ComponentPropsWithoutRef,
+} from 'react';
+import { Menu, Transition } from '@headlessui/react';
 import { type ReactTag, type ElementType, useMenuButton } from './a11y';
-import ActionMenuItemList, { type IActionMenuItem } from "./list";
-
+import ActionMenuItemList, { type IActionMenuItem } from './list';
+import { blockContext } from '../../fields/fieldsContext';
 
 interface IActionMenuContext {
     disabled: boolean;
@@ -30,12 +41,10 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     if (disabled || menu.length === 0) {
-        return (
-            <div {...attrs}>
-                {props.children}
-            </div>
-        );
+        return <div {...attrs}>{props.children}</div>;
     }
+
+    const block = useContext(blockContext);
 
     return (
         <Menu as={Fragment}>
@@ -45,8 +54,10 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                         value={{
                             disabled,
                             expanded: open,
-                            moveTo(x, y) {
-                                setCoord([x, y]);
+                            moveTo(cx, cy) {
+                                const blockRect = block.current?.getBoundingClientRect();
+                                const { x, y } = blockRect ?? { x: 0, y: 0 };
+                                setCoord([cx - x, cy - y]);
                             },
                             open() {
                                 if (!open) {
@@ -57,16 +68,14 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                             _items: menu,
                         }}
                     >
-                        <Menu.Button
-                            ref={buttonRef}
-                            className="sr-only"
-                            aria-hidden
-                        />
+                        <Menu.Button ref={buttonRef} className="sr-only" aria-hidden />
                         <div
-                            onContextMenu={e => {
+                            onContextMenu={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setCoord([e.clientX, e.clientY]);
+                                const blockRect = block.current?.getBoundingClientRect();
+                                const { x, y } = blockRect ?? { x: 0, y: 0 };
+                                setCoord([e.clientX - x, e.clientY - y]);
                                 if (!open) {
                                     buttonRef.current?.click();
                                 }
@@ -104,20 +113,22 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
 
 type IActionMenuButtonProps<T extends ReactTag> = (
     | {
-        /** @default "button" */
-        as: T;
-    }
+          /** @default "button" */
+          as: T;
+      }
     | {
-        /** @default "button" */
-        as?: ReactTag;
-    }
+          /** @default "button" */
+          as?: ReactTag;
+      }
 ) & {
     onPress?: (ctx: IActionMenuContext | undefined) => void;
     /** @deprecated use `onPress()` instead */
     onClick?: () => void;
 };
 
-const ActionMenuButton = function ActionMenuButton<T extends ReactTag>(props: IActionMenuButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof IActionMenuProps>): ReactElement {
+const ActionMenuButton = function ActionMenuButton<T extends ReactTag>(
+    props: IActionMenuButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof IActionMenuProps>
+): ReactElement {
     const { as: _as = 'button', onPress, children, ...attrs } = props;
     const Component = _as as T;
 
@@ -145,7 +156,7 @@ const ActionMenuButton = function ActionMenuButton<T extends ReactTag>(props: IA
 
     const buttonProps = useMenuButton({
         ...attrs,
-        "aria-expanded": ctx?.expanded ?? false,
+        'aria-expanded': ctx?.expanded ?? false,
         onPress: handlePress,
     });
 
@@ -160,7 +171,6 @@ const ActionMenuButton = function ActionMenuButton<T extends ReactTag>(props: IA
         </Component>
     );
 };
-
 
 export default Object.assign(ActionMenu, {
     Button: memo(ActionMenuButton),
