@@ -90,3 +90,4 @@ export { getGlobalConfig } from './config';
 export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery } from './utils/workflow';
 export * from './components/filterWalker';
+export { chartToWorkflow } from './utils/workflow';
