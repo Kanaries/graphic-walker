@@ -342,6 +342,7 @@ export interface IVisualLayout {
     geojson?: FeatureCollection;
     geoKey?: string;
     geoUrl?: IGeoUrl;
+    geoMapTileUrl?: string;
     interactiveScale: boolean;
     stack: IStackMode;
     showActions: boolean;

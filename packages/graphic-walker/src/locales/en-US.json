@@ -22,7 +22,8 @@
         "misc": "Misc",
         "formatGuidesDocs": "Format guides docs",
         "readHere": "read here",
-        "svg": "Use SVG"
+        "svg": "Use SVG",
+        "customTile": "Use a Custom Tile for map"
     },
     "constant": {
         "row_count": "Row count",

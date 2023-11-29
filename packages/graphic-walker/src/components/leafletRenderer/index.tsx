@@ -40,7 +40,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
         defaultAggregated,
         geoms: [markType],
     } = visualConfig;
-    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false } = visualLayout;
+    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false, geoMapTileUrl } = visualLayout;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);
@@ -67,6 +67,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     if (markType === 'poi') {
         return (
             <POIRenderer
+                tileUrl={geoMapTileUrl}
                 name={name}
                 data={data}
                 allFields={allFields}
@@ -84,6 +85,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     } else if (markType === 'choropleth') {
         return (
             <ChoroplethRenderer
+                tileUrl={geoMapTileUrl}
                 name={name}
                 data={data}
                 allFields={allFields}

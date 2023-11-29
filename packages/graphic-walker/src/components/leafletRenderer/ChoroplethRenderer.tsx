@@ -29,6 +29,7 @@ export interface IChoroplethRendererProps {
     vegaConfig: VegaGlobalConfig;
     scaleIncludeUnmatchedChoropleth: boolean;
     channelScales: IChannelScales;
+    tileUrl?: string;
 }
 
 export interface IChoroplethRendererRef {}
@@ -109,6 +110,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         vegaConfig,
         scaleIncludeUnmatchedChoropleth,
         channelScales,
+        tileUrl,
     } = props;
 
     useImperativeHandle(ref, () => ({}));
@@ -252,11 +254,15 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <ChangeView bounds={bounds} />
-            <TileLayer
+            {tileUrl === undefined && <TileLayer
                 className="map-tile"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            />}
+            {tileUrl && <TileLayer
+                className="map-tile"
+                url={tileUrl}
+            />}
             <AttributionControl prefix="Leaflet" />
             {lngLat.length > 0 &&
                 data.map((row, i) => {
