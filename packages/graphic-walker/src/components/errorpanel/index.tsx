@@ -17,7 +17,7 @@ export default observer(function ErrorPanel() {
             return null;
         case 500:
             return (
-                <Modal show={true}>
+                <Modal show={true} onClose={closeModal}>
                     <div className="flex flex-col justify-center items-start">
                         <h2 className="font-medium text-xl my-2">Oops!</h2>
                         <p className="font-normal my-2">The chart is too large to render. You can try options above:</p>
@@ -60,7 +60,7 @@ export default observer(function ErrorPanel() {
             );
         case 501:
             return (
-                <Modal show={true}>
+                <Modal show={true} onClose={closeModal}>
                     <div className="flex flex-col justify-center items-start">
                         <h2 className="font-medium text-xl my-2">Oops!</h2>
                         <p className="font-normal my-2">There is some error with Computation service. Here is the Error message:</p>
@@ -80,7 +80,7 @@ export default observer(function ErrorPanel() {
             );
         case 502:
             return (
-                <Modal show={true}>
+                <Modal show={true} onClose={closeModal} >
                     <div className="flex flex-col justify-center items-start">
                         <h2 className="font-medium text-xl my-2">Oops!</h2>
                         <p className="font-normal my-2">There is some error with Askviz service. Here is the Error message:</p>
