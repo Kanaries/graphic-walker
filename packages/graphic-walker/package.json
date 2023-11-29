@@ -40,9 +40,9 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@headlessui-float/react": "^0.11.4",
-    "@headlessui/react": "^1.7.12",
+    "@headlessui/react": "1.7.12",
     "@heroicons/react": "^2.0.8",
-    "@kanaries/react-beautiful-dnd": "^0.1.0",
+    "@kanaries/react-beautiful-dnd": "^0.1.1",
     "@kanaries/web-data-loader": "^0.1.7",
     "@tailwindcss/forms": "^0.5.4",
     "@tanstack/react-virtual": "^3.0.0-beta.68",
