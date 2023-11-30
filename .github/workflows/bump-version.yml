@@ -1,0 +1,45 @@
+name: Bump Version and Sync Dependency in Monorepo
+
+on:
+  workflow_dispatch:
+    inputs:
+      newVersion:
+        description: 'New version number for graphic-walker'
+        required: true
+        default: '1.0.1'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18.x' # Adjust as per your project requirement
+
+    - name: Bump graphic-walker version
+      run: |
+        cd packages/graphic-walker
+        yarn version --no-git-tag-version --new-version ${{ github.event.inputs.newVersion }}
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Update playground dependency
+      run: |
+        cd ../playground
+        yarn add @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
+        git add .
+        git commit -m "release: Update graphic-walker to ${{ github.event.inputs.newVersion }}"
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        commit-message: Sync graphic-walker and playground versions to ${{ github.event.inputs.newVersion }}
+        title: 'Sync graphic-walker and playground package versions to ${{ github.event.inputs.newVersion }}'
+        body: 'This is an auto-generated PR to update the graphic-walker version and its dependency in playground.'
+        branch: sync-versions-${{ github.event.inputs.newVersion }} # Branch to create the PR
+        labels: version-sync, automated pr
