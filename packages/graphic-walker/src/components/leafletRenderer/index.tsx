@@ -62,12 +62,14 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
         }
         return cs;
     }, [channelScaleRaw, scale]);
+
+    const tileUrl = geoMapTileUrl ?? vegaConfig.leafletGeoTileUrl;
     
 
     if (markType === 'poi') {
         return (
             <POIRenderer
-                tileUrl={geoMapTileUrl}
+                tileUrl={tileUrl}
                 name={name}
                 data={data}
                 allFields={allFields}
@@ -85,7 +87,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     } else if (markType === 'choropleth') {
         return (
             <ChoroplethRenderer
-                tileUrl={geoMapTileUrl}
+                tileUrl={tileUrl}
                 name={name}
                 data={data}
                 allFields={allFields}

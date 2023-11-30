@@ -389,7 +389,7 @@ export type IThemeKey = 'vega' | 'g2';
 export type IDarkMode = 'media' | 'light' | 'dark';
 export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
 
-export type VegaGlobalConfig = VgConfig & VlConfig;
+export type VegaGlobalConfig = VgConfig & VlConfig & { leafletGeoTileUrl?: string };
 
 export interface IVegaChartRef {
     x: number;
