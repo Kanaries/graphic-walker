@@ -22,16 +22,19 @@ jobs:
         node-version: '18.x' # Adjust as per your project requirement
 
     - name: Bump graphic-walker version
+      working-directory: ./packages/graphic-walker
       run: |
-        cd packages/graphic-walker
         yarn version --no-git-tag-version --new-version ${{ github.event.inputs.newVersion }}
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
 
     - name: Update playground dependency
       run: |
-        cd ../playground
         yarn add @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
+      working-directory: ./packages/playground
+
+    - name: Commit Changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add .
         git commit -m "release: Update graphic-walker to ${{ github.event.inputs.newVersion }}"
 
