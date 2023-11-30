@@ -1,0 +1,24 @@
+name: Publish Package to npmjs
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install deps
+        run: yarn install
+      - name: npm package build
+        run: yarn workspace @kanaries/graphic-walker build
+      - name: Web app (playground) build
+        run: yarn workspace playground build
+      - run: cd ./packages/graphic-walker
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
