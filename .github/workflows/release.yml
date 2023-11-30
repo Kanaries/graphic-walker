@@ -18,7 +18,6 @@ jobs:
         run: yarn workspace @kanaries/graphic-walker build
       - name: Web app (playground) build
         run: yarn workspace playground build
-      - run: cd ./packages/graphic-walker
       - run: npm publish
         working-directory: ./packages/graphic-walker
         env:
