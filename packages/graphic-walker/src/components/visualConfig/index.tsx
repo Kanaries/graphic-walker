@@ -28,15 +28,18 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
     const [domainMax, setDomainMax] = useState(100);
     const [rangeMin, setRangeMin] = useState(defaultMinRange ?? minRange);
     const [rangeMax, setRangeMax] = useState(defaultMaxRange ?? maxRange);
-    const setValue = useCallback((value: IConfigScale) => {
-        setEnableMaxDomain(value.domainMax !== undefined);
-        setEnableMinDomain(value.domainMin !== undefined);
-        setEnableRange(value.rangeMax !== undefined || value.rangeMin !== undefined);
-        setDomainMin(value.domainMin ?? 0);
-        setDomainMax(value.domainMax ?? 100);
-        setRangeMax(value.rangeMax ?? defaultMaxRange ?? maxRange);
-        setRangeMin(value.rangeMin ?? defaultMinRange ?? minRange);
-    }, [defaultMaxRange, defaultMinRange, maxRange, minRange]);
+    const setValue = useCallback(
+        (value: IConfigScale) => {
+            setEnableMaxDomain(value.domainMax !== undefined);
+            setEnableMinDomain(value.domainMin !== undefined);
+            setEnableRange(value.rangeMax !== undefined || value.rangeMin !== undefined);
+            setDomainMin(value.domainMin ?? 0);
+            setDomainMax(value.domainMax ?? 100);
+            setRangeMax(value.rangeMax ?? defaultMaxRange ?? maxRange);
+            setRangeMin(value.rangeMin ?? defaultMinRange ?? minRange);
+        },
+        [defaultMaxRange, defaultMinRange, maxRange, minRange]
+    );
 
     const value = useMemo(
         () => ({
@@ -93,6 +96,7 @@ const VisualConfigPanel: React.FC = () => {
     const [colorEdited, setColorEdited] = useState(false);
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
+    const [geoMapTileUrl, setGeoMapTileUrl] = useState<string | undefined>(undefined);
     const opacityValue = useScale(0, 1, 0.3, 0.8);
     const sizeValue = useScale(0, 100);
 
@@ -112,6 +116,7 @@ const VisualConfigPanel: React.FC = () => {
         setColorPalette(layout.colorPalette ?? '');
         opacityValue.setValue(layout.scale?.opacity ?? {});
         sizeValue.setValue(layout.scale?.size ?? {});
+        setGeoMapTileUrl(layout.geoMapTileUrl);
     }, [showVisualConfigPanel]);
 
     return (
@@ -296,6 +301,25 @@ const VisualConfigPanel: React.FC = () => {
                         <ConfigItemTitle>{t('config.misc')}</ConfigItemTitle>
                     </ConfigItemHeader>
                     <ConfigItemContent>
+                        <div className="flex flex-col space-y-2 mb-2">
+                            <Toggle
+                                label={t(`config.customTile`)}
+                                enabled={geoMapTileUrl !== undefined}
+                                onChange={(e) => {
+                                    setGeoMapTileUrl(e ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : undefined);
+                                }}
+                            />
+                            {geoMapTileUrl !== undefined && (
+                                <input
+                                    type="text"
+                                    className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
+                                    value={geoMapTileUrl}
+                                    onChange={(e) => {
+                                        setGeoMapTileUrl(e.target.value);
+                                    }}
+                                />
+                            )}
+                        </div>
                         <div className="flex space-x-6">
                             <Toggle
                                 label={t(`config.zeroScale`)}
@@ -344,7 +368,8 @@ const VisualConfigPanel: React.FC = () => {
                                                   `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`,
                                               ] as KVTuple<IVisualLayout>,
                                           ]
-                                        : [])
+                                        : []),
+                                    ['geoMapTileUrl', geoMapTileUrl]
                                 );
                                 vizStore.setShowVisualConfigPanel(false);
                             });

@@ -22,6 +22,7 @@ export interface IPOIRendererProps {
     details: readonly DeepReadonly<IViewField>[];
     vegaConfig: VegaGlobalConfig;
     channelScales: IChannelScales;
+    tileUrl?: string;
 }
 
 export interface IPOIRendererRef {}
@@ -39,7 +40,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer(props, ref) {
-    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, channelScales } = props;
+    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, channelScales, tileUrl } = props;
 
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
@@ -149,11 +150,15 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
     return (
         <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <ChangeView bounds={bounds} />
-            <TileLayer
+            {tileUrl === undefined && <TileLayer
                 className="map-tile"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            />}
+            {tileUrl && <TileLayer
+                className="map-tile"
+                url={tileUrl}
+            />}
             <AttributionControl prefix="Leaflet" />
             {Boolean(latitude && longitude) &&
                 data.map((row, i) => {

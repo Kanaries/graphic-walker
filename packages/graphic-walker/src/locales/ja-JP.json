@@ -22,7 +22,8 @@
         "misc": "その他",
         "formatGuidesDocs": "フォーマットガイド",
         "readHere": "ここを読む",
-        "svg": "SVGを使う"
+        "svg": "SVGを使う",
+        "customTile": "地図タイルをカスタマイズ"
     },
     "constant": {
         "row_count": "行数",
