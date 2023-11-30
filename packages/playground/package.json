@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@kanaries/graphic-walker": "0.4.32",
+    "@kanaries/graphic-walker": "0.4.33",
     "@vercel/analytics": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
