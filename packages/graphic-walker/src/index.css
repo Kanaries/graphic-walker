@@ -30,3 +30,7 @@ code {
 .dark .map-tile {
     filter: var(--map-tiles-filter, none);
 }
+
+.dark .leaflet-container {
+    background-color: #333;
+}
