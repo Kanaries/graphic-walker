@@ -16,6 +16,7 @@ interface ISelectContextProps {
     onSelect?: (selectedKeys: string[]) => void;
     className?: string;
     required?: boolean;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 const SelectContext: React.FC<ISelectContextProps> = (props) => {
     const { options = [], disable = false, selectedKeys = [], onSelect, className = '', required } = props;

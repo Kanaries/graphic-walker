@@ -19,6 +19,7 @@ interface IDropdownSelectProps {
     placeholder?: string;
     className?: string;
     buttonClassName?: string;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 const DropdownSelect: React.FC<IDropdownSelectProps> = (props) => {
     const { options = [], disable, selectedKey, onSelect, placeholder = "Select an option", className, buttonClassName } = props;

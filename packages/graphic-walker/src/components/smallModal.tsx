@@ -30,6 +30,7 @@ interface ModalProps {
     onClose?: () => void;
     show?: boolean;
     title?: string;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 const Modal: React.FC<ModalProps> = (props) => {
     const { onClose, title, show } = props;

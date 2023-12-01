@@ -8,6 +8,7 @@ interface SizeSettingProps {
     onHeightChange: (val: number) => void;
     width: number;
     height: number;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 
 export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
