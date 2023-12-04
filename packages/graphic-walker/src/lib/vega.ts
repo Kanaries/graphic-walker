@@ -1,5 +1,6 @@
 import { GLOBAL_CONFIG } from '../config';
 import { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
+import { encodeFid } from '../vis/spec/encode';
 import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, resolveScales } from '../vis/spec/view';
 
@@ -73,7 +74,7 @@ export function toVegaSpec({
                 name: 'geom',
                 select: {
                     type: 'point',
-                    fields: allFieldIds,
+                    fields: allFieldIds.map(encodeFid),
                 },
             },
         ],

@@ -47,6 +47,10 @@ function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
     return unit;
 }
 
+export function encodeFid(fid: string) {
+    return fid.replace(/\"/g, '\\"').replace(/\'/g, "\\'");
+}
+
 export function channelEncode(props: IEncodeProps) {
     const avcs = availableChannels(props.geomType);
     const encoding: { [key: string]: any } = {};
@@ -55,7 +59,7 @@ export function channelEncode(props: IEncodeProps) {
         .forEach((c) => {
             if (props[c] !== NULL_FIELD) {
                 encoding[c] = {
-                    field: props[c].fid,
+                    field: encodeFid(props[c].fid),
                     title: props[c].name,
                     type: props[c].semanticType,
                 };
