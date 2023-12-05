@@ -28,7 +28,7 @@ export function availableChannels(geomType: string): Set<string> {
     return new Set(['column', 'opacity', 'color', 'row', 'size', 'x', 'y', 'xOffset', 'yOffset', 'shape']);
 }
 function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
-    switch(unit) {
+    switch (unit) {
         case 'quarter':
             return 'yearquarter';
         case 'month':
@@ -48,7 +48,11 @@ function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
 }
 
 export function encodeFid(fid: string) {
-    return fid.replace(/\"/g, '\\"').replace(/\'/g, "\\'");
+    return fid
+        .replace(/([\"\'\.\[\]\/\\])/g, '\\$1')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t')
+        .replace(/\r/g, '\\r');
 }
 
 export function channelEncode(props: IEncodeProps) {
@@ -72,16 +76,16 @@ export function channelEncode(props: IEncodeProps) {
                     encoding[c].type = 'quantitative';
                 }
                 if (props[c].semanticType === 'temporal' && props[c].timeUnit) {
-                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit)
+                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit);
                 }
             }
         });
     // FIXME: temporal fix, only for x and y relative order
     if (encoding.x) {
-        encoding.x.axis = { labelOverlap: true }
+        encoding.x.axis = { labelOverlap: true };
     }
     if (encoding && encoding.y) {
-        encoding.y.axis = { labelOverlap: true }
+        encoding.y.axis = { labelOverlap: true };
     }
     if (encoding.x && encoding.y) {
         if ((props.x.sort && props.x.sort) || (props.y && props.y.sort)) {
