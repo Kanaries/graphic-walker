@@ -3,7 +3,9 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { GLOBAL_CONFIG } from '../config';
 
-export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProperties, 'translate'> }> = (props) => {
+export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProperties, 'translate'>; children?: React.ReactNode | Iterable<React.ReactNode> }> = (
+    props
+) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
@@ -16,7 +18,7 @@ export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProper
     );
 };
 
-export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProperties }> = (props) => {
+export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProperties; children?: React.ReactNode | Iterable<React.ReactNode> }> = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
@@ -29,7 +31,7 @@ export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProper
     );
 };
 
-export const FilterFieldContainer: React.FC = (props) => {
+export const FilterFieldContainer: React.FC<{ children?: React.ReactNode | Iterable<React.ReactNode> }> = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
@@ -78,7 +80,7 @@ export const FieldListSegment = styled.div`
         }
     }
     div.fl-container {
-        flex-grow: 10;    
+        flex-grow: 10;
         position: relative;
     }
 `;

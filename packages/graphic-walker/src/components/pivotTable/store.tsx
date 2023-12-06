@@ -35,6 +35,7 @@ const PTContext = createContext<PivotTableStore>(initStore);
 export interface PivotTableDataProps {
     data: IRow[];
     metas: IField[];
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 export const PivotTableStoreWrapper: React.FC<PivotTableDataProps> = (props) => {
     const { data, metas } = props;
