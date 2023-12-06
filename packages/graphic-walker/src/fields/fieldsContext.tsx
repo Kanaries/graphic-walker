@@ -78,7 +78,7 @@ function sensorMapper(sensor: Sensor): Sensor {
 
 const sensors = [useMouseSensor, useTouchSensor, useKeyboardSensor].map(sensorMapper);
 
-export const FieldsContextWrapper: React.FC = (props) => {
+export const FieldsContextWrapper: React.FC<{ children?: React.ReactNode | Iterable<React.ReactNode> }> = (props) => {
     const vizStore = useVizStore();
     const blockRef = useRef<HTMLDivElement>(null);
     const onDragEnd = useCallback(

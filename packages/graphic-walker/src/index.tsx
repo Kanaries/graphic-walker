@@ -6,7 +6,7 @@ import { App } from './FullApp';
 
 import { ShadowDom } from './shadow-dom';
 import AppRoot from './components/appRoot';
-import type { IGWHandler, IGWHandlerInsider, IGWProps, ITableProps, IVizAppProps } from './interfaces';
+import type { IChart, IGWHandler, IGWHandlerInsider, IGWProps, IMutField, IRow, ITableProps, IVizAppProps } from './interfaces';
 
 import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
@@ -82,7 +82,8 @@ export const TableWalker = observer(
 
 export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
-export type { IGWProps, ITableProps, IVizAppProps };
+export type { IGWProps, ITableProps, IVizAppProps, IMutField, IRow, IChart };
+export { VizSpecStore } from './store/visualSpecStore';
 export { ISegmentKey, ColorSchemes } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
 export { getGlobalConfig } from './config';

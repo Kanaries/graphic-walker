@@ -16,6 +16,7 @@ interface IDropdownContextProps {
     onSelect?: (value: string, index: number) => void;
     // left-0 right-0
     position?: string;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 const DropdownContext: React.FC<IDropdownContextProps> = (props) => {
     const { options = [], disable, position = 'left-0' } = props;

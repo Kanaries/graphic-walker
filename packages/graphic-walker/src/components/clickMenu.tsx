@@ -11,6 +11,7 @@ const MenuContainer = styled.div`
 interface ClickMenuProps {
     x: number;
     y: number;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
 }
 
 const ClickMenu: React.FC<ClickMenuProps> = (props) => {
