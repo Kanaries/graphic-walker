@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { runInAction } from 'mobx';
 import { useVizStore } from '../../store';
 import Spinner from '../spinner';
 import Modal from '../modal';
@@ -47,10 +46,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                     geoList.map((x, i) => ({
                         label: x.name,
                         value: `${i}`,
-                    }))
+                    })),
                 )
                 .concat({ label: 'Manual Set', value: '-2' }),
-        [geoList]
+        [geoList],
     );
     const setSelectItem = useMemo(() => (a: string) => setSelectItemR(parseInt(a)), []);
 
@@ -101,7 +100,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         objectKey: topoJSONKey || defaultTopoJSONKey,
                     },
                     featureId,
-                    loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined
+                    loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined,
                 );
             } else {
                 vizStore.setGeographicData(
@@ -110,7 +109,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         data: json,
                     },
                     featureId,
-                    loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined
+                    loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined,
                 );
             }
             vizStore.setShowGeoJSONConfigPanel(false);
@@ -121,7 +120,8 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
 
     return (
         <Modal
-            containerStyle={{ overflow: 'visible' }} show={showGeoJSONConfigPanel}
+            containerStyle={{ overflow: 'visible' }}
+            show={showGeoJSONConfigPanel}
             onClose={() => {
                 vizStore.setShowGeoJSONConfigPanel(false);
             }}
@@ -130,11 +130,11 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                 <h2 className="text-lg mb-4">{t('geography')}</h2>
                 <div>
                     <div className="my-2">
-                        <label className="block text-xs font-medium leading-6 text-gray-900">{t('geography_settings.geoKey')}</label>
+                        <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">{t('geography_settings.geoKey')}</label>
                         <div className="mt-1">
                             <input
                                 type="text"
-                                className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
                                 value={featureId}
                                 onChange={(e) => setFeatureId(e.target.value)}
                             />
@@ -142,13 +142,15 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                     </div>
                     {geoList.length > 0 && (
                         <div className="my-2">
-                            <label className="block text-xs font-medium leading-6 text-gray-900">GeoData</label>
+                            <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">GeoData</label>
                             <DropdownSelect options={options} selectedKey={`${selectItem}`} onSelect={setSelectItem} />
                         </div>
                     )}
                     {isCustom && (
                         <div className="my-2">
-                            <label className="block text-xs font-medium leading-6 text-gray-900">{t(`geography_settings.${dataMode.toLowerCase()}`)}</label>
+                            <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">
+                                {t(`geography_settings.${dataMode.toLowerCase()}`)}
+                            </label>
                             <div className="mt-1 flex flex-col space-y-2">
                                 <div role="radiogroup">
                                     <div className="flex items-center space-x-2">
@@ -186,7 +188,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                     </label>
                                     <input
                                         type="text"
-                                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
                                         value={url}
                                         placeholder={t('geography_settings.hrefPlaceholder', { format: dataMode.toLowerCase() })}
                                         onChange={(e) => {
@@ -197,7 +199,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                         text={t('geography_settings.load')}
                                         className="mr-2 flex-shrink-0"
                                         disabled={loading}
-                                        icon={loading ? <Spinner className="text-black" /> : undefined}
+                                        icon={loading ? <Spinner className="text-black dark:text-white" /> : undefined}
                                         onClick={() => {
                                             if (url) {
                                                 setLoading(true);
@@ -232,11 +234,11 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                 >
                                     {({ getRootProps, getInputProps, isDragActive, open }) => (
                                         <div
-                                            className={`relative justify-center flex w-full h-80 rounded ring-gray-300 shadow-sm ring-1 ring-inset`}
+                                            className={`relative justify-center flex w-full h-80 rounded ring-gray-300 dark:ring-gray-600 shadow-sm ring-1 ring-inset`}
                                             {...getRootProps()}
                                         >
                                             {isDragActive && (
-                                                <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 opacity-80" />
+                                                <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 dark:bg-gray-700 opacity-80" />
                                             )}
                                             <input {...getInputProps()} />
                                             <div onClick={open} className="flex h-full items-center justify-center w-48">
@@ -251,7 +253,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                         <label className="text-xs whitespace-nowrap capitalize">{t('geography_settings.objectKey')}</label>
                                         <input
                                             type="text"
-                                            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
                                             value={topoJSONKey}
                                             placeholder={defaultTopoJSONKey}
                                             onChange={(e) => {

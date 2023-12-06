@@ -52,11 +52,7 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
 
     if (!d && !props.url) return null;
     if (!data) {
-        return (
-            <div className="w-full flex-1 flex items-center justify-center border-l border-gray-500">
-                {t('geography_settings.loading')}
-            </div>
-        );
+        return <div className="w-full flex-1 flex items-center justify-center border-l border-gray-500">{t('geography_settings.loading')}</div>;
     }
     return (
         <div className="w-full flex-1 relative">
@@ -79,6 +75,7 @@ function Renderer(props: { data?: FeatureCollection }) {
             style={{ width: '100%', height: '100%', zIndex: 1 }}
         >
             <TileLayer
+                className="map-tile"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
