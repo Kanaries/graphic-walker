@@ -42,6 +42,7 @@ import throttle from '../utils/throttle';
 import KanariesLogo from '../assets/kanaries.png';
 import { ImageWithFallback } from '../components/timeoutImg';
 import LimitSetting from '../components/limitSetting';
+import { omitRedundantSeparator } from './utils';
 
 const Invisible = styled.div`
     clip: rect(1px, 1px, 1px, 1px);
@@ -579,7 +580,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
         ].filter(Boolean) as ToolbarItemProps[];
 
-        const items = builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key));
+        const items = omitRedundantSeparator(builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key)));
 
         switch (vizStore.config.geoms[0]) {
             case 'table':
