@@ -153,8 +153,8 @@ export function DataSourceSegmentComponent(props: {
     }, [dataset, props.provider]);
 
     const computation = useMemo<IComputationFunction>(
-        () => (payload) => {
-            return props.provider.queryData(payload, [selectedId]);
+        () => async (payload) => {
+            return selectedId ? props.provider.queryData(payload, [selectedId]) : [];
         },
         [computationID, props.provider, selectedId]
     );

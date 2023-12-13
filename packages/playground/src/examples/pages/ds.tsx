@@ -1,10 +1,10 @@
 import Example from '../components/examplePage';
-import code from './gw.stories?raw';
-import Comp from './gw.stories';
+import code from './ds.stories?raw';
+import Comp from './ds.stories';
 
 export default function GraphicWalkerComponent() {
     return (
-        <Example name="Graphic Walker Example" code={code}>
+        <Example name="DataSource Segment" code={code}>
             <Comp />
         </Example>
     );

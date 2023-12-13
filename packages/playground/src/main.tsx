@@ -1,5 +1,5 @@
 import { inject } from '@vercel/analytics';
-import { embedGraphicWalker } from '@kanaries/graphic-walker'
+import { embedGraphicWalker } from '@kanaries/graphic-walker';
 import './index.css';
 
 if (!import.meta.env.DEV) {
@@ -14,5 +14,5 @@ embedGraphicWalker(document.getElementById('root') as HTMLElement, {
             type: 'GeoJSON',
             url: 'https://raw.githubusercontent.com/drei01/geojson-world-cities/f2a988af4bc15463df55586afbbffbd3068b7218/cities.geojson',
         },
-    ]
+    ],
 });

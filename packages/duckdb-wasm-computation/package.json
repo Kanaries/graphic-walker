@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "typescript": "^4.3.2",
-    "@kanaries/graphic-walker": "0.4.31"
+    "@kanaries/graphic-walker": "0.4.34"
   }
 }

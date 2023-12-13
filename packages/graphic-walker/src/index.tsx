@@ -10,8 +10,6 @@ import type {
     IChart, IGWHandler,
     IGWHandlerInsider,
     IGWProps,
-    IMutField,
-    IRow,
     IMutField, IRow, ITableProps,
     IVizAppProps,
 } from './interfaces';
@@ -67,7 +65,7 @@ export const TableWalker = observer(
 
 export { default as PureRenderer } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
-export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IMutField, IRow, IChart };
+export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IChart };
 export { VizSpecStore } from './store/visualSpecStore';
 export { ISegmentKey, ColorSchemes, IDataSourceEventType } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
@@ -77,6 +75,5 @@ export * from './models/visSpecHistory';
 export * from './dataSourceProvider';
 
 export { getComputation } from './computation/clientComputation';
-export { addFilterForQuery } from './utils/workflow';
+export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
 export * from './components/filterWalker';
-export { chartToWorkflow } from './utils/workflow';
