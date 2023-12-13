@@ -805,10 +805,7 @@ export interface IVizProps {
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
-            askviz?:
-                | string
-                | boolean
-                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+            askviz?: string | boolean | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
             feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
         };
     };
@@ -870,4 +867,31 @@ export interface IAskVizFeedback {
     action: 'voteup' | 'votedown' | 'report';
     question: string;
     spec: string;
+}
+
+export const IDataSourceEventType = {
+    updateList: 1,
+    updateMeta: 2,
+    updateSpec: 4,
+    updateData: 8,
+};
+
+export type IDataSourceListener = (event: number, datasetId: string) => void;
+
+export interface IDataSourceProvider {
+    addDataSource(data: IRow[], meta: IMutField[], name: string): Promise<string>;
+    getDataSourceList(): Promise<{ name: string; id: string; }[]>;
+
+    getMeta(datasetId: string): Promise<IMutField[]>;
+    setMeta(datasetId: string, meta: IMutField[]): Promise<void>;
+
+    getSpecs(datasetId: string): Promise<string>;
+    saveSpecs(datasetId: string, value: string): Promise<void>;
+
+    queryData(query: IDataQueryPayload, datasetIds: string[]): Promise<IRow[]>;
+
+    onExportFile?: () => Promise<Blob>;
+    onImportFile?: (file: File) => void;
+
+    registerCallback(callback: IDataSourceListener): () => void;
 }

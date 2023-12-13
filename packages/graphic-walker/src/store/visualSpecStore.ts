@@ -261,6 +261,10 @@ export class VizSpecStore {
         this.meta = meta;
     }
 
+    setOnMetaChange(onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void) {
+        this.onMetaChange = onMetaChange;
+    }
+
     resetVisualization(name = 'Chart 1') {
         this.visList = [fromFields(this.meta, name)];
         this.createdVis = 1;

@@ -18,9 +18,8 @@ import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
 import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
-import type { ToolbarItemProps } from './components/toolbar';
 import AskViz from './components/askViz';
-import { VizSpecStore, renderSpec } from './store/visualSpecStore';
+import { renderSpec } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
@@ -43,7 +42,6 @@ export type BaseVizProps = IAppI18nProps &
     ISpecProps &
     IComputationContextProps & {
         darkMode?: 'light' | 'dark';
-        dataSelection?: React.ReactChild;
     };
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
@@ -134,7 +132,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 <ComputationContext.Provider value={wrappedComputation}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            {props.dataSelection}
                             <div className="px-2 mx-2">
                                 <SegmentNav />
                             </div>
@@ -231,31 +228,39 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps) {
-    const { computation, safeMetas } = useMemo(() => {
+    const { computation, safeMetas, onMetaChange } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
                 const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
+                    onMetaChange: (safeFID, meta) => {
+                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
+                        if (index >= 0) {
+                            props.onMetaChange?.(props.rawFields[index].fid, meta);
+                        }
+                    },
                 };
             }
             return {
                 safeMetas: props.rawFields,
                 computation: getComputation(props.dataSource),
+                onMetaChange: props.onMetaChange,
             };
         }
         return {
             safeMetas: props.rawFields,
             computation: props.computation,
+            onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard]);
+    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(props.dark);
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={props.onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
+            <VizStoreWrapper onMetaChange={onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
                 <FieldsContextWrapper>
                     <VizApp
                         darkMode={darkMode}
