@@ -1,17 +1,16 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useGlobalStore } from '../store';
 import DataTable from '../components/dataTable';
 import { toJS } from 'mobx';
 import { getComputation } from '../computation/clientComputation';
+import { CommonStore } from '../store/commonStore';
 
 interface TableProps {
     size?: number;
+    commonStore: CommonStore;
 }
 
-const Table: React.FC<TableProps> = (props) => {
-    const { size = 10 } = props;
-    const commonStore = useGlobalStore();
+const Table: React.FC<TableProps> = ({ commonStore, size = 10 }) => {
     const { tmpDSRawFields, tmpDataSource } = commonStore;
 
     const metas = toJS(tmpDSRawFields);

@@ -1,7 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { FullGraphicWalker, IGWProps } from './index';
+import { DataSourceSegmentComponent, GraphicWalker, IGWProps } from './index';
+import createMemoryProvider from './dataSourceProvider/memory';
 
+function FullGraphicWalker(props: IGWProps) {
+    const provider = useMemo(() => createMemoryProvider(), []);
+    return (
+        <DataSourceSegmentComponent provider={provider}>
+            {(p) => {
+                return (
+                    <GraphicWalker
+                        {...props}
+                        storeRef={p.storeRef}
+                        computation={p.computation}
+                        rawFields={p.meta}
+                        onMetaChange={p.onMetaChange}
+                    />
+                );
+            }}
+        </DataSourceSegmentComponent>
+    );
+}
 
 export function embedGraphicWalker(dom: HTMLElement | null, props: IGWProps | undefined = {}) {
     if (!dom) {

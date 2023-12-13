@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGlobalStore, useVizStore } from '../../store';
+import { useVizStore } from '../../store';
 import SmallModal from '../../components/smallModal';
 import PrimaryButton from '../../components/button/primary';
 import DefaultButton from '../../components/button/default';

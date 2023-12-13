@@ -1,30 +1,24 @@
-import React from "react";
-import { useGlobalStore } from "../../store";
-import { observer } from "mobx-react-lite";
-
+import React from 'react';
 
 interface GWFileProps {
     fileRef: React.RefObject<HTMLInputElement>;
+    onImport: (file: File) => void;
 }
 const GWFile: React.FC<GWFileProps> = (props) => {
-    const { dataStore } = useGlobalStore();
-
     return (
         <input
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
             type="file"
             ref={props.fileRef}
             onChange={(e) => {
                 const files = e.target.files;
                 if (files !== null) {
                     const file = files[0];
-                    file.text().then(res => {
-                        dataStore.importData(JSON.parse(res))
-                    })
+                    props.onImport(file);
                 }
             }}
         />
     );
 };
 
-export default observer(GWFile);
+export default GWFile;
