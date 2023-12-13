@@ -8,6 +8,11 @@
   "scripts": {
     "build": "vite build"
   },
+  "prettier": {
+    "tabWidth": 4,
+    "printWidth": 160,
+    "singleQuote": true
+  },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.28.0",
     "@kanaries-temp/gw-dsl-parser": "^0.1.36-rc5",
