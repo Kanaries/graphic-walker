@@ -349,6 +349,19 @@ export class VizSpecStore {
         } else if (destMeta) {
             this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
         } else {
+            // add an encoding
+            if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID) {
+                this.visList[this.visIndex] = performers.addFoldField(
+                    this.visList[this.visIndex],
+                    sourceKey,
+                    sourceIndex,
+                    destinationKey,
+                    destinationIndex,
+                    uniqueId(),
+                    limit
+                );
+                return; 
+            }
             this.visList[this.visIndex] = performers.cloneField(
                 this.visList[this.visIndex],
                 sourceKey,
