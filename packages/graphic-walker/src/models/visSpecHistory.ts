@@ -50,6 +50,7 @@ export enum Methods {
     createDateFeatureField,
     changeSemanticType,
     setFilterAggregator,
+    addFoldField,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -72,6 +73,7 @@ type PropsMap = {
     [Methods.createDateFeatureField]: [normalKeys, number, (typeof DATE_TIME_FEATURE_LEVELS)[number], string, string, string | undefined, number | undefined];
     [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
+    [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -294,6 +296,30 @@ const actions: {
         return mutPath(data, `encodings.filters`, (f) =>
             replace(f, index, (x) => ({ ...x, aggName: aggName || 'sum', enableAgg: aggName ? true : false, rule: null }))
         );
+    },
+    [Methods.addFoldField]: (originalData, from, findex, to, tindex, newVarKey, limit) => {
+        let data = originalData;
+        const originalField = data.encodings[from][findex];
+        if (!data.config.folds) {
+            const validFoldBy = [...data.encodings.measures, ...data.encodings.details].filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+            data = actions[Methods.setConfig](
+                data,
+                'folds',
+                validFoldBy.map((x) => x.fid)
+            );
+        }
+        if (originalField.fid === MEA_VAL_ID) {
+            const meaKeyIndexes = Object.keys(data.encodings)
+                .filter((x): x is normalKeys => x !== 'filters')
+                .map((k) => [k, data.encodings[k].findIndex((f) => f.fid === MEA_KEY_ID)] as const)
+                .filter(([k, i]) => i >= 0);
+            if (meaKeyIndexes.length === 1) {
+                // there is no Measure Name in Chart, add it in Details channel (which has no limit)
+                const [fromKey, fromIndex] = meaKeyIndexes[0];
+                data = actions[Methods.cloneField](data, fromKey, fromIndex, 'details', 0, `${newVarKey}_auto`, Infinity);
+            }
+        }
+        return actions[Methods.cloneField](data, from, findex, to, tindex, newVarKey, limit);
     },
 };
 
