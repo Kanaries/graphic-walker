@@ -73,6 +73,7 @@ const SliderSlice = styled.div`
 
 const nicer = (range: readonly [number, number], value: number): string => {
     if (typeof value !== 'number') {
+        console.warn('Expected a number but received', typeof value);
         return '';
     }
     const precision = /(\.\d*)$/.exec(((range[1] - range[0]) / 1000).toString())?.[0].length;
@@ -114,6 +115,11 @@ const ValueInput: React.FC<ValueInputProps> = (props) => {
             value={innerValue}
             onChange={(e) => setInnerValue(e.target.value)}
             onBlur={handleSubmitValue}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    handleSubmitValue();
+                }
+            }}            
         />
     );
 };
