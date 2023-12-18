@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { filter, fromEvent, map, throttleTime } from 'rxjs';
 import { useTranslation } from 'react-i18next';
@@ -71,10 +71,11 @@ const SliderSlice = styled.div`
     height: 100%;
 `;
 
-
 const nicer = (range: readonly [number, number], value: number): string => {
+    if (typeof value !== 'number') {
+        return '';
+    }
     const precision = /(\.\d*)$/.exec(((range[1] - range[0]) / 1000).toString())?.[0].length;
-    
     return precision === undefined ? `${value}` : value.toFixed(precision).replace(/\.?0+$/, '');
 };
 
@@ -86,26 +87,36 @@ interface ValueInputProps {
     onChange: (value: number) => void;
 }
 
-const ValueInput: React.FC<ValueInputProps> = props => {
+const ValueInput: React.FC<ValueInputProps> = (props) => {
     const { min, max, value, resetValue, onChange } = props;
-    const handleSubmitValue = (value) => {
-        if (!isNaN(value) && value <= max && value >= min) {
-            onChange(value);
+    const [innerValue, setInnerValue] = useState(`${value}`);
+
+    const handleSubmitValue = () => {
+        const v = Number(innerValue);
+        if (!isNaN(v) && v <= max && v >= min) {
+            onChange(v);
         } else {
             onChange(resetValue);
+            setInnerValue(`${resetValue}`);
         }
-    }
+    };
+
+    useEffect(() => {
+        setInnerValue(`${value}`);
+    }, [value]);
+
     return (
         <input
             type="number"
             min={min}
             max={max}
             className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            value={value}
-            onChange={(e) => handleSubmitValue(Number(e.target.value))}
+            value={innerValue}
+            onChange={(e) => setInnerValue(e.target.value)}
+            onBlur={handleSubmitValue}
         />
-    )
-}
+    );
+};
 
 interface SliderProps {
     min: number;
