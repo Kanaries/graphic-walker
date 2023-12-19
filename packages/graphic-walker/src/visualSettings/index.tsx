@@ -78,7 +78,7 @@ interface IVisualSettings {
 
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [] }) => {
     const vizStore = useVizStore();
-    const { config, layout, canUndo, canRedo, limit } = vizStore;
+    const { config, layout, canUndo, canRedo, limit, paintInfo } = vizStore;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -578,9 +578,9 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             {
                 key: 'painter',
-                label: vizStore.paintInfo === null ? t('button.disabled_painter') : t('button.painter'),
+                label: paintInfo === null ? t('button.disabled_painter') : t('button.painter'),
                 icon: PaintBrushIcon,
-                disabled: vizStore.paintInfo === null,
+                disabled: paintInfo === null,
                 onClick: () => {
                     vizStore.setShowPainter(true);
                 },
@@ -633,6 +633,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         exclude,
         limit,
         showTableSummary,
+        paintInfo
     ]);
 
     return (
