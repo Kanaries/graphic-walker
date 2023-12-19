@@ -1,12 +1,13 @@
-import { IExpParameter, IExpression, IRow } from "../interfaces";
-import dateTimeDrill from "./op/dateTimeDrill";
-import dateTimeFeature from "./op/dateTimeFeature";
+import { IExpParameter, IExpression, IPaintMap, IRow } from '../interfaces';
+import dateTimeDrill from './op/dateTimeDrill';
+import dateTimeFeature from './op/dateTimeFeature';
+import { calcMap } from './paint';
 
 export interface IDataFrame {
     [key: string]: any[];
 }
 
-export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataFrame {
+export async function execExpression(exp: IExpression, dataFrame: IDataFrame): Promise<IDataFrame> {
     const { op, params, num } = exp;
     const subFrame: IDataFrame = { ...dataFrame };
     const len = dataFrame[Object.keys(dataFrame)[0]].length;
@@ -19,10 +20,10 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
                 subFrame[param.value] = new Array(len).fill(param.value);
                 break;
             case 'expression':
-                let f = execExpression(param.value, dataFrame);
-                Object.keys(f).forEach(key => {
+                let f = await execExpression(param.value, dataFrame);
+                Object.keys(f).forEach((key) => {
                     subFrame[key] = f[key];
-                })
+                });
                 break;
             case 'value':
             default:
@@ -46,6 +47,8 @@ export function execExpression (exp: IExpression, dataFrame: IDataFrame): IDataF
             return dateTimeDrill(exp.as, params, subFrame);
         case 'dateTimeFeature':
             return dateTimeFeature(exp.as, params, subFrame);
+        case 'paint':
+            return await paint(exp.as, params, subFrame);
         default:
             return subFrame;
     }
@@ -64,7 +67,7 @@ function bin(resKey: string, params: IExpParameter[], data: IDataFrame, binSize:
     const step = (_max - _min) / binSize;
     // prevent (_max - _min) to be 0
     const safeWidth = Math.min(Number.MAX_SAFE_INTEGER, Math.max(_max - _min, Number.MIN_VALUE));
-    const beaStep = Math.max(-Math.round(Math.log10(safeWidth)) + 2, 0)
+    const beaStep = Math.max(-Math.round(Math.log10(safeWidth)) + 2, 0);
     // toFix() accepts 0-100
     const safeBeaStep = Math.min(100, Math.max(0, Math.max(Number.isFinite(beaStep) ? beaStep : 0, 0)));
     const newValues = fieldValues.map((v: number) => {
@@ -73,69 +76,53 @@ function bin(resKey: string, params: IExpParameter[], data: IDataFrame, binSize:
         if (Number.isNaN(bIndex)) {
             bIndex = 0;
         }
-        return Number(((bIndex * step + _min)).toFixed(safeBeaStep))
+        return Number((bIndex * step + _min).toFixed(safeBeaStep));
     });
     return {
         ...data,
         [resKey]: newValues,
-    }
+    };
 }
 
 function binCount(resKey: string, params: IExpParameter[], data: IDataFrame, binSize: number | undefined = 10): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey] as number[];
 
-    const valueWithIndices: {val: number; index: number; orderIndex: number }[] = fieldValues.map((v, i) => ({
-        val: v,
-        index: i
-    })).sort((a, b) => a.val - b.val)
+    const valueWithIndices: { val: number; index: number; orderIndex: number }[] = fieldValues
+        .map((v, i) => ({
+            val: v,
+            index: i,
+        }))
+        .sort((a, b) => a.val - b.val)
         .map((item, i) => ({
             val: item.val,
             index: item.index,
-            orderIndex: i
-        }))
+            orderIndex: i,
+        }));
 
     const groupSize = valueWithIndices.length / binSize;
 
-    const newValues = valueWithIndices.sort((a, b) => a.index - b.index).map(item => {
-        let bIndex = Math.floor(item.orderIndex / groupSize);
-        if (bIndex === binSize) bIndex = binSize - 1;
-        return bIndex + 1
-    })
+    const newValues = valueWithIndices
+        .sort((a, b) => a.index - b.index)
+        .map((item) => {
+            let bIndex = Math.floor(item.orderIndex / groupSize);
+            if (bIndex === binSize) bIndex = binSize - 1;
+            return bIndex + 1;
+        });
     return {
         ...data,
         [resKey]: newValues,
-    }
+    };
 }
 
-function log2(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
-    const { value } = params[0];
-    const field = data[value];
-    const newField = field.map((v: number) => Math.log2(v));
-    return {
-        ...data,
-        [resKey]: newField,
-    }
-}
-
-function log10(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
+function log(resKey: string, params: IExpParameter[], data: IDataFrame, baseNum: number | undefined = 10): IDataFrame {
     const { value: fieldKey } = params[0];
     const fieldValues = data[fieldKey];
-    const newField = fieldValues.map((v: number) => Math.log10(v));
+    const newField = fieldValues.map((v: number) => Math.log(v) / Math.log(baseNum));
     return {
         ...data,
         [resKey]: newField,
-    }
-}
-
-function log(resKey: string, params: IExpParameter[], data: IDataFrame, baseNum: number | undefined=10): IDataFrame {
-    const { value: fieldKey } = params[0];
-    const fieldValues = data[fieldKey];
-    const newField = fieldValues.map((v: number) => Math.log(v) / Math.log(baseNum) );
-    return {
-        ...data,
-        [resKey]: newField,
-    }
+    };
 }
 
 function one(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
@@ -146,7 +133,17 @@ function one(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFr
     return {
         ...data,
         [resKey]: newField,
-    }
+    };
+}
+
+async function paint(resKey: string, params: IExpParameter[], data: IDataFrame): Promise<IDataFrame> {
+    const param = params.find((x) => x.type === 'map');
+    if (!param) return data;
+    const map: IPaintMap = param.value;
+    return {
+        ...data,
+        [resKey]: await calcMap(data[map.x], data[map.y], map),
+    };
 }
 
 export function dataset2DataFrame(dataset: IRow[]): IDataFrame {

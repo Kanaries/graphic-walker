@@ -37,9 +37,10 @@ import {
     ICreateField,
     ISemanticType,
     IChartForExport,
+    IPaintMap,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
@@ -94,6 +95,7 @@ export class VizSpecStore {
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
     showErrorResolutionPanel: number = 0;
+    showPainterPanel: boolean = false;
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = "";
@@ -236,6 +238,32 @@ export class VizSpecStore {
         return viz.cursor !== viz.timeline.length;
     }
 
+    get paintInfo() {
+        const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
+        if (existPaintField) {
+            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
+            if (param) {
+                return param;
+            }
+        }
+        if (!this.currentVis.config.defaultAggregated) {
+            const { columns, rows } = this.currentEncodings;
+            if (columns.length !== 1 || rows.length !== 1) {
+                return null;
+            }
+            const col = columns[0];
+            const row = rows[0];
+            if (col.semanticType != 'quantitative' || row.semanticType != 'quantitative') {
+                return null;
+            }
+            return {
+                x: col.fid,
+                y: row.fid,
+            };
+        }
+        return null;
+    }
+
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID) {
@@ -340,7 +368,7 @@ export class VizSpecStore {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
         const destMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(destinationKey);
-        if (sourceMeta && destMeta && (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID)) {
+        if (sourceMeta && destMeta && (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID || oriF.fid === PAINT_FIELD_ID)) {
             return;
         }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
@@ -588,6 +616,10 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
     }
 
+    updatePaint(paintMap: IPaintMap | null, name: string) {
+        this.visList[this.visIndex] = performers.upsertPaintField(this.visList[this.visIndex], paintMap, name);
+    }
+
     updateGeoKey(key: string) {
         this.setVisualLayout('geoKey', key);
     }
@@ -639,6 +671,11 @@ export class VizSpecStore {
         this.showErrorResolutionPanel = errCode;
         this.lastErrorMessage = msg;
     }
+
+    setShowPainter(show: boolean) {
+        this.showPainterPanel = show;
+    }
+
 
     updateLastSpec(spec: string) {
         this.lastSpec = spec;

@@ -8,3 +8,4 @@ export const DATE_TIME_FEATURE_LEVELS = [
 
 export const MEA_KEY_ID = 'gw_mea_key_fid';
 export const MEA_VAL_ID = 'gw_mea_val_fid';
+export const PAINT_FIELD_ID = 'gw_paint_fid';

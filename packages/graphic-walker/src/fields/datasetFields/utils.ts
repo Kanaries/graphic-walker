@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCompututaion, useVizStore } from '../../store';
 import type { IActionMenuItem } from '../../components/actionMenu/list';
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { getSample } from '../../computation';
 import { getTimeFormat } from '../../lib/inferMeta';
 
@@ -20,7 +20,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
             const isDateTimeDrilled = f.expression?.op === 'dateTimeDrill';
-            const isInnerField = [COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID].includes(f.fid);
+            const isInnerField = [COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID].includes(f.fid);
             return keepTrue<IActionMenuItem>([
                 channel === 'dimensions' && {
                     label: t('to_mea'),

@@ -8,6 +8,7 @@ import type {
     IVisFilter,
     ISortWorkflowStep,
     IDataQueryPayload,
+    IPaintMap,
     IFilterField,
     IChartForExport,
 } from '../interfaces';
@@ -149,7 +150,7 @@ export const toWorkflow = (
             .filter((f) => f.computed && f.expression)
             .map((f) => ({
                 key: f.fid,
-                expression: f.expression!,
+                expression: processExpression(f.expression!),
             })),
         [...viewKeys]
     );
@@ -312,3 +313,41 @@ export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
         limit: limit > 0 ? limit : undefined
     };
 }
+
+export const processExpression = (exp: IExpression): IExpression => {
+    if (exp.op === 'paint') {
+        return {
+            ...exp,
+            params: exp.params.map((x) => {
+                if (x.type === 'map') {
+                    const dict = {
+                        ...x.value.dict,
+                        '255': { name: '' },
+                    };
+                    return {
+                        type: 'map',
+                        value: {
+                            x: x.value.x,
+                            y: x.value.y,
+                            domainX: x.value.domainX,
+                            domainY: x.value.domainY,
+                            map: x.value.map,
+                            dict: Object.fromEntries(
+                                x.value.usedColor.map((i) => [
+                                    i,
+                                    {
+                                        name: dict[i].name,
+                                    },
+                                ])
+                            ),
+                            mapwidth: x.value.mapwidth,
+                        } as IPaintMap,
+                    };
+                } else {
+                    return x;
+                }
+            }),
+        };
+    }
+    return exp;
+};
