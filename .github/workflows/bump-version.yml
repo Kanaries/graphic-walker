@@ -31,6 +31,11 @@ jobs:
         yarn add @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
       working-directory: ./packages/playground
 
+    - name: Update Wasm dependecy
+      run: |
+        yarn add @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
+      working-directory: ./packages/duckdb-wasm-computation
+
     - name: Commit Changes
       run: |
         git config --local user.email "action@github.com"
