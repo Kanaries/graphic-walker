@@ -15,6 +15,9 @@ import {
     ICoordMode,
     IGeoUrl,
     ISemanticType,
+    IPaintMap,
+    IExpression,
+    IFilterField,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields } from '../utils';
@@ -23,7 +26,7 @@ import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/s
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../constants';
 import { algebraLint } from '../lib/gog';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
@@ -51,6 +54,7 @@ export enum Methods {
     changeSemanticType,
     setFilterAggregator,
     addFoldField,
+    upsertPaintField,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -74,6 +78,7 @@ type PropsMap = {
     [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
+    [Methods.upsertPaintField]: [IPaintMap | null, string];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -321,6 +326,56 @@ const actions: {
         }
         return actions[Methods.cloneField](data, from, findex, to, tindex, newVarKey, limit);
     },
+    [Methods.upsertPaintField]: (data, map, name) => {
+        if (!map) {
+            return mutPath(
+                data,
+                'encodings',
+                (encodings) =>
+                    Object.fromEntries(Object.entries(encodings).map(([c, f]) => [c, f.filter((x) => x.fid !== PAINT_FIELD_ID)])) as DraggableFieldState
+            );
+        }
+        const expression: IExpression = {
+            op: 'paint',
+            as: PAINT_FIELD_ID,
+            params: [{ type: 'map', value: map }],
+        };
+        return mutPath(data, 'encodings', (enc) => {
+            let hasPaintField = false;
+            const entries = Object.entries(enc).map(([channel, fields]: [string, IViewField[] | IFilterField[]]) => {
+                const i = fields.findIndex((x) => x.fid === PAINT_FIELD_ID);
+                if (i > -1) {
+                    hasPaintField = true;
+                    return [
+                        channel,
+                        replace(fields, i, (x) => ({
+                            ...x,
+                            expression,
+                        })),
+                    ];
+                }
+                return [channel, fields];
+            });
+            if (hasPaintField) {
+                return Object.fromEntries(entries);
+            }
+            // if is creating paint field, add it to color encoding.
+            const field: IViewField = {
+                fid: PAINT_FIELD_ID,
+                dragId: PAINT_FIELD_ID,
+                analyticType: 'dimension',
+                name,
+                semanticType: 'nominal',
+                computed: true,
+                expression,
+            };
+            return mutPath(
+                mutPath(enc, 'dimensions', (f) => insert(f, field, f.length)),
+                'color',
+                () => [{ ...field, dragId: `auto_${PAINT_FIELD_ID}` }]
+            );
+        });
+    },
 };
 
 const diffChangedEncodings = (prev: IChart, next: IChart) => {
@@ -350,7 +405,7 @@ function makeFieldAtLast<T>(arr: T[], lasts: ((item: T) => boolean)[]): T[] {
 function lintExtraFields<T extends Partial<DraggableFieldState>>(encodings: T): Partial<T> {
     const result: Partial<T> = {};
     if (encodings.dimensions && encodings.dimensions.length > 0) {
-        result.dimensions = makeFieldAtLast(encodings.dimensions, [(i) => i.fid === MEA_KEY_ID]);
+        result.dimensions = makeFieldAtLast(encodings.dimensions, [(i) => i.fid === PAINT_FIELD_ID, (i) => i.fid === MEA_KEY_ID]);
     }
     if (encodings.measures && encodings.measures.length > 0) {
         result.measures = makeFieldAtLast(encodings.measures, [(i) => i.fid === COUNT_FIELD_ID, (i) => i.fid === MEA_VAL_ID]);

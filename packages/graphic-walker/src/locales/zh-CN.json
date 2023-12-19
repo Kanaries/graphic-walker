@@ -29,6 +29,7 @@
         "row_count": "行数",
         "mea_key": "度量名称",
         "mea_val": "度量值",
+        "paint_key": "绘制字段",
         "analytic_type": {
             "dimension": "维度",
             "measure": "度量"
@@ -199,7 +200,20 @@
                     "export_chart": "导出",
                     "export_chart_as": "导出 {{type}}",
                     "export_code": "导出代码",
-                    "geojson": "地理信息配置"
+                    "geojson": "地理信息配置",
+                    "painter": "打开数据绘板",
+                    "disabled_painter": "创建绘制字段需要在XY轴使用数据类型并关闭聚合"
+                },
+                "paint": {
+                    "palette": "色板",
+                    "eraser": "橡皮",
+                    "color": "颜色",
+                    "label": "标签",
+                    "brush_size": "笔刷大小",
+                    "save_paint": "保存画板",
+                    "reset_paint": "重置画板",
+                    "cancel": "取消改动",
+                    "delete_paint": "删除画板"
                 },
                 "limit": "上限",
                 "size": "调整尺寸",

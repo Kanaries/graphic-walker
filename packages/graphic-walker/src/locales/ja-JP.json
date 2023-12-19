@@ -27,8 +27,9 @@
     },
     "constant": {
         "row_count": "行数",
-        "dim_key": "名",
-        "dim_val": "値",
+        "mea_key": "名",
+        "mea_val": "値",
+        "paint_key": "キャンバスでのフィールド",
         "analytic_type": {
             "dimension": "ディメンション",
             "measure": "メジャー"
@@ -193,7 +194,20 @@
                     "export_chart": "エクスポート",
                     "export_chart_as": "{{type}}としてエクスポート",
                     "export_code": "コードをエクスポート",
-                    "geojson": "地理情報設定"
+                    "geojson": "地理情報設定",
+                    "painter": "データキャンバスを開く",
+                    "disabled_painter": "データキャンバスを作るには数量尺度フィールドをXY軸に設置して集計をオフにするが必要"
+                },
+                "paint": {
+                    "palette": "パレット",
+                    "eraser": "消しゴム",
+                    "color": "色",
+                    "label": "ラベル",
+                    "brush_size": "ブラシサイズ",
+                    "save_paint": "キャンバスを保存",
+                    "reset_paint": "キャンバスをリセット",
+                    "cancel": "キャンセル",
+                    "delete_paint": "キャンバスを削除"
                 },
                 "limit": "上限",
                 "size": "サイズ変更",

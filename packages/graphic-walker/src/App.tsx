@@ -29,6 +29,7 @@ import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
+import Painter from './components/painter';
 import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
@@ -164,6 +165,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <Errorpanel />
                                     <LogPanel />
                                     <BinPanel />
+                                    <Painter />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="sm:flex">
                                         <SideReisze
