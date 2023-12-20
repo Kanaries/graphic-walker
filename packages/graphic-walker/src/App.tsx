@@ -165,7 +165,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <Errorpanel />
                                     <LogPanel />
                                     <BinPanel />
-                                    <Painter />
+                                    <Painter themeConfig={themeConfig} dark={darkMode} themeKey={themeKey} />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="sm:flex">
                                         <SideReisze

@@ -4,7 +4,7 @@ import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
 import { getRange } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
-import { IViewField } from '../../interfaces';
+import { IDarkMode, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
 import embed from 'vega-embed';
 import Modal from '../modal';
 import { PAINT_FIELD_ID } from '../../constants';
@@ -17,6 +17,8 @@ import LoadingLayer from '../loadingLayer';
 import DefaultButton from '../button/default';
 import PrimaryButton from '../button/primary';
 import { GLOBAL_CONFIG } from '../../config';
+import { GWGlobalConfig, builtInThemes } from '../../vis/theme';
+import { useCurrentMediaTheme } from '../../utils/media';
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -63,6 +65,7 @@ const PainterContent = (props: {
     domainX: [number, number];
     domainY: [number, number];
     dict: typeof defaultScheme;
+    vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
     mapRef: React.MutableRefObject<Uint8Array | undefined>;
     onDelete: () => void;
@@ -165,7 +168,7 @@ const PainterContent = (props: {
                 width: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
                 height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
             };
-            embed(containerRef.current, spec, { actions: false }).then((res) => {
+            embed(containerRef.current, spec, { config: props.vegaConfig, actions: false }).then((res) => {
                 const scene = res.view.scenegraph() as unknown as { root: Scene };
                 const origin = res.view.origin();
                 setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
@@ -244,7 +247,7 @@ const PainterContent = (props: {
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
-    }, [loading, data, props.dict]);
+    }, [loading, data, props.dict, props.vegaConfig]);
 
     const [showCursorPreview, setShowCursorPreview] = React.useState(false);
 
@@ -375,7 +378,7 @@ const PainterContent = (props: {
     );
 };
 
-const Painter = () => {
+const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
     const { showPainterPanel } = vizStore;
     const { t } = useTranslation();
@@ -440,6 +443,17 @@ const Painter = () => {
         vizStore.setShowPainter(false);
     };
 
+    const mediaTheme = useCurrentMediaTheme(dark);
+
+    const vegaConfig = useMemo<VegaGlobalConfig>(() => {
+        const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
+        const config: VegaGlobalConfig = {
+            ...presetConfig?.[mediaTheme],
+            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+        };
+        return config;
+    }, [themeConfig, themeKey, mediaTheme]);
+
     return (
         <Modal
             show={showPainterPanel}
@@ -451,6 +465,7 @@ const Painter = () => {
                 <LoadingLayer />
             ) : (
                 <PainterContent
+                    vegaConfig={vegaConfig}
                     onSave={saveMap}
                     onDelete={() => {
                         vizStore.updatePaint(null, '');
