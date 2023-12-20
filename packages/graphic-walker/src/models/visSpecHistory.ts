@@ -363,7 +363,7 @@ const actions: {
             });
             const erasedFilter: IFilterField = {
                 fid: PAINT_FIELD_ID,
-                dragId: PAINT_FIELD_ID,
+                dragId: PAINT_FIELD_ID + '_filter',
                 analyticType: 'dimension',
                 name,
                 semanticType: 'nominal',
