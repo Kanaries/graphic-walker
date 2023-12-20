@@ -340,12 +340,17 @@ const actions: {
             as: PAINT_FIELD_ID,
             params: [{ type: 'map', value: map }],
         };
+        const hasErased = map.usedColor.includes(255);
         return mutPath(data, 'encodings', (enc) => {
             let hasPaintField = false;
+            let hasFilterField = false;
             const entries = Object.entries(enc).map(([channel, fields]: [string, IViewField[] | IFilterField[]]) => {
                 const i = fields.findIndex((x) => x.fid === PAINT_FIELD_ID);
                 if (i > -1) {
                     hasPaintField = true;
+                    if (channel === 'filters') {
+                        hasFilterField = true;
+                    }
                     return [
                         channel,
                         replace(fields, i, (x) => ({
@@ -356,7 +361,23 @@ const actions: {
                 }
                 return [channel, fields];
             });
+            const erasedFilter: IFilterField = {
+                fid: PAINT_FIELD_ID,
+                dragId: PAINT_FIELD_ID,
+                analyticType: 'dimension',
+                name,
+                semanticType: 'nominal',
+                computed: true,
+                expression,
+                rule: {
+                    type: 'not in',
+                    value: new Set(['']),
+                },
+            };
             if (hasPaintField) {
+                if (!hasFilterField && hasErased) {
+                    return mutPath(Object.fromEntries(entries) as DraggableFieldState, 'filters', (f) => f.concat(erasedFilter));
+                }
                 return Object.fromEntries(entries);
             }
             // if is creating paint field, add it to color encoding.
@@ -369,11 +390,15 @@ const actions: {
                 computed: true,
                 expression,
             };
-            return mutPath(
+            const result = mutPath(
                 mutPath(enc, 'dimensions', (f) => insert(f, field, f.length)),
                 'color',
                 () => [{ ...field, dragId: `auto_${PAINT_FIELD_ID}` }]
             );
+            if (hasErased) {
+                return mutPath(result, 'filters', (f) => f.concat(erasedFilter));
+            }
+            return result;
         });
     },
 };
