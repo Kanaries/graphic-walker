@@ -310,7 +310,7 @@ const actions: {
             data = actions[Methods.setConfig](
                 data,
                 'folds',
-                validFoldBy.map((x) => x.fid)
+                validFoldBy.filter((_, i) => i === 0).map((x) => x.fid)
             );
         }
         if (originalField.fid === MEA_VAL_ID) {
