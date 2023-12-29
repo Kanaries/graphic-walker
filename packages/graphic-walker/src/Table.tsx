@@ -12,6 +12,7 @@ import { getComputation } from './computation/clientComputation';
 import DatasetTable from './components/dataTable';
 import { useCurrentMediaTheme } from './utils/media';
 import { toJS } from 'mobx';
+import Errorpanel from './components/errorpanel';
 
 export type BaseTableProps = IAppI18nProps &
     IErrorHandlerProps &
@@ -68,6 +69,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                             <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} />
                         </div>
                     </div>
+                    <Errorpanel />
                 </ComputationContext.Provider>
             </ErrorBoundary>
         </ErrorContext>
