@@ -136,6 +136,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                             <div className="px-2 mx-2">
                                 <SegmentNav />
                             </div>
+                            <Errorpanel />
                             {segmentKey === ISegmentKey.vis && (
                                 <div className="px-2 mx-2 mt-2">
                                     <VisNav />
@@ -162,7 +163,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <ExplainData themeKey={themeKey} dark={darkMode} />
                                     {vizStore.showDataBoard && <DataBoard />}
                                     <VisualConfig />
-                                    <Errorpanel />
                                     <LogPanel />
                                     <BinPanel />
                                     <Painter themeConfig={themeConfig} dark={darkMode} themeKey={themeKey} />
