@@ -9,6 +9,7 @@ import type {
     IRow,
     ISortWorkflowStep,
     ITransformWorkflowStep,
+    IViewWorkflowStep,
     IVisFilter,
 } from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
@@ -86,12 +87,12 @@ export const dataReadRaw = async (
 };
 
 export const dataQuery = async (service: IComputationFunction, workflow: IDataQueryWorkflowStep[], limit?: number): Promise<IRow[]> => {
+    const viewWorkflow = workflow.find(x => x.type === 'view') as IViewWorkflowStep | undefined;
     if (
-        workflow.length === 1 &&
-        workflow[0].type === 'view' &&
-        workflow[0].query.length === 1 &&
-        workflow[0].query[0].op === 'raw' &&
-        workflow[0].query[0].fields.length === 0
+        viewWorkflow &&
+        viewWorkflow.query.length === 1 &&
+        viewWorkflow.query[0].op === 'raw' &&
+        viewWorkflow.query[0].fields.length === 0
     ) {
         return [];
     }
