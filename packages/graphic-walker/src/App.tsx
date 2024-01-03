@@ -191,7 +191,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             </div>
                                             <div
                                                 className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
-                                                style={{ minHeight: '600px', overflow: 'auto' }}
+                                                style={{ minHeight: '600px', height: 1, maxHeight: '100vh', overflow: 'auto' }}
                                                 onMouseLeave={() => {
                                                     vizEmbededMenu.show && vizStore.closeEmbededMenu();
                                                 }}
