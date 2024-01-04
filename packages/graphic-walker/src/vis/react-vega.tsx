@@ -294,7 +294,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 }).then((res) => {
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                    const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+                    const success = useSvg || (canvas && canvasSize.test({ width: canvas.width || 1, height: canvas.height || 1 }));
                     if (!success) {
                         if (canvas) {
                             reportGWError('canvas exceed max size', Errors.canvasExceedSize);
@@ -364,7 +364,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         }).then((res) => {
                             const container = res.view.container();
                             const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                            const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+                            const success = useSvg || (canvas && canvasSize.test({ width: canvas.width || 1, height: canvas.height || 1 }));
                             if (!success) {
                                 if (canvas) {
                                     reportGWError('canvas exceed max size', Errors.canvasExceedSize);

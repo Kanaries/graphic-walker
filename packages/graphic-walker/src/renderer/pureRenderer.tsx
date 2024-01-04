@@ -70,6 +70,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         [rawLayout, overrideSize]
     );
 
+    const sizeMode = visualLayout.size.mode;
+
     const sort = getSort(visualState);
     const limit = visualConfig.limit ?? -1;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
@@ -123,8 +125,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom className={className}>
-            <div className="relative">
+        <ShadowDom style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined} className={className}>
+            <div className="relative" style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined}>
                 {isSpatial && (
                     <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
