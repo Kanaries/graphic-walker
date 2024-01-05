@@ -442,6 +442,7 @@ type reducerMiddleware<T> = (item: T, original: T) => T;
 
 const diffLinter: reducerMiddleware<IChart> = (item, original) => {
     const diffs = diffChangedEncodings(original, item);
+    if (Object.keys(diffs).length === 0) return item; 
     return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(diffs), ...lintExtraFields(diffs) }));
 };
 

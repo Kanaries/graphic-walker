@@ -354,7 +354,7 @@ export interface IVisualLayout {
         size?: boolean;
     };
     size: {
-        mode: 'auto' | 'fixed';
+        mode: 'auto' | 'fixed' | 'full';
         width: number;
         height: number;
     };
@@ -419,7 +419,7 @@ export interface IVegaChartRef {
     innerWidth: number;
     innerHeight: number;
     view: View;
-    canvas: HTMLCanvasElement | null;
+    canvas: HTMLCanvasElement | SVGSVGElement | null;
 }
 
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
@@ -435,7 +435,7 @@ export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data
         canvasWidth: number;
         canvasHeight: number;
         data: string;
-        canvas(): HTMLCanvasElement | null;
+        canvas(): HTMLCanvasElement | SVGSVGElement | null;
     }[];
     container(): HTMLDivElement | null;
     chartType?: string;
