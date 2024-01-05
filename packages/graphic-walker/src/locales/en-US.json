@@ -73,7 +73,8 @@
         "layout_type": {
             "__enum__": "Layout Mode",
             "auto": "Auto",
-            "fixed": "Fixed"
+            "fixed": "Fixed",
+            "full": "Container"
         },
         "exploration_mode": {
             "__enum__": "Exploration Mode",

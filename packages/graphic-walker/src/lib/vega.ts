@@ -87,13 +87,18 @@ export function toVegaSpec({
         });
     }
     if (rowRepeatFields.length <= 1 && colRepeatFields.length <= 1) {
-        if (layoutMode === 'fixed') {
-            if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
-                spec.autosize = 'fit';
-            }
-            spec.width = width;
-            spec.height = height;
+        if (layoutMode === 'auto') {
+        } else if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
+            spec.autosize = 'fit';
+            spec.width = width - 5;
+            spec.height = height - 5;
+        } else {
+            const rowNums = rowFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[rowFacetField.fid])).size : 1;
+            const colNums = colFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[colFacetField.fid])).size : 1;
+            spec.width = Math.floor((width - (rowFacetField === NULL_FIELD ? 40 : 94)) / colNums - 23);
+            spec.height = Math.floor((height - (colFacetField === NULL_FIELD ? 24 : 94)) / rowNums - 23);
         }
+
         const v = getSingleView({
             x: xField,
             y: yField,
@@ -134,11 +139,18 @@ export function toVegaSpec({
         }
         return [spec];
     } else {
-        if (layoutMode === 'fixed') {
+        if (layoutMode === 'auto') {
+        } else if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
             spec.width = Math.floor(width / colRepeatFields.length) - 5;
             spec.height = Math.floor(height / rowRepeatFields.length) - 5;
             spec.autosize = 'fit';
+        } else {
+            const rowNums = rowFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[rowFacetField.fid])).size : 1;
+            const colNums = colFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[colFacetField.fid])).size : 1;
+            spec.width = Math.floor((width / colRepeatFields.length - (rowFacetField === NULL_FIELD ? 40 : 94)) / colNums - 23);
+            spec.height = Math.floor((height / rowRepeatFields.length - (colFacetField === NULL_FIELD ? 24 : 94)) / rowNums - 23);
         }
+
         let index = 0;
         let result = new Array(rowRepeatFields.length * colRepeatFields.length);
         for (let i = 0; i < rowRepeatFields.length; i++) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, forwardRef, useRef } from 'react';
+import React, { useEffect, useState, useMemo, forwardRef, useRef, useCallback } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
@@ -11,12 +11,33 @@ import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
 import { useCurrentMediaTheme } from '../utils/media';
 import { toVegaSpec } from '../lib/vega';
+import { useResizeDetector } from 'react-resize-detector';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     display: grid;
     grid-template-columns: repeat(${(props) => props.colSize}, 1fr);
     grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
 `;
+
+function parseRect(el: HTMLCanvasElement | SVGSVGElement) {
+    if (el instanceof HTMLCanvasElement) {
+        return {
+            width: parseInt(el.style.width),
+            height: parseInt(el.style.height),
+            renderWidth: el.width,
+            renderHeight: el.height,
+        };
+    } else if (el instanceof SVGSVGElement) {
+        const width = el.width.baseVal.value;
+        const height = el.height.baseVal.value;
+        return {
+            width,
+            height,
+            renderWidth: 0,
+            renderHeight: 0,
+        };
+    }
+}
 
 const SELECTION_NAME = 'geom';
 export interface IReactVegaHandler {
@@ -182,6 +203,44 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
     const vegaRefs = useRef<IVegaChartRef[]>([]);
     const renderTaskRefs = useRef<Promise<unknown>[]>([]);
+    const { width: areaWidth, height: areaHeight, ref: areaRef } = useResizeDetector();
+
+    const modifierDeps = [
+        columns,
+        dataSource,
+        defaultAggregate,
+        geomType,
+        interactiveScale,
+        layoutMode,
+        mediaTheme,
+        rows,
+        stack,
+        channelScales,
+        color,
+        details,
+        opacity,
+        radius,
+        shape,
+        size,
+        text,
+        theta,
+    ];
+
+    const modifierDepsRef = useRef(modifierDeps);
+
+    const [modifierRaw, setModifier] = useState({ width: 0, height: 0 });
+
+    let modifier: typeof modifierRaw;
+
+    if (modifierDepsRef.current.map((x, i) => x === modifierDeps[i]).every((x) => x)) {
+        modifier = modifierRaw;
+    } else {
+        modifier = { width: 0, height: 0 };
+    }
+
+    const vegaWidth = (areaWidth || width) - modifier.width;
+    const vegaHeight = (areaHeight || height) - modifier.height;
+
     const specs = useMemo(
         () =>
             toVegaSpec({
@@ -189,13 +248,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 dataSource,
                 defaultAggregated: defaultAggregate,
                 geomType,
-                height,
+                height: vegaHeight,
                 interactiveScale,
                 layoutMode,
                 mediaTheme,
                 rows,
                 stack,
-                width,
+                width: vegaWidth,
                 channelScales,
                 color,
                 details,
@@ -212,13 +271,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             dataSource,
             defaultAggregate,
             geomType,
-            height,
+            vegaHeight,
             interactiveScale,
             layoutMode,
             mediaTheme,
             rows,
             stack,
-            width,
+            vegaWidth,
             channelScales,
             color,
             details,
@@ -254,14 +313,23 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                     config: vegaConfig,
                 }).then((res) => {
                     const container = res.view.container();
-                    const canvas = container?.querySelector('canvas') ?? null;
-                    const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+                    const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
+                    const rect = canvas ? parseRect(canvas): null;
+                    const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
                     if (!success) {
                         if (canvas) {
                             reportGWError('canvas exceed max size', Errors.canvasExceedSize);
                         } else {
                             reportGWError('canvas not found', Errors.canvasExceedSize);
                         }
+                    }
+                    if (rect && !modifier.width && !modifier.height && specs[0].width > 0 && specs[0].height > 0) {
+                        const modifier = {
+                            width: Math.max(rect.width- (areaWidth || width), 0),
+                            height: Math.max(rect.height - (areaHeight || height), 0),
+                        };
+                        setModifier(modifier);
+                        modifierDepsRef.current = modifierDeps;
                     }
                     vegaRefs.current = [
                         {
@@ -299,6 +367,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
                 subscriptions.push(throttledParamStore$.subscribe(cb));
             };
+            const newModifier = { width: 0, height: 0 };
 
             for (let i = 0; i < rowRepeatFields.length; i++) {
                 for (let j = 0; j < colRepeatFields.length; j++, index++) {
@@ -315,14 +384,25 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             config: vegaConfig,
                         }).then((res) => {
                             const container = res.view.container();
-                            const canvas = container?.querySelector('canvas') ?? null;
-                            const success = useSvg || (canvas && canvasSize.test({ width: canvas.width, height: canvas.height }));
+                            const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
+                            const rect = canvas ? parseRect(canvas): null;
+                            const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
                             if (!success) {
                                 if (canvas) {
                                     reportGWError('canvas exceed max size', Errors.canvasExceedSize);
                                 } else {
                                     reportGWError('canvas not found', Errors.canvasExceedSize);
                                 }
+                            }
+                            if (rect && !modifier.width && !modifier.height) {
+                                const modifier = {
+                                    width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
+                                    height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
+                                };
+                                newModifier.width = Math.max(newModifier.width, modifier.width);
+                                newModifier.height = Math.max(newModifier.height, modifier.height);
+                                setModifier(newModifier);
+                                modifierDepsRef.current = modifierDeps;
                             }
                             vegaRefs.current[id] = {
                                 w: container?.clientWidth ?? res.view.width(),
@@ -410,12 +490,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     useVegaExportApi(name, vegaRefs, ref, renderTaskRefs, containerRef);
 
     return (
-        <CanvaContainer rowSize={Math.max(rowRepeatFields.length, 1)} colSize={Math.max(colRepeatFields.length, 1)} ref={containerRef}>
-            {/* <div ref={container}></div> */}
-            {viewPlaceholders.map((view, i) => (
-                <div key={i} ref={view}></div>
-            ))}
-        </CanvaContainer>
+        <div className="w-full h-full relative" style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}>
+            <div ref={areaRef} className="inset-0 absolute" />
+            <CanvaContainer
+                style={layoutMode === 'full' ? { width: '100%', height: '100%' } : {}}
+                rowSize={Math.max(rowRepeatFields.length, 1)}
+                colSize={Math.max(colRepeatFields.length, 1)}
+                ref={containerRef}
+            >
+                {/* <div ref={container}></div> */}
+                {viewPlaceholders.map((view, i) => (
+                    <div key={i} ref={view}></div>
+                ))}
+            </CanvaContainer>
+        </div>
     );
 });
 

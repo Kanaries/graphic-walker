@@ -9,7 +9,7 @@ const COORD_TYPES: ICoordMode[] = ['generic', 'geographic'];
 
 const STACK_MODE: IStackMode[] = ['none', 'stack', 'normalize', 'center'];
 
-const CHART_LAYOUT_TYPE: ('auto' | 'fixed')[] = ['auto', 'fixed'];
+const CHART_LAYOUT_TYPE: ('auto' | 'fixed' | 'full')[] = ['auto', 'fixed', 'full'];
 
 const COLORS = {
     // tableau style

@@ -4,7 +4,18 @@ import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
-import type { IDarkMode, IViewField, IRow, IThemeKey, DraggableFieldState, IVisualConfig, IVisualConfigNew, IComputationFunction, IVisualLayout, IChannelScales } from '../interfaces';
+import type {
+    IDarkMode,
+    IViewField,
+    IRow,
+    IThemeKey,
+    DraggableFieldState,
+    IVisualConfig,
+    IVisualConfigNew,
+    IComputationFunction,
+    IVisualLayout,
+    IChannelScales,
+} from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
 import { useRenderer } from './hooks';
@@ -24,6 +35,7 @@ type IPureRendererProps =
           visualLayout?: IVisualLayout;
           locale?: string;
           channelScales?: IChannelScales;
+          overrideSize?: IVisualLayout['size'];
       } & (
           | {
                 type: 'remote';
@@ -40,7 +52,7 @@ type IPureRendererProps =
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
-    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, locale, type, themeConfig, channelScales } = props;
+    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, overrideSize, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -48,7 +60,17 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
         return getComputation(props.rawData);
     }, [type, type === 'remote' ? props.computation : props.rawData]);
 
-    const visualLayout = layout ?? (visualConfig as IVisualConfig);
+    const rawLayout = layout ?? (visualConfig as IVisualConfig);
+
+    const visualLayout = useMemo(
+        () => ({
+            ...rawLayout,
+            ...(overrideSize ? { size: overrideSize } : {}),
+        }),
+        [rawLayout, overrideSize]
+    );
+
+    const sizeMode = visualLayout.size.mode;
 
     const sort = getSort(visualState);
     const limit = visualConfig.limit ?? -1;
@@ -103,8 +125,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom className={className}>
-            <div className="relative">
+        <ShadowDom style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined} className={className}>
+            <div className="relative" style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined}>
                 {isSpatial && (
                     <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />

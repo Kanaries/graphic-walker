@@ -44,7 +44,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         onGeomClick,
         onChartResize,
         locale,
- onReportSpec,
+        onReportSpec,
         themeConfig: customizedThemeConfig,
         channelScales,
     },
@@ -148,7 +148,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     return (
         <Resizable
-            className={enableResize ? 'border-blue-400 border-2 overflow-hidden inline-block' : 'inline-block'}
+            className={
+                enableResize ? 'border-blue-400 border-2 overflow-hidden inline-block max-h-screen max-w-[100vw]' : 'inline-block max-h-screen max-w-[100vw]'
+            }
             style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
                 onChartResize?.(size.width + d.width, size.height + d.height);
@@ -178,6 +180,11 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     ? {
                           width: LEAFLET_DEFAULT_WIDTH + 'px',
                           height: LEAFLET_DEFAULT_HEIGHT + 'px',
+                      }
+                    : size.mode === 'full'
+                    ? {
+                          width: '100%',
+                          height: '100%',
                       }
                     : { width: 'auto', height: 'auto' }
             }
