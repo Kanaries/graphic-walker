@@ -19,6 +19,26 @@ const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
 `;
 
+function parseRect(el: HTMLCanvasElement | SVGSVGElement) {
+    if (el instanceof HTMLCanvasElement) {
+        return {
+            width: parseInt(el.style.width),
+            height: parseInt(el.style.height),
+            renderWidth: el.width,
+            renderHeight: el.height,
+        };
+    } else if (el instanceof SVGSVGElement) {
+        const width = el.width.baseVal.value;
+        const height = el.height.baseVal.value;
+        return {
+            width,
+            height,
+            renderWidth: 0,
+            renderHeight: 0,
+        };
+    }
+}
+
 const SELECTION_NAME = 'geom';
 export interface IReactVegaHandler {
     getSVGData: () => Promise<string[]>;
@@ -294,7 +314,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 }).then((res) => {
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                    const success = useSvg || (canvas && canvasSize.test({ width: canvas.width || 1, height: canvas.height || 1 }));
+                    const rect = canvas ? parseRect(canvas): null;
+                    const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
                     if (!success) {
                         if (canvas) {
                             reportGWError('canvas exceed max size', Errors.canvasExceedSize);
@@ -302,10 +323,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             reportGWError('canvas not found', Errors.canvasExceedSize);
                         }
                     }
-                    if (canvas && !modifier.width && !modifier.height && specs[0].width > 0 && specs[0].height > 0) {
+                    if (rect && !modifier.width && !modifier.height && specs[0].width > 0 && specs[0].height > 0) {
                         const modifier = {
-                            width: Math.max(parseInt(canvas.style.width) - (areaWidth || width), 0),
-                            height: Math.max(parseInt(canvas.style.height) - (areaHeight || height), 0),
+                            width: Math.max(rect.width- (areaWidth || width), 0),
+                            height: Math.max(rect.height - (areaHeight || height), 0),
                         };
                         setModifier(modifier);
                         modifierDepsRef.current = modifierDeps;
@@ -364,7 +385,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         }).then((res) => {
                             const container = res.view.container();
                             const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                            const success = useSvg || (canvas && canvasSize.test({ width: canvas.width || 1, height: canvas.height || 1 }));
+                            const rect = canvas ? parseRect(canvas): null;
+                            const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
                             if (!success) {
                                 if (canvas) {
                                     reportGWError('canvas exceed max size', Errors.canvasExceedSize);
@@ -372,10 +394,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                     reportGWError('canvas not found', Errors.canvasExceedSize);
                                 }
                             }
-                            if (canvas && !modifier.width && !modifier.height) {
+                            if (rect && !modifier.width && !modifier.height) {
                                 const modifier = {
-                                    width: Math.max(parseInt(canvas.style.width) - (areaWidth || width) / colRepeatFields.length, 0),
-                                    height: Math.max(parseInt(canvas.style.height) - (areaHeight || height) / rowRepeatFields.length, 0),
+                                    width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
+                                    height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
                                 };
                                 newModifier.width = Math.max(newModifier.width, modifier.width);
                                 newModifier.height = Math.max(newModifier.height, modifier.height);
