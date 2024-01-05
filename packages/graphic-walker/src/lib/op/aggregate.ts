@@ -1,7 +1,7 @@
-import { IRow } from "../../interfaces";
-import { getMeaAggKey } from "../../utils";
-import { IAggQuery } from "../../interfaces";
-import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from "./stat";
+import { IRow } from '../../interfaces';
+import { getMeaAggKey } from '../../utils';
+import { IAggQuery } from '../../interfaces';
+import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from './stat';
 
 const aggregatorMap = {
     sum,
@@ -17,7 +17,7 @@ const aggregatorMap = {
 
 const KEY_JOINER = '___';
 
-export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
+export function aggregate(data: IRow[], query: IAggQuery): IRow[] {
     const { groupBy, measures } = query;
     const ans: Map<string, IRow> = new Map();
     const groups: Map<string, IRow[]> = new Map();
@@ -49,7 +49,8 @@ export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
                         return new Date(x).getTime();
                     }
                     return x;
-                });
+                })
+                .filter((x) => mea.field === '*' || (x !== undefined && x !== null));
             const aggregator = aggregatorMap[mea.agg] ?? sum;
             aggRow[aggMeaKey] = aggregator(values);
         }
