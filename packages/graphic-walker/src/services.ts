@@ -1,5 +1,5 @@
 import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
-import { INestNode } from "./components/pivotTable/inteface";
+import { INestNode } from './components/pivotTable/inteface';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
 // eslint-disable-next-line
@@ -18,6 +18,12 @@ function workerService<T, R>(worker: Worker, data: R): Promise<T> {
     return new Promise<T>((resolve, reject) => {
         worker.postMessage(data);
         worker.onmessage = (e: MessageEvent) => {
+            if (typeof e.data === 'string') {
+                reject({
+                    success: false,
+                    message: e.data,
+                });
+            }
             resolve(e.data);
         };
         worker.onerror = (e: ErrorEvent) => {
@@ -96,7 +102,6 @@ interface PreAnalysisParams {
 //     }
 // }
 
-
 export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSimple[]): Promise<IRow[]> => {
     if (filters.length === 0) return data;
     const worker = new FilterWorker();
@@ -107,15 +112,14 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSi
         });
 
         return res;
-    } catch (error) {
-        // @ts-ignore @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
-        throw new Error('Uncaught error in FilterWorker', { cause: error });
+    } catch (error: any) {
+        throw new Error(error.message);
     } finally {
         worker.terminate();
     }
 };
 
-export const transformDataService = async (data: IRow[], trans: { key: string, expression: IExpression }[]): Promise<IRow[]> => {
+export const transformDataService = async (data: IRow[], trans: { key: string; expression: IExpression }[]): Promise<IRow[]> => {
     if (data.length === 0) return data;
     const worker = new TransformDataWorker();
     try {
@@ -124,8 +128,8 @@ export const transformDataService = async (data: IRow[], trans: { key: string, e
             trans,
         });
         return res;
-    } catch (error) {
-        throw new Error('Uncaught error in TransformDataWorker', { cause: error });
+    } catch (error: any) {
+        throw new Error(error.message);
     } finally {
         worker.terminate();
     }
@@ -139,33 +143,34 @@ export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<I
             query: query,
         });
         return res;
-    } catch (err) {
-        throw new Error('Uncaught error in ViewQueryWorker', { cause: err });
+    } catch (err: any) {
+        throw new Error(err.message);
     } finally {
         worker.terminate();
     }
-}
+};
 
-export const buildPivotTableService = async (dimsInRow: IViewField[], 
-        dimsInColumn: IViewField[], 
-        allData: IRow[], 
-        aggData: IRow[], 
-        collapsedKeyList: string[], 
-        showTableSummary: boolean,
-        sort?: {
-            fid: string,
-            type: 'ascending' | 'descending',
-            mode: 'row' | 'column',
-        }
-    ): Promise<{lt: INestNode, tt: INestNode, metric: (IRow | null)[][]}> => {
+export const buildPivotTableService = async (
+    dimsInRow: IViewField[],
+    dimsInColumn: IViewField[],
+    allData: IRow[],
+    aggData: IRow[],
+    collapsedKeyList: string[],
+    showTableSummary: boolean,
+    sort?: {
+        fid: string;
+        type: 'ascending' | 'descending';
+        mode: 'row' | 'column';
+    }
+): Promise<{ lt: INestNode; tt: INestNode; metric: (IRow | null)[][] }> => {
     const worker = new BuildMetricTableWorker();
     try {
-        const res: {lt: INestNode, tt: INestNode, metric: (IRow | null)[][]} = await workerService(worker, {
+        const res: { lt: INestNode; tt: INestNode; metric: (IRow | null)[][] } = await workerService(worker, {
             dimsInRow,
-            dimsInColumn, 
-            allData, 
-            aggData, 
-            collapsedKeyList, 
+            dimsInColumn,
+            allData,
+            aggData,
+            collapsedKeyList,
             showTableSummary,
             sort,
         });
@@ -175,13 +180,9 @@ export const buildPivotTableService = async (dimsInRow: IViewField[],
     } finally {
         worker.terminate();
     }
-}
+};
 
-export const applySort = async (
-    data: IRow[],
-    viewMeasures: string[],
-    sort: 'ascending' | 'descending'
-): Promise<IRow[]> => {
+export const applySort = async (data: IRow[], viewMeasures: string[], sort: 'ascending' | 'descending'): Promise<IRow[]> => {
     const worker = new SortWorker();
     try {
         const res: IRow[] = await workerService(worker, {

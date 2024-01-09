@@ -25,6 +25,7 @@ import {
     RectangleGroupIcon,
     GlobeAmericasIcon,
     HashtagIcon,
+    DocumentPlusIcon,
     PaintBrushIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
@@ -34,7 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { ResizeDialog } from '../components/sizeSetting';
 import { GLOBAL_CONFIG } from '../config';
 import { useVizStore } from '../store';
-import { IStackMode, IDarkMode } from '../interfaces';
+import { IStackMode, IDarkMode, IExperimentalFeatures } from '../interfaces';
 import { IReactVegaHandler } from '../vis/react-vega';
 import Toolbar, { ToolbarItemProps } from '../components/toolbar';
 import { ButtonWithShortcut } from './menubar';
@@ -74,9 +75,10 @@ interface IVisualSettings {
     csvHandler?: React.MutableRefObject<{ download: () => void }>;
     exclude?: string[];
     extra?: ToolbarItemProps[];
+    experimentalFeatures?: IExperimentalFeatures;
 }
 
-const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [] }) => {
+const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [], experimentalFeatures }) => {
     const vizStore = useVizStore();
     const { config, layout, canUndo, canRedo, limit, paintInfo } = vizStore;
     const { t: tGlobal } = useTranslation();
@@ -400,6 +402,9 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
                     vizStore.setVisualLayout('showTableSummary', checked);
                 },
             },
+            ...(experimentalFeatures?.computedField
+                ? [{ key: 'field:add', label: 'Add Computed Field', icon: DocumentPlusIcon, onClick: () => vizStore.setComputedFieldFid('') }]
+                : []),
             '-',
             {
                 key: 'axes_resize',
@@ -633,6 +638,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         exclude,
         limit,
         showTableSummary,
+        experimentalFeatures,
         paintInfo
     ]);
 

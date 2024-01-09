@@ -18,6 +18,7 @@ import {
     IPaintMap,
     IExpression,
     IFilterField,
+    IField,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields } from '../utils';
@@ -28,6 +29,7 @@ import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } 
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../constants';
 import { algebraLint } from '../lib/gog';
+import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -55,6 +57,9 @@ export enum Methods {
     setFilterAggregator,
     addFoldField,
     upsertPaintField,
+    addSQLComputedField,
+    removeAllField,
+    editAllField,
 }
 type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -79,6 +84,9 @@ type PropsMap = {
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
     [Methods.upsertPaintField]: [IPaintMap | null, string];
+    [Methods.addSQLComputedField]: [string, string, string];
+    [Methods.removeAllField]: [string];
+    [Methods.editAllField]: [string, Partial<IField>];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -400,6 +408,58 @@ const actions: {
             }
             return result;
         });
+    },
+    [Methods.addSQLComputedField]: (data, fid, name, sql) => {
+        const [type, isAgg] = getSQLItemAnalyticType(parseSQLExpr(sql), data.encodings.dimensions.concat(data.encodings.measures));
+        const analyticType = type === 'quantitative' ? 'measure' : 'dimension';
+        return mutPath(data, `encodings.${analyticType}s`, (f) =>
+            f.concat({
+                analyticType,
+                dragId: fid,
+                fid,
+                name,
+                semanticType: type,
+                computed: true,
+                aggName: isAgg ? 'expr' : analyticType === 'dimension' ? undefined : 'sum',
+                expression: {
+                    op: 'expr',
+                    as: fid,
+                    params: [{ type: 'sql', value: sql }],
+                },
+            })
+        );
+    },
+    [Methods.removeAllField]: (data, fid) => {
+        return mutPath(
+            data,
+            'encodings',
+            (e) =>
+                Object.fromEntries(
+                    Object.entries(e).map(([fname, fields]) => {
+                        const newFields = fields.filter((x) => x.fid !== fid);
+                        if (fields.length === newFields.length) {
+                            return [fname, fields];
+                        }
+                        return [fname, newFields];
+                    })
+                ) as typeof e
+        );
+    },
+    [Methods.editAllField]: (data, fid, newData) => {
+        return mutPath(
+            data,
+            'encodings',
+            (e) =>
+                Object.fromEntries(
+                    Object.entries(e).map(([fname, fields]) => {
+                        const hasField = fields.find((x) => x.fid === fid);
+                        if (hasField) {
+                            return [fname, fields.map((x) => (x.fid === fid ? { ...x, ...newData } : x))];
+                        }
+                        return [fname, fields];
+                    })
+                ) as typeof e
+        );
     },
 };
 

@@ -182,10 +182,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             clickSub.unsubscribe();
         };
     }, [onGeomClick]);
-    const rowDims = useMemo(() => rows.filter((f) => f.analyticType === 'dimension'), [rows]);
-    const colDims = useMemo(() => columns.filter((f) => f.analyticType === 'dimension'), [columns]);
-    const rowMeas = useMemo(() => rows.filter((f) => f.analyticType === 'measure'), [rows]);
-    const colMeas = useMemo(() => columns.filter((f) => f.analyticType === 'measure'), [columns]);
+    const guardedRows = useMemo(() => rows.filter((x) => defaultAggregate || x.aggName !== 'expr'), [rows, defaultAggregate]);
+    const guardedCols = useMemo(() => columns.filter((x) => defaultAggregate || x.aggName !== 'expr'), [columns, defaultAggregate]);
+    const rowDims = useMemo(() => guardedRows.filter((f) => f.analyticType === 'dimension'), [guardedRows]);
+    const colDims = useMemo(() => guardedCols.filter((f) => f.analyticType === 'dimension'), [guardedCols]);
+    const rowMeas = useMemo(() => guardedRows.filter((f) => f.analyticType === 'measure'), [guardedRows]);
+    const colMeas = useMemo(() => guardedCols.filter((f) => f.analyticType === 'measure'), [guardedCols]);
     const rowRepeatFields = useMemo(() => (rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas), [rowDims, rowMeas]); //rowMeas.slice(0, -1);
     const colRepeatFields = useMemo(() => (colMeas.length === 0 ? colDims.slice(-1) : colMeas), [colDims, colMeas]); //colMeas.slice(0, -1);
     const { reportError: reportGWError } = useReporter();
@@ -244,7 +246,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const specs = useMemo(
         () =>
             toVegaSpec({
-                columns,
+                columns: guardedCols,
                 dataSource,
                 defaultAggregated: defaultAggregate,
                 geomType,
@@ -252,7 +254,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 interactiveScale,
                 layoutMode,
                 mediaTheme,
-                rows,
+                rows: guardedRows,
                 stack,
                 width: vegaWidth,
                 channelScales,
@@ -267,7 +269,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 vegaConfig,
             }),
         [
-            columns,
+            guardedCols,
             dataSource,
             defaultAggregate,
             geomType,
@@ -275,7 +277,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             interactiveScale,
             layoutMode,
             mediaTheme,
-            rows,
+            guardedRows,
             stack,
             vegaWidth,
             channelScales,

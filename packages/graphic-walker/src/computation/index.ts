@@ -6,6 +6,7 @@ import type {
     IField,
     IFieldStats,
     IFilterWorkflowStep,
+    IMutField,
     IRow,
     ISortWorkflowStep,
     ITransformWorkflowStep,
@@ -114,7 +115,8 @@ export const fieldStat = async (
         valuesLimit?: number;
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
-    }
+    },
+    allFields: IMutField[]
 ): Promise<IFieldStats> => {
     const { values = true, range = true, valuesMeta = true, sortBy = 'none' } = options;
     const COUNT_ID = `count_${field.fid}`;
@@ -127,7 +129,7 @@ export const fieldStat = async (
                   type: 'transform',
                   transform: [
                       {
-                          expression: processExpression(field.expression!),
+                          expression: processExpression(field.expression!, allFields),
                           key: field.fid,
                       },
                   ],
