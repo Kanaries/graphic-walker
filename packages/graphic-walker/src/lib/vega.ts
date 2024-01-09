@@ -5,8 +5,8 @@ import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, resolveScales } from '../vis/spec/view';
 
 export function toVegaSpec({
-    rows,
-    columns,
+    rows: rowsRaw,
+    columns: columnsRaw,
     color,
     opacity,
     size,
@@ -49,8 +49,11 @@ export function toVegaSpec({
     mediaTheme: 'dark' | 'light';
     vegaConfig: VegaGlobalConfig;
 }) {
-    const yField = rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD;
-    const xField = columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD;
+    const guard = defaultAggregated ? (x?: IViewField) => x ?? NULL_FIELD : (x?: IViewField) => (x ? (x.aggName === 'expr' ? NULL_FIELD : x) : NULL_FIELD);
+    const rows = rowsRaw.map(guard).filter((x) => x !== NULL_FIELD);
+    const columns = columnsRaw.map(guard).filter((x) => x !== NULL_FIELD);
+    const yField = guard(rows.length > 0 ? rows[rows.length - 1] : NULL_FIELD);
+    const xField = guard(columns.length > 0 ? columns[columns.length - 1] : NULL_FIELD);
     const rowDims = rows.filter((f) => f.analyticType === 'dimension');
     const colDims = columns.filter((f) => f.analyticType === 'dimension');
     const rowMeas = rows.filter((f) => f.analyticType === 'measure');
@@ -63,7 +66,10 @@ export function toVegaSpec({
 
     const rowFacetField = rowLeftFacetFields.length > 0 ? rowLeftFacetFields[rowLeftFacetFields.length - 1] : NULL_FIELD;
     const colFacetField = colLeftFacetFields.length > 0 ? colLeftFacetFields[colLeftFacetFields.length - 1] : NULL_FIELD;
-    const allFieldIds = [...rows, ...columns, color, opacity, size].filter((f) => Boolean(f)).map((f) => (f as IViewField).fid);
+    const geomFieldIds = [...rows, ...columns, color, opacity, size]
+        .filter((f) => Boolean(f))
+        .filter((f) => f!.aggName !== 'expr')
+        .map((f) => (f as IViewField).fid);
 
     const spec: any = {
         data: {
@@ -74,7 +80,7 @@ export function toVegaSpec({
                 name: 'geom',
                 select: {
                     type: 'point',
-                    fields: allFieldIds.map(encodeFid),
+                    fields: geomFieldIds.map(encodeFid),
                 },
             },
         ],
@@ -102,13 +108,13 @@ export function toVegaSpec({
         const v = getSingleView({
             x: xField,
             y: yField,
-            color: color ? color : NULL_FIELD,
-            opacity: opacity ? opacity : NULL_FIELD,
-            size: size ? size : NULL_FIELD,
-            shape: shape ? shape : NULL_FIELD,
-            theta: theta ? theta : NULL_FIELD,
-            radius: radius ? radius : NULL_FIELD,
-            text: text ? text : NULL_FIELD,
+            color: guard(color),
+            opacity: guard(opacity),
+            size: guard(size),
+            shape: guard(shape),
+            theta: guard(theta),
+            radius: guard(radius),
+            text: guard(text),
             row: rowFacetField,
             column: colFacetField,
             xOffset: NULL_FIELD,
@@ -159,15 +165,15 @@ export function toVegaSpec({
                 const v = getSingleView({
                     x: colRepeatFields[j] || NULL_FIELD,
                     y: rowRepeatFields[i] || NULL_FIELD,
-                    color: color ? color : NULL_FIELD,
-                    opacity: opacity ? opacity : NULL_FIELD,
-                    size: size ? size : NULL_FIELD,
-                    shape: shape ? shape : NULL_FIELD,
-                    theta: theta ? theta : NULL_FIELD,
-                    radius: radius ? radius : NULL_FIELD,
+                    color: guard(color),
+                    opacity: guard(opacity),
+                    size: guard(size),
+                    shape: guard(shape),
+                    theta: guard(theta),
+                    radius: guard(radius),
+                    text: guard(text),
                     row: rowFacetField,
                     column: colFacetField,
-                    text: text ? text : NULL_FIELD,
                     xOffset: NULL_FIELD,
                     yOffset: NULL_FIELD,
                     details,

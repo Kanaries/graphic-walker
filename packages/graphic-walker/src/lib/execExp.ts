@@ -2,6 +2,7 @@ import { IExpParameter, IExpression, IPaintMap, IRow } from '../interfaces';
 import dateTimeDrill from './op/dateTimeDrill';
 import dateTimeFeature from './op/dateTimeFeature';
 import { calcMap } from './paint';
+import { expr } from './sql';
 
 export interface IDataFrame {
     [key: string]: any[];
@@ -49,6 +50,8 @@ export async function execExpression(exp: IExpression, dataFrame: IDataFrame): P
             return dateTimeFeature(exp.as, params, subFrame);
         case 'paint':
             return await paint(exp.as, params, subFrame);
+        case 'expr':
+            return execSQL(exp.as, params, subFrame);
         default:
             return subFrame;
     }
@@ -144,6 +147,25 @@ async function paint(resKey: string, params: IExpParameter[], data: IDataFrame):
         ...data,
         [resKey]: await calcMap(data[map.x], data[map.y], map),
     };
+}
+
+function execSQL(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
+    const param = params.find((x) => x.type === 'sql');
+    if (!param) return data;
+    const result = expr(param.value, data);
+    if (result instanceof Array) {
+        return {
+            ...data,
+            [resKey]: result,
+        };
+    } else {
+        const firstKey = Object.keys(data)[0];
+        if (!firstKey) return data;
+        return {
+            ...data,
+            [resKey]: new Array(data[firstKey].length).fill(result),
+        };
+    }
 }
 
 export function dataset2DataFrame(dataset: IRow[]): IDataFrame {

@@ -11,12 +11,14 @@ import type {
     IPaintMap,
     IFilterField,
     IChartForExport,
+    IMutField,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { encodeFilterRule } from './filter';
 import { decodeVisSpec } from '../models/visSpecHistory';
+import { replaceFid, walkFid } from '../lib/sql';
 
 const walkExpression = (expression: IExpression, each: (field: string) => void): void => {
     for (const param of expression.params) {
@@ -24,6 +26,8 @@ const walkExpression = (expression: IExpression, each: (field: string) => void):
             each(param.value);
         } else if (param.type === 'expression') {
             walkExpression(param.value, each);
+        } else if (param.type === 'sql') {
+            walkFid(param.value).forEach(each);
         }
     }
 };
@@ -147,11 +151,13 @@ export const toWorkflow = (
     // Second, to transform the data by rows 1 by 1
     const computedFields = treeShake(
         allFields
-            .filter((f) => f.computed && f.expression)
-            .map((f) => ({
-                key: f.fid,
-                expression: processExpression(f.expression!),
-            })),
+            .filter((f) => f.computed && f.expression && !(f.expression.op === 'expr' && f.aggName === 'expr'))
+            .map((f) => {
+                return {
+                    key: f.fid,
+                    expression: processExpression(f.expression!, allFields),
+                };
+            }),
         [...viewKeys]
     );
     if (computedFields.length) {
@@ -175,10 +181,22 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggergatedFilter = viewFilters.filter((f) => f.enableAgg && f.aggName && f.rule);
+    const aggergatedComputed = treeShake(
+        allFields
+            .filter((f) => f.computed && f.expression && f.expression.op === 'expr' && f.aggName === 'expr')
+            .map((f) => {
+                return {
+                    key: f.fid,
+                    expression: processExpression(f.expression!, allFields),
+                };
+            }),
+        [...viewKeys]
+    );
     const aggregateOn = viewMeasures
         .filter((f) => f.aggName)
         .map((f) => [f.fid, f.aggName as string])
-        .concat(aggergatedFilter.map((f) => [f.fid, f.aggName as string]));
+        .concat(aggergatedFilter.map((f) => [f.fid, f.aggName as string]))
+        .concat(aggergatedComputed.map((f) => [f.expression.params[0].value, 'expr']));
     const aggergated = defaultAggregated && (aggregateOn.length || (viewMeasures.length === 0 && viewDimensions.length > 0));
 
     if (aggergated) {
@@ -192,11 +210,20 @@ export const toWorkflow = (
                         (x) => x
                     ),
                     measures: deduper(
-                        viewMeasures.concat(aggergatedFilter).map((f) => ({
-                            field: f.fid,
-                            agg: f.aggName as any,
-                            asFieldKey: getMeaAggKey(f.fid, f.aggName!),
-                        })),
+                        viewMeasures
+                            .concat(aggergatedFilter)
+                            .map((f) => ({
+                                field: f.fid,
+                                agg: f.aggName as any,
+                                asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                            }))
+                            .concat(
+                                aggergatedComputed.map((f) => ({
+                                    field: f.expression.params[0].value,
+                                    agg: 'expr',
+                                    asFieldKey: f.key,
+                                }))
+                            ),
                         (x) => x.asFieldKey
                     ),
                 },
@@ -310,11 +337,22 @@ export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
             c.config?.folds ?? [],
             limit
         ),
-        limit: limit > 0 ? limit : undefined
+        limit: limit > 0 ? limit : undefined,
     };
 }
 
-export const processExpression = (exp: IExpression): IExpression => {
+export const processExpression = (exp: IExpression, allFields: IMutField[]): IExpression => {
+    if (exp?.op === 'expr') {
+        return {
+            ...exp,
+            params: [
+                {
+                    type: 'sql',
+                    value: replaceFid(exp.params.find((x) => x.type === 'sql')!.value, allFields).trim(),
+                },
+            ],
+        };
+    }
     if (exp.op === 'paint') {
         return {
             ...exp,

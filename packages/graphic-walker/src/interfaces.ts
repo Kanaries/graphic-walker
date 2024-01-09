@@ -19,7 +19,7 @@ export interface IRow {
     [key: string]: any;
 }
 
-export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount';
+export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
 export interface Specification {
@@ -122,10 +122,14 @@ export type IExpParameter =
     | {
           type: 'map';
           value: IPaintMap;
+      }
+    | {
+          type: 'sql';
+          value: string;
       };
 
 export interface IExpression {
-    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log' | 'paint';
+    op: 'bin' | 'log2' | 'log10' | 'one' | 'binCount' | 'dateTimeDrill' | 'dateTimeFeature' | 'log' | 'paint' | 'expr';
     params: IExpParameter[];
     as: string;
     num?: number;
@@ -156,6 +160,7 @@ export interface IField {
     basename?: string;
     path?: string[];
     offset?: number;
+    aggergated?: boolean;
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
@@ -825,12 +830,20 @@ export interface IVizProps {
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
-            askviz?: string | boolean | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+            askviz?:
+                | string
+                | boolean
+                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
             feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
         };
     };
     geoList?: IGeoDataItem[];
     channelScales?: IChannelScales;
+    experimentalFeatures?: IExperimentalFeatures;
+}
+
+export interface IExperimentalFeatures {
+    computedField?: boolean;
 }
 
 export interface IVizStoreProps {
@@ -900,7 +913,7 @@ export type IDataSourceListener = (event: number, datasetId: string) => void;
 
 export interface IDataSourceProvider {
     addDataSource(data: IRow[], meta: IMutField[], name: string): Promise<string>;
-    getDataSourceList(): Promise<{ name: string; id: string; }[]>;
+    getDataSourceList(): Promise<{ name: string; id: string }[]>;
 
     getMeta(datasetId: string): Promise<IMutField[]>;
     setMeta(datasetId: string, meta: IMutField[]): Promise<void>;

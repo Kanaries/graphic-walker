@@ -12,7 +12,7 @@ import { download } from '../utils/save';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { emptyEncodings, emptyVisualConfig } from '../utils/save';
-import { getMeaAggKey } from '../utils';
+import { getMeaAggKey, getMeaAggName } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
@@ -82,7 +82,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
                             return {
                                 fid: getMeaAggKey(x.fid, x.aggName),
-                                name: `${x.aggName}(${x.name})`,
+                                name: getMeaAggName(x.name, x.aggName),
                             };
                         }
                         return { fid: x.fid, name: x.name };

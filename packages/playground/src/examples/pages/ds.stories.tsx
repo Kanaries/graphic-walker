@@ -12,7 +12,16 @@ export default function DataSourceSegment() {
     return (
         <DataSourceSegmentComponent provider={provider}>
             {(p) => {
-                return <GraphicWalker storeRef={p.storeRef} computation={p.computation} rawFields={p.meta} onMetaChange={p.onMetaChange} dark={theme} />;
+                return (
+                    <GraphicWalker
+                        storeRef={p.storeRef}
+                        computation={p.computation}
+                        rawFields={p.meta}
+                        onMetaChange={p.onMetaChange}
+                        dark={theme}
+                        experimentalFeatures={{ computedField: true }}
+                    />
+                );
             }}
         </DataSourceSegmentComponent>
     );

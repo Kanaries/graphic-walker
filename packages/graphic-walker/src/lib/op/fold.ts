@@ -1,6 +1,6 @@
 import { MEA_VAL_ID, MEA_KEY_ID } from '../../constants';
 import { IRow, IViewField } from '../../interfaces';
-import { getMeaAggKey } from '../../utils';
+import { getMeaAggKey, getMeaAggName } from '../../utils';
 import { IFoldQuery } from '../../interfaces';
 
 export function fold(data: IRow[], query: IFoldQuery): IRow[] {
@@ -37,7 +37,7 @@ export function fold2(
             .map((x) => {
                 if (defaultAggregated) {
                     return {
-                        name: `${meaVal.aggName}(${x.name})`,
+                        name: getMeaAggName(x.name, meaVal.aggName),
                         fid: getMeaAggKey(x.fid, meaVal.aggName),
                     };
                 }
