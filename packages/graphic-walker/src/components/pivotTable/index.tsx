@@ -6,7 +6,7 @@ import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
 import { observer } from 'mobx-react-lite';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout } from '../../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
 import { INestNode } from './inteface';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
@@ -37,6 +37,13 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const vizStore = useVizStore();
+    
+    const [format, setFormat] = useState<IVisualConfig['format']>({
+        numberFormat: layout.format.numberFormat,
+        timeFormat: layout.format.timeFormat,
+        normalizedNumberFormat: layout.format.normalizedNumberFormat,
+    });
+    
     const enableCollapse = !!vizStore;
     const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
     const { rows, columns } = draggableFieldState;
@@ -77,6 +84,11 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         } else {
             aggregateThenGenerate();
         }
+        setFormat({
+            numberFormat: layout.format.numberFormat,
+            timeFormat: layout.format.timeFormat,
+            normalizedNumberFormat: layout.format.normalizedNumberFormat,
+        });
     }, [data, enableCollapse, vizStore]);
 
     useEffect(() => {
