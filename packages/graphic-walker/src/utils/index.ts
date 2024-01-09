@@ -288,8 +288,15 @@ export function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ');
 }
 
+export function getMeaAggName(meaName: string, agg?: string | undefined) {
+    if (!agg || agg === 'expr') {
+        return meaName;
+    }
+    return `${agg}(${meaName})`;
+}
+
 export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
-    if (!agg) {
+    if (!agg || agg === 'expr') {
         return meaKey;
     }
     return `${meaKey}_${agg}`;

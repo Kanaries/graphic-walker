@@ -1,7 +1,8 @@
-import { IRow } from "../../interfaces";
-import { getMeaAggKey } from "../../utils";
-import { IAggQuery } from "../../interfaces";
-import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from "./stat";
+import { IRow } from '../../interfaces';
+import { getMeaAggKey } from '../../utils';
+import { IAggQuery } from '../../interfaces';
+import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from './stat';
+import { expr } from '../sql';
 
 const aggregatorMap = {
     sum,
@@ -17,7 +18,7 @@ const aggregatorMap = {
 
 const KEY_JOINER = '___';
 
-export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
+export function aggregate(data: IRow[], query: IAggQuery): IRow[] {
     const { groupBy, measures } = query;
     const ans: Map<string, IRow> = new Map();
     const groups: Map<string, IRow[]> = new Map();
@@ -42,18 +43,27 @@ export function aggregate (data: IRow[], query: IAggQuery): IRow[] {
             if (aggRow[aggMeaKey] === undefined) {
                 aggRow[aggMeaKey] = 0;
             }
-            const values: number[] = subGroup
-                .map((r) => r[mea.field])
-                .map((x) => {
-                    if (mea.format) {
-                        return new Date(x).getTime();
-                    }
-                    return x;
-                });
-            const aggregator = aggregatorMap[mea.agg] ?? sum;
-            aggRow[aggMeaKey] = aggregator(values);
+            if (mea.agg === 'expr') {
+                const result = expr(mea.field, subGroup);
+                if (result instanceof Array) {
+                    throw new Error(`except aggergated result, but got array; calc ${mea.field}`)
+                }
+                aggRow[aggMeaKey] = result;
+            } else {
+                const values: number[] = subGroup
+                    .map((r) => r[mea.field])
+                    .map((x) => {
+                        if (mea.format) {
+                            return new Date(x).getTime();
+                        }
+                        return x;
+                    });
+                const aggregator = aggregatorMap[mea.agg] ?? sum;
+                aggRow[aggMeaKey] = aggregator(values);
+            }
         }
         ans.set(gk, aggRow);
     }
     return Array.from(ans.values());
 }
+

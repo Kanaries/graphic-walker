@@ -1,5 +1,5 @@
 import { IViewField } from '../../interfaces';
-import { getMeaAggKey } from '../../utils';
+import { getMeaAggKey, getMeaAggName } from '../../utils';
 
 export function addTooltipEncode(encoding: { [key: string]: any }, details: Readonly<IViewField[]> = [], defaultAggregated = false) {
     const encs = Object.keys(encoding)
@@ -19,7 +19,7 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
         .concat(
             details.map((f) => ({
                 field: defaultAggregated ? getMeaAggKey(f.fid, f.aggName) : f.fid,
-                title: defaultAggregated && f.aggName ? `${f.aggName}(${f.name})` : f.name,
+                title: defaultAggregated ? getMeaAggName(f.name, f.aggName) : f.name,
                 type: f.semanticType,
             }))
         );

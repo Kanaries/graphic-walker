@@ -4,7 +4,7 @@ import { useCompututaion, useVizStore } from '../store';
 import DataTable from './dataTable';
 import React, { useMemo } from 'react';
 import { IComputationFunction, IVisFilter } from '../interfaces';
-import { addFilterForQuery, addTransformForQuery } from '../utils/workflow';
+import { addFilterForQuery, addTransformForQuery, processExpression } from '../utils/workflow';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 
 const DataBoard = observer(function DataBoardModal() {
@@ -20,7 +20,7 @@ const DataBoard = observer(function DataBoardModal() {
         }
         return entries.map(([k, v]): IVisFilter => ({ fid: k, rule: { type: 'one of', value: [v] } }));
     }, [selectedMarkObject]);
-    const computedFileds = useMemo(() => allFields.filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression), [allFields]);
+    const computedFileds = useMemo(() => allFields.filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression && x.aggName !== 'expr'), [allFields]);
 
     const filteredComputation = useMemo((): IComputationFunction => {
         return (query) =>
@@ -28,15 +28,15 @@ const DataBoard = observer(function DataBoardModal() {
                 addTransformForQuery(
                     addFilterForQuery(query, filters),
                     computedFileds.map((x) => ({
-                        expression: x.expression!,
+                        expression: processExpression(x.expression!, allFields),
                         key: x.fid!,
                     }))
                 )
             );
-    }, [computation, filters, computedFileds]);
+    }, [computation, filters, computedFileds, allFields]);
 
     const metas = useMemo(() => {
-        return allFields.filter((x) => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x.fid));
+        return allFields.filter(x => x.aggName !== 'expr').filter((x) => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x.fid));
     }, [allFields]);
 
     return (

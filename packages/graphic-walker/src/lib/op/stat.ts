@@ -45,6 +45,10 @@ export function count(nums: any[]): number {
     return nums.length;
 }
 
+export function countTruly(nums: any[]): number {
+    return nums.filter(x => x !== undefined && x !== null).length;
+}
+
 export function distinctCount(datas: any[]) {
     return new Set(datas).size;
 }

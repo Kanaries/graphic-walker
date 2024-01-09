@@ -153,6 +153,22 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                         },
                     })),
                 },
+                f.computed &&
+                    !isInnerField &&
+                    f.expression?.op === 'expr' && {
+                        label: 'Edit Computed Field',
+                        onPress() {
+                            vizStore.setComputedFieldFid(f.fid);
+                        },
+                    },
+                f.computed &&
+                    !isInnerField && {
+                        label: 'Remove Field',
+                        onPress() {
+                            const originChannel = f.analyticType === 'dimension' ? 'dimensions' : 'measures';
+                            vizStore.removeComputedField(originChannel, index);
+                        },
+                    },
             ]);
         });
     }, [channel, fields, vizStore, t, computation]);

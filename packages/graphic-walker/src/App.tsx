@@ -36,6 +36,7 @@ import DataBoard from './components/dataBoard';
 import SideReisze from './components/side-resize';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
+import ComputedFieldDialog from './components/computedField';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -156,6 +157,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         csvHandler={downloadCSVRef}
                                         rendererHandler={rendererRef}
                                         darkModePreference={darkMode}
+                                        experimentalFeatures={props.experimentalFeatures}
                                         exclude={toolbar?.exclude}
                                         extra={toolbar?.extra}
                                     />
@@ -165,6 +167,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <VisualConfig />
                                     <LogPanel />
                                     <BinPanel />
+                                    <ComputedFieldDialog />
                                     <Painter themeConfig={themeConfig} dark={darkMode} themeKey={themeKey} />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="sm:flex">
@@ -280,6 +283,7 @@ export function VizAppWithContext(props: IVizAppProps) {
                         spec={props.spec}
                         vlSpec={props.vlSpec}
                         themeConfig={props.themeConfig}
+                        experimentalFeatures={props.experimentalFeatures}
                     />
                 </FieldsContextWrapper>
             </VizStoreWrapper>

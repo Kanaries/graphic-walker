@@ -145,7 +145,8 @@ const useFieldStats = (
     field: IFilterField,
     attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number> },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
-    computation: IComputationFunction
+    computation: IComputationFunction,
+    allFields: IMutField[]
 ): IFieldStats | null => {
     const { values, range, valuesMeta, selectedCount } = attributes;
     const { fid } = field;
@@ -157,7 +158,7 @@ const useFieldStats = (
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount })
+        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount }, allFields)
             .then((stats) => {
                 if (isCancelled) {
                     return;
@@ -210,14 +211,15 @@ const useVisualCount = (
     field: IFilterField,
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction,
-    onChange: (rule: IFilterRule) => void
+    onChange: (rule: IFilterRule) => void,
+    allFields: IMutField[]
 ) => {
     // fetch metaData of filter field, only fetch once per fid.
     const initRuleValue = useMemo(
         () => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : new Set<string | number>()),
         [field.fid, computation]
     );
-    const metaData = useFieldStats(field, { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true }, 'none', computation);
+    const metaData = useFieldStats(field, { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true }, 'none', computation, allFields);
     // sum of count of rule.
     const [selectedValueSum, setSelectedValueSum] = useState(0);
     useEffect(() => {
@@ -245,14 +247,19 @@ const useVisualCount = (
             const page = Math.floor(index / PAGE_SIZE);
             if (loadedRef.current.length <= index || loadedRef.current[index] === null) {
                 if (loadingRef.current[page] === undefined) {
-                    const promise = fieldStat(computation, field, {
-                        range: false,
-                        values: true,
-                        valuesMeta: false,
-                        sortBy,
-                        valuesLimit: PAGE_SIZE,
-                        valuesOffset: PAGE_SIZE * page,
-                    });
+                    const promise = fieldStat(
+                        computation,
+                        field,
+                        {
+                            range: false,
+                            values: true,
+                            valuesMeta: false,
+                            sortBy,
+                            valuesLimit: PAGE_SIZE,
+                            valuesOffset: PAGE_SIZE * page,
+                        },
+                        allFields
+                    );
                     loadingRef.current[page] = promise;
                     promise.then((stats) => {
                         // check that the list is not cleared
@@ -265,7 +272,7 @@ const useVisualCount = (
                 // already fetching, skip
             }
         },
-        [computation, sortBy]
+        [computation, sortBy, allFields]
     );
     // clear data when field or sort changes
     useEffect(() => {
@@ -347,7 +354,7 @@ const Effecter = (props: { effect: () => void; effectId: any }) => {
     return null;
 };
 
-export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange }) => {
+export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields }) => {
     interface SortConfig {
         key: 'value' | 'count';
         ascending: boolean;
@@ -371,7 +378,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
     }, [active, onChange, field]);
 
     const { currentCount, currentSum, data, distinctTotal, handleSelect, handleToggleFullOrEmptySet, handleToggleReverseSet, loadData, loading } =
-        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange);
+        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields);
 
     const parentRef = React.useRef<HTMLDivElement>(null);
 
@@ -626,11 +633,11 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     ) : null;
 };
 
-export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange }) => {
+export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
     const computation = useCompututaion();
 
-    const stats = useFieldStats(field, { values: false, range: true, valuesMeta: false }, 'none', computation);
+    const stats = useFieldStats(field, { values: false, range: true, valuesMeta: false }, 'none', computation, rawFields);
     const range = stats?.range;
 
     React.useEffect(() => {

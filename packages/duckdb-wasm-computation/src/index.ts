@@ -9,6 +9,7 @@ import initWasm, { parser_dsl_with_table } from '@kanaries-temp/gw-dsl-parser';
 import dslWasm from '@kanaries-temp/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
 import { IDataSourceProvider, IMutField, IDataSourceListener, exportFullRaw, fromFields } from '@kanaries/graphic-walker';
+import { MapRow } from 'apache-arrow';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
     mvp: {
@@ -93,7 +94,11 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }
-            const res = await conn.query(sql).then((x) => x.toArray().map((r) => JSON.parse(r.toString())));
+            const res = await conn
+                .query(sql)
+                .then((x) =>
+                    x.toArray().map((r: MapRow) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v])))
+                );
             return res;
         },
         registerCallback(cb) {
@@ -127,7 +132,11 @@ export async function getComutation(data: Record<string, number>[]) {
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }
-            const res = await conn.query(sql).then((x) => x.toArray().map((r) => JSON.parse(r.toString())));
+            const res = await conn
+                .query(sql)
+                .then((x) =>
+                    x.toArray().map((r) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v])))
+                );
             return res;
         },
     };

@@ -47,6 +47,7 @@ import { KVTuple, uniqueId } from '../models/utils';
 import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
+import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 export const viewEncodingKeys = (geom: string) => {
@@ -98,7 +99,8 @@ export class VizSpecStore {
     showPainterPanel: boolean = false;
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
-    lastSpec: string = "";
+    lastSpec: string = '';
+    editingComputedFieldFid: string | undefined = undefined;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -266,7 +268,7 @@ export class VizSpecStore {
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
-        if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID) {
+        if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID || oriF.aggName === 'expr') {
             return;
         }
         this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, uniqueId());
@@ -388,7 +390,7 @@ export class VizSpecStore {
                     uniqueId(),
                     limit
                 );
-                return; 
+                return;
             }
             this.visList[this.visIndex] = performers.cloneField(
                 this.visList[this.visIndex],
@@ -676,9 +678,40 @@ export class VizSpecStore {
         this.showPainterPanel = show;
     }
 
-
     updateLastSpec(spec: string) {
         this.lastSpec = spec;
+    }
+
+    setComputedFieldFid(fid?: string) {
+        this.editingComputedFieldFid = fid;
+    }
+
+    upsertComputedField(fid: string, name: string, sql: string) {
+        if (fid === '') {
+            this.visList[this.visIndex] = performers.addSQLComputedField(this.visList[this.visIndex], uniqueId(), name, sql);
+        } else {
+            const originalField = this.allFields.find((x) => x.fid === fid);
+            if (!originalField) return;
+            const [semanticType, isAgg] = getSQLItemAnalyticType(parseSQLExpr(sql), this.allFields);
+            const analyticType = semanticType === 'quantitative' ? 'measure' : 'dimension';
+            const newAggName = isAgg ? 'expr' : analyticType === 'dimension' ? undefined : 'sum';
+            const preAggName = originalField.aggName === 'expr' ? 'expr' : originalField.aggName === undefined ? undefined : 'sum';
+
+            this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], fid, {
+                name,
+                analyticType,
+                semanticType,
+                ...(preAggName !== newAggName ? { aggName: newAggName } : {}),
+                expression: { as: fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
+            });
+        }
+    }
+
+    removeComputedField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
+        const oriF = this.currentEncodings[sourceKey][sourceIndex];
+        if (oriF.computed) {
+            this.visList[this.visIndex] = performers.removeAllField(this.visList[this.visIndex], oriF.fid);
+        }
     }
 }
 

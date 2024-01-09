@@ -65,7 +65,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 ref={refMapper(provided.innerRef)}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={"flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1" + (provided.draggableProps.style?.transform ? ' z-10' : '')}
+                                className={"flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1" + (provided.draggableProps.style?.transform ? ' z-10' : '') + (channelItem.aggName === 'expr' && !config.defaultAggregated ? ' !opacity-50' : '')}
                             >
                                 <div
                                     onClick={() => {
@@ -89,7 +89,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                         </SelectContext>
                                     )}
                                     {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}
-                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
+                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && config.defaultAggregated && channelItem.aggName !== 'expr' && (
                                         <DropdownContext
                                             options={aggregationOptions}
                                             onSelect={(value) => {

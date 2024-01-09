@@ -45,6 +45,7 @@ const OBPill: React.FC<PillProps> = (props) => {
         <Pill
             ref={refMapper(provided.innerRef)}
             colType={field.analyticType === 'dimension' ? 'discrete' : 'continuous'}
+            className={`${field.aggName === 'expr' && !config.defaultAggregated ? '!opacity-50' : ''}`}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >
@@ -61,7 +62,7 @@ const OBPill: React.FC<PillProps> = (props) => {
             )}
             {!folds && <span className="flex-1 truncate">{field.name}</span>}
             &nbsp;
-            {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && config.defaultAggregated && (
+            {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && config.defaultAggregated && field.aggName !== 'expr' && (
                 <DropdownContext
                     options={aggregationOptions}
                     onSelect={(value) => {

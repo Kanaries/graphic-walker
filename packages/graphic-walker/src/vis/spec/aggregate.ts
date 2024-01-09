@@ -1,6 +1,6 @@
 import { COUNT_FIELD_ID } from '../../constants';
 import { IViewField } from '../../interfaces';
-import { getMeaAggKey } from '../../utils';
+import { getMeaAggKey, getMeaAggName } from '../../utils';
 import { encodeFid } from './encode';
 
 export function channelAggregate(encoding: { [key: string]: any }, fields: IViewField[]) {
@@ -11,7 +11,7 @@ export function channelAggregate(encoding: { [key: string]: any }, fields: IView
             c.title = 'Count';
             c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName))
         } else if (targetField) {
-            c.title = `${targetField.aggName}(${targetField.name})`;
+            c.title = getMeaAggName(targetField.name, targetField.aggName),
             c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName))
         }
     });

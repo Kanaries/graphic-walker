@@ -8,7 +8,8 @@ const main = (e: { data: { dataSource: IRow[]; trans: IFieldTransform[] } }) => 
             self.postMessage(ans);
         })
         .catch((error) => {
-            self.postMessage({ error: error.message });
+            console.error(error.stack);
+            self.postMessage(error.stack);
         });
 };
 
