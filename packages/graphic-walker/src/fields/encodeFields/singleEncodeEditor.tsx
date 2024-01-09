@@ -41,7 +41,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     }, []);
 
     const foldOptions = useMemo<ISelectContextOption[]>(() => {
-        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID && f.aggName !== 'expr');
         return validFoldBy.map<ISelectContextOption>((f) => ({
             key: f.fid,
             label: f.name,

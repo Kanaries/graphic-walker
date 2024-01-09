@@ -314,7 +314,9 @@ const actions: {
         let data = originalData;
         const originalField = data.encodings[from][findex];
         if (!data.config.folds) {
-            const validFoldBy = [...data.encodings.measures, ...data.encodings.details].filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+            const validFoldBy = [...data.encodings.measures, ...data.encodings.details].filter(
+                (f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID && f.aggName !== 'expr'
+            );
             data = actions[Methods.setConfig](
                 data,
                 'folds',
@@ -502,7 +504,7 @@ type reducerMiddleware<T> = (item: T, original: T) => T;
 
 const diffLinter: reducerMiddleware<IChart> = (item, original) => {
     const diffs = diffChangedEncodings(original, item);
-    if (Object.keys(diffs).length === 0) return item; 
+    if (Object.keys(diffs).length === 0) return item;
     return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(diffs), ...lintExtraFields(diffs) }));
 };
 
