@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 
-export default function SideReisze(props: {
+export default function SideResize(props: {
     defaultWidth: number;
     handleWidth?: number;
     className?: string;

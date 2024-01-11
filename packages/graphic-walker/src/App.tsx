@@ -33,7 +33,7 @@ import Painter from './components/painter';
 import { parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
-import SideReisze from './components/side-resize';
+import SideResize from './components/side-resize';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import ComputedFieldDialog from './components/computedField';
@@ -171,15 +171,15 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     <Painter themeConfig={themeConfig} dark={darkMode} themeKey={themeKey} />
                                     {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                     <div className="sm:flex">
-                                        <SideReisze
+                                        <SideResize
                                             defaultWidth={240}
                                             handleWidth={4}
                                             className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
                                             handlerClassName="hidden sm:block"
                                         >
                                             <DatasetFields />
-                                        </SideReisze>
-                                        <SideReisze
+                                        </SideResize>
+                                        <SideResize
                                             defaultWidth={180}
                                             handleWidth={4}
                                             className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
@@ -187,7 +187,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         >
                                             <FilterField />
                                             <AestheticFields />
-                                        </SideReisze>
+                                        </SideResize>
                                         <div className="flex-1 min-w-[0px]">
                                             <div>
                                                 <PosFields />
