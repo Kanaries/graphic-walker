@@ -267,6 +267,7 @@ export class VizSpecStore {
             }
             const col = columns[0];
             const row = rows[0];
+            // range on temporal need use a temporal Domain, which is not impemented
             if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
                 return null;
             }

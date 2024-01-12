@@ -109,6 +109,14 @@ export interface IPaintDimension {
               value: [number, number];
               width: number;
           };
+    // TODO: impement the temporal support
+    // | {
+    //       type: 'temporal';
+    //       value: [number, number];
+    //       width: number;
+    //       offset?: number;
+    //       format?: string;
+    //   };
 }
 
 export interface IPaintMapV2 {

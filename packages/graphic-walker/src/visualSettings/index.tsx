@@ -78,6 +78,19 @@ interface IVisualSettings {
     experimentalFeatures?: IExperimentalFeatures;
 }
 
+const KanariesIcon = () => (
+    <a href="https://docs.kanaries.net" target="_blank">
+        <ImageWithFallback
+            id="kanaries-logo"
+            className="p-1.5 opacity-70 hover:opacity-100"
+            src="https://imagedelivery.net/tSvh1MGEu9IgUanmf58srQ/b6bc899f-a129-4c3a-d08f-d406166d0c00/public"
+            fallbackSrc={KanariesLogo}
+            timeout={1000}
+            alt="kanaries documents"
+        />
+    </a>
+)
+
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePreference, csvHandler, extra = [], exclude = [], experimentalFeatures }) => {
     const vizStore = useVizStore();
     const { config, layout, canUndo, canRedo, limit, paintInfo } = vizStore;
@@ -583,7 +596,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             },
             {
                 key: 'painter',
-                label: paintInfo === null ? t('button.disabled_painter') : t('button.painter'),
+                label: paintInfo === null ? (defaultAggregated ? t('button.disabled_painter') : t('button.disabled_painter_temporal')) : t('button.painter'),
                 icon: PaintBrushIcon,
                 disabled: paintInfo === null,
                 onClick: () => {
@@ -594,19 +607,8 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
             {
                 key: 'kanaries',
                 label: 'kanaries docs',
-                icon: () => (
-                    // Kanaries brand info is not allowed to be removed or changed unless you are granted with special permission.
-                    <a href="https://docs.kanaries.net" target="_blank">
-                        <ImageWithFallback
-                            id="kanaries-logo"
-                            className="p-1.5 opacity-70 hover:opacity-100"
-                            src="https://imagedelivery.net/tSvh1MGEu9IgUanmf58srQ/b6bc899f-a129-4c3a-d08f-d406166d0c00/public"
-                            fallbackSrc={KanariesLogo}
-                            timeout={1000}
-                            alt="kanaries documents"
-                        />
-                    </a>
-                ),
+                // Kanaries brand info is not allowed to be removed or changed unless you are granted with special permission.
+                icon: KanariesIcon,
             },
         ].filter(Boolean) as ToolbarItemProps[];
 
@@ -639,7 +641,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, darkModePr
         limit,
         showTableSummary,
         experimentalFeatures,
-        paintInfo
+        paintInfo,
     ]);
 
     return (
