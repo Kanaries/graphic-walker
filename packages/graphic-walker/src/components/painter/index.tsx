@@ -421,7 +421,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                             setY(yf);
                             setLoading(false);
                         });
-                    } else {
+                    } else if (paintInfo.type === 'new') {
                         const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
                             if (f.semanticType === 'quantitative') {
                                 const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);

@@ -12,6 +12,7 @@ import type {
     IFilterField,
     IChartForExport,
     IMutField,
+    IPaintMapV2,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
@@ -31,7 +32,7 @@ const walkExpression = (expression: IExpression, each: (field: string) => void):
             each(param.value.x);
             each(param.value.y);
         } else if (param.type === 'newmap') {
-            param.value.facets.flatMap(x => x.dimensions).forEach((x) => each(x.fid));
+            param.value.facets.flatMap((x) => x.dimensions).forEach((x) => each(x.fid));
         }
     }
 };
@@ -386,6 +387,25 @@ export const processExpression = (exp: IExpression, allFields: IMutField[]): IEx
                             ),
                             mapwidth: x.value.mapwidth,
                         } as IPaintMap,
+                    };
+                } else if (x.type === 'newmap') {
+                    const dict = {
+                        ...x.value.dict,
+                        '255': { name: '' },
+                    };
+                    return {
+                        type: 'newmap',
+                        value: {
+                            facets: x.value.facets,
+                            dict: Object.fromEntries(
+                                x.value.usedColor.map((i) => [
+                                    i,
+                                    {
+                                        name: dict[i].name,
+                                    },
+                                ])
+                            ),
+                        } as IPaintMapV2,
                     };
                 } else {
                     return x;
