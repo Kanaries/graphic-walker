@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
-import { calcIndexs, compressMap, decompressMap, emptyMap, indexesFrom } from '../../lib/paint';
-import { getRange } from '../../computation';
+import { calcIndexsV2, compressMap, createMap, decompressMap, indexesFrom } from '../../lib/paint';
+import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
-import { IDarkMode, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
+import { IDarkMode, IPaintDimension, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
 import embed from 'vega-embed';
 import Modal from '../modal';
 import { PAINT_FIELD_ID } from '../../constants';
@@ -12,13 +12,14 @@ import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
 import { sceneVisit } from 'vega';
 import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
-import { ClickInput, ColorEditor, Container, PixelContainer } from './components';
+import { ClickInput, ColorEditor, CursorDef, PixelContainer } from './components';
 import LoadingLayer from '../loadingLayer';
 import DefaultButton from '../button/default';
 import PrimaryButton from '../button/primary';
 import { GLOBAL_CONFIG } from '../../config';
 import { GWGlobalConfig, builtInThemes } from '../../vis/theme';
 import { useCurrentMediaTheme } from '../../utils/media';
+import { unstable_batchedUpdates } from 'react-dom';
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -59,11 +60,14 @@ function selectInteractive(scene: { root: Scene }) {
     return selected;
 }
 
+const getFactor = (f: IPaintDimension) =>
+    f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
+
 const PainterContent = (props: {
     x: IViewField;
     y: IViewField;
-    domainX: [number, number];
-    domainY: [number, number];
+    domainX: IPaintDimension;
+    domainY: IPaintDimension;
     dict: typeof defaultScheme;
     vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
@@ -105,18 +109,9 @@ const PainterContent = (props: {
         viewMeasures: fields,
     });
     const indexes = useMemo(() => {
-        return calcIndexs(
-            viewData.map((x) => {
-                return x[props.x.fid];
-            }),
-            viewData.map((x) => {
-                return x[props.y.fid];
-            }),
-            props.domainX,
-            props.domainY,
-            GLOBAL_CONFIG.PAINT_MAP_SIZE
-        );
-    }, [viewData, props.x, props.y, props.domainX, props.domainY]);
+        const mapper = calcIndexsV2([props.domainY, props.domainX]);
+        return viewData.map(mapper);
+    }, [viewData, props.domainX, props.domainY]);
     const data = useMemo(() => {
         return viewData.map((x, i) => {
             return {
@@ -133,27 +128,29 @@ const PainterContent = (props: {
 
     useEffect(() => {
         if (!loading && containerRef.current) {
+            const xQuan = props.domainX.domain.type === 'quantitative';
+            const yQuan = props.domainY.domain.type === 'quantitative';
             const colors = Object.entries(props.dict);
             const spec: any = {
                 data: {
                     name: 'data',
                     values: data,
                 },
-                mark: { type: 'circle', opacity: 0.66 },
+                mark: { type: xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square', opacity: 0.66 },
                 encoding: {
                     x: {
                         field: props.x.fid,
                         title: props.x.name,
-                        type: 'quantitative',
+                        type: props.domainX.domain.type,
                         axis: { labelOverlap: true },
-                        scale: { domain: props.domainX },
+                        scale: { domain: props.domainX.domain.value },
                     },
                     y: {
                         field: props.y.fid,
                         title: props.y.name,
-                        type: 'quantitative',
+                        type: props.domainY.domain.type,
                         axis: { labelOverlap: true },
-                        scale: { domain: props.domainY },
+                        scale: { domain: props.domainY.domain.type === 'quantitative' ? props.domainY.domain.value : props.domainY.domain.value.toReversed() },
                     },
                     color: {
                         field: PAINT_FIELD_ID,
@@ -188,7 +185,7 @@ const PainterContent = (props: {
                 //@ts-ignore
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
-                    props.mapRef.current! = emptyMap(GLOBAL_CONFIG.PAINT_MAP_SIZE);
+                    props.mapRef.current! = createMap([props.domainY, props.domainX]);
                     const { name, color } = props.dict[0];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
@@ -213,12 +210,9 @@ const PainterContent = (props: {
                                 : props.dict[brushIdRef.current];
                         if (!targetColor) return;
                         const pts = indexesFrom(
-                            [
-                                Math.floor(x / GLOBAL_CONFIG.PAINT_SIZE_FACTOR),
-                                GLOBAL_CONFIG.PAINT_MAP_SIZE - 1 - Math.floor(y / GLOBAL_CONFIG.PAINT_SIZE_FACTOR),
-                            ],
+                            [Math.floor(x / getFactor(props.domainX)), props.domainY.domain.width - 1 - Math.floor(y / getFactor(props.domainY))],
                             brushSizeRef.current,
-                            GLOBAL_CONFIG.PAINT_MAP_SIZE
+                            [props.domainY, props.domainX]
                         );
                         let i = 0;
                         pts.forEach((x) => {
@@ -247,11 +241,28 @@ const PainterContent = (props: {
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
-    }, [loading, data, props.dict, props.vegaConfig]);
+    }, [loading, data, props.dict, props.vegaConfig, props.domainX, props.domainY]);
 
     const [showCursorPreview, setShowCursorPreview] = React.useState(false);
 
-    const [pixelContainer] = React.useState(true);
+    const cursor = useMemo((): CursorDef => {
+        if (props.domainX.domain.type === 'quantitative' && props.domainY.domain.type === 'quantitative') {
+            return { dia: brushSize, factor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR, type: 'circle' };
+        }
+        return {
+            type: 'rect',
+            x: props.domainX.domain.type === 'nominal' ? 1 : brushSize,
+            xFactor:
+                props.domainX.domain.type === 'nominal'
+                    ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / props.domainX.domain.width
+                    : GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
+            y: props.domainY.domain.type === 'nominal' ? 1 : brushSize,
+            yFactor:
+                props.domainY.domain.type === 'nominal'
+                    ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / props.domainY.domain.width
+                    : GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
+        };
+    }, [props.domainX, props.domainY, brushSize]);
 
     useEffect(() => {
         setShowCursorPreview(true);
@@ -264,20 +275,17 @@ const PainterContent = (props: {
         };
     }, [brushSize, brushId]);
 
-    const CursorContainer = pixelContainer ? PixelContainer : Container;
-
     return (
         <div className="flex">
-            <CursorContainer
+            <PixelContainer
                 color={props.dict[brushId]?.color ?? '#333'}
-                dia={brushSize}
-                factor={GLOBAL_CONFIG.PAINT_SIZE_FACTOR}
+                cursor={cursor}
                 offsetX={pixelOffset[0]}
                 offsetY={pixelOffset[1]}
                 showPreview={showCursorPreview}
             >
                 <div ref={containerRef} id="painter-container" className="!cursor-none"></div>
-            </CursorContainer>
+            </PixelContainer>
             <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0">
                 <div className="flex space-x-4" aria-label="Tabs">
                     <a
@@ -389,8 +397,8 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
     const [dict, setDict] = useState(defaultScheme);
     const [fieldX, setX] = useState<IViewField>();
     const [fieldY, setY] = useState<IViewField>();
-    const [domainX, setDomainX] = useState<[number, number]>([0, 0]);
-    const [domainY, setDomainY] = useState<[number, number]>([0, 0]);
+    const [domainX, setDomainX] = useState<IPaintDimension>();
+    const [domainY, setDomainY] = useState<IPaintDimension>();
 
     useEffect(() => {
         if (showPainterPanel) {
@@ -398,44 +406,74 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
             (async () => {
                 const { paintInfo, allFields } = vizStore;
                 if (paintInfo) {
-                    const { x, y } = paintInfo;
-                    const xf = allFields.find((a) => a.fid === x);
-                    const yf = allFields.find((a) => a.fid === y);
-                    if ('map' in paintInfo) {
-                        mapRef.current = await decompressMap(paintInfo.map);
-                        setDict(paintInfo.dict);
-                        setDomainX(paintInfo.domainX);
-                        setDomainY(paintInfo.domainY);
+                    if (paintInfo.type === 'exist') {
+                        mapRef.current = await decompressMap(paintInfo.item.map);
+                        const x = paintInfo.item.dimensions.at(-1)?.fid;
+                        const y = paintInfo.item.dimensions.at(-2)?.fid;
+                        const xf = allFields.find((a) => a.fid === x);
+                        const yf = allFields.find((a) => a.fid === y);
+                        unstable_batchedUpdates(() => {
+                            setDict(paintInfo.item.dict);
+                            setDomainX(paintInfo.item.dimensions.at(-1));
+                            setDomainY(paintInfo.item.dimensions.at(-2));
+                            setX(xf);
+                            setY(yf);
+                            setLoading(false);
+                        });
                     } else {
-                        mapRef.current = emptyMap(GLOBAL_CONFIG.PAINT_MAP_SIZE);
-                        const xs = getRange(compuation, paintInfo.x);
-                        const ys = getRange(compuation, paintInfo.y);
+                        const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
+                            if (f.semanticType === 'quantitative') {
+                                const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);
+                                return {
+                                    domain: {
+                                        type: 'quantitative',
+                                        value: res.range,
+                                        width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
+                                    },
+                                    fid: f.fid,
+                                };
+                            } else {
+                                const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
+                                const value = res.values.map((x) => x.value);
+                                return {
+                                    domain: {
+                                        type: 'nominal',
+                                        value,
+                                        width: value.length,
+                                    },
+                                    fid: f.fid,
+                                };
+                            }
+                        };
+                        let xs: Promise<IPaintDimension>;
+                        let ys: Promise<IPaintDimension>;
+                        xs = getDomain(paintInfo.x);
+                        ys = getDomain(paintInfo.y);
                         const domainX = await xs;
                         const domainY = await ys;
-                        setDict(defaultScheme);
-                        setDomainX(domainX);
-                        setDomainY(domainY);
+                        mapRef.current = createMap([domainY, domainX]);
+                        unstable_batchedUpdates(() => {
+                            setDict(defaultScheme);
+                            setDomainX(domainX);
+                            setDomainY(domainY);
+                            setX(paintInfo.x);
+                            setY(paintInfo.y);
+                            setLoading(false);
+                        });
                     }
-                    setX(xf);
-                    setY(yf);
-                    setLoading(false);
                 }
             })();
         }
     }, [showPainterPanel, vizStore, compuation]);
 
     const saveMap = async () => {
-        if (fieldX && fieldY && mapRef.current) {
+        if (domainX && domainY && mapRef.current) {
             vizStore.updatePaint(
                 {
                     dict,
-                    domainX,
-                    domainY,
                     map: await compressMap(mapRef.current),
-                    x: fieldX.fid,
-                    y: fieldY.fid,
                     usedColor: [...new Set(mapRef.current).values()],
-                    mapwidth: GLOBAL_CONFIG.PAINT_MAP_SIZE,
+                    dimensions: [domainY, domainX],
                 },
                 t('constant.paint_key')
             );
@@ -476,8 +514,8 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     }}
                     x={fieldX!}
                     y={fieldY!}
-                    domainX={domainX}
-                    domainY={domainY}
+                    domainX={domainX!}
+                    domainY={domainY!}
                     dict={dict}
                     onChangeDict={setDict}
                     mapRef={mapRef}

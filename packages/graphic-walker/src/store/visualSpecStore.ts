@@ -38,6 +38,7 @@ import {
     ISemanticType,
     IChartForExport,
     IPaintMap,
+    IPaintMapV2,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
@@ -48,6 +49,7 @@ import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
+import { IPaintMapAdapter } from '../lib/paint';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 export const viewEncodingKeys = (geom: string) => {
@@ -245,7 +247,17 @@ export class VizSpecStore {
         if (existPaintField) {
             const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
             if (param) {
-                return param;
+                return {
+                    type: 'exist',
+                    item: IPaintMapAdapter(param),
+                } as const;
+            }
+            const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
+            if (paramV2) {
+                return {
+                    type: 'exist',
+                    item: paramV2,
+                } as const;
             }
         }
         if (!this.currentVis.config.defaultAggregated) {
@@ -255,13 +267,14 @@ export class VizSpecStore {
             }
             const col = columns[0];
             const row = rows[0];
-            if (col.semanticType != 'quantitative' || row.semanticType != 'quantitative') {
+            if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
                 return null;
             }
             return {
-                x: col.fid,
-                y: row.fid,
-            };
+                type: 'new',
+                x: col,
+                y: row,
+            } as const;
         }
         return null;
     }
@@ -618,7 +631,7 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
     }
 
-    updatePaint(paintMap: IPaintMap | null, name: string) {
+    updatePaint(paintMap: IPaintMapV2 | null, name: string) {
         this.visList[this.visIndex] = performers.upsertPaintField(this.visList[this.visIndex], paintMap, name);
     }
 

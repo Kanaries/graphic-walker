@@ -42,8 +42,26 @@ export function getCircleFrom([x0, y0]: [number, number], dia: number, mapWidth:
  * @param mapWidth Width of the Map (points outside map will be croped)
  * @returns Indexes of circle points in the map.
  */
-export function indexesFrom(center: [number, number], dia: number, mapWidth: number) {
-    return getCircleFrom(center, dia, mapWidth).map(([x, y]) => index(x, y, mapWidth));
+export function indexesFrom(center: [number, number], dia: number, dimensions: [IPaintDimension, IPaintDimension]) {
+    const [y, x] = dimensions;
+    const index = indexV2(dimensions);
+    if (y.domain.type === 'quantitative' && x.domain.type === 'quantitative') {
+        const mapWidth = y.domain.width;
+        return getCircleFrom(center, dia, mapWidth).map(([x, y]) => index([y, x]));
+    }
+    const getI = (c: number, domain: IPaintDimension): number[] => {
+        if (domain.domain.type === 'nominal') {
+            return [c];
+        }
+        const half = (dia - (dia % 2)) / 2;
+        return new Array(dia)
+            .fill(0)
+            .map((_, i) => i + c - half)
+            .filter((x) => x >= 0 && x < domain.domain.width);
+    };
+    return getI(center[0], x)
+        .flatMap((x) => getI(center[1], y).map((y) => [x, y] as const))
+        .map(([x, y]) => index([y, x]));
 }
 
 function index(x: number, y: number, mapWidth: number) {
@@ -79,8 +97,8 @@ export async function decompressMap(base64: string) {
     return new Uint8Array(result);
 }
 
-export function emptyMap(mapWidth: number) {
-    return new Uint8Array(mapWidth * mapWidth);
+export function createMap(dimensions: IPaintDimension[]) {
+    return new Uint8Array(dimensions.reduce((x, d) => x * d.domain.width, 1));
 }
 
 /**
@@ -127,8 +145,22 @@ export async function calcMap(dataX: number[], dataY: number[], paintMap: IPaint
     });
 }
 
+// e.g. [3,3,3] => [9,3,1]
+function indexV2(dimensions: IPaintDimension[]) {
+    const indexWeights = dimensions
+        .map((x) => x.domain.width)
+        .reduceRight(([n, ...rest], a) => [a * n, n, ...rest], [1])
+        .slice(1);
+    return (indexs: number[]) => indexs.map((i, wi) => i * indexWeights[wi]).reduce((x, y) => x + y);
+}
+
+/**
+ * calc indexes of items in the map.
+ * @param dimensions the dimensions of the map
+ * @returns mapper for data.
+ */
 export function calcIndexsV2(dimensions: IPaintDimension[]) {
-    const getIndex = dimensions.map(({ domain, fid }) => {
+    const getSingleIndex = dimensions.map(({ domain, fid }) => {
         if (domain.type === 'nominal') {
             const indexDict = new Map(domain.value.map((x, i) => [x, i]));
             return (data: IRow) => indexDict.get(data[fid]) ?? 0;
@@ -139,16 +171,43 @@ export function calcIndexsV2(dimensions: IPaintDimension[]) {
         const neverType: never = domain;
         throw new Error(`unsupported domain type ${neverType['type']}`);
     });
-    const lengths = dimensions.map((x) => x.domain.width);
-    // e.g. [3,3,3] => [9,3,1]
-    const indexWeights = lengths.reduceRight(([n, ...rest], a) => [a * n, n, ...rest], [1]).slice(1);
 
-    return (data: IRow) => {
-        const indexs = getIndex.map((f) => f(data));
-        return indexs.map((i, wi) => i * indexWeights[wi]).reduce((x, y) => x + y);
+    const index = indexV2(dimensions);
+    return (data: IRow) => index(getSingleIndex.map((f) => f(data)));
+}
+
+export function IPaintMapAdapter(paintMap: IPaintMap): IPaintMapV2 {
+    return {
+        dict: paintMap.dict,
+        map: paintMap.map,
+        usedColor: paintMap.usedColor,
+        dimensions: [
+            {
+                fid: paintMap.y,
+                domain: {
+                    type: 'quantitative',
+                    value: paintMap.domainY,
+                    width: paintMap.mapwidth,
+                },
+            },
+            {
+                fid: paintMap.x,
+                domain: {
+                    type: 'quantitative',
+                    value: paintMap.domainX,
+                    width: paintMap.mapwidth,
+                },
+            },
+        ],
     };
 }
 
+/**
+ * calc result of items in paintMap.
+ * @param data data
+ * @param paintMap paintMap
+ * @returns result
+ */
 export async function calcMapV2(data: IRow[], paintMap: IPaintMapV2) {
     const { dict, dimensions, map: raw } = paintMap;
     const map = await decompressMap(raw);

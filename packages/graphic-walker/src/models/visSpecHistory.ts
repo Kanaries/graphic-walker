@@ -19,6 +19,7 @@ import {
     IExpression,
     IFilterField,
     IField,
+    IPaintMapV2,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields } from '../utils';
@@ -83,7 +84,7 @@ type PropsMap = {
     [Methods.changeSemanticType]: [normalKeys, number, ISemanticType];
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
-    [Methods.upsertPaintField]: [IPaintMap | null, string];
+    [Methods.upsertPaintField]: [IPaintMap | IPaintMapV2 | null, string];
     [Methods.addSQLComputedField]: [string, string, string];
     [Methods.removeAllField]: [string];
     [Methods.editAllField]: [string, Partial<IField>];
@@ -343,11 +344,14 @@ const actions: {
                     Object.fromEntries(Object.entries(encodings).map(([c, f]) => [c, f.filter((x) => x.fid !== PAINT_FIELD_ID)])) as DraggableFieldState
             );
         }
-        const expression: IExpression = {
-            op: 'paint',
-            as: PAINT_FIELD_ID,
-            params: [{ type: 'map', value: map }],
-        };
+        const expression: IExpression =
+            'dimensions' in map
+                ? { op: 'paint', as: PAINT_FIELD_ID, params: [{ type: 'newmap', value: map }] }
+                : {
+                      op: 'paint',
+                      as: PAINT_FIELD_ID,
+                      params: [{ type: 'map', value: map }],
+                  };
         const hasErased = map.usedColor.includes(255);
         return mutPath(data, 'encodings', (enc) => {
             let hasPaintField = false;
@@ -502,7 +506,7 @@ type reducerMiddleware<T> = (item: T, original: T) => T;
 
 const diffLinter: reducerMiddleware<IChart> = (item, original) => {
     const diffs = diffChangedEncodings(original, item);
-    if (Object.keys(diffs).length === 0) return item; 
+    if (Object.keys(diffs).length === 0) return item;
     return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(diffs), ...lintExtraFields(diffs) }));
 };
 
