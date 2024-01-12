@@ -187,7 +187,7 @@ const PainterContent = (props: {
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
                     props.mapRef.current! = createMap([props.domainY, props.domainX]);
-                    const { name, color } = props.dict[0];
+                    const { name, color } = props.dict[1];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
                             if ('datum' in item) {
