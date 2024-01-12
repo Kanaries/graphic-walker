@@ -134,7 +134,7 @@
         "segments": {
             "vis": "Visualization",
             "data": "Data"
-        }, 
+        },
         "feedback": {
             "vote": "Is the result of Askviz good?",
             "voteup": "Yes",
@@ -203,8 +203,11 @@
                     "export_code": "Export Code",
                     "geojson": "Geography Configuration",
                     "painter": "Open Painter",
-                    "disabled_painter": "disable aggregation to create a paint",
-                    "disabled_painter_temporal": "painter doesn't support temporal fields now"
+                    "disabled_painter": {
+                        "aggergation": "disable aggregation to create a paint",
+                        "temporal": "painter doesn't support temporal fields now",
+                        "count": "drag single field on x and y to create a paint"
+                    }
                 },
                 "paint": {
                     "palette": "Palette",

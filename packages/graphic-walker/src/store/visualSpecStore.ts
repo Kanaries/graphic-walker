@@ -263,13 +263,23 @@ export class VizSpecStore {
         if (!this.currentVis.config.defaultAggregated) {
             const { columns, rows } = this.currentEncodings;
             if (columns.length !== 1 || rows.length !== 1) {
-                return null;
+                return { type: 'error', key: 'count' }as const;
             }
             const col = columns[0];
             const row = rows[0];
             // range on temporal need use a temporal Domain, which is not impemented
             if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
-                return null;
+                return { type: 'error', key: 'temporal' }as const;
+            }
+            if (
+                col.aggName === 'expr' ||
+                row.aggName === 'expr' ||
+                col.fid === MEA_KEY_ID ||
+                col.fid === MEA_VAL_ID ||
+                row.fid === MEA_KEY_ID ||
+                row.fid === MEA_VAL_ID
+            ) {
+                return { type: 'error', key: 'count' } as const;
             }
             return {
                 type: 'new',
@@ -277,7 +287,7 @@ export class VizSpecStore {
                 y: row,
             } as const;
         }
-        return null;
+        return { type: 'error', key: 'aggergation' } as const;
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {

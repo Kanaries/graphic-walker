@@ -203,8 +203,11 @@
                     "export_code": "导出代码",
                     "geojson": "地理信息配置",
                     "painter": "打开数据绘板",
-                    "disabled_painter": "创建绘制字段需要关闭聚合",
-                    "disabled_painter_temporal": "绘制字段暂不支持时间字段"
+                    "disabled_painter": {
+                        "aggergation": "创建绘制字段需要关闭聚合",
+                        "temporal": "绘制字段暂不支持时间字段",
+                        "count": "在x和y轴上分别放置一个字段来创建绘制字段"
+                    }
                 },
                 "paint": {
                     "palette": "色板",
