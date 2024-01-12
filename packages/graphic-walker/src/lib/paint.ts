@@ -1,4 +1,4 @@
-import { IPaintMap } from '../interfaces';
+import { IPaintDimension, IPaintMap, IPaintMapV2, IRow } from '../interfaces';
 
 const circles = new Map<number, [number, number][]>();
 
@@ -117,7 +117,7 @@ export function calcIndexs(dataX: number[], dataY: number[], domainX: [number, n
  * @param dataX data of item in X axis.
  * @param dataY data of item in Y axis.
  * @param paintMap the PaintMap to use.
- * @returns 
+ * @returns
  */
 export async function calcMap(dataX: number[], dataY: number[], paintMap: IPaintMap) {
     const { dict, domainX, domainY, map: raw, mapwidth } = paintMap;
@@ -125,4 +125,33 @@ export async function calcMap(dataX: number[], dataY: number[], paintMap: IPaint
     return calcIndexs(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
         return dict[map[x]]?.name;
     });
+}
+
+export function calcIndexsV2(dimensions: IPaintDimension[]) {
+    const getIndex = dimensions.map(({ domain, fid }) => {
+        if (domain.type === 'nominal') {
+            const indexDict = new Map(domain.value.map((x, i) => [x, i]));
+            return (data: IRow) => indexDict.get(data[fid]) ?? 0;
+        }
+        if (domain.type === 'quantitative') {
+            return (data: IRow) => calcIndex(domain.value, data[fid], domain.width);
+        }
+        const neverType: never = domain;
+        throw new Error(`unsupported domain type ${neverType['type']}`);
+    });
+    const lengths = dimensions.map((x) => x.domain.width);
+    // e.g. [3,3,3] => [9,3,1]
+    const indexWeights = lengths.reduceRight(([n, ...rest], a) => [a * n, n, ...rest], [1]).slice(1);
+
+    return (data: IRow) => {
+        const indexs = getIndex.map((f) => f(data));
+        return indexs.map((i, wi) => i * indexWeights[wi]).reduce((x, y) => x + y);
+    };
+}
+
+export async function calcMapV2(data: IRow[], paintMap: IPaintMapV2) {
+    const { dict, dimensions, map: raw } = paintMap;
+    const map = await decompressMap(raw);
+    const index = calcIndexsV2(dimensions);
+    return data.map(index).map((x) => dict[map[x]]?.name);
 }
