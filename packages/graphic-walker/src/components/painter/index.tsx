@@ -35,7 +35,7 @@ const MouseButtons = {
 
 const scheme = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac'];
 
-const defaultScheme = Object.fromEntries(scheme.map((color, i) => [i, { name: `L_${i + 1}`, color }]));
+const defaultScheme = Object.fromEntries(scheme.map((color, i) => [i + 1, { name: `L_${i + 1}`, color }]));
 
 const emptyField = [];
 
@@ -72,6 +72,7 @@ const PainterContent = (props: {
     vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
     mapRef: React.MutableRefObject<Uint8Array | undefined>;
+    allFields: IViewField[];
     onDelete: () => void;
     onCancel: () => void;
     onSave: () => void;
@@ -94,15 +95,15 @@ const PainterContent = (props: {
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
-    const brushIdRef = useRef(1);
-    const [brushId, setBrushId] = useState(1);
+    const brushIdRef = useRef(2);
+    const [brushId, setBrushId] = useState(2);
     brushIdRef.current = brushId;
     const containerRef = useRef<HTMLDivElement>(null);
     const { loading, viewData } = useRenderer({
         computationFunction: computation,
         defaultAggregated: false,
         filters: emptyField,
-        allFields: fields,
+        allFields: props.allFields,
         limit: -1,
         sort: 'none',
         viewDimensions: emptyField,
@@ -116,7 +117,7 @@ const PainterContent = (props: {
         return viewData.map((x, i) => {
             return {
                 ...x,
-                [PAINT_FIELD_ID]: props.dict[props.mapRef.current![indexes[i]]]?.name,
+                [PAINT_FIELD_ID]: props.dict[props.mapRef.current![indexes[i]] || 1]?.name,
                 [PIXEL_INDEX]: indexes[i],
             };
         });
@@ -293,7 +294,7 @@ const PainterContent = (props: {
                             (brushId === ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
                             ' rounded-md px-3 py-2 text-sm font-medium'
                         }
-                        onClick={() => setBrushId(1)}
+                        onClick={() => setBrushId(2)}
                     >
                         {t('main.tabpanel.settings.paint.palette')}
                     </a>
@@ -388,7 +389,7 @@ const PainterContent = (props: {
 
 const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
-    const { showPainterPanel } = vizStore;
+    const { showPainterPanel, allFields } = vizStore;
     const { t } = useTranslation();
     const compuation = useCompututaion();
 
@@ -407,15 +408,15 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                 const { paintInfo, allFields } = vizStore;
                 if (paintInfo) {
                     if (paintInfo.type === 'exist') {
-                        mapRef.current = await decompressMap(paintInfo.item.map);
-                        const x = paintInfo.item.dimensions.at(-1)?.fid;
-                        const y = paintInfo.item.dimensions.at(-2)?.fid;
+                        mapRef.current = await decompressMap(paintInfo.item.facets[0].map);
+                        const x = paintInfo.item.facets[0].dimensions.at(-1)?.fid;
+                        const y = paintInfo.item.facets[0].dimensions.at(-2)?.fid;
                         const xf = allFields.find((a) => a.fid === x);
                         const yf = allFields.find((a) => a.fid === y);
                         unstable_batchedUpdates(() => {
                             setDict(paintInfo.item.dict);
-                            setDomainX(paintInfo.item.dimensions.at(-1));
-                            setDomainY(paintInfo.item.dimensions.at(-2));
+                            setDomainX(paintInfo.item.facets[0].dimensions.at(-1));
+                            setDomainY(paintInfo.item.facets[0].dimensions.at(-2));
                             setX(xf);
                             setY(yf);
                             setLoading(false);
@@ -471,9 +472,13 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
             vizStore.updatePaint(
                 {
                     dict,
-                    map: await compressMap(mapRef.current),
-                    usedColor: [...new Set(mapRef.current).values()],
-                    dimensions: [domainY, domainX],
+                    usedColor: [...new Set(mapRef.current).values()].map(x => x || 1),
+                    facets: [
+                        {
+                            map: await compressMap(mapRef.current),
+                            dimensions: [domainY, domainX],
+                        },
+                    ],
                 },
                 t('constant.paint_key')
             );
@@ -514,6 +519,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     }}
                     x={fieldX!}
                     y={fieldY!}
+                    allFields={allFields}
                     domainX={domainX!}
                     domainY={domainY!}
                     dict={dict}

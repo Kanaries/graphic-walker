@@ -345,7 +345,7 @@ const actions: {
             );
         }
         const expression: IExpression =
-            'dimensions' in map
+            'facets' in map
                 ? { op: 'paint', as: PAINT_FIELD_ID, params: [{ type: 'newmap', value: map }] }
                 : {
                       op: 'paint',

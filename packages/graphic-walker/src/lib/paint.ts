@@ -179,24 +179,28 @@ export function calcIndexsV2(dimensions: IPaintDimension[]) {
 export function IPaintMapAdapter(paintMap: IPaintMap): IPaintMapV2 {
     return {
         dict: paintMap.dict,
-        map: paintMap.map,
         usedColor: paintMap.usedColor,
-        dimensions: [
+        facets: [
             {
-                fid: paintMap.y,
-                domain: {
-                    type: 'quantitative',
-                    value: paintMap.domainY,
-                    width: paintMap.mapwidth,
-                },
-            },
-            {
-                fid: paintMap.x,
-                domain: {
-                    type: 'quantitative',
-                    value: paintMap.domainX,
-                    width: paintMap.mapwidth,
-                },
+                map: paintMap.map,
+                dimensions: [
+                    {
+                        fid: paintMap.y,
+                        domain: {
+                            type: 'quantitative',
+                            value: paintMap.domainY,
+                            width: paintMap.mapwidth,
+                        },
+                    },
+                    {
+                        fid: paintMap.x,
+                        domain: {
+                            type: 'quantitative',
+                            value: paintMap.domainX,
+                            width: paintMap.mapwidth,
+                        },
+                    },
+                ],
             },
         ],
     };
@@ -209,8 +213,13 @@ export function IPaintMapAdapter(paintMap: IPaintMap): IPaintMapV2 {
  * @returns result
  */
 export async function calcMapV2(data: IRow[], paintMap: IPaintMapV2) {
-    const { dict, dimensions, map: raw } = paintMap;
-    const map = await decompressMap(raw);
-    const index = calcIndexsV2(dimensions);
-    return data.map(index).map((x) => dict[map[x]]?.name);
+    const { dict, facets } = paintMap;
+    let result = data.map(() => dict[1].name);
+    for (const { map: raw, dimensions } of facets) {
+        const map = await decompressMap(raw);
+        const index = calcIndexsV2(dimensions);
+        result = data.map(index).map((x, i) => (map[x] !== 0 ? dict[map[x]]?.name : result[i]));
+    }
+
+    return result;
 }

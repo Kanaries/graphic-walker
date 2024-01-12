@@ -42,53 +42,6 @@ export const PixelCursor = (props: { color: string; dia: number; factor: number;
     );
 };
 
-// export const Container = (props: { color: string; cursor: CursorDef; children?: React.ReactNode | Iterable<React.ReactNode>; showPreview?: boolean }) => {
-//     const { color, cursor, children, showPreview } = props;
-//     const [cursorPos, setCursorPos] = React.useState<[number, number] | null>(null);
-//     return (
-//         <div
-//             className="relative cursor-none"
-//             onMouseOut={() => setCursorPos(null)}
-//             onMouseMoveCapture={(e) => setCursorPos([e.nativeEvent.offsetX, e.nativeEvent.offsetY])}
-//             onTouchMoveCapture={(e) => {
-//                 const rect = e.currentTarget.getBoundingClientRect();
-//                 setCursorPos([e.changedTouches[0].pageX - rect.left, e.changedTouches[0].pageY - rect.top]);
-//             }}
-//             onTouchEnd={() => setCursorPos(null)}
-//         >
-//             {children}
-//             {cursorPos !== null && cursor.type === 'circle' && (
-//                 <div
-//                     className="absolute pointer-events-none"
-//                     style={{
-//                         background: color,
-//                         width: cursor.dia * cursor.factor,
-//                         height: cursor.dia * cursor.factor,
-//                         borderRadius: cursor.dia * cursor.factor,
-//                         opacity: 0.6,
-//                         left: cursorPos[0] - (cursor.dia * cursor.factor) / 2,
-//                         top: cursorPos[1] - (cursor.dia * cursor.factor) / 2,
-//                     }}
-//                 />
-//             )}
-//             {showPreview && !cursorPos && cursor.type === 'circle' && (
-//                 <div
-//                     className="absolute pointer-events-none"
-//                     style={{
-//                         background: color,
-//                         width: cursor.dia * cursor.factor,
-//                         height: cursor.dia * cursor.factor,
-//                         borderRadius: cursor.dia * cursor.factor,
-//                         opacity: 0.6,
-//                         left: `calc(50% - ${(cursor.dia * cursor.factor) / 2}px)`,
-//                         top: `calc(50% - ${(cursor.dia * cursor.factor) / 2}px)`,
-//                     }}
-//                 />
-//             )}
-//         </div>
-//     );
-// };
-
 export type CursorDef =
     | {
           type: 'circle';

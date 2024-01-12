@@ -119,10 +119,14 @@ export interface IPaintDimension {
     //   };
 }
 
-export interface IPaintMapV2 {
+export interface IPaintMapFacet {
     dimensions: IPaintDimension[];
     /** compressed array of UInt8[dimensions.reduce((x,d) => x * d.domain.width, 1)] */
     map: string;
+}
+
+export interface IPaintMapV2 {
+    facets: IPaintMapFacet[];
     dict: Record<number, { name: string; color: string }>;
     usedColor: number[];
 }
