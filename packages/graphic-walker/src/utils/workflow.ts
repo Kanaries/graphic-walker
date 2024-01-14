@@ -12,11 +12,11 @@ import type {
     IFilterField,
     IChartForExport,
     IMutField,
+    IPaintMapV2,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { encodeFilterRule } from './filter';
 import { decodeVisSpec } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
 
@@ -28,6 +28,11 @@ const walkExpression = (expression: IExpression, each: (field: string) => void):
             walkExpression(param.value, each);
         } else if (param.type === 'sql') {
             walkFid(param.value).forEach(each);
+        } else if (param.type === 'map') {
+            each(param.value.x);
+            each(param.value.y);
+        } else if (param.type === 'newmap') {
+            param.value.facets.flatMap((x) => x.dimensions).forEach((x) => each(x.fid));
         }
     }
 };
@@ -43,7 +48,7 @@ const treeShake = (
     viewKeys: readonly string[]
 ): { key: string; expression: IExpression }[] => {
     const usedFields = new Set(viewKeys);
-    const result = computedFields.filter((f) => usedFields.has(f.key));
+    let result = computedFields.filter((f) => usedFields.has(f.key));
     let currentFields = result.slice();
     let rest = computedFields.filter((f) => !usedFields.has(f.key));
     while (currentFields.length && rest.length) {
@@ -52,6 +57,8 @@ const treeShake = (
             walkExpression(f.expression, (field) => dependencies.add(field));
         }
         const nextFields = rest.filter((f) => dependencies.has(f.key));
+        const deps = computedFields.filter((f) => dependencies.has(f.key));
+        result = deps.concat(result.filter((f) => !dependencies.has(f.key)));
         currentFields = nextFields;
         rest = rest.filter((f) => !dependencies.has(f.key));
     }
@@ -380,6 +387,25 @@ export const processExpression = (exp: IExpression, allFields: IMutField[]): IEx
                             ),
                             mapwidth: x.value.mapwidth,
                         } as IPaintMap,
+                    };
+                } else if (x.type === 'newmap') {
+                    const dict = {
+                        ...x.value.dict,
+                        '255': { name: '' },
+                    };
+                    return {
+                        type: 'newmap',
+                        value: {
+                            facets: x.value.facets,
+                            dict: Object.fromEntries(
+                                x.value.usedColor.map((i) => [
+                                    i,
+                                    {
+                                        name: dict[i].name,
+                                    },
+                                ])
+                            ),
+                        } as IPaintMapV2,
                     };
                 } else {
                     return x;

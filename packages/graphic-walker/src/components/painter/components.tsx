@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { getCircle } from '../../lib/paint';
 import { SketchPicker } from 'react-color';
-import Default from '../tabs/defaultTab';
 import DefaultButton from '../button/default';
 import { ShadowDomContext } from '../../shadow-dom';
 
@@ -43,72 +42,30 @@ export const PixelCursor = (props: { color: string; dia: number; factor: number;
     );
 };
 
-export const Container = (props: {
-    color: string;
-    dia: number;
-    factor: number;
-    children?: React.ReactNode | Iterable<React.ReactNode>;
-    showPreview?: boolean;
-}) => {
-    const { color, factor, dia, children, showPreview } = props;
-    const [cursorPos, setCursorPos] = React.useState<[number, number] | null>(null);
-    const size = dia * factor;
-    return (
-        <div
-            className="relative cursor-none"
-            onMouseOut={() => setCursorPos(null)}
-            onMouseMoveCapture={(e) => setCursorPos([e.nativeEvent.offsetX, e.nativeEvent.offsetY])}
-            onTouchMoveCapture={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setCursorPos([e.changedTouches[0].pageX - rect.left, e.changedTouches[0].pageY - rect.top]);
-            }}
-            onTouchEnd={() => setCursorPos(null)}
-        >
-            {children}
-            {cursorPos !== null && (
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        background: color,
-                        width: size,
-                        height: size,
-                        borderRadius: size,
-                        opacity: 0.6,
-                        left: cursorPos[0] - size / 2,
-                        top: cursorPos[1] - size / 2,
-                    }}
-                />
-            )}
-            {showPreview && !cursorPos && (
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        background: color,
-                        width: size,
-                        height: size,
-                        borderRadius: size,
-                        opacity: 0.6,
-                        left: `calc(50% - ${size / 2}px)`,
-                        top: `calc(50% - ${size / 2}px)`,
-                    }}
-                />
-            )}
-        </div>
-    );
-};
+export type CursorDef =
+    | {
+          type: 'circle';
+          dia: number;
+          factor: number;
+      }
+    | {
+          type: 'rect';
+          x: number;
+          xFactor: number;
+          y: number;
+          yFactor: number;
+      };
 
 export const PixelContainer = (props: {
     color: string;
-    dia: number;
-    factor: number;
+    cursor: CursorDef;
     offsetX: number;
     offsetY: number;
     children?: React.ReactNode | Iterable<React.ReactNode>;
     showPreview?: boolean;
 }) => {
-    const { color, dia, factor, offsetX, offsetY, children, showPreview } = props;
+    const { color, cursor, offsetX, offsetY, children, showPreview } = props;
     const [cursorPos, setCursorPos] = React.useState<[number, number] | null>(null);
-    const center = (dia - (dia % 2)) / 2;
     return (
         <div
             className="relative cursor-none"
@@ -121,27 +78,78 @@ export const PixelContainer = (props: {
             onTouchEnd={() => setCursorPos(null)}
         >
             {children}
-            {cursorPos !== null && (
-                <PixelCursor
+            {cursorPos !== null && cursor.type === 'rect' && (
+                <>
+                    <div
+                        className="absolute pointer-events-none"
+                        style={{
+                            backgroundColor: color,
+                            left:
+                                Math.floor((cursorPos[0] - offsetX) / cursor.xFactor) * cursor.xFactor +
+                                offsetX -
+                                ((cursor.x - (cursor.x % 2)) / 2) * cursor.xFactor,
+                            top:
+                                Math.floor((cursorPos[1] - offsetY) / cursor.yFactor) * cursor.yFactor +
+                                offsetY -
+                                ((cursor.y - (cursor.y % 2)) / 2 - 1 + (cursor.y % 2)) * cursor.yFactor,
+                            width: cursor.x * cursor.xFactor,
+                            height: cursor.y * cursor.yFactor,
+                            opacity: 0.6,
+                        }}
+                    />
+                    <div
+                        className="absolute pointer-events-none bg-black dark:bg-white"
+                        style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 16,
+                            opacity: 0.4,
+                            left: cursorPos[0] - 8,
+                            top: cursorPos[1] - 8,
+                        }}
+                    />
+                </>
+            )}
+            {showPreview && !cursorPos && cursor.type === 'rect' && (
+                <div
                     className="absolute pointer-events-none"
-                    color={color}
-                    factor={factor}
-                    dia={dia}
                     style={{
-                        left: Math.floor((cursorPos[0] - offsetX) / factor) * factor + offsetX - center * factor,
-                        top: Math.floor((cursorPos[1] - offsetY) / factor) * factor + offsetY - (center - 1 + (dia % 2)) * factor,
+                        backgroundColor: color,
+                        width: cursor.x * cursor.xFactor,
+                        height: cursor.y * cursor.yFactor,
+                        opacity: 0.6,
+                        left: `calc(50% - ${((cursor.x - (cursor.x % 2)) / 2) * cursor.xFactor}px)`,
+                        top: `calc(50% - ${((cursor.y - (cursor.y % 2)) / 2) * cursor.yFactor}px)`,
                     }}
                 />
             )}
-            {showPreview && !cursorPos && (
+            {cursorPos !== null && cursor.type === 'circle' && (
                 <PixelCursor
                     className="absolute pointer-events-none"
                     color={color}
-                    factor={factor}
-                    dia={dia}
+                    factor={cursor.factor}
+                    dia={cursor.dia}
                     style={{
-                        left: `calc(50% - ${center * factor}px)`,
-                        top: `calc(50% - ${center * factor}px)`,
+                        left:
+                            Math.floor((cursorPos[0] - offsetX) / cursor.factor) * cursor.factor +
+                            offsetX -
+                            ((cursor.dia - (cursor.dia % 2)) / 2) * cursor.factor,
+                        top:
+                            Math.floor((cursorPos[1] - offsetY) / cursor.factor) * cursor.factor +
+                            offsetY -
+                            ((cursor.dia - (cursor.dia % 2)) / 2 - 1 + (cursor.dia % 2)) * cursor.factor,
+                    }}
+                />
+            )}
+            {showPreview && !cursorPos && cursor.type === 'circle' && (
+                <PixelCursor
+                    className="absolute pointer-events-none"
+                    color={color}
+                    factor={cursor.factor}
+                    dia={cursor.dia}
+                    style={{
+                        left: `calc(50% - ${((cursor.dia - (cursor.dia % 2)) / 2) * cursor.factor}px)`,
+                        top: `calc(50% - ${((cursor.dia - (cursor.dia % 2)) / 2) * cursor.factor}px)`,
                     }}
                 />
             )}

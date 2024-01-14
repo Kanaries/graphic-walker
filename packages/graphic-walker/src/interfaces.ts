@@ -78,6 +78,7 @@ export interface IFieldStats {
     range: [number, number];
 }
 
+/** @deprecated */
 export interface IPaintMap {
     /** fid of x */
     x: string;
@@ -90,6 +91,42 @@ export interface IPaintMap {
     /** compressed array of UInt8[mapwidth][mapwidth] */
     map: string;
     /** map values */
+    dict: Record<number, { name: string; color: string }>;
+    usedColor: number[];
+}
+
+export interface IPaintDimension {
+    fid: string;
+    domain:
+        | {
+              type: 'nominal';
+              value: any[];
+              // = value.length
+              width: number;
+          }
+        | {
+              type: 'quantitative';
+              value: [number, number];
+              width: number;
+          };
+    // TODO: impement the temporal support
+    // | {
+    //       type: 'temporal';
+    //       value: [number, number];
+    //       width: number;
+    //       offset?: number;
+    //       format?: string;
+    //   };
+}
+
+export interface IPaintMapFacet {
+    dimensions: IPaintDimension[];
+    /** compressed array of UInt8[dimensions.reduce((x,d) => x * d.domain.width, 1)] */
+    map: string;
+}
+
+export interface IPaintMapV2 {
+    facets: IPaintMapFacet[];
     dict: Record<number, { name: string; color: string }>;
     usedColor: number[];
 }
@@ -126,6 +163,10 @@ export type IExpParameter =
     | {
           type: 'sql';
           value: string;
+      }
+    | {
+          type: 'newmap';
+          value: IPaintMapV2;
       };
 
 export interface IExpression {
