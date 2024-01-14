@@ -250,7 +250,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             enableCollapse={enableCollapse}
                         />
                     )}
-                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
+                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} numberFormat={format} />}
                 </table>
             </div>
         </div>

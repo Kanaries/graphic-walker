@@ -1,11 +1,12 @@
 import React from 'react';
-import { IField, IRow } from '../../interfaces';
+import { IField, IRow, IVisualConfig } from '../../interfaces';
 import { getMeaAggKey } from '../../utils';
 
 interface MetricTableProps {
     matrix: any[][];
     meaInRows: IField[];
     meaInColumns: IField[];
+    numberFormat: IVisualConfig['format']
 }
 
 function getCellData (cell: IRow, measure: IField) {
@@ -16,7 +17,7 @@ function getCellData (cell: IRow, measure: IField) {
     return cell[meaKey];
 }
 const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
-    const { matrix, meaInRows, meaInColumns } = props;
+    const { matrix, meaInRows, meaInColumns, numberFormat } = props;
     return (
         <tbody className="bg-white dark:bg-black text-gray-800 dark:text-gray-100 border-r border-b border-gray-300">
             {matrix.map((row, rIndex) => {
