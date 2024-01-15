@@ -20,6 +20,7 @@ import { GLOBAL_CONFIG } from '../../config';
 import { GWGlobalConfig, builtInThemes } from '../../vis/theme';
 import { useCurrentMediaTheme } from '../../utils/media';
 import { unstable_batchedUpdates } from 'react-dom';
+import { autoMark } from '../../vis/spec/mark';
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -85,6 +86,7 @@ const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
 const PainterContent = (props: {
+    mark: string;
     x: IViewField;
     y: IViewField;
     domainX: IPaintDimension;
@@ -164,7 +166,7 @@ const PainterContent = (props: {
                     name: 'data',
                     values: data,
                 },
-                mark: { type: xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square', opacity: 0.66 },
+                mark: { type: props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark, opacity: 0.66 },
                 encoding: {
                     x: {
                         field: props.x.fid,
@@ -270,7 +272,7 @@ const PainterContent = (props: {
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
-    }, [loading, data, props.dict, props.vegaConfig, props.domainX, props.domainY, props.onReset]);
+    }, [loading, data, props.dict, props.vegaConfig, props.domainX, props.domainY, props.onReset, props.mark]);
 
     const [showCursorPreview, setShowCursorPreview] = React.useState(false);
 
@@ -437,7 +439,8 @@ function toZeroscaled([min, max]: [number, number]): [number, number] {
 
 const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
-    const { showPainterPanel, allFields, layout } = vizStore;
+    const { showPainterPanel, allFields, layout, config } = vizStore;
+    const {geoms} = config;
     const { zeroScale } = layout;
     const { t } = useTranslation();
     const compuation = useCompututaion();
@@ -604,6 +607,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                 <LoadingLayer />
             ) : (
                 <PainterContent
+                    mark={geoms[0]}
                     vegaConfig={vegaConfig}
                     onSave={saveMap}
                     onDelete={() => {
