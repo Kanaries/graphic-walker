@@ -85,6 +85,9 @@ function selectInteractive(scene: { root: Scene }) {
 const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
+// TODO: add text: fetch the text channel to show
+const markWhitelist = ['point', 'circle', 'tick'];
+
 const PainterContent = (props: {
     mark: string;
     x: IViewField;
@@ -160,13 +163,15 @@ const PainterContent = (props: {
         if (!loading && containerRef.current) {
             const xQuan = props.domainX.domain.type === 'quantitative';
             const yQuan = props.domainY.domain.type === 'quantitative';
+            const fallbackMark = xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square';
+            const mark =  props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
             const spec: any = {
                 data: {
                     name: 'data',
                     values: data,
                 },
-                mark: { type: props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark, opacity: 0.66 },
+                mark: { type: markWhitelist.includes(mark) ? mark : fallbackMark, opacity: 0.66 },
                 encoding: {
                     x: {
                         field: props.x.fid,
@@ -221,7 +226,8 @@ const PainterContent = (props: {
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
                             if ('datum' in item) {
-                                item['fill'] = color;
+                                item['fill'] && item['fill'] !== 'transparent' && (item['fill'] = color);
+                                item['stroke'] && item['stroke'] !== 'transparent' && (item['stroke'] = color);
                                 item.datum![PAINT_FIELD_ID] = name;
                             }
                         })
@@ -248,7 +254,8 @@ const PainterContent = (props: {
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
-                                item['fill'] = targetColor.color;
+                                item['fill'] && item['fill'] !== 'transparent' && (item['fill'] = targetColor.color);
+                                item['stroke'] && item['stroke'] !== 'transparent' && (item['stroke'] = targetColor.color);
                                 item.datum![PAINT_FIELD_ID] = targetColor.name;
                                 i++;
                             });
@@ -440,7 +447,7 @@ function toZeroscaled([min, max]: [number, number]): [number, number] {
 const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
     const { showPainterPanel, allFields, layout, config } = vizStore;
-    const {geoms} = config;
+    const { geoms } = config;
     const { zeroScale } = layout;
     const { t } = useTranslation();
     const compuation = useCompututaion();
