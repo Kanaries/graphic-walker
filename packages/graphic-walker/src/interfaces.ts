@@ -123,6 +123,7 @@ export interface IPaintMapFacet {
     dimensions: IPaintDimension[];
     /** compressed array of UInt8[dimensions.reduce((x,d) => x * d.domain.width, 1)] */
     map: string;
+    usedColor: number[];
 }
 
 export interface IPaintMapV2 {

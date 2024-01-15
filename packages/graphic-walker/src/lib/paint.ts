@@ -183,6 +183,7 @@ export function IPaintMapAdapter(paintMap: IPaintMap): IPaintMapV2 {
         facets: [
             {
                 map: paintMap.map,
+                usedColor: paintMap.usedColor,
                 dimensions: [
                     {
                         fid: paintMap.y,
