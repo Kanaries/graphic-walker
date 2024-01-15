@@ -23,35 +23,37 @@ import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
 
-type IPureRendererProps =
-    | {
-          className?: string;
-          name?: string;
-          themeKey?: IThemeKey;
-          themeConfig?: GWGlobalConfig;
-          dark?: IDarkMode;
-          visualState: DraggableFieldState;
-          visualConfig: IVisualConfigNew | IVisualConfig;
-          visualLayout?: IVisualLayout;
-          locale?: string;
-          channelScales?: IChannelScales;
-          overrideSize?: IVisualLayout['size'];
-      } & (
-          | {
-                type: 'remote';
-                computation: IComputationFunction;
-            }
-          | {
-                type?: 'local';
-                rawData: IRow[];
-            }
-      );
+type IPureRendererProps = {
+    className?: string;
+    name?: string;
+    themeKey?: IThemeKey;
+    themeConfig?: GWGlobalConfig;
+    dark?: IDarkMode;
+    visualState: DraggableFieldState;
+    visualConfig: IVisualConfigNew | IVisualConfig;
+    visualLayout?: IVisualLayout;
+    locale?: string;
+    channelScales?: IChannelScales;
+    overrideSize?: IVisualLayout['size'];
+};
 
+type LocalProps = {
+    type?: 'local';
+    rawData: IRow[];
+};
+
+type RemoteProps = {
+    type: 'remote';
+    computation: IComputationFunction;
+};
+
+export type IRemotePureRendererProps = IPureRendererProps & RemoteProps & React.RefAttributes<IReactVegaHandler>;
+export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.RefAttributes<IReactVegaHandler>;
 /**
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
-const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function PureRenderer(props, ref) {
+const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
     const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, overrideSize, locale, type, themeConfig, channelScales } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
@@ -125,8 +127,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <ShadowDom style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined} className={className}>
-            <div className="relative" style={sizeMode === 'full' ? {width: '100%', height: '100%'} : undefined}>
+        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className}>
+            <div className="relative" style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                 {isSpatial && (
                     <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                         <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
@@ -153,4 +155,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps>(function 
     );
 });
 
-export default observer(withAppRoot<IPureRendererProps>(PureRenderer));
+export default observer(withAppRoot<IPureRendererProps>(PureRenderer)) as {
+    (p: ILocalPureRendererProps): JSX.Element;
+    (p: IRemotePureRendererProps): JSX.Element;
+};

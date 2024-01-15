@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps } from './interfaces';
+import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IRemoteComputationProps, IComputationProps } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -232,7 +232,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 });
 
-export function VizAppWithContext(props: IVizAppProps) {
+export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const { computation, safeMetas, onMetaChange } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {

@@ -7,6 +7,7 @@ import { ToolbarItemProps } from './components/toolbar';
 import { GWGlobalConfig } from './vis/theme';
 import { VizSpecStore } from './store/visualSpecStore';
 import { CommonStore } from './store/commonStore';
+import type { XOR } from 'ts-xor';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -894,27 +895,25 @@ export interface IVizStoreProps {
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
 }
 
-export type IComputationProps = {
+export interface ILocalComputationProps {
+    /**
+     * auto parse field key into a safe string. default is true
+     */
+    fieldKeyGuard?: boolean;
+    dataSource: any[];
     computationTimeout?: number;
-} & (
-    | {
-          /**
-           * auto parse field key into a safe string. default is true
-           */
-          fieldKeyGuard?: boolean;
-          dataSource: any[];
-      }
-    | {
-          fieldKeyGuard?: undefined;
-          dataSource?: undefined;
-          computation: IComputationFunction;
-      }
-);
+}
+
+export interface IRemoteComputationProps {
+    computation: IComputationFunction;
+}
 
 export interface IComputationContextProps {
     computation?: IComputationFunction;
     computationTimeout?: number;
 }
+
+export type IComputationProps = XOR<IRemoteComputationProps,ILocalComputationProps>;
 
 export type IGWProps = IAppI18nProps &
     IVizProps &
@@ -933,9 +932,8 @@ export interface ITableSpecProps {
     pageSize?: number;
 }
 
-export type IVizAppProps = IAppI18nProps & IVizProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ISpecProps;
-
-export type ITableProps = IAppI18nProps & IThemeProps & IErrorHandlerProps & IVizStoreProps & IComputationProps & ITableSpecProps;
+export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}
+export interface ITableProps extends IAppI18nProps, ITableSpecProps, IThemeProps, IErrorHandlerProps, IVizStoreProps {}
 
 export interface IAskVizFeedback {
     action: 'voteup' | 'votedown' | 'report';
