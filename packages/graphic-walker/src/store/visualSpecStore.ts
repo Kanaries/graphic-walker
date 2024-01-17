@@ -242,34 +242,17 @@ export class VizSpecStore {
         return viz.cursor !== viz.timeline.length;
     }
 
-    get paintInfo() {
-        const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
-        if (existPaintField) {
-            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
-            if (param) {
-                return {
-                    type: 'exist',
-                    item: IPaintMapAdapter(param),
-                } as const;
-            }
-            const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
-            if (paramV2) {
-                return {
-                    type: 'exist',
-                    item: paramV2,
-                } as const;
-            }
-        }
+    paintFields() {
         if (!this.currentVis.config.defaultAggregated) {
             const { columns, rows } = this.currentEncodings;
             if (columns.length !== 1 || rows.length !== 1) {
-                return { type: 'error', key: 'count' }as const;
+                return { type: 'error', key: 'count' } as const;
             }
             const col = columns[0];
             const row = rows[0];
             // range on temporal need use a temporal Domain, which is not impemented
             if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
-                return { type: 'error', key: 'temporal' }as const;
+                return { type: 'error', key: 'temporal' } as const;
             }
             if (
                 col.aggName === 'expr' ||
@@ -288,6 +271,29 @@ export class VizSpecStore {
             } as const;
         }
         return { type: 'error', key: 'aggergation' } as const;
+    }
+
+    get paintInfo() {
+        const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
+        if (existPaintField) {
+            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
+            if (param) {
+                return {
+                    type: 'exist',
+                    item: IPaintMapAdapter(param),
+                    new: this.paintFields(),
+                } as const;
+            }
+            const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
+            if (paramV2) {
+                return {
+                    type: 'exist',
+                    item: paramV2,
+                    new: this.paintFields(),
+                } as const;
+            }
+        }
+        return this.paintFields();
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
