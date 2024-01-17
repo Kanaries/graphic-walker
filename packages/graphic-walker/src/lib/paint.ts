@@ -42,9 +42,9 @@ export function getCircleFrom([x0, y0]: [number, number], dia: number, mapWidth:
  * @param mapWidth Width of the Map (points outside map will be croped)
  * @returns Indexes of circle points in the map.
  */
-export function indexesFrom(center: [number, number], dia: number, dimensions: [IPaintDimension, IPaintDimension]) {
+export function getCircleIndexes(center: [number, number], dia: number, dimensions: [IPaintDimension, IPaintDimension]) {
     const [y, x] = dimensions;
-    const index = indexV2(dimensions);
+    const index = indexByDimensions(dimensions);
     if (y.domain.type === 'quantitative' && x.domain.type === 'quantitative') {
         const mapWidth = y.domain.width;
         return getCircleFrom(center, dia, mapWidth).map(([x, y]) => index([y, x]));
@@ -80,7 +80,7 @@ async function bufferToBase64(buffer: Uint8Array | ArrayBuffer): Promise<string>
  * @param arr Uint8Array to be compressed.
  * @returns Promise of the compressed data in base64-string.
  */
-export async function compressMap(arr: Uint8Array) {
+export async function compressPaintMap(arr: Uint8Array) {
     const stream = new Response(arr).body!.pipeThrough(new CompressionStream('deflate-raw'));
     const result = await new Response(stream).arrayBuffer();
     return bufferToBase64(result);
@@ -91,13 +91,13 @@ export async function compressMap(arr: Uint8Array) {
  * @param base64 base64-string to be decompressed.
  * @returns Promise of the decompressed data.
  */
-export async function decompressMap(base64: string) {
+export async function decompressPaintMap(base64: string) {
     const stream = await fetch('data:application/octet-stream;base64,' + base64).then((res) => res.body!.pipeThrough(new DecompressionStream('deflate-raw')));
     const result = await new Response(stream).arrayBuffer();
     return new Uint8Array(result);
 }
 
-export function createMap(dimensions: IPaintDimension[]) {
+export function createPaintMap(dimensions: IPaintDimension[]) {
     return new Uint8Array(dimensions.reduce((x, d) => x * d.domain.width, 1));
 }
 
@@ -108,7 +108,7 @@ export function createMap(dimensions: IPaintDimension[]) {
  * @param mapWidth width of the map.
  * @returns index of the item in the map.
  */
-export function calcIndex(domain: [number, number], item: number, mapWidth: number) {
+export function calcIndexInMap(domain: [number, number], item: number, mapWidth: number) {
     if (item >= domain[1]) return mapWidth - 1;
     if (item <= domain[0]) return 0;
     return Math.floor((mapWidth * (item - domain[0])) / (domain[1] - domain[0]));
@@ -123,10 +123,10 @@ export function calcIndex(domain: [number, number], item: number, mapWidth: numb
  * @param mapWidth width of the map.
  * @returns index of items in the map.
  */
-export function calcIndexs(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
+export function calcIndexsInMap(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
     return dataX.map((x, i) => {
         const y = dataY[i];
-        return index(calcIndex(domainX, x, mapWidth), calcIndex(domainY, y, mapWidth), mapWidth);
+        return index(calcIndexInMap(domainX, x, mapWidth), calcIndexInMap(domainY, y, mapWidth), mapWidth);
     });
 }
 
@@ -137,16 +137,16 @@ export function calcIndexs(dataX: number[], dataY: number[], domainX: [number, n
  * @param paintMap the PaintMap to use.
  * @returns
  */
-export async function calcMap(dataX: number[], dataY: number[], paintMap: IPaintMap) {
+export async function calcPaintMap(dataX: number[], dataY: number[], paintMap: IPaintMap) {
     const { dict, domainX, domainY, map: raw, mapwidth } = paintMap;
-    const map = await decompressMap(raw);
-    return calcIndexs(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
+    const map = await decompressPaintMap(raw);
+    return calcIndexsInMap(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
         return dict[map[x]]?.name;
     });
 }
 
 // e.g. [3,3,3] => [9,3,1]
-function indexV2(dimensions: IPaintDimension[]) {
+function indexByDimensions(dimensions: IPaintDimension[]) {
     const indexWeights = dimensions
         .map((x) => x.domain.width)
         .reduceRight(([n, ...rest], a) => [a * n, n, ...rest], [1])
@@ -159,20 +159,20 @@ function indexV2(dimensions: IPaintDimension[]) {
  * @param dimensions the dimensions of the map
  * @returns mapper for data.
  */
-export function calcIndexsV2(dimensions: IPaintDimension[]) {
+export function calcIndexsByDimensions(dimensions: IPaintDimension[]) {
     const getSingleIndex = dimensions.map(({ domain, fid }) => {
         if (domain.type === 'nominal') {
             const indexDict = new Map(domain.value.map((x, i) => [x, i]));
             return (data: IRow) => indexDict.get(data[fid]) ?? 0;
         }
         if (domain.type === 'quantitative') {
-            return (data: IRow) => calcIndex(domain.value, data[fid], domain.width);
+            return (data: IRow) => calcIndexInMap(domain.value, data[fid], domain.width);
         }
         const neverType: never = domain;
         throw new Error(`unsupported domain type ${neverType['type']}`);
     });
 
-    const index = indexV2(dimensions);
+    const index = indexByDimensions(dimensions);
     return (data: IRow) => index(getSingleIndex.map((f) => f(data)));
 }
 
@@ -213,12 +213,12 @@ export function IPaintMapAdapter(paintMap: IPaintMap): IPaintMapV2 {
  * @param paintMap paintMap
  * @returns result
  */
-export async function calcMapV2(data: IRow[], paintMap: IPaintMapV2) {
+export async function calcPaintMapV2(data: IRow[], paintMap: IPaintMapV2) {
     const { dict, facets } = paintMap;
     let result = data.map(() => dict[1].name);
     for (const { map: raw, dimensions } of facets) {
-        const map = await decompressMap(raw);
-        const index = calcIndexsV2(dimensions);
+        const map = await decompressPaintMap(raw);
+        const index = calcIndexsByDimensions(dimensions);
         result = data.map(index).map((x, i) => (map[x] !== 0 ? dict[map[x]]?.name : result[i]));
     }
 

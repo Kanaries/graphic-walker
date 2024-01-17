@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
-import { calcIndexsV2, calcMapV2, compressMap, createMap, decompressMap, indexesFrom } from '../../lib/paint';
+import { calcIndexsByDimensions, calcPaintMapV2, compressPaintMap, createPaintMap, decompressPaintMap, getCircleIndexes } from '../../lib/paint';
 import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
 import { IDarkMode, IPaintDimension, IPaintMapFacet, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
@@ -98,7 +98,7 @@ const PainterContent = (props: {
     facets: IPaintMapFacet[];
     vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
-    mapRef: React.MutableRefObject<Uint8Array | undefined>;
+    paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
     allFields: IViewField[];
     onReset: () => void;
     onDelete: () => void;
@@ -138,13 +138,13 @@ const PainterContent = (props: {
         viewMeasures: fields,
     });
     const indexes = useMemo(() => {
-        const mapper = calcIndexsV2([props.domainY, props.domainX]);
+        const mapper = calcIndexsByDimensions([props.domainY, props.domainX]);
         return viewData.map(mapper);
     }, [viewData, props.domainX, props.domainY]);
     const [data, loadingResult] = useAsyncMemo(async () => {
-        const facetResult = await calcMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
+        const facetResult = await calcPaintMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
         return viewData.map((x, i) => {
-            const pid = props.mapRef.current![indexes[i]];
+            const pid = props.paintMapRef.current![indexes[i]];
             return {
                 ...x,
                 [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] : props.dict[pid]?.name,
@@ -221,7 +221,7 @@ const PainterContent = (props: {
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
                     props.onReset();
-                    props.mapRef.current! = createMap([props.domainY, props.domainX]);
+                    props.paintMapRef.current! = createPaintMap([props.domainY, props.domainX]);
                     const { name, color } = props.dict[1];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
@@ -246,7 +246,7 @@ const PainterContent = (props: {
                                   }
                                 : props.dict[brushIdRef.current];
                         if (!targetColor) return;
-                        const pts = indexesFrom(
+                        const pts = getCircleIndexes(
                             [Math.floor(x / getFactor(props.domainX)), props.domainY.domain.width - 1 - Math.floor(y / getFactor(props.domainY))],
                             brushSizeRef.current,
                             [props.domainY, props.domainX]
@@ -259,7 +259,7 @@ const PainterContent = (props: {
                                 item.datum![PAINT_FIELD_ID] = targetColor.name;
                                 i++;
                             });
-                            props.mapRef.current![x] = brushIdRef.current;
+                            props.paintMapRef.current![x] = brushIdRef.current;
                         });
                         i > 0 && rerender();
                     };
@@ -428,10 +428,10 @@ function isZeroscaled([min, max]: [number, number]) {
     return (min < 0 && max > 0) || min === 0 || max === 0;
 }
 
-function isDomainZeroscaled(domain: IPaintDimension['domain'] | undefined, zeroScale: boolean) {
+function isDomainZeroscaledAs(domain: IPaintDimension['domain'] | undefined, exceptedZeroscale: boolean) {
     if (!domain) return false;
     if (domain.type === 'nominal') return true;
-    return isZeroscaled(domain.value) === zeroScale;
+    return isZeroscaled(domain.value) === exceptedZeroscale;
 }
 
 function toZeroscaled([min, max]: [number, number]): [number, number] {
@@ -453,7 +453,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
     const compuation = useCompututaion();
 
     const [loading, setLoading] = useState(true);
-    const mapRef = useRef<Uint8Array>();
+    const paintMapRef = useRef<Uint8Array>();
     const [dict, setDict] = useState(defaultScheme);
     const [fieldX, setX] = useState<IViewField>();
     const [fieldY, setY] = useState<IViewField>();
@@ -491,18 +491,13 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                             };
                         }
                     };
-                    let xs: Promise<IPaintDimension>;
-                    let ys: Promise<IPaintDimension>;
-                    xs = getDomain(paintInfo.x);
-                    ys = getDomain(paintInfo.y);
-                    const domainX = await xs;
-                    const domainY = await ys;
+                    const [domainX, domainY] = await Promise.all([getDomain(paintInfo.x), getDomain(paintInfo.y)]);
                     return {
                         x: paintInfo.x,
                         y: paintInfo.y,
                         domainX,
                         domainY,
-                        map: createMap([domainY, domainX]),
+                        map: createPaintMap([domainY, domainX]),
                     };
                 };
                 if (paintInfo) {
@@ -512,15 +507,15 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                             paintInfo.new.type === 'new' &&
                             (lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
                                 lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
-                                !isDomainZeroscaled(lastFacet.dimensions[0]?.domain, zeroScale) ||
-                                !isDomainZeroscaled(lastFacet.dimensions[1]?.domain, zeroScale))
+                                !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
+                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale))
                         ) {
                             const { domainX, domainY, map } = await getNewMap(paintInfo.new);
                             // adapter for old single facet
                             if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
                                 paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
                             }
-                            mapRef.current = map;
+                            paintMapRef.current = map;
                             unstable_batchedUpdates(() => {
                                 setDict(paintInfo.item.dict);
                                 setDomainX(domainX);
@@ -531,7 +526,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                                 setLoading(false);
                             });
                         } else {
-                            mapRef.current = await decompressMap(lastFacet.map);
+                            paintMapRef.current = await decompressPaintMap(lastFacet.map);
                             const x = lastFacet.dimensions.at(-1)?.fid;
                             const y = lastFacet.dimensions.at(-2)?.fid;
                             const xf = allFields.find((a) => a.fid === x);
@@ -548,7 +543,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                         }
                     } else if (paintInfo.type === 'new') {
                         const { domainX, domainY, map } = await getNewMap(paintInfo);
-                        mapRef.current = map;
+                        paintMapRef.current = map;
                         unstable_batchedUpdates(() => {
                             setDict(defaultScheme);
                             setDomainX(domainX);
@@ -565,13 +560,13 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
     }, [showPainterPanel, vizStore, compuation, zeroScale]);
 
     const saveMap = async () => {
-        if (domainX && domainY && mapRef.current) {
+        if (domainX && domainY && paintMapRef.current) {
             const newFacets = [
                 ...facets,
                 {
-                    map: await compressMap(mapRef.current),
+                    map: await compressPaintMap(paintMapRef.current),
                     dimensions: [domainY, domainX],
-                    usedColor: [...new Set(mapRef.current).values()].map((x) => x || 1),
+                    usedColor: Array.from(new Set(paintMapRef.current)).map((x) => x || 1),
                 },
             ];
             // all colors in map
@@ -634,7 +629,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     domainY={domainY!}
                     dict={dict}
                     onChangeDict={setDict}
-                    mapRef={mapRef}
+                    paintMapRef={paintMapRef}
                     onReset={onReset}
                 />
             )}
