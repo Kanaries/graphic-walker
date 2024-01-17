@@ -80,7 +80,7 @@ async function bufferToBase64(buffer: Uint8Array | ArrayBuffer): Promise<string>
  * @param arr Uint8Array to be compressed.
  * @returns Promise of the compressed data in base64-string.
  */
-export async function compressPaintMap(arr: Uint8Array) {
+export async function compressBitMap(arr: Uint8Array) {
     const stream = new Response(arr).body!.pipeThrough(new CompressionStream('deflate-raw'));
     const result = await new Response(stream).arrayBuffer();
     return bufferToBase64(result);
@@ -91,13 +91,13 @@ export async function compressPaintMap(arr: Uint8Array) {
  * @param base64 base64-string to be decompressed.
  * @returns Promise of the decompressed data.
  */
-export async function decompressPaintMap(base64: string) {
+export async function decompressBitMap(base64: string) {
     const stream = await fetch('data:application/octet-stream;base64,' + base64).then((res) => res.body!.pipeThrough(new DecompressionStream('deflate-raw')));
     const result = await new Response(stream).arrayBuffer();
     return new Uint8Array(result);
 }
 
-export function createPaintMap(dimensions: IPaintDimension[]) {
+export function createBitMapForMap(dimensions: IPaintDimension[]) {
     return new Uint8Array(dimensions.reduce((x, d) => x * d.domain.width, 1));
 }
 
@@ -108,7 +108,7 @@ export function createPaintMap(dimensions: IPaintDimension[]) {
  * @param mapWidth width of the map.
  * @returns index of the item in the map.
  */
-export function calcIndexInMap(domain: [number, number], item: number, mapWidth: number) {
+export function calcIndexInPaintMap(domain: [number, number], item: number, mapWidth: number) {
     if (item >= domain[1]) return mapWidth - 1;
     if (item <= domain[0]) return 0;
     return Math.floor((mapWidth * (item - domain[0])) / (domain[1] - domain[0]));
@@ -123,10 +123,10 @@ export function calcIndexInMap(domain: [number, number], item: number, mapWidth:
  * @param mapWidth width of the map.
  * @returns index of items in the map.
  */
-export function calcIndexesInMap(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
+export function calcIndexesInPaintMap(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
     return dataX.map((x, i) => {
         const y = dataY[i];
-        return index(calcIndexInMap(domainX, x, mapWidth), calcIndexInMap(domainY, y, mapWidth), mapWidth);
+        return index(calcIndexInPaintMap(domainX, x, mapWidth), calcIndexInPaintMap(domainY, y, mapWidth), mapWidth);
     });
 }
 
@@ -139,8 +139,8 @@ export function calcIndexesInMap(dataX: number[], dataY: number[], domainX: [num
  */
 export async function calcPaintMap(dataX: number[], dataY: number[], paintMap: IPaintMap) {
     const { dict, domainX, domainY, map: raw, mapwidth } = paintMap;
-    const map = await decompressPaintMap(raw);
-    return calcIndexesInMap(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
+    const map = await decompressBitMap(raw);
+    return calcIndexesInPaintMap(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
         return dict[map[x]]?.name;
     });
 }
@@ -166,7 +166,7 @@ export function calcIndexesByDimensions(dimensions: IPaintDimension[]) {
             return (data: IRow) => indexDict.get(data[fid]) ?? 0;
         }
         if (domain.type === 'quantitative') {
-            return (data: IRow) => calcIndexInMap(domain.value, data[fid], domain.width);
+            return (data: IRow) => calcIndexInPaintMap(domain.value, data[fid], domain.width);
         }
         const neverType: never = domain;
         throw new Error(`unsupported domain type ${neverType['type']}`);
@@ -217,7 +217,7 @@ export async function calcPaintMapV2(data: IRow[], paintMap: IPaintMapV2) {
     const { dict, facets } = paintMap;
     let result = data.map(() => dict[1].name);
     for (const { map: raw, dimensions } of facets) {
-        const map = await decompressPaintMap(raw);
+        const map = await decompressBitMap(raw);
         const index = calcIndexesByDimensions(dimensions);
         result = data.map(index).map((x, i) => (map[x] !== 0 ? dict[map[x]]?.name : result[i]));
     }

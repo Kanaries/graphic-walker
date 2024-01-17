@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
-import { calcIndexesByDimensions, calcPaintMapV2, compressPaintMap, createPaintMap, decompressPaintMap, getCircleIndexes } from '../../lib/paint';
+import { calcIndexesByDimensions, calcPaintMapV2, compressBitMap, createBitMapForMap, decompressBitMap, getCircleIndexes } from '../../lib/paint';
 import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
 import { IDarkMode, IField, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
@@ -147,10 +147,7 @@ const PainterContent = (props: {
         viewDimensions: emptyField,
         viewMeasures: fields,
     });
-    const indexes = useMemo(() => {
-        const mapper = calcIndexesByDimensions([props.domainY, props.domainX]);
-        return viewData.map(mapper);
-    }, [viewData, props.domainX, props.domainY]);
+    const indexes = useMemo(() => viewData.map(calcIndexesByDimensions([props.domainY, props.domainX])), [viewData, props.domainX, props.domainY]);
     const [data, loadingResult] = useAsyncMemo(async () => {
         const facetResult = await calcPaintMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
         return viewData.map((x, i) => {
@@ -229,7 +226,7 @@ const PainterContent = (props: {
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
                     props.onReset();
-                    props.paintMapRef.current! = createPaintMap([props.domainY, props.domainX]);
+                    props.paintMapRef.current! = createBitMapForMap([props.domainY, props.domainX]);
                     const { name, color } = props.dict[1];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
@@ -505,7 +502,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                         y: paintInfo.y,
                         domainX,
                         domainY,
-                        map: createPaintMap([domainY, domainX]),
+                        map: createBitMapForMap([domainY, domainX]),
                     };
                 };
                 if (paintInfo) {
@@ -534,7 +531,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                                 setLoading(false);
                             });
                         } else {
-                            paintMapRef.current = await decompressPaintMap(lastFacet.map);
+                            paintMapRef.current = await decompressBitMap(lastFacet.map);
                             const x = lastFacet.dimensions.at(-1)?.fid;
                             const y = lastFacet.dimensions.at(-2)?.fid;
                             const xf = allFields.find((a) => a.fid === x);
@@ -572,7 +569,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
             const newFacets = [
                 ...facets,
                 {
-                    map: await compressPaintMap(paintMapRef.current),
+                    map: await compressBitMap(paintMapRef.current),
                     dimensions: [domainY, domainX],
                     usedColor: Array.from(new Set(paintMapRef.current)).map((x) => x || 1),
                 },
