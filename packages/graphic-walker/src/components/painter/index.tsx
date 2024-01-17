@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
-import { calcIndexsByDimensions, calcPaintMapV2, compressPaintMap, createPaintMap, decompressPaintMap, getCircleIndexes } from '../../lib/paint';
+import { calcIndexesByDimensions, calcPaintMapV2, compressPaintMap, createPaintMap, decompressPaintMap, getCircleIndexes } from '../../lib/paint';
 import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
-import { IDarkMode, IPaintDimension, IPaintMapFacet, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
+import { IDarkMode, IField, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
 import embed from 'vega-embed';
 import Modal from '../modal';
 import { PAINT_FIELD_ID } from '../../constants';
@@ -85,6 +85,16 @@ function selectInteractive(scene: { root: Scene }) {
 const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
+function getMarkFor(types: ISemanticType[]) {
+    if (types.every((x) => x === 'quantitative')) {
+        return 'circle';
+    }
+    if (types.find((x) => x === 'quantitative')) {
+        return 'tick';
+    }
+    return 'square';
+}
+
 // TODO: add text: fetch the text channel to show
 const markWhitelist = ['point', 'circle', 'tick'];
 
@@ -138,7 +148,7 @@ const PainterContent = (props: {
         viewMeasures: fields,
     });
     const indexes = useMemo(() => {
-        const mapper = calcIndexsByDimensions([props.domainY, props.domainX]);
+        const mapper = calcIndexesByDimensions([props.domainY, props.domainX]);
         return viewData.map(mapper);
     }, [viewData, props.domainX, props.domainY]);
     const [data, loadingResult] = useAsyncMemo(async () => {
@@ -161,9 +171,7 @@ const PainterContent = (props: {
 
     useEffect(() => {
         if (!loading && containerRef.current) {
-            const xQuan = props.domainX.domain.type === 'quantitative';
-            const yQuan = props.domainY.domain.type === 'quantitative';
-            const fallbackMark = xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square';
+            const fallbackMark = getMarkFor([props.domainY.domain.type, props.domainX.domain.type]);
             const mark = props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
             const spec: any = {

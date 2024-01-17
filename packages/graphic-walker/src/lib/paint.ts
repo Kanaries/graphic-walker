@@ -123,7 +123,7 @@ export function calcIndexInMap(domain: [number, number], item: number, mapWidth:
  * @param mapWidth width of the map.
  * @returns index of items in the map.
  */
-export function calcIndexsInMap(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
+export function calcIndexesInMap(dataX: number[], dataY: number[], domainX: [number, number], domainY: [number, number], mapWidth: number) {
     return dataX.map((x, i) => {
         const y = dataY[i];
         return index(calcIndexInMap(domainX, x, mapWidth), calcIndexInMap(domainY, y, mapWidth), mapWidth);
@@ -140,7 +140,7 @@ export function calcIndexsInMap(dataX: number[], dataY: number[], domainX: [numb
 export async function calcPaintMap(dataX: number[], dataY: number[], paintMap: IPaintMap) {
     const { dict, domainX, domainY, map: raw, mapwidth } = paintMap;
     const map = await decompressPaintMap(raw);
-    return calcIndexsInMap(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
+    return calcIndexesInMap(dataX, dataY, domainX, domainY, mapwidth).map((x) => {
         return dict[map[x]]?.name;
     });
 }
@@ -151,7 +151,7 @@ function indexByDimensions(dimensions: IPaintDimension[]) {
         .map((x) => x.domain.width)
         .reduceRight(([n, ...rest], a) => [a * n, n, ...rest], [1])
         .slice(1);
-    return (indexs: number[]) => indexs.map((i, wi) => i * indexWeights[wi]).reduce((x, y) => x + y);
+    return (indexes: number[]) => indexes.map((i, wi) => i * indexWeights[wi]).reduce((x, y) => x + y);
 }
 
 /**
@@ -159,7 +159,7 @@ function indexByDimensions(dimensions: IPaintDimension[]) {
  * @param dimensions the dimensions of the map
  * @returns mapper for data.
  */
-export function calcIndexsByDimensions(dimensions: IPaintDimension[]) {
+export function calcIndexesByDimensions(dimensions: IPaintDimension[]) {
     const getSingleIndex = dimensions.map(({ domain, fid }) => {
         if (domain.type === 'nominal') {
             const indexDict = new Map(domain.value.map((x, i) => [x, i]));
@@ -218,7 +218,7 @@ export async function calcPaintMapV2(data: IRow[], paintMap: IPaintMapV2) {
     let result = data.map(() => dict[1].name);
     for (const { map: raw, dimensions } of facets) {
         const map = await decompressPaintMap(raw);
-        const index = calcIndexsByDimensions(dimensions);
+        const index = calcIndexesByDimensions(dimensions);
         result = data.map(index).map((x, i) => (map[x] !== 0 ? dict[map[x]]?.name : result[i]));
     }
 
