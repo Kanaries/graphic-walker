@@ -110,7 +110,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     };
 }
 
-export async function getComutation(data: Record<string, number>[]) {
+export async function getComputation(data: Record<string, number>[]) {
     if (data.length === 0) {
         return {
             close: async () => {},
