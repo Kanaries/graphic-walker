@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useCallback, useMemo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps } from './interfaces';
+import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps } from './interfaces';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { useVizStore, withErrorReport, withTimeout, ComputationContext, VizStoreWrapper } from './store';
 import { parseErrorMessage } from './utils';
@@ -76,7 +76,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     );
 });
 
-export function TableAppWithContext(props: ITableProps) {
+export function TableAppWithContext(props: ITableProps & IComputationProps) {
     const { computation, safeMetas } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {

@@ -261,6 +261,21 @@ export function createFilterContext(components: {
             return <>{loadingContent}</>;
         }
         return children(filteredComputation, elements);
+    } as {
+        (props: {
+            configs: FilterConfig[];
+            dataSource: IRow[];
+            loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
+            rawFields: IMutField[];
+            children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
+        }): JSX.Element;
+        (props: {
+            configs: FilterConfig[];
+            computation: IComputationFunction;
+            loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
+            rawFields: IMutField[];
+            children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
+        }): JSX.Element;
     };
 }
 
