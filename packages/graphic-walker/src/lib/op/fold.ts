@@ -18,6 +18,16 @@ export function fold(data: IRow[], query: IFoldQuery): IRow[] {
     return ans;
 }
 
+export function replaceAggForFold<T extends { aggName?: string }>(x: T, newAggName?: string) {
+    if (x.aggName === 'expr') {
+        return x;
+    }
+    return {
+        ...x,
+        aggName: newAggName,
+    };
+}
+
 export function fold2(
     data: IRow,
     defaultAggregated: boolean,
@@ -36,9 +46,10 @@ export function fold2(
             .filter(Boolean)
             .map((x) => {
                 if (defaultAggregated) {
+                    const fieldWithReplacedAgg = replaceAggForFold(x, meaVal.aggName);
                     return {
-                        name: getMeaAggName(x.name, meaVal.aggName),
-                        fid: getMeaAggKey(x.fid, meaVal.aggName),
+                        name: getMeaAggName(fieldWithReplacedAgg.name, fieldWithReplacedAgg.aggName),
+                        fid: getMeaAggKey(fieldWithReplacedAgg.name, fieldWithReplacedAgg.aggName),
                     };
                 }
                 return { name: x.name, fid: x.fid };

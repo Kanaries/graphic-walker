@@ -19,6 +19,7 @@ import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { decodeVisSpec } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
+import { replaceAggForFold } from '../lib/op/fold';
 
 const walkExpression = (expression: IExpression, each: (field: string) => void): void => {
     for (const param of expression.params) {
@@ -82,8 +83,8 @@ export const toWorkflow = (
         const aggName = viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID)!.aggName;
         const newFields = folds
             .map((k) => allFields.find((x) => x.fid === k)!)
-            .map((x) => ({ ...x, aggName }))
-            .filter(Boolean);
+            .filter(Boolean)
+            .map((x) => replaceAggForFold(x, aggName));
         viewDimensions.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
         viewMeasures.push(...newFields.filter((x) => x?.analyticType === 'measure'));
     }
@@ -242,7 +243,7 @@ export const toWorkflow = (
             query: [
                 {
                     op: 'raw',
-                    fields: [...new Set([...viewDimensions, ...viewMeasures])].map((f) => f.fid),
+                    fields: [...new Set([...viewDimensions, ...viewMeasures])].filter(f => f.aggName !== 'expr').map((f) => f.fid),
                 },
             ],
         };
