@@ -577,6 +577,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
+                    offset: f.offset
                 })
             )
             .concat(extraDimensions),
@@ -591,6 +592,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: 'sum',
+                    offset: f.offset
                 })
             )
             .concat(extraMeasures),

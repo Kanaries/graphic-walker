@@ -531,20 +531,22 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
 interface CalendarInputProps {
     min: number;
     max: number;
+    offset?: number;
     value: number;
     onChange: (value: number) => void;
 }
 
 export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
-    const { min, max, value, onChange } = props;
+    const { min, max, value, onChange, offset } = props;
     const dateStringFormatter = (timestamp: number) => {
-        const date = new Date(timestamp);
+        const date = newOffsetDate(offset)(timestamp);
         if (Number.isNaN(date.getTime())) return '';
         return formatDate(date);
     };
     const handleSubmitDate = (value: string) => {
-        if (new Date(value).getTime() <= max && new Date(value).getTime() >= min) {
-            onChange(new Date(value).getTime());
+        const timestamp = newOffsetDate(offset)(value).getTime();
+        if (timestamp <= max && timestamp >= min) {
+            onChange(timestamp);
         }
     };
     return (
@@ -613,6 +615,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     <CalendarInput
+                        offset={field.rule.offset}
                         min={min}
                         max={field.rule.value[1]}
                         value={field.rule.value[0]}
@@ -622,6 +625,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     <CalendarInput
+                        offset={field.rule.offset}
                         min={field.rule.value[0]}
                         max={max}
                         value={field.rule.value[1]}

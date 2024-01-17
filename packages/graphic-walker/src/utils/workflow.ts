@@ -112,12 +112,13 @@ export const toWorkflow = (
                 },
             };
         } else if (rule.type === 'temporal range') {
-            const range = [new Date(rule.value[0]).getTime(), new Date(rule.value[1]).getTime()] as const;
             return {
                 fid,
                 rule: {
                     type: 'temporal range',
-                    value: range,
+                    value: rule.value,
+                    offset: rule.offset,
+                    format: rule.format,
                 },
             };
         } else if (rule.type === 'not in') {

@@ -9,7 +9,8 @@ import initWasm, { parser_dsl_with_table } from '@kanaries-temp/gw-dsl-parser';
 import dslWasm from '@kanaries-temp/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
 import { IDataSourceProvider, IMutField, IDataSourceListener, exportFullRaw, fromFields } from '@kanaries/graphic-walker';
-import { MapRow } from 'apache-arrow';
+import { Table } from 'apache-arrow';
+import { bigNumToString } from 'apache-arrow/util/bn';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
     mvp: {
@@ -44,6 +45,19 @@ export async function init() {
     URL.revokeObjectURL(worker_url);
     await initWasm(dslWasm);
 }
+
+const transformData = (table: Table) => {
+    return table
+        .toArray()
+        .map((r) =>
+            Object.fromEntries(
+                Object.entries(r.toJSON()).map(([k, v]) => [
+                    k,
+                    typeof v === 'object' ? parseInt(bigNumToString(v as any)) : typeof v === 'bigint' ? Number(v) : v,
+                ])
+            )
+        );
+};
 
 export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     await init();
@@ -94,11 +108,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }
-            const res = await conn
-                .query(sql)
-                .then((x) =>
-                    x.toArray().map((r: MapRow) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v])))
-                );
+            const res = await conn.query(sql).then(transformData);
             return res;
         },
         registerCallback(cb) {
@@ -132,11 +142,7 @@ export async function getComputation(data: Record<string, number>[]) {
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }
-            const res = await conn
-                .query(sql)
-                .then((x) =>
-                    x.toArray().map((r) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v])))
-                );
+            const res = await conn.query(sql).then(transformData);
             return res;
         },
     };

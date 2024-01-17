@@ -88,13 +88,8 @@ export const dataReadRaw = async (
 };
 
 export const dataQuery = async (service: IComputationFunction, workflow: IDataQueryWorkflowStep[], limit?: number): Promise<IRow[]> => {
-    const viewWorkflow = workflow.find(x => x.type === 'view') as IViewWorkflowStep | undefined;
-    if (
-        viewWorkflow &&
-        viewWorkflow.query.length === 1 &&
-        viewWorkflow.query[0].op === 'raw' &&
-        viewWorkflow.query[0].fields.length === 0
-    ) {
+    const viewWorkflow = workflow.find((x) => x.type === 'view') as IViewWorkflowStep | undefined;
+    if (viewWorkflow && viewWorkflow.query.length === 1 && viewWorkflow.query[0].op === 'raw' && viewWorkflow.query[0].fields.length === 0) {
         return [];
     }
     const res = await service({
@@ -411,12 +406,14 @@ export async function getTemporalRange(service: IComputationFunction, field: str
                                 agg: 'min',
                                 asFieldKey: MIN_ID,
                                 format,
+                                offset: offset ?? defaultOffset,
                             },
                             {
                                 field,
                                 agg: 'max',
                                 asFieldKey: MAX_ID,
                                 format,
+                                offset: offset ?? defaultOffset,
                             },
                         ],
                     },
