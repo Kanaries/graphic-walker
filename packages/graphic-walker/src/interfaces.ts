@@ -188,7 +188,7 @@ export interface IField {
      */
     name: string;
     /**
-     * aggregator's name
+     * aggregator's name, "expr" represents for aggergated computed field.
      */
     aggName?: string;
     semanticType: ISemanticType;
