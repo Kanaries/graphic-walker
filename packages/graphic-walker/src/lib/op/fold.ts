@@ -44,12 +44,13 @@ export function fold2(
         const foldedFields = (folds ?? [])
             .map((x) => allFields.find((y) => y.fid === x)!)
             .filter(Boolean)
+            .filter(x => defaultAggregated || x.aggName !== 'expr')
             .map((x) => {
                 if (defaultAggregated) {
                     const fieldWithReplacedAgg = replaceAggForFold(x, meaVal.aggName);
                     return {
                         name: getMeaAggName(fieldWithReplacedAgg.name, fieldWithReplacedAgg.aggName),
-                        fid: getMeaAggKey(fieldWithReplacedAgg.name, fieldWithReplacedAgg.aggName),
+                        fid: getMeaAggKey(fieldWithReplacedAgg.fid, fieldWithReplacedAgg.aggName),
                     };
                 }
                 return { name: x.name, fid: x.fid };
