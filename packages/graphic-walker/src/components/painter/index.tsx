@@ -164,7 +164,7 @@ const PainterContent = (props: {
             const xQuan = props.domainX.domain.type === 'quantitative';
             const yQuan = props.domainY.domain.type === 'quantitative';
             const fallbackMark = xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square';
-            const mark =  props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark;
+            const mark = props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
             const spec: any = {
                 data: {
@@ -574,13 +574,15 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     usedColor: [...new Set(mapRef.current).values()].map((x) => x || 1),
                 },
             ];
+            // all colors in map
+            const defaultUsedColor = Object.keys(dict)
+                .map((x) => parseInt(x))
+                .concat(ERASER);
             vizStore.updatePaint(
                 {
                     dict,
                     facets: newFacets,
-                    usedColor: Array.from(
-                        newFacets.reduce((s, { usedColor }) => ((usedColor ?? [1, 2, 3, 4, 5, 6, 7, 8, 255]).forEach((x) => s.add(x)), s), new Set<number>())
-                    ),
+                    usedColor: Array.from(new Set(newFacets.flatMap((f) => f.usedColor ?? defaultUsedColor))),
                 },
                 t('constant.paint_key')
             );
