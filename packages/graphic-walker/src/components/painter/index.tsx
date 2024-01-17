@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
-import { calcIndexsV2, compressMap, createMap, decompressMap, indexesFrom } from '../../lib/paint';
+import { calcIndexesByDimensions, calcPaintMapV2, compressBitMap, createBitMapForMap, decompressBitMap, getCircleIndexes } from '../../lib/paint';
 import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
-import { IDarkMode, IPaintDimension, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
+import { IDarkMode, IField, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
 import embed from 'vega-embed';
 import Modal from '../modal';
 import { PAINT_FIELD_ID } from '../../constants';
@@ -20,6 +20,7 @@ import { GLOBAL_CONFIG } from '../../config';
 import { GWGlobalConfig, builtInThemes } from '../../vis/theme';
 import { useCurrentMediaTheme } from '../../utils/media';
 import { unstable_batchedUpdates } from 'react-dom';
+import { autoMark } from '../../vis/spec/mark';
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -38,6 +39,27 @@ const scheme = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b'
 const defaultScheme = Object.fromEntries(scheme.map((color, i) => [i + 1, { name: `L_${i + 1}`, color }]));
 
 const emptyField = [];
+
+function useAsyncMemo<T>(factory: () => Promise<T> | undefined | null, deps: DependencyList, initial?: T) {
+    const [val, setVal] = useState<T | undefined>(initial);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        let cancel = false;
+        setLoading(true);
+        const promise = factory();
+        if (promise === undefined || promise === null) return;
+        promise.then((val) => {
+            if (!cancel) {
+                setLoading(false);
+                setVal(val);
+            }
+        });
+        return () => {
+            cancel = true;
+        };
+    }, deps);
+    return [val, loading];
+}
 
 function selectInteractive(scene: { root: Scene }) {
     const selected: (Scene | SceneGroup)[] = [];
@@ -63,16 +85,32 @@ function selectInteractive(scene: { root: Scene }) {
 const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
+function getMarkFor(types: ISemanticType[]) {
+    if (types.every((x) => x === 'quantitative')) {
+        return 'circle';
+    }
+    if (types.find((x) => x === 'quantitative')) {
+        return 'tick';
+    }
+    return 'square';
+}
+
+// TODO: add text: fetch the text channel to show
+const markWhitelist = ['point', 'circle', 'tick'];
+
 const PainterContent = (props: {
+    mark: string;
     x: IViewField;
     y: IViewField;
     domainX: IPaintDimension;
     domainY: IPaintDimension;
     dict: typeof defaultScheme;
+    facets: IPaintMapFacet[];
     vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
-    mapRef: React.MutableRefObject<Uint8Array | undefined>;
+    paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
     allFields: IViewField[];
+    onReset: () => void;
     onDelete: () => void;
     onCancel: () => void;
     onSave: () => void;
@@ -99,7 +137,7 @@ const PainterContent = (props: {
     const [brushId, setBrushId] = useState(2);
     brushIdRef.current = brushId;
     const containerRef = useRef<HTMLDivElement>(null);
-    const { loading, viewData } = useRenderer({
+    const { loading: loadingData, viewData } = useRenderer({
         computationFunction: computation,
         defaultAggregated: false,
         filters: emptyField,
@@ -109,35 +147,36 @@ const PainterContent = (props: {
         viewDimensions: emptyField,
         viewMeasures: fields,
     });
-    const indexes = useMemo(() => {
-        const mapper = calcIndexsV2([props.domainY, props.domainX]);
-        return viewData.map(mapper);
-    }, [viewData, props.domainX, props.domainY]);
-    const data = useMemo(() => {
+    const indexes = useMemo(() => viewData.map(calcIndexesByDimensions([props.domainY, props.domainX])), [viewData, props.domainX, props.domainY]);
+    const [data, loadingResult] = useAsyncMemo(async () => {
+        const facetResult = await calcPaintMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
         return viewData.map((x, i) => {
+            const pid = props.paintMapRef.current![indexes[i]];
             return {
                 ...x,
-                [PAINT_FIELD_ID]: props.dict[props.mapRef.current![indexes[i]] || 1]?.name,
+                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] : props.dict[pid]?.name,
                 [PIXEL_INDEX]: indexes[i],
             };
         });
-    }, [indexes, viewData, props.dict]);
+    }, [indexes, viewData, props.dict, props.facets]);
 
     const [pixelOffset, setPixelOffset] = useState([0, 0]);
 
     const resetRef = useRef(() => {});
 
+    const loading = loadingData || loadingResult;
+
     useEffect(() => {
         if (!loading && containerRef.current) {
-            const xQuan = props.domainX.domain.type === 'quantitative';
-            const yQuan = props.domainY.domain.type === 'quantitative';
+            const fallbackMark = getMarkFor([props.domainY.domain.type, props.domainX.domain.type]);
+            const mark = props.mark === 'auto' ? autoMark([props.x.semanticType, props.y.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
             const spec: any = {
                 data: {
                     name: 'data',
                     values: data,
                 },
-                mark: { type: xQuan && yQuan ? 'circle' : xQuan || yQuan ? 'tick' : 'square', opacity: 0.66 },
+                mark: { type: markWhitelist.includes(mark) ? mark : fallbackMark, opacity: 0.66 },
                 encoding: {
                     x: {
                         field: props.x.fid,
@@ -186,12 +225,14 @@ const PainterContent = (props: {
                 //@ts-ignore
                 const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
                 resetRef.current = () => {
-                    props.mapRef.current! = createMap([props.domainY, props.domainX]);
+                    props.onReset();
+                    props.paintMapRef.current! = createBitMapForMap([props.domainY, props.domainX]);
                     const { name, color } = props.dict[1];
                     interactive.forEach((item) =>
                         sceneVisit(item, (item) => {
                             if ('datum' in item) {
-                                item['fill'] = color;
+                                item['fill'] && item['fill'] !== 'transparent' && (item['fill'] = color);
+                                item['stroke'] && item['stroke'] !== 'transparent' && (item['stroke'] = color);
                                 item.datum![PAINT_FIELD_ID] = name;
                             }
                         })
@@ -210,7 +251,7 @@ const PainterContent = (props: {
                                   }
                                 : props.dict[brushIdRef.current];
                         if (!targetColor) return;
-                        const pts = indexesFrom(
+                        const pts = getCircleIndexes(
                             [Math.floor(x / getFactor(props.domainX)), props.domainY.domain.width - 1 - Math.floor(y / getFactor(props.domainY))],
                             brushSizeRef.current,
                             [props.domainY, props.domainX]
@@ -218,11 +259,12 @@ const PainterContent = (props: {
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
-                                item['fill'] = targetColor.color;
+                                item['fill'] && item['fill'] !== 'transparent' && (item['fill'] = targetColor.color);
+                                item['stroke'] && item['stroke'] !== 'transparent' && (item['stroke'] = targetColor.color);
                                 item.datum![PAINT_FIELD_ID] = targetColor.name;
                                 i++;
                             });
-                            props.mapRef.current![x] = brushIdRef.current;
+                            props.paintMapRef.current![x] = brushIdRef.current;
                         });
                         i > 0 && rerender();
                     };
@@ -242,7 +284,7 @@ const PainterContent = (props: {
                 res.view.addEventListener('touchmove', handleDraw);
             });
         }
-    }, [loading, data, props.dict, props.vegaConfig, props.domainX, props.domainY]);
+    }, [loading, data, props.dict, props.vegaConfig, props.domainX, props.domainY, props.onReset, props.mark]);
 
     const [showCursorPreview, setShowCursorPreview] = React.useState(false);
 
@@ -387,104 +429,170 @@ const PainterContent = (props: {
     );
 };
 
+function isZeroscaled([min, max]: [number, number]) {
+    return (min < 0 && max > 0) || min === 0 || max === 0;
+}
+
+function isDomainZeroscaledAs(domain: IPaintDimension['domain'] | undefined, exceptedZeroscale: boolean) {
+    if (!domain) return false;
+    if (domain.type === 'nominal') return true;
+    return isZeroscaled(domain.value) === exceptedZeroscale;
+}
+
+function toZeroscaled([min, max]: [number, number]): [number, number] {
+    if (min > 0) {
+        return [0, max];
+    }
+    if (max < 0) {
+        return [min, 0];
+    }
+    return [min, max];
+}
+
 const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
-    const { showPainterPanel, allFields } = vizStore;
+    const { showPainterPanel, allFields, layout, config } = vizStore;
+    const { geoms } = config;
+    const { zeroScale } = layout;
     const { t } = useTranslation();
     const compuation = useCompututaion();
 
     const [loading, setLoading] = useState(true);
-    const mapRef = useRef<Uint8Array>();
+    const paintMapRef = useRef<Uint8Array>();
     const [dict, setDict] = useState(defaultScheme);
     const [fieldX, setX] = useState<IViewField>();
     const [fieldY, setY] = useState<IViewField>();
     const [domainX, setDomainX] = useState<IPaintDimension>();
     const [domainY, setDomainY] = useState<IPaintDimension>();
+    const [facets, setFacets] = useState<IPaintMapFacet[]>([]);
 
     useEffect(() => {
         if (showPainterPanel) {
             setLoading(true);
             (async () => {
                 const { paintInfo, allFields } = vizStore;
+                const getNewMap = async (paintInfo: { x: IViewField; y: IViewField }) => {
+                    const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
+                        if (f.semanticType === 'quantitative') {
+                            const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);
+                            return {
+                                domain: {
+                                    type: 'quantitative',
+                                    value: zeroScale ? toZeroscaled(res.range) : res.range,
+                                    width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
+                                },
+                                fid: f.fid,
+                            };
+                        } else {
+                            const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
+                            const value = res.values.map((x) => x.value);
+                            return {
+                                domain: {
+                                    type: 'nominal',
+                                    value,
+                                    width: value.length,
+                                },
+                                fid: f.fid,
+                            };
+                        }
+                    };
+                    const [domainX, domainY] = await Promise.all([getDomain(paintInfo.x), getDomain(paintInfo.y)]);
+                    return {
+                        x: paintInfo.x,
+                        y: paintInfo.y,
+                        domainX,
+                        domainY,
+                        map: createBitMapForMap([domainY, domainX]),
+                    };
+                };
                 if (paintInfo) {
                     if (paintInfo.type === 'exist') {
-                        mapRef.current = await decompressMap(paintInfo.item.facets[0].map);
-                        const x = paintInfo.item.facets[0].dimensions.at(-1)?.fid;
-                        const y = paintInfo.item.facets[0].dimensions.at(-2)?.fid;
-                        const xf = allFields.find((a) => a.fid === x);
-                        const yf = allFields.find((a) => a.fid === y);
-                        unstable_batchedUpdates(() => {
-                            setDict(paintInfo.item.dict);
-                            setDomainX(paintInfo.item.facets[0].dimensions.at(-1));
-                            setDomainY(paintInfo.item.facets[0].dimensions.at(-2));
-                            setX(xf);
-                            setY(yf);
-                            setLoading(false);
-                        });
-                    } else if (paintInfo.type === 'new') {
-                        const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
-                            if (f.semanticType === 'quantitative') {
-                                const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);
-                                return {
-                                    domain: {
-                                        type: 'quantitative',
-                                        value: res.range,
-                                        width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
-                                    },
-                                    fid: f.fid,
-                                };
-                            } else {
-                                const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
-                                const value = res.values.map((x) => x.value);
-                                return {
-                                    domain: {
-                                        type: 'nominal',
-                                        value,
-                                        width: value.length,
-                                    },
-                                    fid: f.fid,
-                                };
+                        const lastFacet = paintInfo.item.facets.at(-1)!;
+                        if (
+                            paintInfo.new.type === 'new' &&
+                            (lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
+                                lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
+                                !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
+                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale))
+                        ) {
+                            const { domainX, domainY, map } = await getNewMap(paintInfo.new);
+                            // adapter for old single facet
+                            if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
+                                paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
                             }
-                        };
-                        let xs: Promise<IPaintDimension>;
-                        let ys: Promise<IPaintDimension>;
-                        xs = getDomain(paintInfo.x);
-                        ys = getDomain(paintInfo.y);
-                        const domainX = await xs;
-                        const domainY = await ys;
-                        mapRef.current = createMap([domainY, domainX]);
+                            paintMapRef.current = map;
+                            unstable_batchedUpdates(() => {
+                                setDict(paintInfo.item.dict);
+                                setDomainX(domainX);
+                                setDomainY(domainY);
+                                setFacets(paintInfo.item.facets);
+                                setX(paintInfo.new.x);
+                                setY(paintInfo.new.y);
+                                setLoading(false);
+                            });
+                        } else {
+                            paintMapRef.current = await decompressBitMap(lastFacet.map);
+                            const x = lastFacet.dimensions.at(-1)?.fid;
+                            const y = lastFacet.dimensions.at(-2)?.fid;
+                            const xf = allFields.find((a) => a.fid === x);
+                            const yf = allFields.find((a) => a.fid === y);
+                            unstable_batchedUpdates(() => {
+                                setDict(paintInfo.item.dict);
+                                setDomainX(lastFacet.dimensions.at(-1));
+                                setDomainY(lastFacet.dimensions.at(-2));
+                                setFacets(paintInfo.item.facets.slice(0, -1));
+                                setX(xf);
+                                setY(yf);
+                                setLoading(false);
+                            });
+                        }
+                    } else if (paintInfo.type === 'new') {
+                        const { domainX, domainY, map } = await getNewMap(paintInfo);
+                        paintMapRef.current = map;
                         unstable_batchedUpdates(() => {
                             setDict(defaultScheme);
                             setDomainX(domainX);
                             setDomainY(domainY);
                             setX(paintInfo.x);
                             setY(paintInfo.y);
+                            setFacets([]);
                             setLoading(false);
                         });
                     }
                 }
             })();
         }
-    }, [showPainterPanel, vizStore, compuation]);
+    }, [showPainterPanel, vizStore, compuation, zeroScale]);
 
     const saveMap = async () => {
-        if (domainX && domainY && mapRef.current) {
+        if (domainX && domainY && paintMapRef.current) {
+            const newFacets = [
+                ...facets,
+                {
+                    map: await compressBitMap(paintMapRef.current),
+                    dimensions: [domainY, domainX],
+                    usedColor: Array.from(new Set(paintMapRef.current)).map((x) => x || 1),
+                },
+            ];
+            // all colors in map
+            const defaultUsedColor = Object.keys(dict)
+                .map((x) => parseInt(x))
+                .concat(ERASER);
             vizStore.updatePaint(
                 {
                     dict,
-                    usedColor: [...new Set(mapRef.current).values()].map(x => x || 1),
-                    facets: [
-                        {
-                            map: await compressMap(mapRef.current),
-                            dimensions: [domainY, domainX],
-                        },
-                    ],
+                    facets: newFacets,
+                    usedColor: Array.from(new Set(newFacets.flatMap((f) => f.usedColor ?? defaultUsedColor))),
                 },
                 t('constant.paint_key')
             );
         }
         vizStore.setShowPainter(false);
     };
+
+    const onReset = useCallback(() => {
+        setFacets([]);
+    }, []);
 
     const mediaTheme = useCurrentMediaTheme(dark);
 
@@ -508,6 +616,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                 <LoadingLayer />
             ) : (
                 <PainterContent
+                    mark={geoms[0]}
                     vegaConfig={vegaConfig}
                     onSave={saveMap}
                     onDelete={() => {
@@ -519,12 +628,14 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     }}
                     x={fieldX!}
                     y={fieldY!}
+                    facets={facets}
                     allFields={allFields}
                     domainX={domainX!}
                     domainY={domainY!}
                     dict={dict}
                     onChangeDict={setDict}
-                    mapRef={mapRef}
+                    paintMapRef={paintMapRef}
+                    onReset={onReset}
                 />
             )}
         </Modal>

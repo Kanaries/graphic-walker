@@ -1,7 +1,7 @@
 import { IExpParameter, IExpression, IPaintMap, IPaintMapV2, IRow } from '../interfaces';
 import dateTimeDrill from './op/dateTimeDrill';
 import dateTimeFeature from './op/dateTimeFeature';
-import { calcMap, calcMapV2 } from './paint';
+import { calcPaintMap, calcPaintMapV2 } from './paint';
 import { expr } from './sql';
 
 export interface IDataFrame {
@@ -147,13 +147,13 @@ async function paint(resKey: string, params: IExpParameter[], data: IDataFrame):
         const map: IPaintMap = oldParam.value;
         return {
             ...data,
-            [resKey]: await calcMap(data[map.x], data[map.y], map),
+            [resKey]: await calcPaintMap(data[map.x], data[map.y], map),
         };
     }
     const map: IPaintMapV2 = param.value;
     return {
         ...data,
-        [resKey]: await calcMapV2(dataframe2Dataset(data), map),
+        [resKey]: await calcPaintMapV2(dataframe2Dataset(data), map),
     };
 }
 

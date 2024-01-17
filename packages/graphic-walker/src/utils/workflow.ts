@@ -371,7 +371,7 @@ export const processExpression = (exp: IExpression, allFields: IMutField[]): IEx
                         '255': { name: '' },
                     };
                     return {
-                        type: 'map',
+                        type: 'map' as const,
                         value: {
                             x: x.value.x,
                             y: x.value.y,
@@ -397,7 +397,7 @@ export const processExpression = (exp: IExpression, allFields: IMutField[]): IEx
                     return {
                         type: 'newmap',
                         value: {
-                            facets: x.value.facets,
+                            facets: x.value.facets.map(({ dimensions, map }) => ({ dimensions, map })),
                             dict: Object.fromEntries(
                                 x.value.usedColor.map((i) => [
                                     i,
