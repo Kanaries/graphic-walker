@@ -51,7 +51,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
-    const { geoms, defaultAggregated, coordSystem } = visualConfig;
+    const { geoms, defaultAggregated, coordSystem, timezoneDisplayOffset } = visualConfig;
     const {
         interactiveScale,
 
@@ -234,6 +234,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     dark={dark}
                     scale={scale}
                     onReportSpec={onReportSpec}
+                    displayOffset={timezoneDisplayOffset}
                 />
             )}
         </Resizable>

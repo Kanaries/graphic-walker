@@ -15,7 +15,7 @@ import type {
     IPaintMapV2,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
-import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
+import { getFilterMeaAggKey, getMeaAggKey, getSort, isNotEmpty } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { decodeVisSpec } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
@@ -74,7 +74,8 @@ export const toWorkflow = (
     defaultAggregated: VizSpecStore['config']['defaultAggregated'],
     sort: 'none' | 'ascending' | 'descending',
     folds = [] as string[],
-    limit?: number
+    limit?: number,
+    timezoneDisplayOffset?: number
 ): IDataQueryWorkflowStep[] => {
     const hasFold = viewDimensionsRaw.find((x) => x.fid === MEA_KEY_ID) && viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID);
     const viewDimensions = viewDimensionsRaw.filter((x) => x.fid !== MEA_KEY_ID);
@@ -164,7 +165,7 @@ export const toWorkflow = (
             .map((f) => {
                 return {
                     key: f.fid,
-                    expression: processExpression(f.expression!, allFields),
+                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
                 };
             }),
         [...viewKeys]
@@ -196,7 +197,7 @@ export const toWorkflow = (
             .map((f) => {
                 return {
                     key: f.fid,
-                    expression: processExpression(f.expression!, allFields),
+                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
                 };
             }),
         [...viewKeys]
@@ -244,7 +245,7 @@ export const toWorkflow = (
             query: [
                 {
                     op: 'raw',
-                    fields: [...new Set([...viewDimensions, ...viewMeasures])].filter(f => f.aggName !== 'expr').map((f) => f.fid),
+                    fields: [...new Set([...viewDimensions, ...viewMeasures])].filter((f) => f.aggName !== 'expr').map((f) => f.fid),
                 },
             ],
         };
@@ -344,13 +345,14 @@ export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
             c.config?.defaultAggregated ?? true,
             getSort({ rows, columns }),
             c.config?.folds ?? [],
-            limit
+            limit,
+            c.config?.timezoneDisplayOffset
         ),
         limit: limit > 0 ? limit : undefined,
     };
 }
 
-export const processExpression = (exp: IExpression, allFields: IMutField[]): IExpression => {
+export const processExpression = (exp: IExpression, allFields: IMutField[], config: { timezoneDisplayOffset?: number }): IExpression => {
     if (exp?.op === 'expr') {
         return {
             ...exp,
@@ -358,6 +360,18 @@ export const processExpression = (exp: IExpression, allFields: IMutField[]): IEx
                 {
                     type: 'sql',
                     value: replaceFid(exp.params.find((x) => x.type === 'sql')!.value, allFields).trim(),
+                },
+            ],
+        };
+    }
+    if (isNotEmpty(config.timezoneDisplayOffset) && (exp.op === 'dateTimeDrill' || exp.op === 'dateTimeFeature')) {
+        return {
+            ...exp,
+            params: [
+                ...exp.params,
+                {
+                    type: 'displayOffset',
+                    value: config.timezoneDisplayOffset,
                 },
             ],
         };

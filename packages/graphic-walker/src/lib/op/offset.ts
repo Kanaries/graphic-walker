@@ -60,3 +60,7 @@ export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
     }
     return creator;
 }
+// TODO remove
+try {
+    window['newOffsetDate'] = newOffsetDate;
+}catch{}

@@ -169,6 +169,10 @@ export type IExpParameter =
     | {
           type: 'newmap';
           value: IPaintMapV2;
+      }
+    | {
+          type: 'displayOffset';
+          value: number;
       };
 
 export interface IExpression {
@@ -427,6 +431,7 @@ export interface IVisualConfigNew {
     coordSystem?: ICoordMode;
     limit: number;
     folds?: string[];
+    timezoneDisplayOffset?: number;
 }
 
 export interface IGeoUrl {
@@ -914,7 +919,7 @@ export interface IComputationContextProps {
     computationTimeout?: number;
 }
 
-export type IComputationProps = XOR<IRemoteComputationProps,ILocalComputationProps>;
+export type IComputationProps = XOR<IRemoteComputationProps, ILocalComputationProps>;
 
 export type IGWProps = IAppI18nProps &
     IVizProps &
@@ -931,6 +936,7 @@ export interface ISpecProps {
 
 export interface ITableSpecProps {
     pageSize?: number;
+    displayOffset?: number;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}

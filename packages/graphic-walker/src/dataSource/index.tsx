@@ -96,6 +96,7 @@ function once<T extends (...args: any[]) => any>(register: (x: T) => () => void,
 
 export function DataSourceSegmentComponent(props: {
     provider: IDataSourceProvider;
+    displayOffset?: number;
     children: (props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
@@ -170,7 +171,11 @@ export function DataSourceSegmentComponent(props: {
         [props.provider, selectedId]
     );
 
-    const commonStore = useMemo(() => new CommonStore(props.provider, setSelectedId), [props.provider]);
+    const commonStore = useMemo(() => new CommonStore(props.provider, setSelectedId, { displayOffset: props.displayOffset }), [props.provider]);
+
+    useEffect(() => {
+        commonStore.setDisplayOffset(props.displayOffset);
+    }, [props.displayOffset, commonStore]);
 
     const onLoad = useMemo(() => {
         const importFile = props.provider.onImportFile;

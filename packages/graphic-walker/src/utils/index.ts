@@ -356,3 +356,7 @@ export const formatDate = (date: Date) => {
     const pad = (x: number) => `${x}`.padStart(2, '0');
     return `${Y}-${pad(M)}-${pad(D)} ${pad(H)}:${pad(m)}:${pad(s)}`;
 };
+
+export const isNotEmpty = <T>(x: T | undefined | null): x is T => {
+    return x !== undefined && x !== null;
+};

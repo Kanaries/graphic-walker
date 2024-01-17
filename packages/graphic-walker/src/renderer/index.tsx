@@ -66,6 +66,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         limit: limit,
         folds: visualConfig.folds,
         computationFunction,
+        timezoneDisplayOffset: visualConfig.timezoneDisplayOffset,
     });
 
     useEffect(() => {

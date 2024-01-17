@@ -60,7 +60,9 @@ const Pill = styled.div`
 const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { provided, fIndex } = props;
     const vizStore = useVizStore();
-    const { viewFilters } = vizStore;
+    const { viewFilters, config } = vizStore;
+
+    const { timezoneDisplayOffset } = config;
 
     const field = viewFilters[fIndex];
 
@@ -79,17 +81,19 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
             >
                 {field.rule ? (
                     <span className="flex-1">
-                        {field.rule.type === 'one of'
-                            ? `oneOf: [${[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]`
-                            : field.rule.type === 'range'
-                            ? `range: [${field.rule.value[0]}, ${field.rule.value[1]}]`
-                            : field.rule.type === 'temporal range'
-                            ? `range: [${formatDate(newOffsetDate(field.rule.offset)(field.rule.value[0]))}, ${formatDate(
-                                  newOffsetDate(field.rule.offset)(field.rule.value[1])
-                              )}]`
-                            : field.rule.type === 'not in'
-                            ? `notIn: [${[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]`
-                            : null}
+                        {field.rule.type === 'one of' && <>oneOf: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'range' && (
+                            <>
+                                range: [{field.rule.value[0]}, {field.rule.value[1]}]
+                            </>
+                        )}
+                        {field.rule.type === 'not in' && <>notIn: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'temporal range' && (
+                            <>
+                                range: [{formatDate(newOffsetDate(timezoneDisplayOffset)(newOffsetDate(field.rule.offset)(field.rule.value[0])))},{' '}
+                                {formatDate(newOffsetDate(timezoneDisplayOffset)(newOffsetDate(field.rule.offset)(field.rule.value[1])))}]
+                            </>
+                        )}
                     </span>
                 ) : (
                     <span className="text-gray-600 flex-1">{t('empty_rule')}</span>

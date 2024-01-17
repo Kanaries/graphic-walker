@@ -23,7 +23,8 @@
         "formatGuidesDocs": "格式指南",
         "readHere": "阅读此处",
         "svg": "使用SVG",
-        "customTile": "使用自定义的地图区块"
+        "customTile": "使用自定义的地图区块",
+        "customOffset": "使用自定义的时区"
     },
     "constant": {
         "row_count": "行数",

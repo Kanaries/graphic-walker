@@ -6,7 +6,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { IFilterField, IFilterRule, IFieldStats, IMutField, IComputationFunction } from '../../interfaces';
 import { useCompututaion } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
-import { fieldStat, getTemporalRange } from '../../computation';
+import { fieldStat, getTemporalRange, withComputedField } from '../../computation';
 import Slider from './slider';
 import { getFilterMeaAggKey, formatDate } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -16,6 +16,7 @@ export type RuleFormProps = {
     rawFields: IMutField[];
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
+    displayOffset?: number;
 };
 
 const Container = styled.div`
@@ -143,12 +144,12 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
 
 const useFieldStats = (
     field: IFilterField,
-    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number> },
+    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number>; displayOffset: number | undefined },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction,
     allFields: IMutField[]
 ): IFieldStats | null => {
-    const { values, range, valuesMeta, selectedCount } = attributes;
+    const { values, range, valuesMeta, selectedCount, displayOffset } = attributes;
     const { fid } = field;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
@@ -158,7 +159,7 @@ const useFieldStats = (
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount }, allFields)
+        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount, timezoneDisplayOffset: displayOffset }, allFields)
             .then((stats) => {
                 if (isCancelled) {
                     return;
@@ -212,14 +213,21 @@ const useVisualCount = (
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction,
     onChange: (rule: IFilterRule) => void,
-    allFields: IMutField[]
+    allFields: IMutField[],
+    displayOffset: number | undefined
 ) => {
     // fetch metaData of filter field, only fetch once per fid.
     const initRuleValue = useMemo(
         () => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : new Set<string | number>()),
         [field.fid, computation]
     );
-    const metaData = useFieldStats(field, { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true }, 'none', computation, allFields);
+    const metaData = useFieldStats(
+        field,
+        { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true, displayOffset },
+        'none',
+        computation,
+        allFields
+    );
     // sum of count of rule.
     const [selectedValueSum, setSelectedValueSum] = useState(0);
     useEffect(() => {
@@ -257,6 +265,7 @@ const useVisualCount = (
                             sortBy,
                             valuesLimit: PAGE_SIZE,
                             valuesOffset: PAGE_SIZE * page,
+                            timezoneDisplayOffset: displayOffset,
                         },
                         allFields
                     );
@@ -354,7 +363,7 @@ const Effecter = (props: { effect: () => void; effectId: any }) => {
     return null;
 };
 
-export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields }) => {
+export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields, displayOffset }) => {
     interface SortConfig {
         key: 'value' | 'count';
         ascending: boolean;
@@ -378,7 +387,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
     }, [active, onChange, field]);
 
     const { currentCount, currentSum, data, distinctTotal, handleSelect, handleToggleFullOrEmptySet, handleToggleReverseSet, loadData, loading } =
-        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields);
+        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields, displayOffset);
 
     const parentRef = React.useRef<HTMLDivElement>(null);
 
@@ -484,7 +493,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         const id = `rule_checkbox_${idx}`;
                         const checked =
                             (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
-                        const displayValue = field.semanticType === 'temporal' ? formatDate(newOffsetDate(field.offset)(value)) : `${value}`;
+                        const displayValue =
+                            field.semanticType === 'temporal' ? formatDate(newOffsetDate(displayOffset)(newOffsetDate(field.offset)(value))) : `${value}`;
                         return (
                             <TableRow
                                 key={idx}
@@ -531,20 +541,20 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
 interface CalendarInputProps {
     min: number;
     max: number;
-    offset?: number;
+    displayOffset?: number;
     value: number;
     onChange: (value: number) => void;
 }
 
 export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
-    const { min, max, value, onChange, offset } = props;
+    const { min, max, value, onChange, displayOffset } = props;
     const dateStringFormatter = (timestamp: number) => {
-        const date = newOffsetDate(offset)(timestamp);
+        const date = newOffsetDate(displayOffset)(timestamp);
         if (Number.isNaN(date.getTime())) return '';
         return formatDate(date);
     };
     const handleSubmitDate = (value: string) => {
-        const timestamp = newOffsetDate(offset)(value).getTime();
+        const timestamp = newOffsetDate(displayOffset)(value).getTime();
         if (timestamp <= max && timestamp >= min) {
             onChange(timestamp);
         }
@@ -561,7 +571,7 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     );
 };
 
-export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange }) => {
+export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, rawFields, onChange, displayOffset }) => {
     const { t } = useTranslation('translation');
 
     const computationFunction = useCompututaion();
@@ -569,7 +579,9 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        getTemporalRange(computationFunction, field.fid, field.offset).then(([min, max, format]) => setRes([min, max, format, true]));
+        withComputedField(field, rawFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
+            getTemporalRange(service, field.fid, field.offset)
+        ).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 
     const [min, max, format, loaded] = res;
@@ -615,7 +627,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     <CalendarInput
-                        offset={field.rule.offset}
+                        displayOffset={displayOffset}
                         min={min}
                         max={field.rule.value[1]}
                         value={field.rule.value[0]}
@@ -625,7 +637,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     <CalendarInput
-                        offset={field.rule.offset}
+                        displayOffset={displayOffset}
                         min={field.rule.value[0]}
                         max={max}
                         value={field.rule.value[1]}
@@ -637,11 +649,11 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     ) : null;
 };
 
-export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields }) => {
+export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields, displayOffset }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
     const computation = useCompututaion();
 
-    const stats = useFieldStats(field, { values: false, range: true, valuesMeta: false }, 'none', computation, rawFields);
+    const stats = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, rawFields);
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -710,7 +722,7 @@ const getType = (type?: 'range' | 'temporal range' | 'one of' | 'not in') => {
     return type;
 };
 
-const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs }) => {
+const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs, displayOffset }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
     const [which, setWhich] = React.useState(getType(field.rule?.type) ?? tabs[0]!);
@@ -757,7 +769,7 @@ const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs }) => {
                             hidden={which !== tab}
                             tabIndex={0}
                         >
-                            <Component field={field} onChange={onChange} active={which === tab} rawFields={rawFields} />
+                            <Component displayOffset={displayOffset} field={field} onChange={onChange} active={which === tab} rawFields={rawFields} />
                         </TabItem>
                     );
                 })}

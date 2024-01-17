@@ -22,7 +22,7 @@ import {
     IPaintMapV2,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
-import { createCountField, createVirtualFields } from '../utils';
+import { createCountField, createVirtualFields, isNotEmpty } from '../utils';
 import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
@@ -247,7 +247,7 @@ const actions: {
                               } as const,
                           ]
                         : []),
-                    ...(offset !== undefined
+                    ...(isNotEmpty(offset)
                         ? [
                               {
                                   type: 'offset',
@@ -290,7 +290,7 @@ const actions: {
                               } as const,
                           ]
                         : []),
-                    ...(offset !== undefined
+                    ...(isNotEmpty(offset)
                         ? [
                               {
                                   type: 'offset',

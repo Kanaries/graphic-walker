@@ -154,8 +154,19 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
             if (!vizStore) return Promise.resolve([]);
-            const { viewFilters, allFields, viewMeasures, sort, limit } = vizStore;
-            const workflow = toWorkflow(viewFilters, allFields, dimComb, viewMeasures, defaultAggregated, sort, folds ?? [], limit > 0 ? limit : undefined);
+            const { viewFilters, allFields, viewMeasures, sort, limit, config } = vizStore;
+            const { timezoneDisplayOffset } = config;
+            const workflow = toWorkflow(
+                viewFilters,
+                allFields,
+                dimComb,
+                viewMeasures,
+                defaultAggregated,
+                sort,
+                folds ?? [],
+                limit > 0 ? limit : undefined,
+                timezoneDisplayOffset
+            );
             return dataQuery(computation, workflow, limit > 0 ? limit : undefined)
                 .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, dimComb, folds))
                 .catch((err) => {

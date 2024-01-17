@@ -2,9 +2,10 @@ import { IChannelScales, IField, IFieldInfos, IRow, ISemanticType, IStackMode, I
 import { autoMark } from './mark';
 import { NULL_FIELD } from './field';
 import { channelAggregate } from './aggregate';
-import { IEncodeProps, channelEncode } from './encode';
+import { IEncodeProps, channelEncode, encodeFid } from './encode';
 import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
+import { isNotEmpty } from '../../utils';
 
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
@@ -31,6 +32,7 @@ export function getSingleView(props: SingleViewProps) {
         stack,
         geomType,
         hideLegend = false,
+        displayOffset,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
@@ -46,6 +48,18 @@ export function getSingleView(props: SingleViewProps) {
         if (y !== NULL_FIELD) types.push(y.semanticType); //types.push(getFieldType(yField));
         markType = autoMark(types);
     }
+
+    const transform = isNotEmpty(displayOffset)
+        ? fields
+              .filter((f) => f.semanticType === 'temporal')
+              .map((f) => {
+                  const fid = encodeFid(f.fid);
+                  return {
+                      calculate: `datum.${fid} - (${displayOffset * 60000})`,
+                      as: fid,
+                  };
+              })
+        : [];
 
     let encoding = channelEncode({
         geomType: markType,
@@ -63,6 +77,7 @@ export function getSingleView(props: SingleViewProps) {
         radius,
         details,
         text,
+        displayOffset,
     });
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
@@ -76,12 +91,18 @@ export function getSingleView(props: SingleViewProps) {
     };
     return {
         config,
+        transform,
         mark,
         encoding,
     };
 }
 
-export function resolveScale<T extends Object>(scale: T | ((info: IFieldInfos) => T), field: IField | null | undefined, data: readonly IRow[], theme: 'dark' | 'light') {
+export function resolveScale<T extends Object>(
+    scale: T | ((info: IFieldInfos) => T),
+    field: IField | null | undefined,
+    data: readonly IRow[],
+    theme: 'dark' | 'light'
+) {
     if (typeof scale === 'function') {
         if (!field) return undefined;
         const values = data.map((x) => x[field.fid]);

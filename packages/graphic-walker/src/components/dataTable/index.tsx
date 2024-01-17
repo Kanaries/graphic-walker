@@ -21,6 +21,7 @@ interface DataTableProps {
     computation: IComputationFunction;
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
     disableFilter?: boolean;
+    displayOffset?: number;
 }
 const Container = styled.div`
     overflow-x: auto;
@@ -161,16 +162,16 @@ function useFilters(metas: IMutField[]) {
     return { filters, options, editingFilterIdx, onSelectFilter, onDeleteFilter, onWriteFilter, onClose };
 }
 
-function FieldValue(props: { field: IMutField; item: IRow }) {
+function FieldValue(props: { field: IMutField; item: IRow; displayOffset?: number }) {
     const { field, item } = props;
     if (field.semanticType === 'temporal') {
-        return <>{formatDate(newOffsetDate(field.offset)(item[field.fid]))}</>;
+        return <>{formatDate(newOffsetDate(props.displayOffset)(newOffsetDate(field.offset)(item[field.fid])))}</>;
     }
     return <>{`${item[field.fid]}`}</>;
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, metas, computation, disableFilter } = props;
+    const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
     const computationFunction = computation;
@@ -406,7 +407,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         key={field.fid + index}
                                         className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-gray-500 dark:text-gray-300'}
                                     >
-                                        <FieldValue field={field} item={row} />
+                                        <FieldValue field={field} item={row} displayOffset={displayOffset} />
                                     </td>
                                 ))}
                             </tr>
@@ -427,6 +428,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                             onWriteFilter={onWriteFilter}
                             options={options}
                             viewFilters={filters}
+                            displayOffset={displayOffset}
                         />
                     </div>
                 </ComputationContext.Provider>

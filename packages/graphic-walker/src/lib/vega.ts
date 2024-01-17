@@ -26,6 +26,7 @@ export function toVegaSpec({
     channelScales,
     mediaTheme,
     vegaConfig,
+    displayOffset,
 }: {
     rows: readonly IViewField[];
     columns: readonly IViewField[];
@@ -48,6 +49,7 @@ export function toVegaSpec({
     channelScales?: IChannelScales;
     mediaTheme: 'dark' | 'light';
     vegaConfig: VegaGlobalConfig;
+    displayOffset?: number;
 }) {
     const guard = defaultAggregated ? (x?: IViewField) => x ?? NULL_FIELD : (x?: IViewField) => (x ? (x.aggName === 'expr' ? NULL_FIELD : x) : NULL_FIELD);
     const rows = rowsRaw.map(guard).filter((x) => x !== NULL_FIELD);
@@ -123,12 +125,16 @@ export function toVegaSpec({
             defaultAggregated,
             stack,
             geomType,
+            displayOffset,
         });
         const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
         spec.mark = singleView.mark;
         if ('encoding' in singleView) {
             spec.encoding = singleView.encoding;
+        }
+        if ('transform' in singleView && singleView.transform.length > 0) {
+            spec.transform = singleView.transform;
         }
 
         spec.resolve ||= {};
@@ -181,6 +187,7 @@ export function toVegaSpec({
                     stack,
                     geomType,
                     hideLegend: !hasLegend,
+                    displayOffset,
                 });
                 const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
                 let commonSpec = { ...spec };

@@ -16,6 +16,7 @@ interface UseRendererProps {
     limit: number;
     computationFunction: IComputationFunction;
     folds?: string[];
+    timezoneDisplayOffset?: number;
 }
 
 interface UseRendererResult {
@@ -27,12 +28,12 @@ interface UseRendererResult {
 }
 
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds } = props;
+    const { allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds, timezoneDisplayOffset } = props;
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
     const workflow = useMemo(() => {
-        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined);
+        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined, timezoneDisplayOffset);
     }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);

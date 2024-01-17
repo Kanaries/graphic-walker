@@ -225,7 +225,8 @@ export class VizSpecStore {
             this.config.defaultAggregated,
             this.sort,
             this.config.folds,
-            this.config.limit
+            this.config.limit,
+            this.config.timezoneDisplayOffset
         );
     }
 
@@ -479,7 +480,7 @@ export class VizSpecStore {
         drillLevel: (typeof DATE_TIME_DRILL_LEVELS)[number],
         name: string,
         format: string,
-        offset: number
+        offset: number | undefined
     ) {
         this.visList[this.visIndex] = performers.createDateDrillField(
             this.visList[this.visIndex],
@@ -489,7 +490,7 @@ export class VizSpecStore {
             uniqueId(),
             name,
             format,
-            offset
+            offset ?? new Date().getTimezoneOffset()
         );
     }
 
@@ -499,7 +500,7 @@ export class VizSpecStore {
         drillLevel: (typeof DATE_TIME_FEATURE_LEVELS)[number],
         name: string,
         format: string,
-        offset: number
+        offset: number | undefined
     ) {
         this.visList[this.visIndex] = performers.createDateFeatureField(
             this.visList[this.visIndex],
@@ -509,7 +510,7 @@ export class VizSpecStore {
             uniqueId(),
             name,
             format,
-            offset
+            offset ?? new Date().getTimezoneOffset()
         );
     }
 

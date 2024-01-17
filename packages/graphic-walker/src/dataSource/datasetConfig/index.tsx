@@ -15,6 +15,7 @@ const DatasetConfig: React.FC = () => {
                 size={100}
                 metas={metas}
                 computation={computation}
+                displayOffset={vizStore.config.timezoneDisplayOffset}
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     vizStore.updateCurrentDatasetMetas(fid, diffMeta);
                 }}

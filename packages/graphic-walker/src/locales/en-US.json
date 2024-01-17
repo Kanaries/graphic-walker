@@ -23,7 +23,8 @@
         "formatGuidesDocs": "Format guides docs",
         "readHere": "read here",
         "svg": "Use SVG",
-        "customTile": "Use a Custom Tile for map"
+        "customTile": "Use a Custom Tile for map",
+        "customOffset": "Use a Specific timezone"
     },
     "constant": {
         "row_count": "Row count",
