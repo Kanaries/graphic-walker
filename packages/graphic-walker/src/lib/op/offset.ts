@@ -19,11 +19,13 @@ export function getOffsetDate(date: Date, offset: number): OffsetDate {
     }) as OffsetDate;
 }
 
-const unexceptedUTCParsedPattern = [
+export const unexceptedUTCParsedPattern = [
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/, // YYYY-MM-DD
     /^\d{4}-(0[1-9]|1[0-2])$/, // YYYY-MM
     /^\d{4}$/, // YYYY
 ];
+
+export const unexceptedUTCParsedPatternFormats = ['%Y', '%Y-%m', '%Y-%m-%d'];
 
 export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
     function creator(): OffsetDate;

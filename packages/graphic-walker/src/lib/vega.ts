@@ -126,6 +126,7 @@ export function toVegaSpec({
             stack,
             geomType,
             displayOffset,
+            dataSource
         });
         const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
@@ -188,6 +189,7 @@ export function toVegaSpec({
                     geomType,
                     hideLegend: !hasLegend,
                     displayOffset,
+                    dataSource,
                 });
                 const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
                 let commonSpec = { ...spec };

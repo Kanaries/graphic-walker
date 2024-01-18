@@ -5,13 +5,21 @@ import { channelAggregate } from './aggregate';
 import { IEncodeProps, channelEncode, encodeFid } from './encode';
 import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
-import { isNotEmpty } from '../../utils';
+import { getTimeFormat } from '../../lib/inferMeta';
+import { unexceptedUTCParsedPatternFormats } from '../../lib/op/offset';
 
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
     stack: IStackMode;
     hideLegend?: boolean;
+    dataSource: readonly IRow[];
 }
+
+function formatOffset(offset: number) {
+    if (offset === 0) return '';
+    return `${offset > 0 ? '+' : '-'}${Math.abs(offset)}`;
+}
+
 export function getSingleView(props: SingleViewProps) {
     const {
         x,
@@ -33,6 +41,7 @@ export function getSingleView(props: SingleViewProps) {
         geomType,
         hideLegend = false,
         displayOffset,
+        dataSource,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
@@ -49,17 +58,36 @@ export function getSingleView(props: SingleViewProps) {
         markType = autoMark(types);
     }
 
-    const transform = isNotEmpty(displayOffset)
-        ? fields
-              .filter((f) => f.semanticType === 'temporal')
-              .map((f) => {
-                  const fid = encodeFid(f.fid);
-                  return {
-                      calculate: `datum.${fid} - (${displayOffset * 60000})`,
-                      as: fid,
-                  };
-              })
-        : [];
+    const transform = fields
+        .filter((f) => f.semanticType === 'temporal')
+        .map((f) => {
+            let offsetTime = (displayOffset ?? new Date().getTimezoneOffset() - (f.offset ?? new Date().getTimezoneOffset())) * -60000;
+            const fid = encodeFid(f.fid);
+            const sample = dataSource[0][f.fid];
+            if (sample) {
+                const format = getTimeFormat(sample);
+                if (format !== 'timestamp') {
+                    if (unexceptedUTCParsedPatternFormats.includes(format)) {
+                        offsetTime += new Date().getTimezoneOffset() * 60000;
+                    }
+                    if (offsetTime === 0) {
+                        return null;
+                    }
+                    return {
+                        calculate: `toDate(datum.${fid})${formatOffset(offsetTime)}`,
+                        as: fid,
+                    };
+                }
+            }
+            if (offsetTime === 0) {
+                return null;
+            }
+            return {
+                calculate: `datum.${fid}${formatOffset(offsetTime)}`,
+                as: fid,
+            };
+        })
+        .filter(Boolean);
 
     let encoding = channelEncode({
         geomType: markType,
