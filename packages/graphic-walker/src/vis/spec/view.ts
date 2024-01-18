@@ -63,7 +63,7 @@ export function getSingleView(props: SingleViewProps) {
         .map((f) => {
             let offsetTime = (displayOffset ?? new Date().getTimezoneOffset() - (f.offset ?? new Date().getTimezoneOffset())) * -60000;
             const fid = encodeFid(f.fid);
-            const sample = dataSource[0][f.fid];
+            const sample = dataSource[0]?.[f.fid];
             if (sample) {
                 const format = getTimeFormat(sample);
                 if (format !== 'timestamp') {
