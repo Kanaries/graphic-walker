@@ -10,7 +10,7 @@ import { fieldStat, getTemporalRange, withComputedField } from '../../computatio
 import Slider from './slider';
 import { getFilterMeaAggKey, formatDate } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { newOffsetDate } from '../../lib/op/offset';
+import { newOffsetDate, parsedOffsetDate } from '../../lib/op/offset';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -493,8 +493,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         const id = `rule_checkbox_${idx}`;
                         const checked =
                             (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
-                        const displayValue =
-                            field.semanticType === 'temporal' ? formatDate(newOffsetDate(displayOffset)(newOffsetDate(field.offset)(value))) : `${value}`;
+                        const displayValue = field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                         return (
                             <TableRow
                                 key={idx}

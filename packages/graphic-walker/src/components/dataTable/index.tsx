@@ -11,7 +11,7 @@ import { encodeFilterRule } from '../../utils/filter';
 import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog';
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
-import { newOffsetDate } from '../../lib/op/offset';
+import { parsedOffsetDate } from '../../lib/op/offset';
 import { formatDate } from '../../utils';
 
 interface DataTableProps {
@@ -165,7 +165,7 @@ function useFilters(metas: IMutField[]) {
 function FieldValue(props: { field: IMutField; item: IRow; displayOffset?: number }) {
     const { field, item } = props;
     if (field.semanticType === 'temporal') {
-        return <>{formatDate(newOffsetDate(props.displayOffset)(newOffsetDate(field.offset)(item[field.fid])))}</>;
+        return <>{formatDate(parsedOffsetDate(props.displayOffset, field.offset)(item[field.fid]))}</>;
     }
     return <>{`${item[field.fid]}`}</>;
 }

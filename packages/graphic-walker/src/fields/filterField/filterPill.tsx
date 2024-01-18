@@ -7,7 +7,7 @@ import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useVizStore } from '../../store';
 import { refMapper } from '../fieldsContext';
 import { formatDate } from '../../utils';
-import { newOffsetDate } from '../../lib/op/offset';
+import { parsedOffsetDate } from '../../lib/op/offset';
 
 interface FilterPillProps {
     provided: DraggableProvided;
@@ -90,8 +90,8 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
                         {field.rule.type === 'not in' && <>notIn: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
                         {field.rule.type === 'temporal range' && (
                             <>
-                                range: [{formatDate(newOffsetDate(timezoneDisplayOffset)(newOffsetDate(field.rule.offset)(field.rule.value[0])))},{' '}
-                                {formatDate(newOffsetDate(timezoneDisplayOffset)(newOffsetDate(field.rule.offset)(field.rule.value[1])))}]
+                                range: [{formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0]))},{' '}
+                                {formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[1]))}]
                             </>
                         )}
                     </span>
