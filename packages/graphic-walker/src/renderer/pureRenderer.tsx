@@ -110,6 +110,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         folds: visualConfig.folds,
         limit,
         computationFunction: computation,
+        timezoneDisplayOffset: visualConfig['timezoneDisplayOffset'],
     });
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({ data });

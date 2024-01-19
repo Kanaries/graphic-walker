@@ -6,6 +6,8 @@ import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useVizStore } from '../../store';
 import { refMapper } from '../fieldsContext';
+import { formatDate } from '../../utils';
+import { parsedOffsetDate } from '../../lib/op/offset';
 
 interface FilterPillProps {
     provided: DraggableProvided;
@@ -58,7 +60,9 @@ const Pill = styled.div`
 const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { provided, fIndex } = props;
     const vizStore = useVizStore();
-    const { viewFilters } = vizStore;
+    const { viewFilters, config } = vizStore;
+
+    const { timezoneDisplayOffset } = config;
 
     const field = viewFilters[fIndex];
 
@@ -77,15 +81,19 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
             >
                 {field.rule ? (
                     <span className="flex-1">
-                        {field.rule.type === 'one of'
-                            ? `oneOf: [${[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]`
-                            : field.rule.type === 'range'
-                            ? `range: [${field.rule.value[0]}, ${field.rule.value[1]}]`
-                            : field.rule.type === 'temporal range'
-                            ? `range: [${new Date(field.rule.value[0])}, ${new Date(field.rule.value[1])}]`
-                            : field.rule.type === 'not in'
-                            ? `notIn: [${[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]`
-                            : null}
+                        {field.rule.type === 'one of' && <>oneOf: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'range' && (
+                            <>
+                                range: [{field.rule.value[0]}, {field.rule.value[1]}]
+                            </>
+                        )}
+                        {field.rule.type === 'not in' && <>notIn: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'temporal range' && (
+                            <>
+                                range: [{formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0]))},{' '}
+                                {formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[1]))}]
+                            </>
+                        )}
                     </span>
                 ) : (
                     <span className="text-gray-600 flex-1">{t('empty_rule')}</span>

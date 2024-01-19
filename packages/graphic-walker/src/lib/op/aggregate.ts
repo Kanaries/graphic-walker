@@ -3,6 +3,7 @@ import { getMeaAggKey } from '../../utils';
 import { IAggQuery } from '../../interfaces';
 import { sum, mean, median, stdev, variance, max, min, count, distinctCount } from './stat';
 import { expr } from '../sql';
+import { newOffsetDate } from './offset';
 
 const aggregatorMap = {
     sum,
@@ -50,11 +51,12 @@ export function aggregate(data: IRow[], query: IAggQuery): IRow[] {
                 }
                 aggRow[aggMeaKey] = result;
             } else {
+                const newDate = newOffsetDate(mea.offset);
                 const values: number[] = subGroup
                     .map((r) => r[mea.field])
                     .map((x) => {
                         if (mea.format) {
-                            return new Date(x).getTime();
+                            return newDate(x).getTime();
                         }
                         return x;
                     });

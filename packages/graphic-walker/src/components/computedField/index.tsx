@@ -4,7 +4,7 @@ import { useVizStore } from '../../store';
 import DefaultButton from '../button/default';
 import PrimaryButton from '../button/primary';
 import Modal from '../modal';
-import { parseErrorMessage } from '../../utils';
+import { isNotEmpty, parseErrorMessage } from '../../utils';
 import { highlightField } from '../highlightField';
 import { aggFuncs, reservedKeywords, sqlFunctions } from '../../lib/sql';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
@@ -53,7 +53,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
     }, [vizStore.allFields]);
 
     useEffect(() => {
-        if (editingComputedFieldFid !== undefined) {
+        if (isNotEmpty(editingComputedFieldFid)) {
             if (editingComputedFieldFid === '') {
                 let idx = 1;
                 while (vizStore.allFields.find((x) => x.name === `Computed ${idx}`)) {
@@ -88,7 +88,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
 
     return (
         <Modal
-            show={editingComputedFieldFid !== undefined}
+            show={isNotEmpty(editingComputedFieldFid)}
             onClose={() => {
                 vizStore.setComputedFieldFid();
             }}

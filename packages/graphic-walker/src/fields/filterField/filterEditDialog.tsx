@@ -21,20 +21,20 @@ const aggregationList = GLOBAL_CONFIG.AGGREGATOR_LIST.map(
     })
 ).concat([{ label: '-', value: '' }]);
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} displayOffset={displayOffset} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['temporal range', 'one of']} rawFields={rawFields} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['temporal range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
@@ -44,6 +44,7 @@ export const PureFilterEditDialog = (props: {
     options: { label: string; value: string }[];
     meta: IMutField[];
     editingFilterIdx: number | null;
+    displayOffset?: number;
     onSelectFilter: (field: string) => void;
     onWriteFilter: (index: number, rule: IFilterRule | null) => void;
     onSelectAgg?: (index: number, aggName: IAggregator | null) => void;
@@ -115,7 +116,7 @@ export const PureFilterEditDialog = (props: {
                         </div>
                     )}
                 </div>
-                <Form rawFields={meta} key={getFilterMeaAggKey(uncontrolledField)} field={uncontrolledField} onChange={handleChange} />
+                <Form rawFields={meta} key={getFilterMeaAggKey(uncontrolledField)} field={uncontrolledField} onChange={handleChange} displayOffset={props.displayOffset} />
                 <div className="mt-4">
                     <PrimaryButton onClick={handleSubmit} text={t('btn.confirm')} />
                     <DefaultButton className="ml-2" onClick={onClose} text={t('btn.cancel')} />
@@ -127,7 +128,8 @@ export const PureFilterEditDialog = (props: {
 
 const FilterEditDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions } = vizStore;
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions, config } = vizStore;
+    const { timezoneDisplayOffset } = config;
 
     const computation = useCompututaion();
 
@@ -142,7 +144,17 @@ const FilterEditDialog: React.FC = observer(() => {
 
     const transformedComputation = useMemo((): IComputationFunction => {
         if (originalField && viewDimensions.length > 0) {
-            const preWorkflow = toWorkflow([], allFields, viewDimensions, [{ ...originalField, aggName: filterAggName }], true, 'none').map((x) => {
+            const preWorkflow = toWorkflow(
+                [],
+                allFields,
+                viewDimensions,
+                [{ ...originalField, aggName: filterAggName }],
+                true,
+                'none',
+                [],
+                undefined,
+                timezoneDisplayOffset
+            ).map((x) => {
                 if (x.type === 'view') {
                     return {
                         ...x,
@@ -209,6 +221,7 @@ const FilterEditDialog: React.FC = observer(() => {
             <PureFilterEditDialog
                 options={allFieldOptions}
                 editingFilterIdx={editingFilterIdx}
+                displayOffset={timezoneDisplayOffset}
                 meta={meta}
                 onClose={handelClose}
                 onSelectFilter={handleSelectFilterField}

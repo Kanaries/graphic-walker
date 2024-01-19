@@ -12,22 +12,13 @@ const COMMON_TIME_FORMAT: RegExp[] = [
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T\d{2}:\d{2}:\d{2}.\d{3}Z$/, // YYYY-MM-DDTHH:MM:SS.gggZ (ISO-8601)
 ];
 
-const TIME_FORMAT = [
-    '%Y-%m-%d',
-    '%m/%d/%Y',
-    '%d/%m/%Y',
-    '%Y/%m/%d',
-    '%Y.%m.%d',
-    '%Y-%m-%d %H:%M:%S',
-    '%Y-%m-%dT%H:%M:%S',
-    '%Y-%m-%dT%H:%M:%S.%gZ'
-]
+const TIME_FORMAT = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d', '%Y.%m.%d', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%gZ'];
 
 export function getTimeFormat(data: string | number) {
     if (typeof data === 'number') return 'timestamp';
-    const i = COMMON_TIME_FORMAT.findIndex(x => x.test(data));
+    const i = COMMON_TIME_FORMAT.findIndex((x) => x.test(data));
     if (i >= 0) return TIME_FORMAT[i];
-    return ''
+    return '';
 }
 
 /**
@@ -100,6 +91,7 @@ export function inferMeta(props: { dataSource: IRow[]; fields: IUncertainMutFiel
             semanticType,
             basename: field.basename || field.name || field.fid,
             path: field.path,
+            offset: semanticType === 'temporal' ? new Date().getTimezoneOffset() : undefined,
         });
     }
     return finalFieldMetas;

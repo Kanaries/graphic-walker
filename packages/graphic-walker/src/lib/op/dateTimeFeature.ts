@@ -6,12 +6,15 @@ import { newOffsetDate } from './offset';
 function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const fieldKey = params.find((p) => p.type === 'field')?.value;
     const drillLevel = params.find((p) => p.type === 'value')?.value as (typeof DATE_TIME_FEATURE_LEVELS)[number] | undefined;
-    const offset = params.find((p) => p.type === 'offset')?.value ?? new Date().getTimezoneOffset();
+    const offset = params.find((p) => p.type === 'offset')?.value;
+    const displayOffset = params.find((p) => p.type === 'displayOffset')?.value;
     if (!fieldKey || !drillLevel) {
         return data;
     }
     const fieldValues = data[fieldKey];
-    const newDate = newOffsetDate(offset);
+    const prepareDate = newOffsetDate(offset);
+    const toOffsetDate = newOffsetDate(displayOffset);
+    const newDate = ((...x: []) => toOffsetDate(prepareDate(...x))) as typeof prepareDate;
     switch (drillLevel) {
         case 'year': {
             const newValues = fieldValues.map((v) => {

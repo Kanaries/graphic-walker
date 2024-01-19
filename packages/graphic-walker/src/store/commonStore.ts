@@ -9,9 +9,11 @@ export class CommonStore {
     public showDSPanel: boolean = false;
     public provider: IDataSourceProvider;
     private onCommitDS: (datasetId: string) => void;
-    constructor(provider: IDataSourceProvider, onCommitDS: (datasetId: string) => void) {
+    public displayOffset: number | undefined;
+    constructor(provider: IDataSourceProvider, onCommitDS: (datasetId: string) => void, config: {displayOffset?: number}) {
         this.provider = provider;
         this.onCommitDS = onCommitDS;
+        this.displayOffset = config.displayOffset;
         makeAutoObservable(this, {
             tmpDataSource: observable.ref,
         });
@@ -80,5 +82,9 @@ export class CommonStore {
     public startDSBuildingTask() {
         this.initTempDS();
         this.showDSPanel = true;
+    }
+
+    public setDisplayOffset(displayOffset?: number) {
+        this.displayOffset = displayOffset;
     }
 }

@@ -11,7 +11,7 @@ interface TableProps {
 }
 
 const Table: React.FC<TableProps> = ({ commonStore, size = 10 }) => {
-    const { tmpDSRawFields, tmpDataSource } = commonStore;
+    const { tmpDSRawFields, tmpDataSource, displayOffset } = commonStore;
 
     const metas = toJS(tmpDSRawFields);
 
@@ -23,6 +23,7 @@ const Table: React.FC<TableProps> = ({ commonStore, size = 10 }) => {
                 size={size}
                 metas={metas}
                 computation={computation}
+                displayOffset={displayOffset}
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     commonStore.updateTempDatasetMetas(fid, diffMeta);
                 }}

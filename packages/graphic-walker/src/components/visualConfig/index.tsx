@@ -17,6 +17,8 @@ import { ColorSchemes, extractRGBA } from './colorScheme';
 import { RangeScale } from './range-scale';
 import { ConfigItemContainer, ConfigItemContent, ConfigItemHeader, ConfigItemTitle } from './config-item';
 import { KVTuple } from '../../models/utils';
+import { isNotEmpty } from '../../utils';
+import { timezones } from './timezone';
 
 const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
@@ -30,9 +32,9 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
     const [rangeMax, setRangeMax] = useState(defaultMaxRange ?? maxRange);
     const setValue = useCallback(
         (value: IConfigScale) => {
-            setEnableMaxDomain(value.domainMax !== undefined);
-            setEnableMinDomain(value.domainMin !== undefined);
-            setEnableRange(value.rangeMax !== undefined || value.rangeMin !== undefined);
+            setEnableMaxDomain(isNotEmpty(value.domainMax));
+            setEnableMinDomain(isNotEmpty(value.domainMin));
+            setEnableRange(isNotEmpty(value.rangeMax) || isNotEmpty(value.rangeMin));
             setDomainMin(value.domainMin ?? 0);
             setDomainMax(value.domainMax ?? 100);
             setRangeMax(value.rangeMax ?? defaultMaxRange ?? maxRange);
@@ -72,7 +74,7 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
 
 const VisualConfigPanel: React.FC = () => {
     const vizStore = useVizStore();
-    const { layout, showVisualConfigPanel } = vizStore;
+    const { layout, showVisualConfigPanel, config } = vizStore;
     const { t } = useTranslation();
     const formatConfigList: (keyof IVisualConfig['format'])[] = ['numberFormat', 'timeFormat', 'normalizedNumberFormat'];
     const [format, setFormat] = useState<IVisualConfig['format']>({
@@ -97,6 +99,9 @@ const VisualConfigPanel: React.FC = () => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
     const [geoMapTileUrl, setGeoMapTileUrl] = useState<string | undefined>(undefined);
+    const [displayOffset, setDisplayOffset] = useState<number | undefined>(undefined);
+    const [displayOffsetEdited, setDisplayOffsetEdited] = useState(false);
+
     const opacityValue = useScale(0, 1, 0.3, 0.8);
     const sizeValue = useScale(0, 100);
 
@@ -117,6 +122,8 @@ const VisualConfigPanel: React.FC = () => {
         opacityValue.setValue(layout.scale?.opacity ?? {});
         sizeValue.setValue(layout.scale?.size ?? {});
         setGeoMapTileUrl(layout.geoMapTileUrl);
+        setDisplayOffset(config.timezoneDisplayOffset);
+        setDisplayOffsetEdited(false);
     }, [showVisualConfigPanel]);
 
     return (
@@ -301,47 +308,74 @@ const VisualConfigPanel: React.FC = () => {
                         <ConfigItemTitle>{t('config.misc')}</ConfigItemTitle>
                     </ConfigItemHeader>
                     <ConfigItemContent>
-                        <div className="flex flex-col space-y-2 mb-2">
-                            <Toggle
-                                label={t(`config.customTile`)}
-                                enabled={geoMapTileUrl !== undefined}
-                                onChange={(e) => {
-                                    setGeoMapTileUrl(e ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : undefined);
-                                }}
-                            />
-                            {geoMapTileUrl !== undefined && (
-                                <input
-                                    type="text"
-                                    className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
-                                    value={geoMapTileUrl}
+                        <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col space-y-2">
+                                <Toggle
+                                    label={t(`config.customTile`)}
+                                    enabled={isNotEmpty(geoMapTileUrl)}
                                     onChange={(e) => {
-                                        setGeoMapTileUrl(e.target.value);
+                                        setGeoMapTileUrl(e ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : undefined);
                                     }}
                                 />
-                            )}
-                        </div>
-                        <div className="flex space-x-6">
-                            <Toggle
-                                label={t(`config.zeroScale`)}
-                                enabled={zeroScale}
-                                onChange={(en) => {
-                                    setZeroScale(en);
-                                }}
-                            />
-                            <Toggle
-                                label={t(`config.svg`)}
-                                enabled={svg}
-                                onChange={(en) => {
-                                    setSvg(en);
-                                }}
-                            />
-                            <Toggle
-                                label="include unmatched choropleth in scale"
-                                enabled={scaleIncludeUnmatchedChoropleth}
-                                onChange={(en) => {
-                                    setScaleIncludeUnmatchedChoropleth(en);
-                                }}
-                            />
+                                {isNotEmpty(geoMapTileUrl) && (
+                                    <input
+                                        type="text"
+                                        className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
+                                        value={geoMapTileUrl}
+                                        onChange={(e) => {
+                                            setGeoMapTileUrl(e.target.value);
+                                        }}
+                                    />
+                                )}
+                            </div>
+                            <div className="flex space-x-6">
+                                <Toggle
+                                    label={t(`config.zeroScale`)}
+                                    enabled={zeroScale}
+                                    onChange={(en) => {
+                                        setZeroScale(en);
+                                    }}
+                                />
+                                <Toggle
+                                    label={t(`config.svg`)}
+                                    enabled={svg}
+                                    onChange={(en) => {
+                                        setSvg(en);
+                                    }}
+                                />
+                                <Toggle
+                                    label="include unmatched choropleth in scale"
+                                    enabled={scaleIncludeUnmatchedChoropleth}
+                                    onChange={(en) => {
+                                        setScaleIncludeUnmatchedChoropleth(en);
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <Toggle
+                                    label={t(`config.customOffset`)}
+                                    enabled={isNotEmpty(displayOffset)}
+                                    onChange={(e) => {
+                                        setDisplayOffsetEdited(true);
+                                        setDisplayOffset(e ? new Date().getTimezoneOffset() : undefined);
+                                    }}
+                                />
+                                {isNotEmpty(displayOffset) && (
+                                    <DropdownSelect
+                                        className="w-full "
+                                        buttonClassName="w-full"
+                                        selectedKey={`${displayOffset}`}
+                                        onSelect={(e) => {
+                                            setDisplayOffsetEdited(true);
+                                            setDisplayOffset(parseInt(e));
+                                        }}
+                                        options={timezones.map((tz) => ({
+                                            value: `${tz.value}`,
+                                            label: <span title={tz.name}>{tz.name}</span>,
+                                        }))}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </ConfigItemContent>
                 </ConfigItemContainer>
@@ -371,6 +405,7 @@ const VisualConfigPanel: React.FC = () => {
                                         : []),
                                     ['geoMapTileUrl', geoMapTileUrl]
                                 );
+                                displayOffsetEdited && vizStore.setVisualConfig('timezoneDisplayOffset', displayOffset);
                                 vizStore.setShowVisualConfigPanel(false);
                             });
                         }}

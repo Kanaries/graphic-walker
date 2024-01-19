@@ -1,5 +1,6 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
 import { IPaintMap, IPaintMapV2, IViewField } from '../../interfaces';
+import { isNotEmpty } from '../../utils';
 import { NULL_FIELD } from './field';
 export interface IEncodeProps {
     geomType: string;
@@ -17,6 +18,7 @@ export interface IEncodeProps {
     radius: IViewField;
     details: Readonly<IViewField[]>;
     text: IViewField;
+    displayOffset?: number;
 }
 export function availableChannels(geomType: string): Set<string> {
     if (geomType === 'text') {
@@ -75,11 +77,14 @@ export function channelEncode(props: IEncodeProps) {
                 if (props[c].analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
                 }
+                if (props[c].semanticType === 'temporal' && isNotEmpty(props.displayOffset)) {
+                    encoding[c].scale = { type: 'utc' };
+                }
                 if (props[c].semanticType === 'temporal' && props[c].timeUnit) {
                     encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit);
                 }
                 if (c === 'color' && props[c].expression?.op === 'paint') {
-                    const map: IPaintMap = props[c].expression!.params.find((x) => x.type === 'map' || x.type === 'newmap')!.value;
+                    const map: IPaintMap | IPaintMapV2 = props[c].expression!.params.find((x) => x.type === 'map' || x.type === 'newmap')!.value;
                     const colors = map.usedColor.map((x) => map.dict[x]).filter(Boolean);
                     encoding[c].scale = {
                         domain: colors.map((x) => x.name),
