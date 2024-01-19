@@ -1,3 +1,5 @@
+import { isNotEmpty } from "../../utils";
+
 export function mean(nums: number[]): number {
     return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
@@ -46,7 +48,7 @@ export function count(nums: any[]): number {
 }
 
 export function countTruly(nums: any[]): number {
-    return nums.filter(x => x !== undefined && x !== null).length;
+    return nums.filter(isNotEmpty).length;
 }
 
 export function distinctCount(datas: any[]) {

@@ -79,6 +79,7 @@ interface ReactVegaProps {
         size: IConfigScale;
     };
     onReportSpec?: (spec: string) => void;
+    displayOffset?: number
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -134,6 +135,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         useSvg,
         channelScales: channelScaleRaw,
         scale,
+        displayOffset,
     } = props;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
     const mediaTheme = useCurrentMediaTheme(dark);
@@ -267,6 +269,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 text,
                 theta,
                 vegaConfig,
+                displayOffset
             }),
         [
             guardedCols,
@@ -289,6 +292,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             size,
             text,
             theta,
+            displayOffset,
         ]
     );
     // Render

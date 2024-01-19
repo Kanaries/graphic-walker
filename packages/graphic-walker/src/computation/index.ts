@@ -88,13 +88,8 @@ export const dataReadRaw = async (
 };
 
 export const dataQuery = async (service: IComputationFunction, workflow: IDataQueryWorkflowStep[], limit?: number): Promise<IRow[]> => {
-    const viewWorkflow = workflow.find(x => x.type === 'view') as IViewWorkflowStep | undefined;
-    if (
-        viewWorkflow &&
-        viewWorkflow.query.length === 1 &&
-        viewWorkflow.query[0].op === 'raw' &&
-        viewWorkflow.query[0].fields.length === 0
-    ) {
+    const viewWorkflow = workflow.find((x) => x.type === 'view') as IViewWorkflowStep | undefined;
+    if (viewWorkflow && viewWorkflow.query.length === 1 && viewWorkflow.query[0].op === 'raw' && viewWorkflow.query[0].fields.length === 0) {
         return [];
     }
     const res = await service({
@@ -115,10 +110,11 @@ export const fieldStat = async (
         valuesLimit?: number;
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
+        timezoneDisplayOffset?: number;
     },
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
-    const { values = true, range = true, valuesMeta = true, sortBy = 'none' } = options;
+    const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset } = options;
     const COUNT_ID = `count_${field.fid}`;
     const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
     const MIN_ID = `min_${field.fid}`;
@@ -129,7 +125,7 @@ export const fieldStat = async (
                   type: 'transform',
                   transform: [
                       {
-                          expression: processExpression(field.expression!, allFields),
+                          expression: processExpression(field.expression!, allFields, { timezoneDisplayOffset }),
                           key: field.fid,
                       },
                   ],
@@ -371,6 +367,31 @@ export async function getRange(service: IComputationFunction, field: string) {
     return [rangeRes[MIN_ID], rangeRes[MAX_ID]] as [number, number];
 }
 
+export function withComputedField(field: IField, allFields: IMutField[], service: IComputationFunction, config: { timezoneDisplayOffset?: number }) {
+    return <T>(builder: (service: IComputationFunction) => Promise<T>) => {
+        const transformWork: ITransformWorkflowStep[] = field.computed
+            ? [
+                  {
+                      type: 'transform',
+                      transform: [
+                          {
+                              expression: processExpression(field.expression!, allFields, config),
+                              key: field.fid,
+                          },
+                      ],
+                  },
+              ]
+            : [];
+        return builder((queryPayload) => {
+            const transformedQueryPayload: IDataQueryPayload = {
+                ...queryPayload,
+                workflow: [...transformWork, ...queryPayload.workflow],
+            };
+            return service(transformedQueryPayload);
+        });
+    };
+}
+
 export async function getSample(service: IComputationFunction, field: string) {
     const res = await service({
         workflow: [
@@ -393,8 +414,8 @@ export async function getSample(service: IComputationFunction, field: string) {
 export async function getTemporalRange(service: IComputationFunction, field: string, offset?: number) {
     const sample = await getSample(service, field);
     const format = getTimeFormat(sample);
-    const defaultOffset = new Date().getTimezoneOffset();
-    const newDate = newOffsetDate(offset ?? defaultOffset);
+    const usedOffset = offset ?? new Date().getTimezoneOffset();
+    const newDate = newOffsetDate(usedOffset);
     const MIN_ID = `min_${field}`;
     const MAX_ID = `max_${field}`;
     const rangeQueryPayload: IDataQueryPayload = {
@@ -411,12 +432,14 @@ export async function getTemporalRange(service: IComputationFunction, field: str
                                 agg: 'min',
                                 asFieldKey: MIN_ID,
                                 format,
+                                offset: usedOffset,
                             },
                             {
                                 field,
                                 agg: 'max',
                                 asFieldKey: MAX_ID,
                                 format,
+                                offset: usedOffset,
                             },
                         ],
                     },

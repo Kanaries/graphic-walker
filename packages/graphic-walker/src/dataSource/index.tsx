@@ -29,7 +29,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
 
     const { showDSPanel } = commonStore;
     return (
-        <div className="flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
+        <div className="font-sans flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
             {props.onLoad && <GwFile onImport={props.onLoad} fileRef={gwFileRef} />}
             {/* <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
                 {t("DataSource.labels.cur_dataset")}
@@ -96,6 +96,7 @@ function once<T extends (...args: any[]) => any>(register: (x: T) => () => void,
 
 export function DataSourceSegmentComponent(props: {
     provider: IDataSourceProvider;
+    displayOffset?: number;
     children: (props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
@@ -170,7 +171,11 @@ export function DataSourceSegmentComponent(props: {
         [props.provider, selectedId]
     );
 
-    const commonStore = useMemo(() => new CommonStore(props.provider, setSelectedId), [props.provider]);
+    const commonStore = useMemo(() => new CommonStore(props.provider, setSelectedId, { displayOffset: props.displayOffset }), [props.provider]);
+
+    useEffect(() => {
+        commonStore.setDisplayOffset(props.displayOffset);
+    }, [props.displayOffset, commonStore]);
 
     const onLoad = useMemo(() => {
         const importFile = props.provider.onImportFile;

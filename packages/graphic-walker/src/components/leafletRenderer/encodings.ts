@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { scaleLinear, scaleOrdinal } from 'd3-scale';
 import type { IChannelScales, IRow, IScale, IViewField, VegaGlobalConfig } from '../../interfaces';
-import { getMeaAggKey } from '../../utils';
+import { getMeaAggKey, isNotEmpty } from '../../utils';
 import { getColor } from '../../utils/useTheme';
 import { resolveScale } from '../../vis/spec/view';
 
@@ -109,14 +109,14 @@ const useDomain = (key: string, data: IRow[], scale?: IScale) => {
                 minDomain = Number(scale.domain[0]);
                 maxDomain = Number(scale.domain[1]);
             }
-            if (scale.domainMin !== undefined) {
+            if (isNotEmpty(scale.domainMin)) {
                 minDomain = scale.domainMin;
             }
-            if (scale.domainMax !== undefined) {
+            if (isNotEmpty(scale.domainMax)) {
                 maxDomain = scale.domainMax;
             }
         }
-        if (minDomain !== undefined && maxDomain !== undefined) {
+        if (isNotEmpty(minDomain) && isNotEmpty(maxDomain)) {
             return [minDomain, maxDomain];
         }
         if (!key) {
@@ -151,10 +151,10 @@ const useRange = (defaultMin: number, defaultMax: number, scale?: IScale) => {
                 minRange = Number(scale.range[0]);
                 maxRange = Number(scale.range[1]);
             }
-            if (scale.rangeMin !== undefined) {
+            if (isNotEmpty(scale.rangeMin)) {
                 minRange = scale.rangeMin;
             }
-            if (scale.rangeMax !== undefined) {
+            if (isNotEmpty(scale.rangeMax)) {
                 maxRange = scale.rangeMax;
             }
         }

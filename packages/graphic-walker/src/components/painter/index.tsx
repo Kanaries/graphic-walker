@@ -110,6 +110,7 @@ const PainterContent = (props: {
     onChangeDict: (d: typeof defaultScheme) => void;
     paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
     allFields: IViewField[];
+    displayOffset?: number;
     onReset: () => void;
     onDelete: () => void;
     onCancel: () => void;
@@ -146,6 +147,7 @@ const PainterContent = (props: {
         sort: 'none',
         viewDimensions: emptyField,
         viewMeasures: fields,
+        timezoneDisplayOffset: props.displayOffset,
     });
     const indexes = useMemo(() => viewData.map(calcIndexesByDimensions([props.domainY, props.domainX])), [viewData, props.domainX, props.domainY]);
     const [data, loadingResult] = useAsyncMemo(async () => {
@@ -452,7 +454,7 @@ function toZeroscaled([min, max]: [number, number]): [number, number] {
 const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
     const { showPainterPanel, allFields, layout, config } = vizStore;
-    const { geoms } = config;
+    const { geoms, timezoneDisplayOffset } = config;
     const { zeroScale } = layout;
     const { t } = useTranslation();
     const compuation = useCompututaion();
@@ -636,6 +638,7 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
                     onChangeDict={setDict}
                     paintMapRef={paintMapRef}
                     onReset={onReset}
+                    displayOffset={timezoneDisplayOffset}
                 />
             )}
         </Modal>

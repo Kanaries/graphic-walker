@@ -8,18 +8,21 @@ const formatDate = (date: Date) => date.getTime();
 function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame): IDataFrame {
     const fieldKey = params.find((p) => p.type === 'field')?.value;
     const drillLevel = params.find((p) => p.type === 'value')?.value as (typeof DATE_TIME_DRILL_LEVELS)[number] | undefined;
-    const offset = params.find((p) => p.type === 'offset')?.value ?? new Date().getTimezoneOffset();
+    const offset = params.find((p) => p.type === 'offset')?.value;
+    const displayOffset = params.find((p) => p.type === 'displayOffset')?.value;
     if (!fieldKey || !drillLevel) {
         return data;
     }
     const fieldValues = data[fieldKey];
-    const newDate = newOffsetDate(offset);
+    const prepareDate = newOffsetDate(offset);
+    const toOffsetDate = newOffsetDate(displayOffset);
+    const newDate = ((...x: []) => toOffsetDate(prepareDate(...x))) as typeof prepareDate;
     switch (drillLevel) {
         case 'year': {
             const newValues = fieldValues.map((v) => {
                 const date = newDate(v);
                 const Y = date.getFullYear();
-                return formatDate(newDate(Y, 0, 1));
+                return formatDate(toOffsetDate(Y, 0, 1));
             });
             return {
                 ...data,
@@ -31,7 +34,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const Q = Math.floor(date.getMonth() / 3);
-                return formatDate(newDate(Y, Q * 3, 1));
+                return formatDate(toOffsetDate(Y, Q * 3, 1));
             });
             return {
                 ...data,
@@ -43,7 +46,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
-                return formatDate(newDate(Y, M, 1));
+                return formatDate(toOffsetDate(Y, M, 1));
             });
             return {
                 ...data,
@@ -57,7 +60,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();
-                return formatDate(newDate(Y, M, D));
+                return formatDate(toOffsetDate(Y, M, D));
             });
             return {
                 ...data,
@@ -70,7 +73,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const Y = date.getFullYear();
                 const M = date.getMonth();
                 const D = date.getDate();
-                return formatDate(newDate(Y, M, D));
+                return formatDate(toOffsetDate(Y, M, D));
             });
             return {
                 ...data,
@@ -84,7 +87,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const M = date.getMonth();
                 const D = date.getDate();
                 const H = date.getHours();
-                return formatDate(newDate(Y, M, D, H));
+                return formatDate(toOffsetDate(Y, M, D, H));
             });
             return {
                 ...data,
@@ -99,7 +102,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const D = date.getDate();
                 const H = date.getHours();
                 const m = date.getMinutes();
-                return formatDate(newDate(Y, M, D, H, m));
+                return formatDate(toOffsetDate(Y, M, D, H, m));
             });
             return {
                 ...data,
@@ -115,7 +118,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
                 const H = date.getHours();
                 const m = date.getMinutes();
                 const s = date.getSeconds();
-                return formatDate(newDate(Y, M, D, H, m, s));
+                return formatDate(toOffsetDate(Y, M, D, H, m, s));
             });
             return {
                 ...data,

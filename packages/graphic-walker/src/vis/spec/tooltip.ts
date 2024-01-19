@@ -14,6 +14,11 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
                           timeUnit: encoding[ck].timeUnit,
                       }
                     : {}),
+                ...(encoding[ck].scale
+                    ? {
+                          scale: encoding[ck].scale,
+                      }
+                    : {}),
             };
         })
         .concat(

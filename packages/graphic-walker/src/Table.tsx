@@ -66,7 +66,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <ComputationContext.Provider value={wrappedComputation}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} />
+                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
                         </div>
                     </div>
                     <Errorpanel />

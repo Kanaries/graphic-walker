@@ -15,7 +15,6 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
     const fields = vizStore.currentVis.encodings[channel];
     const { t } = useTranslation('translation', { keyPrefix: 'field_menu' });
     const computation = useCompututaion();
-    const defaultOffset = new Date().getTimezoneOffset();
 
     return useMemo<IActionMenuItem[][]>(() => {
         return fields.map((f, index) => {
@@ -119,7 +118,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                         level,
                                         `${t(`drill.levels.${level}`)} (${originField.name || originField.fid})`,
                                         format,
-                                        f.offset ?? defaultOffset
+                                        f.offset
                                     )
                                 );
                         },
@@ -147,7 +146,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                         level,
                                         `${t(`drill.levels.${level}`)} [${originField.name || originField.fid}]`,
                                         format,
-                                        f.offset ?? defaultOffset
+                                        f.offset
                                     )
                                 );
                         },

@@ -22,7 +22,7 @@ import {
     IPaintMapV2,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
-import { createCountField, createVirtualFields } from '../utils';
+import { createCountField, createVirtualFields, isNotEmpty } from '../utils';
 import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
@@ -247,7 +247,7 @@ const actions: {
                               } as const,
                           ]
                         : []),
-                    ...(offset !== undefined
+                    ...(isNotEmpty(offset)
                         ? [
                               {
                                   type: 'offset',
@@ -290,7 +290,7 @@ const actions: {
                               } as const,
                           ]
                         : []),
-                    ...(offset !== undefined
+                    ...(isNotEmpty(offset)
                         ? [
                               {
                                   type: 'offset',
@@ -577,6 +577,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
+                    offset: f.offset
                 })
             )
             .concat(extraDimensions),
@@ -591,6 +592,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: 'sum',
+                    offset: f.offset
                 })
             )
             .concat(extraMeasures),

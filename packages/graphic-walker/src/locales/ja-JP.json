@@ -23,7 +23,8 @@
         "formatGuidesDocs": "フォーマットガイド",
         "readHere": "ここを読む",
         "svg": "SVGを使う",
-        "customTile": "地図タイルをカスタマイズ"
+        "customTile": "地図タイルをカスタマイズ",
+        "customOffset": "タイムゾーンをカスタマイズ"
     },
     "constant": {
         "row_count": "行数",
