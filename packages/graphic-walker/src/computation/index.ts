@@ -16,6 +16,7 @@ import type {
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
 import { processExpression } from '../utils/workflow';
+import { isNotEmpty } from '../utils';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -111,14 +112,23 @@ export const fieldStat = async (
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
         timezoneDisplayOffset?: number;
+        keyword?: string;
     },
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
-    const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset } = options;
+    const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset, keyword } = options;
     const COUNT_ID = `count_${field.fid}`;
     const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
     const MIN_ID = `min_${field.fid}`;
     const MAX_ID = `max_${field.fid}`;
+    const filterWork: IFilterWorkflowStep[] = isNotEmpty(keyword)
+        ? [
+              {
+                  type: 'filter',
+                  filters: [{ fid: field.fid, rule: { type: 'like', value: `%${keyword}%` } }],
+              },
+          ]
+        : [];
     const transformWork: ITransformWorkflowStep[] = field.computed
         ? [
               {
@@ -134,6 +144,7 @@ export const fieldStat = async (
         : [];
     const valuesMetaQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...filterWork,
             ...transformWork,
             {
                 type: 'view',
@@ -176,6 +187,7 @@ export const fieldStat = async (
     };
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...filterWork,
             ...transformWork,
             {
                 type: 'view',
@@ -210,6 +222,7 @@ export const fieldStat = async (
     const valuesRes = values ? await service(valuesQueryPayload) : [];
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
+            ...filterWork,
             ...transformWork,
             {
                 type: 'view',
@@ -251,6 +264,7 @@ export const fieldStat = async (
     const selectedCountWork: IDataQueryPayload | null = options.selectedCount?.size
         ? {
               workflow: [
+                  ...filterWork,
                   ...transformWork,
                   {
                       type: 'filter',

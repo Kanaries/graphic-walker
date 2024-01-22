@@ -41,6 +41,13 @@ export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
                         return false;
                     }
                 }
+                case 'like': {
+                    if (new RegExp(`^${rule.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/%/g, '.*')}$`).test(which[fid])) {
+                        break;
+                    } else {
+                        return false;
+                    }
+                }
                 default: {
                     console.warn('Unresolvable filter rule', rule);
                     continue;

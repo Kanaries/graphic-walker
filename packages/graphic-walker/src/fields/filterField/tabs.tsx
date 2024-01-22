@@ -8,7 +8,7 @@ import { useCompututaion } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { fieldStat, getTemporalRange, withComputedField } from '../../computation';
 import Slider from './slider';
-import { getFilterMeaAggKey, formatDate } from '../../utils';
+import { getFilterMeaAggKey, formatDate, classNames } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { newOffsetDate, parsedOffsetDate } from '../../lib/op/offset';
 
@@ -114,7 +114,7 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void }> = (props) => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
     const checkboxRef = useRef(null);
 
@@ -135,8 +135,12 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
     return (
         <input
             type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+            className={classNames(
+                props.disabled ? 'text-gray-300 bg-gray-300 hover:bg-gray-300' : 'text-indigo-600 focus:ring-indigo-600',
+                'h-4 w-4 rounded border-gray-300'
+            )}
             ref={checkboxRef}
+            disabled={props.disabled}
             onChange={() => onChange()}
         />
     );
@@ -144,13 +148,19 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
 
 const useFieldStats = (
     field: IFilterField,
-    attributes: { values: boolean; range: boolean; valuesMeta?: boolean; selectedCount?: Set<string | number>; displayOffset: number | undefined },
+    attributes: {
+        values: boolean;
+        range: boolean;
+        valuesMeta?: boolean;
+        selectedCount?: Set<string | number>;
+        displayOffset: number | undefined;
+        keyword?: string;
+    },
     sortBy: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none',
     computation: IComputationFunction,
     allFields: IMutField[]
 ): IFieldStats | null => {
-    const { values, range, valuesMeta, selectedCount, displayOffset } = attributes;
-    const { fid } = field;
+    const { values, range, valuesMeta, selectedCount, displayOffset, keyword } = attributes;
     const [loading, setLoading] = React.useState(true);
     const [stats, setStats] = React.useState<IFieldStats | null>(null);
 
@@ -159,7 +169,7 @@ const useFieldStats = (
     React.useEffect(() => {
         setLoading(true);
         let isCancelled = false;
-        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount, timezoneDisplayOffset: displayOffset }, allFields)
+        fieldStat(computation, field, { values, range, valuesMeta, sortBy, selectedCount, timezoneDisplayOffset: displayOffset, keyword }, allFields)
             .then((stats) => {
                 if (isCancelled) {
                     return;
@@ -178,7 +188,7 @@ const useFieldStats = (
         return () => {
             isCancelled = true;
         };
-    }, [fieldStatKey, computation, values, range, valuesMeta, sortBy, selectedCount]);
+    }, [fieldStatKey, computation, values, range, valuesMeta, sortBy, selectedCount, keyword, displayOffset]);
 
     return loading ? null : stats;
 };
@@ -214,7 +224,10 @@ const useVisualCount = (
     computation: IComputationFunction,
     onChange: (rule: IFilterRule) => void,
     allFields: IMutField[],
-    displayOffset: number | undefined
+    options: {
+        displayOffset: number | undefined;
+        keyword?: string;
+    }
 ) => {
     // fetch metaData of filter field, only fetch once per fid.
     const initRuleValue = useMemo(
@@ -223,7 +236,14 @@ const useVisualCount = (
     );
     const metaData = useFieldStats(
         field,
-        { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true, displayOffset },
+        { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true, displayOffset: options.displayOffset },
+        'none',
+        computation,
+        allFields
+    );
+    const currentMeta = useFieldStats(
+        field,
+        { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true, displayOffset: options.displayOffset, keyword: options.keyword },
         'none',
         computation,
         allFields
@@ -265,7 +285,8 @@ const useVisualCount = (
                             sortBy,
                             valuesLimit: PAGE_SIZE,
                             valuesOffset: PAGE_SIZE * page,
-                            timezoneDisplayOffset: displayOffset,
+                            timezoneDisplayOffset: options.displayOffset,
+                            keyword: options.keyword,
                         },
                         allFields
                     );
@@ -281,22 +302,22 @@ const useVisualCount = (
                 // already fetching, skip
             }
         },
-        [computation, sortBy, allFields]
+        [computation, sortBy, allFields, options.displayOffset, options.keyword]
     );
     // clear data when field or sort changes
     useEffect(() => {
         loadingRef.current = {};
         setLoadedPageData(emptyArray);
-    }, [field.fid, computation, sortBy]);
+    }, [field.fid, computation, sortBy, options.keyword]);
 
     useEffect(() => {
         loadData(0);
-    }, []);
+    }, [loadData]);
 
     const data = useMemo(() => {
-        if (!metaData?.valuesMeta.distinctTotal) return [];
-        return loadedPageData.concat(new Array<null>(Math.max(metaData.valuesMeta.distinctTotal - loadedPageData.length, 0)).fill(null));
-    }, [loadedPageData, metaData?.valuesMeta.distinctTotal]);
+        if (!currentMeta?.valuesMeta.distinctTotal) return [];
+        return loadedPageData.concat(new Array<null>(Math.max(currentMeta.valuesMeta.distinctTotal - loadedPageData.length, 0)).fill(null));
+    }, [loadedPageData, currentMeta?.valuesMeta.distinctTotal]);
 
     const currentCount =
         field.rule?.type === 'one of'
@@ -344,7 +365,7 @@ const useVisualCount = (
 
     return {
         total: metaData?.valuesMeta.total,
-        distinctTotal: metaData?.valuesMeta.distinctTotal,
+        distinctTotal: currentMeta?.valuesMeta.distinctTotal,
         currentCount,
         currentSum,
         handleToggleFullOrEmptySet,
@@ -386,8 +407,17 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         }
     }, [active, onChange, field]);
 
+    const [keyword, setKeyword] = useState('');
+
+    const enableKeyword = field.semanticType === 'nominal';
+
+    const searchKeyword = enableKeyword ? keyword || undefined : undefined;
+
     const { currentCount, currentSum, data, distinctTotal, handleSelect, handleToggleFullOrEmptySet, handleToggleReverseSet, loadData, loading } =
-        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields, displayOffset);
+        useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields, {
+            displayOffset,
+            keyword: searchKeyword,
+        });
 
     const parentRef = React.useRef<HTMLDivElement>(null);
 
@@ -397,14 +427,6 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         estimateSize: () => 32,
         overscan: 10,
     });
-
-    if (loading) {
-        return (
-            <div className="h-24 w-full relative">
-                <LoadingLayer />
-            </div>
-        );
-    }
 
     const SortButton: React.FC<{ currentKey: SortConfig['key'] }> = ({ currentKey }) => {
         const isCurrentKey = sortConfig.key === currentKey;
@@ -432,10 +454,26 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
+            {enableKeyword && (
+                <input
+                    type="search"
+                    className="block mb-2 w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
+                    value={keyword}
+                    placeholder="Search Value..."
+                    onChange={(e) => {
+                        setKeyword(e.target.value);
+                    }}
+                />
+            )}
             <Table className="bg-slate-50 dark:bg-gray-800">
                 <TableRow>
                     <div className="flex justify-center items-center">
-                        <StatusCheckbox currentNum={currentCount} totalNum={distinctTotal ?? 0} onChange={handleToggleFullOrEmptySet} />
+                        <StatusCheckbox
+                            disabled={!!searchKeyword}
+                            currentNum={currentCount}
+                            totalNum={distinctTotal ?? 0}
+                            onChange={handleToggleFullOrEmptySet}
+                        />
                     </div>
                     <label className="header text-gray-500 dark:text-gray-300 flex items-center">
                         {t('filters.header.value')}
@@ -447,92 +485,103 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                     </label>
                 </TableRow>
             </Table>
-            {/* <hr /> */}
-            <Table ref={parentRef}>
-                <div
-                    style={{
-                        paddingBottom: `${rowVirtualizer.getTotalSize()}px`,
-                        width: '100%',
-                        position: 'relative',
-                    }}
-                >
-                    {rowVirtualizer.getVirtualItems().map((vItem) => {
-                        const idx = vItem.index;
-                        const item = data?.[idx];
-                        if (!item) {
-                            return (
-                                <TableRow
-                                    key={idx}
-                                    className="animate-pulse"
-                                    style={{
-                                        height: `${vItem.size}px`,
-                                        transform: `translateY(${vItem.start}px)`,
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                    }}
-                                >
-                                    <div className="flex justify-center items-center">
-                                        <div className="h-4 w-4 bg-slate-200 rounded"></div>
-                                    </div>
-                                    <div className="flex justify-left items-center">
-                                        <div className="h-3 w-20 bg-slate-200 rounded"></div>
-                                    </div>
-                                    <div className="flex justify-right items-center">
-                                        <div className="h-3 w-6 bg-slate-200 rounded"></div>
-                                    </div>
-                                    <Effecter
-                                        effect={() => loadData(idx)}
-                                        effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
-                                    />
-                                </TableRow>
-                            );
-                        }
-                        const { value, count } = item;
-                        const id = `rule_checkbox_${idx}`;
-                        const checked =
-                            (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
-                        const displayValue = field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
-                        return (
-                            <TableRow
-                                key={idx}
-                                style={{
-                                    height: `${vItem.size}px`,
-                                    transform: `translateY(${vItem.start}px)`,
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                }}
-                            >
-                                <div className="flex justify-center items-center">
-                                    <input
-                                        type="checkbox"
-                                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                        checked={checked}
-                                        id={id}
-                                        aria-describedby={`${id}_label`}
-                                        title={displayValue}
-                                        onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
-                                    />
-                                </div>
-                                <label id={`${id}_label`} htmlFor={id} title={displayValue}>
-                                    {displayValue}
-                                </label>
-                                <label htmlFor={id}>{count}</label>
-                            </TableRow>
-                        );
-                    })}
+            {loading && (
+                <div className="h-24 w-full relative">
+                    <LoadingLayer />
                 </div>
-            </Table>
-            <Table className="text-gray-600">
-                <TableRow>
-                    <label></label>
-                    <label>{t('filters.selected_keys', { count: currentCount })}</label>
-                    <label>{currentSum}</label>
-                </TableRow>
-            </Table>
+            )}
+            {/* <hr /> */}
+            {!loading && (
+                <>
+                    <Table ref={parentRef}>
+                        <div
+                            style={{
+                                paddingBottom: `${rowVirtualizer.getTotalSize()}px`,
+                                width: '100%',
+                                position: 'relative',
+                            }}
+                        >
+                            {rowVirtualizer.getVirtualItems().map((vItem) => {
+                                const idx = vItem.index;
+                                const item = data?.[idx];
+                                if (!item) {
+                                    return (
+                                        <TableRow
+                                            key={idx}
+                                            className="animate-pulse"
+                                            style={{
+                                                height: `${vItem.size}px`,
+                                                transform: `translateY(${vItem.start}px)`,
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                            }}
+                                        >
+                                            <div className="flex justify-center items-center">
+                                                <div className="h-4 w-4 bg-slate-200 rounded"></div>
+                                            </div>
+                                            <div className="flex justify-left items-center">
+                                                <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                            </div>
+                                            <div className="flex justify-right items-center">
+                                                <div className="h-3 w-6 bg-slate-200 rounded"></div>
+                                            </div>
+                                            <Effecter
+                                                effect={() => loadData(idx)}
+                                                effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
+                                            />
+                                        </TableRow>
+                                    );
+                                }
+                                const { value, count } = item;
+                                const id = `rule_checkbox_${idx}`;
+                                const checked =
+                                    (field.rule?.type === 'one of' && field.rule.value.has(value)) ||
+                                    (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                                const displayValue =
+                                    field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
+                                return (
+                                    <TableRow
+                                        key={idx}
+                                        style={{
+                                            height: `${vItem.size}px`,
+                                            transform: `translateY(${vItem.start}px)`,
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                        }}
+                                    >
+                                        <div className="flex justify-center items-center">
+                                            <input
+                                                type="checkbox"
+                                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                                checked={checked}
+                                                id={id}
+                                                aria-describedby={`${id}_label`}
+                                                title={displayValue}
+                                                onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
+                                            />
+                                        </div>
+                                        <label id={`${id}_label`} htmlFor={id} title={displayValue}>
+                                            {displayValue}
+                                        </label>
+                                        <label htmlFor={id}>{count}</label>
+                                    </TableRow>
+                                );
+                            })}
+                        </div>
+                    </Table>
+                    <Table className="text-gray-600">
+                        <TableRow>
+                            <label></label>
+                            <label>{t('filters.selected_keys', { count: currentCount })}</label>
+                            <label>{currentSum}</label>
+                        </TableRow>
+                    </Table>
+                </>
+            )}
         </Container>
     ) : null;
 };
@@ -688,7 +737,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({
     ) : null;
 };
 
-const filterTabs: Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean }>> = {
+const filterTabs: Partial<Record<IFilterRule['type'], React.FC<RuleFormProps & { active: boolean }>>> = {
     'one of': FilterOneOfRule,
     'not in': FilterOneOfRule,
     range: FilterRangeRule,
@@ -714,7 +763,7 @@ export interface TabsProps extends RuleFormProps {
     tabs: IFilterRule['type'][];
 }
 
-const getType = (type?: 'range' | 'temporal range' | 'one of' | 'not in') => {
+const getType = (type?: 'range' | 'temporal range' | 'one of' | 'not in' | 'like') => {
     if (type === 'not in') {
         return 'one of';
     }
@@ -758,6 +807,7 @@ const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs, displayOf
             <TabPanel>
                 {tabs.map((tab, i) => {
                     const Component = filterTabs[tab];
+                    if (!Component) return null;
 
                     return (
                         <TabItem

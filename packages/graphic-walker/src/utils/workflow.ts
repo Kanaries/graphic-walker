@@ -139,6 +139,14 @@ export const toWorkflow = (
                     value: range,
                 },
             };
+        } else if (rule.type === 'like') {
+            return {
+                fid,
+                rule: {
+                    type: 'like',
+                    value: rule.value,
+                },
+            };
         } else {
             const neverRule: never = rule;
             console.error('unknown rule', neverRule);

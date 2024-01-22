@@ -325,6 +325,10 @@ export type IFilterRule =
     | {
           type: 'not in';
           value: Set<string | number>;
+      }
+    | {
+          type: 'like';
+          value: string;
       };
 
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
