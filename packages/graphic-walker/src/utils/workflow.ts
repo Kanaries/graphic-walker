@@ -364,14 +364,14 @@ export const processExpression = (exp: IExpression, allFields: IMutField[], conf
             ],
         };
     }
-    if (isNotEmpty(config.timezoneDisplayOffset) && (exp.op === 'dateTimeDrill' || exp.op === 'dateTimeFeature')) {
+    if (exp.op === 'dateTimeDrill' || exp.op === 'dateTimeFeature') {
         return {
             ...exp,
             params: [
                 ...exp.params,
                 {
                     type: 'displayOffset',
-                    value: config.timezoneDisplayOffset,
+                    value: config.timezoneDisplayOffset ?? new Date().getTimezoneOffset(),
                 },
             ],
         };

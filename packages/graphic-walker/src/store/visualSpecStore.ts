@@ -39,6 +39,7 @@ import {
     IChartForExport,
     IPaintMap,
     IPaintMapV2,
+    IDefaultConfig,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
@@ -103,6 +104,7 @@ export class VizSpecStore {
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = '';
     editingComputedFieldFid: string | undefined = undefined;
+    defaultConfig: IDefaultConfig | undefined;
 
     private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -111,11 +113,13 @@ export class VizSpecStore {
         options?: {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            defaultConfig?: IDefaultConfig
         }
     ) {
         this.meta = meta;
-        this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1')];
+        this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1', options?.defaultConfig)];
         this.createdVis = this.visList.length;
+        this.defaultConfig = options?.defaultConfig;
         this.onMetaChange = options?.onMetaChange;
         makeAutoObservable(this, {
             visList: observable.shallow,
@@ -326,14 +330,18 @@ export class VizSpecStore {
         this.onMetaChange = onMetaChange;
     }
 
+    setDefaultConfig(defaultConfig?: IDefaultConfig) {
+        this.defaultConfig = defaultConfig;
+    }
+
     resetVisualization(name = 'Chart 1') {
-        this.visList = [fromFields(this.meta, name)];
+        this.visList = [fromFields(this.meta, name, this.defaultConfig)];
         this.createdVis = 1;
     }
 
     addVisualization(defaultName?: string | ((index: number) => string)) {
         const name = defaultName ? (typeof defaultName === 'function' ? defaultName(this.createdVis + 1) : defaultName) : 'Chart ' + (this.createdVis + 1);
-        this.visList.push(fromFields(this.meta, name));
+        this.visList.push(fromFields(this.meta, name, this.defaultConfig));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }

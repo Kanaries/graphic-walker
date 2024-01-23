@@ -59,7 +59,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     );
 
     const metas = toJS(vizStore.meta);
-    
+
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
@@ -101,7 +101,13 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={props.onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
+            <VizStoreWrapper
+                onMetaChange={props.onMetaChange}
+                meta={safeMetas}
+                keepAlive={props.keepAlive}
+                storeRef={props.storeRef}
+                defaultConfig={props.defaultConfig}
+            >
                 <TableApp
                     darkMode={darkMode}
                     i18nLang={props.i18nLang}

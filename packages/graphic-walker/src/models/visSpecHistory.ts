@@ -20,6 +20,7 @@ import {
     IFilterField,
     IField,
     IPaintMapV2,
+    IDefaultConfig,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields, isNotEmpty } from '../utils';
@@ -551,21 +552,21 @@ export function decodeVisSpec(snapshot: Partial<IChartForExport>): PartialChart 
         };
     });
 }
-function emptyChart(visId: string, name: string): IChart {
+function emptyChart(visId: string, name: string, defaultConfig?: IDefaultConfig): IChart {
     return {
-        config: emptyVisualConfig,
+        config: defaultConfig?.config ? { ...emptyVisualConfig, ...defaultConfig.config } : emptyVisualConfig,
         encodings: emptyEncodings,
-        layout: emptyVisualLayout,
+        layout: defaultConfig?.layout ? { ...emptyVisualLayout, ...defaultConfig.layout } : emptyVisualLayout,
         visId: visId,
         name,
     };
 }
-export function newChart(fields: IMutField[], name: string, visId?: string): IChart {
-    if (fields.length === 0) return emptyChart(visId || uniqueId(), name);
+export function newChart(fields: IMutField[], name: string, visId?: string, defaultConfig?: IDefaultConfig): IChart {
+    if (fields.length === 0) return emptyChart(visId || uniqueId(), name, defaultConfig);
     const extraFields = [createCountField(), ...createVirtualFields()];
     const extraDimensions = extraFields.filter((x) => x.analyticType === 'dimension');
     const extraMeasures = extraFields.filter((x) => x.analyticType === 'measure');
-    return mutPath(emptyChart(visId || uniqueId(), name), 'encodings', (e) => ({
+    return mutPath(emptyChart(visId || uniqueId(), name, defaultConfig), 'encodings', (e) => ({
         ...e,
         dimensions: fields
             .filter((f) => f.analyticType === 'dimension')
@@ -577,7 +578,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     basename: f.basename || f.name || f.fid,
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
-                    offset: f.offset
+                    offset: f.offset,
                 })
             )
             .concat(extraDimensions),
@@ -592,7 +593,7 @@ export function newChart(fields: IMutField[], name: string, visId?: string): ICh
                     analyticType: f.analyticType,
                     semanticType: f.semanticType,
                     aggName: 'sum',
-                    offset: f.offset
+                    offset: f.offset,
                 })
             )
             .concat(extraMeasures),
@@ -621,8 +622,8 @@ export function fillChart(chart: PartialChart): IChart {
 export function fromSnapshot(snapshot: PartialChart): VisSpecWithHistory {
     return create(fillChart(snapshot));
 }
-export function fromFields(fields: IMutField[], name: string): VisSpecWithHistory {
-    return create(newChart(fields, name));
+export function fromFields(fields: IMutField[], name: string, defaultConfig?: IDefaultConfig): VisSpecWithHistory {
+    return create(newChart(fields, name, undefined, defaultConfig));
 }
 type VisSpecHistoryInfoForExport = {
     base: Partial<IChartForExport>;

@@ -894,11 +894,17 @@ export interface IExperimentalFeatures {
     computedField?: boolean;
 }
 
+export interface IDefaultConfig {
+    config?: Partial<IVisualConfigNew>,
+    layout?: Partial<IVisualLayout>
+}
+
 export interface IVizStoreProps {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
     rawFields: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    defaultConfig?: IDefaultConfig;
 }
 
 export interface ILocalComputationProps {
