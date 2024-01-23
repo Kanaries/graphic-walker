@@ -100,6 +100,7 @@ export const dataQuery = async (service: IComputationFunction, workflow: IDataQu
     return res;
 };
 
+// TODO: refactor this function
 export const fieldStat = async (
     service: IComputationFunction,
     field: IField,
