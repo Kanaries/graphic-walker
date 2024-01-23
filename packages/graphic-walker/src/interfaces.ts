@@ -327,9 +327,17 @@ export type IFilterRule =
           value: Set<string | number>;
       }
     | {
-          type: 'like';
+          type: 'regexp';
           value: string;
+          caseSensitive?: boolean;
       };
+
+export interface IKeyWord {
+    value: string;
+    caseSenstive: boolean;
+    word: boolean;
+    regexp: boolean;
+}
 
 export type IStackMode = 'none' | 'stack' | 'normalize' | 'zero' | 'center';
 

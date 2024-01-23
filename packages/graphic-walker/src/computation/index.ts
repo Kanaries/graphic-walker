@@ -6,6 +6,7 @@ import type {
     IField,
     IFieldStats,
     IFilterWorkflowStep,
+    IKeyWord,
     IMutField,
     IRow,
     ISortWorkflowStep,
@@ -16,7 +17,7 @@ import type {
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
 import { processExpression } from '../utils/workflow';
-import { isNotEmpty } from '../utils';
+import { isNotEmpty, parseKeyword } from '../utils';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -113,7 +114,7 @@ export const fieldStat = async (
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
         timezoneDisplayOffset?: number;
-        keyword?: string;
+        keyword?: IKeyWord;
     },
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
@@ -122,11 +123,12 @@ export const fieldStat = async (
     const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
     const MIN_ID = `min_${field.fid}`;
     const MAX_ID = `max_${field.fid}`;
-    const filterWork: IFilterWorkflowStep[] = isNotEmpty(keyword)
+    const k = isNotEmpty(keyword) ? parseKeyword(keyword) : undefined;
+    const filterWork: IFilterWorkflowStep[] = k
         ? [
               {
                   type: 'filter',
-                  filters: [{ fid: field.fid, rule: { type: 'like', value: `%${keyword}%` } }],
+                  filters: [{ fid: field.fid, rule: { type: 'regexp', value: k.source, caseSensitive: !k.ignoreCase } }],
               },
           ]
         : [];

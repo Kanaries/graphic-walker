@@ -707,6 +707,18 @@ function exprSQL(item: parser.Expr, datas: IRow[] | Record<string, any[]>): (str
                     case 'AND':
                         op = (x, y) => x && y;
                         break;
+                    case '~':
+                        op = (x, y) => new RegExp(y).test(x);
+                        break;
+                    case '~*':
+                        op = (x, y) => new RegExp(y, 'i').test(x);
+                        break;
+                    case '!~':
+                        op = (x, y) => !new RegExp(y).test(x);
+                        break;
+                    case '!~*':
+                        op = (x, y) => !new RegExp(y, 'i').test(x);
+                        break;
                     default:
                         throw new Error(`unsupport op ${i.op}, calculating ${parser.toSql.expr(i)}`);
                 }

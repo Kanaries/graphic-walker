@@ -41,8 +41,8 @@ export const filter = (dataSource: IRow[], filters: IFilterFiledSimple[]) => {
                         return false;
                     }
                 }
-                case 'like': {
-                    if (new RegExp(`^${rule.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/%/g, '.*')}$`).test(which[fid])) {
+                case 'regexp': {
+                    if (new RegExp(rule.value, rule.caseSensitive ? '' : 'i').test(which[fid])) {
                         break;
                     } else {
                         return false;

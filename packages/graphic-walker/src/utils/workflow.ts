@@ -139,12 +139,13 @@ export const toWorkflow = (
                     value: range,
                 },
             };
-        } else if (rule.type === 'like') {
+        } else if (rule.type === 'regexp') {
             return {
                 fid,
                 rule: {
-                    type: 'like',
+                    type: 'regexp',
                     value: rule.value,
+                    caseSensitive: rule.caseSensitive,
                 },
             };
         } else {

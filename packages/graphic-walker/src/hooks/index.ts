@@ -1,29 +1,69 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useState, useEffect, useRef } from 'react';
 
-export function useDebounceValue<T>(value: T, timeout = 200): T {
-    const [innerValue, setInnerValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => setInnerValue(value), timeout);
-        return () => clearTimeout(handler);
-    }, [value]);
-    return innerValue;
+export function createStreamedValueHook(wrapper: <T>(emitter: (v: T) => void) => (v: T) => void) {
+    return function useStreamedValue<T>(value: T) {
+        const [innerValue, setInnerValue] = useState(value);
+        const setter = useCallback(wrapper(setInnerValue), []);
+        useEffect(() => setter(value), [value]);
+        return innerValue;
+    };
 }
 
-export function useDebounceValueBind<T>(value: T, setter: (v: T) => void, timeout = 200): [T, (v: T) => void] {
-    const [innerValue, setInnerValue] = useState(value);
-    const valueToSet = useDebounceValue(innerValue, timeout);
-    const first = useRef(true);
-    useEffect(() => setInnerValue(value), [value]);
-    useEffect(() => {
-        if (first.current) {
-            first.current = false;
-        } else {
-            setter(valueToSet);
-        }
-    }, [valueToSet]);
-    return [innerValue, setInnerValue];
+export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void) => (v: T) => void) {
+    const useStreamedValue = createStreamedValueHook(wrapper);
+    return function useStreamedValueBind<T>(value: T, setter: (v: T) => void): [T, React.Dispatch<React.SetStateAction<T>>] {
+        const [innerValue, setInnerValue] = useState(value);
+        const valueToSet = useStreamedValue(innerValue);
+        const first = useRef(true);
+        useEffect(() => setInnerValue(value), [value]);
+        useEffect(() => {
+            if (first.current) {
+                first.current = false;
+            } else {
+                setter(valueToSet);
+            }
+        }, [valueToSet]);
+        return [innerValue, setInnerValue];
+    };
 }
+
+function debouce(timeout = 200, leading = false) {
+    return <T>(emitter: (v: T) => void): ((v: T) => void) => {
+        const disposer = { current: null as (() => void) | null };
+        let leadingFired = false;
+        return (v) => {
+            disposer.current?.();
+            if (leading && disposer.current === null) {
+                emitter(v);
+                leadingFired = true;
+            } else {
+                leadingFired = false;
+            }
+            const handler = setTimeout(() => {
+                if (leadingFired) {
+                    disposer.current = null;
+                } else {
+                    emitter(v);
+                    // clean dispoer after timeout so leading won't fire when trailing just fired.
+                    const disposerToClean = disposer.current;
+                    setTimeout(() => {
+                        if (disposerToClean === disposer.current) {
+                            disposer.current = null;
+                        }
+                    }, timeout);
+                }
+            }, timeout);
+            disposer.current = () => {
+                clearTimeout(handler);
+            };
+        };
+    };
+}
+
+export const useKeyWord = createStreamedValueHook(debouce(200, true));
+export const useDebounceValueBind = createStreamedValueBindHook(debouce());
+
 /**
  * hook of state that change of value will change innerValue inplace, make reduced re-render.
  * @param value the Value to control
