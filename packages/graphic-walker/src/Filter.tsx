@@ -55,6 +55,7 @@ export const FilterApp = observer(function VizApp(props: BaseVizProps) {
         computationTimeout = 60000,
         spec,
         vlSpec,
+        chart,
         onError,
     } = props;
 
@@ -86,6 +87,12 @@ export const FilterApp = observer(function VizApp(props: BaseVizProps) {
             vizStore.replaceNow(renderSpec(spec, vizStore.meta, vizStore.currentVis.name ?? 'Chart 1', vizStore.currentVis.visId));
         }
     }, [spec, vizStore]);
+
+    useEffect(() => {
+        if (chart) {
+            vizStore.importCode(chart);
+        }
+    }, [chart, vizStore]);
 
     useEffect(() => {
         if (vlSpec) {
@@ -256,7 +263,13 @@ const FilterSection = observer(function FilterSection() {
 export function FilterAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
-    const { computation, safeMetas, onMetaChange } = useMemo(() => {
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+
+    const {
+        computation: safeComputation,
+        safeMetas,
+        onMetaChange: safeOnMetaChange,
+    } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
                 const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
@@ -288,29 +301,9 @@ export function FilterAppWithContext(
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
+            <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
                 <FieldsContextWrapper>
-                    <FilterApp
-                        darkMode={darkMode}
-                        enhanceAPI={props.enhanceAPI}
-                        i18nLang={props.i18nLang}
-                        i18nResources={props.i18nResources}
-                        themeKey={props.themeKey}
-                        toolbar={props.toolbar}
-                        computation={computation}
-                        computationTimeout={props.computationTimeout}
-                        channelScales={props.channelScales}
-                        geoList={props.geoList}
-                        geographicData={props.geographicData}
-                        onError={props.onError}
-                        spec={props.spec}
-                        vlSpec={props.vlSpec}
-                        themeConfig={props.themeConfig}
-                        experimentalFeatures={props.experimentalFeatures}
-                        overrideSize={props.overrideSize}
-                        containerClassName={props.containerClassName}
-                        containerStyle={props.containerStyle}
-                    />
+                    <FilterApp {...rest} darkMode={darkMode} computation={safeComputation} />
                 </FieldsContextWrapper>
             </VizStoreWrapper>
         </div>

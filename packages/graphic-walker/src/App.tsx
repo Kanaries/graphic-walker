@@ -59,6 +59,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         geographicData,
         computationTimeout = 60000,
         spec,
+        chart,
         vlSpec,
         onError,
     } = props;
@@ -91,6 +92,12 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             vizStore.replaceNow(renderSpec(spec, vizStore.meta, vizStore.currentVis.name ?? 'Chart 1', vizStore.currentVis.visId));
         }
     }, [spec, vizStore]);
+
+    useEffect(() => {
+        if (chart) {
+            vizStore.importCode(chart);
+        }
+    }, [chart, vizStore]);
 
     useEffect(() => {
         if (vlSpec) {
@@ -233,7 +240,12 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { computation, safeMetas, onMetaChange } = useMemo(() => {
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const {
+        computation: safeComputation,
+        safeMetas,
+        onMetaChange: safeOnMetaChange,
+    } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
                 const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
@@ -265,32 +277,9 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper
-                onMetaChange={onMetaChange}
-                meta={safeMetas}
-                keepAlive={props.keepAlive}
-                storeRef={props.storeRef}
-                defaultConfig={props.defaultConfig}
-            >
+            <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
                 <FieldsContextWrapper>
-                    <VizApp
-                        darkMode={darkMode}
-                        enhanceAPI={props.enhanceAPI}
-                        i18nLang={props.i18nLang}
-                        i18nResources={props.i18nResources}
-                        themeKey={props.themeKey}
-                        toolbar={props.toolbar}
-                        computation={computation}
-                        computationTimeout={props.computationTimeout}
-                        channelScales={props.channelScales}
-                        geoList={props.geoList}
-                        geographicData={props.geographicData}
-                        onError={props.onError}
-                        spec={props.spec}
-                        vlSpec={props.vlSpec}
-                        themeConfig={props.themeConfig}
-                        experimentalFeatures={props.experimentalFeatures}
-                    />
+                    <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
                 </FieldsContextWrapper>
             </VizStoreWrapper>
         </div>

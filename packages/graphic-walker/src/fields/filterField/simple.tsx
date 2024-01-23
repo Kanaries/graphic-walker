@@ -151,12 +151,14 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
             <Popover className="w-full">
                 <Popover.Button className="flex items-center h-8 space-x-2 p-2 rounded border w-full text-left">
                     {field.rule.value.size > 0 && (
-                        <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                            {field.rule.type === 'not in' ? 'exclude: ' : ''}
-                            {Array.from(field.rule.value).slice(0, 3).join(', ')}
+                        <div className="flex flex-1 space-x-2">
+                            <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                {field.rule.type === 'not in' ? 'exclude: ' : ''}
+                                {Array.from(field.rule.value).slice(0, 3).join(', ')}
+                            </div>
+                            {field.rule.value.size > 3 && <div className="flex-shrink-0">+{field.rule.value.size - 3}</div>}
                         </div>
                     )}
-                    {field.rule.value.size > 3 && <div className='flex-shrink-0'>+{field.rule.value.size - 3}</div>}
                     {field.rule.value.size === 0 && (
                         <div className="flex-1 text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
                             {field.rule.type === 'one of' ? 'Select Values...' : 'Select Values to Exclude...'}

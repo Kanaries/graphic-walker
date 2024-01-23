@@ -77,45 +77,45 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
 });
 
 export function TableAppWithContext(props: ITableProps & IComputationProps) {
-    const { computation, safeMetas } = useMemo(() => {
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const {
+        computation: safeComputation,
+        safeMetas,
+        onMetaChange: safeOnMetaChange,
+    } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
                 const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
+                    onMetaChange: (safeFID, meta) => {
+                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
+                        if (index >= 0) {
+                            props.onMetaChange?.(props.rawFields[index].fid, meta);
+                        }
+                    },
                 };
             }
             return {
                 safeMetas: props.rawFields,
                 computation: getComputation(props.dataSource),
+                onMetaChange: props.onMetaChange,
             };
         }
         return {
             safeMetas: props.rawFields,
             computation: props.computation,
+            onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard]);
+    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(props.dark);
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper
-                onMetaChange={props.onMetaChange}
-                meta={safeMetas}
-                keepAlive={props.keepAlive}
-                storeRef={props.storeRef}
-                defaultConfig={props.defaultConfig}
-            >
-                <TableApp
-                    darkMode={darkMode}
-                    i18nLang={props.i18nLang}
-                    i18nResources={props.i18nResources}
-                    computation={computation}
-                    computationTimeout={props.computationTimeout}
-                    onError={props.onError}
-                />
+            <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+                <TableApp darkMode={darkMode} computation={safeComputation} {...rest} />
             </VizStoreWrapper>
         </div>
     );

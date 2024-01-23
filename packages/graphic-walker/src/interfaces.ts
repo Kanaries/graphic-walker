@@ -950,6 +950,7 @@ export type IGWProps = IAppI18nProps &
 export interface ISpecProps {
     spec?: Specification;
     vlSpec?: any;
+    chart?: IChartForExport[] | IVisSpecForExport[];
 }
 
 export interface ITableSpecProps {

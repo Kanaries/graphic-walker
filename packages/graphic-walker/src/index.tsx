@@ -19,6 +19,8 @@ import type {
     IRemoteComputationProps,
     IComputationProps,
     IVisualLayout,
+    IChartForExport,
+    IVisSpecForExport,
 } from './interfaces';
 
 import './empty_sheet.css';
@@ -118,7 +120,7 @@ export const TableWalker = observer(
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
-export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IChart };
+export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IChart, IChartForExport, IVisSpecForExport };
 export { VizSpecStore } from './store/visualSpecStore';
 export { ISegmentKey, ColorSchemes, IDataSourceEventType } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
