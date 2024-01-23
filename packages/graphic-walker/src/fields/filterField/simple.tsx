@@ -151,7 +151,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
             <Popover className="w-full">
                 <Popover.Button className="flex items-center h-8 space-x-2 p-2 rounded border w-full text-left">
                     {field.rule.value.size > 0 && (
-                        <div className="flex flex-1 space-x-2">
+                        <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
                                 {field.rule.type === 'not in' ? 'exclude: ' : ''}
                                 {Array.from(field.rule.value).slice(0, 3).join(', ')}
