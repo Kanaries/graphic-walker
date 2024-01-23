@@ -22,6 +22,7 @@ import type {
 
 import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
+import { FilterAppWithContext } from './Filter';
 
 export type ILocalVizAppProps = IVizAppProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
 export type IRemoteVizAppProps = IVizAppProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
@@ -42,6 +43,32 @@ export const GraphicWalker = observer(
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
                     <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
                         <VizAppWithContext {...props} />
+                    </DOMProvider>
+                </ShadowDom>
+            </AppRoot>
+        );
+    })
+) as {
+    (p: ILocalVizAppProps): JSX.Element;
+    (p: IRemoteVizAppProps): JSX.Element;
+};
+
+export const FilterWalker = observer(
+    forwardRef<IGWHandler, IVizAppProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+        const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
+
+        const handleMount = (shadowRoot: ShadowRoot) => {
+            setShadowRoot(shadowRoot);
+        };
+        const handleUnmount = () => {
+            setShadowRoot(null);
+        };
+
+        return (
+            <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
+                <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                        <FilterAppWithContext {...props} />
                     </DOMProvider>
                 </ShadowDom>
             </AppRoot>
@@ -95,4 +122,3 @@ export * from './dataSourceProvider';
 export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
 export * from './components/filterWalker';
-

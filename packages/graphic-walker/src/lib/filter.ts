@@ -28,8 +28,13 @@ const toFilterFunc = (filter: IFilterFiledSimple): ((row: IRow) => boolean) => {
             };
         }
         case 'regexp': {
-            const regexp = new RegExp(rule.value, rule.caseSensitive ? '' : 'i');
-            return (which) => regexp.test(which[fid]);
+            try {
+                const regexp = new RegExp(rule.value, rule.caseSensitive ? '' : 'i');
+                return (which) => regexp.test(which[fid]);
+            } catch (error) {
+                console.error(error);
+                return () => false;
+            }
         }
         default: {
             console.warn('Unresolvable filter rule', rule);

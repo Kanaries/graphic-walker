@@ -9,6 +9,7 @@ import {
     importFull,
     importNow,
     newChart,
+    parseChart,
     performers,
     redo,
     undo,
@@ -572,7 +573,7 @@ export class VizSpecStore {
     }
 
     appendFromCode(data: IVisSpecForExport | IChartForExport) {
-        const newChart = 'layout' in data ? importNow(data) : fromSnapshot(convertChart(visSpecDecoder(forwardVisualConfigs(data))));
+        const newChart = fromSnapshot(parseChart(data));
         this.visList.push(newChart);
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;

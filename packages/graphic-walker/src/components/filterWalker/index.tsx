@@ -13,6 +13,7 @@ type domains = rangeValue | temporalRangeValue | string[];
 export interface FilterConfig {
     fid: string;
     mode: 'single' | 'multi' | 'range';
+    defaultValue?: string | string[] | [number, number];
 }
 
 export interface SingleProps {
@@ -96,7 +97,7 @@ export function createFilterContext(components: {
                 configs.flatMap((x) => {
                     const f = rawFields.find((a) => a.fid === x.fid);
                     if (!f) return [];
-                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset }];
+                    return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset, defaultValue: x.defaultValue }];
                 }),
             [configs, rawFields]
         );
@@ -136,6 +137,9 @@ export function createFilterContext(components: {
                 const domains = await Promise.all(domainsP);
                 const values = fields.map((x, i) => {
                     const k = `${x.mode}__${x.fid}__${isNominalType(x.type) ? 'n' : 'q'}`;
+                    if (x.defaultValue) {
+                        return x.defaultValue instanceof Array ? x.defaultValue : [x.defaultValue];
+                    }
                     if (valuesRef.current.has(k)) {
                         return valuesRef.current.get(k)!;
                     }
