@@ -1,29 +1,37 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useState, useEffect, useRef } from 'react';
+import debounce from 'lodash-es/debounce';
 
-export function useDebounceValue<T>(value: T, timeout = 200): T {
-    const [innerValue, setInnerValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => setInnerValue(value), timeout);
-        return () => clearTimeout(handler);
-    }, [value]);
-    return innerValue;
+export function createStreamedValueHook(wrapper: <T>(emitter: (v: T) => void) => (v: T) => void) {
+    return function useStreamedValue<T>(value: T) {
+        const [innerValue, setInnerValue] = useState(value);
+        const setter = useCallback(wrapper(setInnerValue), []);
+        useEffect(() => setter(value), [value]);
+        return innerValue;
+    };
 }
 
-export function useDebounceValueBind<T>(value: T, setter: (v: T) => void, timeout = 200): [T, (v: T) => void] {
-    const [innerValue, setInnerValue] = useState(value);
-    const valueToSet = useDebounceValue(innerValue, timeout);
-    const first = useRef(true);
-    useEffect(() => setInnerValue(value), [value]);
-    useEffect(() => {
-        if (first.current) {
-            first.current = false;
-        } else {
-            setter(valueToSet);
-        }
-    }, [valueToSet]);
-    return [innerValue, setInnerValue];
+export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void) => (v: T) => void) {
+    const useStreamedValue = createStreamedValueHook(wrapper);
+    return function useStreamedValueBind<T>(value: T, setter: (v: T) => void): [T, React.Dispatch<React.SetStateAction<T>>] {
+        const [innerValue, setInnerValue] = useState(value);
+        const valueToSet = useStreamedValue(innerValue);
+        const first = useRef(true);
+        useEffect(() => setInnerValue(value), [value]);
+        useEffect(() => {
+            if (first.current) {
+                first.current = false;
+            } else {
+                setter(valueToSet);
+            }
+        }, [valueToSet, setter]);
+        return [innerValue, setInnerValue];
+    };
 }
+
+export const useKeyWord = createStreamedValueHook((f) => debounce(f, 200, { leading: true, trailing: true }));
+export const useDebounceValueBind = createStreamedValueBindHook((f) => debounce(f, 200));
+
 /**
  * hook of state that change of value will change innerValue inplace, make reduced re-render.
  * @param value the Value to control

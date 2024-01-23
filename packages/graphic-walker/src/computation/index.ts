@@ -6,6 +6,7 @@ import type {
     IField,
     IFieldStats,
     IFilterWorkflowStep,
+    IKeyWord,
     IMutField,
     IRow,
     ISortWorkflowStep,
@@ -16,6 +17,7 @@ import type {
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
 import { processExpression } from '../utils/workflow';
+import { isNotEmpty, parseKeyword } from '../utils';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -99,6 +101,7 @@ export const dataQuery = async (service: IComputationFunction, workflow: IDataQu
     return res;
 };
 
+// TODO: refactor this function
 export const fieldStat = async (
     service: IComputationFunction,
     field: IField,
@@ -111,14 +114,24 @@ export const fieldStat = async (
         valuesOffset?: number;
         sortBy?: 'value' | 'value_dsc' | 'count' | 'count_dsc' | 'none';
         timezoneDisplayOffset?: number;
+        keyword?: IKeyWord;
     },
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
-    const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset } = options;
+    const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset, keyword } = options;
     const COUNT_ID = `count_${field.fid}`;
     const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
     const MIN_ID = `min_${field.fid}`;
     const MAX_ID = `max_${field.fid}`;
+    const k = isNotEmpty(keyword) ? parseKeyword(keyword) : undefined;
+    const filterWork: IFilterWorkflowStep[] = k
+        ? [
+              {
+                  type: 'filter',
+                  filters: [{ fid: field.fid, rule: { type: 'regexp', value: k.source, caseSensitive: !k.ignoreCase } }],
+              },
+          ]
+        : [];
     const transformWork: ITransformWorkflowStep[] = field.computed
         ? [
               {
@@ -135,6 +148,7 @@ export const fieldStat = async (
     const valuesMetaQueryPayload: IDataQueryPayload = {
         workflow: [
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -177,6 +191,7 @@ export const fieldStat = async (
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -211,6 +226,7 @@ export const fieldStat = async (
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -252,6 +268,7 @@ export const fieldStat = async (
         ? {
               workflow: [
                   ...transformWork,
+                  ...filterWork,
                   {
                       type: 'filter',
                       filters: [

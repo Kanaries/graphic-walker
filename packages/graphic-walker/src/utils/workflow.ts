@@ -139,6 +139,15 @@ export const toWorkflow = (
                     value: range,
                 },
             };
+        } else if (rule.type === 'regexp') {
+            return {
+                fid,
+                rule: {
+                    type: 'regexp',
+                    value: rule.value,
+                    caseSensitive: rule.caseSensitive,
+                },
+            };
         } else {
             const neverRule: never = rule;
             console.error('unknown rule', neverRule);

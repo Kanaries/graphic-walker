@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord } from '../interfaces';
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -360,3 +360,13 @@ export const formatDate = (date: Date) => {
 export const isNotEmpty = <T>(x: T | undefined | null): x is T => {
     return x !== undefined && x !== null;
 };
+export function parseKeyword(keyword: IKeyWord): RegExp {
+    let source = keyword.value;
+    if (!keyword.regexp) {
+        source = source.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    }
+    if (keyword.word) {
+        source = `\\b${source}\\b`;
+    }
+    return new RegExp(source, keyword.caseSenstive ? '' : 'i');
+}
