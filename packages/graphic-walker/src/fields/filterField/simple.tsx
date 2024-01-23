@@ -150,17 +150,18 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
             <label>{field.name}:</label>
             <Popover className="w-full">
                 <Popover.Button className="flex items-center h-8 space-x-2 p-2 rounded border w-full text-left">
-                    <div className="flex-1">
-                        {field.rule.value.size > 0 && (
-                            <>
-                                {field.rule.type === 'not in' ? 'exclude: ' : ''}
-                                {Array.from(field.rule.value).slice(0, 3).join(', ') + (field.rule.value.size > 3 ? ` +${field.rule.value.size - 3}` : '')}
-                            </>
-                        )}
-                        {field.rule.value.size === 0 && (
-                            <span className="text-gray-400">{field.rule.type === 'one of' ? 'Select Values...' : 'Select Values to Exclude...'}</span>
-                        )}
-                    </div>
+                    {field.rule.value.size > 0 && (
+                        <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                            {field.rule.type === 'not in' ? 'exclude: ' : ''}
+                            {Array.from(field.rule.value).slice(0, 3).join(', ')}
+                        </div>
+                    )}
+                    {field.rule.value.size > 3 && <div className='flex-shrink-0'>+{field.rule.value.size - 3}</div>}
+                    {field.rule.value.size === 0 && (
+                        <div className="flex-1 text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
+                            {field.rule.type === 'one of' ? 'Select Values...' : 'Select Values to Exclude...'}
+                        </div>
+                    )}
                     <span>
                         <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </span>

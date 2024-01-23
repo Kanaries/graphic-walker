@@ -18,6 +18,7 @@ import type {
     ILocalComputationProps,
     IRemoteComputationProps,
     IComputationProps,
+    IVisualLayout,
 } from './interfaces';
 
 import './empty_sheet.css';
@@ -53,8 +54,14 @@ export const GraphicWalker = observer(
     (p: IRemoteVizAppProps): JSX.Element;
 };
 
+export type IFilterWalkerProps = {
+    containerClassName?: string;
+    containerStyle?: React.CSSProperties;
+    overrideSize?: IVisualLayout['size'];
+};
+
 export const FilterWalker = observer(
-    forwardRef<IGWHandler, IVizAppProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+    forwardRef<IGWHandler, IVizAppProps & IFilterWalkerProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
@@ -75,8 +82,8 @@ export const FilterWalker = observer(
         );
     })
 ) as {
-    (p: ILocalVizAppProps): JSX.Element;
-    (p: IRemoteVizAppProps): JSX.Element;
+    (p: ILocalVizAppProps & IFilterWalkerProps): JSX.Element;
+    (p: IRemoteVizAppProps & IFilterWalkerProps): JSX.Element;
 };
 
 export type ILocalTableProps = ITableProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;

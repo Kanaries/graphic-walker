@@ -12,8 +12,8 @@ import {
     IComputationFunction,
     IFilterRule,
     IFilterField,
+    IVisualLayout,
 } from './interfaces';
-import type { IReactVegaHandler } from './vis/react-vega';
 import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
@@ -32,12 +32,15 @@ import { SimpleOneOfSelector, SimpleRange, SimpleSearcher, SimpleTemporalRange }
 import { toWorkflow } from './utils/workflow';
 import { useResizeDetector } from 'react-resize-detector';
 
-export type BaseVizProps = IAppI18nProps &
+type BaseVizProps = IAppI18nProps &
     IVizProps &
     IErrorHandlerProps &
     ISpecProps &
     IComputationContextProps & {
         darkMode?: 'light' | 'dark';
+        overrideSize?: IVisualLayout['size'];
+        containerClassName?: string;
+        containerStyle?: React.CSSProperties;
     };
 
 export const FilterApp = observer(function VizApp(props: BaseVizProps) {
@@ -98,10 +101,6 @@ export const FilterApp = observer(function VizApp(props: BaseVizProps) {
         }
     }, [vlSpec, vizStore]);
 
-    const rendererRef = useRef<IReactVegaHandler>(null);
-
-    const downloadCSVRef = useRef<{ download: () => void }>({ download() {} });
-
     const reportError = useCallback(
         (msg: string, code?: number) => {
             const err = new Error(`Error${code ? `(${code})` : ''}: ${msg}`);
@@ -118,6 +117,7 @@ export const FilterApp = observer(function VizApp(props: BaseVizProps) {
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
+
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
@@ -126,17 +126,18 @@ export const FilterApp = observer(function VizApp(props: BaseVizProps) {
                         <div className="flex flex-col space-y-2 bg-white dark:bg-zinc-900 dark:text-white">
                             <Errorpanel />
                             <FilterSection />
-                            {computation && (
-                                <ReactiveRenderer
-                                    csvRef={downloadCSVRef}
-                                    ref={rendererRef}
-                                    themeKey={themeKey}
-                                    dark={darkMode}
-                                    themeConfig={themeConfig}
-                                    computationFunction={wrappedComputation}
-                                    channelScales={props.channelScales}
-                                />
-                            )}
+                            <div className={props.containerClassName} style={props.containerStyle}>
+                                {computation && (
+                                    <ReactiveRenderer
+                                        themeKey={themeKey}
+                                        dark={darkMode}
+                                        themeConfig={themeConfig}
+                                        computationFunction={wrappedComputation}
+                                        channelScales={props.channelScales}
+                                        overrideSize={props.overrideSize}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </ComputationContext.Provider>
@@ -252,7 +253,9 @@ const FilterSection = observer(function FilterSection() {
     );
 });
 
-export function FilterAppWithContext(props: IVizAppProps & IComputationProps) {
+export function FilterAppWithContext(
+    props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
+) {
     const { computation, safeMetas, onMetaChange } = useMemo(() => {
         if (props.dataSource) {
             if (props.fieldKeyGuard) {
@@ -304,6 +307,9 @@ export function FilterAppWithContext(props: IVizAppProps & IComputationProps) {
                         vlSpec={props.vlSpec}
                         themeConfig={props.themeConfig}
                         experimentalFeatures={props.experimentalFeatures}
+                        overrideSize={props.overrideSize}
+                        containerClassName={props.containerClassName}
+                        containerStyle={props.containerStyle}
                     />
                 </FieldsContextWrapper>
             </VizStoreWrapper>
