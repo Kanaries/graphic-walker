@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useState, useEffect, useRef } from 'react';
+import debounce from 'lodash-es/debounce';
 
 export function createStreamedValueHook(wrapper: <T>(emitter: (v: T) => void) => (v: T) => void) {
     return function useStreamedValue<T>(value: T) {
@@ -23,46 +24,13 @@ export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void
             } else {
                 setter(valueToSet);
             }
-        }, [valueToSet]);
+        }, [valueToSet, setter]);
         return [innerValue, setInnerValue];
     };
 }
 
-function debouce(timeout = 200, leading = false) {
-    return <T>(emitter: (v: T) => void): ((v: T) => void) => {
-        const disposer = { current: null as (() => void) | null };
-        let leadingFired = false;
-        return (v) => {
-            disposer.current?.();
-            if (leading && disposer.current === null) {
-                emitter(v);
-                leadingFired = true;
-            } else {
-                leadingFired = false;
-            }
-            const handler = setTimeout(() => {
-                if (leadingFired) {
-                    disposer.current = null;
-                } else {
-                    emitter(v);
-                    // clean dispoer after timeout so leading won't fire when trailing just fired.
-                    const disposerToClean = disposer.current;
-                    setTimeout(() => {
-                        if (disposerToClean === disposer.current) {
-                            disposer.current = null;
-                        }
-                    }, timeout);
-                }
-            }, timeout);
-            disposer.current = () => {
-                clearTimeout(handler);
-            };
-        };
-    };
-}
-
-export const useKeyWord = createStreamedValueHook(debouce(200, true));
-export const useDebounceValueBind = createStreamedValueBindHook(debouce());
+export const useKeyWord = createStreamedValueHook((f) => debounce(f, 200, { leading: true, trailing: true }));
+export const useDebounceValueBind = createStreamedValueBindHook((f) => debounce(f, 200));
 
 /**
  * hook of state that change of value will change innerValue inplace, make reduced re-render.

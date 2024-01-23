@@ -147,8 +147,8 @@ export const fieldStat = async (
         : [];
     const valuesMetaQueryPayload: IDataQueryPayload = {
         workflow: [
-            ...filterWork,
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -190,8 +190,8 @@ export const fieldStat = async (
     };
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
-            ...filterWork,
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -225,8 +225,8 @@ export const fieldStat = async (
     const valuesRes = values ? await service(valuesQueryPayload) : [];
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
-            ...filterWork,
             ...transformWork,
+            ...filterWork,
             {
                 type: 'view',
                 query: [
@@ -267,8 +267,8 @@ export const fieldStat = async (
     const selectedCountWork: IDataQueryPayload | null = options.selectedCount?.size
         ? {
               workflow: [
-                  ...filterWork,
                   ...transformWork,
+                  ...filterWork,
                   {
                       type: 'filter',
                       filters: [
