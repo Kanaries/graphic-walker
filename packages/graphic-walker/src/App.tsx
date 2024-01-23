@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IRemoteComputationProps, IComputationProps } from './interfaces';
+import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps } from './interfaces';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -265,7 +265,13 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
 
     return (
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={onMetaChange} meta={safeMetas} keepAlive={props.keepAlive} storeRef={props.storeRef}>
+            <VizStoreWrapper
+                onMetaChange={onMetaChange}
+                meta={safeMetas}
+                keepAlive={props.keepAlive}
+                storeRef={props.storeRef}
+                defaultConfig={props.defaultConfig}
+            >
                 <FieldsContextWrapper>
                     <VizApp
                         darkMode={darkMode}

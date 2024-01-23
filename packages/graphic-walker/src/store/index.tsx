@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IMutField, IRow } from '../interfaces';
+import { IComputationFunction, IDefaultConfig, IMutField, IRow } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -20,6 +20,7 @@ const getVizStore = createKeepAliveContext(
         opts?: {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            defaultConfig?: IDefaultConfig;
         }
     ) => new VizSpecStore(meta, opts)
 );
@@ -34,11 +35,12 @@ interface VizStoreWrapperProps {
     children?: React.ReactNode;
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    defaultConfig?: IDefaultConfig;
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
-    const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange }), [storeKey]);
+    const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig: props.defaultConfig }), [storeKey]);
     const lastMeta = useRef(props.meta);
     useEffect(() => {
         if (lastMeta.current !== props.meta) {
@@ -53,6 +55,14 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
             lastOnMetaChange.current = props.onMetaChange;
         }
     }, [props.meta, store]);
+
+    const lastDefaultConfig = useRef(props.defaultConfig);
+    useEffect(() => {
+        if (lastDefaultConfig.current !== props.defaultConfig) {
+            store.setDefaultConfig(props.defaultConfig);
+            lastDefaultConfig.current = props.defaultConfig;
+        }
+    }, [props.defaultConfig, store]);
 
     useEffect(() => {
         if (props.storeRef) {
