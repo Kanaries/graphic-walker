@@ -18,10 +18,14 @@ import type {
     ILocalComputationProps,
     IRemoteComputationProps,
     IComputationProps,
+    IVisualLayout,
+    IChartForExport,
+    IVisSpecForExport,
 } from './interfaces';
 
 import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
+import { RendererAppWithContext } from './Renderer';
 
 export type ILocalVizAppProps = IVizAppProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
 export type IRemoteVizAppProps = IVizAppProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
@@ -50,6 +54,38 @@ export const GraphicWalker = observer(
 ) as {
     (p: ILocalVizAppProps): JSX.Element;
     (p: IRemoteVizAppProps): JSX.Element;
+};
+
+export type IRendererProps = {
+    containerClassName?: string;
+    containerStyle?: React.CSSProperties;
+    overrideSize?: IVisualLayout['size'];
+};
+
+export const GraphicRenderer = observer(
+    forwardRef<IGWHandler, IVizAppProps & IRendererProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+        const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
+
+        const handleMount = (shadowRoot: ShadowRoot) => {
+            setShadowRoot(shadowRoot);
+        };
+        const handleUnmount = () => {
+            setShadowRoot(null);
+        };
+
+        return (
+            <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
+                <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                        <RendererAppWithContext {...props} />
+                    </DOMProvider>
+                </ShadowDom>
+            </AppRoot>
+        );
+    })
+) as {
+    (p: ILocalVizAppProps & IRendererProps): JSX.Element;
+    (p: IRemoteVizAppProps & IRendererProps): JSX.Element;
 };
 
 export type ILocalTableProps = ITableProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
@@ -84,7 +120,7 @@ export const TableWalker = observer(
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
 export { embedGraphicWalker } from './vanilla';
-export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IChart };
+export type { IGWProps, ITableProps, IVizAppProps, IDataSourceProvider, IMutField, IRow, IDataSourceListener, IChart, IChartForExport, IVisSpecForExport };
 export { VizSpecStore } from './store/visualSpecStore';
 export { ISegmentKey, ColorSchemes, IDataSourceEventType } from './interfaces';
 export { resolveChart, convertChart } from './models/visSpecHistory';
@@ -95,4 +131,3 @@ export * from './dataSourceProvider';
 export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
 export * from './components/filterWalker';
-

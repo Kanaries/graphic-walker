@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, forwardRef, useRef, useCallback } from 'react';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales, IViewField } from '../interfaces';
+import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo } from 'react';
+import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales, IViewField, IVisualLayout } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction } from 'mobx';
@@ -26,13 +26,14 @@ interface RendererProps {
     computationFunction: IComputationFunction;
     channelScales?: IChannelScales;
     csvRef?: React.MutableRefObject<{ download: () => void }>;
+    overrideSize?: IVisualLayout['size'];
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationFunction, themeConfig, csvRef } = props;
+    const { themeKey, dark, computationFunction, themeConfig, csvRef, overrideSize } = props;
     const vizStore = useVizStore();
     const {
         allFields,
@@ -47,6 +48,15 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         sort,
         limit,
     } = vizStore;
+
+    const visualLayout = useMemo(
+        () => ({
+            ...layout,
+            ...(overrideSize ? { size: overrideSize } : {}),
+        }),
+        [layout, overrideSize]
+    );
+
 
     const draggableFieldState = chart.encodings;
 
@@ -168,8 +178,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
     const isSpatial = viewConfig.coordSystem === 'geographic';
 
-    const sizeRef = useRef(layout.size);
-    sizeRef.current = layout.size;
+    const sizeRef = useRef(visualLayout.size);
+    sizeRef.current = visualLayout.size;
 
     useEffect(() => {
         if (isSpatial) {
@@ -201,7 +211,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             visualConfig={viewConfig}
             onGeomClick={handleGeomClick}
             onChartResize={handleChartResize}
-            layout={layout}
+            layout={visualLayout}
             channelScales={props.channelScales}
             onReportSpec={(spec) => {
                 vizStore.updateLastSpec(spec);

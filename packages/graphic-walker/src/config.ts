@@ -64,6 +64,12 @@ export const GLOBAL_CONFIG = {
     PAINT_MIN_BRUSH_SIZE: 1,
     PAINT_DEFAULT_BRUSH_SIZE: 9,
     PAINT_MAX_BRUSH_SIZE: 36,
+    KEYWORD_DEBOUNCE_SETTING: { timeout: 300, leading: true, trailing: true } as {
+        timeout: number;
+        leading?: boolean;
+        maxWait?: number;
+        trailing?: boolean;
+    },
 };
 
 export function getGlobalConfig() {

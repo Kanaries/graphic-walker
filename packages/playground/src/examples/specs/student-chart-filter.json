@@ -1,0 +1,171 @@
+[
+    {
+        "config": { "defaultAggregated": true, "geoms": ["auto"], "coordSystem": "generic", "limit": -1 },
+        "encodings": {
+            "dimensions": [
+                { "dragId": "gw_2E8z", "fid": "gender", "name": "gender", "basename": "gender", "semanticType": "nominal", "analyticType": "dimension" },
+                {
+                    "dragId": "gw_gIma",
+                    "fid": "race/ethnicity",
+                    "name": "race/ethnicity",
+                    "basename": "race/ethnicity",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension"
+                },
+                {
+                    "dragId": "gw_aOb9",
+                    "fid": "parental level of education",
+                    "name": "parental level of education",
+                    "basename": "parental level of education",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension"
+                },
+                { "dragId": "gw_kOPV", "fid": "lunch", "name": "lunch", "basename": "lunch", "semanticType": "nominal", "analyticType": "dimension" },
+                {
+                    "dragId": "gw_gTcA",
+                    "fid": "test preparation course",
+                    "name": "test preparation course",
+                    "basename": "test preparation course",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension"
+                },
+                { "dragId": "gw_mea_key_fid", "fid": "gw_mea_key_fid", "name": "Measure names", "analyticType": "dimension", "semanticType": "nominal" }
+            ],
+            "measures": [
+                {
+                    "dragId": "gw_bvxb",
+                    "fid": "math score",
+                    "name": "math score",
+                    "basename": "math score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                },
+                {
+                    "dragId": "gw_42Qf",
+                    "fid": "reading score",
+                    "name": "reading score",
+                    "basename": "reading score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                },
+                {
+                    "dragId": "gw_HIVG",
+                    "fid": "writing score",
+                    "name": "writing score",
+                    "basename": "writing score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                },
+                {
+                    "dragId": "gw_count_fid",
+                    "fid": "gw_count_fid",
+                    "name": "Row count",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum",
+                    "computed": true,
+                    "expression": { "op": "one", "params": [], "as": "gw_count_fid" }
+                },
+                {
+                    "dragId": "gw_mea_val_fid",
+                    "fid": "gw_mea_val_fid",
+                    "name": "Measure values",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                }
+            ],
+            "rows": [
+                { "dragId": "gw_ez5n", "fid": "gender", "name": "gender", "basename": "gender", "semanticType": "nominal", "analyticType": "dimension" },
+                {
+                    "dragId": "gw_vDrz",
+                    "fid": "race/ethnicity",
+                    "name": "race/ethnicity",
+                    "basename": "race/ethnicity",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension"
+                }
+            ],
+            "columns": [
+                {
+                    "dragId": "gw_TYkI",
+                    "fid": "math score",
+                    "name": "math score",
+                    "basename": "math score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "mean"
+                },
+                {
+                    "dragId": "gw_glm7",
+                    "fid": "writing score",
+                    "name": "writing score",
+                    "basename": "writing score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "mean"
+                }
+            ],
+            "color": [{ "dragId": "gw_MKne", "fid": "lunch", "name": "lunch", "basename": "lunch", "semanticType": "nominal", "analyticType": "dimension" }],
+            "opacity": [],
+            "size": [],
+            "shape": [],
+            "radius": [],
+            "theta": [],
+            "longitude": [],
+            "latitude": [],
+            "geoId": [],
+            "details": [],
+            "filters": [
+                {
+                    "dragId": "gw_jOFY",
+                    "fid": "parental level of education",
+                    "name": "parental level of education",
+                    "basename": "parental level of education",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension",
+                    "rule": {
+                        "type": "one of",
+                        "value": ["master's degree", "bachelor's degree", "some high school", "high school", "associate's degree", "some college"]
+                    }
+                },
+                {
+                    "dragId": "gw_vWc3",
+                    "fid": "race/ethnicity",
+                    "name": "race/ethnicity",
+                    "basename": "race/ethnicity",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension",
+                    "rule": { "type": "one of", "value": ["group A", "group E", "group B", "group D", "group C"] }
+                },
+                {
+                    "dragId": "gw_Anu8",
+                    "fid": "reading score",
+                    "name": "reading score",
+                    "basename": "reading score",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum",
+                    "rule": { "type": "range", "value": [17, 100] }
+                }
+            ],
+            "text": []
+        },
+        "layout": {
+            "showActions": false,
+            "showTableSummary": false,
+            "stack": "stack",
+            "interactiveScale": false,
+            "zeroScale": true,
+            "size": { "mode": "auto", "width": 320, "height": 200 },
+            "format": {},
+            "geoKey": "name",
+            "resolve": { "x": false, "y": false, "color": false, "opacity": false, "shape": false, "size": false }
+        },
+        "visId": "gw_C7pS",
+        "name": "Chart 1"
+    }
+]
