@@ -252,7 +252,7 @@ const FilterSection = observer(function FilterSection() {
     const cols = width > 1280 ? 'grid-cols-3' : width > 768 ? 'grid-cols-2' : 'grid-cols-1';
 
     return (
-        <div className={classNames('grid', cols)} ref={ref}>
+        <div className={classNames('grid gap-2 px-2', cols)} ref={ref}>
             {vizStore.viewFilters.map((filter, idx) => (
                 <FilterItem filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
             ))}

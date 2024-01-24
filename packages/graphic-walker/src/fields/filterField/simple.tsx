@@ -11,7 +11,7 @@ import { IFilterField, IKeyWord } from '../../interfaces';
 import { ArrowRightIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getTemporalRange, withComputedField } from '../../computation';
 import Slider from '../../components/slider';
-import { createStreamedValueHook } from '../../hooks';
+import { createStreamedValueHook, useDebounceValueBind } from '../../hooks';
 import { GLOBAL_CONFIG } from '../../config';
 import { debounce } from 'lodash-es';
 
@@ -25,11 +25,11 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
     const { value, caseSensitive } = field.rule;
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label className="text-sm">{field.name}:</label>
+            <label className="text-sm leading-none font-medium">{field.name}</label>
             <div className="relative">
                 <input
                     type="search"
-                    className="flex h-10 w-full rounded-md border border-input bg-white dark:bg-zinc-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-zinc-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-9 w-full rounded-md border border-input bg-white dark:bg-zinc-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-zinc-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={value}
                     placeholder="Input Regular Expression..."
                     onChange={(e) => {
@@ -73,7 +73,7 @@ function Toggle(props: { children?: React.ReactNode; value: boolean; onChange?: 
                 props.onChange?.(!props.value);
             }}
             className={classNames(
-                props.value ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800',
+                props.value ? 'bg-gray-100 dark:bg-zinc-700' : 'hover:bg-gray-100 dark:hover:bg-zinc-700',
                 'rounded cursor-pointer p-1 w-6 h-6 flex items-center justify-center'
             )}
         >
@@ -130,9 +130,9 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
     if (field.rule?.type !== 'one of' && field.rule?.type !== 'not in') return null;
     return (
         <div className="flex flex-col space-y-2 p-2 relative">
-            <label className="text-sm">{field.name}:</label>
+            <label className="text-sm leading-none font-medium">{field.name}</label>
             <Popover className="w-full">
-                <Popover.Button className="flex items-center h-10 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-zinc-900">
+                <Popover.Button className="flex shadow-sm items-center h-9 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-zinc-900">
                     {field.rule.value.size > 0 && (
                         <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -160,7 +160,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     leaveFrom="opacity-100 translate-y-0"
                     leaveTo="opacity-0 translate-y-1"
                 >
-                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-white dark:bg-zinc-800">
+                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-white dark:bg-zinc-800 shadow-md">
                         <div className="flex flex-col w-full">
                             {enableKeyword && (
                                 <div className="relative border-b border-gray-300 p-3 flex space-x-2 items-center text-sm">
@@ -168,7 +168,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                     <input
                                         type="search"
                                         autoFocus
-                                        className="block focus:ring-0 focus:outline-none py-0 pl-0 pr-[88px] w-full border-0 shadow-none bg-transparent text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
+                                        className="block focus:ring-0 focus:outline-none py-0 pl-0 pr-[88px] w-full border-0 shadow-none bg-transparent text-gray-700 text-sm h-4 dark:text-gray-200 placeholder:text-gray-400"
                                         value={keywordValue}
                                         placeholder="Search Value..."
                                         onChange={(e) => {
@@ -281,9 +281,7 @@ function VirtualList({
                                     width: '100%',
                                 }}
                             >
-                                <div className="flex justify-center items-center">
-                                    <div className="h-4 w-4 bg-slate-200 rounded"></div>
-                                </div>
+                                <div className="h-4 w-4" />
                                 <div className="flex justify-left items-center">
                                     <div className="h-3 w-20 bg-slate-200 rounded"></div>
                                 </div>
@@ -360,8 +358,9 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
 
     if (!loaded) {
         return (
-            <div className="flex items-center">
-                <div className="h-12 w-full relative">
+            <div className="flex flex-col space-y-2 p-2">
+                <label className="text-sm leading-none font-medium">{field.name}</label>
+                <div className="h-9 w-full relative">
                     <LoadingLayer />
                 </div>
             </div>
@@ -370,11 +369,11 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
 
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label className="text-sm">{field.name}:</label>
-            <div className="flex space-x-2 items-center h-10">
+            <label className="text-sm leading-none font-medium">{field.name}</label>
+            <div className="flex space-x-2 items-center h-9">
                 <div className="flex-1">
                     <CalendarInput
-                        className="h-10 py-4"
+                        className="h-9 py-4"
                         displayOffset={displayOffset}
                         min={min}
                         max={field.rule.value[1]}
@@ -387,7 +386,7 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
                 </div>
                 <div className="flex-1">
                     <CalendarInput
-                        className="h-10 py-4"
+                        className="h-9 py-4"
                         displayOffset={displayOffset}
                         min={field.rule.value[0]}
                         max={max}
@@ -412,21 +411,46 @@ export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, rawField
             value,
         });
     }, []);
+
     if (field.rule?.type !== 'range') return null;
 
     if (!range) {
         return (
-            <div className="h-12 w-full relative">
-                <LoadingLayer />
+            <div className="flex flex-col space-y-2 p-2">
+                <label className="text-sm leading-none font-medium">{field.name}</label>
+                <div className="h-9 w-full relative">
+                    <LoadingLayer />
+                </div>
             </div>
         );
     }
+
+    return <RangeField name={field.name} value={field.rule.value as [number, number]} range={range} onChange={handleChange} />;
+};
+
+function RangeField({
+    name,
+    value,
+    range,
+    onChange,
+}: {
+    name: string;
+    value: [number, number];
+    range: [number, number];
+    onChange: (v: [number, number]) => void;
+}) {
+    const [innerValue, setInnerValue] = useDebounceValueBind(value, onChange);
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label className="text-sm">{field.name}:</label>
-            <div className="flex items-center">
-                <Slider min={range[0]} max={range[1]} value={field.rule.value as [number, number]} onChange={handleChange} />
+            <div className="flex justify-between text-sm leading-none">
+                <label className="font-medium">{name}</label>
+                <span className="text-right text-gray-500">
+                    [{innerValue[0]},{innerValue[1]}]
+                </span>
+            </div>
+            <div className="flex items-center h-9">
+                <Slider min={range[0]} max={range[1]} value={innerValue} onChange={setInnerValue} />
             </div>
         </div>
     );
-};
+}
