@@ -22,8 +22,8 @@ const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
 function parseRect(el: HTMLCanvasElement | SVGSVGElement) {
     if (el instanceof HTMLCanvasElement) {
         return {
-            width: parseInt(el.style.width),
-            height: parseInt(el.style.height),
+            width: parseInt(el.style.width || `${el.width}`),
+            height: parseInt(el.style.height || `${el.height}`),
             renderWidth: el.width,
             renderHeight: el.height,
         };
@@ -79,7 +79,7 @@ interface ReactVegaProps {
         size: IConfigScale;
     };
     onReportSpec?: (spec: string) => void;
-    displayOffset?: number
+    displayOffset?: number;
 }
 
 const click$ = new Subject<ScenegraphEvent>();
@@ -102,6 +102,11 @@ interface ParamStoreEntry {
     /** 这个标记用于防止循环 */
     source: number;
     data: any;
+}
+
+interface Rect {
+    width: number;
+    height: number;
 }
 
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega(props, ref) {
@@ -232,18 +237,18 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
     const modifierDepsRef = useRef(modifierDeps);
 
-    const [modifierRaw, setModifier] = useState({ width: 0, height: 0 });
+    const [modifierRaw, setModifier] = useState<Partial<Rect>>({});
 
     let modifier: typeof modifierRaw;
 
-    if (modifierDepsRef.current.map((x, i) => x === modifierDeps[i]).every((x) => x)) {
+    if (modifierDepsRef.current.map((x, i) => x === modifierDeps[i]).every((x) => x) && layoutMode !== 'auto') {
         modifier = modifierRaw;
     } else {
-        modifier = { width: 0, height: 0 };
+        modifier = {};
     }
 
-    const vegaWidth = (areaWidth || width) - modifier.width;
-    const vegaHeight = (areaHeight || height) - modifier.height;
+    const vegaWidth = (areaWidth || width) - (modifier.width ?? 0);
+    const vegaHeight = (areaHeight || height) - (modifier.height ?? 0);
 
     const specs = useMemo(
         () =>
@@ -269,7 +274,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 text,
                 theta,
                 vegaConfig,
-                displayOffset
+                displayOffset,
             }),
         [
             guardedCols,
@@ -320,7 +325,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 }).then((res) => {
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                    const rect = canvas ? parseRect(canvas): null;
+                    const rect = canvas ? parseRect(canvas) : null;
                     const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
                     if (!success) {
                         if (canvas) {
@@ -329,9 +334,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             reportGWError('canvas not found', Errors.canvasExceedSize);
                         }
                     }
-                    if (rect && !modifier.width && !modifier.height && specs[0].width > 0 && specs[0].height > 0) {
+                    if (rect && !modifier.width && !modifier.height && layoutMode !== 'auto') {
                         const modifier = {
-                            width: Math.max(rect.width- (areaWidth || width), 0),
+                            width: Math.max(rect.width - (areaWidth || width), 0),
                             height: Math.max(rect.height - (areaHeight || height), 0),
                         };
                         setModifier(modifier);
@@ -373,10 +378,18 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             const subscribe = (cb: (entry: ParamStoreEntry) => void) => {
                 subscriptions.push(throttledParamStore$.subscribe(cb));
             };
-            const newModifier = { width: 0, height: 0 };
+            const modifiers: Promise<Rect>[] = [];
 
             for (let i = 0; i < rowRepeatFields.length; i++) {
                 for (let j = 0; j < colRepeatFields.length; j++, index++) {
+                    let resolveModifer: (modifier: Rect) => void;
+                    let rejectModifer: (reason?: any) => void;
+                    modifiers.push(
+                        new Promise((resolve, reject) => {
+                            resolveModifer = resolve;
+                            rejectModifer = reject;
+                        })
+                    );
                     const sourceId = index;
                     const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null;
                     const ans = specs[index];
@@ -388,97 +401,104 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             actions: showActions,
                             timeFormatLocale: getVegaTimeFormatRules(locale),
                             config: vegaConfig,
-                        }).then((res) => {
-                            const container = res.view.container();
-                            const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
-                            const rect = canvas ? parseRect(canvas): null;
-                            const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
-                            if (!success) {
-                                if (canvas) {
-                                    reportGWError('canvas exceed max size', Errors.canvasExceedSize);
-                                } else {
-                                    reportGWError('canvas not found', Errors.canvasExceedSize);
-                                }
-                            }
-                            if (rect && !modifier.width && !modifier.height) {
-                                const modifier = {
-                                    width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
-                                    height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
-                                };
-                                newModifier.width = Math.max(newModifier.width, modifier.width);
-                                newModifier.height = Math.max(newModifier.height, modifier.height);
-                                setModifier(newModifier);
-                                modifierDepsRef.current = modifierDeps;
-                            }
-                            vegaRefs.current[id] = {
-                                w: container?.clientWidth ?? res.view.width(),
-                                h: container?.clientHeight ?? res.view.height(),
-                                innerWidth: canvas?.clientWidth ?? res.view.width(),
-                                innerHeight: canvas?.clientHeight ?? res.view.height(),
-                                x: j,
-                                y: i,
-                                view: res.view,
-                                canvas,
-                            };
-                            const paramStores = (res.vgSpec.data?.map((d) => d.name) ?? [])
-                                .filter((name) => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map((p) => `${p}_store`).includes(name))
-                                .map((name) => name.replace(/_store$/, ''));
-                            try {
-                                for (const param of paramStores) {
-                                    let noBroadcasting = false;
-                                    // 发出
-                                    res.view.addSignalListener(param, (name) => {
-                                        if (noBroadcasting) {
-                                            noBroadcasting = false;
-                                            return;
-                                        }
-                                        if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
-                                            const data = res.view.getState().data?.[`${name}_store`];
-                                            if (!data || (Array.isArray(data) && data.length === 0)) {
-                                                setCrossFilterTriggerIdx(-1);
-                                            }
-                                            combinedParamStore$.next({
-                                                signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
-                                                source: sourceId,
-                                                data: data ?? null,
-                                            });
-                                        }
-                                    });
-                                    subscribe((entry) => {
-                                        if (entry.source === sourceId || !entry.data) {
-                                            return;
-                                        }
-                                        noBroadcasting = true;
-                                        res.view.setState({
-                                            data: {
-                                                [`${entry.signal}_store`]: entry.data,
-                                            },
-                                        });
-                                    });
-                                }
-                            } catch (error) {
-                                console.warn('Crossing filter failed', error);
-                            }
-                            try {
-                                res.view.addEventListener('mouseover', () => {
-                                    if (sourceId !== crossFilterTriggerIdx) {
-                                        setCrossFilterTriggerIdx(sourceId);
+                        })
+                            .then((res) => {
+                                const container = res.view.container();
+                                const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
+                                const rect = canvas ? parseRect(canvas) : null;
+                                const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
+                                if (!success) {
+                                    if (canvas) {
+                                        reportGWError('canvas exceed max size', Errors.canvasExceedSize);
+                                    } else {
+                                        reportGWError('canvas not found', Errors.canvasExceedSize);
                                     }
-                                });
-                                res.view.addEventListener('click', (e) => {
-                                    click$.next(e);
-                                });
-                                res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                    selection$.next(values);
-                                });
-                            } catch (error) {
-                                console.warn(error);
-                            }
-                        });
+                                }
+                                if (rect && !modifier.width && !modifier.height && layoutMode !== 'auto') {
+                                    const modifier = {
+                                        width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
+                                        height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
+                                    };
+                                    resolveModifer(modifier);
+                                }
+                                vegaRefs.current[id] = {
+                                    w: container?.clientWidth ?? res.view.width(),
+                                    h: container?.clientHeight ?? res.view.height(),
+                                    innerWidth: canvas?.clientWidth ?? res.view.width(),
+                                    innerHeight: canvas?.clientHeight ?? res.view.height(),
+                                    x: j,
+                                    y: i,
+                                    view: res.view,
+                                    canvas,
+                                };
+                                const paramStores = (res.vgSpec.data?.map((d) => d.name) ?? [])
+                                    .filter((name) => [BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].map((p) => `${p}_store`).includes(name))
+                                    .map((name) => name.replace(/_store$/, ''));
+                                try {
+                                    for (const param of paramStores) {
+                                        let noBroadcasting = false;
+                                        res.view.addSignalListener(param, (name) => {
+                                            if (noBroadcasting) {
+                                                noBroadcasting = false;
+                                                return;
+                                            }
+                                            if ([BRUSH_SIGNAL_NAME, POINT_SIGNAL_NAME].includes(name)) {
+                                                const data = res.view.getState().data?.[`${name}_store`];
+                                                if (!data || (Array.isArray(data) && data.length === 0)) {
+                                                    setCrossFilterTriggerIdx(-1);
+                                                }
+                                                combinedParamStore$.next({
+                                                    signal: name as typeof BRUSH_SIGNAL_NAME | typeof POINT_SIGNAL_NAME,
+                                                    source: sourceId,
+                                                    data: data ?? null,
+                                                });
+                                            }
+                                        });
+                                        subscribe((entry) => {
+                                            if (entry.source === sourceId || !entry.data) {
+                                                return;
+                                            }
+                                            noBroadcasting = true;
+                                            res.view.setState({
+                                                data: {
+                                                    [`${entry.signal}_store`]: entry.data,
+                                                },
+                                            });
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.warn('Crossing filter failed', error);
+                                }
+                                try {
+                                    res.view.addEventListener('mouseover', () => {
+                                        if (sourceId !== crossFilterTriggerIdx) {
+                                            setCrossFilterTriggerIdx(sourceId);
+                                        }
+                                    });
+                                    res.view.addEventListener('click', (e) => {
+                                        click$.next(e);
+                                    });
+                                    res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
+                                        selection$.next(values);
+                                    });
+                                } catch (error) {
+                                    console.warn(error);
+                                }
+                            })
+                            .catch((e) => rejectModifer(e));
                         renderTaskRefs.current.push(task);
                     }
                 }
             }
+            Promise.allSettled(modifiers).then((mods) => {
+                setModifier(
+                    mods
+                        .filter((x): x is PromiseFulfilledResult<Rect> => x.status === 'fulfilled')
+                        .map((x) => x.value)
+                        .reduce((x, y) => ({ width: x.width + y.width, height: x.height + y.height }), { width: 0, height: 0 })
+                );
+                modifierDepsRef.current = modifierDeps;
+            });
             return () => {
                 subscriptions.forEach((sub) => sub.unsubscribe());
                 props.onReportSpec?.('');
@@ -499,7 +519,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         <div className="w-full h-full relative" style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}>
             <div ref={areaRef} className="inset-0 absolute" />
             <CanvaContainer
-                style={layoutMode === 'full' ? { width: '100%', height: '100%' } : {}}
+                style={{
+                    opacity: layoutMode !== 'auto' && modifier.width === undefined ? 0 : 1,
+                    ...(layoutMode === 'full' ? { width: '100%', height: '100%' } : {}),
+                }}
                 rowSize={Math.max(rowRepeatFields.length, 1)}
                 colSize={Math.max(colRepeatFields.length, 1)}
                 ref={containerRef}
