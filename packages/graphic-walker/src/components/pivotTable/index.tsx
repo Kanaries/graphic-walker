@@ -35,15 +35,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
     const vizStore = useVizStore();
-    
-    const [format, setFormat] = useState<IVisualConfig['format']>({
-        numberFormat: layout.format.numberFormat,
-        timeFormat: layout.format.timeFormat,
-        normalizedNumberFormat: layout.format.normalizedNumberFormat,
-    });
-    
     const enableCollapse = !!vizStore;
     const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
     const { rows, columns } = draggableFieldState;
@@ -84,11 +76,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         } else {
             aggregateThenGenerate();
         }
-        setFormat({
-            numberFormat: layout.format.numberFormat,
-            timeFormat: layout.format.timeFormat,
-            normalizedNumberFormat: layout.format.normalizedNumberFormat,
-        });
     }, [data, enableCollapse, vizStore]);
 
     useEffect(() => {
@@ -250,7 +237,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             enableCollapse={enableCollapse}
                         />
                     )}
-                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} numberFormat={format} />}
+                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} numberFormat={layout.format.numberFormat || ''} />}
                 </table>
             </div>
         </div>

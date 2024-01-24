@@ -8,7 +8,7 @@ interface MetricTableProps {
     matrix: any[][];
     meaInRows: IField[];
     meaInColumns: IField[];
-    numberFormat: IVisualConfig['format']
+    numberFormat: string;
 }
 
 function getCellData (cell: IRow, measure: IField, formatter: (value: unknown) => string) {
@@ -20,25 +20,17 @@ function getCellData (cell: IRow, measure: IField, formatter: (value: unknown) =
     const formattedValue = formatter(cell[meaKey]);
     return formattedValue;
 }
+
 const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
     const { matrix, meaInRows, meaInColumns, numberFormat } = props;
 
     const numberFormatter = useMemo<(value: unknown) => string>(() => {
-        if (!numberFormat) {
-            return (value: unknown) => {
-                if (typeof value !== 'number') {
-                    return '';
-                }
-                return value.toLocaleString();
-            };
-        }
-        const numF = numberFormat.numberFormat || '';
-        const nf = format(numF);
+        const numberFormatter = numberFormat ? format(numberFormat) : (v: number) => v.toLocaleString();
         return (value: unknown) => {
-            if (typeof value !== 'number') {
-                return '';
+            if (typeof value !== "number") {
+                return `${value}`;
             }
-            return nf(value);
+            return numberFormatter(value);
         };
     }, [numberFormat]);
 
