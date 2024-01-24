@@ -91,7 +91,7 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
                                             classNames(
                                                 checked
                                                     ? 'bg-indigo-600 text-white hover:bg-indigo-500'
-                                                    : 'ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
+                                                    : 'ring-1 ring-inset ring-gray-300 text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800',
                                                 'flex cursor-pointer items-center justify-center rounded py-1 px-8 text-sm font-semibold uppercase sm:flex-1'
                                             )
                                         }
