@@ -10,10 +10,10 @@ export default (props: { min: number; max: number; value: [number, number]; onCh
         max={props.max}
         onValueChange={(v) => props.onChange(v as [number, number])}
     >
-        <Slider.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gray-500">
-            <Slider.Range className="absolute h-full bg-indigo-500" />
+        <Slider.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <Slider.Range className="absolute h-full bg-zinc-900 dark:bg-white" />
         </Slider.Track>
-        <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-indigo-500 bg-white dark:bg-zinc-900 disabled:pointer-events-none disabled:opacity-50" />
-        <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-indigo-500 bg-white dark:bg-zinc-900 disabled:pointer-events-none disabled:opacity-50" />
+        <Slider.Thumb className="block h-5 w-5 outline-none rounded-full border-2 border-zinc-900 dark:border-white bg-white dark:bg-zinc-900 disabled:pointer-events-none disabled:opacity-50" />
+        <Slider.Thumb className="block h-5 w-5 outline-none rounded-full border-2 border-zinc-900 dark:border-white bg-white dark:bg-zinc-900 disabled:pointer-events-none disabled:opacity-50" />
     </Slider.Root>
 );

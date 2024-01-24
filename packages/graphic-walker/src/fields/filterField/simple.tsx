@@ -6,10 +6,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Popover, Transition } from '@headlessui/react';
 import { classNames, formatDate } from '../../utils';
 import { parsedOffsetDate } from '../../lib/op/offset';
-import styled from 'styled-components';
 import LoadingLayer from '../../components/loadingLayer';
 import { IFilterField, IKeyWord } from '../../interfaces';
-import { ArrowRightIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getTemporalRange, withComputedField } from '../../computation';
 import Slider from '../../components/slider';
 import { useKeyWord } from '../../hooks';
@@ -24,11 +23,11 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
     const { value, caseSensitive } = field.rule;
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label>{field.name}:</label>
+            <label className="text-sm">{field.name}:</label>
             <div className="relative">
                 <input
                     type="search"
-                    className="block w-full text-gray-700 dark:text-gray-200 rounded-md border-0 py-1 px-2 pr-9 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
+                    className="flex h-10 w-full rounded-md border border-input bg-white dark:bg-zinc-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-zinc-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={value}
                     placeholder="Input Regular Expression..."
                     onChange={(e) => {
@@ -63,31 +62,6 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
         </div>
     );
 });
-
-const TableRow = styled.div`
-    display: flex;
-    & > input,
-    & > *[for] {
-        cursor: pointer;
-    }
-    & > * {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        user-select: none;
-        border-bottom: 0.8px solid rgb(226 232 240);
-        flex-shink: 0;
-    }
-    & > *:first-child {
-        width: 4em;
-    }
-    & > *:last-child {
-        width: max-content;
-    }
-    & > *:first-child + * {
-        flex: 1;
-    }
-`;
 
 function Toggle(props: { children?: React.ReactNode; value: boolean; onChange?: (v: boolean) => void; label?: string }) {
     return (
@@ -147,9 +121,9 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
     if (field.rule?.type !== 'one of' && field.rule?.type !== 'not in') return null;
     return (
         <div className="flex flex-col space-y-2 p-2 relative">
-            <label>{field.name}:</label>
+            <label className="text-sm">{field.name}:</label>
             <Popover className="w-full">
-                <Popover.Button className="flex items-center h-8 space-x-2 p-2 rounded border w-full text-left">
+                <Popover.Button className="flex items-center h-10 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-zinc-900">
                     {field.rule.value.size > 0 && (
                         <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -165,7 +139,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                         </div>
                     )}
                     <span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <ChevronUpDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
                     </span>
                 </Popover.Button>
                 <Transition
@@ -177,20 +151,22 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     leaveFrom="opacity-100 translate-y-0"
                     leaveTo="opacity-0 translate-y-1"
                 >
-                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md p-3 inset-x-2 bg-white dark:bg-zinc-800">
+                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-white dark:bg-zinc-800">
                         <div className="flex flex-col w-full">
                             {enableKeyword && (
-                                <div className="relative mb-2">
+                                <div className="relative border-b border-gray-300 p-3 flex space-x-2 items-center text-sm">
+                                    <MagnifyingGlassIcon className="w-4 h-4" />
                                     <input
                                         type="search"
-                                        className="block py-1 px-2 pr-24 w-full text-gray-700 dark:text-gray-200 rounded-md border-0 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
+                                        autoFocus
+                                        className="block focus:ring-0 focus:outline-none py-0 pl-0 pr-[88px] w-full border-0 shadow-none bg-transparent text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
                                         value={keywordValue}
                                         placeholder="Search Value..."
                                         onChange={(e) => {
                                             setKeyword(e.target.value);
                                         }}
                                     />
-                                    <div className="absolute flex space-x-1 items-center inset-y-0 right-2">
+                                    <div className="absolute flex space-x-1 items-center inset-y-0 right-3">
                                         <Toggle label="Match Case" value={isCaseSenstive} onChange={setIsCaseSenstive}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <path
@@ -243,6 +219,9 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
     );
 });
 
+const tableRow =
+    'relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800';
+
 function VirtualList({
     field,
     distinctTotal,
@@ -268,7 +247,7 @@ function VirtualList({
     });
 
     return (
-        <div className="overflow-y-auto w-full flex flex-col max-h-64" ref={parentRef}>
+        <div className="overflow-y-auto w-full flex flex-col max-h-64 p-1" ref={parentRef}>
             <div
                 style={{
                     paddingBottom: `${rowVirtualizer.getTotalSize()}px`,
@@ -281,9 +260,9 @@ function VirtualList({
                     const item = data?.[idx];
                     if (!item) {
                         return (
-                            <TableRow
+                            <div
                                 key={idx}
-                                className="animate-pulse"
+                                className={classNames('animate-pulse', tableRow)}
                                 style={{
                                     height: `${vItem.size}px`,
                                     transform: `translateY(${vItem.start}px)`,
@@ -303,17 +282,17 @@ function VirtualList({
                                     effect={() => loadData(idx)}
                                     effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
                                 />
-                            </TableRow>
+                            </div>
                         );
                     }
                     const { value, count } = item;
-                    const id = `rule_checkbox_${idx}`;
                     const checked =
                         (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
                     const displayValue = field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                     return (
-                        <TableRow
+                        <div
                             key={idx}
+                            className={tableRow}
                             style={{
                                 height: `${vItem.size}px`,
                                 transform: `translateY(${vItem.start}px)`,
@@ -322,25 +301,15 @@ function VirtualList({
                                 left: 0,
                                 width: '100%',
                             }}
+                            onClick={() => handleSelect(value, !checked, count)}
                         >
-                            <div className="flex justify-center items-center">
-                                <input
-                                    type="checkbox"
-                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    checked={checked}
-                                    id={id}
-                                    aria-describedby={`${id}_label`}
-                                    title={displayValue}
-                                    onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
-                                />
-                            </div>
-                            <label id={`${id}_label`} htmlFor={id} className="flex items-center" title={displayValue}>
-                                {displayValue}
-                            </label>
-                        </TableRow>
+                            <CheckIcon className={classNames('w-4 h-4', checked ? 'opacity-100' : 'opacity-0')} />
+                            <div className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex-1">{displayValue}</div>
+                        </div>
                     );
                 })}
             </div>
+            {distinctTotal === 0 && <div className="py-6 text-center">No value found.</div>}
         </div>
     );
 }
@@ -392,10 +361,11 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
 
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label>{field.name}:</label>
-            <div className="flex space-x-2 items-center h-8">
+            <label className="text-sm">{field.name}:</label>
+            <div className="flex space-x-2 items-center h-10">
                 <div className="flex-1">
                     <CalendarInput
+                        className="h-10 py-4"
                         displayOffset={displayOffset}
                         min={min}
                         max={field.rule.value[1]}
@@ -408,6 +378,7 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
                 </div>
                 <div className="flex-1">
                     <CalendarInput
+                        className="h-10 py-4"
                         displayOffset={displayOffset}
                         min={field.rule.value[0]}
                         max={max}
@@ -443,8 +414,8 @@ export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, rawField
     }
     return (
         <div className="flex flex-col space-y-2 p-2">
-            <label>{field.name}:</label>
-            <div className="flex space-x-1 w-full h-8 items-center">
+            <label className="text-sm">{field.name}:</label>
+            <div className="flex space-x-2 w-full h-10 items-center">
                 <label>{field.rule.value[0]}</label>
                 <Slider min={range[0]} max={range[1]} value={field.rule.value as [number, number]} onChange={handleChange} />
                 <label>{field.rule.value[1]}</label>
