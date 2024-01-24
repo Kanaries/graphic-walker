@@ -43,6 +43,9 @@ type BaseVizProps = IAppI18nProps &
         containerStyle?: React.CSSProperties;
     };
 
+const XL = 1280;
+const MD = 768;
+
 export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     const {
         computation,
@@ -249,7 +252,7 @@ const FilterSection = observer(function FilterSection() {
 
     const { width = 0, ref } = useResizeDetector();
 
-    const cols = width > 1280 ? 'grid-cols-3' : width > 768 ? 'grid-cols-2' : 'grid-cols-1';
+    const cols = width > XL ? 'grid-cols-3' : width > MD ? 'grid-cols-2' : 'grid-cols-1';
 
     return (
         <div className={classNames('grid gap-2 px-2', cols)} ref={ref}>
