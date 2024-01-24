@@ -17,7 +17,8 @@ function getCellData (cell: IRow, measure: IField, formatter: (value: unknown) =
     if (cell[meaKey] === undefined) {
         return '--';
     }
-    return cell[meaKey];
+    const formattedValue = formatter(cell[meaKey]);
+    return formattedValue;
 }
 const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
     const { matrix, meaInRows, meaInColumns, numberFormat } = props;
