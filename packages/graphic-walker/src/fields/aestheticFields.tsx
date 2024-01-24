@@ -5,6 +5,8 @@ import { AestheticFieldContainer } from './components';
 import SingleEncodeEditor from './encodeFields/singleEncodeEditor';
 import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../store';
+import MultiEncodeEditor from './encodeFields/multiEncodeEditor';
+import { GLOBAL_CONFIG } from '../config';
 
 type aestheticFields = 'color' | 'opacity' | 'size' | 'shape' | 'details' | 'text';
 
@@ -39,18 +41,28 @@ const AestheticFields: React.FC = (props) => {
                 return aestheticFields.filter((f) => f.id !== 'text');
         }
     }, [geoms[0]]);
+
     return (
         <div>
-            {channels.map((dkey, i, { length }) => (
-                <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
-                    <Droppable droppableId={dkey.id} direction="horizontal">
-                        {(provided, snapshot) => (
-                            // <OBFieldContainer dkey={dkey} provided={provided} />
-                            <SingleEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />
-                        )}
-                    </Droppable>
-                </AestheticFieldContainer>
-            ))}
+            {channels.map((dkey, i, { length }) => {
+                if (GLOBAL_CONFIG.CHANNEL_LIMIT[dkey.id] === 1) {
+                    return (
+                        <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
+                            <Droppable droppableId={dkey.id} direction="horizontal">
+                                {(provided, snapshot) => <SingleEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />}
+                            </Droppable>
+                        </AestheticFieldContainer>
+                    );
+                } else {
+                    return (
+                        <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
+                            <Droppable droppableId={dkey.id} direction="vertical">
+                                {(provided, snapshot) => <MultiEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />}
+                            </Droppable>
+                        </AestheticFieldContainer>
+                    );
+                }
+            })}
         </div>
     );
 };
