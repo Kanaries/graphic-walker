@@ -20,12 +20,13 @@ import {
     IFilterField,
     IField,
     IPaintMapV2,
+    IVisSpecForExport,
     IDefaultConfig,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
 import { createCountField, createVirtualFields, isNotEmpty } from '../utils';
 import { decodeFilterRule, encodeFilterRule } from '../utils/filter';
-import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../utils/save';
+import { emptyEncodings, emptyVisualConfig, emptyVisualLayout, visSpecDecoder, forwardVisualConfigs } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
 import { GLOBAL_CONFIG } from '../config';
@@ -710,4 +711,8 @@ export function convertChart(data: IVisSpec): IChart {
         useSvg: data.config.useSvg,
     };
     return result;
+}
+
+export function parseChart(chart: IVisSpecForExport | IChartForExport) {
+    return 'layout' in chart ? decodeVisSpec(chart) : convertChart(visSpecDecoder(forwardVisualConfigs(chart)));
 }

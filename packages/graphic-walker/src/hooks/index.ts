@@ -29,7 +29,6 @@ export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void
     };
 }
 
-export const useKeyWord = createStreamedValueHook((f) => debounce(f, 200, { leading: true, trailing: true }));
 export const useDebounceValueBind = createStreamedValueBindHook((f) => debounce(f, 200));
 
 /**

@@ -10,9 +10,22 @@ const COMMON_TIME_FORMAT: RegExp[] = [
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\s\d{2}:\d{2}:\d{2}$/, // YYYY-MM-DD HH:MM:SS
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T\d{2}:\d{2}:\d{2}$/, // YYYY-MM-DDTHH:MM:SS (ISO-8601)
     /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T\d{2}:\d{2}:\d{2}.\d{3}Z$/, // YYYY-MM-DDTHH:MM:SS.gggZ (ISO-8601)
+    /^([1-9]|1[0-2])\/([1-9]|[12][0-9]|3[01])\/\d{4}$/, // m/d/YYYY
+    /^([1-9]|[12][0-9]|3[01])\/([1-9]|1[0-2])\/\d{4}$/, // d/m/YYYY
 ];
 
-const TIME_FORMAT = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d', '%Y.%m.%d', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%gZ'];
+const TIME_FORMAT = [
+    '%Y-%m-%d',
+    '%m/%d/%Y',
+    '%d/%m/%Y',
+    '%Y/%m/%d',
+    '%Y.%m.%d',
+    '%Y-%m-%d %H:%M:%S',
+    '%Y-%m-%dT%H:%M:%S',
+    '%Y-%m-%dT%H:%M:%S.%gZ',
+    '%f/%e/%Y',
+    '%e/%f/%Y',
+];
 
 export function getTimeFormat(data: string | number) {
     if (typeof data === 'number') return 'timestamp';

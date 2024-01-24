@@ -13,11 +13,12 @@ import type {
     IChartForExport,
     IMutField,
     IPaintMapV2,
+    IVisSpecForExport,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort, isNotEmpty } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { decodeVisSpec } from '../models/visSpecHistory';
+import { parseChart } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
 import { replaceAggForFold } from '../lib/op/fold';
 
@@ -339,23 +340,23 @@ export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[
     };
 };
 
-export function chartToWorkflow(chart: IChartForExport): IDataQueryPayload {
-    const c = decodeVisSpec(chart);
-    const viewEncodingFields = viewEncodingKeys(c.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => c.encodings?.[k] ?? []);
-    const rows = c.encodings?.rows ?? [];
-    const columns = c.encodings?.columns ?? [];
-    const limit = c.config?.limit ?? -1;
+export function chartToWorkflow(chart: IVisSpecForExport | IChartForExport): IDataQueryPayload {
+    const parsedChart = parseChart(chart);
+    const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
+    const rows = parsedChart.encodings?.rows ?? [];
+    const columns = parsedChart.encodings?.columns ?? [];
+    const limit = parsedChart.config?.limit ?? -1;
     return {
         workflow: toWorkflow(
-            c.encodings?.filters ?? [],
-            [...(c.encodings?.dimensions ?? []), ...(c.encodings?.measures ?? [])],
+            parsedChart.encodings?.filters ?? [],
+            [...(parsedChart.encodings?.dimensions ?? []), ...(parsedChart.encodings?.measures ?? [])],
             viewEncodingFields.filter((x) => x.analyticType === 'dimension'),
             viewEncodingFields.filter((x) => x.analyticType === 'measure'),
-            c.config?.defaultAggregated ?? true,
+            parsedChart.config?.defaultAggregated ?? true,
             getSort({ rows, columns }),
-            c.config?.folds ?? [],
+            parsedChart.config?.folds ?? [],
             limit,
-            c.config?.timezoneDisplayOffset
+            parsedChart.config?.timezoneDisplayOffset
         ),
         limit: limit > 0 ? limit : undefined,
     };
