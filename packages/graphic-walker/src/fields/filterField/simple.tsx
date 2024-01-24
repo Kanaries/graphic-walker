@@ -11,7 +11,9 @@ import { IFilterField, IKeyWord } from '../../interfaces';
 import { ArrowRightIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getTemporalRange, withComputedField } from '../../computation';
 import Slider from '../../components/slider';
-import { useKeyWord } from '../../hooks';
+import { createStreamedValueHook } from '../../hooks';
+import { GLOBAL_CONFIG } from '../../config';
+import { debounce } from 'lodash-es';
 
 const sortConfig = {
     key: 'value',
@@ -100,7 +102,14 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
         [keywordValue, isCaseSenstive, isWord, isRegexp]
     );
 
-    const debouncedKeyword = useKeyWord(keyword);
+    const debouncer = useMemo(() => {
+        const { timeout, ...options } = GLOBAL_CONFIG.KEYWORD_DEBOUNCE_SETTING;
+        return function <T extends (...args: any) => any>(f: T) {
+            return debounce(f, timeout, options);
+        };
+    }, []);
+
+    const debouncedKeyword = createStreamedValueHook(debouncer)(keyword);
 
     const enableKeyword = field.semanticType === 'nominal';
 
@@ -415,10 +424,8 @@ export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, rawField
     return (
         <div className="flex flex-col space-y-2 p-2">
             <label className="text-sm">{field.name}:</label>
-            <div className="flex space-x-2 w-full h-10 items-center">
-                <label>{field.rule.value[0]}</label>
+            <div className="flex items-center">
                 <Slider min={range[0]} max={range[1]} value={field.rule.value as [number, number]} onChange={handleChange} />
-                <label>{field.rule.value[1]}</label>
             </div>
         </div>
     );

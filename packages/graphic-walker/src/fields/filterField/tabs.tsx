@@ -11,8 +11,9 @@ import Slider from './slider';
 import { getFilterMeaAggKey, formatDate, classNames, isNotEmpty } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { newOffsetDate, parsedOffsetDate } from '../../lib/op/offset';
-import { useKeyWord } from '../../hooks';
-import ToolbarToggleButton from '../../components/toolbar/toolbar-toggle-button';
+import { createStreamedValueHook } from '../../hooks';
+import { debounce } from 'lodash-es';
+import { GLOBAL_CONFIG } from '../../config';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -445,7 +446,14 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         [keywordValue, isCaseSenstive, isWord, isRegexp]
     );
 
-    const debouncedKeyword = useKeyWord(keyword);
+    const debouncer = useMemo(() => {
+        const { timeout, ...options } = GLOBAL_CONFIG.KEYWORD_DEBOUNCE_SETTING;
+        return function <T extends (...args: any) => any>(f: T) {
+            return debounce(f, timeout, options);
+        };
+    }, []);
+
+    const debouncedKeyword = createStreamedValueHook(debouncer)(keyword);
 
     const enableKeyword = field.semanticType === 'nominal';
 
