@@ -25,7 +25,7 @@ import type {
 
 import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
-import { FilterAppWithContext } from './Filter';
+import { RendererAppWithContext } from './Renderer';
 
 export type ILocalVizAppProps = IVizAppProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
 export type IRemoteVizAppProps = IVizAppProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
@@ -56,14 +56,14 @@ export const GraphicWalker = observer(
     (p: IRemoteVizAppProps): JSX.Element;
 };
 
-export type IFilterWalkerProps = {
+export type IRendererProps = {
     containerClassName?: string;
     containerStyle?: React.CSSProperties;
     overrideSize?: IVisualLayout['size'];
 };
 
-export const FilterWalker = observer(
-    forwardRef<IGWHandler, IVizAppProps & IFilterWalkerProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+export const GraphicRenderer = observer(
+    forwardRef<IGWHandler, IVizAppProps & IRendererProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
@@ -77,15 +77,15 @@ export const FilterWalker = observer(
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount}>
                     <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
-                        <FilterAppWithContext {...props} />
+                        <RendererAppWithContext {...props} />
                     </DOMProvider>
                 </ShadowDom>
             </AppRoot>
         );
     })
 ) as {
-    (p: ILocalVizAppProps & IFilterWalkerProps): JSX.Element;
-    (p: IRemoteVizAppProps & IFilterWalkerProps): JSX.Element;
+    (p: ILocalVizAppProps & IRendererProps): JSX.Element;
+    (p: IRemoteVizAppProps & IRendererProps): JSX.Element;
 };
 
 export type ILocalTableProps = ITableProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;

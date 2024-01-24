@@ -16,8 +16,8 @@ export const pages = [
         name: 'DataSourceSegment',
     },
     {
-        comp: () => import('./pages/filter'),
-        name: 'FilterWalker',
+        comp: () => import('./pages/renderer'),
+        name: 'GraphicRenderer',
     },
 ].map((Component) => ({
     name: Component.name,

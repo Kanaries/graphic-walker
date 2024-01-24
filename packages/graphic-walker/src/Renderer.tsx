@@ -43,7 +43,7 @@ type BaseVizProps = IAppI18nProps &
         containerStyle?: React.CSSProperties;
     };
 
-export const FilterApp = observer(function VizApp(props: BaseVizProps) {
+export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     const {
         computation,
         darkMode = 'light',
@@ -260,7 +260,7 @@ const FilterSection = observer(function FilterSection() {
     );
 });
 
-export function FilterAppWithContext(
+export function RendererAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
     const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
@@ -303,7 +303,7 @@ export function FilterAppWithContext(
         <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
             <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
                 <FieldsContextWrapper>
-                    <FilterApp {...rest} darkMode={darkMode} computation={safeComputation} />
+                    <RendererApp {...rest} darkMode={darkMode} computation={safeComputation} />
                 </FieldsContextWrapper>
             </VizStoreWrapper>
         </div>
