@@ -119,7 +119,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
         </tbody>
     );
 }, function areEqual(prevProps, nextProps) {
-    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix)) {
+    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix) && prevProps.numberFormat === nextProps.numberFormat) {
         return true;
     }
     
