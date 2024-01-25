@@ -1,22 +1,39 @@
 import React from 'react';
-import { IField, IRow } from '../../interfaces';
+import { useMemo } from "react";
+import { IField, IRow, IVisualConfig } from '../../interfaces';
 import { getMeaAggKey } from '../../utils';
+import { format } from "d3-format";
 
 interface MetricTableProps {
     matrix: any[][];
     meaInRows: IField[];
     meaInColumns: IField[];
+    numberFormat: string;
 }
 
-function getCellData (cell: IRow, measure: IField) {
+function getCellData (cell: IRow, measure: IField, formatter: (value: unknown) => string) {
+
     const meaKey = getMeaAggKey(measure.fid, measure.aggName);
     if (cell[meaKey] === undefined) {
         return '--';
     }
-    return cell[meaKey];
+    const formattedValue = formatter(cell[meaKey]);
+    return formattedValue;
 }
+
 const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
-    const { matrix, meaInRows, meaInColumns } = props;
+    const { matrix, meaInRows, meaInColumns, numberFormat } = props;
+
+    const numberFormatter = useMemo<(value: unknown) => string>(() => {
+        const numberFormatter = numberFormat ? format(numberFormat) : (v: number) => v.toLocaleString();
+        return (value: unknown) => {
+            if (typeof value !== "number") {
+                return `${value}`;
+            }
+            return numberFormatter(value);
+        };
+    }, [numberFormat]);
+
     return (
         <tbody className="bg-white dark:bg-black text-gray-800 dark:text-gray-100 border-r border-b border-gray-300">
             {matrix.map((row, rIndex) => {
@@ -33,7 +50,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
                                                     className="whitespace-nowrap p-2 text-xs"
                                                     key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${colMea.fid}-${colMea.aggName}`}
                                                 >
-                                                    {getCellData(cell, rowMea)} , {getCellData(cell, colMea)}
+                                                    {getCellData(cell, rowMea, numberFormatter)} , {getCellData(cell, colMea, numberFormatter)}
                                                 </td>
                                             ));
                                         }
@@ -42,7 +59,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
                                                 className="whitespace-nowrap p-2 text-xs"
                                                 key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}`}
                                             >
-                                                {getCellData(cell, rowMea)}
+                                                {getCellData(cell, rowMea, numberFormatter)}
                                             </td>
                                         );
                                     })
@@ -62,7 +79,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
                                         key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                     >
                                         {
-                                            getCellData(cell, colMea)
+                                            getCellData(cell, colMea, numberFormatter)
                                         }
                                     </td>
                                 ));
@@ -86,7 +103,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
                                                 className="whitespace-nowrap p-2 text-xs"
                                                 key={`${rIndex}-${cIndex}-${rmIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}
                                             >
-                                                { getCellData(cell, rowMea) } , { getCellData(cell, colMea) }
+                                                { getCellData(cell, rowMea, numberFormatter) } , { getCellData(cell, colMea, numberFormatter) }
                                             </td>
                                         ))}
                                     </td>
@@ -102,7 +119,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo((props) => {
         </tbody>
     );
 }, function areEqual(prevProps, nextProps) {
-    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix)) {
+    if (JSON.stringify(prevProps.matrix) === JSON.stringify(nextProps.matrix) && prevProps.numberFormat === nextProps.numberFormat) {
         return true;
     }
     
