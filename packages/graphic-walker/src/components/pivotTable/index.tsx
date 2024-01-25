@@ -6,7 +6,7 @@ import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
 import { observer } from 'mobx-react-lite';
-import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout } from '../../interfaces';
+import { DeepReadonly, DraggableFieldState, IDarkMode, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
 import { INestNode } from './inteface';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
@@ -35,7 +35,6 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     const [topTree, setTopTree] = useState<INestNode | null>(null);
     const [metricTable, setMetricTable] = useState<any[][]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
     const vizStore = useVizStore();
     const enableCollapse = !!vizStore;
     const tableCollapsedHeaderMap = vizStore?.tableCollapsedHeaderMap ?? emptyMap;
@@ -249,7 +248,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             enableCollapse={enableCollapse}
                         />
                     )}
-                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} />}
+                    {metricTable && <MetricTable matrix={metricTable} meaInColumns={measInColumn} meaInRows={measInRow} numberFormat={layout.format.numberFormat || ''} />}
                 </table>
             </div>
         </div>
