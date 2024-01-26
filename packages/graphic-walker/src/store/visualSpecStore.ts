@@ -114,7 +114,7 @@ export class VizSpecStore {
         options?: {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
-            defaultConfig?: IDefaultConfig
+            defaultConfig?: IDefaultConfig;
         }
     ) {
         this.meta = meta;
@@ -766,34 +766,34 @@ export function renderSpec(spec: Specification, meta: IMutField[], name: string,
         const facets = (spec.facets || []).concat(spec.highFacets || []);
         for (let facet of facets) {
             const f = fields.find((f) => f.fid === facet);
-            f && chart.encodings.rows.push(f);
+            f && (chart.encodings.rows = chart.encodings.rows.concat([f]));
         }
     }
     if (spec.position) {
         const [cols, rows] = spec.position;
         if (cols) {
             const f = fields.find((f) => f.fid === cols);
-            f && chart.encodings.columns.push(f);
+            f && (chart.encodings.columns = chart.encodings.columns.concat([f]));
         }
         if (rows) {
             const f = fields.find((f) => f.fid === rows);
-            f && chart.encodings.rows.push(f);
+            f && (chart.encodings.rows = chart.encodings.rows.concat([f]));
         }
     }
     if (spec.color && spec.color.length > 0) {
         const color = spec.color[0];
         const f = fields.find((f) => f.fid === color);
-        f && chart.encodings.color.push(f);
+        f && (chart.encodings.color = chart.encodings.color.concat([f]));
     }
     if (spec.size && spec.size.length > 0) {
         const size = spec.size[0];
         const f = fields.find((f) => f.fid === size);
-        f && chart.encodings.size.push(f);
+        f && (chart.encodings.size = chart.encodings.size.concat([f]));
     }
     if (spec.opacity && spec.opacity.length > 0) {
         const opacity = spec.opacity[0];
         const f = fields.find((f) => f.fid === opacity);
-        f && chart.encodings.opacity.push(f);
+        f && (chart.encodings.opacity = chart.encodings.opacity.concat([f]));
     }
     return chart;
 }
