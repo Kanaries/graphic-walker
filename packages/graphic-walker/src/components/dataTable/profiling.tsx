@@ -8,6 +8,7 @@ import { themeContext } from '../../store/theme';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
+import { getTheme } from '../../utils/useTheme';
 
 export interface FieldProfilingProps {
     field: string;
@@ -97,6 +98,19 @@ function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
 }
 
 function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantitativeField>> }) {
+    const mediaTheme = useContext(themeContext);
+    const themeConfig = getTheme({
+        mediaTheme,
+    });
+
+    const vegaConfig = useMemo(() => {
+        const config: any = {
+            ...themeConfig,
+            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+        };
+        return config;
+    }, [themeConfig]);
+
     const ref = useCallback(
         (node: HTMLDivElement) => {
             if (!node) {
@@ -138,6 +152,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
                 renderer: 'canvas',
                 mode: 'vega-lite',
                 actions: false,
+                config: vegaConfig,
             });
         },
         [data]
