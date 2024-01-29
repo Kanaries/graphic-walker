@@ -313,13 +313,19 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             reportGWError('canvas not found', Errors.canvasExceedSize);
                         }
                     }
-                    if (rect && !modifier.width && !modifier.height && layoutMode !== 'auto') {
-                        const modifier = {
-                            width: Math.max(rect.width - (areaWidth || width), 0),
-                            height: Math.max(rect.height - (areaHeight || height), 0),
-                        };
-                        setModifier(modifier);
-                        modifierDepsRef.current = modifierDeps;
+                    if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
+                        if (rect) {
+                            const modifier = {
+                                width: Math.max(rect.width - (areaWidth || width), 0),
+                                height: Math.max(rect.height - (areaHeight || height), 0),
+                            };
+                            setModifier(modifier);
+                            modifierDepsRef.current = modifierDeps;
+                        } else {
+                            // fallback to show
+                            setModifier({ width: 0, height: 0 });
+                            modifierDepsRef.current = modifierDeps;
+                        }
                     }
                     vegaRefs.current = [
                         {
@@ -361,11 +367,11 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
             for (let i = 0; i < rowRepeatFields.length; i++) {
                 for (let j = 0; j < colRepeatFields.length; j++, index++) {
-                    let resolveModifer: (modifier: Rect) => void;
+                    let resolveModifier: (modifier: Rect) => void;
                     let rejectModifer: (reason?: any) => void;
                     modifiers.push(
                         new Promise((resolve, reject) => {
-                            resolveModifer = resolve;
+                            resolveModifier = resolve;
                             rejectModifer = reject;
                         })
                     );
@@ -393,12 +399,16 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         reportGWError('canvas not found', Errors.canvasExceedSize);
                                     }
                                 }
-                                if (rect && !modifier.width && !modifier.height && layoutMode !== 'auto') {
-                                    const modifier = {
-                                        width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
-                                        height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
-                                    };
-                                    resolveModifer(modifier);
+                                if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
+                                    if (rect) {
+                                        const modifier = {
+                                            width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
+                                            height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
+                                        };
+                                        resolveModifier(modifier);
+                                    } else {
+                                        resolveModifier({ width: 0, height: 0 });
+                                    }
                                 }
                                 vegaRefs.current[id] = {
                                     w: container?.clientWidth ?? res.view.width(),
