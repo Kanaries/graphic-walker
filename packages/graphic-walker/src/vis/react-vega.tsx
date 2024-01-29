@@ -215,14 +215,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const { width: areaWidth, height: areaHeight, ref: areaRef } = useResizeDetector();
 
     const modifierDeps = [
-        columns,
+        guardedCols,
         dataSource,
         defaultAggregate,
         geomType,
         interactiveScale,
         layoutMode,
         mediaTheme,
-        rows,
+        guardedRows,
         stack,
         channelScales,
         color,
@@ -233,6 +233,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         size,
         text,
         theta,
+        displayOffset,
     ];
 
     const modifierDepsRef = useRef(modifierDeps);
@@ -276,29 +277,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 vegaConfig,
                 displayOffset,
             }),
-        [
-            guardedCols,
-            dataSource,
-            defaultAggregate,
-            geomType,
-            vegaHeight,
-            interactiveScale,
-            layoutMode,
-            mediaTheme,
-            guardedRows,
-            stack,
-            vegaWidth,
-            channelScales,
-            color,
-            details,
-            opacity,
-            radius,
-            shape,
-            size,
-            text,
-            theta,
-            displayOffset,
-        ]
+        modifierDeps.concat([vegaHeight, vegaWidth])
     );
     // Render
     useEffect(() => {
@@ -509,7 +488,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             renderTaskRefs.current = [];
             props.onReportSpec?.('');
         };
-    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale]);
+    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale, modifier]);
 
     const containerRef = useRef<HTMLDivElement>(null);
 

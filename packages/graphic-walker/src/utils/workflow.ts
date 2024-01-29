@@ -296,12 +296,11 @@ export const addTransformForQuery = (
     }[]
 ): IDataQueryPayload => {
     if (transform.length === 0) return query;
-    const existTransform = query.workflow.findIndex((x) => x.type === 'transform');
-    if (existTransform > -1) {
+    if (query.workflow[0].type === 'transform') {
         return {
             ...query,
             workflow: query.workflow.map((x, i) => {
-                if (x.type === 'transform' && i === existTransform) {
+                if (x.type === 'transform' && i === 0) {
                     const transforms = new Set(x.transform.map((t) => t.key));
                     return {
                         type: 'transform',

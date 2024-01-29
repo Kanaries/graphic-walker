@@ -13,6 +13,7 @@ import DatasetTable from './components/dataTable';
 import { useCurrentMediaTheme } from './utils/media';
 import { toJS } from 'mobx';
 import Errorpanel from './components/errorpanel';
+import { themeContext } from './store/theme';
 
 export type BaseTableProps = IAppI18nProps &
     IErrorHandlerProps &
@@ -64,12 +65,14 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
                 <ComputationContext.Provider value={wrappedComputation}>
-                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                        <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
+                    <themeContext.Provider value={darkMode}>
+                        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+                            <div className="bg-white dark:bg-zinc-900 dark:text-white">
+                                <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
+                            </div>
                         </div>
-                    </div>
-                    <Errorpanel />
+                        <Errorpanel />
+                    </themeContext.Provider>
                 </ComputationContext.Provider>
             </ErrorBoundary>
         </ErrorContext>
@@ -113,10 +116,8 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(props.dark);
 
     return (
-        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
-                <TableApp darkMode={darkMode} computation={safeComputation} {...rest} />
-            </VizStoreWrapper>
-        </div>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+            <TableApp darkMode={darkMode} computation={safeComputation} {...rest} />
+        </VizStoreWrapper>
     );
 }

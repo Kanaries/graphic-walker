@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { IComputationFunction, IMutField, IRow, ISemanticType, IVisFilter } from '../../interfaces';
-import { getDistinctValues, getRange, getTemporalRange } from '../../computation';
+import { getFieldDistinctCounts, getRange, getTemporalRange } from '../../computation';
 import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
 
@@ -115,7 +115,7 @@ export function createFilterContext(components: {
                         return domainsRef.current.get(k)!;
                     }
                     if (x.mode === 'single' || x.mode === 'multi') {
-                        const p = getDistinctValues(computation, x.fid).then((x) => x.map((i) => i.value));
+                        const p = getFieldDistinctCounts(computation, x.fid, { sortBy: 'count_dsc' }).then((x) => x.map((i) => i.value));
                         domainsRef.current.set(k, p);
                         return p;
                     }
@@ -392,7 +392,7 @@ export const useNominalFilter = (
     const [domain, setDomain] = React.useState<string[]>([]);
     useEffect(() => {
         (async () => {
-            const domain = await getDistinctValues(computation, fid);
+            const domain = await getFieldDistinctCounts(computation, fid, { sortBy: 'count_dsc' });
             setDomain(domain.map((x) => x.value));
         })();
     }, [computation, fid]);
