@@ -112,6 +112,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
                 data: {
                     values: data.binValues.map(({ from, to, count }) => ({
                         value: `${formatter(from)} - ${formatter(to)}`,
+                        sort: from,
                         count,
                     })),
                 },
@@ -120,6 +121,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
                     x: {
                         field: 'value',
                         type: 'ordinal',
+                        sort: { op: 'sum', field: 'sort' },
                         axis: false,
                     },
                     y: {
