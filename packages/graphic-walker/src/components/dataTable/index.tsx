@@ -14,6 +14,7 @@ import { ComputationContext } from '../../store';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import { formatDate } from '../../utils';
 import { FieldProfiling } from './profiling';
+import { addFilterForQuery, createFilter } from '../../utils/workflow';
 
 interface DataTableProps {
     /** page limit */
@@ -266,6 +267,11 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         };
     }, [computationFunction, pageIndex, size, sorting, filters]);
 
+    const filteredComputation = useMemo((): IComputationFunction => {
+        const filterRules = filters.filter((f) => f.rule).map(createFilter);
+        return (query) => computation(addFilterForQuery(query, filterRules));
+    }, [computation, filters]);
+
     const loading = statLoading || dataLoading;
 
     const headers = useMemo(() => getHeaders(metas), [metas]);
@@ -419,7 +425,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                     <FieldProfiling
                                         field={field.fid}
                                         semanticType={field.semanticType}
-                                        computation={computation}
+                                        computation={filteredComputation}
                                         displayOffset={displayOffset}
                                         offset={field.offset}
                                     />
