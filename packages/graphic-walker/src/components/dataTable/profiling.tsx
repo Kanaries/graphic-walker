@@ -26,14 +26,21 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
         return <div className="h-24 flex items-center justify-center">Loading...</div>;
     }
 
+    const render = (value) => {
+        const displayValue = valueRenderer(value);
+        if (!displayValue) {
+            return <span className="text-red-500">(Empty)</span>;
+        }
+        return displayValue;
+    };
+
     const [meta, tops] = stat;
     // shows top 2 when the maximum quantity is more than 1.3x the average quantity, and over 1%.
-    // or there are only 2 types of value.
-    const showsTops =
-        meta.distinctTotal === 2 || (meta.distinctTotal > 2 && tops[0].count > (1.3 * meta.total) / meta.distinctTotal && tops[0].count > meta.total / 100);
+    // or there are lower than 10 unique values.
+    const showsTops = meta.distinctTotal < 10 || (tops[0].count > (1.3 * meta.total) / meta.distinctTotal && tops[0].count > meta.total / 100);
 
     if (meta.distinctTotal === 1) {
-        return <div className="h-24 flex items-center justify-center text-xl">= {tops[0].value || '(Empty)'}</div>;
+        return <div className="h-24 flex items-center justify-center text-xl">= {render(tops[0].value)}</div>;
     }
 
     return (
@@ -41,7 +48,7 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
             {showsTops && (
                 <>
                     {tops.map(({ count, value }) => {
-                        const displayValue = valueRenderer(value) || '(Empty)';
+                        const displayValue = render(value);
                         return (
                             <Tooltip content={displayValue} darkModePreference={dark}>
                                 <div className="w-full rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 flex justify-between space-x-2">
