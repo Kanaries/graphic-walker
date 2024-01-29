@@ -14,6 +14,7 @@ import { useCurrentMediaTheme } from './utils/media';
 import { toJS } from 'mobx';
 import Errorpanel from './components/errorpanel';
 import { themeContext } from './store/theme';
+import { VizAppContext } from './store/context';
 
 export type BaseTableProps = IAppI18nProps &
     IErrorHandlerProps &
@@ -23,7 +24,17 @@ export type BaseTableProps = IAppI18nProps &
     };
 
 export const TableApp = observer(function VizApp(props: BaseTableProps) {
-    const { computation, darkMode = 'light', i18nLang = 'en-US', i18nResources, computationTimeout = 60000, onError, pageSize = 20 } = props;
+    const {
+        computation,
+        darkMode = 'light',
+        i18nLang = 'en-US',
+        i18nResources,
+        computationTimeout = 60000,
+        onError,
+        pageSize = 20,
+        themeConfig,
+        themeKey,
+    } = props;
 
     const { i18n } = useTranslation();
     const curLang = i18n.language;
@@ -64,16 +75,14 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <ComputationContext.Provider value={wrappedComputation}>
-                    <themeContext.Provider value={darkMode}>
-                        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                            <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                                <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
-                            </div>
+                <VizAppContext ComputationContext={wrappedComputation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+                        <div className="bg-white dark:bg-zinc-900 dark:text-white">
+                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
                         </div>
-                        <Errorpanel />
-                    </themeContext.Provider>
-                </ComputationContext.Provider>
+                    </div>
+                    <Errorpanel />
+                </VizAppContext>
             </ErrorBoundary>
         </ErrorContext>
     );

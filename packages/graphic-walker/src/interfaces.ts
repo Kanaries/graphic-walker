@@ -956,6 +956,8 @@ export interface ISpecProps {
 export interface ITableSpecProps {
     pageSize?: number;
     displayOffset?: number;
+    themeKey?: IThemeKey;
+    themeConfig?: GWGlobalConfig;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}

@@ -8,11 +8,14 @@ import DataSelection from './dataSelection';
 import DefaultButton from '../components/button/default';
 import DropdownSelect from '../components/dropdownSelect';
 import PrimaryButton from '../components/button/primary';
-import { IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField } from '../interfaces';
+import { IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
 import { ShadowDom } from '../shadow-dom';
 import { CommonStore } from '../store/commonStore';
 import { VizSpecStore } from '../store/visualSpecStore';
 import { useCurrentMediaTheme } from '../utils/media';
+import { GWGlobalConfig } from '../vis/theme';
+import { composeContext } from '../utils/context';
+import { themeContext, vegaThemeContext } from '../store/theme';
 
 interface DSSegmentProps {
     commonStore: CommonStore;
@@ -95,10 +98,14 @@ function once<T extends (...args: any[]) => any>(register: (x: T) => () => void,
     disposer.current = register(newCB as T);
 }
 
+const DataSourceThemeContext = composeContext({ themeContext, vegaThemeContext });
+
 export function DataSourceSegmentComponent(props: {
     provider: IDataSourceProvider;
     displayOffset?: number;
     dark?: IDarkMode;
+    themeKey?: IThemeKey;
+    themeConfig?: GWGlobalConfig;
     children: (props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
@@ -219,16 +226,18 @@ export function DataSourceSegmentComponent(props: {
     return (
         <>
             <ShadowDom>
-                <div className={`${darkMode === 'dark' ? 'dark' : ''}`}>
-                    <DataSourceSegment
-                        commonStore={commonStore}
-                        dataSources={datasetList}
-                        onSelectId={setSelectedId}
-                        selectedId={selectedId}
-                        onLoad={onLoad}
-                        onSave={onSave}
-                    />
-                </div>
+                <DataSourceThemeContext themeContext={darkMode} vegaThemeContext={{ themeConfig: props.themeConfig, themeKey: props.themeKey }}>
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''}`}>
+                        <DataSourceSegment
+                            commonStore={commonStore}
+                            dataSources={datasetList}
+                            onSelectId={setSelectedId}
+                            selectedId={selectedId}
+                            onLoad={onLoad}
+                            onSave={onSave}
+                        />
+                    </div>
+                </DataSourceThemeContext>
             </ShadowDom>
             <props.children
                 computation={computation}
