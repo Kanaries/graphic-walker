@@ -87,9 +87,7 @@ function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
     }
     return (
         <div className="h-24 w-full flex flex-col space-y-1">
-            <div className="w-full flex-1">
-                <BinRenderer data={stat} />
-            </div>
+            <BinRenderer data={stat} />
             <div className="flex justify-between w-full text-xs font-medium leading-none">
                 <div>{formatter(stat.min)}</div>
                 <div>{formatter(stat.max)}</div>
@@ -144,7 +142,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
         },
         [data]
     );
-    return <div className="w-full h-full" ref={ref} />;
+    return <div ref={ref} />;
 }
 
 function LazyLoaded<T>(Component: ComponentType<T>) {

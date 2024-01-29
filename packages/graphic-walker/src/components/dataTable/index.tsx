@@ -421,7 +421,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                         ))}
                         <tr className="divide-x divide-gray-200 dark:divide-gray-700 border-b">
                             {metas.map((field) => (
-                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-gray-500 dark:text-gray-300'}>
+                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-gray-500 dark:text-gray-300'}>
                                     <FieldProfiling
                                         field={field.fid}
                                         semanticType={field.semanticType}
