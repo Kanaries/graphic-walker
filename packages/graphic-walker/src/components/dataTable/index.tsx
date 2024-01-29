@@ -13,6 +13,8 @@ import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react
 import { ComputationContext } from '../../store';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import { formatDate } from '../../utils';
+import { FieldProfiling } from './profiling';
+import { addFilterForQuery, createFilter } from '../../utils/workflow';
 
 interface DataTableProps {
     /** page limit */
@@ -265,10 +267,30 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         };
     }, [computationFunction, pageIndex, size, sorting, filters]);
 
+    const filteredComputation = useMemo((): IComputationFunction => {
+        const filterRules = filters.filter((f) => f.rule).map(createFilter);
+        return (query) => computation(addFilterForQuery(query, filterRules));
+    }, [computation, filters]);
+
     const loading = statLoading || dataLoading;
 
     const headers = useMemo(() => getHeaders(metas), [metas]);
 
+    const [isSticky, setIsSticky] = useState(false);
+
+    const obRef = useRef<IntersectionObserver>();
+    const stickyDector = useCallback((node: HTMLDivElement) => {
+        obRef.current?.disconnect();
+        if (node) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    setIsSticky(!entry.isIntersecting);
+                });
+            });
+            observer.observe(node);
+            obRef.current = observer;
+        }
+    }, []);
     return (
         <Container className="relative">
             {!disableFilter && filters.length > 0 && (
@@ -303,8 +325,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             </nav>
 
             <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
+                <div className="h-0 w-full" ref={stickyDector}></div>
                 <table className="min-w-full relative border-x border-gray-200 dark:border-gray-700">
-                    <thead className="">
+                    <thead className={`sticky top-0 bg-white dark:bg-zinc-900 ${isSticky ? 'shadow-md' : ''}`}>
                         {headers.map((row) => (
                             <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={`row_${getHeaderKey(row[0])}`}>
                                 {row.map((f, i) => (
@@ -312,92 +335,103 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                         colSpan={f.colSpan}
                                         rowSpan={f.rowSpan}
                                         key={getHeaderKey(f)}
-                                        className="align-top sticky top-0 bg-white dark:bg-zinc-900 p-0"
+                                        className="align-top p-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900"
                                         style={{ zIndex: row.length - i }}
                                     >
-                                        <div className="border-b border-gray-200 dark:border-gray-700">
-                                            {f.type === 'name' && (
-                                                <div
-                                                    className={
-                                                        'border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-gray-900 dark:text-gray-50'
-                                                    }
-                                                >
-                                                    <b className="sticky inset-x-0 w-fit px-4 sm:pl-6">{f.value}</b>
-                                                </div>
-                                            )}
-                                            {f.type === 'field' && (
-                                                <div
-                                                    className={
-                                                        getHeaderClassNames(f.value) +
-                                                        ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1 group'
-                                                    }
-                                                >
-                                                    <div className="font-normal inline-block">
-                                                        {!onMetaChange && (
-                                                            <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
+                                        {f.type === 'name' && (
+                                            <div
+                                                className={
+                                                    'inset-x-0 border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-gray-900 dark:text-gray-50'
+                                                }
+                                            >
+                                                <b className="sticky inset-x-0 w-fit px-4 sm:pl-6">{f.value}</b>
+                                            </div>
+                                        )}
+                                        {f.type === 'field' && (
+                                            <div
+                                                className={
+                                                    getHeaderClassNames(f.value) +
+                                                    ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1 group'
+                                                }
+                                            >
+                                                <div className="font-normal inline-block">
+                                                    {!onMetaChange && (
+                                                        <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
+                                                            <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
+                                                        </span>
+                                                    )}
+                                                    {onMetaChange && (
+                                                        <DropdownContext
+                                                            options={semanticTypeList}
+                                                            onSelect={(value) => {
+                                                                onMetaChange(f.value.fid, f.fIndex, {
+                                                                    semanticType: value as IMutField['semanticType'],
+                                                                });
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
+                                                                    getSemanticColors(f.value)
+                                                                }
+                                                            >
                                                                 <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
                                                             </span>
-                                                        )}
-                                                        {onMetaChange && (
-                                                            <DropdownContext
-                                                                options={semanticTypeList}
-                                                                onSelect={(value) => {
-                                                                    onMetaChange(f.value.fid, f.fIndex, {
-                                                                        semanticType: value as IMutField['semanticType'],
-                                                                    });
-                                                                }}
-                                                            >
-                                                                <span
-                                                                    className={
-                                                                        'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
-                                                                        getSemanticColors(f.value)
-                                                                    }
-                                                                >
-                                                                    <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
-                                                                </span>
-                                                            </DropdownContext>
-                                                        )}
-                                                    </div>
-                                                    <b
-                                                        className="inline-block"
-                                                        onClick={() =>
-                                                            setSorting((s) => {
-                                                                if (s?.fid === f.value.fid && s.sort === 'descending') {
-                                                                    return {
-                                                                        fid: f.value.fid,
-                                                                        sort: 'ascending',
-                                                                    };
-                                                                }
-                                                                return {
-                                                                    fid: f.value.fid,
-                                                                    sort: 'descending',
-                                                                };
-                                                            })
-                                                        }
-                                                    >
-                                                        {f.value.basename || f.value.name || f.value.fid}
-                                                    </b>
-                                                    {sorting?.fid === f.value.fid && (
-                                                        <div className="mx-1">
-                                                            {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
-                                                            {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
-                                                        </div>
-                                                    )}
-                                                    {!disableFilter && (
-                                                        <div
-                                                            className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
-                                                            onClick={() => onSelectFilter(f.value.fid)}
-                                                        >
-                                                            <FunnelIcon className="w-4 inline-block" />
-                                                        </div>
+                                                        </DropdownContext>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
+                                                <b
+                                                    className="inline-block"
+                                                    onClick={() =>
+                                                        setSorting((s) => {
+                                                            if (s?.fid === f.value.fid && s.sort === 'descending') {
+                                                                return {
+                                                                    fid: f.value.fid,
+                                                                    sort: 'ascending',
+                                                                };
+                                                            }
+                                                            return {
+                                                                fid: f.value.fid,
+                                                                sort: 'descending',
+                                                            };
+                                                        })
+                                                    }
+                                                >
+                                                    {f.value.basename || f.value.name || f.value.fid}
+                                                </b>
+                                                {sorting?.fid === f.value.fid && (
+                                                    <div className="mx-1">
+                                                        {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
+                                                        {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
+                                                    </div>
+                                                )}
+                                                {!disableFilter && (
+                                                    <div
+                                                        className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
+                                                        onClick={() => onSelectFilter(f.value.fid)}
+                                                    >
+                                                        <FunnelIcon className="w-4 inline-block" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </th>
                                 ))}
                             </tr>
                         ))}
+                        <tr className="divide-x divide-gray-200 dark:divide-gray-700 border-b">
+                            {metas.map((field) => (
+                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-gray-500 dark:text-gray-300'}>
+                                    <FieldProfiling
+                                        field={field.fid}
+                                        semanticType={field.semanticType}
+                                        computation={filteredComputation}
+                                        displayOffset={displayOffset}
+                                        offset={field.offset}
+                                    />
+                                </th>
+                            ))}
+                        </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900 font-mono">
                         {rows.map((row, index) => (

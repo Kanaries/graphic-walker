@@ -16,7 +16,7 @@ import type {
     IVisSpecForExport,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
-import { getFilterMeaAggKey, getMeaAggKey, getSort, isNotEmpty } from '.';
+import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { parseChart } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
@@ -67,6 +67,63 @@ const treeShake = (
     return result;
 };
 
+export const createFilter = (f: IFilterField): IVisFilter => {
+    const fid = getFilterMeaAggKey(f);
+    const rule = f.rule!;
+    if (rule.type === 'one of') {
+        return {
+            fid,
+            rule: {
+                type: 'one of',
+                value: [...rule.value],
+            },
+        };
+    } else if (rule.type === 'temporal range') {
+        return {
+            fid,
+            rule: {
+                type: 'temporal range',
+                value: rule.value,
+                offset: rule.offset,
+                format: rule.format,
+            },
+        };
+    } else if (rule.type === 'not in') {
+        return {
+            fid,
+            rule: {
+                type: 'not in',
+                value: [...rule.value],
+            },
+        };
+    } else if (rule.type === 'range') {
+        const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
+        return {
+            fid,
+            rule: {
+                type: 'range',
+                value: range,
+            },
+        };
+    } else if (rule.type === 'regexp') {
+        return {
+            fid,
+            rule: {
+                type: 'regexp',
+                value: rule.value,
+                caseSensitive: rule.caseSensitive,
+            },
+        };
+    } else {
+        const neverRule: never = rule;
+        console.error('unknown rule', neverRule);
+        return {
+            fid,
+            rule,
+        };
+    }
+};
+
 export const toWorkflow = (
     viewFilters: VizSpecStore['viewFilters'],
     allFields: Omit<IViewField, 'dragId'>[],
@@ -101,66 +158,14 @@ export const toWorkflow = (
 
     // TODO: apply **fold** before filter
 
-    const createFilter = (f: IFilterField): IVisFilter => {
-        const fid = getFilterMeaAggKey(f);
-        viewKeys.add(fid);
-        const rule = f.rule!;
-        if (rule.type === 'one of') {
-            return {
-                fid,
-                rule: {
-                    type: 'one of',
-                    value: [...rule.value],
-                },
-            };
-        } else if (rule.type === 'temporal range') {
-            return {
-                fid,
-                rule: {
-                    type: 'temporal range',
-                    value: rule.value,
-                    offset: rule.offset,
-                    format: rule.format,
-                },
-            };
-        } else if (rule.type === 'not in') {
-            return {
-                fid,
-                rule: {
-                    type: 'not in',
-                    value: [...rule.value],
-                },
-            };
-        } else if (rule.type === 'range') {
-            const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
-            return {
-                fid,
-                rule: {
-                    type: 'range',
-                    value: range,
-                },
-            };
-        } else if (rule.type === 'regexp') {
-            return {
-                fid,
-                rule: {
-                    type: 'regexp',
-                    value: rule.value,
-                    caseSensitive: rule.caseSensitive,
-                },
-            };
-        } else {
-            const neverRule: never = rule;
-            console.error('unknown rule', neverRule);
-            return {
-                fid,
-                rule,
-            };
-        }
+    const buildFilter = (f: IFilterField) => {
+        const filter = createFilter(f);
+        viewKeys.add(filter.fid);
+        return filter;
     };
 
     // First, to apply filters on the detailed data
-    const filters = viewFilters.filter((f) => !f.computed && f.rule && !f.enableAgg).map<IVisFilter>(createFilter);
+    const filters = viewFilters.filter((f) => !f.computed && f.rule && !f.enableAgg).map<IVisFilter>(buildFilter);
     if (filters.length) {
         filterWorkflow = {
             type: 'filter',
@@ -188,7 +193,7 @@ export const toWorkflow = (
     }
 
     // Third, apply filter on the transformed data
-    const computedFilters = viewFilters.filter((f) => f.computed && f.rule && !f.enableAgg).map<IVisFilter>(createFilter);
+    const computedFilters = viewFilters.filter((f) => f.computed && f.rule && !f.enableAgg).map<IVisFilter>(buildFilter);
     if (computedFilters.length) {
         computedWorkflow = {
             type: 'filter',
@@ -265,7 +270,7 @@ export const toWorkflow = (
     if (aggergated && viewDimensions.length > 0 && aggergatedFilter.length > 0) {
         aggFilterWorkflow = {
             type: 'filter',
-            filters: aggergatedFilter.map(createFilter),
+            filters: aggergatedFilter.map(buildFilter),
         };
     }
 
@@ -296,12 +301,11 @@ export const addTransformForQuery = (
     }[]
 ): IDataQueryPayload => {
     if (transform.length === 0) return query;
-    const existTransform = query.workflow.findIndex((x) => x.type === 'transform');
-    if (existTransform > -1) {
+    if (query.workflow[0].type === 'transform') {
         return {
             ...query,
             workflow: query.workflow.map((x, i) => {
-                if (x.type === 'transform' && i === existTransform) {
+                if (x.type === 'transform' && i === 0) {
                     const transforms = new Set(x.transform.map((t) => t.key));
                     return {
                         type: 'transform',

@@ -370,3 +370,30 @@ export function parseKeyword(keyword: IKeyWord): RegExp {
     }
     return new RegExp(source, keyword.caseSenstive ? '' : 'i');
 }
+
+export function range(start: number, end: number) {
+    return new Array(end - start + 1).fill(0).map((_, i) => i + start);
+}
+
+export function binarySearchClosest<T>(arr: T[], target: number, keyF: (v: T) => number) {
+    if (arr.length === 0) throw new Error('there is no item in arr.');
+    let left = 0;
+    let right = arr.length - 1;
+    let closest: T = arr[0];
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        const midValue = arr[mid];
+        const key = keyF(midValue);
+        if (closest === null || Math.abs(key - target) < Math.abs(keyF(closest) - target)) {
+            closest = midValue;
+        }
+        if (key === target) {
+            return midValue;
+        } else if (key < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return closest;
+}

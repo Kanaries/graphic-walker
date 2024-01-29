@@ -6,7 +6,7 @@ import createMemoryProvider from './dataSourceProvider/memory';
 function FullGraphicWalker(props: IGWProps) {
     const provider = useMemo(() => createMemoryProvider(), []);
     return (
-        <DataSourceSegmentComponent provider={provider} dark={props.dark}>
+        <DataSourceSegmentComponent provider={provider} dark={props.dark} themeConfig={props.themeConfig} themeKey={props.themeKey}>
             {(p) => {
                 return (
                     <GraphicWalker

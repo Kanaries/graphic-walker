@@ -135,7 +135,7 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
                         onChange={(e) => {
                             commonStore.updateTempName(e.target.value);
                         }}
-                        className="text-xs mr-2 p-2 rounded border border-gray-200 dark:border-gray-700 outline-none focus:outline-none focus:border-blue-500 placeholder:italic placeholder:text-slate-400 dark:bg-stone-900"
+                        className="text-xs mr-2 p-2 rounded border border-gray-200 dark:border-gray-700 outline-none focus:outline-none focus:border-blue-500 placeholder:italic placeholder:text-slate-400 dark:text-gray-200 dark:bg-stone-900"
                     />
                     <PrimaryButton
                         className="mr-2"
