@@ -17,7 +17,9 @@ import type {
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
 import { processExpression } from '../utils/workflow';
-import { isNotEmpty, parseKeyword } from '../utils';
+import { binarySearchClosest, isNotEmpty, parseKeyword } from '../utils';
+import { COUNT_FIELD_ID } from '../constants';
+import { range } from 'lodash-es';
 
 export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
     const res = (await service({
@@ -316,37 +318,6 @@ export const fieldStat = async (
     };
 };
 
-export async function getDistinctValues(service: IComputationFunction, field: string) {
-    const COUNT_ID = `distinct_count_${field}`;
-    const valuesQueryPayload: IDataQueryPayload = {
-        workflow: [
-            {
-                type: 'view',
-                query: [
-                    {
-                        op: 'aggregate',
-                        groupBy: [field],
-                        measures: [
-                            {
-                                field: '*',
-                                agg: 'count',
-                                asFieldKey: COUNT_ID,
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    };
-    const valuesRes = await service(valuesQueryPayload);
-    return valuesRes
-        .sort((a, b) => b[COUNT_ID] - a[COUNT_ID])
-        .map((row) => ({
-            value: row[field] as string,
-            count: row[COUNT_ID] as number,
-        }));
-}
-
 export async function getRange(service: IComputationFunction, field: string) {
     const MIN_ID = `min_${field}`;
     const MAX_ID = `max_${field}`;
@@ -471,4 +442,201 @@ export async function getTemporalRange(service: IComputationFunction, field: str
         },
     ] = await service(rangeQueryPayload);
     return [newDate(rangeRes[MIN_ID]).getTime(), newDate(rangeRes[MAX_ID]).getTime(), format] as [number, number, string];
+}
+
+export async function getFieldDistinctMeta(service: IComputationFunction, field: string) {
+    const COUNT_ID = `count_${field}`;
+    const TOTAL_DISTINCT_ID = `total_distinct_${field}`;
+    const workflow: IDataQueryWorkflowStep[] = [
+        {
+            type: 'view',
+            query: [
+                {
+                    op: 'aggregate',
+                    groupBy: [field],
+                    measures: [
+                        {
+                            field: '*',
+                            agg: 'count',
+                            asFieldKey: COUNT_ID,
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            type: 'view',
+            query: [
+                {
+                    op: 'aggregate',
+                    groupBy: [],
+                    measures: [
+                        {
+                            field: '*',
+                            agg: 'count',
+                            asFieldKey: TOTAL_DISTINCT_ID,
+                        },
+                        {
+                            field: COUNT_ID,
+                            agg: 'sum',
+                            asFieldKey: 'count',
+                        },
+                    ],
+                },
+            ],
+        },
+    ];
+    const [valuesMetaRes = { [TOTAL_DISTINCT_ID]: 0, count: 0 }] = await service({ workflow });
+    return {
+        total: valuesMetaRes.count as number,
+        distinctTotal: valuesMetaRes[TOTAL_DISTINCT_ID] as number,
+    };
+}
+
+export async function getFieldDistinctCounts(
+    service: IComputationFunction,
+    field: string,
+    options: {
+        sortBy?: 'value' | 'count' | 'value_dsc' | 'count_dsc' | 'none';
+        valuesLimit?: number;
+        valuesOffset?: number;
+    } = {}
+) {
+    const { sortBy = 'none', valuesLimit, valuesOffset } = options;
+    const COUNT_ID = `count_${field}`;
+    const valuesQueryPayload: IDataQueryPayload = {
+        workflow: [
+            {
+                type: 'view',
+                query: [
+                    {
+                        op: 'aggregate',
+                        groupBy: [field],
+                        measures: [
+                            {
+                                field: '*',
+                                agg: 'count',
+                                asFieldKey: COUNT_ID,
+                            },
+                        ],
+                    },
+                ],
+            },
+            ...(sortBy === 'none'
+                ? []
+                : ([
+                      {
+                          type: 'sort',
+                          by: [sortBy.startsWith('value') ? field : COUNT_ID],
+                          sort: sortBy.endsWith('dsc') ? 'descending' : 'ascending',
+                      },
+                  ] as ISortWorkflowStep[])),
+        ],
+        limit: valuesLimit,
+        offset: valuesOffset,
+    };
+    const valuesRes = await service(valuesQueryPayload);
+    return valuesRes.map((row) => ({
+        value: row[field] as string,
+        count: row[COUNT_ID] as number,
+    }));
+}
+
+export async function profileNonmialField(service: IComputationFunction, field: string) {
+    const TOPS_NUM = 2;
+    const meta = getFieldDistinctMeta(service, field);
+    const tops = getFieldDistinctCounts(service, field, { sortBy: 'count_dsc', valuesLimit: TOPS_NUM });
+    return Promise.all([meta, tops] as const);
+}
+
+export async function profileQuantitativeField(service: IComputationFunction, field: string) {
+    const BIN_FIELD = `bin_${field}`;
+    const ROW_NUM_FIELD = `${COUNT_FIELD_ID}_sum`;
+    const BIN_SIZE = 10;
+
+    const workflow: IDataQueryWorkflowStep[] = [
+        {
+            type: 'transform',
+            transform: [
+                {
+                    key: BIN_FIELD,
+                    expression: {
+                        op: 'bin',
+                        as: BIN_FIELD,
+                        params: [
+                            {
+                                type: 'field',
+                                value: field,
+                            },
+                        ],
+                        num: BIN_SIZE,
+                    },
+                },
+                {
+                    key: COUNT_FIELD_ID,
+                    expression: {
+                        op: 'one',
+                        params: [],
+                        as: COUNT_FIELD_ID,
+                    },
+                },
+            ],
+        },
+        {
+            type: 'view',
+            query: [
+                {
+                    op: 'aggregate',
+                    groupBy: [BIN_FIELD],
+                    measures: [
+                        {
+                            field: COUNT_FIELD_ID,
+                            agg: 'sum',
+                            asFieldKey: ROW_NUM_FIELD,
+                        },
+                    ],
+                },
+            ],
+        },
+    ];
+
+    const rangeRes = getRange(service, field);
+    const valuesRes = service({ workflow });
+    const [min, max] = await rangeRes;
+    const values = (await valuesRes).sort((x, y) => x[BIN_FIELD] - y[BIN_FIELD]);
+    if (values.length === 0) {
+        return {
+            max: 0,
+            min: 0,
+            binValues: [],
+        };
+    }
+    const step = (max - min) / BIN_SIZE;
+    const binValues = range(0, BIN_SIZE)
+        .map((x) => x * step + min)
+        .map((bin) => {
+            const row = binarySearchClosest(values, bin, (row) => row[BIN_FIELD]);
+            const binValue = row[BIN_FIELD] as number;
+            if (Math.abs(binValue - bin) * 2 < step) {
+                // accepted nearest (to ignore float presision)
+                const count = row[ROW_NUM_FIELD] as number;
+                return {
+                    from: bin,
+                    to: bin + step,
+                    count,
+                };
+            } else {
+                // not found
+                return {
+                    from: bin,
+                    to: bin + step,
+                    count: 0,
+                };
+            }
+        });
+    return {
+        max,
+        min,
+        binValues,
+    };
 }

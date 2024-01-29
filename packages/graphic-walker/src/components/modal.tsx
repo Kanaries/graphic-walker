@@ -9,7 +9,7 @@ const Background = styled.div`
     right: 0;
     bottom: 0;
     backdrop-filter: blur(1px);
-    z-index: 25535;
+    z-index: 40;
 `;
 
 const Container = styled.div`

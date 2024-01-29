@@ -8,7 +8,7 @@ import PosFields from './fields/posFields';
 import AestheticFields from './fields/aestheticFields';
 import DatasetFields from './fields/datasetFields/index';
 import ReactiveRenderer from './renderer/index';
-import { ComputationContext, VizStoreWrapper, useVizStore, withErrorReport, withTimeout } from './store';
+import { VizStoreWrapper, useVizStore, withErrorReport, withTimeout } from './store';
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
@@ -37,6 +37,7 @@ import SideResize from './components/side-resize';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import ComputedFieldDialog from './components/computedField';
+import { VizAppContext } from './store/context';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -138,7 +139,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <ComputationContext.Provider value={wrappedComputation}>
+                <VizAppContext ComputationContext={wrappedComputation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
                         <div className="bg-white dark:bg-zinc-900 dark:text-white">
                             <div className="px-2 mx-2">
@@ -233,7 +234,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                             )}
                         </div>
                     </div>
-                </ComputationContext.Provider>
+                </VizAppContext>
             </ErrorBoundary>
         </ErrorContext>
     );
@@ -276,12 +277,10 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(props.dark);
 
     return (
-        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-            <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
-                <FieldsContextWrapper>
-                    <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
-                </FieldsContextWrapper>
-            </VizStoreWrapper>
-        </div>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+            <FieldsContextWrapper>
+                <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
+            </FieldsContextWrapper>
+        </VizStoreWrapper>
     );
 }
