@@ -31,7 +31,7 @@ import { newChart } from './models/visSpecHistory';
 import { SimpleOneOfSelector, SimpleRange, SimpleSearcher, SimpleTemporalRange } from './fields/filterField/simple';
 import { toWorkflow } from './utils/workflow';
 import { useResizeDetector } from 'react-resize-detector';
-import { themeContext } from './store/theme';
+import { VizAppContext } from './store/context';
 
 type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -132,28 +132,26 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <ComputationContext.Provider value={wrappedComputation}>
-                    <themeContext.Provider value={darkMode}>
-                        <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                            <div className="flex flex-col space-y-2 bg-white dark:bg-zinc-900 dark:text-white">
-                                <Errorpanel />
-                                <FilterSection />
-                                <div className={props.containerClassName} style={props.containerStyle}>
-                                    {computation && (
-                                        <ReactiveRenderer
-                                            themeKey={themeKey}
-                                            dark={darkMode}
-                                            themeConfig={themeConfig}
-                                            computationFunction={wrappedComputation}
-                                            channelScales={props.channelScales}
-                                            overrideSize={props.overrideSize}
-                                        />
-                                    )}
-                                </div>
+                <VizAppContext ComputationContext={wrappedComputation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
+                        <div className="flex flex-col space-y-2 bg-white dark:bg-zinc-900 dark:text-white">
+                            <Errorpanel />
+                            <FilterSection />
+                            <div className={props.containerClassName} style={props.containerStyle}>
+                                {computation && (
+                                    <ReactiveRenderer
+                                        themeKey={themeKey}
+                                        dark={darkMode}
+                                        themeConfig={themeConfig}
+                                        computationFunction={wrappedComputation}
+                                        channelScales={props.channelScales}
+                                        overrideSize={props.overrideSize}
+                                    />
+                                )}
                             </div>
                         </div>
-                    </themeContext.Provider>
-                </ComputationContext.Provider>
+                    </div>
+                </VizAppContext>
             </ErrorBoundary>
         </ErrorContext>
     );

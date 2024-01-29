@@ -1,10 +1,10 @@
-import { ComponentProps, ComponentType, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { IComputationFunction, ISemanticType } from '../../interfaces';
 import { profileNonmialField, profileQuantitativeField } from '../../computation';
 import React from 'react';
 import { formatDate, isNotEmpty } from '../../utils';
 import Tooltip from '../tooltip';
-import { themeContext } from '../../store/theme';
+import { themeContext, vegaThemeContext } from '../../store/theme';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
@@ -99,17 +99,21 @@ function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
 
 function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantitativeField>> }) {
     const mediaTheme = useContext(themeContext);
-    const themeConfig = getTheme({
+    const { themeConfig, themeKey } = useContext(vegaThemeContext);
+
+    const theme = getTheme({
         mediaTheme,
+        themeConfig,
+        themeKey,
     });
 
     const vegaConfig = useMemo(() => {
         const config: any = {
-            ...themeConfig,
+            ...theme,
             background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
         };
         return config;
-    }, [themeConfig]);
+    }, [theme]);
 
     const ref = useCallback(
         (node: HTMLDivElement) => {
@@ -155,7 +159,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
                 config: vegaConfig,
             });
         },
-        [data]
+        [data, vegaConfig]
     );
     return <div ref={ref} />;
 }

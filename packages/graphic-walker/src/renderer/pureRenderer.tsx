@@ -22,6 +22,8 @@ import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
+import { VizAppContext } from '../store/context';
+import { useCurrentMediaTheme } from '../utils/media';
 
 type IPureRendererProps = {
     className?: string;
@@ -49,6 +51,7 @@ type RemoteProps = {
 
 export type IRemotePureRendererProps = IPureRendererProps & RemoteProps & React.RefAttributes<IReactVegaHandler>;
 export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.RefAttributes<IReactVegaHandler>;
+
 /**
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
@@ -126,32 +129,35 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
 
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
+    const darkMode = useCurrentMediaTheme(dark);
 
     return (
         <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className}>
-            <div className="relative" style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
-                {isSpatial && (
-                    <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
-                        <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
-                    </div>
-                )}
-                {isSpatial || (
-                    <SpecRenderer
-                        themeConfig={themeConfig}
-                        name={name}
-                        loading={waiting}
-                        data={viewData}
-                        ref={ref}
-                        themeKey={themeKey}
-                        dark={dark}
-                        draggableFieldState={visualState}
-                        visualConfig={visualConfig}
-                        layout={visualLayout}
-                        locale={locale ?? 'en-US'}
-                        channelScales={channelScales}
-                    />
-                )}
-            </div>
+            <VizAppContext ComputationContext={computation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
+                <div className={`relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
+                    {isSpatial && (
+                        <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
+                            <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
+                        </div>
+                    )}
+                    {isSpatial || (
+                        <SpecRenderer
+                            themeConfig={themeConfig}
+                            name={name}
+                            loading={waiting}
+                            data={viewData}
+                            ref={ref}
+                            themeKey={themeKey}
+                            dark={dark}
+                            draggableFieldState={visualState}
+                            visualConfig={visualConfig}
+                            layout={visualLayout}
+                            locale={locale ?? 'en-US'}
+                            channelScales={channelScales}
+                        />
+                    )}
+                </div>
+            </VizAppContext>
         </ShadowDom>
     );
 });
