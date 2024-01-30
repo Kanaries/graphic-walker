@@ -253,6 +253,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const vegaWidth = layoutMode === 'auto' ? 0 : (areaWidth || width) - (modifier.width ?? 0);
     const vegaHeight = layoutMode === 'auto' ? 0 : (areaHeight || height) - (modifier.height ?? 0);
 
+    const needModifier = !modifier.width && !modifier.height && layoutMode !== 'auto';
+
     const specs = useMemo(
         () =>
             toVegaSpec({
@@ -318,7 +320,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             }
                         }
                     });
-                    if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
+                    if (needModifier) {
                         if (rect) {
                             const modifier = {
                                 width: Math.max(rect.width - (areaWidth || width), 0),
@@ -372,14 +374,16 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
             for (let i = 0; i < rowRepeatFields.length; i++) {
                 for (let j = 0; j < colRepeatFields.length; j++, index++) {
-                    let resolveModifier: (modifier: Rect) => void;
-                    let rejectModifer: (reason?: any) => void;
-                    modifiers.push(
-                        new Promise((resolve, reject) => {
-                            resolveModifier = resolve;
-                            rejectModifer = reject;
-                        })
-                    );
+                    let resolveModifier: (modifier: Rect) => void | undefined;
+                    let rejectModifer: (reason?: any) => void | undefined;
+                    if (needModifier) {
+                        modifiers.push(
+                            new Promise((resolve, reject) => {
+                                resolveModifier = resolve;
+                                rejectModifer = reject;
+                            })
+                        );
+                    }
                     const sourceId = index;
                     const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null;
                     const ans = specs[index];
@@ -409,15 +413,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         }
                                     }
                                 });
-                                if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
+                                if (needModifier) {
                                     if (rect) {
                                         const modifier = {
                                             width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
                                             height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
                                         };
-                                        resolveModifier(modifier);
+                                        resolveModifier?.(modifier);
                                     } else {
-                                        resolveModifier({ width: 0, height: 0 });
+                                        resolveModifier?.({ width: 0, height: 0 });
                                     }
                                 }
                                 vegaRefs.current[id] = {
@@ -484,20 +488,22 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                     console.warn(error);
                                 }
                             })
-                            .catch((e) => rejectModifer(e));
+                            .catch((e) => rejectModifer?.(e));
                         renderTaskRefs.current.push(task);
                     }
                 }
             }
-            Promise.allSettled(modifiers).then((mods) => {
-                setModifier(
-                    mods
-                        .filter((x): x is PromiseFulfilledResult<Rect> => x.status === 'fulfilled')
-                        .map((x) => x.value)
-                        .reduce((x, y) => ({ width: x.width + y.width, height: x.height + y.height }), { width: 0, height: 0 })
-                );
-                modifierDepsRef.current = modifierDeps;
-            });
+            if (needModifier) {
+                Promise.allSettled(modifiers).then((mods) => {
+                    setModifier(
+                        mods
+                            .filter((x): x is PromiseFulfilledResult<Rect> => x.status === 'fulfilled')
+                            .map((x) => x.value)
+                            .reduce((x, y) => ({ width: x.width + y.width, height: x.height + y.height }), { width: 0, height: 0 })
+                    );
+                    modifierDepsRef.current = modifierDeps;
+                });
+            }
             return () => {
                 subscriptions.forEach((sub) => sub.unsubscribe());
                 props.onReportSpec?.('');
@@ -508,7 +514,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             renderTaskRefs.current = [];
             props.onReportSpec?.('');
         };
-    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale]);
+    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale, needModifier]);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
