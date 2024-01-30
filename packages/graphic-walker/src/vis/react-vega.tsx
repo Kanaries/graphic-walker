@@ -12,6 +12,7 @@ import { Errors, useReporter } from '../utils/reportError';
 import { useCurrentMediaTheme } from '../utils/media';
 import { toVegaSpec } from '../lib/vega';
 import { useResizeDetector } from 'react-resize-detector';
+import { startTask } from '../utils';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     display: grid;
@@ -205,6 +206,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         setCrossFilterTriggerIdx(-1);
         setViewPlaceholders((views) => {
             const viewNum = Math.max(1, rowRepeatFields.length * colRepeatFields.length);
+            if (viewNum === views.length) return views;
             const nextViews = new Array(viewNum).fill(null).map((v, i) => views[i] || React.createRef());
             return nextViews;
         });
@@ -248,8 +250,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         modifier = {};
     }
 
-    const vegaWidth = (areaWidth || width) - (modifier.width ?? 0);
-    const vegaHeight = (areaHeight || height) - (modifier.height ?? 0);
+    const vegaWidth = layoutMode === 'auto' ? 0 : (areaWidth || width) - (modifier.width ?? 0);
+    const vegaHeight = layoutMode === 'auto' ? 0 : (areaHeight || height) - (modifier.height ?? 0);
 
     const specs = useMemo(
         () =>
@@ -305,14 +307,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
                     const rect = canvas ? parseRect(canvas) : null;
-                    const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
-                    if (!success) {
-                        if (canvas) {
-                            reportGWError('canvas exceed max size', Errors.canvasExceedSize);
-                        } else {
-                            reportGWError('canvas not found', Errors.canvasExceedSize);
+                    startTask(() => {
+                        const success =
+                            layoutMode !== 'auto' || useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
+                        if (!success) {
+                            if (canvas) {
+                                reportGWError('canvas exceed max size', Errors.canvasExceedSize);
+                            } else {
+                                reportGWError('canvas not found', Errors.canvasExceedSize);
+                            }
                         }
-                    }
+                    });
                     if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
                         if (rect) {
                             const modifier = {
@@ -391,14 +396,19 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                 const container = res.view.container();
                                 const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
                                 const rect = canvas ? parseRect(canvas) : null;
-                                const success = useSvg || (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
-                                if (!success) {
-                                    if (canvas) {
-                                        reportGWError('canvas exceed max size', Errors.canvasExceedSize);
-                                    } else {
-                                        reportGWError('canvas not found', Errors.canvasExceedSize);
+                                startTask(() => {
+                                    const success =
+                                        layoutMode !== 'auto' ||
+                                        useSvg ||
+                                        (rect && canvasSize.test({ width: rect.renderWidth || 1, height: rect.renderHeight || 1 }));
+                                    if (!success) {
+                                        if (canvas) {
+                                            reportGWError('canvas exceed max size', Errors.canvasExceedSize);
+                                        } else {
+                                            reportGWError('canvas not found', Errors.canvasExceedSize);
+                                        }
                                     }
-                                }
+                                });
                                 if (!modifier.width && !modifier.height && layoutMode !== 'auto') {
                                     if (rect) {
                                         const modifier = {
@@ -498,7 +508,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             renderTaskRefs.current = [];
             props.onReportSpec?.('');
         };
-    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale, modifier]);
+    }, [specs, viewPlaceholders, showActions, vegaConfig, useSvg, locale]);
 
     const containerRef = useRef<HTMLDivElement>(null);
 

@@ -397,3 +397,7 @@ export function binarySearchClosest<T>(arr: T[], target: number, keyF: (v: T) =>
     }
     return closest;
 }
+
+export function startTask(task: () => void) {
+    Promise.resolve().then(task);
+}
