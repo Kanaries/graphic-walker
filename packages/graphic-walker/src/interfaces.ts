@@ -998,24 +998,83 @@ export interface IDataSourceProvider {
 }
 
 export interface IColorSet {
+    /** page and most component's background.
+     *  - recommend: white/950
+     */
     background: string;
+    /** text color on page and most component's background.
+     *  - recommend: 950/50
+     */
     foreground: string;
+    /** background of cards.
+     *  - recommend: white/950
+     */
     card: string;
+    /** text color of cards.
+     *  - recommend: 950/50 */
     'card-foreground': string;
+    /** background of popovers.
+     * - recommend: white/950
+     */
     popover: string;
+    /** text color of popovers.
+     * - recommend: 950/50
+     */
     'popover-foreground': string;
+    /** background of primary buttons and etc.
+     * - recommend: 900/50
+     */
     primary: string;
+    /** text color of primary buttons and etc.
+     * - recommend: 50/900
+     */
     'primary-foreground': string;
+    /** background of secondary buttons.
+     * - recommend: 900/50
+     */
     secondary: string;
+    /** text color of secondary buttons.
+     * - recommend: 900/50
+     */
     'secondary-foreground': string;
+    /** color of selected item or sperator in menu.
+     * - recommend: 100/800
+     */
     muted: string;
+    /** text color of descriptions.
+     * - recommend: 500/400
+     */
     'muted-foreground': string;
+    /** color of buttons being hovered.
+     * - recommend: 100/800
+     */
     accent: string;
+    /** text color of buttons being hovered.
+     * - recommend: 900/50
+     */
     'accent-foreground': string;
+    /** color of buttons that performs danger operations like delete.
+     * - recommend: red-500/red-900
+     */
     destructive: string;
+    /** text color of buttons that performs danger operations like delete.
+     * - recommend: 50
+     */
     'destructive-foreground': string;
+    /**
+     * color of container borders.
+     * - recommend: 200/800
+     */
     border: string;
+    /**
+     * color of input borders.
+     * - recommend: 200/800
+     */
     input: string;
+    /**
+     * color of rings.
+     * - recommend: 950/300
+     */
     ring: string;
 }
 
