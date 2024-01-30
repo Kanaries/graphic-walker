@@ -1030,7 +1030,7 @@ export interface IColorSet {
      */
     'primary-foreground': string;
     /** background of secondary buttons.
-     * - recommend: 900/50
+     * - recommend: 100/800
      */
     secondary: string;
     /** text color of secondary buttons.
@@ -1056,11 +1056,19 @@ export interface IColorSet {
     /** color of buttons that performs danger operations like delete.
      * - recommend: red-500/red-900
      */
-    destructive: string;
+    destructive?: string;
     /** text color of buttons that performs danger operations like delete.
      * - recommend: 50
      */
-    'destructive-foreground': string;
+    'destructive-foreground'?: string;
+    /** color of dimension fields.
+     * - recommend: blue-500/blue-400
+     */
+    dimension?: string;
+    /** color of measure fields.
+     * - recommend: purple-500/purple-400
+     */
+    measure?: string;
     /**
      * color of container borders.
      * - recommend: 200/800

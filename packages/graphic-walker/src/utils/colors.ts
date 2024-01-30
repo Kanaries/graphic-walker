@@ -1,14 +1,35 @@
 import { IColorConfig, IColorSet } from '../interfaces';
 
-function ColorSetToCss(set: IColorSet) {
+function ColorSetToCss(set: Required<IColorSet>) {
     return Object.entries(set)
         .map(([name, value]) => `--${name}:${value};`)
         .join('');
 }
 
 export function ColorConfigToCSS(config: IColorConfig) {
-    return `:root{${ColorSetToCss(config.light)}}.dark{${ColorSetToCss(config.dark)}}`;
+    return `:host{${ColorSetToCss({ ...baseTheme.light, ...config.light })}}\n.dark{${ColorSetToCss({ ...baseTheme.dark, ...config.dark })}}`;
 }
+
+type OptionalKeys<T> = {
+    [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+
+type FlipOptional<T> = Required<Pick<T, OptionalKeys<T>>> & Partial<Omit<T, OptionalKeys<T>>> extends infer O ? { [K in keyof O]: O[K] } : never;
+
+const baseTheme: { light: FlipOptional<IColorSet>; dark: FlipOptional<IColorSet> } = {
+    light: {
+        destructive: '0 84.2% 60.2%',
+        'destructive-foreground': '0 0% 98%',
+        dimension: '217.2 91.2% 59.8%',
+        measure: '270.7 91% 65.1%',
+    },
+    dark: {
+        destructive: '0 62.8% 30.6%',
+        'destructive-foreground': '0 0% 98%',
+        dimension: '213.1 93.9% 67.8%',
+        measure: '270 95.2% 75.3%',
+    },
+};
 
 export const zincTheme: IColorConfig = {
     light: {
@@ -26,8 +47,6 @@ export const zincTheme: IColorConfig = {
         'muted-foreground': '240 3.8% 46.1%',
         accent: '240 4.8% 95.9%',
         'accent-foreground': '240 5.9% 10%',
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '0 0% 98%',
         border: '240 5.9% 90%',
         input: '240 5.9% 90%',
         ring: '240 10% 3.9%',
@@ -47,8 +66,6 @@ export const zincTheme: IColorConfig = {
         'muted-foreground': '240 5% 64.9%',
         accent: '240 3.7% 15.9%',
         'accent-foreground': '0 0% 98%',
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '0 0% 98%',
         border: '240 3.7% 15.9%',
         input: '240 3.7% 15.9%',
         ring: '240 4.9% 83.9%',
@@ -70,8 +87,6 @@ export const slateTheme: IColorConfig = {
         'muted-foreground': '215.4 16.3% 46.9%',
         accent: '210 40% 96.1%',
         'accent-foreground': '222.2 47.4% 11.2%',
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '210 40% 98%',
         border: '214.3 31.8% 91.4%',
         input: '214.3 31.8% 91.4%',
         ring: '222.2 84% 4.9%',
@@ -91,8 +106,6 @@ export const slateTheme: IColorConfig = {
         'muted-foreground': '215 20.2% 65.1%',
         accent: '217.2 32.6% 17.5%',
         'accent-foreground': '210 40% 98%',
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '210 40% 98%',
         border: '217.2 32.6% 17.5%',
         input: '217.2 32.6% 17.5%',
         ring: '212.7 26.8% 83.9%',
@@ -114,8 +127,6 @@ export const grayTheme: IColorConfig = {
         'muted-foreground': '220 8.9% 46.1%',
         accent: '220 14.3% 95.9%',
         'accent-foreground': '220.9 39.3% 11%',
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '210 20% 98%',
         border: '220 13% 91%',
         input: '220 13% 91%',
         ring: '224 71.4% 4.1%',
@@ -135,8 +146,6 @@ export const grayTheme: IColorConfig = {
         'muted-foreground': '217.9 10.6% 64.9%',
         accent: '215 27.9% 16.9%',
         'accent-foreground': '210 20% 98%',
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '210 20% 98%',
         border: '215 27.9% 16.9%',
         input: '215 27.9% 16.9%',
         ring: '216 12.2% 83.9%',
@@ -158,8 +167,6 @@ export const neutralTheme: IColorConfig = {
         'muted-foreground': '0 0% 45.1%',
         accent: '0 0% 96.1%',
         'accent-foreground': '0 0% 9%',
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '0 0% 98%',
         border: '0 0% 89.8%',
         input: '0 0% 89.8%',
         ring: '0 0% 3.9%',
@@ -179,8 +186,6 @@ export const neutralTheme: IColorConfig = {
         'muted-foreground': '0 0% 63.9%',
         accent: '0 0% 14.9%',
         'accent-foreground': '0 0% 98%',
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '0 0% 98%',
         border: '0 0% 14.9%',
         input: '0 0% 14.9%',
         ring: '0 0% 83.1%',
@@ -202,8 +207,6 @@ export const stoneTheme: IColorConfig = {
         'muted-foreground': '25 5.3% 44.7%',
         accent: '60 4.8% 95.9%',
         'accent-foreground': '24 9.8% 10%',
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '60 9.1% 97.8%',
         border: '20 5.9% 90%',
         input: '20 5.9% 90%',
         ring: '20 14.3% 4.1%',
@@ -223,10 +226,53 @@ export const stoneTheme: IColorConfig = {
         'muted-foreground': '24 5.4% 63.9%',
         accent: '12 6.5% 15.1%',
         'accent-foreground': '60 9.1% 97.8%',
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '60 9.1% 97.8%',
         border: '12 6.5% 15.1%',
         input: '12 6.5% 15.1%',
         ring: '24 5.7% 82.9%',
+    },
+};
+
+export const emeraldTheme: IColorConfig = {
+    light: {
+        background: '0 0% 100%',
+        foreground: '161.4 93.5% 30.4%',
+        card: '0 0% 100%',
+        'card-foreground': '161.4 93.5% 30.4%',
+        popover: '0 0% 100%',
+        'popover-foreground': '161.4 93.5% 30.4%',
+        primary: '164.2 85.7% 16.5%',
+        'primary-foreground': '151.8 81% 95.9%',
+        secondary: '149.3 80.4% 90%',
+        'secondary-foreground': '164.2 85.7% 16.5%',
+        muted: '149.3 80.4% 90%',
+        'muted-foreground': '160.1 84.1% 39.4%',
+        accent: '149.3 80.4% 90%',
+        'accent-foreground': '164.2 85.7% 16.5%',
+        destructive: '217.2 91.2% 59.8%',
+        'destructive-foreground': '213.8 100% 96.9%',
+        border: '152.4 76% 80.4%',
+        input: '152.4 76% 80.4%',
+        ring: '166 91% 9%',
+    },
+    dark: {
+        background: '166 91% 9%',
+        foreground: '151.8 81% 95.9%',
+        card: '166 91% 9%',
+        'card-foreground': '151.8 81% 95.9%',
+        popover: '166 91% 9%',
+        'popover-foreground': '151.8 81% 95.9%',
+        primary: '151.8 81% 95.9%',
+        'primary-foreground': '164.2 85.7% 16.5%',
+        secondary: '163.1 88.1% 19.8%',
+        'secondary-foreground': '151.8 81% 95.9%',
+        muted: '163.1 88.1% 19.8%',
+        'muted-foreground': '158.1 64.4% 51.6%',
+        accent: '163.1 88.1% 19.8%',
+        'accent-foreground': '151.8 81% 95.9%',
+        destructive: '224.4 64.3% 32.9%',
+        'destructive-foreground': '213.8 100% 96.9%',
+        border: '163.1 88.1% 19.8%',
+        input: '163.1 88.1% 19.8%',
+        ring: '156.2 71.6% 66.9%',
     },
 };

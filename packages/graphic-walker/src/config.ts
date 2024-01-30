@@ -11,18 +11,6 @@ const STACK_MODE: IStackMode[] = ['none', 'stack', 'normalize', 'center'];
 
 const CHART_LAYOUT_TYPE: ('auto' | 'fixed' | 'full')[] = ['auto', 'fixed', 'full'];
 
-const COLORS = {
-    // tableau style
-    // dimension: 'rgb(73, 150, 178)',
-    // measure: 'rgb(0, 177, 128)',
-    // dimension: 'rgb(86, 170, 208)',
-    // measure: 'rgb(232, 149, 72)'
-    dimension: 'rgba(0, 0, 0, 0.9)',
-    measure: 'rgba(10, 0, 0, 0.6)',
-    black: '#141414',
-    white: '#fafafa',
-};
-
 const CHANNEL_LIMIT = {
     rows: Infinity,
     columns: Infinity,
@@ -49,7 +37,6 @@ const EMBEDED_MENU_LIST: IEmbedMenuItem[] = ['data_interpretation', 'data_view']
 export const GLOBAL_CONFIG = {
     AGGREGATOR_LIST,
     CHART_LAYOUT_TYPE,
-    COLORS,
     COORD_TYPES,
     GEOM_TYPES,
     MAX_HISTORY_SIZE: 20,

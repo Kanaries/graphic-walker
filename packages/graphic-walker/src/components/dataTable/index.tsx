@@ -15,6 +15,8 @@ import { parsedOffsetDate } from '../../lib/op/offset';
 import { formatDate } from '../../utils';
 import { FieldProfiling } from './profiling';
 import { addFilterForQuery, createFilter } from '../../utils/workflow';
+import { Button, buttonVariants } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 interface DataTableProps {
     /** page limit */
@@ -53,7 +55,7 @@ function getHeaderType(field: IMutField): 'number' | 'text' {
 }
 
 function getHeaderClassNames(field: IMutField) {
-    return field.analyticType === 'dimension' ? 'border-t-2 border-blue-400' : 'border-t-2 border-purple-400';
+    return field.analyticType === 'dimension' ? 'border-t-2 border-dimension' : 'border-t-2 border-measure';
 }
 
 function getSemanticColors(field: IMutField): string {
@@ -301,47 +303,49 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </div>
             )}
-            <nav className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2" aria-label="Pagination">
-                <div className="hidden sm:block">
-                    <p className="text-sm text-gray-800 dark:text-gray-100">
+            <nav className="flex items-center justify-end space-x-2 p-2" aria-label="Pagination">
+                <div className="hidden sm:block flex-1">
+                    <p className="text-sm text-muted-foreground">
                         Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
                         <span className="font-medium">{total}</span> results
                     </p>
                 </div>
-                <Pagination
-                    total={total}
-                    pageSize={size}
-                    pageIndex={pageIndex}
-                    onNext={() => {
-                        setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
-                    }}
-                    onPrev={() => {
-                        setPageIndex(Math.max(0, pageIndex - 1));
-                    }}
-                    onPageChange={(index) => {
-                        setPageIndex(Math.max(0, Math.min(Math.ceil(total / size) - 1, index)));
-                    }}
-                />
+                <div className="space-x-2">
+                    <Pagination
+                        total={total}
+                        pageSize={size}
+                        pageIndex={pageIndex}
+                        onNext={() => {
+                            setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
+                        }}
+                        onPrev={() => {
+                            setPageIndex(Math.max(0, pageIndex - 1));
+                        }}
+                        onPageChange={(index) => {
+                            setPageIndex(Math.max(0, Math.min(Math.ceil(total / size) - 1, index)));
+                        }}
+                    />
+                </div>
             </nav>
 
             <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
                 <div className="h-0 w-full" ref={stickyDector}></div>
-                <table className="min-w-full relative border-x border-gray-200 dark:border-gray-700">
-                    <thead className={`sticky top-0 bg-white dark:bg-zinc-900 ${isSticky ? 'shadow-md' : ''}`}>
+                <table className="min-w-full relative border-x">
+                    <thead className={`sticky top-0 bg-background ${isSticky ? 'shadow-md' : ''}`}>
                         {headers.map((row) => (
-                            <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={`row_${getHeaderKey(row[0])}`}>
+                            <tr className="divide-x divide-border" key={`row_${getHeaderKey(row[0])}`}>
                                 {row.map((f, i) => (
                                     <th
                                         colSpan={f.colSpan}
                                         rowSpan={f.rowSpan}
                                         key={getHeaderKey(f)}
-                                        className="align-top p-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900"
+                                        className="align-top p-0 border-b bg-background"
                                         style={{ zIndex: row.length - i }}
                                     >
                                         {f.type === 'name' && (
                                             <div
                                                 className={
-                                                    'inset-x-0 border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-gray-900 dark:text-gray-50'
+                                                    'inset-x-0 border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-foreground'
                                                 }
                                             >
                                                 <b className="sticky inset-x-0 w-fit px-4 sm:pl-6">{f.value}</b>
@@ -351,10 +355,10 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                             <div
                                                 className={
                                                     getHeaderClassNames(f.value) +
-                                                    ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-gray-900 dark:text-gray-50 flex items-center gap-1 group'
+                                                    ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-foreground flex items-center gap-1 group'
                                                 }
                                             >
-                                                <div className="font-normal inline-block">
+                                                <div className="font-normal block">
                                                     {!onMetaChange && (
                                                         <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
                                                             <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
@@ -407,7 +411,11 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                 )}
                                                 {!disableFilter && (
                                                     <div
-                                                        className="cursor-pointer invisible group-hover:visible rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-1"
+                                                        className={buttonVariants({
+                                                            variant: 'ghost',
+                                                            className: 'cursor-pointer invisible group-hover:visible',
+                                                            size: 'icon-sm',
+                                                        })}
                                                         onClick={() => onSelectFilter(f.value.fid)}
                                                     >
                                                         <FunnelIcon className="w-4 inline-block" />
@@ -419,9 +427,9 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                 ))}
                             </tr>
                         ))}
-                        <tr className="divide-x divide-gray-200 dark:divide-gray-700 border-b">
+                        <tr className="divide-x divide-border border-b">
                             {metas.map((field) => (
-                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-gray-500 dark:text-gray-300'}>
+                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
                                     <FieldProfiling
                                         field={field.fid}
                                         semanticType={field.semanticType}
@@ -433,14 +441,11 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-zinc-900 font-mono">
+                    <tbody className="divide-y divide-border bg-background font-mono">
                         {rows.map((row, index) => (
-                            <tr className="divide-x divide-gray-200 dark:divide-gray-700" key={index}>
+                            <tr className="divide-x divide-border" key={index}>
                                 {metas.map((field) => (
-                                    <td
-                                        key={field.fid + index}
-                                        className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-gray-500 dark:text-gray-300'}
-                                    >
+                                    <td key={field.fid + index} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-muted-foreground'}>
                                         <FieldValue field={field} item={row} displayOffset={displayOffset} />
                                     </td>
                                 ))}
@@ -475,28 +480,23 @@ export default DataTable;
 
 const FilterPill = (props: { name: string; onRemove?: () => void; onClick?: () => void }) => {
     return (
-        <span
-            onClick={props.onClick}
-            className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10"
-        >
+        <Badge onClick={props.onClick} className="gap-x-0.5">
             {props.name}
-            <button
+            <Button
                 onClick={(e) => {
                     e.stopPropagation();
                     props.onRemove?.();
                 }}
-                type="button"
-                className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
+                variant="ghost"
+                size="none"
+                className="relative -mr-1 h-3.5 w-3.5 rounded-sm"
             >
                 <span className="sr-only">Remove</span>
-                <svg
-                    viewBox="0 0 14 14"
-                    className="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75 dark:stroke-gray-200/50 dark:group-hover:stroke-gray-200/75"
-                >
+                <svg viewBox="0 0 14 14" className="h-3.5 w-3.5 stroke-current">
                     <path d="M4 4l6 6m0-6l-6 6" />
                 </svg>
                 <span className="absolute -inset-1"></span>
-            </button>
-        </span>
+            </Button>
+        </Badge>
     );
 };

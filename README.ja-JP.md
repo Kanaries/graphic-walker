@@ -201,7 +201,6 @@ export interface IGWProps {
 	dataSource?: IRow[];
 	rawFields?: IMutField[];
 	spec?: Specification;
-	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean;
@@ -213,7 +212,6 @@ export interface IGWProps {
 + `dataSource`, type `Array<{[key: string]: any}>`, key-value オブジェクトの配列。
 + `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts). 列の配列。
 + `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). 可視化の配置データ。
-+ `hideDataSourceConfig` を `true` に設置して導入機能を非表示にします。
 + `i18nLang`, type `string`. 言語コード。
 + `i18nResources` 多言語データ。
 + `keepAlive`, type `boolean`. `true` に設置したら、Graphic Walker はコンポーネントが削除されても、また使う必要のあるデータをセーブします。

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import Modal from '../modal';
 import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../../store';
-import DefaultButton from '../button/default';
-import PrimaryButton from '../button/primary';
 import { useTranslation } from 'react-i18next';
-import DefaultTab, { ITabOption } from '../tabs/defaultTab';
+import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 const syntaxHighlight = (json: any) => {
     if (typeof json != 'string') {
@@ -42,7 +41,7 @@ const CodeExport: React.FC = observer((props) => {
     const [tabKey, setTabKey] = useState<string>('graphic-walker');
     const [code, setCode] = useState<any>('');
 
-    const specTabs: ITabOption[] = [
+    const specTabs: { key: string; label: string }[] = [
         {
             key: 'graphic-walker',
             label: 'Graphic-Walker',
@@ -64,44 +63,44 @@ const CodeExport: React.FC = observer((props) => {
         }
     }, [tabKey, showCodeExportPanel, vizStore]);
     return (
-        <Modal
-            show={showCodeExportPanel}
-            onClose={() => {
+        <Dialog
+            open={showCodeExportPanel}
+            onOpenChange={() => {
                 vizStore.setShowCodeExportPanel(false);
             }}
         >
-            <div>
+            <DialogContent>
                 <h1>Code Export</h1>
-                <DefaultTab
-                    tabs={specTabs}
-                    selectedKey={tabKey}
-                    onSelected={(k) => {
-                        setTabKey(k as string);
-                    }}
-                />
-                <div className="text-sm px-6 max-h-96 overflow-auto">
-                    <code dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
-                </div>
-                <div className="mt-4 flex justify-start">
-                    <PrimaryButton
-                        // text={t("actions.confirm")}
-                        className="mr-2 px-6"
-                        text="Copy to Clipboard"
+                <Tabs value={tabKey} onValueChange={setTabKey}>
+                    <TabsList className="my-1">
+                        {specTabs.map((tab) => (
+                            <TabsTrigger value={tab.key}>{tab.label}</TabsTrigger>
+                        ))}
+                    </TabsList>
+                    <div className="border rounded-md overflow-hidden">
+                        <div className="text-sm px-6 max-h-96 overflow-auto ">
+                            <code dangerouslySetInnerHTML={{ __html: syntaxHighlight(code) }} />
+                        </div>
+                    </div>
+                </Tabs>
+                <DialogFooter className="mt-2">
+                    <Button
+                        children="Copy to Clipboard"
                         onClick={() => {
                             navigator.clipboard.writeText(JSON.stringify(code));
                             vizStore.setShowCodeExportPanel(false);
                         }}
                     />
-                    <DefaultButton
-                        text={t('actions.cancel')}
-                        className="mr-2 px-6"
+                    <Button
+                        variant="outline"
+                        children={t('actions.cancel')}
                         onClick={() => {
                             vizStore.setShowCodeExportPanel(false);
                         }}
                     />
-                </div>
-            </div>
-        </Modal>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 });
 

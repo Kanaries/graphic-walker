@@ -17,6 +17,8 @@ module.exports = {
                 ring: 'hsl(var(--ring))',
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
+                dimension: 'hsl(var(--dimension))',
+                measure: 'hsl(var(--measure))',
                 primary: {
                     DEFAULT: 'hsl(var(--primary))',
                     foreground: 'hsl(var(--primary-foreground))',
@@ -65,14 +67,12 @@ module.exports = {
                 'accordion-down': 'accordion-down 0.2s ease-out',
                 'accordion-up': 'accordion-up 0.2s ease-out',
             },
-        },
-        minWidth: {
-            96: '96px',
-        },
-        extend: {
             filter: {
                 darkmap: 'var(--map-tiles-filter)',
             },
+        },
+        minWidth: {
+            96: '96px',
         },
     },
     darkMode: 'class', // or 'media' or 'class

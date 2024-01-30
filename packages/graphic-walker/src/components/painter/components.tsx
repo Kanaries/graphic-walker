@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { getCircle } from '../../lib/paint';
-import { SketchPicker } from 'react-color';
-import DefaultButton from '../button/default';
 import { ShadowDomContext } from '../../shadow-dom';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { StyledPicker } from '../color-picker';
 
 export const PixelCursor = (props: { color: string; dia: number; factor: number; style?: React.CSSProperties; className?: string }) => {
     const { className, color, dia, factor, style } = props;
@@ -165,9 +166,8 @@ export const ClickInput = (props: { value: string; onChange: (v: string) => void
     };
 
     return edit ? (
-        <input
+        <Input
             autoFocus
-            className="block w-full rounded border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600"
             defaultValue={props.value}
             onBlur={doChange}
             onKeyUp={(e) => {
@@ -181,7 +181,7 @@ export const ClickInput = (props: { value: string; onChange: (v: string) => void
         />
     ) : (
         <label
-            className="px-2 py-1 rounded hover:bg-blue-100 leading-6"
+            className="px-3 py-1 text-sm transition-colors rounded hover:bg-accent leading-6"
             onClick={() => {
                 setEdit(true);
             }}
@@ -225,26 +225,28 @@ export const ColorEditor = (props: { color: string; onChangeColor: (color: strin
                 }}
             ></div>
             {showColorEdit && (
-                <div className="absolute right-0 top-8 z-40 flex-col space-y-1 bg-white dark:bg-zinc-900 shadow-lg rounded-md border border-gray-100 dark:border-gray-800">
-                    <SketchPicker
+                <div className="absolute right-0 top-8 z-40 flex-col space-y-1 bg-popover shadow-lg rounded-md border">
+                    <StyledPicker
                         presetColors={props.colors}
                         color={color}
                         onChange={(color) => {
                             setColorEdited(true);
                             setColor(color.hex);
                         }}
-                        styles={{ default: { picker: { border: 'none', boxShadow: 'none' } } }}
-                    ></SketchPicker>
+                        noShadow
+                        noBorder
+                    />
                     <div className="flex justify-end p-2">
-                        <DefaultButton
-                            text="Save"
+                        <Button
+                            variant="outline"
+                            children="Save"
                             onClick={() => {
                                 setShowColorEdit(false);
                                 if (colorEdited) {
                                     props.onChangeColor(color);
                                 }
                             }}
-                        ></DefaultButton>
+                        ></Button>
                     </div>
                 </div>
             )}

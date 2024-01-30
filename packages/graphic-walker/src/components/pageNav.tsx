@@ -20,10 +20,10 @@ const PageNav: React.FC = (props) => {
         },
     ];
     return (
-        <div className="w-fit h-5/6 m-2 rounded-xl bg-black shadow-2xl shadow-black	">
+        <div className="w-fit h-5/6 m-2 rounded-xl bg-primary shadow-2xl">
             <div className="flex flex-col">
                 <div
-                    className="p-2 m-2 mb-6 rounded text-white text-center flex items-center flex-col"
+                    className="p-2 m-2 mb-6 rounded text-primary-foreground text-center flex items-center flex-col"
                 >
                     
                     <h1 className="text-3xl font-bold">
@@ -33,7 +33,7 @@ const PageNav: React.FC = (props) => {
                 {NavLinks.map((link, index) => (
                     <div
                         key={index}
-                        className="p-2 m-2 rounded text-white hover:bg-gray-800 text-center flex items-center flex-col cursor-pointer"
+                        className="p-2 m-2 rounded text-primary-foreground hover:bg-primary/90 text-center flex items-center flex-col cursor-pointer"
                     >
                         {link.icon("w-6")}
                         <a className="text-xs" href={link.link}>

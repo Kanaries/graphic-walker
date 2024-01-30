@@ -84,6 +84,8 @@ If you want to use Graphic Walker as a data exploration tool without thinking ab
 
 Use it here: [Graphic Walker Online](https://graphic-walker.kanaries.net)
 
+Examples here: [Graphic Walker Examples](https://graphic-walker.kanaries.net/examples)
+
 ### Method 1: use as an independent app.
 ```bash
 yarn install
@@ -111,7 +113,7 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
     return <GraphicWalker
         dataSource={dataSource}
         rawFields={fields}
-        spec={graphicWalkerSpec}
+        chart={graphicWalkerSpec}
         i18nLang={langStore.lang}
     />;
 }
@@ -119,17 +121,35 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
 export default YourEmbeddingApp;
 ```
 
-If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` component to make a single chart without controls UI.
+If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` or `GraphicRenderer` component to make a single chart without controls UI.
 
 ```typescript
 import { PureRenderer } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC<IYourChartProps> = props => {
-    const { rawData, visualState, visualConfig } = props;
+    const { rawData, visualState, visualConfig, visualLayout } = props;
     return <PureRenderer
         rawData={rawData}
         visualState={visualState}
         visualConfig={visualConfig}
+        visualLayout={visualLayout}
+    />;
+}
+
+export default YourChart;
+```
+
+The `GraphicRenderer` component accepts same props as `GraphicWalker`, and would display the chart and the filters of the chart to change.
+
+```typescript
+import { GraphicRenderer } from '@kanaries/graphic-walker';
+
+const YourChart: React.FC<IYourChartProps> = props => {
+    const { dataSource, fields, spec } = props;
+    return <GraphicRenderer
+        dataSource={dataSource}
+        rawFields={fields}
+        chart={spec}
     />;
 }
 
@@ -214,7 +234,6 @@ export interface IGWProps {
 	dataSource?: IRow[];
 	rawFields?: IMutField[];
 	spec?: Specification;
-	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean | string;
@@ -241,10 +260,6 @@ Array of fields(columns) of the data. Provide this prop with `dataSource` prop t
 #### ~~`spec`: optional _{ [`Specification`](./packages/graphic-walker/src/interfaces.ts) }_~~
 
 Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop.
-
-#### `hideDataSourceConfig`: optional _{ `boolean = false` }_
-
-Data source control at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`.
 
 #### `i18nLang`: optional _{ `string = 'en-US'` }_
 

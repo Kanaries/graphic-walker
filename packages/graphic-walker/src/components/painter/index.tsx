@@ -1,12 +1,11 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, DependencyList, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { calcIndexesByDimensions, calcPaintMapV2, compressBitMap, createBitMapForMap, decompressBitMap, getCircleIndexes } from '../../lib/paint';
 import { fieldStat } from '../../computation';
 import { useRenderer } from '../../renderer/hooks';
-import { IDarkMode, IField, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
+import { IDarkMode, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, IViewField, VegaGlobalConfig } from '../../interfaces';
 import embed from 'vega-embed';
-import Modal from '../modal';
 import { PAINT_FIELD_ID } from '../../constants';
 import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
 import { sceneVisit } from 'vega';
@@ -14,13 +13,15 @@ import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
 import { ClickInput, ColorEditor, CursorDef, PixelContainer } from './components';
 import LoadingLayer from '../loadingLayer';
-import DefaultButton from '../button/default';
-import PrimaryButton from '../button/primary';
 import { GLOBAL_CONFIG } from '../../config';
 import { GWGlobalConfig, builtInThemes } from '../../vis/theme';
-import { useCurrentMediaTheme } from '../../utils/media';
 import { unstable_batchedUpdates } from 'react-dom';
 import { autoMark } from '../../vis/spec/mark';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent } from '../ui/dialog';
+import { Slider } from '../ui/slider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { themeContext } from '@/store/theme';
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -117,6 +118,7 @@ const PainterContent = (props: {
     onSave: () => void;
 }) => {
     const { t } = useTranslation();
+    const mediaTheme = useContext(themeContext);
     const computation = useCompututaion();
     const fields = useMemo(
         () => [
@@ -207,7 +209,13 @@ const PainterContent = (props: {
                 width: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
                 height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
             };
-            embed(containerRef.current, spec, { config: props.vegaConfig, actions: false }).then((res) => {
+            embed(containerRef.current, spec, {
+                config: props.vegaConfig,
+                actions: false,
+                tooltip: {
+                    theme: mediaTheme,
+                },
+            }).then((res) => {
                 const scene = res.view.scenegraph() as unknown as { root: Scene };
                 const origin = res.view.origin();
                 setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
@@ -331,100 +339,88 @@ const PainterContent = (props: {
             >
                 <div ref={containerRef} id="painter-container" className="!cursor-none"></div>
             </PixelContainer>
-            <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0">
-                <div className="flex space-x-4" aria-label="Tabs">
-                    <a
-                        className={
-                            (brushId === ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
-                            ' rounded-md px-3 py-2 text-sm font-medium cursor-pointer'
+            <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0 px-1">
+                <Tabs
+                    value={brushId === ERASER ? 'eraser' : 'palette'}
+                    onValueChange={(v) => {
+                        if (v === 'palette') {
+                            setBrushId(2);
+                        } else {
+                            setBrushId(ERASER);
                         }
-                        onClick={() => setBrushId(2)}
-                    >
-                        {t('main.tabpanel.settings.paint.palette')}
-                    </a>
-                    <a
-                        className={
-                            (brushId !== ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
-                            ' rounded-md px-3 py-2 text-sm font-medium cursor-pointer'
-                        }
-                        onClick={() => setBrushId(ERASER)}
-                    >
-                        {t('main.tabpanel.settings.paint.eraser')}
-                    </a>
-                </div>
-                {brushId !== ERASER && (
-                    <>
-                        <div className="grid grid-cols-5 gap-2 p-2">
-                            {Object.entries(props.dict).map(([id, { color }]) => (
-                                <div
-                                    key={id}
-                                    className={`box-border rounded-full border-black hover:border-gray-200 ${
-                                        id === `${brushId}` ? 'border-2' : 'hover:border-2'
-                                    } active:ring-black active:ring-1 w-4 h-4`}
-                                    style={{
-                                        background: color,
+                    }}
+                >
+                    <TabsList>
+                        <TabsTrigger value="palette"> {t('main.tabpanel.settings.paint.palette')}</TabsTrigger>
+                        <TabsTrigger value="eraser"> {t('main.tabpanel.settings.paint.eraser')}</TabsTrigger>
+                    </TabsList>
+                    {brushId !== ERASER && (
+                        <TabsContent value="palette">
+                            <div className="grid grid-cols-5 gap-2 p-2">
+                                {Object.entries(props.dict).map(([id, { color }]) => (
+                                    <div
+                                        key={id}
+                                        className={`box-border rounded-full border-primary hover: ${
+                                            id === `${brushId}` ? 'border-2' : 'hover:border-2'
+                                        } active:ring-black active:ring-1 w-4 h-4`}
+                                        style={{
+                                            background: color,
+                                        }}
+                                        onClick={() => setBrushId(Number(id))}
+                                    ></div>
+                                ))}
+                            </div>
+                            <div className="flex space-x-2">
+                                <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
+                                <ColorEditor
+                                    color={props.dict[brushId].color}
+                                    colors={scheme}
+                                    onChangeColor={(color) => {
+                                        props.onChangeDict({
+                                            ...props.dict,
+                                            [brushId]: {
+                                                color,
+                                                name: props.dict[brushId].name,
+                                            },
+                                        });
                                     }}
-                                    onClick={() => setBrushId(Number(id))}
-                                ></div>
-                            ))}
-                        </div>
-                        <div className="flex space-x-2">
-                            <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
-                            <ColorEditor
-                                color={props.dict[brushId].color}
-                                colors={scheme}
-                                onChangeColor={(color) => {
-                                    props.onChangeDict({
-                                        ...props.dict,
-                                        [brushId]: {
-                                            color,
-                                            name: props.dict[brushId].name,
-                                        },
-                                    });
-                                }}
-                            />
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                            <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
-                            <ClickInput
-                                value={props.dict[brushId].name}
-                                onChange={(name) => {
-                                    props.onChangeDict({
-                                        ...props.dict,
-                                        [brushId]: {
-                                            color: props.dict[brushId].color,
-                                            name,
-                                        },
-                                    });
-                                }}
-                            />
-                        </div>
-                    </>
-                )}
+                                />
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
+                                <ClickInput
+                                    value={props.dict[brushId].name}
+                                    onChange={(name) => {
+                                        props.onChangeDict({
+                                            ...props.dict,
+                                            [brushId]: {
+                                                color: props.dict[brushId].color,
+                                                name,
+                                            },
+                                        });
+                                    }}
+                                />
+                            </div>
+                        </TabsContent>
+                    )}
+                </Tabs>
                 <div className="pt-2">
                     <output className="text-sm">
                         {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
                     </output>
-                    <input
-                        className="w-full h-2 bg-blue-100 appearance-none"
-                        type="range"
-                        value={brushSize}
+                    <Slider
+                        className="mt-2"
+                        value={[brushSize]}
                         min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
                         max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
-                        step="1"
-                        onChange={(e) => {
-                            const v = parseInt(e.target.value);
-                            if (!isNaN(v)) {
-                                setBrushSize(v);
-                            }
-                        }}
+                        onValueChange={([v]) => setBrushSize(v)}
                     />
                 </div>
                 <div className="flex-1 flex flex-col space-y-2 justify-end">
-                    <PrimaryButton className="bg-red-600 hover:bg-red-700" text={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
-                    <DefaultButton text={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
-                    <DefaultButton text={t('main.tabpanel.settings.paint.cancel')} onClick={props.onCancel} />
-                    <PrimaryButton text={t('main.tabpanel.settings.paint.save_paint')} onClick={props.onSave} />
+                    <Button variant="destructive" children={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
+                    <Button variant="outline" children={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
+                    <Button variant="outline" children={t('main.tabpanel.settings.paint.cancel')} onClick={props.onCancel} />
+                    <Button children={t('main.tabpanel.settings.paint.save_paint')} onClick={props.onSave} />
                 </div>
             </div>
         </div>
@@ -451,7 +447,7 @@ function toZeroscaled([min, max]: [number, number]): [number, number] {
     return [min, max];
 }
 
-const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
+const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
     const vizStore = useVizStore();
     const { showPainterPanel, allFields, layout, config } = vizStore;
     const { geoms, timezoneDisplayOffset } = config;
@@ -596,52 +592,54 @@ const Painter = ({ dark, themeConfig, themeKey }: { dark?: IDarkMode; themeConfi
         setFacets([]);
     }, []);
 
-    const mediaTheme = useCurrentMediaTheme(dark);
+    const mediaTheme = useContext(themeContext);
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
         const config: VegaGlobalConfig = {
             ...presetConfig?.[mediaTheme],
-            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+            background: 'transparent',
         };
         return config;
     }, [themeConfig, themeKey, mediaTheme]);
 
     return (
-        <Modal
-            show={showPainterPanel}
-            onClose={() => {
+        <Dialog
+            open={showPainterPanel}
+            onOpenChange={() => {
                 vizStore.setShowPainter(false);
             }}
         >
-            {loading ? (
-                <LoadingLayer />
-            ) : (
-                <PainterContent
-                    mark={geoms[0]}
-                    vegaConfig={vegaConfig}
-                    onSave={saveMap}
-                    onDelete={() => {
-                        vizStore.updatePaint(null, '');
-                        vizStore.setShowPainter(false);
-                    }}
-                    onCancel={() => {
-                        vizStore.setShowPainter(false);
-                    }}
-                    x={fieldX!}
-                    y={fieldY!}
-                    facets={facets}
-                    allFields={allFields}
-                    domainX={domainX!}
-                    domainY={domainY!}
-                    dict={dict}
-                    onChangeDict={setDict}
-                    paintMapRef={paintMapRef}
-                    onReset={onReset}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
-        </Modal>
+            <DialogContent>
+                {loading ? (
+                    <LoadingLayer />
+                ) : (
+                    <PainterContent
+                        mark={geoms[0]}
+                        vegaConfig={vegaConfig}
+                        onSave={saveMap}
+                        onDelete={() => {
+                            vizStore.updatePaint(null, '');
+                            vizStore.setShowPainter(false);
+                        }}
+                        onCancel={() => {
+                            vizStore.setShowPainter(false);
+                        }}
+                        x={fieldX!}
+                        y={fieldY!}
+                        facets={facets}
+                        allFields={allFields}
+                        domainX={domainX!}
+                        domainY={domainY!}
+                        dict={dict}
+                        onChangeDict={setDict}
+                        paintMapRef={paintMapRef}
+                        onReset={onReset}
+                        displayOffset={timezoneDisplayOffset}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
     );
 };
 

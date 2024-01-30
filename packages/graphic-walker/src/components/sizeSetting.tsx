@@ -1,7 +1,8 @@
-import { ArrowsPointingOutIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import React, { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useDebounceValueBind } from "../hooks";
+import { ArrowsPointingOutIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDebounceValueBind } from '../hooks';
+import { Slider } from './ui/slider';
 
 interface SizeSettingProps {
     onWidthChange: (val: number) => void;
@@ -13,47 +14,39 @@ interface SizeSettingProps {
 
 export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
     const { onWidthChange, onHeightChange, width, height, children } = props;
-    const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.settings.size_setting" });
+    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings.size_setting' });
     const [innerWidth, setInnerWidth] = useDebounceValueBind(width, onWidthChange);
     const [innerHeight, setInnerHeight] = useDebounceValueBind(height, onHeightChange);
+
+    const sliderWidthValue = useMemo(() => [Math.sqrt(innerWidth / 1000)], [innerWidth]);
+    const sliderHeightValue = useMemo(() => [Math.sqrt(innerHeight / 1000)], [innerHeight]);
+
     return (
-        <div className="text-zinc-400">
+        <div className="w-60 p-2">
             {children}
-            <div className="mt-4 w-60">
-                <input
-                    className="w-full h-2 bg-blue-100 appearance-none"
-                    style={{ cursor: "ew-resize" }}
-                    type="range"
+            <div className="mt-4">
+                <Slider
+                    min={0}
+                    max={1}
+                    step={0.01}
                     name="width"
-                    value={Math.sqrt(innerWidth / 1000)}
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    onChange={(e) => {
-                        setInnerWidth(Math.round(Number(e.target.value) ** 2 * 1000));
-                    }}
+                    className="w-full"
+                    onValueChange={([v]) => setInnerWidth(Math.round(v ** 2 * 1000))}
+                    value={sliderWidthValue}
                 />
-                <output className="ml-1" htmlFor="width">
-                    {`${t("width")}: ${innerWidth}`}
-                </output>
+                <div className="ml-1 mt-1 text-xs">{`${t('width')}: ${innerWidth}`}</div>
             </div>
-            <div className="mt-2">
-                <input
-                    className="w-full h-2 bg-blue-100 appearance-none"
-                    style={{ cursor: "ew-resize" }}
-                    type="range"
+            <div className="mt-4">
+                <Slider
+                    min={0}
+                    max={1}
+                    step={0.01}
                     name="height"
-                    value={Math.sqrt(innerHeight / 1000)}
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    onChange={(e) => {
-                        setInnerHeight(Math.round(Number(e.target.value) ** 2 * 1000));
-                    }}
+                    className="w-full"
+                    onValueChange={([v]) => setInnerHeight(Math.round(v ** 2 * 1000))}
+                    value={sliderHeightValue}
                 />
-                <output className="ml-1" htmlFor="height">
-                    {`${t("height")}: ${innerHeight}`}
-                </output>
+                <div className="ml-1 mt-1 text-xs"> {`${t('height')}: ${innerHeight}`}</div>
             </div>
         </div>
     );
@@ -62,7 +55,7 @@ export const ResizeDialog: React.FC<SizeSettingProps> = (props) => {
 const SizeSetting: React.FC<SizeSettingProps> = (props) => {
     const { onWidthChange, onHeightChange, width, height } = props;
     const [show, setShow] = useState<boolean>(false);
-    const { t } = useTranslation("translation", { keyPrefix: "main.tabpanel.settings.size_setting" });
+    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings.size_setting' });
 
     useEffect(() => {
         if (show) {
@@ -73,13 +66,13 @@ const SizeSetting: React.FC<SizeSettingProps> = (props) => {
             let subscribed = false;
             const timer = setTimeout(() => {
                 subscribed = true;
-                document.body.addEventListener("click", closeDialog);
+                document.body.addEventListener('click', closeDialog);
             }, 200);
 
             return () => {
                 clearTimeout(timer);
                 if (subscribed) {
-                    document.body.removeEventListener("click", closeDialog);
+                    document.body.removeEventListener('click', closeDialog);
                 }
             };
         }
@@ -100,20 +93,20 @@ const SizeSetting: React.FC<SizeSettingProps> = (props) => {
             />
             {show && (
                 <>
-                <ResizeDialog {...props}>
-                    <div>
-                        <XMarkIcon
-                            className="text-gray-900 absolute right-2 top-2 w-4 cursor-pointer hover:bg-red-100"
-                            role="button"
-                            tabIndex={0}
-                            aria-label="close"
-                            onClick={(e) => {
-                                setShow(false);
-                                e.stopPropagation();
-                            }}
-                        />
-                    </div>
-                </ResizeDialog>
+                    <ResizeDialog {...props}>
+                        <div>
+                            <XMarkIcon
+                                className="text-gray-900 absolute right-2 top-2 w-4 cursor-pointer hover:bg-red-100"
+                                role="button"
+                                tabIndex={0}
+                                aria-label="close"
+                                onClick={(e) => {
+                                    setShow(false);
+                                    e.stopPropagation();
+                                }}
+                            />
+                        </div>
+                    </ResizeDialog>
                 </>
             )}
         </div>

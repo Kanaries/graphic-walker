@@ -6,7 +6,8 @@ html {
 
 @media (prefers-color-scheme: dark) {
     html {
-        background-color: rgb(24 24 27);
+        background-color: rgb(9, 9, 11);
+        color-scheme: dark;
     }
 }
 body {

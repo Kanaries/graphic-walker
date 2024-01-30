@@ -3,14 +3,16 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { GLOBAL_CONFIG } from '../config';
 
-export const FieldListContainer: React.FC<{ name: string; style?: Omit<CSSProperties, 'translate'>; children?: React.ReactNode | Iterable<React.ReactNode> }> = (
-    props
-) => {
+export const FieldListContainer: React.FC<{
+    name: string;
+    style?: Omit<CSSProperties, 'translate'>;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
+}> = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <FieldListSegment className="m-0.5 border border-gray-200 dark:border-gray-700 relative" style={props.style}>
-            <div className="fl-header border-r border-gray-200 dark:border-gray-800 cursor-default select-none">
+        <FieldListSegment className="sm:ml-0.5 my-0.5 border relative" style={props.style}>
+            <div className="fl-header border-r cursor-default select-none">
                 <h4 className="font-normal">{t(props.name)}</h4>
             </div>
             <div className="fl-container">{props.children}</div>
@@ -22,8 +24,8 @@ export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProper
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700" style={props.style}>
-            <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
+        <div className="my-0.5 sm:mx-0.5 text-xs border" style={props.style}>
+            <div className="border-b p-2 cursor-default select-none">
                 <h4 className="font-normal">{t(props.name)}</h4>
             </div>
             <div>{props.children}</div>
@@ -35,8 +37,8 @@ export const FilterFieldContainer: React.FC<{ children?: React.ReactNode | Itera
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <div className="m-0.5 text-xs border border-gray-200 dark:border-gray-700">
-            <div className="border-b border-gray-200 dark:border-gray-800 p-2 cursor-default select-none">
+        <div className="my-0.5 sm:mx-0.5 text-xs border">
+            <div className="border-b p-2 cursor-default select-none">
                 <h4 className="font-normal">{t('filters')}</h4>
             </div>
             <div>{props.children}</div>
@@ -68,7 +70,6 @@ export const FilterFieldsContainer = styled.div({
 
 export const FieldListSegment = styled.div`
     display: flex;
-    margin: 0.2em;
     font-size: 12px;
     div.fl-header {
         /* flex-basis: 100px; */
@@ -110,15 +111,15 @@ export const FilterFieldSegment = styled.div`
 `;
 
 export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
-    background-color: ${(props) => (props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.white : GLOBAL_CONFIG.COLORS.black)};
-    border-color: ${(props) => (props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.black : GLOBAL_CONFIG.COLORS.white)};
-    color: ${(props) => (props.colType === 'continuous' ? GLOBAL_CONFIG.COLORS.black : GLOBAL_CONFIG.COLORS.white)};
+    background-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--background))' : 'hsl(var(--primary))')};
+    border-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--border))' : 'hsl(var(--background))')};
+    color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))')};
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-align-items: center;
     -webkit-user-select: none;
     align-items: center;
-    border-radius: 10px;
+    border-radius: calc(var(--radius) - 2px);
     border-style: solid;
     border-width: 1px;
     box-sizing: border-box;

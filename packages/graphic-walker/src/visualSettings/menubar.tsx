@@ -1,10 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import styled from 'styled-components'
+import styled from 'styled-components';
 import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../store';
-
 
 export const MenubarContainer = styled.div({
     marginBlock: '0 0.6em',
@@ -12,9 +11,11 @@ export const MenubarContainer = styled.div({
 });
 
 const Button = styled.button(({ disabled = false }) => ({
-    '&:hover': disabled ? {} : {
-        backgroundColor: 'rgba(243, 244, 246, 0.7)',
-    },
+    '&:hover': disabled
+        ? {}
+        : {
+              backgroundColor: 'rgba(243, 244, 246, 0.7)',
+          },
     color: disabled ? 'rgba(156, 163, 175, 0.5)' : 'rgb(55, 65, 81)',
     '& > pre': {
         display: 'inline-block',
@@ -35,16 +36,12 @@ interface ButtonWithShortcutProps {
     icon?: JSX.Element;
 }
 
-export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, shortcut, disabled, handler, icon }) => {
-    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.menubar' });
-
+export const useShortcut = (shortcut: string, handler: () => void) => {
     const rule = React.useMemo(() => {
-        const keys = shortcut.split('+').map(d => d.trim());
+        const keys = shortcut.split('+').map((d) => d.trim());
 
         return {
-            key: keys.filter(
-                d => /^[a-z]$/i.test(d)
-            )[0],
+            key: keys.filter((d) => /^[a-z]$/i.test(d))[0],
             ctrlKey: keys.includes('Ctrl'),
             shiftKey: keys.includes('Shift'),
             altKey: keys.includes('Alt'),
@@ -53,12 +50,7 @@ export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, s
 
     React.useEffect(() => {
         const cb = (ev: KeyboardEvent) => {
-            if (
-                ev.ctrlKey === rule.ctrlKey
-                && ev.shiftKey === rule.shiftKey
-                && ev.altKey === rule.altKey
-                && ev.key.toLowerCase() === rule.key.toLowerCase()
-            ) {
+            if (ev.ctrlKey === rule.ctrlKey && ev.shiftKey === rule.shiftKey && ev.altKey === rule.altKey && ev.key.toLowerCase() === rule.key.toLowerCase()) {
                 handler();
                 ev.stopPropagation();
             }
@@ -68,10 +60,16 @@ export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, s
 
         return () => document.body.removeEventListener('keydown', cb);
     }, [rule, handler]);
+};
+
+export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, shortcut, disabled, handler, icon }) => {
+    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.menubar' });
+
+    useShortcut(shortcut, handler);
 
     return (
         <Button
-            className="text-sm px-3 py-1 border text-gray-400 select-none"
+            className="text-sm px-3 py-1 border text-muted-foreground select-none"
             disabled={disabled}
             onClick={handler}
             aria-label={t(label)}
@@ -104,6 +102,6 @@ const Menubar: React.FC = () => {
             />
         </MenubarContainer>
     );
-}
+};
 
 export default observer(Menubar);

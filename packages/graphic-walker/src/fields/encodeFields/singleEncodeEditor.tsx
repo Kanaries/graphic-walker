@@ -20,7 +20,7 @@ const PillActions = styled.div`
 
 interface SingleEncodeEditorProps {
     dkey: {
-        id: keyof Omit<DraggableFieldState, 'filters'>
+        id: keyof Omit<DraggableFieldState, 'filters'>;
     };
     provided: DroppableProvided;
     snapshot: DroppableStateSnapshot;
@@ -51,7 +51,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             <div
-                className={`p-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
+                className={`p-1.5 bg-primary-foreground text-muted-foreground border flex item-center justify-center grow ${
                     snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
                 } relative z-0`}
             >
@@ -65,17 +65,21 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 ref={refMapper(provided.innerRef)}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={"flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1" + (provided.draggableProps.style?.transform ? ' z-10' : '') + (channelItem.aggName === 'expr' && !config.defaultAggregated ? ' !opacity-50' : '')}
+                                className={
+                                    'flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1' +
+                                    (provided.draggableProps.style?.transform ? ' z-10' : '') +
+                                    (channelItem.aggName === 'expr' && !config.defaultAggregated ? ' !opacity-50' : '')
+                                }
                             >
                                 <div
                                     onClick={() => {
                                         vizStore.removeField(dkey.id, 0);
                                     }}
-                                    className="grow-0 shrink-0 px-1.5 flex items-center justify-center bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 cursor-pointer"
+                                    className="grow-0 shrink-0 px-1.5 flex items-center justify-center bg-destructive text-destructive-foreground cursor-pointer"
                                 >
                                     <TrashIcon className="w-4" />
                                 </div>
-                                <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
+                                <PillActions className="flex-1 flex items-center border border-l-0 px-2 space-x-2 truncate">
                                     {channelItem.fid === MEA_KEY_ID && (
                                         <SelectContext
                                             options={foldOptions}
@@ -85,23 +89,28 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             }}
                                             className="flex-1"
                                         >
-                                            <span className="flex-1 truncate" title={channelItem.name}>{channelItem.name}</span>
+                                            <span className="flex-1 truncate" title={channelItem.name}>
+                                                {channelItem.name}
+                                            </span>
                                         </SelectContext>
                                     )}
                                     {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}
-                                    {channelItem.analyticType === 'measure' && channelItem.fid !== COUNT_FIELD_ID && config.defaultAggregated && channelItem.aggName !== 'expr' && (
-                                        <DropdownContext
-                                            options={aggregationOptions}
-                                            onSelect={(value) => {
-                                                vizStore.setFieldAggregator(dkey.id, 0, value as IAggregator);
-                                            }}
-                                        >
-                                            <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
-                                                {channelItem.aggName || ''}
-                                                <ChevronUpDownIcon className="w-3" />
-                                            </span>
-                                        </DropdownContext>
-                                    )}
+                                    {channelItem.analyticType === 'measure' &&
+                                        channelItem.fid !== COUNT_FIELD_ID &&
+                                        config.defaultAggregated &&
+                                        channelItem.aggName !== 'expr' && (
+                                            <DropdownContext
+                                                options={aggregationOptions}
+                                                onSelect={(value) => {
+                                                    vizStore.setFieldAggregator(dkey.id, 0, value as IAggregator);
+                                                }}
+                                            >
+                                                <span className="bg-transparent text-muted-foreground float-right focus:outline-none focus: dark:focus: flex items-center ml-2">
+                                                    {channelItem.aggName || ''}
+                                                    <ChevronUpDownIcon className="w-3" />
+                                                </span>
+                                            </DropdownContext>
+                                        )}
                                 </PillActions>
                             </div>
                         );

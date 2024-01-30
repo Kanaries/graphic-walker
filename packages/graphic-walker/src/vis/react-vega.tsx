@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, forwardRef, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, forwardRef, useRef, useContext } from 'react';
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
@@ -9,10 +9,10 @@ import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannel
 import { getVegaTimeFormatRules } from './temporalFormat';
 import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
-import { useCurrentMediaTheme } from '../utils/media';
 import { toVegaSpec } from '../lib/vega';
 import { useResizeDetector } from 'react-resize-detector';
 import { startTask } from '../utils';
+import { themeContext } from '@/store/theme';
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     display: grid;
@@ -129,7 +129,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         height,
         details = [],
         // themeKey = 'vega',
-        dark = 'media',
         vegaConfig,
         // format
         locale = 'en-US',
@@ -139,7 +138,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         displayOffset,
     } = props;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
-    const mediaTheme = useCurrentMediaTheme(dark);
+    const mediaTheme = useContext(themeContext);
     const channelScales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
         if (scale?.opacity) {
@@ -286,6 +285,9 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                     actions: showActions,
                     timeFormatLocale: getVegaTimeFormatRules(locale),
                     config: vegaConfig,
+                    tooltip: {
+                        theme: mediaTheme,
+                    },    
                 }).then((res) => {
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
@@ -362,6 +364,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             actions: showActions,
                             timeFormatLocale: getVegaTimeFormatRules(locale),
                             config: vegaConfig,
+                            tooltip: {
+                                theme: mediaTheme,
+                            },
+            
                         }).then((res) => {
                             const container = res.view.container();
                             const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;

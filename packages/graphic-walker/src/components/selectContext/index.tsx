@@ -68,27 +68,23 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
                 <div className="relative w-full flex items-center space-x-2">
                     <span className="flex-1 block truncate text-start">{props.children}</span>
                     <Listbox.Button className="grow-0 shrink-0 flex items-center relative">
-                        <Cog6ToothIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                        {required && selected.length === 0 && (
-                            <span
-                                className="absolute top-0 right-0 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500 pointer-events-none"
-                                aria-hidden
-                            />
-                        )}
+                        <Cog6ToothIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         {selected.length > 0 && (
-                            <span className="absolute top-0 right-0 h-4 px-1 translate-x-1/2 -translate-y-1/2 scale-[67%] flex items-center justify-center rounded-full bg-indigo-400/75 text-white text-xs font-normal pointer-events-none">
+                            <span className="absolute top-0 right-0 h-4 px-1 translate-x-1/2 -translate-y-1/2 scale-[67%] flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-normal pointer-events-none">
                                 {selected.length > 10 ? '10+' : selected.length}
                             </span>
                         )}
                     </Listbox.Button>
                 </div>
                 <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-                    <Listbox.Options className="absolute mt-1 max-h-60 min-w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <Listbox.Options className="absolute mt-1 max-h-60 min-w-full overflow-auto rounded-md bg-popover text-popover-foreground py-1 text-base shadow-lg border focus:outline-none sm:text-sm">
                         {options.map((option) => (
                             <Listbox.Option
                                 key={option.key}
                                 className={({ active }) =>
-                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-amber-100 text-amber-900' : 'text-gray-900'}`
+                                    `relative cursor-default rounded-md mx-1 select-none py-2 pl-10 pr-4 ${
+                                        active ? 'bg-accent text-accent-foreground' : 'text-popover-foreground'
+                                    }`
                                 }
                                 value={option}
                             >
@@ -96,7 +92,7 @@ const SelectContext: React.FC<ISelectContextProps> = (props) => {
                                     <>
                                         <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>{option.label}</span>
                                         {selected ? (
-                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-accent-foreground">
                                                 <CheckIcon className="h-5 w-5" aria-hidden="true" />
                                             </span>
                                         ) : null}

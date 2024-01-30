@@ -287,7 +287,7 @@ export function makeNumbersBeautiful(nums: number[]): number[] {
     });
 }
 
-export function classNames(...classes: string[]) {
+export function classNames(...classes: (string | undefined)[]) {
     return classes.filter(Boolean).join(' ');
 }
 

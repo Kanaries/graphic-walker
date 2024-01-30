@@ -1,12 +1,12 @@
-import React, { Fragment, useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import Modal from '../modal';
 import { unstable_batchedUpdates } from 'react-dom';
-import DefaultButton from '../button/default';
-import PrimaryButton from '../button/primary';
 import RemoveConfirm from '../removeConfirm';
-import { Popover, Transition } from '@headlessui/react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ');
@@ -117,40 +117,37 @@ export default function EditableTabs(props: EditableTabsProps) {
     const { t } = useTranslation();
 
     return (
-        <div className="border-b border-gray-200 dark:border-gray-700 overflow-y-visible">
+        <div className="border-b overflow-y-visible">
             <RemoveConfirm />
-            <Modal
-                show={editingIndex > -1}
-                onClose={() => {
+            <Dialog
+                open={editingIndex > -1}
+                onOpenChange={() => {
                     setEditingIndex(-1);
                 }}
             >
-                <div>
-                    <span className="block text-sm font-medium leading-6">{t('main.tablist.chart_name')}</span>
-                    <div className="mt-2">
-                        <input
+                <DialogContent>
+                    <DialogHeader>{t('main.tablist.chart_name')}</DialogHeader>
+                    <div className="py-4">
+                        <Input
                             value={name}
                             onChange={(e) => {
                                 setName(e.target.value);
                             }}
-                            type="text"
-                            name="text"
-                            className="block w-full rounded-md border-0 px-2 py-1.5 bg-transparent shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                     </div>
-                    <div className="mt-4 flex justify-end">
-                        <DefaultButton
-                            className="mr-2"
-                            text={t('actions.cancel')}
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
                             onClick={() => {
                                 unstable_batchedUpdates(() => {
                                     setEditingIndex(-1);
                                     setName('');
                                 });
                             }}
-                        />
-                        <PrimaryButton
-                            text={t('actions.confirm')}
+                        >
+                            {t('actions.cancel')}
+                        </Button>
+                        <Button
                             onClick={() => {
                                 unstable_batchedUpdates(() => {
                                     onEditLabel && onEditLabel(name, editingIndex);
@@ -158,12 +155,14 @@ export default function EditableTabs(props: EditableTabsProps) {
                                     setName('');
                                 });
                             }}
-                        />
-                    </div>
-                </div>
-            </Modal>
+                        >
+                            {t('actions.confirm')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <Slider>
-                <nav className="-mb-px flex h-8 border-gray-200 dark:border-gray-700" role="tablist" aria-label="Tabs">
+                <nav className="-mb-px flex h-8" role="tablist" aria-label="Tabs">
                     {tabs.map((tab, tabIndex) => (
                         <span
                             role="tab"
@@ -176,65 +175,51 @@ export default function EditableTabs(props: EditableTabsProps) {
                             }}
                             key={tab.key}
                             className={classNames(
-                                tab.key === selectedKey
-                                    ? 'border'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-50 dark:hover:text-gray-200 dark:hover:bg-gray-800',
-                                'flex whitespace-nowrap rounded-t group border-gray-200 dark:border-gray-700 py-1 px-2 pr-2 text-sm cursor-default dark:text-white'
+                                tab.key === selectedKey ? 'border' : 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
+                                'flex whitespace-nowrap rounded-t group py-1 px-2 pr-2 text-sm cursor-default'
                             )}
                         >
                             {tab.label}
                             {tab.key === selectedKey && tab.editable && (
-                                <Popover className="relative inline-flex">
-                                    <Popover.Button className="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger>
                                         <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-                                    </Popover.Button>
-                                    <Transition
-                                        as={Fragment}
-                                        enter="transition ease-out duration-200"
-                                        enterFrom="opacity-0 translate-y-1"
-                                        enterTo="opacity-100 translate-y-0"
-                                        leave="transition ease-in duration-150"
-                                        leaveFrom="opacity-100 translate-y-0"
-                                        leaveTo="opacity-0 translate-y-1"
-                                    >
-                                        <Popover.Panel className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-min -translate-x-1/4 px-2">
-                                            <div className="shrink rounded p-1 bg-white dark:bg-zinc-900 text-xs font-semibold leading-2 text-gray-900 dark:text-white shadow-lg ring-1 ring-gray-900/5">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        unstable_batchedUpdates(() => {
-                                                            setEditingIndex(tabIndex);
-                                                            setName(tab.label);
-                                                        });
-                                                    }}
-                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
-                                                >
-                                                    {'Edit'}
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onDuplicate?.(tabIndex);
-                                                    }}
-                                                    className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-left"
-                                                >
-                                                    {'Duplicate'}
-                                                </button>
-                                                {showRemove && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onRemove?.(tabIndex);
-                                                        }}
-                                                        className="block p-1 w-full hover:bg-gray-200 dark:hover:bg-gray-800 text-red-500 text-left"
-                                                    >
-                                                        {'Remove'}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </Popover.Panel>
-                                    </Transition>
-                                </Popover>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuItem
+                                            className="text-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                unstable_batchedUpdates(() => {
+                                                    setEditingIndex(tabIndex);
+                                                    setName(tab.label);
+                                                });
+                                            }}
+                                        >
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            className="text-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDuplicate?.(tabIndex);
+                                            }}
+                                        >
+                                            Duplicate
+                                        </DropdownMenuItem>
+                                        {showRemove && (
+                                            <DropdownMenuItem
+                                                className="text-xs text-destructive"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onRemove?.(tabIndex);
+                                                }}
+                                            >
+                                                Remove
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             )}
                         </span>
                     ))}

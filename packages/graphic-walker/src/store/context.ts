@@ -1,5 +1,5 @@
 import { ComputationContext } from '.';
 import { composeContext } from '../utils/context';
-import { themeContext, vegaThemeContext } from './theme';
+import { portalContainerContext, themeContext, vegaThemeContext } from './theme';
 
-export const VizAppContext = composeContext({ ComputationContext, themeContext, vegaThemeContext });
+export const VizAppContext = composeContext({ ComputationContext, themeContext, vegaThemeContext, portalContainerContext });

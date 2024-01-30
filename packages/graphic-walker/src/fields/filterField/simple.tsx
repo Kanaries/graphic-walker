@@ -10,10 +10,11 @@ import LoadingLayer from '../../components/loadingLayer';
 import { IFilterField, IKeyWord } from '../../interfaces';
 import { ArrowRightIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getTemporalRange, withComputedField } from '../../computation';
-import Slider from '../../components/slider';
+import { Slider } from '../../components/rangeslider';
 import { createStreamedValueHook, useDebounceValueBind } from '../../hooks';
 import { GLOBAL_CONFIG } from '../../config';
 import { debounce } from 'lodash-es';
+import { Input } from '@/components/ui/input';
 
 const sortConfig = {
     key: 'value',
@@ -27,9 +28,9 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
         <div className="flex flex-col space-y-2 p-2">
             <label className="text-sm leading-none font-medium">{field.name}</label>
             <div className="relative">
-                <input
+                <Input
                     type="search"
-                    className="flex h-9 w-full rounded-md border border-input bg-white dark:bg-zinc-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-zinc-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="pr-8"
                     value={value}
                     placeholder="Input Regular Expression..."
                     onChange={(e) => {
@@ -163,12 +164,12 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-white dark:bg-zinc-800 shadow-md">
                         <div className="flex flex-col w-full">
                             {enableKeyword && (
-                                <div className="relative border-b border-gray-300 p-3 flex space-x-2 items-center text-sm">
+                                <div className="relative border-b p-3 flex space-x-2 items-center text-sm">
                                     <MagnifyingGlassIcon className="w-4 h-4" />
                                     <input
                                         type="search"
                                         autoFocus
-                                        className="block focus:ring-0 focus:outline-none py-0 pl-0 pr-[88px] w-full border-0 shadow-none bg-transparent text-gray-700 text-sm h-4 dark:text-gray-200 placeholder:text-gray-400"
+                                        className="block focus:ring-0 focus:outline-none py-0 pl-0  w-full border-0 shadow-none bg-transparent text-gray-700 text-sm h-4 dark:text-gray-200 placeholder:text-gray-400"
                                         value={keywordValue}
                                         placeholder="Search Value..."
                                         onChange={(e) => {
@@ -187,7 +188,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                         <Toggle label="Match Whole Word" value={isWord} onChange={setIsWord}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <g fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clip-rule="evenodd" />
+                                                    <path fillRule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clipRule="evenodd" />
                                                     <path d="M6.84 11h-.88v-.86h-.022c-.383.66-.947.989-1.692.989c-.548 0-.977-.145-1.289-.435c-.308-.29-.462-.675-.462-1.155c0-1.028.605-1.626 1.816-1.794l1.649-.23c0-.935-.378-1.403-1.134-1.403c-.662 0-1.26.226-1.794.677v-.902c.541-.344 1.164-.516 1.87-.516c1.292 0 1.938.684 1.938 2.052zm-.88-2.782L4.633 8.4c-.408.058-.716.16-.924.307c-.208.143-.311.399-.311.768c0 .268.095.488.284.66c.194.168.45.253.768.253a1.41 1.41 0 0 0 1.08-.457c.286-.308.43-.696.43-1.165zm3.388 1.987h-.022V11h-.88V2.857h.88v3.61h.021c.434-.73 1.068-1.096 1.902-1.096c.705 0 1.257.247 1.654.741c.401.49.602 1.15.602 1.977c0 .92-.224 1.658-.672 2.213c-.447.551-1.06.827-1.837.827c-.726 0-1.276-.308-1.649-.924m-.022-2.218v.768c0 .455.147.841.44 1.16c.298.315.674.473 1.128.473c.534 0 .951-.204 1.252-.613c.304-.408.456-.975.456-1.702c0-.613-.141-1.092-.424-1.44c-.283-.347-.666-.52-1.15-.52c-.511 0-.923.178-1.235.536c-.311.355-.467.8-.467 1.338" />
                                                 </g>
                                             </svg>
@@ -196,9 +197,9 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <path
                                                     fill="currentColor"
-                                                    fill-rule="evenodd"
+                                                    fillRule="evenodd"
                                                     d="M10.012 2h.976v3.113l2.56-1.557l.486.885L11.47 6l2.564 1.559l-.485.885l-2.561-1.557V10h-.976V6.887l-2.56 1.557l-.486-.885L9.53 6L6.966 4.441l.485-.885l2.561 1.557zM2 10h4v4H2z"
-                                                    clip-rule="evenodd"
+                                                    clipRule="evenodd"
                                                 />
                                             </svg>
                                         </Toggle>
@@ -440,6 +441,8 @@ function RangeField({
     onChange: (v: [number, number]) => void;
 }) {
     const [innerValue, setInnerValue] = useDebounceValueBind(value, onChange);
+    // step to last digit
+    const stepDigit = 10 ** Math.floor(Math.log10((range[1] - range[0]) / 100));
     return (
         <div className="flex flex-col space-y-2 p-2">
             <div className="flex justify-between text-sm leading-none">
@@ -449,7 +452,7 @@ function RangeField({
                 </span>
             </div>
             <div className="flex items-center h-9">
-                <Slider min={range[0]} max={range[1]} value={innerValue} onChange={setInnerValue} />
+                <Slider step={stepDigit} min={range[0]} max={range[1]} value={innerValue} onValueChange={([min, max]) => setInnerValue([min, max])} />
             </div>
         </div>
     );

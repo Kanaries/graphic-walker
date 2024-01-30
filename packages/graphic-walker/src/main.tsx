@@ -1,6 +1,7 @@
 import { inject } from '@vercel/analytics';
 import { embedGraphicWalker } from './vanilla';
 import './main.css';
+import { emeraldTheme } from './utils/colors';
 
 if (!import.meta.env.DEV) {
     inject();

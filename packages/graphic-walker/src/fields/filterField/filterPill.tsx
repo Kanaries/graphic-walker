@@ -71,10 +71,10 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
 
     return (
-        <Pill className="text-gray-900" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
-            <header className="bg-indigo-50">{fieldName}</header>
+        <Pill className="text-foreground" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
+            <header className="bg-secondary">{fieldName}</header>
             <div
-                className="bg-white dark:bg-zinc-900  text-gray-500 hover:bg-gray-100 flex flex-row output"
+                className="bg-background  text-muted-foreground hover:bg-accent flex flex-row output"
                 onClick={() => vizStore.setFilterEditing(fIndex)}
                 style={{ cursor: 'pointer' }}
                 title={t('to_edit')}
@@ -96,10 +96,10 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
                         )}
                     </span>
                 ) : (
-                    <span className="text-gray-600 flex-1">{t('empty_rule')}</span>
+                    <span className="text-muted-foreground flex-1">{t('empty_rule')}</span>
                 )}
                 <PencilSquareIcon
-                    className="icon flex-grow-0 flex-shrink-0 pointer-events-none text-gray-500"
+                    className="icon flex-grow-0 flex-shrink-0 pointer-events-none text-muted-foreground"
                     role="presentation"
                     aria-hidden
                     width="1.4em"
