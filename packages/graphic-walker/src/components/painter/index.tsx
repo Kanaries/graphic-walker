@@ -336,7 +336,7 @@ const PainterContent = (props: {
                     <a
                         className={
                             (brushId === ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
-                            ' rounded-md px-3 py-2 text-sm font-medium'
+                            ' rounded-md px-3 py-2 text-sm font-medium cursor-pointer'
                         }
                         onClick={() => setBrushId(2)}
                     >
@@ -345,7 +345,7 @@ const PainterContent = (props: {
                     <a
                         className={
                             (brushId !== ERASER ? 'text-gray-500 hover:text-gray-700' : 'bg-indigo-100 text-indigo-700') +
-                            ' rounded-md px-3 py-2 text-sm font-medium'
+                            ' rounded-md px-3 py-2 text-sm font-medium cursor-pointer'
                         }
                         onClick={() => setBrushId(ERASER)}
                     >
