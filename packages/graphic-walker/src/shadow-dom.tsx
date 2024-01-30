@@ -1,18 +1,21 @@
-import React, { HTMLAttributes, createContext, useEffect, useRef, useState } from "react";
-import { StyleSheetManager } from "styled-components";
-import root from "react-shadow";
+import React, { HTMLAttributes, createContext, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheetManager } from 'styled-components';
+import root from 'react-shadow';
 
-import tailwindStyle from "tailwindcss/tailwind.css?inline";
-import style from "./index.css?inline";
+import tailwindStyle from 'tailwindcss/tailwind.css?inline';
+import style from './index.css?inline';
+import { IColorConfig } from './interfaces';
+import { ColorConfigToCSS, zincTheme } from './utils/colors';
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
 interface IShadowDomProps extends HTMLAttributes<HTMLDivElement> {
+    colorConfig?: IColorConfig;
     onMount?: (shadowRoot: ShadowRoot) => void;
     onUnmount?: () => void;
 }
 
-export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom ({ onMount, onUnmount, children, ...attrs }) {
+export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount, onUnmount, children, colorConfig = zincTheme, ...attrs }) {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +23,8 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom ({ onMoun
     onMountRef.current = onMount;
     const onUnmountRef = useRef(onUnmount);
     onUnmountRef.current = onUnmount;
+
+    const colorStyle = useMemo(() => ColorConfigToCSS(colorConfig), [colorConfig])
 
     useEffect(() => {
         if (rootRef.current) {
@@ -36,6 +41,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom ({ onMoun
         <root.div {...attrs} mode="open" ref={rootRef}>
             <style>{tailwindStyle}</style>
             <style>{style}</style>
+            <style>{colorStyle}</style>
             {/* Leaflet CSS file */}
             <link
                 rel="stylesheet"
@@ -45,9 +51,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom ({ onMoun
             />
             {shadowRoot && (
                 <StyleSheetManager target={shadowRoot}>
-                    <ShadowDomContext.Provider value={{ root: shadowRoot }}>
-                        {children}
-                    </ShadowDomContext.Provider>
+                    <ShadowDomContext.Provider value={{ root: shadowRoot }}>{children}</ShadowDomContext.Provider>
                 </StyleSheetManager>
             )}
         </root.div>

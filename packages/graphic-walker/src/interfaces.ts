@@ -870,6 +870,7 @@ export interface IAppI18nProps {
 
 export interface IThemeProps {
     dark?: IDarkMode;
+    colorConfig?: IColorConfig;
 }
 
 export interface IErrorHandlerProps {
@@ -907,8 +908,8 @@ export interface IExperimentalFeatures {
 }
 
 export interface IDefaultConfig {
-    config?: Partial<IVisualConfigNew>,
-    layout?: Partial<IVisualLayout>
+    config?: Partial<IVisualConfigNew>;
+    layout?: Partial<IVisualLayout>;
 }
 
 export interface IVizStoreProps {
@@ -994,4 +995,31 @@ export interface IDataSourceProvider {
     onImportFile?: (file: File) => void;
 
     registerCallback(callback: IDataSourceListener): () => void;
+}
+
+export interface IColorSet {
+    background: string;
+    foreground: string;
+    card: string;
+    'card-foreground': string;
+    popover: string;
+    'popover-foreground': string;
+    primary: string;
+    'primary-foreground': string;
+    secondary: string;
+    'secondary-foreground': string;
+    muted: string;
+    'muted-foreground': string;
+    accent: string;
+    'accent-foreground': string;
+    destructive: string;
+    'destructive-foreground': string;
+    border: string;
+    input: string;
+    ring: string;
+}
+
+export interface IColorConfig {
+    light: IColorSet;
+    dark: IColorSet;
 }
