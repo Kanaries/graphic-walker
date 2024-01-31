@@ -24,7 +24,8 @@ export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void
             } else {
                 setter(valueToSet);
             }
-        }, [valueToSet, setter]);
+        // exclude setter to use inline function for setter and not to cause loops
+        }, [valueToSet]);
         return [innerValue, setInnerValue];
     };
 }
