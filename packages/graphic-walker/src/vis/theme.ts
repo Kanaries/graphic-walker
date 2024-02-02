@@ -14,8 +14,16 @@ export type GWGlobalConfig<
 };
 
 export const DEFAULT_COLOR = '#5B8FF9';
-const DARK_COMMON_DESIGN = {
+const DARK_COMMON_DESIGN: GWGlobalConfig['dark'] = {
     background: 'transparent',
+    boxplot: {
+        ticks: {
+            fill: '#d1d5db', // change tick color to white
+        },
+        rule: {
+            color: '#d1d5db', // change rule color to white
+        },
+    },
     header: {
         titleColor: '#d1d5db', // change title color to white
         labelColor: '#d1d5db', // change label color to white
@@ -39,6 +47,7 @@ const DARK_COMMON_DESIGN = {
 export const VegaTheme = {
     light: {
         background: 'transparent',
+        boxplot: { ticks: true },
     },
     dark: DARK_COMMON_DESIGN,
 } as const;
@@ -53,6 +62,7 @@ export const AntVTheme: GWGlobalConfig = {
         rect: { fill: DEFAULT_COLOR },
         tick: { fill: DEFAULT_COLOR },
         arc: { fill: DEFAULT_COLOR },
+        boxplot: { ticks: true },
         background: 'transparent',
         range: {
             category: ['#5B8FF9', '#61DDAA', '#65789B', '#F6BD16', '#7262FD', '#78D3F8', '#9661BC', '#F6903D', '#008685', '#F08BB4'],
