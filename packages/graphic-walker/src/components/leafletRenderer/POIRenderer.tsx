@@ -86,25 +86,6 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         ];
     }, [lngLat]);
 
-    const failedLatLngListRef = useRef<[index: number, lng: unknown, lat: unknown][]>([]);
-    failedLatLngListRef.current = [];
-
-    useEffect(() => {
-        if (failedLatLngListRef.current.length > 0) {
-            console.warn(
-                `Failed to render ${failedLatLngListRef.current.length.toLocaleString()} markers of ${data.length.toLocaleString()} rows due to invalid lat/lng.\n--------\n${
-                    `${failedLatLngListRef.current
-                        .slice(0, debugMaxLen)
-                        .map(([idx, lng, lat]) => `[${idx + 1}] ${formatCoerceLatLng(lat, lng)}`)
-                        .join('\n')}` +
-                    (failedLatLngListRef.current.length > debugMaxLen
-                        ? `\n\t... and ${(failedLatLngListRef.current.length - debugMaxLen).toLocaleString()} more`
-                        : '')
-                }\n`
-            );
-        }
-    });
-
     const mapRef = useRef<Map>(null);
 
     useEffect(() => {
@@ -147,53 +128,92 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
             key: defaultAggregated && f.analyticType === 'measure' && f.aggName ? getMeaAggKey(f.fid, f.aggName) : f.fid,
         }));
     }, [defaultAggregated, details, size, color, opacity]);
+
+    const points = useMemo(() => {
+        if (Boolean(latitude && longitude)) {
+            const failedLatLngList: [index: number, lat: unknown, lng: unknown][] = [];
+            const result = data.flatMap((row, i) => {
+                const lat = row[latitude!.fid];
+                const lng = row[longitude!.fid];
+                if (!isValidLatLng(lat, lng)) {
+                    failedLatLngList.push([i, lat, lng]);
+                    return [];
+                }
+                const radius = sizeScale(row);
+                const opacity = opacityScale(row);
+                const color = colorScale(row);
+                return [
+                    {
+                        key: `${i}-${radius}-${opacity}-${color}`,
+                        center: [Number(lat), Number(lng)] as [number, number],
+                        radius,
+                        opacity,
+                        color,
+                        row,
+                    },
+                ];
+            });
+            if (failedLatLngList.length > 0) {
+                console.warn(
+                    `Failed to render ${failedLatLngList.length.toLocaleString()} markers of ${data.length.toLocaleString()} rows due to invalid lat/lng.\n--------\n${
+                        `${failedLatLngList
+                            .slice(0, debugMaxLen)
+                            .map(([idx, lat, lng]) => `[${idx + 1}] ${formatCoerceLatLng(lat, lng)}`)
+                            .join('\n')}` +
+                        (failedLatLngList.length > debugMaxLen ? `\n\t... and ${(failedLatLngList.length - debugMaxLen).toLocaleString()} more` : '')
+                    }\n`
+                );
+            }
+            return result;
+        } else {
+            return [];
+        }
+    }, [latitude, longitude, data, sizeScale, opacityScale, colorScale]);
+
     return (
-        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer
+            attributionControl={false}
+            center={center}
+            ref={mapRef}
+            zoom={5}
+            bounds={bounds}
+            preferCanvas
+            style={{ width: '100%', height: '100%', zIndex: 1 }}
+        >
             <ChangeView bounds={bounds} />
-            {tileUrl === undefined && <TileLayer
-                className="map-tile"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />}
-            {tileUrl && <TileLayer
-                className="map-tile"
-                url={tileUrl}
-            />}
+            {tileUrl === undefined && (
+                <TileLayer
+                    className="map-tile"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+            )}
+            {tileUrl && <TileLayer className="map-tile" url={tileUrl} />}
             <AttributionControl prefix="Leaflet" />
-            {Boolean(latitude && longitude) &&
-                data.map((row, i) => {
-                    const lat = row[latitude!.fid];
-                    const lng = row[longitude!.fid];
-                    if (!isValidLatLng(lat, lng)) {
-                        failedLatLngListRef.current.push([i, lat, lng]);
-                        return null;
-                    }
-                    const radius = sizeScale(row);
-                    const opacity = opacityScale(row);
-                    const color = colorScale(row);
-                    return (
-                        <CircleMarker
-                            key={`${i}-${radius}-${opacity}-${color}`}
-                            center={[Number(lat), Number(lng)]}
-                            radius={radius}
-                            opacity={0.8}
-                            fillOpacity={opacity}
-                            fillColor={color}
-                            color="#00000022"
-                            stroke
-                            weight={1}
-                            fill
-                        >
-                            {tooltipFields.length > 0 && (
-                                <Tooltip>
-                                    {tooltipFields.map((f, j) => (
-                                        <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
-                                    ))}
-                                </Tooltip>
-                            )}
-                        </CircleMarker>
-                    );
-                })}
+            {points.map(({ key, center, radius, opacity, color, row }) => {
+                return (
+                    <CircleMarker
+                        key={key}
+                        center={center}
+                        radius={radius}
+                        opacity={0.8}
+                        fillOpacity={opacity}
+                        fillColor={color}
+                        color="#00000022"
+                        stroke
+                        weight={1}
+                        fill
+                    >
+                        {tooltipFields.length > 0 && (
+                            <Tooltip>
+                                {tooltipFields.map((f, j) => (
+                                    <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                ))}
+                            </Tooltip>
+                        )}
+                    </CircleMarker>
+                );
+            })}
             {colorDisplay && <ColorPanel display={colorDisplay} field={color!} />}
         </MapContainer>
     );

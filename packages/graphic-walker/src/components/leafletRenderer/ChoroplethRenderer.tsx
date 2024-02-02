@@ -252,7 +252,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     }
 
     return (
-        <MapContainer attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer preferCanvas attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <ChangeView bounds={bounds} />
             {tileUrl === undefined && <TileLayer
                 className="map-tile"
