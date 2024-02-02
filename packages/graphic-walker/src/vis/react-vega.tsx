@@ -385,7 +385,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
                                         height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
                                     };
-                                    console.log(modifier);
                                     res.view.width(ans.width - modifier.width);
                                     res.view.height(ans.height - modifier.height);
                                     res.view.runAsync();
