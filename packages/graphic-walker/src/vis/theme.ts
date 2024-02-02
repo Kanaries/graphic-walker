@@ -147,6 +147,7 @@ export const StreamlitTheme = {
         facet: { columns: 1 },
         mark: { tooltip: true, color: '#0068C9' },
         bar: { binSpacing: 4, discreteBandSize: { band: 0.85 } },
+        boxplot: { ticks: true },
         axisDiscrete: { grid: false },
         axisXPoint: { grid: false },
         axisTemporal: { grid: false },
@@ -226,6 +227,14 @@ export const StreamlitTheme = {
             stroke: 'transparent',
             continuousHeight: 350,
             continuousWidth: 400,
+        },
+        boxplot: {
+            ticks: {
+                fill: '#e6eaf1',
+            },
+            rule: {
+                color: '#e6eaf1',
+            },
         },
         concat: { columns: 1 },
         facet: { columns: 1 },

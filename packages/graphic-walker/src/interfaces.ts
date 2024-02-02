@@ -470,7 +470,7 @@ export enum ISegmentKey {
     data = 'data',
 }
 
-export type IThemeKey = 'vega' | 'g2';
+export type IThemeKey = 'vega' | 'g2' | 'streamlit';
 export type IDarkMode = 'media' | 'light' | 'dark';
 export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
 
