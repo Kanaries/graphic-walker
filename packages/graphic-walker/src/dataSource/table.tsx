@@ -18,7 +18,7 @@ const Table: React.FC<TableProps> = ({ commonStore, size = 10 }) => {
     const computation = React.useMemo(() => getComputation(tmpDataSource), [tmpDataSource]);
 
     return (
-        <div className="rounded border-gray-200 dark:border-gray-700 border">
+        <div className="rounded border">
             <DataTable
                 size={size}
                 metas={metas}

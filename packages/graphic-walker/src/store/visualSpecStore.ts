@@ -378,6 +378,7 @@ export class VizSpecStore {
     }
 
     setVisualConfig(...args: KVTuple<IVisualConfigNew>) {
+        console.log('setConfig');
         this.visList[this.visIndex] = performers.setConfig(this.visList[this.visIndex], ...args);
     }
 

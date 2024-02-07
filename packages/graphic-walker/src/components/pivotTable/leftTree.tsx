@@ -1,7 +1,7 @@
 import React, { ReactNode, useMemo } from 'react';
 import { INestNode } from './inteface';
 import { IField } from '../../interfaces';
-import { MinusCircleIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 
 function getChildCount(node: INestNode): number {
     if (node.isCollapsed || node.children.length === 0) {
@@ -18,7 +18,15 @@ function getChildCount(node: INestNode): number {
  * @param cellRows
  * @returns
  */
-function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRows: ReactNode[][], meaNumber: number, onHeaderCollapse: (node: INestNode) => void, enableCollapse: boolean) {
+function renderTree(
+    node: INestNode,
+    dimsInRow: IField[],
+    depth: number,
+    cellRows: ReactNode[][],
+    meaNumber: number,
+    onHeaderCollapse: (node: INestNode) => void,
+    enableCollapse: boolean
+) {
     const childrenSize = getChildCount(node);
     const { isCollapsed } = node;
     if (depth > dimsInRow.length) {
@@ -27,13 +35,13 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
     cellRows[cellRows.length - 1].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}`}
-            className={`bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 align-top whitespace-nowrap p-2 text-xs m-1 border border-gray-300`}
+            className={`bg-secondary text-secondary-foreground align-top whitespace-nowrap p-2 text-xs m-1 border`}
             colSpan={isCollapsed ? node.height + 1 : 1}
             rowSpan={isCollapsed ? Math.max(meaNumber, 1) : childrenSize * Math.max(meaNumber, 1)}
         >
             <div className="flex">
                 <div>{node.value}</div>
-                {node.height > 0 && node.key !== "__total" && enableCollapse && (
+                {node.height > 0 && node.key !== '__total' && enableCollapse && (
                     <>
                         {isCollapsed && <PlusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
                         {!isCollapsed && <MinusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
@@ -42,7 +50,7 @@ function renderTree(node: INestNode, dimsInRow: IField[], depth: number, cellRow
             </div>
         </td>
     );
-    if (isCollapsed) return
+    if (isCollapsed) return;
     for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
         renderTree(child, dimsInRow, depth + 1, cellRows, meaNumber, onHeaderCollapse, enableCollapse);
@@ -57,7 +65,7 @@ export interface TreeProps {
     dimsInRow: IField[];
     measInRow: IField[];
     onHeaderCollapse: (node: INestNode) => void;
-    enableCollapse: boolean
+    enableCollapse: boolean;
 }
 const LeftTree: React.FC<TreeProps> = (props) => {
     const { data, dimsInRow, measInRow, onHeaderCollapse } = props;
@@ -72,7 +80,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ...row,
                     <td
                         key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
-                        className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
+                        className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
                         {measInRow[0].aggName}({measInRow[0].name})
                     </td>,
@@ -81,7 +89,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                     ans.push([
                         <td
                             key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
-                            className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
+                            className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                         >
                             {measInRow[j].aggName}({measInRow[j].name})
                         </td>,
@@ -93,9 +101,9 @@ const LeftTree: React.FC<TreeProps> = (props) => {
         return cellRows;
     }, [data, dimsInRow, measInRow]);
     return (
-        <thead className="bg-gray-50 border border-gray-300">
+        <thead className="bg-secondary border">
             {nodeCells.map((row, rIndex) => (
-                <tr className="border border-gray-300" key={rIndex}>
+                <tr className="border" key={rIndex}>
                     {row}
                 </tr>
             ))}

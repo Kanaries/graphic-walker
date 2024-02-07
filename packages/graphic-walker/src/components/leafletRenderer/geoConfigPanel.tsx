@@ -3,13 +3,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../../store';
 import Spinner from '../spinner';
-import Modal from '../modal';
-import PrimaryButton from '../button/primary';
-import DefaultButton from '../button/default';
 import type { IGeoDataItem, IGeoUrl, Topology } from '../../interfaces';
 import DropdownSelect from '../dropdownSelect';
 import Dropzone from 'react-dropzone';
 import { GeojsonRenderer } from './geojsonRenderer';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const emptyList = [];
 
@@ -46,10 +47,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                     geoList.map((x, i) => ({
                         label: x.name,
                         value: `${i}`,
-                    })),
+                    }))
                 )
-                .concat({ label: 'Manual Set', value: '-2' }),
-        [geoList],
+                .concat({ label: 'Manual Configuration', value: '-2' }),
+        [geoList]
     );
     const setSelectItem = useMemo(() => (a: string) => setSelectItemR(parseInt(a)), []);
 
@@ -100,7 +101,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         objectKey: topoJSONKey || defaultTopoJSONKey,
                     },
                     featureId,
-                    loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined,
+                    loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined
                 );
             } else {
                 vizStore.setGeographicData(
@@ -109,7 +110,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         data: json,
                     },
                     featureId,
-                    loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined,
+                    loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined
                 );
             }
             vizStore.setShowGeoJSONConfigPanel(false);
@@ -119,87 +120,62 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
     };
 
     return (
-        <Modal
-            containerStyle={{ overflow: 'visible' }}
-            show={showGeoJSONConfigPanel}
-            onClose={() => {
+        <Dialog
+            open={showGeoJSONConfigPanel}
+            onOpenChange={() => {
                 vizStore.setShowGeoJSONConfigPanel(false);
             }}
         >
-            <div>
+            <DialogContent>
                 <h2 className="text-lg mb-4">{t('geography')}</h2>
                 <div>
                     <div className="my-2">
-                        <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">{t('geography_settings.geoKey')}</label>
+                        <label className="block text-xs font-medium leading-6">{t('geography_settings.geoKey')}</label>
                         <div className="mt-1">
-                            <input
-                                type="text"
-                                className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
-                                value={featureId}
-                                onChange={(e) => setFeatureId(e.target.value)}
-                            />
+                            <Input type="text" value={featureId} onChange={(e) => setFeatureId(e.target.value)} />
                         </div>
                     </div>
                     {geoList.length > 0 && (
                         <div className="my-2">
-                            <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">GeoData</label>
+                            <label className="block text-xs font-medium leading-6">GeoData</label>
                             <DropdownSelect options={options} selectedKey={`${selectItem}`} onSelect={setSelectItem} />
                         </div>
                     )}
                     {isCustom && (
                         <div className="my-2">
-                            <label className="block text-xs font-medium leading-6 text-gray-900 dark:text-gray-50">
-                                {t(`geography_settings.${dataMode.toLowerCase()}`)}
-                            </label>
+                            <label className="block text-xs font-medium leading-6">{t(`geography_settings.${dataMode.toLowerCase()}`)}</label>
                             <div className="mt-1 flex flex-col space-y-2">
                                 <div role="radiogroup">
-                                    <div className="flex items-center space-x-2">
-                                        <input
-                                            type="radio"
-                                            name="dataMode"
-                                            id="geojson"
-                                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 dark:bg-gray-800 dark:border-gray-600"
-                                            checked={dataMode === 'GeoJSON'}
-                                            onChange={() => {
-                                                setDataMode('GeoJSON');
-                                            }}
-                                        />
+                                    <RadioGroup
+                                        value={dataMode}
+                                        onValueChange={(v) => setDataMode(v as 'GeoJSON' | 'TopoJSON')}
+                                        className="flex items-center space-x-2"
+                                    >
+                                        <RadioGroupItem value="GeoJSON" id="geojson" />
                                         <label htmlFor="geojson" className="text-xs whitespace-nowrap">
                                             {t('geography_settings.geojson')}
                                         </label>
-                                        <input
-                                            type="radio"
-                                            name="dataMode"
-                                            id="topojson"
-                                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 dark:bg-gray-800 dark:border-gray-600"
-                                            checked={dataMode === 'TopoJSON'}
-                                            onChange={() => {
-                                                setDataMode('TopoJSON');
-                                            }}
-                                        />
+                                        <RadioGroupItem value="TopoJSON" id="topojson" />
                                         <label htmlFor="topojson" className="text-xs whitespace-nowrap">
                                             {t('geography_settings.topojson')}
                                         </label>
-                                    </div>
+                                    </RadioGroup>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <label className="text-xs whitespace-nowrap capitalize">
                                         {t('geography_settings.href', { format: dataMode.toLowerCase() })}
                                     </label>
-                                    <input
+                                    <Input
                                         type="text"
-                                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
                                         value={url}
                                         placeholder={t('geography_settings.hrefPlaceholder', { format: dataMode.toLowerCase() })}
                                         onChange={(e) => {
                                             setUrl(e.target.value);
                                         }}
                                     />
-                                    <DefaultButton
-                                        text={t('geography_settings.load')}
+                                    <Button
                                         className="mr-2 flex-shrink-0"
                                         disabled={loading}
-                                        icon={loading ? <Spinner className="text-black dark:text-white" /> : undefined}
                                         onClick={() => {
                                             if (url) {
                                                 setLoading(true);
@@ -215,7 +191,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                                     });
                                             }
                                         }}
-                                    />
+                                    >
+                                        {loading && <Spinner />}
+                                        {t('geography_settings.load')}
+                                    </Button>
                                 </div>
                                 <Dropzone
                                     onDrop={(acceptedFiles) => {
@@ -233,12 +212,9 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                     noClick
                                 >
                                     {({ getRootProps, getInputProps, isDragActive, open }) => (
-                                        <div
-                                            className={`relative justify-center flex w-full h-80 rounded ring-gray-300 dark:ring-gray-600 shadow-sm ring-1 ring-inset`}
-                                            {...getRootProps()}
-                                        >
+                                        <div className={`relative justify-center flex w-full h-80 rounded border shadow-sm`} {...getRootProps()}>
                                             {isDragActive && (
-                                                <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-gray-200 dark:bg-gray-700 opacity-80" />
+                                                <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-accent opacity-80" />
                                             )}
                                             <input {...getInputProps()} />
                                             <div onClick={open} className="flex h-full items-center justify-center w-48">
@@ -251,9 +227,8 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                 {dataMode === 'TopoJSON' && (
                                     <div className="flex items-center space-x-2">
                                         <label className="text-xs whitespace-nowrap capitalize">{t('geography_settings.objectKey')}</label>
-                                        <input
+                                        <Input
                                             type="text"
-                                            className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 dark:text-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-900"
                                             value={topoJSONKey}
                                             placeholder={defaultTopoJSONKey}
                                             onChange={(e) => {
@@ -266,18 +241,18 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         </div>
                     )}
                 </div>
-                <div className="mt-4">
-                    <PrimaryButton text={tGlobal('actions.confirm')} className="mr-2" onClick={handleSubmit} />
-                    <DefaultButton
-                        text={tGlobal('actions.cancel')}
-                        className="mr-2"
+                <DialogFooter>
+                    <Button children={tGlobal('actions.confirm')} onClick={handleSubmit} />
+                    <Button
+                        children={tGlobal('actions.cancel')}
+                        variant="outline"
                         onClick={() => {
                             vizStore.setShowGeoJSONConfigPanel(false);
                         }}
                     />
-                </div>
-            </div>
-        </Modal>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

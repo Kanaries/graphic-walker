@@ -1,38 +1,39 @@
 import React from 'react';
-import Modal from './modal';
 import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../store';
-import DefaultButton from './button/default';
-import PrimaryButton from './button/primary';
 import { useTranslation } from 'react-i18next';
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from './ui/dialog';
+import { Button } from './ui/button';
 
 const RemoveConfirm = observer(function RemoveConfirm() {
     const { t } = useTranslation();
 
     const viz = useVizStore();
     return (
-        <Modal onClose={() => viz.closeRemoveConfirmModal()} show={viz.removeConfirmIdx !== null}>
-            <div>
-                <span className="block text-sm font-medium leading-6">{t('main.tablist.remove_confirm')}</span>
-                <div className="mt-4 flex justify-end">
-                    <DefaultButton
-                        className="mr-2"
-                        text={t('actions.cancel')}
+        <Dialog onOpenChange={() => viz.closeRemoveConfirmModal()} open={viz.removeConfirmIdx !== null}>
+            <DialogContent>
+                <DialogHeader>{t('main.tablist.remove_confirm')}</DialogHeader>
+                <DialogFooter className="mt-4">
+                    <Button
+                        variant="outline"
                         onClick={() => {
                             viz.closeRemoveConfirmModal();
                         }}
-                    />
-                    <PrimaryButton
-                        className="bg-red-600 hover:bg-red-700"
-                        text={t('actions.confirm')}
+                    >
+                        {t('actions.cancel')}
+                    </Button>
+                    <Button
+                        variant="destructive"
                         onClick={() => {
                             viz.removeVisualization(viz.removeConfirmIdx!);
                             viz.closeRemoveConfirmModal();
                         }}
-                    />
-                </div>
-            </div>
-        </Modal>
+                    >
+                        {t('actions.confirm')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 });
 

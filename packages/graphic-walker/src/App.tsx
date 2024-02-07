@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps } from './interfaces';
@@ -12,7 +12,6 @@ import { VizStoreWrapper, useVizStore, withErrorReport, withTimeout } from './st
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
-import SegmentNav from './segments/segmentNav';
 import DatasetConfig from './dataSource/datasetConfig';
 import CodeExport from './components/codeExport';
 import VisualConfig from './components/visualConfig';
@@ -30,7 +29,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
 import Painter from './components/painter';
-import { parseErrorMessage } from './utils';
+import { classNames, parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
 import SideResize from './components/side-resize';
@@ -38,6 +37,9 @@ import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import ComputedFieldDialog from './components/computedField';
 import { VizAppContext } from './store/context';
+import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
+import { ChartPieIcon, CircleStackIcon } from '@heroicons/react/24/outline';
+import { TabsContent } from '@radix-ui/react-tabs';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -136,103 +138,119 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
+    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
+
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <VizAppContext ComputationContext={wrappedComputation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
-                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                        <div className="bg-white dark:bg-zinc-900 dark:text-white">
-                            <div className="px-2 mx-2">
-                                <SegmentNav />
-                            </div>
-                            <Errorpanel />
-                            {segmentKey === ISegmentKey.vis && (
-                                <div className="px-2 mx-2 mt-2">
-                                    <VisNav />
-                                </div>
-                            )}
-
-                            {segmentKey === ISegmentKey.vis && (
-                                <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-gray-200 dark:border-gray-700">
-                                    {enhanceAPI?.features?.askviz && (
-                                        <AskViz
-                                            api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}
-                                            feedbackApi={typeof enhanceAPI.features.feedbackAskviz === 'boolean' ? '' : enhanceAPI.features.feedbackAskviz}
-                                            headers={enhanceAPI?.header}
-                                        />
-                                    )}
-                                    <VisualSettings
-                                        csvHandler={downloadCSVRef}
-                                        rendererHandler={rendererRef}
-                                        darkModePreference={darkMode}
-                                        experimentalFeatures={props.experimentalFeatures}
-                                        exclude={toolbar?.exclude}
-                                        extra={toolbar?.extra}
-                                    />
-                                    <CodeExport />
-                                    <ExplainData themeKey={themeKey} dark={darkMode} />
-                                    {vizStore.showDataBoard && <DataBoard />}
-                                    <VisualConfig />
-                                    <LogPanel />
-                                    <BinPanel />
-                                    <ComputedFieldDialog />
-                                    <Painter themeConfig={themeConfig} dark={darkMode} themeKey={themeKey} />
-                                    {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                    <div className="sm:flex">
-                                        <SideResize
-                                            defaultWidth={240}
-                                            handleWidth={4}
-                                            className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
-                                            handlerClassName="hidden sm:block"
-                                        >
-                                            <DatasetFields />
-                                        </SideResize>
-                                        <SideResize
-                                            defaultWidth={180}
-                                            handleWidth={4}
-                                            className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
-                                            handlerClassName="hidden sm:block"
-                                        >
-                                            <FilterField />
-                                            <AestheticFields />
-                                        </SideResize>
-                                        <div className="flex-1 min-w-[0px]">
-                                            <div>
-                                                <PosFields />
-                                            </div>
-                                            <div
-                                                className="m-0.5 p-1 border border-gray-200 dark:border-gray-700"
-                                                style={{ minHeight: '600px', height: 1, maxHeight: '100vh', overflow: 'auto' }}
-                                                onMouseLeave={() => {
-                                                    vizEmbededMenu.show && vizStore.closeEmbededMenu();
-                                                }}
-                                                onClick={() => {
-                                                    vizEmbededMenu.show && vizStore.closeEmbededMenu();
-                                                }}
-                                            >
-                                                {computation && (
-                                                    <ReactiveRenderer
-                                                        csvRef={downloadCSVRef}
-                                                        ref={rendererRef}
-                                                        themeKey={themeKey}
-                                                        dark={darkMode}
-                                                        themeConfig={themeConfig}
-                                                        computationFunction={wrappedComputation}
-                                                        channelScales={props.channelScales}
-                                                    />
-                                                )}
-                                                <VizEmbedMenu />
+                <VizAppContext
+                    ComputationContext={wrappedComputation}
+                    themeContext={darkMode}
+                    vegaThemeContext={{ themeConfig, themeKey }}
+                    portalContainerContext={portal}
+                >
+                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
+                        <FieldsContextWrapper>
+                            <div className="bg-background text-foreground">
+                                <Errorpanel />
+                                <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)}>
+                                    <TabsList className="mx-4">
+                                        <TabsTrigger value={ISegmentKey.data}>
+                                            <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
+                                        </TabsTrigger>
+                                        <TabsTrigger value={ISegmentKey.vis}>
+                                            <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value={ISegmentKey.data}>
+                                        <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
+                                            <DatasetConfig />
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value={ISegmentKey.vis}>
+                                        <div className="px-2 mx-2 mt-2">
+                                            <VisNav />
+                                        </div>
+                                        <div style={{ marginTop: '0em' }} className="m-4 p-4 border border-border rounded-md rounded-tl-none">
+                                            {enhanceAPI?.features?.askviz && (
+                                                <AskViz
+                                                    api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}
+                                                    feedbackApi={
+                                                        typeof enhanceAPI.features.feedbackAskviz === 'boolean' ? '' : enhanceAPI.features.feedbackAskviz
+                                                    }
+                                                    headers={enhanceAPI?.header}
+                                                />
+                                            )}
+                                            <VisualSettings
+                                                csvHandler={downloadCSVRef}
+                                                rendererHandler={rendererRef}
+                                                darkModePreference={darkMode}
+                                                experimentalFeatures={props.experimentalFeatures}
+                                                exclude={toolbar?.exclude}
+                                                extra={toolbar?.extra}
+                                            />
+                                            <CodeExport />
+                                            <ExplainData themeKey={themeKey} />
+                                            {vizStore.showDataBoard && <DataBoard />}
+                                            <VisualConfig />
+                                            <LogPanel />
+                                            <BinPanel />
+                                            <ComputedFieldDialog />
+                                            <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
+                                            <div className="sm:flex">
+                                                <SideResize
+                                                    defaultWidth={240}
+                                                    handleWidth={4}
+                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
+                                                    handlerClassName="hidden sm:block"
+                                                >
+                                                    <DatasetFields />
+                                                </SideResize>
+                                                <SideResize
+                                                    defaultWidth={180}
+                                                    handleWidth={4}
+                                                    className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
+                                                    handlerClassName="hidden sm:block"
+                                                >
+                                                    <FilterField />
+                                                    <AestheticFields />
+                                                </SideResize>
+                                                <div className="flex-1 min-w-[0px]">
+                                                    <div>
+                                                        <PosFields />
+                                                    </div>
+                                                    <div
+                                                        className="my-0.5 sm:ml-0.5 p-1 border"
+                                                        style={{ minHeight: '600px', height: 1, maxHeight: '100vh', overflow: 'auto' }}
+                                                        onMouseLeave={() => {
+                                                            vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                                        }}
+                                                        onClick={() => {
+                                                            vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                                        }}
+                                                    >
+                                                        {computation && (
+                                                            <ReactiveRenderer
+                                                                csvRef={downloadCSVRef}
+                                                                ref={rendererRef}
+                                                                themeKey={themeKey}
+                                                                dark={darkMode}
+                                                                themeConfig={themeConfig}
+                                                                computationFunction={wrappedComputation}
+                                                                channelScales={props.channelScales}
+                                                            />
+                                                        )}
+                                                        <VizEmbedMenu />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                            {segmentKey === ISegmentKey.data && (
-                                <div className="mx-4 p-4 border border-gray-200 dark:border-gray-700" style={{ marginTop: '0em', borderTop: 'none' }}>
-                                    <DatasetConfig />
-                                </div>
-                            )}
-                        </div>
+                                    </TabsContent>
+                                </Tabs>
+                            </div>
+                        </FieldsContextWrapper>
+                        <div ref={setPortal} />
                     </div>
                 </VizAppContext>
             </ErrorBoundary>
@@ -278,9 +296,7 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
 
     return (
         <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
-            <FieldsContextWrapper>
-                <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
-            </FieldsContextWrapper>
+            <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
         </VizStoreWrapper>
     );
 }

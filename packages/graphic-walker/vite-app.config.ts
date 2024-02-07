@@ -21,5 +21,10 @@ export default defineConfig({
   build: {
     outDir: 'app-dist',
     minify: 'esbuild',
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
   }
 })

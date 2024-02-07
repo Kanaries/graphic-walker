@@ -1,6 +1,9 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { IRow, Filters, IViewField, IFilterField, IKeyWord } from '../interfaces';
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 interface NRReturns {
     normalizedData: IRow[];
     maxMeasures: IRow;
@@ -284,7 +287,7 @@ export function makeNumbersBeautiful(nums: number[]): number[] {
     });
 }
 
-export function classNames(...classes: string[]) {
+export function classNames(...classes: (string | undefined)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
@@ -400,4 +403,8 @@ export function binarySearchClosest<T>(arr: T[], target: number, keyF: (v: T) =>
 
 export function startTask(task: () => void) {
     Promise.resolve().then(task);
+}
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
 }

@@ -1,21 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import Modal from '../components/modal';
 import { downloadBlob } from '../utils/save';
 import GwFile from './dataSelection/gwFile';
 import DataSelection from './dataSelection';
-import DefaultButton from '../components/button/default';
 import DropdownSelect from '../components/dropdownSelect';
-import PrimaryButton from '../components/button/primary';
-import { IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
+import { IColorConfig, IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
 import { ShadowDom } from '../shadow-dom';
 import { CommonStore } from '../store/commonStore';
 import { VizSpecStore } from '../store/visualSpecStore';
 import { useCurrentMediaTheme } from '../utils/media';
 import { GWGlobalConfig } from '../vis/theme';
 import { composeContext } from '../utils/context';
-import { themeContext, vegaThemeContext } from '../store/theme';
+import { portalContainerContext, themeContext, vegaThemeContext } from '../store/theme';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface DSSegmentProps {
     commonStore: CommonStore;
@@ -33,13 +32,14 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
 
     const { showDSPanel } = commonStore;
     return (
-        <div className="font-sans flex items-center m-4 p-4 border border-gray-200 dark:border-gray-700">
+        <div className="font-sans flex items-center m-4 p-4 border rounded-md">
             {props.onLoad && <GwFile onImport={props.onLoad} fileRef={gwFileRef} />}
             {/* <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
                 {t("DataSource.labels.cur_dataset")}
             </label> */}
             <div className="mr-2">
                 <DropdownSelect
+                    className='text-xs !h-8'
                     options={dataSources.map((d) => ({ label: d.name, value: d.id }))}
                     selectedKey={selectedId}
                     onSelect={onSelectId}
@@ -47,43 +47,55 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
                 />
             </div>
 
-            <PrimaryButton
+            <Button
+                size="sm"
                 className="mr-2"
-                text={t('DataSource.buttons.create_dataset')}
                 onClick={() => {
                     commonStore.startDSBuildingTask();
                 }}
-            />
+            >
+                {t('DataSource.buttons.create_dataset')}
+            </Button>
             {onSave && (
-                <DefaultButton
+                <Button
+                    size="sm"
                     className="mr-2"
-                    text={t('DataSource.buttons.export_as_file')}
+                    variant="outline"
                     onClick={async () => {
                         const blob = await onSave();
                         downloadBlob(blob, 'graphic-walker-notebook.json');
                     }}
-                />
+                >
+                    {t('DataSource.buttons.export_as_file')}
+                </Button>
             )}
             {props.onLoad && (
-                <DefaultButton
+                <Button
                     className="mr-2"
-                    text={t('DataSource.buttons.import_file')}
+                    size="sm"
+                    variant="outline"
                     onClick={() => {
                         if (gwFileRef.current) {
                             gwFileRef.current.click();
                         }
                     }}
-                />
+                >
+                    {t('DataSource.buttons.import_file')}
+                </Button>
             )}
-            <Modal
-                title={t('DataSource.dialog.create_data_source')}
-                onClose={() => {
+            <Dialog
+                onOpenChange={() => {
                     commonStore.setShowDSPanel(false);
                 }}
-                show={showDSPanel}
+                open={showDSPanel}
             >
-                <DataSelection commonStore={commonStore} />
-            </Modal>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('DataSource.dialog.create_data_source')}</DialogTitle>
+                    </DialogHeader>
+                    <DataSelection commonStore={commonStore} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 });
@@ -98,7 +110,7 @@ function once<T extends (...args: any[]) => any>(register: (x: T) => () => void,
     disposer.current = register(newCB as T);
 }
 
-const DataSourceThemeContext = composeContext({ themeContext, vegaThemeContext });
+const DataSourceThemeContext = composeContext({ themeContext, vegaThemeContext, portalContainerContext });
 
 export function DataSourceSegmentComponent(props: {
     provider: IDataSourceProvider;
@@ -106,6 +118,7 @@ export function DataSourceSegmentComponent(props: {
     dark?: IDarkMode;
     themeKey?: IThemeKey;
     themeConfig?: GWGlobalConfig;
+    colorConfig?: IColorConfig;
     children: (props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
@@ -222,12 +235,17 @@ export function DataSourceSegmentComponent(props: {
     }, [selectedId, props.provider]);
 
     const darkMode = useCurrentMediaTheme(props.dark);
+    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
         <>
-            <ShadowDom>
-                <DataSourceThemeContext themeContext={darkMode} vegaThemeContext={{ themeConfig: props.themeConfig, themeKey: props.themeKey }}>
-                    <div className={`${darkMode === 'dark' ? 'dark' : ''}`}>
+            <ShadowDom colorConfig={props.colorConfig}>
+                <DataSourceThemeContext
+                    themeContext={darkMode}
+                    vegaThemeContext={{ themeConfig: props.themeConfig, themeKey: props.themeKey }}
+                    portalContainerContext={portal}
+                >
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App`}>
                         <DataSourceSegment
                             commonStore={commonStore}
                             dataSources={datasetList}
@@ -236,6 +254,7 @@ export function DataSourceSegmentComponent(props: {
                             onLoad={onLoad}
                             onSave={onSave}
                         />
+                        <div ref={setPortal} />
                     </div>
                 </DataSourceThemeContext>
             </ShadowDom>

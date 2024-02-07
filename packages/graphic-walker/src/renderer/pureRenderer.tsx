@@ -130,10 +130,16 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
     const darkMode = useCurrentMediaTheme(dark);
+    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
         <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className}>
-            <VizAppContext ComputationContext={computation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
+            <VizAppContext
+                ComputationContext={computation}
+                themeContext={darkMode}
+                vegaThemeContext={{ themeConfig, themeKey }}
+                portalContainerContext={portal}
+            >
                 <div className={`relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
@@ -148,7 +154,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             data={viewData}
                             ref={ref}
                             themeKey={themeKey}
-                            dark={dark}
                             draggableFieldState={visualState}
                             visualConfig={visualConfig}
                             layout={visualLayout}
@@ -156,6 +161,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             channelScales={channelScales}
                         />
                     )}
+                    <div className={`App ${darkMode === 'dark' ? 'dark' : ''}`} ref={setPortal} />
                 </div>
             </VizAppContext>
         </ShadowDom>

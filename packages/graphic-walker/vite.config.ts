@@ -25,6 +25,9 @@ export default defineConfig({
   ],
   resolve: {
     dedupe: modulesNotToBundle,
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
   build: {
     lib: {

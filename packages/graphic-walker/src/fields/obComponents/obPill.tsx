@@ -69,27 +69,12 @@ const OBPill: React.FC<PillProps> = (props) => {
                         vizStore.setFieldAggregator(dkey.id, fIndex, value as IAggregator);
                     }}
                 >
-                    <span className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
+                    <span className="bg-transparent float-right focus:outline-none focus: dark:focus: flex items-center ml-2">
                         {field.aggName || ''}
                         <ChevronUpDownIcon className="w-3" />
                     </span>
                 </DropdownContext>
             )}
-            {/* {field.analyticType === "measure" && field.fid !== COUNT_FIELD_ID && visualConfig.defaultAggregated && (
-                <select
-                    className="bg-transparent text-gray-700 float-right focus:outline-none focus:border-gray-500"
-                    value={field.aggName || ""}
-                    onChange={(e) => {
-                        vizStore.setFieldAggregator(dkey.id, fIndex, e.target.value);
-                    }}
-                >
-                    {AGGREGATOR_LIST.map((op) => (
-                        <option className="inline" value={op} key={op}>
-                            {t(op)}
-                        </option>
-                    ))}
-                </select>
-            )} */}
             {field.analyticType === 'dimension' && field.sort === 'ascending' && (
                 <BarsArrowUpIcon className="float-right w-3" role="status" aria-label="Sorted in ascending order" />
             )}

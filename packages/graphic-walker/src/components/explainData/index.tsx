@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import Modal from '../modal';
+import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +8,9 @@ import embed from 'vega-embed';
 import { VegaGlobalConfig, IDarkMode, IThemeKey, IField, IRow, IPredicate } from '../../interfaces';
 import { builtInThemes } from '../../vis/theme';
 import { explainBySelection } from '../../lib/insights/explainBySelection';
+import { Dialog, DialogContent } from '../ui/dialog';
+import LoadingLayer from '../loadingLayer';
+import { themeContext } from '@/store/theme';
 
 const Container = styled.div`
     height: 50vh;
@@ -27,7 +29,7 @@ const Tab = styled.div`
     margin-block: 0.2em;
     margin-inline: 0.2em;
     padding: 0.5em;
-    border: 2px solid gray;
+    border-width: 2px;
     cursor: pointer;
 `;
 
@@ -41,10 +43,10 @@ const getCategoryName = (row: IRow, field: IField) => {
 };
 
 const ExplainData: React.FC<{
-    dark: IDarkMode;
     themeKey: IThemeKey;
-}> = observer(({ dark, themeKey }) => {
+}> = observer(({ themeKey }) => {
     const vizStore = useVizStore();
+    const dark = useContext(themeContext);
     const computationFunction = useCompututaion();
     const { allFields, viewMeasures, viewDimensions, viewFilters, showInsightBoard, selectedMarkObject, config } = vizStore;
     const { timezoneDisplayOffset } = config;
@@ -70,7 +72,15 @@ const ExplainData: React.FC<{
     const { t } = useTranslation();
 
     const explain = async (predicates) => {
-        const explainInfoList = await explainBySelection({ predicates, viewFilters, allFields, viewMeasures, viewDimensions, computationFunction, timezoneDisplayOffset });
+        const explainInfoList = await explainBySelection({
+            predicates,
+            viewFilters,
+            allFields,
+            viewMeasures,
+            viewDimensions,
+            computationFunction,
+            timezoneDisplayOffset,
+        });
         setExplainDataInfoList(explainInfoList);
     };
 
@@ -162,33 +172,43 @@ const ExplainData: React.FC<{
                 resolve: { scale: { y: 'independent' } },
             };
 
-            embed(chartRef.current, spec, { mode: 'vega-lite', actions: false, config: vegaConfig });
+            embed(chartRef.current, spec, {
+                mode: 'vega-lite',
+                actions: false,
+                config: vegaConfig,
+                tooltip: {
+                    theme: dark,
+                },
+            });
         }
     }, [explainDataInfoList, chartRef.current, selectedInfoIndex, vegaConfig]);
 
     return (
-        <Modal
-            show={showInsightBoard}
-            onClose={() => {
+        <Dialog
+            open={showInsightBoard}
+            onOpenChange={() => {
                 vizStore.setShowInsightBoard(false);
                 setSelectedInfoIndex(0);
             }}
         >
-            <Container className="grid grid-cols-4">
-                <TabsList className="col-span-1">
-                    {explainDataInfoList.map((option, i) => {
-                        return (
-                            <Tab key={i} className={`${selectedInfoIndex === i ? 'border-indigo-400' : ''} text-xs`} onClick={() => setSelectedInfoIndex(i)}>
-                                {option.targetField.name} {option.score.toFixed(2)}
-                            </Tab>
-                        );
-                    })}
-                </TabsList>
-                <div className="col-span-3 text-center overflow-y-scroll">
-                    <div ref={chartRef}></div>
-                </div>
-            </Container>
-        </Modal>
+            <DialogContent>
+                {explainDataInfoList.length === 0 && <LoadingLayer />}
+                <Container className="grid grid-cols-4">
+                    <TabsList className="col-span-1">
+                        {explainDataInfoList.map((option, i) => {
+                            return (
+                                <Tab key={i} className={`${selectedInfoIndex === i ? 'border-primary' : ''} text-xs`} onClick={() => setSelectedInfoIndex(i)}>
+                                    {option.targetField.name} {option.score.toFixed(2)}
+                                </Tab>
+                            );
+                        })}
+                    </TabsList>
+                    <div className="col-span-3 text-center overflow-y-scroll">
+                        <div ref={chartRef}></div>
+                    </div>
+                </Container>
+            </DialogContent>
+        </Dialog>
     );
 });
 

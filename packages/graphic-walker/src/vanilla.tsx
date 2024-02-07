@@ -6,17 +6,15 @@ import createMemoryProvider from './dataSourceProvider/memory';
 function FullGraphicWalker(props: IGWProps) {
     const provider = useMemo(() => createMemoryProvider(), []);
     return (
-        <DataSourceSegmentComponent provider={provider} dark={props.dark} themeConfig={props.themeConfig} themeKey={props.themeKey}>
+        <DataSourceSegmentComponent
+            provider={provider}
+            dark={props.dark}
+            themeConfig={props.themeConfig}
+            themeKey={props.themeKey}
+            colorConfig={props.colorConfig}
+        >
             {(p) => {
-                return (
-                    <GraphicWalker
-                        {...props}
-                        storeRef={p.storeRef}
-                        computation={p.computation}
-                        rawFields={p.meta}
-                        onMetaChange={p.onMetaChange}
-                    />
-                );
+                return <GraphicWalker {...props} storeRef={p.storeRef} computation={p.computation} rawFields={p.meta} onMetaChange={p.onMetaChange} />;
             }}
         </DataSourceSegmentComponent>
     );

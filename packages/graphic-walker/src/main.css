@@ -1,0 +1,21 @@
+html {
+    margin: 0px;
+    padding: 0px;
+    background-color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        background-color: rgb(9, 9, 11);
+        color-scheme: dark;
+    }
+}
+body {
+    /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif; */
+    /* -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; */
+    margin: 0px;
+    padding: 0px;
+}

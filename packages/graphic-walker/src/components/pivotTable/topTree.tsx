@@ -27,7 +27,7 @@ function renderTree(node: INestNode, dimsInCol: IField[], depth: number, cellRow
     cellRows[depth].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}-${cellRows[depth].length}`}
-            className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 align-top whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
+            className="bg-secondary text-secondary-foreground align-top whitespace-nowrap p-2 text-xs m-1 border"
             colSpan={isCollapsed ? Math.max(meaNumber, 1) : childrenSize * Math.max(meaNumber, 1)}
             rowSpan={isCollapsed ? node.height + 1 : 1}
         >
@@ -82,7 +82,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                 measInCol.map((m) => (
                     <td
                         key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}`}
-                        className="bg-zinc-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-100 whitespace-nowrap p-2 text-xs m-1 border border-gray-300"
+                        className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
                         {m.aggName}({m.name})
                     </td>
@@ -98,9 +98,9 @@ const TopTree: React.FC<TreeProps> = (props) => {
     }, [nodeCells]);
 
     return (
-        <thead className="border border-gray-300 bg-gray-50">
+        <thead className="border bg-secondary">
             {nodeCells.map((row, rIndex) => (
-                <tr className={`${row?.length > 0 ? "" : "hidden"} border border-gray-300`} key={rIndex}>
+                <tr className={`${row?.length > 0 ? "" : "hidden"} border`} key={rIndex}>
                     {row}
                 </tr>
             ))}

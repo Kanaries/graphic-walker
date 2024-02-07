@@ -14,6 +14,13 @@ import { newOffsetDate, parsedOffsetDate } from '../../lib/op/offset';
 import { createStreamedValueHook } from '../../hooks';
 import { debounce } from 'lodash-es';
 import { GLOBAL_CONFIG } from '../../config';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import Tooltip from '@/components/tooltip';
 
 export type RuleFormProps = {
     rawFields: IMutField[];
@@ -40,20 +47,6 @@ const Container = styled.div`
     }
 `;
 
-export const Button = styled.button`
-    :hover {
-        background-color: rgba(243, 244, 246, 0.5);
-    }
-    color: rgb(55, 65, 81);
-    border: 1px solid rgb(226 232 240);
-    border-radius: 0.5em;
-    padding-block: 0.4em;
-    padding-inline: 1em;
-    user-select: none;
-    font-weight: bold;
-    cursor: pointer;
-`;
-
 const Table = styled.div`
     display: flex;
     flex-direction: column;
@@ -74,7 +67,7 @@ const TableRow = styled.div`
         overflow: hidden;
         text-overflow: ellipsis;
         user-select: none;
-        border-bottom: 0.8px solid rgb(226 232 240);
+        border-bottom: 0.8px solid hsl(var(--border));
         flex-shink: 0;
     }
     & > *:first-child {
@@ -119,34 +112,17 @@ const TabItem = styled.div``;
 
 const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
-    const checkboxRef = useRef(null);
 
-    React.useEffect(() => {
-        if (!checkboxRef.current) return;
-        const checkboxRefDOM = checkboxRef.current as HTMLInputElement;
-        if (currentNum === totalNum) {
-            checkboxRefDOM.checked = true;
-            checkboxRefDOM.indeterminate = false;
-        } else if (currentNum < totalNum && currentNum > 0) {
-            checkboxRefDOM.indeterminate = true;
-        } else if (currentNum === 0) {
-            checkboxRefDOM.checked = false;
-            checkboxRefDOM.indeterminate = false;
-        }
-    }, [currentNum, totalNum]);
+    let checked: boolean | 'indeterminate';
+    if (currentNum === totalNum) {
+        checked = true;
+    } else if (currentNum < totalNum && currentNum > 0) {
+        checked = 'indeterminate';
+    } else {
+        checked = false;
+    }
 
-    return (
-        <input
-            type="checkbox"
-            className={classNames(
-                props.disabled ? 'text-gray-300 bg-gray-300 hover:bg-gray-300' : 'text-indigo-600 focus:ring-indigo-600',
-                'h-4 w-4 rounded border-gray-300'
-            )}
-            ref={checkboxRef}
-            disabled={props.disabled}
-            onChange={() => onChange()}
-        />
-    );
+    return <Checkbox checked={checked} disabled={props.disabled} onCheckedChange={() => onChange()} />;
 };
 
 // TODO: refactor this function
@@ -389,28 +365,53 @@ const Effecter = (props: { effect: () => void; effectId: any }) => {
     return null;
 };
 
+interface SortConfig {
+    key: 'value' | 'count';
+    ascending: boolean;
+}
+
 function Toggle(props: { children?: React.ReactNode; value: boolean; onChange?: (v: boolean) => void; label?: string }) {
     return (
-        <div
-            title={props.label}
-            onClick={() => {
-                props.onChange?.(!props.value);
-            }}
-            className={classNames(
-                props.value ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800',
-                'rounded cursor-pointer p-1 w-6 h-6 flex items-center justify-center'
-            )}
-        >
-            {props.children}
-        </div>
+        <Tooltip content={props.label}>
+            <div
+                onClick={() => {
+                    props.onChange?.(!props.value);
+                }}
+                className={classNames(
+                    props.value ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
+                    'rounded cursor-pointer p-1 w-6 h-6 flex items-center justify-center'
+                )}
+            >
+                {props.children}
+            </div>
+        </Tooltip>
     );
 }
 
+const SortButton: React.FC<{ id: string; config: SortConfig; currentKey: SortConfig['key']; setSortConfig: (value: SortConfig) => void }> = ({
+    config: { key, ascending },
+    currentKey,
+    setSortConfig,
+    id,
+}) => {
+    const isCurrentKey = key === currentKey;
+    return (
+        <Button
+            id={id}
+            variant={isCurrentKey ? 'secondary' : 'ghost'}
+            size="icon-xs"
+            className={classNames('ml-2')}
+            onClick={(e) => {
+                e.preventDefault();
+                setSortConfig({ key: currentKey, ascending: isCurrentKey ? !ascending : true });
+            }}
+        >
+            {isCurrentKey && !ascending ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronUpIcon className="h-4 w-4" />}
+        </Button>
+    );
+};
+
 export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields, displayOffset }) => {
-    interface SortConfig {
-        key: 'value' | 'count';
-        ascending: boolean;
-    }
     const [sortConfig, setSortConfig] = useState<SortConfig>({
         key: 'count',
         ascending: true,
@@ -487,37 +488,23 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         overscan: 10,
     });
 
-    const SortButton: React.FC<{ currentKey: SortConfig['key'] }> = ({ currentKey }) => {
-        const isCurrentKey = sortConfig.key === currentKey;
-        return (
-            <span
-                className={`ml-2 flex-none rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${
-                    isCurrentKey ? 'text-indigo-600' : 'text-gray-500'
-                }`}
-                onClick={() => setSortConfig({ key: currentKey, ascending: isCurrentKey ? !sortConfig.ascending : true })}
-            >
-                {isCurrentKey && !sortConfig.ascending ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronUpIcon className="h-4 w-4" />}
-            </span>
-        );
-    };
-
     return field.rule?.type === 'one of' || field.rule?.type === 'not in' ? (
         <Container>
             <div>{t('constant.filter_type.one_of')}</div>
-            <div className="text-gray-500 dark:text-gray-300">{t('constant.filter_type.one_of_desc')}</div>
+            <div className="text-muted-foreground">{t('constant.filter_type.one_of_desc')}</div>
             <div className="btn-grp">
-                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleFullOrEmptySet()}>
+                <Button variant="outline" size="sm" onClick={() => handleToggleFullOrEmptySet()}>
                     {currentCount === distinctTotal ? t('filters.btn.unselect_all') : t('filters.btn.select_all')}
                 </Button>
-                <Button className="dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-gray-800" onClick={() => handleToggleReverseSet()}>
+                <Button variant="outline" size="sm" onClick={() => handleToggleReverseSet()}>
                     {t('filters.btn.reverse')}
                 </Button>
             </div>
             {enableKeyword && (
                 <div className="relative">
-                    <input
+                    <Input
+                        className="mb-2 pr-[88px]"
                         type="search"
-                        className="block mb-2 py-1 px-2 pr-24 w-full text-gray-700 dark:text-gray-200 rounded-md border-0 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-900 "
                         value={keywordValue}
                         placeholder="Search Value..."
                         onChange={(e) => {
@@ -536,7 +523,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         <Toggle label="Match Whole Word" value={isWord} onChange={setIsWord}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <g fill="currentColor">
-                                    <path fill-rule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clip-rule="evenodd" />
+                                    <path fillRule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clipRule="evenodd" />
                                     <path d="M6.84 11h-.88v-.86h-.022c-.383.66-.947.989-1.692.989c-.548 0-.977-.145-1.289-.435c-.308-.29-.462-.675-.462-1.155c0-1.028.605-1.626 1.816-1.794l1.649-.23c0-.935-.378-1.403-1.134-1.403c-.662 0-1.26.226-1.794.677v-.902c.541-.344 1.164-.516 1.87-.516c1.292 0 1.938.684 1.938 2.052zm-.88-2.782L4.633 8.4c-.408.058-.716.16-.924.307c-.208.143-.311.399-.311.768c0 .268.095.488.284.66c.194.168.45.253.768.253a1.41 1.41 0 0 0 1.08-.457c.286-.308.43-.696.43-1.165zm3.388 1.987h-.022V11h-.88V2.857h.88v3.61h.021c.434-.73 1.068-1.096 1.902-1.096c.705 0 1.257.247 1.654.741c.401.49.602 1.15.602 1.977c0 .92-.224 1.658-.672 2.213c-.447.551-1.06.827-1.837.827c-.726 0-1.276-.308-1.649-.924m-.022-2.218v.768c0 .455.147.841.44 1.16c.298.315.674.473 1.128.473c.534 0 .951-.204 1.252-.613c.304-.408.456-.975.456-1.702c0-.613-.141-1.092-.424-1.44c-.283-.347-.666-.52-1.15-.52c-.511 0-.923.178-1.235.536c-.311.355-.467.8-.467 1.338" />
                                 </g>
                             </svg>
@@ -545,9 +532,9 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path
                                     fill="currentColor"
-                                    fill-rule="evenodd"
+                                    fillRule="evenodd"
                                     d="M10.012 2h.976v3.113l2.56-1.557l.486.885L11.47 6l2.564 1.559l-.485.885l-2.561-1.557V10h-.976V6.887l-2.56 1.557l-.486-.885L9.53 6L6.966 4.441l.485-.885l2.561 1.557zM2 10h4v4H2z"
-                                    clip-rule="evenodd"
+                                    clipRule="evenodd"
                                 />
                             </svg>
                         </Toggle>
@@ -555,7 +542,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                 </div>
             )}
             <div className="relative">
-                <Table className="bg-slate-50 dark:bg-gray-800">
+                <Table>
                     <TableRow>
                         <div className="flex justify-center items-center">
                             <StatusCheckbox
@@ -565,14 +552,14 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                 onChange={handleToggleFullOrEmptySet}
                             />
                         </div>
-                        <label className="header text-gray-500 dark:text-gray-300 flex items-center">
-                            {t('filters.header.value')}
-                            <SortButton currentKey="value" />
-                        </label>
-                        <label className="header text-gray-500 dark:text-gray-300 flex items-center">
-                            {t('filters.header.count')}
-                            <SortButton currentKey="count" />
-                        </label>
+                        <div className="header text-muted-foreground flex items-center">
+                            <label htmlFor="value_sort">{t('filters.header.value')}</label>
+                            <SortButton id="value_sort" currentKey="value" setSortConfig={setSortConfig} config={sortConfig} />
+                        </div>
+                        <div className="header text-muted-foreground flex items-center">
+                            <label htmlFor="count_sort">{t('filters.header.count')}</label>
+                            <SortButton id="count_sort" currentKey="count" setSortConfig={setSortConfig} config={sortConfig} />
+                        </div>
                     </TableRow>
                 </Table>
                 {loading && (
@@ -606,13 +593,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                         }}
                                     >
                                         <div className="flex justify-center items-center">
-                                            <div className="h-4 w-4 bg-slate-200 rounded"></div>
+                                            <Skeleton className="h-4 w-4" />
                                         </div>
                                         <div className="flex justify-left items-center">
-                                            <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                            <Skeleton className="h-3 w-20" />
                                         </div>
                                         <div className="flex justify-right items-center">
-                                            <div className="h-3 w-6 bg-slate-200 rounded"></div>
+                                            <Skeleton className="h-3 w-6" />
                                         </div>
                                     </TableRow>
                                 ))}
@@ -644,13 +631,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                                 }}
                                             >
                                                 <div className="flex justify-center items-center">
-                                                    <div className="h-4 w-4 bg-slate-200 rounded"></div>
+                                                    <Skeleton className="h-4 w-4" />
                                                 </div>
                                                 <div className="flex justify-left items-center">
-                                                    <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                                    <Skeleton className="h-3 w-20" />
                                                 </div>
                                                 <div className="flex justify-right items-center">
-                                                    <div className="h-3 w-6 bg-slate-200 rounded"></div>
+                                                    <Skeleton className="h-3 w-6" />
                                                 </div>
                                                 <Effecter
                                                     effect={() => loadData(idx)}
@@ -679,14 +666,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                             }}
                                         >
                                             <div className="flex justify-center items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                                <Checkbox
+                                                    className="h-4 w-4"
                                                     checked={checked}
                                                     id={id}
                                                     aria-describedby={`${id}_label`}
                                                     title={displayValue}
-                                                    onChange={({ target: { checked } }) => handleSelect(value, checked, count)}
+                                                    onCheckedChange={(checked) => handleSelect(value, !!checked, count)}
                                                 />
                                             </div>
                                             <label id={`${id}_label`} htmlFor={id} title={displayValue}>
@@ -701,7 +687,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                     </Table>
                 )}
                 {isNotEmpty(distinctTotal) && (
-                    <Table className="text-gray-600">
+                    <Table className="text-muted-foreground">
                         <TableRow>
                             <label></label>
                             <label>{t('filters.selected_keys', { count: currentCount })}</label>
@@ -739,7 +725,7 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     return (
         <input
             className={classNames(
-                'block w-full dark:[color-scheme:dark] rounded-md border-0 py-1 px-2 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 dark:bg-zinc-900 dark:border-gray-700 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+                'dark:[color-scheme:dark] flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
                 props.className ?? ''
             )}
             type="datetime-local"
@@ -802,7 +788,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     return field.rule?.type === 'temporal range' ? (
         <Container className="overflow-visible">
             <div>{t('constant.filter_type.temporal_range')}</div>
-            <div className="text-gray-500">{t('constant.filter_type.temporal_range_desc')}</div>
+            <div className="text-muted-foreground">{t('constant.filter_type.temporal_range_desc')}</div>
             <CalendarInputContainer>
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
@@ -863,7 +849,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({
     return field.rule?.type === 'range' ? (
         <Container>
             <div>{t('range')}</div>
-            <div className="text-gray-500">{t('range_desc')}</div>
+            <div className="text-muted-foreground">{t('range_desc')}</div>
             <Slider min={range[0]} max={range[1]} value={field.rule.value} onChange={handleChange} />
         </Container>
     ) : null;
@@ -912,29 +898,21 @@ const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs, displayOf
 
     return (
         <TabsContainer>
-            <div>
+            <RadioGroup value={which} onValueChange={(s) => setWhich(s as (typeof tabs)[number])}>
                 {tabs.map((option) => {
                     return (
                         <div className="flex my-2" key={option}>
                             <div className="align-top">
-                                <input
-                                    type="radio"
-                                    className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    id={option}
-                                    checked={option === which}
-                                    onChange={(e) => setWhich((e.target as HTMLInputElement).value as typeof which)}
-                                    name="filter_type"
-                                    value={option}
-                                />
+                                <RadioGroupItem id={option} value={option} />
                             </div>
                             <div className="ml-3">
-                                <label htmlFor={option}>{t(tabOptionDict[option].key)}</label>
-                                <div className="text-gray-500">{t(tabOptionDict[option].descKey)}</div>
+                                <Label htmlFor={option}>{t(tabOptionDict[option].key)}</Label>
+                                <div className="text-muted-foreground">{t(tabOptionDict[option].descKey)}</div>
                             </div>
                         </div>
                     );
                 })}
-            </div>
+            </RadioGroup>
             <hr className="my-0.5" />
             <TabPanel>
                 {tabs.map((tab, i) => {

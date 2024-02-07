@@ -95,7 +95,7 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                             leaveTo="transform opacity-0 scale-95"
                         >
                             <Menu.Items
-                                className="fixed z-50 mt-0.5 min-w-[8rem] max-w-[16rem] origin-top-left bg-white dark:bg-zinc-900 shadow-lg border border-gray-50 dark:border-gray-800 focus:outline-none"
+                                className="fixed rounded-md z-50 mt-0.5 min-w-[8rem] max-w-[16rem] origin-top-left bg-popover text-popover-foreground shadow-lg border focus:outline-none"
                                 style={{
                                     left: coord[0],
                                     top: coord[1],

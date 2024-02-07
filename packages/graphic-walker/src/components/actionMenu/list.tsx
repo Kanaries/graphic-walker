@@ -1,10 +1,11 @@
-import React, { memo, type ComponentProps, type ReactElement, createContext, useState, useContext, useMemo, useEffect } from "react";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
-import styled from "styled-components";
-
+import React, { Fragment, memo, type ComponentProps, type ReactElement, createContext, useState, useContext, useMemo, useEffect } from 'react';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import styled from 'styled-components';
+import { Transition } from '@headlessui/react';
+import { Separator } from '../ui/separator';
 
 function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(" ");
+    return classes.filter(Boolean).join(' ');
 }
 
 export interface IActionMenuItem {
@@ -35,30 +36,20 @@ const List = styled.div`
                 padding-left: 0.4rem;
             }
         }
-        &[aria-disabled="true"] > * {
+        > *:first-child {
+            border-top-left-radius: calc(var(--radius) - 4px);
+            border-bottom-left-radius: calc(var(--radius) - 4px);
+        }
+        > *:last-child {
+            border-top-right-radius: calc(var(--radius) - 4px);
+            border-bottom-right-radius: calc(var(--radius) - 4px);
+        }
+        &[aria-disabled='true'] > * {
             opacity: 0.5;
             cursor: default;
         }
     }
 `;
-
-const FixedTarget = memo(function FixedTarget(props: ComponentProps<"div">) {
-    const { children, ...attrs } = props;
-
-    return (
-        <div className="absolute top-0 right-0">
-            <div
-                {...attrs}
-                style={{
-                    ...attrs.style,
-                    position: "fixed",
-                }}
-            >
-                {children}
-            </div>
-        </div>
-    );
-});
 
 interface IActionMenuRootContext {
     path: number[];
@@ -77,7 +68,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
     const { icon, label, disabled = false, children = [], onPress } = item;
     const [hover, setHover] = useState(false);
     const [focus, setFocus] = useState(false);
-    
+
     const ctx = useContext(Context);
 
     const expanded = children.length > 0 && ctx.path.length > 0 && path.length <= ctx.path.length && path.every((v, i) => v === ctx.path[i]);
@@ -94,7 +85,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
 
     useEffect(() => {
         if (children.length === 0 && (hover || focus)) {
-            if (basePath.join(".") !== ctx.path.join(".")) {
+            if (basePath.join('.') !== ctx.path.join('.')) {
                 ctx.setPath(basePath);
             }
         }
@@ -104,14 +95,14 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
         <div
             tabIndex={disabled ? undefined : 0}
             role="button"
-            aria-haspopup={children.length ? "menu" : undefined}
+            aria-haspopup={children.length ? 'menu' : undefined}
             aria-disabled={disabled}
             className={classNames(
-                active ? "bg-gray-100/50 text-gray-900 dark:bg-gray-800/50 dark:text-gray-50" : "text-gray-700 dark:text-gray-200",
-                disabled ? "" : "cursor-pointer",
-                "text-xs",
+                active ? 'bg-accent text-accent-foreground' : 'text-foreground',
+                disabled ? 'text-muted-foreground' : 'cursor-pointer',
+                'transition-colors text-xs'
             )}
-            onClick={e => {
+            onClick={(e) => {
                 if (disabled || children.length) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -142,7 +133,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
             onMouseLeave={() => {
                 setHover(false);
             }}
-            onKeyDown={e => {
+            onKeyDown={(e) => {
                 if (disabled || children.length) {
                     return;
                 }
@@ -152,26 +143,31 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                 }
             }}
         >
-            <div aria-hidden="true">
-                {icon}
-            </div>
+            <div aria-hidden="true">{icon}</div>
             <div>
-                <span className="truncate self-start">
-                    {label}
-                </span>
+                <span className="truncate self-start">{label}</span>
             </div>
-            <div
-                aria-hidden="true"
-                className="relative"
-            >
+            <div aria-hidden="true" className="relative">
                 {children.length > 0 && (
                     <>
                         <ChevronRightIcon className="w-4 h-4" aria-hidden="true" />
-                        {expanded && (
-                            <FixedTarget className="z-50 min-w-[8rem] max-w-[16rem] bg-white dark:bg-zinc-900 shadow-lg border border-gray-50 dark:border-gray-800 focus:outline-none">
-                                <MenuItemList items={children} path={path} />
-                            </FixedTarget>
-                        )}
+                        <div className="absolute top-0 right-0">
+                            <Transition
+                                appear
+                                as={Fragment}
+                                show={expanded}
+                                enter="transition ease-out duration-100"
+                                enterFrom="transform opacity-0 scale-95"
+                                enterTo="transform opacity-100 scale-100"
+                                leave="transition ease-in duration-75"
+                                leaveFrom="transform opacity-100 scale-100"
+                                leaveTo="transform opacity-0 scale-95"
+                            >
+                                <div className="fixed rounded-md -translate-x-1 z-50 min-w-[8rem] max-w-[16rem] bg-popover shadow-lg border focus:outline-none">
+                                    <MenuItemList items={children} path={path} />
+                                </div>
+                            </Transition>
+                        </div>
                     </>
                 )}
             </div>
@@ -186,14 +182,10 @@ interface IActionMenuItemListProps {
 }
 
 const MenuItemList = memo<IActionMenuItemListProps>(function ActionMenuItemList({ items, path, title }) {
-
     return (
-        <div className="py-1 -mx-px">
-            {title && (
-                <header className="px-3 py-1 mb-1.5 text-xs text-gray-500/75 dark:text-gray-400/75 truncate">
-                    {title}
-                </header>
-            )}
+        <div className="p-1 -mx-px">
+            {title && <header className="px-3 py-1 mb-1.5 text-xs font-medium truncate">{title}</header>}
+            {title && <Separator orientation="horizontal" className="-mx-1 my-1" />}
             <List>
                 {items.map((item, index) => (
                     <ActionMenuItem key={index} item={item} path={[...path, index]} />
@@ -206,13 +198,8 @@ const MenuItemList = memo<IActionMenuItemListProps>(function ActionMenuItemList(
 const ActionMenuItemRoot = memo<{ onDismiss: () => void; children: any }>(function ActionMenuItemRoot({ onDismiss, children }) {
     const [path, setPath] = useState<number[]>([]);
 
-    return (
-        <Context.Provider value={{ path, setPath, onDismiss }}>
-            {children}
-        </Context.Provider>
-    );
+    return <Context.Provider value={{ path, setPath, onDismiss }}>{children}</Context.Provider>;
 });
-
 
 export default memo<Omit<IActionMenuItemListProps, 'path'> & { onDismiss: () => void }>(function ActionMenuItemList({ onDismiss, items, title }) {
     return (
