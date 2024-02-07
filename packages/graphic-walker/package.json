@@ -102,7 +102,8 @@
     "ts-jest": "^29.1.1",
     "vega": "^5.22.1",
     "vega-embed": "^6.21.0",
-    "vega-lite": "^5.6.0"
+    "vega-lite": "^5.6.0",
+    "vega-webgl-renderer": "^1.0.0-beta.2"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.5",
