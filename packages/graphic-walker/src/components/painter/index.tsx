@@ -8,7 +8,7 @@ import { IDarkMode, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, I
 import embed from 'vega-embed';
 import { PAINT_FIELD_ID } from '../../constants';
 import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
-import { sceneVisit } from 'vega';
+import { renderModule, sceneVisit, CanvasHandler } from 'vega';
 import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
 import { ClickInput, ColorEditor, CursorDef, PixelContainer } from './components';
@@ -22,6 +22,15 @@ import { Dialog, DialogContent } from '../ui/dialog';
 import { Slider } from '../ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { themeContext } from '@/store/theme';
+import { WebGLRenderer } from 'vega-webgl-renderer';
+
+//@ts-ignore
+CanvasHandler.prototype.context = function () {
+    //@ts-ignore
+    return this._canvas.getContext('2d') || this._canvas._textCanvas.getContext('2d');
+};
+
+renderModule('webgl', { handler: CanvasHandler, renderer: WebGLRenderer });
 
 const MAGIC_PADDING = 5;
 const PIXEL_INDEX = '_gw_pixel_index';
@@ -210,6 +219,7 @@ const PainterContent = (props: {
                 height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
             };
             embed(containerRef.current, spec, {
+                renderer: 'webgl' as any,
                 config: props.vegaConfig,
                 actions: false,
                 tooltip: {
@@ -233,7 +243,7 @@ const PainterContent = (props: {
                     })
                 );
                 //@ts-ignore
-                const rerender = throttle(() => res.view._renderer._render(scene.root), 100, { trailing: true });
+                const rerender = throttle(() => res.view._renderer._render(scene.root), 15, { trailing: true });
                 resetRef.current = () => {
                     props.onReset();
                     props.paintMapRef.current! = createBitMapForMap([props.domainY, props.domainX]);
@@ -257,7 +267,7 @@ const PainterContent = (props: {
                             brushIdRef.current === ERASER
                                 ? {
                                       name: '',
-                                      color: '#00000000',
+                                      color: 'transparent',
                                   }
                                 : props.dict[brushIdRef.current];
                         if (!targetColor) return;
@@ -269,8 +279,16 @@ const PainterContent = (props: {
                         let i = 0;
                         pts.forEach((x) => {
                             itemsMap.get(x)?.forEach((item) => {
-                                item['fill'] && item['fill'] !== 'transparent' && (item['fill'] = targetColor.color);
-                                item['stroke'] && item['stroke'] !== 'transparent' && (item['stroke'] = targetColor.color);
+                                switch (item['ariaRoleDescription']) {
+                                    case 'circle':
+                                    case 'square':
+                                    case 'tick':
+                                        item['fill'] = targetColor.color;
+                                        break;
+                                    case 'point':
+                                        item['stroke'] = targetColor.color;
+                                        break;
+                                }
                                 item.datum![PAINT_FIELD_ID] = targetColor.name;
                                 i++;
                             });
@@ -337,7 +355,7 @@ const PainterContent = (props: {
                 offsetY={pixelOffset[1]}
                 showPreview={showCursorPreview}
             >
-                <div ref={containerRef} id="painter-container" className="!cursor-none"></div>
+                <div ref={containerRef} id="painter-container" className="!cursor-none min-w-[600px] min-h-[512px]"></div>
             </PixelContainer>
             <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0 px-1">
                 <Tabs
