@@ -84,6 +84,8 @@ If you want to use Graphic Walker as a data exploration tool without thinking ab
 
 Use it here: [Graphic Walker Online](https://graphic-walker.kanaries.net)
 
+Examples here: [Graphic Walker Examples](https://graphic-walker.kanaries.net/examples)
+
 ### Method 1: use as an independent app.
 ```bash
 yarn install
@@ -111,7 +113,7 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
     return <GraphicWalker
         dataSource={dataSource}
         rawFields={fields}
-        spec={graphicWalkerSpec}
+        chart={graphicWalkerSpec}
         i18nLang={langStore.lang}
     />;
 }
@@ -119,17 +121,35 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
 export default YourEmbeddingApp;
 ```
 
-If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` component to make a single chart without controls UI.
+If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` or `GraphicRenderer` component to make a single chart without controls UI.
 
 ```typescript
 import { PureRenderer } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC<IYourChartProps> = props => {
-    const { rawData, visualState, visualConfig } = props;
+    const { rawData, visualState, visualConfig, visualLayout } = props;
     return <PureRenderer
         rawData={rawData}
         visualState={visualState}
         visualConfig={visualConfig}
+        visualLayout={visualLayout}
+    />;
+}
+
+export default YourChart;
+```
+
+The `GraphicRenderer` component accepts same props as `GraphicWalker`, and would display the chart and the filters of the chart to change.
+
+```typescript
+import { GraphicRenderer } from '@kanaries/graphic-walker';
+
+const YourChart: React.FC<IYourChartProps> = props => {
+    const { dataSource, fields, spec } = props;
+    return <GraphicRenderer
+        dataSource={dataSource}
+        rawFields={fields}
+        chart={spec}
     />;
 }
 
@@ -214,7 +234,6 @@ export interface IGWProps {
 	dataSource?: IRow[];
 	rawFields?: IMutField[];
 	spec?: Specification;
-	hideDataSourceConfig?: boolean;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean | string;
@@ -227,6 +246,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    colorConfig?: IColorConfig;
 }
 ```
 
@@ -242,10 +262,6 @@ Array of fields(columns) of the data. Provide this prop with `dataSource` prop t
 
 Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop.
 
-#### `hideDataSourceConfig`: optional _{ `boolean = false` }_
-
-Data source control at the top of graphic walker, you can import or upload dataset files. If you want to use graphic-walker as a controlled component, you can hide those component by setting this prop to `true`.
-
 #### `i18nLang`: optional _{ `string = 'en-US'` }_
 
 Graphic Walker support i18n, you can set the language of the component by this prop. Currently, we support `en-US`, `zh-CN`, `ja-JP` with built-in locale resources. If you want to use other languages, you can provide your own locale resources by [`i18nResources` prop](#i18nresources).
@@ -257,10 +273,6 @@ Customize locale resources. See [Customize I18n](#customize-i18n) for more detai
 #### `keepAlive`: optional _{ `boolean | string = false` }_
 
 Whether to keep the component state when it is unmounted. If provided, after you unmount the graphic-walker component, the state will still be stored, and will be restored when the component is mount again. If you need to enable `keepAlive` for multiple graphic-walker components, you can provide a unique string value for each component to distinguish them.
-
-#### `fieldKeyGuard`: optional _{ `boolean = true` }_
-
-Whether to use the field key guard. If enabled, the field `fid` will be transformed to ensure that it is safe to use as a reference in Vega-Lite. Otherwise, the `fid` provided in `rawFields` will be used directly.
 
 #### `themeKey`: optional _{ `IThemeKey = "vega"` }_
 
@@ -344,6 +356,47 @@ const channelScales = {
     }
 }
 
+```
+
+#### `colorConfig`: optional _{ `IColorConfig` }_
+
+Specify the color that graphic walker use, so the background of Graphic Walker will match to your website.
+
+You can pass either css color name (such as cyan), tailwind color name (such as zinc-900), hex color (e.g. #ff0000), hsl color (e.g. hsl(217.2 91.2% 59.8%)), or hwb color(e.g. hwb(60, 3%, 60%)).
+
+you can also use helpers to help you create a color config.
+
+Here are some examples:
+
+```ts
+import { getColorConfigFromPalette, getPaletteFromColor } from '@kanaries/graphic-walker'
+
+const colorConfig: IColorConfig = {
+    light: {
+        background: 'amber-100',
+        foreground: 'amber-950',
+        primary: 'amber-950',
+        'primary-foreground': 'amber-50',
+        muted: 'amber-200',
+        'muted-foreground': 'amber-500',
+        border: 'amber-300',
+        ring: 'amber-950',
+    },
+    dark: {
+        background: 'amber-900',
+        foreground: 'amber-50',
+        primary: 'amber-50',
+        'primary-foreground': 'amber-800',
+        muted: 'amber-700',
+        'muted-foreground': 'amber-400',
+        border: 'amber-700',
+        ring: 'amber-300',
+    },
+};
+
+const colorConfig = getColorConfigFromPalette(tailwindcss.colors.zinc);
+
+const colorConfig = getColorConfigFromPalette(getPaletteFromColor('#6366f1'));
 ```
 
 ### Ref

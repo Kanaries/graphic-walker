@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,7 +18,6 @@ import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { renderSpec } from './store/visualSpecStore';
-import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import { ErrorContext } from './utils/reportError';
@@ -128,13 +127,19 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
+    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
-                <VizAppContext ComputationContext={wrappedComputation} themeContext={darkMode} vegaThemeContext={{ themeConfig, themeKey }}>
-                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-white dark:bg-zinc-900 dark:text-white m-0 p-0`}>
-                        <div className="flex flex-col space-y-2 bg-white dark:bg-zinc-900 dark:text-white">
+                <VizAppContext
+                    ComputationContext={wrappedComputation}
+                    themeContext={darkMode}
+                    vegaThemeContext={{ themeConfig, themeKey }}
+                    portalContainerContext={portal}
+                >
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
+                        <div className="flex flex-col space-y-2 bg-background text-foreground">
                             <Errorpanel />
                             <FilterSection />
                             <div className={props.containerClassName} style={props.containerStyle}>
@@ -150,6 +155,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                                 )}
                             </div>
                         </div>
+                        <div ref={setPortal} />
                     </div>
                 </VizAppContext>
             </ErrorBoundary>
@@ -258,7 +264,7 @@ const FilterSection = observer(function FilterSection() {
     return (
         <div className={classNames('grid gap-2 px-2', cols)} ref={ref}>
             {vizStore.viewFilters.map((filter, idx) => (
-                <FilterItem filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
+                <FilterItem key={filter.fid} filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
             ))}
         </div>
     );
@@ -305,9 +311,7 @@ export function RendererAppWithContext(
 
     return (
         <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
-            <FieldsContextWrapper>
-                <RendererApp {...rest} darkMode={darkMode} computation={safeComputation} />
-            </FieldsContextWrapper>
+            <RendererApp {...rest} darkMode={darkMode} computation={safeComputation} />
         </VizStoreWrapper>
     );
 }

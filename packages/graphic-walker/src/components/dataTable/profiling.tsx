@@ -4,11 +4,12 @@ import { profileNonmialField, profileQuantitativeField } from '../../computation
 import React from 'react';
 import { formatDate, isNotEmpty } from '../../utils';
 import Tooltip from '../tooltip';
-import { themeContext, vegaThemeContext } from '../../store/theme';
+import { colorContext, themeContext, vegaThemeContext } from '../../store/theme';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
 import { getTheme } from '../../utils/useTheme';
+import { parseColorToHSL } from '@/utils/colors';
 
 export interface FieldProfilingProps {
     field: string;
@@ -20,7 +21,6 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
     useEffect(() => {
         profileNonmialField(computation, field).then(setStat);
     }, [computation, field]);
-    const dark = useContext(themeContext);
 
     if (!isNotEmpty(stat)) {
         return <div className="h-24 flex items-center justify-center">Loading...</div>;
@@ -29,7 +29,7 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
     const render = (value) => {
         const displayValue = valueRenderer(value);
         if (!displayValue) {
-            return <span className="text-red-500">(Empty)</span>;
+            return <span className="text-destructive">(Empty)</span>;
         }
         return displayValue;
     };
@@ -47,11 +47,11 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
         <div className="h-24 flex items-center justify-center flex-col gap-2 text-xs">
             {showsTops && (
                 <>
-                    {tops.map(({ count, value }) => {
+                    {tops.map(({ count, value }, idx) => {
                         const displayValue = render(value);
                         return (
-                            <Tooltip content={displayValue} darkModePreference={dark}>
-                                <div className="w-full rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 flex justify-between space-x-2">
+                            <Tooltip key={idx} content={displayValue}>
+                                <div className="w-full rounded-md px-2 py-1 hover:bg-accent flex justify-between space-x-2">
                                     <div className="min-w-[0px] flex-shrink whitespace-nowrap text-ellipsis overflow-hidden">{displayValue}</div>
                                     <div className="flex-shrink-0">{Math.floor((100 * count) / meta.total)}%</div>
                                 </div>
@@ -59,7 +59,7 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
                         );
                     })}
                     {meta.distinctTotal > tops.length && (
-                        <div className="w-full rounded-md px-2 py-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex justify-between space-x-2">
+                        <div className="w-full rounded-md px-2 py-1 text-muted-foreground hover:bg-accent flex justify-between space-x-2">
                             <div className="min-w-[0px] flex-shrink whitespace-nowrap text-ellipsis overflow-hidden">
                                 Other ({meta.distinctTotal - tops.length})
                             </div>
@@ -114,10 +114,12 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
         themeKey,
     });
 
+    const color = useContext(colorContext);
+
     const vegaConfig = useMemo(() => {
         const config: any = {
             ...theme,
-            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+            background: 'transparent',
         };
         return config;
     }, [theme]);
@@ -164,6 +166,9 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
                 mode: 'vega-lite',
                 actions: false,
                 config: vegaConfig,
+                tooltip: {
+                    theme: mediaTheme,
+                },
             });
         },
         [data, vegaConfig]

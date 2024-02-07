@@ -1,5 +1,14 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+    Pagination as PaginationRoot,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious,
+    PaginationContent,
+    PaginationLink,
+} from '../ui/pagination';
 
 type IPageItem = {
     index: number;
@@ -15,11 +24,6 @@ interface PaginationProps {
     pageSize?: number;
     extendPageNumber?: number;
 }
-function btnStylePrefix(...className: string[]) {
-    return `rounded-md px-2.5 py-1.5 text-xs font-medium ${className?.join(' ')}`;
-}
-
-const defaultColor = 'ring-1 ring-inset ring-gray-300 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800';
 
 export default function Pagination(props: PaginationProps) {
     const { total, onNext, onPrev, pageIndex, onPageChange, pageSize = 100, extendPageNumber = 1 } = props;
@@ -56,49 +60,54 @@ export default function Pagination(props: PaginationProps) {
 
     const pageButton = (index: number) => {
         return (
-            <button
-                key={index}
-                className={btnStylePrefix('inline-block', index === pageIndex ? 'bg-indigo-600 text-white' : defaultColor)}
-                onClick={() => {
-                    onPageChange && onPageChange(index);
-                }}
-            >
-                {index + 1}
-            </button>
+            <PaginationItem key={index}>
+                <PaginationLink
+                    isActive={index === pageIndex}
+                    onClick={() => {
+                        onPageChange && onPageChange(index);
+                    }}
+                >
+                    {index + 1}
+                </PaginationLink>
+            </PaginationItem>
         );
     };
 
     return showIndices.length > 0 ? (
-        <div className="flex flex-1 justify-between sm:justify-end gap-2">
-            <button
-                onClick={() => {
-                    onPrev();
-                }}
-                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-                {t('actions.prev')}
-            </button>
-            {pageButton(showIndices[0].index)}
-            {showIndices.length > 2 && showIndices[1].index > showIndices[0].index + 1 && (
-                <div className={btnStylePrefix('inline-block', defaultColor)} aria-hidden>
-                    ...
-                </div>
-            )}
-            {showIndices.slice(1, -1).map((page) => pageButton(page.index))}
-            {showIndices.length > 2 && showIndices[showIndices.length - 1].index > showIndices[showIndices.length - 2].index + 1 && (
-                <div className={btnStylePrefix('inline-block', defaultColor)} aria-hidden>
-                    ...
-                </div>
-            )}
-            {showIndices.length > 2 && pageButton(showIndices[showIndices.length - 1].index)}
-            <button
-                onClick={() => {
-                    onNext();
-                }}
-                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-zinc-900  px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-                {t('actions.next')}
-            </button>
-        </div>
+        <PaginationRoot>
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious
+                        onClick={() => {
+                            onPrev();
+                        }}
+                    >
+                        {t('actions.prev')}
+                    </PaginationPrevious>
+                </PaginationItem>
+                {pageButton(showIndices[0].index)}
+                {showIndices.length > 2 && showIndices[1].index > showIndices[0].index + 1 && (
+                    <PaginationItem>
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                )}
+                {showIndices.slice(1, -1).map((page) => pageButton(page.index))}
+                {showIndices.length > 2 && showIndices[showIndices.length - 1].index > showIndices[showIndices.length - 2].index + 1 && (
+                    <PaginationItem>
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                )}
+                {showIndices.length > 2 && pageButton(showIndices[showIndices.length - 1].index)}
+                <PaginationItem>
+                    <PaginationNext
+                        onClick={() => {
+                            onNext();
+                        }}
+                    >
+                        {t('actions.next')}
+                    </PaginationNext>
+                </PaginationItem>
+            </PaginationContent>
+        </PaginationRoot>
     ) : null;
 }

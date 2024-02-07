@@ -6,7 +6,7 @@ export interface TextFieldProps {
 }
 
 export function highlightField(highlighter: (value: string) => string) {
-    return React.forwardRef<{ clear(): void; setValue(value: string): void; }, TextFieldProps>(function TextField({ placeholder, onChange }, ref) {
+    return React.forwardRef<{ clear(): void; setValue(value: string): void }, TextFieldProps>(function TextField({ placeholder, onChange }, ref) {
         const [value, setValue] = useState('');
         const divRef = useRef<HTMLDivElement>(null);
         const highlightValue = highlighter(value);
@@ -21,9 +21,11 @@ export function highlightField(highlighter: (value: string) => string) {
             },
         }));
         return (
-            <div className="relative w-full text-gray-700 dark:text-gray-200 rounded-md border-0 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400  sm:text-sm sm:leading-6 dark:bg-zinc-900">
-                <div className="absolute whitespace-pre inset-0 pointer-events-none py-1 px-2" dangerouslySetInnerHTML={{ __html: highlightValue }} />
-                {placeholder && value === '' && <div className="py-1 px-2 pointer-events-none text-gray-400 absolute inset-0 select-none">{placeholder}</div>}
+            <div className="relative flex min-h-[60px] w-full rounded-md border border-input bg-transparent text-sm shadow-sm">
+                <div className="absolute whitespace-pre inset-0 pointer-events-none px-3 py-2" dangerouslySetInnerHTML={{ __html: highlightValue }} />
+                {placeholder && value === '' && (
+                    <div className="px-3 py-2 pointer-events-none text-muted-foreground absolute inset-0 select-none">{placeholder}</div>
+                )}
                 <div
                     ref={divRef}
                     contentEditable="plaintext-only"
@@ -32,7 +34,7 @@ export function highlightField(highlighter: (value: string) => string) {
                         setValue(text);
                         onChange?.(text);
                     }}
-                    className="py-1 px-2 focus-visible:ring-1 focus-visible:ring-inset rounded-md border-0 focus-visible:ring-indigo-600 text-transparent caret-gray-700 dark:caret-gray-200 focus-visible:outline-none"
+                    className="px-3 py-2 w-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 rounded-md border-0 text-transparent caret-foreground"
                 ></div>
             </div>
         );

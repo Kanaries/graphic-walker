@@ -69,11 +69,11 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                         onClick={() => {
                                             vizStore.removeField(dkey.id, 0);
                                         }}
-                                        className="grow-0 shrink-0 px-1.5 flex items-center justify-center bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 cursor-pointer"
+                                        className="grow-0 shrink-0 px-1.5 flex items-center justify-center bg-destructive text-destructive-foreground cursor-pointer"
                                     >
                                         <TrashIcon className="w-4" />
                                     </div>
-                                    <PillActions className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 border-l-0 px-2 space-x-2 truncate">
+                                    <PillActions className="flex-1 flex items-center border border-l-0 px-2 space-x-2 truncate">
                                         {channelItem.fid === MEA_KEY_ID && (
                                             <SelectContext
                                                 options={foldOptions}
@@ -99,7 +99,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                                         vizStore.setFieldAggregator(dkey.id, 0, value as IAggregator);
                                                     }}
                                                 >
-                                                    <span className="bg-transparent text-gray-700 dark:text-gray-200 float-right focus:outline-none focus:border-gray-500 dark:focus:border-gray-400 flex items-center ml-2">
+                                                    <span className="bg-transparent text-muted-foreground float-right focus:outline-none focus: dark:focus: flex items-center ml-2">
                                                         {channelItem.aggName || ''}
                                                         <ChevronUpDownIcon className="w-3" />
                                                     </span>
@@ -115,7 +115,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
             {channelItems.length !== 0 && provided.placeholder}
             {channelItems.length === 0 && <div className={`h-[34px] w-full`} />}
             <div
-                className={`p-1.5 m-1 bg-gray-50 dark:bg-gray-900 pointer-events-none border border-gray-200 dark:border-gray-700 flex item-center justify-center grow text-gray-500 dark:text-gray-400 ${
+                className={`p-1.5 m-1 bg-primary-foreground text-muted-foreground pointer-events-none border flex item-center justify-center grow ${
                     (snapshot.draggingFromThisWith && channelItems.length === 1) || channelItems.length === 0 ? 'opacity-100' : 'opacity-0'
                 } absolute inset-0 z-0`}
             >

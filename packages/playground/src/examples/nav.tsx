@@ -19,6 +19,10 @@ export const pages = [
         comp: () => import('./pages/renderer'),
         name: 'GraphicRenderer',
     },
+    {
+        comp: () => import('./pages/cc'),
+        name: 'CustomColor',
+    },
 ].map((Component) => ({
     name: Component.name,
     path: Component.name.replace(/\s/g, '_'),

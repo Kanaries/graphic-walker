@@ -1,20 +1,18 @@
-import { toJS } from 'mobx';
 import { Resizable } from 're-resizable';
-import React, { forwardRef, useMemo } from 'react';
+import React, { forwardRef, useMemo, useContext } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
 import LoadingLayer from '../components/loadingLayer';
-import { useCurrentMediaTheme } from '../utils/media';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
+import { themeContext } from '@/store/theme';
 
 interface SpecRendererProps {
     name?: string;
     themeKey?: IThemeKey;
-    dark?: IDarkMode;
     data: IRow[];
     loading: boolean;
     draggableFieldState: DraggableFieldState;
@@ -36,7 +34,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         name,
         layout,
         themeKey,
-        dark,
         data,
         loading,
         draggableFieldState,
@@ -88,7 +85,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
-    const mediaTheme = useCurrentMediaTheme(dark);
+    const mediaTheme = useContext(themeContext);
     const themeConfig = getTheme({
         themeKey,
         mediaTheme,
@@ -100,7 +97,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
             ...themeConfig,
-            background: mediaTheme === 'dark' ? '#18181f' : '#ffffff',
+            background: 'transparent',
         };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
@@ -139,7 +136,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 layout={layout}
                 loading={loading}
                 themeKey={themeKey}
-                dark={dark}
             />
         );
     }
@@ -149,7 +145,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     return (
         <Resizable
             className={
-                enableResize ? 'border-blue-400 border-2 overflow-hidden inline-block max-h-screen max-w-[100vw]' : 'inline-block max-h-screen max-w-[100vw]'
+                enableResize ? 'border-primary border-2 overflow-hidden inline-block max-h-screen max-w-[100vw]' : 'inline-block max-h-screen max-w-[100vw]'
             }
             style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
@@ -176,15 +172,15 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           width: size.width + 'px',
                           height: size.height + 'px',
                       }
-                    : isSpatial
-                    ? {
-                          width: LEAFLET_DEFAULT_WIDTH + 'px',
-                          height: LEAFLET_DEFAULT_HEIGHT + 'px',
-                      }
                     : size.mode === 'full'
                     ? {
                           width: '100%',
                           height: '100%',
+                      }
+                    : isSpatial
+                    ? {
+                          width: LEAFLET_DEFAULT_WIDTH + 'px',
+                          height: LEAFLET_DEFAULT_HEIGHT + 'px',
                       }
                     : { width: 'auto', height: 'auto' }
             }
@@ -231,7 +227,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     locale={locale}
                     useSvg={useSvg}
                     channelScales={channelScales}
-                    dark={dark}
                     scale={scale}
                     onReportSpec={onReportSpec}
                     displayOffset={timezoneDisplayOffset}

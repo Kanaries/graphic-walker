@@ -1,25 +1,24 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Modal from '../../components/modal';
 import type { IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
 import { ComputationContext, useCompututaion, useVizStore } from '../../store';
 import Tabs, { RuleFormProps } from './tabs';
-import DefaultButton from '../../components/button/default';
-import PrimaryButton from '../../components/button/primary';
 import DropdownSelect, { IDropdownSelectOption } from '../../components/dropdownSelect';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { GLOBAL_CONFIG } from '../../config';
 import { toWorkflow } from '../../utils/workflow';
 import { useRefControledState } from '../../hooks';
 import { getFilterMeaAggKey, getMeaAggKey } from '../../utils';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const aggregationList = GLOBAL_CONFIG.AGGREGATOR_LIST.map(
     (x): IDropdownSelectOption => ({
         label: x,
         value: x,
     })
-).concat([{ label: '-', value: '' }]);
+).concat([{ label: '-', value: '_none' }]);
 
 const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
     return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
@@ -90,39 +89,50 @@ export const PureFilterEditDialog = (props: {
         : EmptyForm;
 
     return uncontrolledField ? (
-        <Modal show={Boolean(uncontrolledField)} title={t('editing')} onClose={onClose}>
-            <div className="px-4 py-1">
-                <div className="flex space-x-2">
-                    <div>
-                        <div className="py-1">{t('form.name')}</div>
-                        <DropdownSelect
-                            buttonClassName="w-96"
-                            className="mb-2"
-                            options={options}
-                            selectedKey={uncontrolledField.fid}
-                            onSelect={onSelectFilter}
-                        />
-                    </div>
-                    {onSelectAgg && editingFilterIdx !== null && uncontrolledField.analyticType === 'measure' && (
+        <Dialog open={Boolean(uncontrolledField)} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{t('editing')}</DialogTitle>
+                </DialogHeader>
+                <div className="pt-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <div className="py-1">{t('form.aggregation')}</div>
+                            <div className="py-1">{t('form.name')}</div>
                             <DropdownSelect
                                 buttonClassName="w-96"
                                 className="mb-2"
-                                options={aggregationList}
-                                selectedKey={uncontrolledField.enableAgg ? uncontrolledField.aggName ?? '' : ''}
-                                onSelect={(v) => onSelectAgg(editingFilterIdx, v === '' ? null : (v as IAggregator))}
+                                options={options}
+                                selectedKey={uncontrolledField.fid}
+                                onSelect={onSelectFilter}
                             />
                         </div>
-                    )}
+                        {onSelectAgg && editingFilterIdx !== null && uncontrolledField.analyticType === 'measure' && (
+                            <div>
+                                <div className="py-1">{t('form.aggregation')}</div>
+                                <DropdownSelect
+                                    buttonClassName="w-96"
+                                    className="mb-2"
+                                    options={aggregationList}
+                                    selectedKey={uncontrolledField.enableAgg ? uncontrolledField.aggName ?? '' : ''}
+                                    onSelect={(v) => onSelectAgg(editingFilterIdx, v === '' ? null : (v as IAggregator))}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <Form
+                        rawFields={meta}
+                        key={getFilterMeaAggKey(uncontrolledField)}
+                        field={uncontrolledField}
+                        onChange={handleChange}
+                        displayOffset={props.displayOffset}
+                    />
+                    <DialogFooter>
+                        <Button onClick={handleSubmit} children={t('btn.confirm')} />
+                        <Button variant="outline" onClick={onClose} children={t('btn.cancel')} />
+                    </DialogFooter>
                 </div>
-                <Form rawFields={meta} key={getFilterMeaAggKey(uncontrolledField)} field={uncontrolledField} onChange={handleChange} displayOffset={props.displayOffset} />
-                <div className="mt-4">
-                    <PrimaryButton onClick={handleSubmit} text={t('btn.confirm')} />
-                    <DefaultButton className="ml-2" onClick={onClose} text={t('btn.cancel')} />
-                </div>
-            </div>
-        </Modal>
+            </DialogContent>
+        </Dialog>
     ) : null;
 };
 

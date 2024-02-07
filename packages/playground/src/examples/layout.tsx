@@ -30,7 +30,7 @@ export default function Layout() {
                                 leaveFrom="opacity-100"
                                 leaveTo="opacity-0"
                             >
-                                <div className="fixed inset-0 bg-gray-900/80 dark:bg-white/80" />
+                                <div className="fixed inset-0 bg-gray-950/80 dark:bg-white/80" />
                             </Transition.Child>
 
                             <div className="fixed inset-0 flex">
@@ -60,7 +60,7 @@ export default function Layout() {
                                                 </button>
                                             </div>
                                         </Transition.Child>
-                                        <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                                        <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
                                             <span className="font-bold">Examples</span>
                                             <ul>
                                                 {pages.map((page) => (
@@ -82,7 +82,7 @@ export default function Layout() {
                     </Transition.Root>
 
                     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                        <nav className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-md">
+                        <nav className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-950 text-gray-900 dark:text-white shadow-md">
                             <span className="font-bold">Examples</span>
                             <ul>
                                 {pages.map((page) => (
@@ -100,12 +100,12 @@ export default function Layout() {
                     </div>
 
                     <div className="lg:pl-72">
-                        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b bg-white dark:bg-gray-950 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                             <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
                                 <span className="sr-only">Open sidebar</span>
                                 <Bars3Icon className="h-6 w-6" aria-hidden="true" />
                             </button>
-                            <div className="h-6 w-px bg-gray-900/10 dark:bg-white/10 lg:hidden" aria-hidden="true" />
+                            <div className="h-6 w-px bg-gray-950/10 dark:bg-white/10 lg:hidden" aria-hidden="true" />
                             <div className="flex flex-1 gap-x-4 items-center self-stretch justify-between lg:gap-x-6">
                                 <div className="flex flex-col space-y-1 text-black dark:text-white">
                                     <div className="text">Graphic Walker Examples</div>
@@ -116,7 +116,7 @@ export default function Layout() {
                             </div>
                         </div>
 
-                        <main className="py-10 bg-white dark:bg-gray-900">
+                        <main className="py-10 bg-white dark:bg-gray-950">
                             <div className="px-4 sm:px-6 lg:px-8">
                                 <Outlet />
                             </div>

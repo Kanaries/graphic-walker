@@ -52,7 +52,7 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
 
     if (!d && !props.url) return null;
     if (!data) {
-        return <div className="w-full flex-1 flex items-center justify-center border-l border-gray-500">{t('geography_settings.loading')}</div>;
+        return <div className="w-full flex-1 flex items-center justify-center border-l">{t('geography_settings.loading')}</div>;
     }
     return (
         <div className="w-full flex-1 relative">
@@ -64,6 +64,7 @@ export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'G
 function Renderer(props: { data?: FeatureCollection }) {
     return (
         <MapContainer
+            preferCanvas
             attributionControl={false}
             center={[0, 0]}
             bounds={[

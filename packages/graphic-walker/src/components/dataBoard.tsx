@@ -1,5 +1,4 @@
 import { observer } from 'mobx-react-lite';
-import Modal from './modal';
 import { useCompututaion, useVizStore } from '../store';
 import DataTable from './dataTable';
 import React, { useMemo } from 'react';
@@ -7,6 +6,7 @@ import { IComputationFunction, IVisFilter } from '../interfaces';
 import { addFilterForQuery, addTransformForQuery, processExpression } from '../utils/workflow';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { isNotEmpty } from '../utils';
+import { Dialog, DialogContent } from './ui/dialog';
 
 const DataBoard = observer(function DataBoardModal() {
     const vizStore = useVizStore();
@@ -41,16 +41,18 @@ const DataBoard = observer(function DataBoardModal() {
     }, [allFields]);
 
     return (
-        <Modal
-            show={showDataBoard}
-            onClose={() => {
+        <Dialog
+            open={showDataBoard}
+            onOpenChange={() => {
                 vizStore.setShowDataBoard(false);
             }}
         >
-            <div className="mt-4">
-                <DataTable size={100} computation={filteredComputation} metas={metas} disableFilter displayOffset={config.timezoneDisplayOffset} />
-            </div>
-        </Modal>
+            <DialogContent>
+                <div className="mt-4">
+                    <DataTable size={100} computation={filteredComputation} metas={metas} disableFilter displayOffset={config.timezoneDisplayOffset} />
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 });
 

@@ -1,6 +1,6 @@
 import { inject } from '@vercel/analytics';
 import { embedGraphicWalker } from './vanilla';
-import './index.css';
+import './main.css';
 
 if (!import.meta.env.DEV) {
     inject();

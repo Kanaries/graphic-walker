@@ -3,11 +3,11 @@ import Table from '../table';
 import { DemoDataAssets, PUBLIC_DATA_LIST, IPublicData } from '../config';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import PrimaryButton from '../../components/button/primary';
 import { CommonStore } from '../../store/commonStore';
 import { RadioGroup } from '@headlessui/react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { classNames } from '../../utils';
+import { Button } from '@/components/ui/button';
 
 interface IPublicDataProps {
     commonStore: CommonStore;
@@ -47,9 +47,9 @@ const PublicData: React.FC<IPublicDataProps> = ({ commonStore }) => {
                         value={data}
                         className={({ active, checked }) =>
                             classNames(
-                                'flex focus:outline-none border rounded items-center justify-between border-gray-300 dark:border-gray-600 p-2 m-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200',
-                                active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                                checked ? 'bg-gray-50 dark:bg-gray-800 dark:text-gray-200' : ''
+                                'flex focus:outline-none border ring-ring rounded items-center justify-between p-2 m-2 cursor-pointer hover:bg-accent hover:text-accent-foreground',
+                                active ? 'ring-2 ring-offset-2' : '',
+                                checked ? 'bg-muted text-muted-foreground' : ''
                             )
                         }
                     >
@@ -57,7 +57,7 @@ const PublicData: React.FC<IPublicDataProps> = ({ commonStore }) => {
                             <>
                                 <RadioGroup.Label as="p">{data.title}</RadioGroup.Label>
                                 {checked && (
-                                    <div className="shrink-0 text-indigo-600">
+                                    <div className="shrink-0 text-primary">
                                         <CheckCircleIcon className="w-5 h-5" />
                                     </div>
                                 )}
@@ -66,14 +66,15 @@ const PublicData: React.FC<IPublicDataProps> = ({ commonStore }) => {
                     </RadioGroup.Option>
                 ))}
             </RadioGroup>
-            <PrimaryButton
+            <Button
                 className="my-1"
                 disabled={tmpDataSource.length === 0}
                 onClick={() => {
                     commonStore.commitTempDS();
                 }}
-                text={t('submit')}
-            />
+            >
+                {t('submit')}
+            </Button>
             <Table commonStore={commonStore} />
         </div>
     );
