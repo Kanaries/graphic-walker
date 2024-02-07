@@ -57,3 +57,14 @@ code {
     background-color: hsla(var(--secondary) / 0.8);
     color: hsl(var(--secondary-foreground));
 }
+.dark .leaflet-tooltip {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border-color: hsl(var(--border));
+}
+.dark .leaflet-tooltip-right:before {
+    border-right-color: hsl(var(--popover));
+}
+.dark .leaflet-tooltip-left:before {
+    border-left-color: hsl(var(--popover));
+}

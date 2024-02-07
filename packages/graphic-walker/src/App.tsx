@@ -163,7 +163,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         </TabsTrigger>
                                     </TabsList>
                                     <TabsContent value={ISegmentKey.data}>
-                                        <div className="mx-4 my-2 p-4 border">
+                                        <div className="mx-4 my-2 p-4 border rounded-md">
                                             <DatasetConfig />
                                         </div>
                                     </TabsContent>
@@ -171,7 +171,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <div className="px-2 mx-2 mt-2">
                                             <VisNav />
                                         </div>
-                                        <div style={{ marginTop: '0em', borderTop: 'none' }} className="m-4 p-4 border border-border">
+                                        <div style={{ marginTop: '0em' }} className="m-4 p-4 border border-border rounded-md rounded-tl-none">
                                             {enhanceAPI?.features?.askviz && (
                                                 <AskViz
                                                     api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}

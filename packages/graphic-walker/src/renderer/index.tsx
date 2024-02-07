@@ -205,7 +205,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             ref={ref}
             themeKey={themeKey}
             themeConfig={themeConfig}
-            dark={dark}
             locale={i18n.language}
             draggableFieldState={encodings}
             visualConfig={viewConfig}

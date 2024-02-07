@@ -117,7 +117,7 @@ export default function EditableTabs(props: EditableTabsProps) {
     const { t } = useTranslation();
 
     return (
-        <div className="border-b overflow-y-visible">
+        <div className="overflow-y-visible">
             <RemoveConfirm />
             <Dialog
                 open={editingIndex > -1}

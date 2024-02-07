@@ -74,7 +74,7 @@ const CodeExport: React.FC = observer((props) => {
                 <Tabs value={tabKey} onValueChange={setTabKey}>
                     <TabsList className="my-1">
                         {specTabs.map((tab) => (
-                            <TabsTrigger value={tab.key}>{tab.label}</TabsTrigger>
+                            <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
                         ))}
                     </TabsList>
                     <div className="border rounded-md overflow-hidden">

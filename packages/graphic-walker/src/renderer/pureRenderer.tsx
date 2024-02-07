@@ -154,7 +154,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             data={viewData}
                             ref={ref}
                             themeKey={themeKey}
-                            dark={dark}
                             draggableFieldState={visualState}
                             visualConfig={visualConfig}
                             layout={visualLayout}
