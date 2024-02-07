@@ -133,7 +133,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
         <div className="flex flex-col space-y-2 p-2 relative">
             <label className="text-sm leading-none font-medium">{field.name}</label>
             <Popover className="w-full">
-                <Popover.Button className="flex shadow-sm items-center h-9 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-zinc-900">
+                <Popover.Button className="flex shadow-sm items-center h-9 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-accent transition-colors bg-popover">
                     {field.rule.value.size > 0 && (
                         <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -161,7 +161,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     leaveFrom="opacity-100 translate-y-0"
                     leaveTo="opacity-0 translate-y-1"
                 >
-                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-white dark:bg-zinc-800 shadow-md">
+                    <Popover.Panel className="absolute mt-2 z-10 border rounded-md inset-x-2 bg-popover shadow-md">
                         <div className="flex flex-col w-full">
                             {enableKeyword && (
                                 <div className="relative border-b p-3 flex space-x-2 items-center text-sm">

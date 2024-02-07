@@ -67,7 +67,7 @@ const TableRow = styled.div`
         overflow: hidden;
         text-overflow: ellipsis;
         user-select: none;
-        border-bottom: 0.8px solid rgb(226 232 240);
+        border-bottom: 0.8px solid hsl(var(--border));
         flex-shink: 0;
     }
     & > *:first-child {

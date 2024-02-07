@@ -99,7 +99,7 @@ export const PixelContainer = (props: {
                         }}
                     />
                     <div
-                        className="absolute pointer-events-none bg-black dark:bg-white"
+                        className="absolute pointer-events-none bg-primary"
                         style={{
                             width: 16,
                             height: 16,

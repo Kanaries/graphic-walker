@@ -1,13 +1,13 @@
 import { useContext, useEffect, useRef } from 'react';
 import spec from '../specs/student-chart.json';
-import { GraphicWalker, VizSpecStore } from '@kanaries/graphic-walker';
+import { GraphicWalker, VizSpecStore, grayTheme } from '@kanaries/graphic-walker';
 import { themeContext } from '../context';
 import { useFetch, IDataSource } from '../util';
 
 export default function GraphicWalkerInModal() {
     const ref = useRef<VizSpecStore>(null);
     const { theme } = useContext(themeContext);
-    const { dataSource, fields } = useFetch<IDataSource>('https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-students-service.json');
+    const { dataSource, fields } = useFetch<IDataSource>('https://chspace.oss-cn-hongkong.aliyuncs.com/api/ds-students-service.json');
 
     useEffect(() => {
         setTimeout(() => {
@@ -38,7 +38,7 @@ export default function GraphicWalkerInModal() {
                     boxSizing: 'border-box',
                 }}
             >
-                <GraphicWalker rawFields={fields} dataSource={dataSource} storeRef={ref} dark={theme} />
+                <GraphicWalker colorConfig={grayTheme} rawFields={fields} dataSource={dataSource} storeRef={ref} dark={theme} />
             </div>
         </div>
     );

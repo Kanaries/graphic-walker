@@ -163,7 +163,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         </TabsTrigger>
                                     </TabsList>
                                     <TabsContent value={ISegmentKey.data}>
-                                        <div className="mx-4 my-2 p-4 border rounded-md">
+                                        <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
                                             <DatasetConfig />
                                         </div>
                                     </TabsContent>

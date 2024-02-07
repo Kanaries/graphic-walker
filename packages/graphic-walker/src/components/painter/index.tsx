@@ -362,7 +362,7 @@ const PainterContent = (props: {
                                         key={id}
                                         className={`box-border rounded-full border-primary hover: ${
                                             id === `${brushId}` ? 'border-2' : 'hover:border-2'
-                                        } active:ring-black active:ring-1 w-4 h-4`}
+                                        } active:ring-ring active:ring-1 w-4 h-4`}
                                         style={{
                                             background: color,
                                         }}

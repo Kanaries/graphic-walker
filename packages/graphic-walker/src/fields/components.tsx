@@ -135,9 +135,9 @@ export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
     text-overflow: ellipsis;
     white-space: nowrap;
     /* --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-ring-shadow: 0 0 #0000;
-  --tw-shadow-color: rgb(6 182 212/0.5);
-  --tw-shadow: var(--tw-shadow-colored);
-  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow-color: rgb(6 182 212/0.5);
+    --tw-shadow: var(--tw-shadow-colored);
+    --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
 `;

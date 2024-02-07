@@ -1,40 +1,4 @@
-import { observer } from 'mobx-react-lite';
 import React from 'react';
-import styled from 'styled-components';
-import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/solid';
-import { useTranslation } from 'react-i18next';
-import { useVizStore } from '../store';
-
-export const MenubarContainer = styled.div({
-    marginBlock: '0 0.6em',
-    marginInline: '0.2em',
-});
-
-const Button = styled.button(({ disabled = false }) => ({
-    '&:hover': disabled
-        ? {}
-        : {
-              backgroundColor: 'rgba(243, 244, 246, 0.7)',
-          },
-    color: disabled ? 'rgba(156, 163, 175, 0.5)' : 'rgb(55, 65, 81)',
-    '& > pre': {
-        display: 'inline-block',
-        marginInlineStart: '0.2em',
-    },
-    marginInlineStart: '0.6em',
-    '&:first-child': {
-        marginInlineStart: '0',
-    },
-    cursor: disabled ? 'default' : 'pointer',
-}));
-
-interface ButtonWithShortcutProps {
-    label: string;
-    shortcut: string;
-    disabled: boolean;
-    handler: () => void;
-    icon?: JSX.Element;
-}
 
 export const useShortcut = (shortcut: string, handler: () => void) => {
     const rule = React.useMemo(() => {
@@ -61,47 +25,3 @@ export const useShortcut = (shortcut: string, handler: () => void) => {
         return () => document.body.removeEventListener('keydown', cb);
     }, [rule, handler]);
 };
-
-export const ButtonWithShortcut: React.FC<ButtonWithShortcutProps> = ({ label, shortcut, disabled, handler, icon }) => {
-    const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.menubar' });
-
-    useShortcut(shortcut, handler);
-
-    return (
-        <Button
-            className="text-sm px-3 py-1 border text-muted-foreground select-none"
-            disabled={disabled}
-            onClick={handler}
-            aria-label={t(label)}
-            title={`${t(label)} (${shortcut})`}
-        >
-            {icon || t(label)}
-        </Button>
-    );
-};
-
-const Menubar: React.FC = () => {
-    const vizStore = useVizStore();
-    const { canUndo, canRedo } = vizStore;
-
-    return (
-        <MenubarContainer>
-            <ButtonWithShortcut
-                label="undo"
-                disabled={!canUndo}
-                handler={vizStore.undo.bind(vizStore)}
-                shortcut="Ctrl+Z"
-                icon={<ArrowUturnLeftIcon width="1.4em" height="1.4em" />}
-            />
-            <ButtonWithShortcut
-                label="redo"
-                disabled={!canRedo}
-                handler={vizStore.redo.bind(vizStore)}
-                shortcut="Ctrl+Shift+Z"
-                icon={<ArrowUturnRightIcon width="1.4em" height="1.4em" />}
-            />
-        </MenubarContainer>
-    );
-};
-
-export default observer(Menubar);

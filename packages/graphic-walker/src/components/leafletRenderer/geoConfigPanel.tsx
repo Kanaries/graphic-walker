@@ -49,7 +49,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         value: `${i}`,
                     }))
                 )
-                .concat({ label: 'Manual Set', value: '-2' }),
+                .concat({ label: 'Manual Configuration', value: '-2' }),
         [geoList]
     );
     const setSelectItem = useMemo(() => (a: string) => setSelectItemR(parseInt(a)), []);
