@@ -1,278 +1,130 @@
-import { IColorConfig, IColorSet } from '../interfaces';
+import { IColorConfig, IColorPalette, IColorSet } from '../interfaces';
+import colorString from 'color-string';
+import rgb from 'color-space/rgb.js';
+import hwb from 'color-space/hwb.js';
+import colors from 'tailwindcss/colors';
+
+function parseColorString(color: string) {
+    const trySplit = color.split('-');
+    if (trySplit.length === 2) {
+        const [name, shade] = trySplit;
+        if (colors[name] && colors[name][shade]) {
+            return colorString.get(colors[name][shade]);
+        }
+    }
+    return colorString.get(color);
+}
+
+function toHSL(color: string): [number, number, number, number] {
+    const item = parseColorString(color);
+    if (item) {
+        if (item.model === 'hsl') {
+            return item.value;
+        }
+        if (item.model === 'rgb') {
+            return rgb.hsl(item.value);
+        }
+        if (item.model === 'hwb') {
+            return hwb.hsl(item.value);
+        }
+    }
+    throw new Error(`cannot parse color ${color}`);
+}
+
+export function parseColorToHSL(color: string) {
+    const [h, s, l] = toHSL(color);
+    return `${h} ${s}% ${l}%`;
+}
 
 function ColorSetToCss(set: Required<IColorSet>) {
     return Object.entries(set)
-        .map(([name, value]) => `--${name}:${value};`)
+        .map(([name, value]) => `--${name}:${parseColorToHSL(value)};`)
         .join('');
 }
 
-export function ColorConfigToCSS(config: IColorConfig) {
-    return `:host{${ColorSetToCss({ ...baseTheme.light, ...config.light })}}\n.dark{${ColorSetToCss({ ...baseTheme.dark, ...config.dark })}}`;
+const baseTheme = {
+    light: {
+        destructive: 'hsl(0 84.2% 60.2%)',
+        'destructive-foreground': 'hsl(0 0% 98%)',
+        dimension: 'hsl(217.2 91.2% 59.8%)',
+        measure: 'hsl(270.7 91% 65.1%)',
+    },
+    dark: {
+        destructive: 'hsl(0 62.8% 30.6%)',
+        'destructive-foreground': 'hsl(0 0% 98%)',
+        dimension: 'hsl(213.1 93.9% 67.8%)',
+        measure: 'hsl(270 95.2% 75.3%)',
+    },
+};
+
+function fillColorConfig(config: IColorSet, baseColors: (typeof baseTheme)['light']): Required<IColorSet> {
+    return {
+        ...baseColors,
+        ...{
+            card: config.background,
+            'card-foreground': config.foreground,
+            popover: config.background,
+            'popover-foreground': config.foreground,
+            secondary: config.muted,
+            'secondary-foreground': config.primary,
+            accent: config.muted,
+            'accent-foreground': config.primary,
+            input: config.border,
+        },
+        ...config,
+    };
 }
 
-type OptionalKeys<T> = {
-    [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
-}[keyof T];
+export function ColorConfigToCSS(config: IColorConfig) {
+    return `:host{${ColorSetToCss(fillColorConfig(config.light, baseTheme.light))}}\n.dark{${ColorSetToCss(fillColorConfig(config.dark, baseTheme.dark))}}`;
+}
 
-type FlipOptional<T> = Required<Pick<T, OptionalKeys<T>>> & Partial<Omit<T, OptionalKeys<T>>> extends infer O ? { [K in keyof O]: O[K] } : never;
+export function getColorConfigFromPalette(colors: IColorPalette): IColorConfig {
+    return {
+        light: {
+            background: 'white',
+            foreground: colors[950],
+            primary: colors[900],
+            'primary-foreground': colors[50],
+            muted: colors[100],
+            'muted-foreground': colors[500],
+            border: colors[200],
+            ring: colors[950],
+        },
+        dark: {
+            background: colors[950],
+            foreground: colors[50],
+            primary: colors[50],
+            'primary-foreground': colors[900],
+            muted: colors[800],
+            'muted-foreground': colors[400],
+            border: colors[800],
+            ring: colors[300],
+        },
+    };
+}
 
-const baseTheme: { light: FlipOptional<IColorSet>; dark: FlipOptional<IColorSet> } = {
-    light: {
-        destructive: '0 84.2% 60.2%',
-        'destructive-foreground': '0 0% 98%',
-        dimension: '217.2 91.2% 59.8%',
-        measure: '270.7 91% 65.1%',
-    },
-    dark: {
-        destructive: '0 62.8% 30.6%',
-        'destructive-foreground': '0 0% 98%',
-        dimension: '213.1 93.9% 67.8%',
-        measure: '270 95.2% 75.3%',
-    },
-};
+const shades = [98, 95, 90, 82, 64, 46, 33, 24, 14, 7, 4];
 
-export const zincTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '240 10% 3.9%',
-        card: '0 0% 100%',
-        'card-foreground': '240 10% 3.9%',
-        popover: '0 0% 100%',
-        'popover-foreground': '240 10% 3.9%',
-        primary: '240 5.9% 10%',
-        'primary-foreground': '0 0% 98%',
-        secondary: '240 4.8% 95.9%',
-        'secondary-foreground': '240 5.9% 10%',
-        muted: '240 4.8% 95.9%',
-        'muted-foreground': '240 3.8% 46.1%',
-        accent: '240 4.8% 95.9%',
-        'accent-foreground': '240 5.9% 10%',
-        border: '240 5.9% 90%',
-        input: '240 5.9% 90%',
-        ring: '240 10% 3.9%',
-    },
-    dark: {
-        background: '240 10% 3.9%',
-        foreground: '0 0% 98%',
-        card: '240 10% 3.9%',
-        'card-foreground': '0 0% 98%',
-        popover: '240 10% 3.9%',
-        'popover-foreground': '0 0% 98%',
-        primary: '0 0% 98%',
-        'primary-foreground': '240 5.9% 10%',
-        secondary: '240 3.7% 15.9%',
-        'secondary-foreground': '0 0% 98%',
-        muted: '240 3.7% 15.9%',
-        'muted-foreground': '240 5% 64.9%',
-        accent: '240 3.7% 15.9%',
-        'accent-foreground': '0 0% 98%',
-        border: '240 3.7% 15.9%',
-        input: '240 3.7% 15.9%',
-        ring: '240 4.9% 83.9%',
-    },
-};
-export const slateTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '222.2 84% 4.9%',
-        card: '0 0% 100%',
-        'card-foreground': '222.2 84% 4.9%',
-        popover: '0 0% 100%',
-        'popover-foreground': '222.2 84% 4.9%',
-        primary: '222.2 47.4% 11.2%',
-        'primary-foreground': '210 40% 98%',
-        secondary: '210 40% 96.1%',
-        'secondary-foreground': '222.2 47.4% 11.2%',
-        muted: '210 40% 96.1%',
-        'muted-foreground': '215.4 16.3% 46.9%',
-        accent: '210 40% 96.1%',
-        'accent-foreground': '222.2 47.4% 11.2%',
-        border: '214.3 31.8% 91.4%',
-        input: '214.3 31.8% 91.4%',
-        ring: '222.2 84% 4.9%',
-    },
-    dark: {
-        background: '222.2 84% 4.9%',
-        foreground: '210 40% 98%',
-        card: '222.2 84% 4.9%',
-        'card-foreground': '210 40% 98%',
-        popover: '222.2 84% 4.9%',
-        'popover-foreground': '210 40% 98%',
-        primary: '210 40% 98%',
-        'primary-foreground': '222.2 47.4% 11.2%',
-        secondary: '217.2 32.6% 17.5%',
-        'secondary-foreground': '210 40% 98%',
-        muted: '217.2 32.6% 17.5%',
-        'muted-foreground': '215 20.2% 65.1%',
-        accent: '217.2 32.6% 17.5%',
-        'accent-foreground': '210 40% 98%',
-        border: '217.2 32.6% 17.5%',
-        input: '217.2 32.6% 17.5%',
-        ring: '212.7 26.8% 83.9%',
-    },
-};
-export const grayTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '224 71.4% 4.1%',
-        card: '0 0% 100%',
-        'card-foreground': '224 71.4% 4.1%',
-        popover: '0 0% 100%',
-        'popover-foreground': '224 71.4% 4.1%',
-        primary: '220.9 39.3% 11%',
-        'primary-foreground': '210 20% 98%',
-        secondary: '220 14.3% 95.9%',
-        'secondary-foreground': '220.9 39.3% 11%',
-        muted: '220 14.3% 95.9%',
-        'muted-foreground': '220 8.9% 46.1%',
-        accent: '220 14.3% 95.9%',
-        'accent-foreground': '220.9 39.3% 11%',
-        border: '220 13% 91%',
-        input: '220 13% 91%',
-        ring: '224 71.4% 4.1%',
-    },
-    dark: {
-        background: '224 71.4% 4.1%',
-        foreground: '210 20% 98%',
-        card: '224 71.4% 4.1%',
-        'card-foreground': '210 20% 98%',
-        popover: '224 71.4% 4.1%',
-        'popover-foreground': '210 20% 98%',
-        primary: '210 20% 98%',
-        'primary-foreground': '220.9 39.3% 11%',
-        secondary: '215 27.9% 16.9%',
-        'secondary-foreground': '210 20% 98%',
-        muted: '215 27.9% 16.9%',
-        'muted-foreground': '217.9 10.6% 64.9%',
-        accent: '215 27.9% 16.9%',
-        'accent-foreground': '210 20% 98%',
-        border: '215 27.9% 16.9%',
-        input: '215 27.9% 16.9%',
-        ring: '216 12.2% 83.9%',
-    },
-};
-export const neutralTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '0 0% 3.9%',
-        card: '0 0% 100%',
-        'card-foreground': '0 0% 3.9%',
-        popover: '0 0% 100%',
-        'popover-foreground': '0 0% 3.9%',
-        primary: '0 0% 9%',
-        'primary-foreground': '0 0% 98%',
-        secondary: '0 0% 96.1%',
-        'secondary-foreground': '0 0% 9%',
-        muted: '0 0% 96.1%',
-        'muted-foreground': '0 0% 45.1%',
-        accent: '0 0% 96.1%',
-        'accent-foreground': '0 0% 9%',
-        border: '0 0% 89.8%',
-        input: '0 0% 89.8%',
-        ring: '0 0% 3.9%',
-    },
-    dark: {
-        background: '0 0% 3.9%',
-        foreground: '0 0% 98%',
-        card: '0 0% 3.9%',
-        'card-foreground': '0 0% 98%',
-        popover: '0 0% 3.9%',
-        'popover-foreground': '0 0% 98%',
-        primary: '0 0% 98%',
-        'primary-foreground': '0 0% 9%',
-        secondary: '0 0% 14.9%',
-        'secondary-foreground': '0 0% 98%',
-        muted: '0 0% 14.9%',
-        'muted-foreground': '0 0% 63.9%',
-        accent: '0 0% 14.9%',
-        'accent-foreground': '0 0% 98%',
-        border: '0 0% 14.9%',
-        input: '0 0% 14.9%',
-        ring: '0 0% 83.1%',
-    },
-};
-export const stoneTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '20 14.3% 4.1%',
-        card: '0 0% 100%',
-        'card-foreground': '20 14.3% 4.1%',
-        popover: '0 0% 100%',
-        'popover-foreground': '20 14.3% 4.1%',
-        primary: '24 9.8% 10%',
-        'primary-foreground': '60 9.1% 97.8%',
-        secondary: '60 4.8% 95.9%',
-        'secondary-foreground': '24 9.8% 10%',
-        muted: '60 4.8% 95.9%',
-        'muted-foreground': '25 5.3% 44.7%',
-        accent: '60 4.8% 95.9%',
-        'accent-foreground': '24 9.8% 10%',
-        border: '20 5.9% 90%',
-        input: '20 5.9% 90%',
-        ring: '20 14.3% 4.1%',
-    },
-    dark: {
-        background: '20 14.3% 4.1%',
-        foreground: '60 9.1% 97.8%',
-        card: '20 14.3% 4.1%',
-        'card-foreground': '60 9.1% 97.8%',
-        popover: '20 14.3% 4.1%',
-        'popover-foreground': '60 9.1% 97.8%',
-        primary: '60 9.1% 97.8%',
-        'primary-foreground': '24 9.8% 10%',
-        secondary: '12 6.5% 15.1%',
-        'secondary-foreground': '60 9.1% 97.8%',
-        muted: '12 6.5% 15.1%',
-        'muted-foreground': '24 5.4% 63.9%',
-        accent: '12 6.5% 15.1%',
-        'accent-foreground': '60 9.1% 97.8%',
-        border: '12 6.5% 15.1%',
-        input: '12 6.5% 15.1%',
-        ring: '24 5.7% 82.9%',
-    },
-};
+export function getPaletteFromColor(color: string): IColorPalette {
+    const [h, s, l] = toHSL(color);
+    const lightOffset = shades.map((baseL) => l - baseL).reduce((a, b) => (Math.abs(a) > Math.abs(b) ? b : a), Infinity);
+    const minimax = (val: number) => Math.min(100, Math.max(0, val));
+    return {
+        '50': `hsl(${h} ${s}% ${minimax(98 + lightOffset)}%)`,
+        '100': `hsl(${h} ${s}% ${minimax(95 + lightOffset)}%)`,
+        '200': `hsl(${h} ${s}% ${minimax(90 + lightOffset)}%)`,
+        '300': `hsl(${h} ${s}% ${minimax(82 + lightOffset)}%)`,
+        '400': `hsl(${h} ${s}% ${minimax(64 + lightOffset)}%)`,
+        '500': `hsl(${h} ${s}% ${minimax(46 + lightOffset)}%)`,
+        '800': `hsl(${h} ${s}% ${minimax(14 + lightOffset)}%)`,
+        '900': `hsl(${h} ${s}% ${minimax(7 + lightOffset)}%)`,
+        '950': `hsl(${h} ${s}% ${minimax(4 + lightOffset)}%)`,
+    };
+}
 
-export const emeraldTheme: IColorConfig = {
-    light: {
-        background: '0 0% 100%',
-        foreground: '161.4 93.5% 30.4%',
-        card: '0 0% 100%',
-        'card-foreground': '161.4 93.5% 30.4%',
-        popover: '0 0% 100%',
-        'popover-foreground': '161.4 93.5% 30.4%',
-        primary: '164.2 85.7% 16.5%',
-        'primary-foreground': '151.8 81% 95.9%',
-        secondary: '149.3 80.4% 90%',
-        'secondary-foreground': '164.2 85.7% 16.5%',
-        muted: '149.3 80.4% 90%',
-        'muted-foreground': '160.1 84.1% 39.4%',
-        accent: '149.3 80.4% 90%',
-        'accent-foreground': '164.2 85.7% 16.5%',
-        destructive: '217.2 91.2% 59.8%',
-        'destructive-foreground': '213.8 100% 96.9%',
-        border: '152.4 76% 80.4%',
-        input: '152.4 76% 80.4%',
-        ring: '166 91% 9%',
-    },
-    dark: {
-        background: '166 91% 9%',
-        foreground: '151.8 81% 95.9%',
-        card: '166 91% 9%',
-        'card-foreground': '151.8 81% 95.9%',
-        popover: '166 91% 9%',
-        'popover-foreground': '151.8 81% 95.9%',
-        primary: '151.8 81% 95.9%',
-        'primary-foreground': '164.2 85.7% 16.5%',
-        secondary: '163.1 88.1% 19.8%',
-        'secondary-foreground': '151.8 81% 95.9%',
-        muted: '163.1 88.1% 19.8%',
-        'muted-foreground': '158.1 64.4% 51.6%',
-        accent: '163.1 88.1% 19.8%',
-        'accent-foreground': '151.8 81% 95.9%',
-        destructive: '224.4 64.3% 32.9%',
-        'destructive-foreground': '213.8 100% 96.9%',
-        border: '163.1 88.1% 19.8%',
-        input: '163.1 88.1% 19.8%',
-        ring: '156.2 71.6% 66.9%',
-    },
-};
+export const zincTheme: IColorConfig = getColorConfigFromPalette(colors.zinc);
+export const slateTheme: IColorConfig = getColorConfigFromPalette(colors.slate);
+export const grayTheme: IColorConfig = getColorConfigFromPalette(colors.gray);
+export const neutralTheme: IColorConfig = getColorConfigFromPalette(colors.neutral);
+export const stoneTheme: IColorConfig = getColorConfigFromPalette(colors.stone);

@@ -999,7 +999,7 @@ export interface IDataSourceProvider {
 
 export interface IColorSet {
     /** page and most component's background.
-     *  - recommend: white/950
+     * - recommend: white/950
      */
     background: string;
     /** text color on page and most component's background.
@@ -1007,20 +1007,25 @@ export interface IColorSet {
      */
     foreground: string;
     /** background of cards.
-     *  - recommend: white/950
+     * - recommend: white/950
+     * - default: will be same as background
      */
-    card: string;
+    card?: string;
     /** text color of cards.
-     *  - recommend: 950/50 */
-    'card-foreground': string;
+     * - recommend: 950/50
+     * - default: will be same as foreground
+     */
+    'card-foreground'?: string;
     /** background of popovers.
      * - recommend: white/950
+     * - default: will be same as background
      */
-    popover: string;
+    popover?: string;
     /** text color of popovers.
      * - recommend: 950/50
+     * - default: will be same as foreground
      */
-    'popover-foreground': string;
+    'popover-foreground'?: string;
     /** background of primary buttons and etc.
      * - recommend: 900/50
      */
@@ -1029,14 +1034,6 @@ export interface IColorSet {
      * - recommend: 50/900
      */
     'primary-foreground': string;
-    /** background of secondary buttons.
-     * - recommend: 100/800
-     */
-    secondary: string;
-    /** text color of secondary buttons.
-     * - recommend: 900/50
-     */
-    'secondary-foreground': string;
     /** color of selected item or sperator in menu.
      * - recommend: 100/800
      */
@@ -1045,28 +1042,44 @@ export interface IColorSet {
      * - recommend: 500/400
      */
     'muted-foreground': string;
+    /** background of secondary buttons.
+     * - recommend: 100/800
+     * - default: will be same as muted
+     */
+    secondary?: string;
+    /** text color of secondary buttons.
+     * - recommend: 900/50
+     * - default: will be same as primary
+     */
+    'secondary-foreground'?: string;
     /** color of buttons being hovered.
      * - recommend: 100/800
+     * - default: will be same as muted
      */
-    accent: string;
+    accent?: string;
     /** text color of buttons being hovered.
      * - recommend: 900/50
+     * - default: will be same as primary
      */
-    'accent-foreground': string;
+    'accent-foreground'?: string;
     /** color of buttons that performs danger operations like delete.
      * - recommend: red-500/red-900
+     * - default: will be red-500/red-900
      */
     destructive?: string;
     /** text color of buttons that performs danger operations like delete.
-     * - recommend: 50
+     * - recommend: red-50
+     * - default: will be red-50
      */
     'destructive-foreground'?: string;
     /** color of dimension fields.
      * - recommend: blue-500/blue-400
+     * - default: will be blue-500/blue-400
      */
     dimension?: string;
     /** color of measure fields.
      * - recommend: purple-500/purple-400
+     * - default: will be purple-500/purple-400
      */
     measure?: string;
     /**
@@ -1077,8 +1090,9 @@ export interface IColorSet {
     /**
      * color of input borders.
      * - recommend: 200/800
+     * - default: will be same as border
      */
-    input: string;
+    input?: string;
     /**
      * color of rings.
      * - recommend: 950/300
@@ -1089,4 +1103,16 @@ export interface IColorSet {
 export interface IColorConfig {
     light: IColorSet;
     dark: IColorSet;
+}
+
+export interface IColorPalette {
+    50: string;
+    100: string;
+    200: string;
+    300: string;
+    400: string;
+    500: string;
+    800: string;
+    900: string;
+    950: string;
 }

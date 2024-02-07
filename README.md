@@ -246,6 +246,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    colorConfig?: IColorConfig;
 }
 ```
 
@@ -272,10 +273,6 @@ Customize locale resources. See [Customize I18n](#customize-i18n) for more detai
 #### `keepAlive`: optional _{ `boolean | string = false` }_
 
 Whether to keep the component state when it is unmounted. If provided, after you unmount the graphic-walker component, the state will still be stored, and will be restored when the component is mount again. If you need to enable `keepAlive` for multiple graphic-walker components, you can provide a unique string value for each component to distinguish them.
-
-#### `fieldKeyGuard`: optional _{ `boolean = true` }_
-
-Whether to use the field key guard. If enabled, the field `fid` will be transformed to ensure that it is safe to use as a reference in Vega-Lite. Otherwise, the `fid` provided in `rawFields` will be used directly.
 
 #### `themeKey`: optional _{ `IThemeKey = "vega"` }_
 
@@ -359,6 +356,47 @@ const channelScales = {
     }
 }
 
+```
+
+#### `colorConfig`: optional _{ `IColorConfig` }_
+
+Specify the color that graphic walker use, so the background of Graphic Walker will match to your website.
+
+You can pass either css color name (such as cyan), tailwind color name (such as zinc-900), hex color (e.g. #ff0000), hsl color (e.g. hsl(217.2 91.2% 59.8%)), or hwb color(e.g. hwb(60, 3%, 60%)).
+
+you can also use helpers to help you create a color config.
+
+Here are some examples:
+
+```ts
+import { getColorConfigFromPalette, getPaletteFromColor } from '@kanaries/graphic-walker'
+
+const colorConfig: IColorConfig = {
+    light: {
+        background: 'amber-100',
+        foreground: 'amber-950',
+        primary: 'amber-950',
+        'primary-foreground': 'amber-50',
+        muted: 'amber-200',
+        'muted-foreground': 'amber-500',
+        border: 'amber-300',
+        ring: 'amber-950',
+    },
+    dark: {
+        background: 'amber-900',
+        foreground: 'amber-50',
+        primary: 'amber-50',
+        'primary-foreground': 'amber-800',
+        muted: 'amber-700',
+        'muted-foreground': 'amber-400',
+        border: 'amber-700',
+        ring: 'amber-300',
+    },
+};
+
+const colorConfig = getColorConfigFromPalette(tailwindcss.colors.zinc);
+
+const colorConfig = getColorConfigFromPalette(getPaletteFromColor('#6366f1'));
 ```
 
 ### Ref

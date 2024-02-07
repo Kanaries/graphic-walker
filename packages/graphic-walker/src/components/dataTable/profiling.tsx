@@ -9,6 +9,7 @@ import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
 import { getTheme } from '../../utils/useTheme';
+import { parseColorToHSL } from '@/utils/colors';
 
 export interface FieldProfilingProps {
     field: string;
@@ -118,7 +119,7 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
     const vegaConfig = useMemo(() => {
         const config: any = {
             ...theme,
-            background: `hsl(${color[mediaTheme].background})`,
+            background: 'transparent',
         };
         return config;
     }, [theme]);
