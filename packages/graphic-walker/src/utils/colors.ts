@@ -1,6 +1,7 @@
 import { IColorConfig, IColorPalette, IColorSet } from '../interfaces';
 import colorString from 'color-string';
 import rgb from 'color-space/rgb.js';
+import hsl from 'color-space/hsl.js';
 import hwb from 'color-space/hwb.js';
 import colors from 'tailwindcss/colors';
 
@@ -34,6 +35,10 @@ function toHSL(color: string): [number, number, number, number] {
 export function parseColorToHSL(color: string) {
     const [h, s, l] = toHSL(color);
     return `${h} ${s}% ${l}%`;
+}
+
+export function parseColorToHex(color: string) {
+    return colorString.to.hex(hsl.rgb(toHSL(color)));
 }
 
 function ColorSetToCss(set: Required<IColorSet>) {

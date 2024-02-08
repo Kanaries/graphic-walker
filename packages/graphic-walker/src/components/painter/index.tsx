@@ -21,8 +21,9 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Slider } from '../ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { themeContext } from '@/store/theme';
+import { colorContext, themeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
+import { parseColorToHex } from '@/utils/colors';
 
 //@ts-ignore
 CanvasHandler.prototype.context = function () {
@@ -611,15 +612,16 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     }, []);
 
     const mediaTheme = useContext(themeContext);
+    const colorConfig = useContext(colorContext);
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
         const config: VegaGlobalConfig = {
             ...presetConfig?.[mediaTheme],
-            background: 'transparent',
+            background: parseColorToHex(colorConfig[mediaTheme].background),
         };
         return config;
-    }, [themeConfig, themeKey, mediaTheme]);
+    }, [colorConfig, themeConfig, themeKey, mediaTheme]);
 
     return (
         <Dialog
