@@ -358,9 +358,11 @@ const channelScales = {
 
 ```
 
-#### `colorConfig`: optional _{ `IColorConfig` }_
+#### `colorConfig`: optional _{ `IColorConfig` }_ (beta stage)
 
 Specify the color that graphic walker use, so the background of Graphic Walker will match to your website.
+
+> currently in beta stage, the parameter may change in the future.
 
 You can pass either css color name (such as cyan), tailwind color name (such as zinc-900), hex color (e.g. #ff0000), hsl color (e.g. hsl(217.2 91.2% 59.8%)), or hwb color(e.g. hwb(60, 3%, 60%)).
 
@@ -368,7 +370,7 @@ you can also use helpers to help you create a color config.
 
 Here are some examples:
 
-```ts
+```tsx
 import { getColorConfigFromPalette, getPaletteFromColor } from '@kanaries/graphic-walker'
 
 const colorConfig: IColorConfig = {
@@ -394,9 +396,12 @@ const colorConfig: IColorConfig = {
     },
 };
 
-const colorConfig = getColorConfigFromPalette(tailwindcss.colors.zinc);
+import colors from 'tailwindcss/colors';
+const colorConfig = getColorConfigFromPalette(colors.zinc);
 
 const colorConfig = getColorConfigFromPalette(getPaletteFromColor('#6366f1'));
+
+<GraphicWalker colorConfig={colorConfig} />
 ```
 
 ### Ref
