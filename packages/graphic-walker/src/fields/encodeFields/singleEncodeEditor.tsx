@@ -51,7 +51,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     return (
         <div className="p-1 select-none relative" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             <div
-                className={`p-1.5 bg-primary-foreground text-muted-foreground border flex item-center justify-center grow ${
+                className={`p-1.5 bg-muted text-muted-foreground border flex item-center justify-center grow ${
                     snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
                 } relative z-0`}
             >
