@@ -10,7 +10,7 @@ export default function DataSourceSegment() {
     const { theme } = useContext(themeContext);
     const provider = getProvider();
     return (
-        <DataSourceSegmentComponent provider={provider}>
+        <DataSourceSegmentComponent dark={theme} provider={provider}>
             {(p) => {
                 return (
                     <GraphicWalker

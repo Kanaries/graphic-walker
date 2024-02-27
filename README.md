@@ -84,7 +84,7 @@ If you want to use Graphic Walker as a data exploration tool without thinking ab
 
 Use it here: [Graphic Walker Online](https://graphic-walker.kanaries.net)
 
-Examples here: [Graphic Walker Examples](https://graphic-walker.kanaries.net/examples)
+Examples here: [Graphic Walker Examples](https://graphic-walker.kanaries.net/examples/)
 
 ### Method 1: use as an independent app.
 ```bash
@@ -150,6 +150,23 @@ const YourChart: React.FC<IYourChartProps> = props => {
         dataSource={dataSource}
         rawFields={fields}
         chart={spec}
+    />;
+}
+
+export default YourChart;
+```
+
+You can use `TableWalker` component to make a single table view with your data. it accepts same props as `GraphicWalker`, but you don't need to pass the chart prop, and you can control the page size by pageSize prop(default value is 20).
+
+```typescript
+import { TableWalker } from '@kanaries/graphic-walker';
+
+const YourChart: React.FC<IYourChartProps> = props => {
+    const { dataSource, fields, spec } = props;
+    return <TableWalker
+        dataSource={dataSource}
+        rawFields={fields}
+        pageSize={50}
     />;
 }
 
