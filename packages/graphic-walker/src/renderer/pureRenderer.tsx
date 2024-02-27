@@ -15,6 +15,7 @@ import type {
     IComputationFunction,
     IVisualLayout,
     IChannelScales,
+    IColorConfig,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -34,6 +35,7 @@ type IPureRendererProps = {
     visualState: DraggableFieldState;
     visualConfig: IVisualConfigNew | IVisualConfig;
     visualLayout?: IVisualLayout;
+    colorConfig?: IColorConfig;
     locale?: string;
     channelScales?: IChannelScales;
     overrideSize?: IVisualLayout['size'];
@@ -57,7 +59,7 @@ export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.Re
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
-    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, overrideSize, locale, type, themeConfig, channelScales } = props;
+    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, overrideSize, locale, type, themeConfig, channelScales, colorConfig } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -133,7 +135,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
-        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className}>
+        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} colorConfig={colorConfig}>
             <VizAppContext
                 ComputationContext={computation}
                 themeContext={darkMode}
