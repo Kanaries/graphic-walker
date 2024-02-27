@@ -23,6 +23,10 @@ export const pages = [
         comp: () => import('./pages/cc'),
         name: 'CustomColor',
     },
+    {
+        comp: () => import('./pages/table'),
+        name: 'TableWalker',
+    },
 ].map((Component) => ({
     name: Component.name,
     path: Component.name.replace(/\s/g, '_'),
