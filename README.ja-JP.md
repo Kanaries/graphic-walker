@@ -1,5 +1,7 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> [English](./README.md) | [简体中文](./README.zh-CN.md) | 日本語
 
+![graphic-walker-banner](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/graphic-walker-banner202402.png)
+
 # graphic-walker
 ![](https://img.shields.io/github/license/Kanaries/graphic-walker?style=flat-square)
 ![](https://img.shields.io/npm/v/@kanaries/graphic-walker?style=flat-square)
@@ -31,30 +33,30 @@ Graphic Walker は React コンポーネントの形で、プラグインとし�
 
 > 導入できるデータソースの種類を増やす予定がありますので、追加をご希望する方は気軽に私たちに連絡または issue で教えてください。開発者には、直接にデータを props として Graphic Walker に入力することができます。[Rath](https://github.com/Kanaries/Rath) はその方法で、多くのデータソースをサポートします。また、[Rath](https://github.com/Kanaries/Rath) でデータを導入してセーブするファイルを Graphic Walker に取り込むこともできます。Graphic Walker で導入できないデータを [Rath](https://github.com/Kanaries/Rath) で処理したり、変換したりしてから Graphic Walker で分析する選択肢もあります。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-ds-02.png)
+![graphic walker dataset upload](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ds-import.png)
 
 確認が完了したら、『Submit』をクリックしましょう。データの各ディメンションとメジャーは左のリストに表示されます。それらをその右側のスペース（行、列、色、不透明度など）にドロップしたら、可視化が生成します。
 
-![](https://foghorn-assets.oss-cn-hangzhou.aliyuncs.com/graphic-walker/doc_images/after_load_data.png)
+![](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ui.png)
 
 
 メジャーには、合計、平均、個数などの統計関数が利用できます。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-bar-01.png)
+![graphic walker bar chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-bar01.png)
 
 
 マークを設置して、グラフを別種類、例えば折れ線グラフに変更しましょう。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-line-01.png)
+![graphic walker line chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-line-02.png)
 
 
 多数のメジャーを比較するために、行や列の空欄に複数のメジャーを入れましょう。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-area-01.png)
+![graphic walker area chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-area.png)
 
 Tableau に似ていて、複数のディメンションを行や列に設置したら、複数のグラフが生成されます。
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-scatter-01.png)
+![graphic walker scatter chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-scatter.png)
 
 Graphic Walker は編集した結果をファイルとして保存することができます。今回の分析を続けたい時または結果を残したい時は、セーブ・アンド・ロード機能を利用しましょう。
 
