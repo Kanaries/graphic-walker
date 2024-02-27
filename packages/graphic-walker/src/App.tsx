@@ -221,7 +221,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                         <PosFields />
                                                     </div>
                                                     <div
-                                                        className="my-0.5 sm:ml-0.5 p-1 border"
+                                                        className="my-0.5 sm:ml-0.5 p-1 border relative"
                                                         style={{ minHeight: '600px', height: 1, maxHeight: '100vh', overflow: 'auto' }}
                                                         onMouseLeave={() => {
                                                             vizEmbededMenu.show && vizStore.closeEmbededMenu();

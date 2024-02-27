@@ -143,96 +143,98 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const isSpatial = coordSystem === 'geographic';
 
     return (
-        <Resizable
-            className={
-                enableResize ? 'border-primary border-2 overflow-hidden inline-block max-h-screen max-w-[100vw]' : 'inline-block max-h-screen max-w-[100vw]'
-            }
-            style={{ padding: '12px' }}
-            onResizeStop={(e, direction, ref, d) => {
-                onChartResize?.(size.width + d.width, size.height + d.height);
-            }}
-            enable={
-                enableResize
-                    ? undefined
-                    : {
-                          top: false,
-                          right: false,
-                          bottom: false,
-                          left: false,
-                          topRight: false,
-                          bottomRight: false,
-                          bottomLeft: false,
-                          topLeft: false,
-                      }
-            }
-            size={
-                // ensure PureRenderer with Auto size is correct
-                size.mode === 'fixed'
-                    ? {
-                          width: size.width + 'px',
-                          height: size.height + 'px',
-                      }
-                    : size.mode === 'full'
-                    ? {
-                          width: '100%',
-                          height: '100%',
-                      }
-                    : isSpatial
-                    ? {
-                          width: LEAFLET_DEFAULT_WIDTH + 'px',
-                          height: LEAFLET_DEFAULT_HEIGHT + 'px',
-                      }
-                    : { width: 'auto', height: 'auto' }
-            }
-        >
+        <>
             {loading && <LoadingLayer />}
-            {isSpatial && (
-                <LeafletRenderer
-                    name={name}
-                    data={data}
-                    draggableFieldState={draggableFieldState}
-                    visualConfig={visualConfig}
-                    visualLayout={layout}
-                    vegaConfig={vegaConfig}
-                    channelScales={channelScales}
-                    scale={scale}
-                />
-            )}
-            {isSpatial || (
-                <ReactVega
-                    name={name}
-                    vegaConfig={vegaConfig}
-                    // format={format}
-                    layoutMode={size.mode}
-                    interactiveScale={interactiveScale}
-                    geomType={geoms[0]}
-                    defaultAggregate={defaultAggregated}
-                    stack={stack}
-                    dataSource={data}
-                    rows={rows}
-                    columns={columns}
-                    color={color[0]}
-                    theta={theta[0]}
-                    radius={radius[0]}
-                    shape={shape[0]}
-                    opacity={opacity[0]}
-                    size={sizeChannel[0]}
-                    details={details}
-                    text={text[0]}
-                    showActions={showActions}
-                    width={size.width - 12 * 4}
-                    height={size.height - 12 * 4}
-                    ref={ref}
-                    onGeomClick={onGeomClick}
-                    locale={locale}
-                    useSvg={useSvg}
-                    channelScales={channelScales}
-                    scale={scale}
-                    onReportSpec={onReportSpec}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
-        </Resizable>
+            <Resizable
+                className={
+                    enableResize ? 'border-primary border-2 overflow-hidden inline-block max-h-screen max-w-[100vw]' : 'inline-block max-h-screen max-w-[100vw]'
+                }
+                style={{ padding: '12px' }}
+                onResizeStop={(e, direction, ref, d) => {
+                    onChartResize?.(size.width + d.width, size.height + d.height);
+                }}
+                enable={
+                    enableResize
+                        ? undefined
+                        : {
+                              top: false,
+                              right: false,
+                              bottom: false,
+                              left: false,
+                              topRight: false,
+                              bottomRight: false,
+                              bottomLeft: false,
+                              topLeft: false,
+                          }
+                }
+                size={
+                    // ensure PureRenderer with Auto size is correct
+                    size.mode === 'fixed'
+                        ? {
+                              width: size.width + 'px',
+                              height: size.height + 'px',
+                          }
+                        : size.mode === 'full'
+                        ? {
+                              width: '100%',
+                              height: '100%',
+                          }
+                        : isSpatial
+                        ? {
+                              width: LEAFLET_DEFAULT_WIDTH + 'px',
+                              height: LEAFLET_DEFAULT_HEIGHT + 'px',
+                          }
+                        : { width: 'auto', height: 'auto' }
+                }
+            >
+                {isSpatial && (
+                    <LeafletRenderer
+                        name={name}
+                        data={data}
+                        draggableFieldState={draggableFieldState}
+                        visualConfig={visualConfig}
+                        visualLayout={layout}
+                        vegaConfig={vegaConfig}
+                        channelScales={channelScales}
+                        scale={scale}
+                    />
+                )}
+                {isSpatial || (
+                    <ReactVega
+                        name={name}
+                        vegaConfig={vegaConfig}
+                        // format={format}
+                        layoutMode={size.mode}
+                        interactiveScale={interactiveScale}
+                        geomType={geoms[0]}
+                        defaultAggregate={defaultAggregated}
+                        stack={stack}
+                        dataSource={data}
+                        rows={rows}
+                        columns={columns}
+                        color={color[0]}
+                        theta={theta[0]}
+                        radius={radius[0]}
+                        shape={shape[0]}
+                        opacity={opacity[0]}
+                        size={sizeChannel[0]}
+                        details={details}
+                        text={text[0]}
+                        showActions={showActions}
+                        width={size.width - 12 * 4}
+                        height={size.height - 12 * 4}
+                        ref={ref}
+                        onGeomClick={onGeomClick}
+                        locale={locale}
+                        useSvg={useSvg}
+                        channelScales={channelScales}
+                        scale={scale}
+                        onReportSpec={onReportSpec}
+                        displayOffset={timezoneDisplayOffset}
+                    />
+                )}
+            </Resizable>
+        </>
     );
 });
 
