@@ -2,7 +2,7 @@ import { getComputation } from '../computation/clientComputation';
 import { IDataSourceEventType, IDataSourceListener, IDataSourceProvider } from '../interfaces';
 import { DataStore } from '../store/dataStore';
 
-export default function createMemoryProvider(initData?: string | null): IDataSourceProvider & { exportData(): string } {
+export function createMemoryProvider(initData?: string | null): IDataSourceProvider & { exportData(): string } {
     const store = new DataStore();
     const listeners: IDataSourceListener[] = [];
 
