@@ -1,6 +1,6 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
-![graphic-walker-banner](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-banner.png)
+![graphic-walker-banner](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/graphic-walker-banner202402.png)
 
 
 # Graphic Walker
@@ -37,34 +37,34 @@ First, upload your Data(csv/json) file, preview your data, and define the analyt
 
 > We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedded component, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
 
-![graphic walker dataset upload](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-create-ds.png)
+![graphic walker dataset upload](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ds-import.png)
 
 When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-readme-01.png)
+![](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ui.png)
 
 You can also view raw data any time or edit the meta data.
 
-![](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/dark-theme-gw-data.png)
+![](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-metadata.png)
 
 
 Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
 
-![graphic walker bar chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-bar-01.png)
+![graphic walker bar chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-bar01.png)
 
 
 You can change the mark type into others to make different charts, for example a line chart.
 
-![graphic walker line chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/20230811/gw-line-01.png)
+![graphic walker line chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-line-02.png)
 
 
 To compare different measures, you can create a concat view by adding more than one measure into rows/columns.
 
-![graphic walker area chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-area-01.png)
+![graphic walker area chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-area.png)
 
 To make a facet view of several subviews divided by the value in dimension, put dimensions into rows or columns to make a facets view. The rules are similar to Tableau.
 
-![graphic walker scatter chart](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/gw-scatter-01.png)
+![graphic walker scatter chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-scatter.png)
 
 When you finish exploration, you can save the result into a local file, which can be imported next time.
 
