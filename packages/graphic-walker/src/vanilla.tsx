@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { DataSourceSegmentComponent, GraphicWalker, IGWProps } from './index';
-import createMemoryProvider from './dataSourceProvider/memory';
+import { createMemoryProvider } from './dataSourceProvider/memory';
 
 function FullGraphicWalker(props: IGWProps) {
     const provider = useMemo(() => createMemoryProvider(), []);
