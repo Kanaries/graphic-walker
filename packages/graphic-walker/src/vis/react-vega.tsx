@@ -309,8 +309,14 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                 width: Math.max(rect.width - (areaWidth || width), 0),
                                 height: Math.max(rect.height - (areaHeight || height), 0),
                             };
+                            if (res.view.width() === 0) {
+                                // is faceted view
+                                res.view.signal('child_width', specs[0].width - modifier.width / Math.round((areaWidth || width) / specs[0].width));
+                                res.view.signal('child_height', specs[0].height - modifier.height / Math.round((areaHeight || height) / specs[0].height));
+                            } else {
                             res.view.width(specs[0].width - modifier.width);
                             res.view.height(specs[0].height - modifier.height);
+                            }
                             res.view.runAsync();
                         }
                     }
@@ -391,8 +397,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         width: Math.max(rect.width - (areaWidth || width) / colRepeatFields.length, 0),
                                         height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
                                     };
-                                    res.view.width(ans.width - modifier.width);
-                                    res.view.height(ans.height - modifier.height);
+                                    if (res.view.width() === 0) {
+                                        // is faceted view
+                                        res.view.signal(
+                                            'child_width',
+                                            specs[0].width - modifier.width / Math.round((areaWidth || width) / colRepeatFields.length / specs[0].width)
+                                        );
+                                        res.view.signal(
+                                            'child_height',
+                                            specs[0].height - modifier.height / Math.round((areaHeight || height) / rowRepeatFields.length / specs[0].height)
+                                        );
+                                    } else {
+                                        res.view.width(specs[0].width - modifier.width);
+                                        res.view.height(specs[0].height - modifier.height);
+                                    }
                                     res.view.runAsync();
                                 }
                             }
