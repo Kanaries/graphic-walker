@@ -126,7 +126,7 @@ export function toVegaSpec({
             stack,
             geomType,
             displayOffset,
-            dataSource
+            dataSource,
         });
         const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
 
@@ -156,7 +156,6 @@ export function toVegaSpec({
         } else if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
             spec.width = Math.floor(width / colRepeatFields.length) - 5;
             spec.height = Math.floor(height / rowRepeatFields.length) - 5;
-            spec.autosize = 'fit';
         } else {
             const rowNums = rowFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[rowFacetField.fid])).size : 1;
             const colNums = colFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[colFacetField.fid])).size : 1;
@@ -168,7 +167,8 @@ export function toVegaSpec({
         let result = new Array(rowRepeatFields.length * colRepeatFields.length);
         for (let i = 0; i < rowRepeatFields.length; i++) {
             for (let j = 0; j < colRepeatFields.length; j++, index++) {
-                const hasLegend = i === 0 && j === colRepeatFields.length - 1;
+                const hasLegend = j === colRepeatFields.length - 1;
+                const showLegend = i == 0;
                 const v = getSingleView({
                     x: colRepeatFields[j] || NULL_FIELD,
                     y: rowRepeatFields[i] || NULL_FIELD,
@@ -187,7 +187,8 @@ export function toVegaSpec({
                     defaultAggregated,
                     stack,
                     geomType,
-                    hideLegend: !hasLegend,
+                    hasLegend,
+                    hideLegend: !showLegend,
                     displayOffset,
                     dataSource,
                 });

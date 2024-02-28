@@ -11,6 +11,7 @@ import { unexceptedUTCParsedPatternFormats } from '../../lib/op/offset';
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
     stack: IStackMode;
+    hasLegend?: boolean;
     hideLegend?: boolean;
     dataSource: readonly IRow[];
 }
@@ -39,6 +40,7 @@ export function getSingleView(props: SingleViewProps) {
         defaultAggregated,
         stack,
         geomType,
+        hasLegend = true,
         hideLegend = false,
         displayOffset,
         dataSource,
@@ -46,9 +48,18 @@ export function getSingleView(props: SingleViewProps) {
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
     let config: any = {};
-    if (hideLegend) {
+    if (!hasLegend) {
         config.legend = {
             disable: true,
+        };
+    } else if (hideLegend) {
+        config.legend = {
+            gradientOpacity: 0,
+            labelColor: 'transparent',
+            symbolOpacity: 0,
+            symbolStrokeColor: 'transparent',
+            titleColor: 'transparent',
+            titleOpacity: 0,
         };
     }
     if (geomType === 'auto') {
