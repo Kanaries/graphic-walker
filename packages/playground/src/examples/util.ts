@@ -11,7 +11,7 @@ export function promiseWrapper<T>(promise: Promise<T>): () => T {
         (error) => {
             status = 'error';
             result = error;
-        },
+        }
     );
 
     return () => {
@@ -41,3 +41,25 @@ export interface IDataSource {
     dataSource: IRow[];
     fields: IMutField[];
 }
+
+export const extractRGB = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return {
+        r: parseInt(result![1], 16),
+        g: parseInt(result![2], 16),
+        b: parseInt(result![3], 16),
+    };
+};
+
+export const extractHSL = (hsl: string) => {
+    const result = /^hsl\(([\d.]+)\s([\d.]+)%\s([\d.]+)%\)$/i.exec(hsl);
+    return {
+        h: parseInt(result![1]),
+        s: parseInt(result![2]),
+        l: parseInt(result![3]),
+    };
+};
+
+export const toHex = (r: number, g: number, b: number) => {
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};

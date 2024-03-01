@@ -115,7 +115,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
             {channelItems.length !== 0 && provided.placeholder}
             {channelItems.length === 0 && <div className={`h-[34px] w-full`} />}
             <div
-                className={`p-1.5 m-1 bg-primary-foreground text-muted-foreground pointer-events-none border flex item-center justify-center grow ${
+                className={`p-1.5 m-1 bg-muted text-muted-foreground pointer-events-none border flex item-center justify-center grow ${
                     (snapshot.draggingFromThisWith && channelItems.length === 1) || channelItems.length === 0 ? 'opacity-100' : 'opacity-0'
                 } absolute inset-0 z-0`}
             >
