@@ -27,6 +27,10 @@ export const pages = [
         comp: () => import('./pages/table'),
         name: 'TableWalker',
     },
+    {
+        comp: () => import('./pages/themeBuilder'),
+        name: 'ThemeBuilder',
+    },
 ].map((Component) => ({
     name: Component.name,
     path: Component.name.replace(/\s/g, '_'),

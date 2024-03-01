@@ -23,13 +23,16 @@
     "@kanaries/graphic-walker": "0.4.53",
     "@vercel/analytics": "^1.1.1",
     "react": "^18.2.0",
+    "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-router": "^6.20.0",
     "react-router-dom": "^6.20.0",
-    "react-syntax-highlighter": "^15.5.0"
+    "react-syntax-highlighter": "^15.5.0",
+    "color-space": "^2.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",
+    "@types/react-color": "^3.0.6",
     "@types/react-dom": "^18.2.15",
     "@types/react-syntax-highlighter": "^15.5.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
