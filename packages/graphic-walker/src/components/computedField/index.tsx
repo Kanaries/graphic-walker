@@ -31,6 +31,11 @@ const ComputedFieldDialog: React.FC = observer(() => {
             .join('|');
         const fieldRegex = fields.length > 0 ? new RegExp(`\\b(${fields})\\b`, 'gi') : null;
         return highlightField((sql: string) => {
+            // highlight field
+            if (fieldRegex) {
+                sql = sql.replace(fieldRegex, '<span class="text-blue-700 dark:text-blue-600">$1</span>');
+            }
+
             // highlight keyword
             sql = sql.replace(keywordRegex, '<span class="text-fuchsia-700 dark:text-fuchsia-600">$1</span>');
 
@@ -42,11 +47,6 @@ const ComputedFieldDialog: React.FC = observer(() => {
 
             // highlight string
             sql = sql.replace(stringRegex, '<span class="text-green-700 dark:text-green-600">$1</span>');
-
-            // highlight field
-            if (fieldRegex) {
-                sql = sql.replace(fieldRegex, '<span class="text-blue-700 dark:text-blue-600">$1</span>');
-            }
 
             return sql;
         });
