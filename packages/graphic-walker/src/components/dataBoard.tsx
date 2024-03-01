@@ -7,11 +7,12 @@ import { addFilterForQuery, addTransformForQuery, processExpression } from '../u
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { isNotEmpty } from '../utils';
 import { Dialog, DialogContent } from './ui/dialog';
+import { encodeFilterRule } from '@/utils/filter';
 
 const DataBoard = observer(function DataBoardModal() {
     const vizStore = useVizStore();
     const computation = useCompututaion();
-    const { showDataBoard, selectedMarkObject, allFields, config } = vizStore;
+    const { showDataBoard, selectedMarkObject, allFields, config, viewFilters } = vizStore;
     const filters = useMemo(() => {
         const entries: [string, string | number][] = Object.entries(selectedMarkObject).filter(
             (x): x is [string, string | number] => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x[0]) && isNotEmpty(x[1])
@@ -27,7 +28,13 @@ const DataBoard = observer(function DataBoardModal() {
         return (query) =>
             computation(
                 addTransformForQuery(
-                    addFilterForQuery(query, filters),
+                    addFilterForQuery(
+                        query,
+                        viewFilters
+                            .map((f) => ({ fid: f.fid, rule: encodeFilterRule(f.rule) }))
+                            .filter((x): x is IVisFilter => !!x.rule)
+                            .concat(filters)
+                    ),
                     computedFileds.map((x) => ({
                         expression: processExpression(x.expression!, allFields, config),
                         key: x.fid!,
