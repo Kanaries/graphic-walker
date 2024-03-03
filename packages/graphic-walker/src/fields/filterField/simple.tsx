@@ -134,16 +134,16 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
             <label className="text-sm leading-none font-medium">{field.name}</label>
             <Popover className="w-full">
                 <Popover.Button className="flex shadow-sm items-center h-9 space-x-2 px-4 py-2 rounded-md border w-full text-left text-sm outline-none hover:bg-accent transition-colors bg-popover">
-                    {field.rule.value.size > 0 && (
+                    {field.rule.value.length > 0 && (
                         <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
                                 {field.rule.type === 'not in' ? 'exclude: ' : ''}
                                 {Array.from(field.rule.value).slice(0, 3).join(', ')}
                             </div>
-                            {field.rule.value.size > 3 && <div className="flex-shrink-0">+{field.rule.value.size - 3}</div>}
+                            {field.rule.value.length > 3 && <div className="flex-shrink-0">+{field.rule.value.length - 3}</div>}
                         </div>
                     )}
-                    {field.rule.value.size === 0 && (
+                    {field.rule.value.length === 0 && (
                         <div className="flex-1 text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
                             {field.rule.type === 'one of' ? 'Select Values...' : 'Select Values to Exclude...'}
                         </div>
@@ -256,6 +256,11 @@ function VirtualList({
         overscan: 10,
     });
 
+    const ruleSet = useMemo(
+        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => JSON.stringify(x))) : null),
+        [field]
+    );
+
     return (
         <div className="overflow-y-auto w-full flex flex-col max-h-64 p-1" ref={parentRef}>
             <div
@@ -295,7 +300,8 @@ function VirtualList({
                     }
                     const { value, count } = item;
                     const checked =
-                        (field.rule?.type === 'one of' && field.rule.value.has(value)) || (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(JSON.stringify(value))) ||
+                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(JSON.stringify(value)));
                     const displayValue = field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                     return (
                         <div

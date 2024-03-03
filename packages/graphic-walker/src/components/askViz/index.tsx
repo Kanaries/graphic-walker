@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useVizStore } from '../../store';
 import { HandThumbDownIcon, HandThumbUpIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import Spinner from '../spinner';
-import { IAskVizFeedback, IChartForExport, IViewField, IVisSpecForExport } from '../../interfaces';
+import { IAskVizFeedback, IChart, IViewField, IVisSpec } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import { useReporter } from '../../utils/reportError';
 import { parseErrorMessage } from '../../utils';
@@ -32,7 +32,7 @@ async function vizQuery(api: string, metas: IViewField[], query: string, headers
     });
     const result: {
         success: boolean;
-        data: IVisSpecForExport | IChartForExport;
+        data: IVisSpec | IChart;
         message?: string;
     } = await res.json();
     if (result.success) {
@@ -64,7 +64,7 @@ async function reportVizQuery(api: string | ((data: IAskVizFeedback) => void), d
 }
 
 const AskViz: React.FC<{
-    api?: string | ((metas: IViewField[], query: string) => PromiseLike<IVisSpecForExport | IChartForExport> | IVisSpecForExport | IChartForExport);
+    api?: string | ((metas: IViewField[], query: string) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
     feedbackApi?: string | ((data: IAskVizFeedback) => void);
     headers?: Record<string, string>;
 }> = (props) => {

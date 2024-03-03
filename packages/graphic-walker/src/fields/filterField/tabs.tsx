@@ -132,7 +132,7 @@ export const useFieldStats = (
         values: boolean;
         range: boolean;
         valuesMeta?: boolean;
-        selectedCount?: Set<string | number>;
+        selectedCount?: any[];
         displayOffset?: number;
         keyword?: IKeyWord;
     },
@@ -210,10 +210,7 @@ export const useVisualCount = (
     }
 ) => {
     // fetch metaData of filter field, only fetch once per fid.
-    const initRuleValue = useMemo(
-        () => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : new Set<string | number>()),
-        [field.fid, computation]
-    );
+    const initRuleValue = useMemo(() => (field.rule?.type === 'not in' || field.rule?.type === 'one of' ? field.rule.value : []), [field.fid, computation]);
     const [metaData] = useFieldStats(
         field,
         { values: false, range: false, selectedCount: initRuleValue, valuesMeta: true, displayOffset: options.displayOffset },
@@ -300,9 +297,9 @@ export const useVisualCount = (
 
     const currentCount =
         field.rule?.type === 'one of'
-            ? field.rule.value.size
+            ? field.rule.value.length
             : metaData && field.rule?.type === 'not in'
-            ? metaData.valuesMeta.distinctTotal - field.rule.value.size
+            ? metaData.valuesMeta.distinctTotal - field.rule.value.length
             : 0;
 
     const currentSum =
@@ -313,7 +310,7 @@ export const useVisualCount = (
         setSelectedValueSum(0);
         onChange({
             type: currentCount === metaData.valuesMeta.distinctTotal ? 'one of' : 'not in',
-            value: new Set(),
+            value: [],
         });
     }, [field.rule, onChange, metaData]);
     const handleToggleReverseSet = useCallback(() => {
@@ -336,7 +333,7 @@ export const useVisualCount = (
             }
             onChange({
                 type: field.rule.type,
-                value: newValue,
+                value: Array.from(newValue),
             });
         },
         [field.rule, onChange]
@@ -425,7 +422,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         if (active && field.rule?.type !== 'one of' && field.rule?.type !== 'not in') {
             onChange({
                 type: 'not in',
-                value: new Set(),
+                value: [],
             });
         }
     }, [active, onChange, field]);
@@ -487,6 +484,11 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         estimateSize: () => 32,
         overscan: 10,
     });
+
+    const ruleSet = useMemo(
+        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => JSON.stringify(x))) : null),
+        [field]
+    );
 
     return field.rule?.type === 'one of' || field.rule?.type === 'not in' ? (
         <Container>
@@ -649,8 +651,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                     const { value, count } = item;
                                     const id = `rule_checkbox_${idx}`;
                                     const checked =
-                                        (field.rule?.type === 'one of' && field.rule.value.has(value)) ||
-                                        (field.rule?.type === 'not in' && !field.rule.value.has(value));
+                                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(JSON.stringify(value))) ||
+                                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(JSON.stringify(value)));
                                     const displayValue =
                                         field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                                     return (

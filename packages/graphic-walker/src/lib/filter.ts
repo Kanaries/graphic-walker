@@ -8,10 +8,12 @@ const toFilterFunc = (filter: IFilterFiledSimple): ((row: IRow) => boolean) => {
     }
     switch (rule.type) {
         case 'one of': {
-            return (which) => rule.value.has(which[fid]);
+            const set = new Set(rule.value.map(x => JSON.stringify(x)));
+            return (which) => set.has(JSON.stringify(which[fid]));
         }
         case 'not in': {
-            return (which) => !rule.value.has(which[fid]);
+            const set = new Set(rule.value.map(x => JSON.stringify(x)));
+            return (which) => !set.has(JSON.stringify(which[fid]));
         }
         case 'range': {
             return (which) => rule.value[0] <= which[fid] && which[fid] <= rule.value[1];

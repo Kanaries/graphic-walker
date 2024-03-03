@@ -7,8 +7,7 @@ import { addFilterForQuery, addTransformForQuery, processExpression } from '../u
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { isNotEmpty } from '../utils';
 import { Dialog, DialogContent } from './ui/dialog';
-import { encodeFilterRule } from '@/utils/filter';
-import {toJS} from "mobx";
+import { toJS } from "mobx";
 
 const DataBoard = observer(function DataBoardModal() {
     const vizStore = useVizStore();
@@ -33,7 +32,7 @@ const DataBoard = observer(function DataBoardModal() {
                     addFilterForQuery(
                         query,
                         viewFilters
-                            .map((f) => ({ fid: f.fid, rule: encodeFilterRule(f.rule) }))
+                            .map((f) => ({ fid: f.fid, rule: f.rule }))
                             .filter((x): x is IVisFilter => !!x.rule)
                             .concat(filters)
                     ),
