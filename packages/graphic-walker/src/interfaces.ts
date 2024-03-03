@@ -320,11 +320,11 @@ export type IFilterRule =
       }
     | {
           type: 'one of';
-          value: Set<string | number>;
+          value: Set<any>;
       }
     | {
           type: 'not in';
-          value: Set<string | number>;
+          value: Set<any>;
       }
     | {
           type: 'regexp';
