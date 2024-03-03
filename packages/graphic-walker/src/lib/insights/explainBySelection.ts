@@ -1,4 +1,4 @@
-import { IAggregator, IExplainProps, IPredicate, IField, IRow, IViewField, IFilterField, IComputationFunction, IViewWorkflowStep } from '../../interfaces';
+import { IAggregator, IExplainProps, IPredicate, IField, IRow, IViewField, IFilterField, IComputationFunction, IViewWorkflowStep, IDataQueryWorkflowStep } from '../../interfaces';
 import { filterByPredicates, getMeaAggKey } from '../../utils';
 import { compareDistribution, compareDistributionKL, compareDistributionJS, normalizeWithParent } from '../../utils/normalization';
 import { aggregate } from '../op/aggregate';
@@ -33,17 +33,23 @@ export async function explainBySelection(props: {
     }[] = [];
     for (let extendDim of complementaryDimensions) {
         let extendDimFid = extendDim.fid;
-        let extraPreWorkflow: IViewWorkflowStep[] = [];
+        let extraPreWorkflow: IDataQueryWorkflowStep[] = [];
         if (extendDim.semanticType === 'quantitative') {
             extraPreWorkflow.push({
-                type: 'view',
-                query: [
+                type: 'transform',
+                transform: [
                     {
-                        op: 'bin',
-                        binBy: extendDim.fid,
-                        binSize: QUANT_BIN_NUM,
-                        newBinCol: extendDimFid,
-                    },
+                        key: extendDimFid,
+                        expression: {
+                            op: 'bin',
+                            as: extendDimFid,
+                            num: QUANT_BIN_NUM,
+                            params: [{
+                                type: 'field',
+                                value: extendDim.fid,
+                            }]
+                        }
+                    }
                 ],
             });
         }
