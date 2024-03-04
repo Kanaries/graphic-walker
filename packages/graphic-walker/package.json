@@ -4,7 +4,7 @@
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc --build",
     "build:app": "vite build --config vite-app.config.ts",
     "serve": "vite preview",
     "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist",
@@ -19,17 +19,22 @@
     "name": "Kanaries Data Inc.",
     "email": "support@kanaries.net"
   },
-  "main": "./dist/graphic-walker.umd.js",
+  "sideEffects": ["./dist/graphic-walker.es.js", "./dist/graphic-walker.cjs.js", "./dist/component.es.js", "./dist/component.cjs.js"],
+  "main": "./dist/graphic-walker.cjs.js",
   "module": "./dist/graphic-walker.es.js",
   "exports": {
     ".": {
       "import": "./dist/graphic-walker.es.js",
-      "require": "./dist/graphic-walker.umd.js",
+      "require": "./dist/graphic-walker.cjs.js",
       "types": "./dist/index.d.ts"
     },
     "./dist/style.css": {
       "import": "./dist/style.css",
       "require": "./dist/style.css"
+    },
+    "./*": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
     }
   },
   "prettier": {
@@ -124,7 +129,7 @@
     "@vitejs/plugin-react": "^3.1.0",
     "styled-components": "^5.3.6",
     "ts-xor": "^1.3.0",
-    "typescript": "^5.1.6",
+    "typescript": "^5.2.2",
     "vite": "^4.1.1"
   },
   "peerDependencies": {
