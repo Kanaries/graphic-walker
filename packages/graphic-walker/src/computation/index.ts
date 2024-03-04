@@ -600,10 +600,8 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
         },
     ];
 
-    const rangeRes = getRange(service, field);
     const valuesRes = service({ workflow });
-    const [min, max] = await rangeRes;
-    const values = (await valuesRes).sort((x, y) => x[BIN_FIELD] - y[BIN_FIELD]);
+    const values = (await valuesRes).sort((x, y) => x[BIN_FIELD][0] - y[BIN_FIELD][0]);
     if (values.length === 0) {
         return {
             max: 0,
@@ -611,12 +609,14 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
             binValues: [],
         };
     }
+    const min = values[0][BIN_FIELD][0];
+    const max = values[values.length - 1][BIN_FIELD][1];
     const step = (max - min) / BIN_SIZE;
     const binValues = range(0, BIN_SIZE)
         .map((x) => x * step + min)
         .map((bin) => {
-            const row = binarySearchClosest(values, bin, (row) => row[BIN_FIELD]);
-            const binValue = row[BIN_FIELD] as number;
+            const row = binarySearchClosest(values, bin, (row) => row[BIN_FIELD][0]);
+            const binValue = row[BIN_FIELD][0] as number;
             if (Math.abs(binValue - bin) * 2 < step) {
                 // accepted nearest (to ignore float presision)
                 const count = row[ROW_NUM_FIELD] as number;
@@ -635,8 +635,8 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
             }
         });
     return {
-        max,
         min,
+        max,
         binValues,
     };
 }

@@ -5,11 +5,11 @@ import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
 import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
-import initWasm, { parser_dsl_with_table } from '@kanaries-temp/gw-dsl-parser';
-import dslWasm from '@kanaries-temp/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
+import initWasm, { parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
+import dslWasm from '@kanaries/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
 import { IDataSourceProvider, IMutField, IDataSourceListener, exportFullRaw, fromFields } from '@kanaries/graphic-walker';
-import { Table } from 'apache-arrow';
+import { Table, Vector } from 'apache-arrow';
 import { bigNumToString } from 'apache-arrow/util/bn';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
@@ -46,17 +46,22 @@ export async function init() {
     await initWasm(dslWasm);
 }
 
+const ArrowToJSON = (v: any): any => {
+    if (typeof v === 'object') {
+        if (v instanceof Vector) {
+            return Array.from(v).map(ArrowToJSON);
+        } else {
+            return parseInt(bigNumToString(v as any));
+        }
+    }
+    if (typeof v === 'bigint') {
+        return Number(v);
+    }
+    return v;
+};
+
 const transformData = (table: Table) => {
-    return table
-        .toArray()
-        .map((r) =>
-            Object.fromEntries(
-                Object.entries(r.toJSON()).map(([k, v]) => [
-                    k,
-                    typeof v === 'object' ? parseInt(bigNumToString(v as any)) : typeof v === 'bigint' ? Number(v) : v,
-                ])
-            )
-        );
+    return table.toArray().map((r) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, ArrowToJSON(v)])));
 };
 
 export async function getMemoryProvider(): Promise<IDataSourceProvider> {
