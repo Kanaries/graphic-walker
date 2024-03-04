@@ -20,15 +20,15 @@
     "@headlessui/react": "1.7.12",
     "@heroicons/react": "^2.0.8",
     "@kanaries/duckdb-computation": "0.0.1",
-    "@kanaries/graphic-walker": "0.4.53",
+    "@kanaries/graphic-walker": "0.4.54",
     "@vercel/analytics": "^1.1.1",
+    "color-space": "^2.0.1",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-router": "^6.20.0",
     "react-router-dom": "^6.20.0",
-    "react-syntax-highlighter": "^15.5.0",
-    "color-space": "^2.0.1"
+    "react-syntax-highlighter": "^15.5.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",
