@@ -2016,7 +2016,7 @@
     "@types/react" "*"
     "@types/reactcss" "*"
 
-"@types/react-dom@*", "@types/react-dom@^18.2.15", "@types/react-dom@^18.x":
+"@types/react-dom@*", "@types/react-dom@^18.2.15":
   version "18.2.19"
   resolved "https://registry.npmmirror.com/@types/react-dom/-/react-dom-18.2.19.tgz#b84b7c30c635a6c26c6a6dfbb599b2da9788be58"
   integrity sha512-aZvQL6uUbIJpjZk4U8JZGbau9KDeAwMfmhyWorxgBkqDIEf6ROjRozcmPIicqsUwPUjbkDfHKgGee1Lq65APcA==
@@ -2030,7 +2030,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^18.2.37", "@types/react@^18.x":
+"@types/react@*", "@types/react@^18.2.37":
   version "18.2.61"
   resolved "https://registry.npmmirror.com/@types/react/-/react-18.2.61.tgz#5607308495037436779939ec0348a5816c08799d"
   integrity sha512-NURTN0qNnJa7O/k4XUkEW2yfygA+NxS0V5h1+kp9jPwhzZy95q3ADoGMP0+JypMhrZBTTgjKAUlTctde1zzeQA==
