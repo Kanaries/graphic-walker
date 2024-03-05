@@ -1,5 +1,5 @@
 import { DATE_TIME_DRILL_LEVELS } from '../../constants';
-import { IPaintMap, IPaintMapV2, IViewField } from '../../interfaces';
+import { IPaintMap, IPaintMapV2, IRow, IViewField } from '../../interfaces';
 import { isNotEmpty } from '../../utils';
 import { NULL_FIELD } from './field';
 export interface IEncodeProps {
@@ -57,34 +57,49 @@ export function encodeFid(fid: string) {
         .replace(/\r/g, '\\r');
 }
 
-export function channelEncode(props: IEncodeProps) {
+export function channelEncode(props: IEncodeProps, data: readonly IRow[]) {
     const avcs = availableChannels(props.geomType);
     const encoding: { [key: string]: any } = {};
     Object.keys(props)
         .filter((c) => avcs.has(c))
         .forEach((c) => {
-            if (props[c] !== NULL_FIELD) {
+            const field: IViewField = props[c];
+            if (field !== NULL_FIELD) {
                 encoding[c] = {
-                    field: encodeFid(props[c].fid),
-                    title: props[c].name,
-                    type: props[c].semanticType,
+                    field: encodeFid(field.fid),
+                    title: field.name,
+                    type: field.semanticType,
                 };
-                if (props[c].analyticType !== 'measure') {
+                if (field.computed && field.expression?.op === 'bin') {
+                    const fid = encoding[c].field;
+                    encoding[c].field = `${fid}[0]`;
+                    delete encoding[c].type;
+                    encoding[c].bin = {
+                        binned: true,
+                        ...(data[0]?.[fid] ? { step: data[0][fid][1] - data[0][fid][0] } : {}),
+                    };
+                    if (c === 'x' || c === 'y') {
+                        encoding[`${c}2`] = {
+                            field: `${fid}[1]`,
+                        };
+                    }
+                }
+                if (field.analyticType !== 'measure') {
                     // if `aggregate` is set to null,
                     // do not aggregate this field
                     encoding[c].aggregate = null;
                 }
-                if (props[c].analyticType === 'measure') {
+                if (field.analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
                 }
-                if (props[c].semanticType === 'temporal' && isNotEmpty(props.displayOffset)) {
+                if (field.semanticType === 'temporal' && isNotEmpty(props.displayOffset)) {
                     encoding[c].scale = { type: 'utc' };
                 }
-                if (props[c].semanticType === 'temporal' && props[c].timeUnit) {
-                    encoding[c].timeUnit = encodeTimeunit(props[c].timeUnit);
+                if (field.semanticType === 'temporal' && field.timeUnit) {
+                    encoding[c].timeUnit = encodeTimeunit(field.timeUnit);
                 }
-                if (c === 'color' && props[c].expression?.op === 'paint') {
-                    const map: IPaintMap | IPaintMapV2 = props[c].expression!.params.find((x) => x.type === 'map' || x.type === 'newmap')!.value;
+                if (c === 'color' && field.expression?.op === 'paint') {
+                    const map: IPaintMap | IPaintMapV2 = field.expression!.params.find((x) => x.type === 'map' || x.type === 'newmap')!.value;
                     const colors = map.usedColor.map((x) => map.dict[x]).filter(Boolean);
                     encoding[c].scale = {
                         domain: colors.map((x) => x.name),

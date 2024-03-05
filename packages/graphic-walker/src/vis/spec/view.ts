@@ -117,7 +117,7 @@ export function getSingleView(props: SingleViewProps) {
         details,
         text,
         displayOffset,
-    });
+    }, dataSource);
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }
