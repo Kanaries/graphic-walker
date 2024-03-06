@@ -7,6 +7,7 @@ import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
 import { getTimeFormat } from '../../lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '../../lib/op/offset';
+import { addBinStep } from './bin';
 
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
@@ -117,10 +118,11 @@ export function getSingleView(props: SingleViewProps) {
         details,
         text,
         displayOffset,
-    }, dataSource);
+    });
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
     }
+    addBinStep(encoding, dataSource);
     addTooltipEncode(encoding, details, defaultAggregated);
     channelStack(encoding, stack);
     const mark = {

@@ -4,7 +4,7 @@ import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useCompututaion } from '../../store';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Popover, Transition } from '@headlessui/react';
-import { classNames, formatDate } from '../../utils';
+import { _unstable_encodeRuleValue, classNames, formatDate } from '../../utils';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import LoadingLayer from '../../components/loadingLayer';
 import { IFilterField, IKeyWord } from '../../interfaces';
@@ -257,7 +257,7 @@ function VirtualList({
     });
 
     const ruleSet = useMemo(
-        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => JSON.stringify(x))) : null),
+        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x))) : null),
         [field]
     );
 
@@ -300,8 +300,8 @@ function VirtualList({
                     }
                     const { value, count } = item;
                     const checked =
-                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(JSON.stringify(value))) ||
-                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(JSON.stringify(value)));
+                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(_unstable_encodeRuleValue(value))) ||
+                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(_unstable_encodeRuleValue(value)));
                     const displayValue = field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                     return (
                         <div

@@ -57,7 +57,7 @@ export function encodeFid(fid: string) {
         .replace(/\r/g, '\\r');
 }
 
-export function channelEncode(props: IEncodeProps, data: readonly IRow[]) {
+export function channelEncode(props: IEncodeProps) {
     const avcs = availableChannels(props.geomType);
     const encoding: { [key: string]: any } = {};
     Object.keys(props)
@@ -76,7 +76,6 @@ export function channelEncode(props: IEncodeProps, data: readonly IRow[]) {
                     delete encoding[c].type;
                     encoding[c].bin = {
                         binned: true,
-                        ...(data[0]?.[fid] ? { step: data[0][fid][1] - data[0][fid][0] } : {}),
                     };
                     if (c === 'x' || c === 'y') {
                         encoding[`${c}2`] = {

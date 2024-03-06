@@ -8,7 +8,7 @@ import { useCompututaion } from '../../store';
 import LoadingLayer from '../../components/loadingLayer';
 import { fieldStat, getTemporalRange, withComputedField } from '../../computation';
 import Slider from './slider';
-import { getFilterMeaAggKey, formatDate, classNames, isNotEmpty } from '../../utils';
+import { getFilterMeaAggKey, formatDate, classNames, isNotEmpty, _unstable_encodeRuleValue } from '../../utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { newOffsetDate, parsedOffsetDate } from '../../lib/op/offset';
 import { createStreamedValueHook } from '../../hooks';
@@ -486,7 +486,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
     });
 
     const ruleSet = useMemo(
-        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => JSON.stringify(x))) : null),
+        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x))) : null),
         [field]
     );
 
@@ -651,8 +651,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                     const { value, count } = item;
                                     const id = `rule_checkbox_${idx}`;
                                     const checked =
-                                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(JSON.stringify(value))) ||
-                                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(JSON.stringify(value)));
+                                        (!!ruleSet && field.rule?.type === 'one of' && ruleSet.has(_unstable_encodeRuleValue(value))) ||
+                                        (!!ruleSet && field.rule?.type === 'not in' && !ruleSet.has(_unstable_encodeRuleValue(value)));
                                     const displayValue =
                                         field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                                     return (
