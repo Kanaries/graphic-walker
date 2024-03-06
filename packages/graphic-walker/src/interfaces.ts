@@ -1,6 +1,6 @@
 import { Config as VgConfig, View } from 'vega';
 import { Config as VlConfig } from 'vega-lite';
-import type { FeatureCollection } from 'geojson';
+import type { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 import type { feature } from 'topojson-client';
 import { DATE_TIME_DRILL_LEVELS } from './constants';
 import { ToolbarItemProps } from './components/toolbar';
@@ -389,7 +389,7 @@ export interface IVisualConfig {
         width: number;
         height: number;
     };
-    geojson?: FeatureCollection;
+    geojson?: FeatureCollection<Geometry, GeoJsonProperties>;
     geoKey?: string;
     geoUrl?: IGeoUrl;
     limit: number;
@@ -423,7 +423,7 @@ export interface IVisualLayout {
         height: number;
     };
     useSvg?: boolean;
-    geojson?: FeatureCollection;
+    geojson?: FeatureCollection<Geometry, GeoJsonProperties>;
     geoKey?: string;
     geoUrl?: IGeoUrl;
     geoMapTileUrl?: string;
@@ -1108,3 +1108,21 @@ export interface IColorPalette {
     900: string;
     950: string;
 }
+
+export interface IStoInfoOld {
+    $schema: undefined;
+    datasets: IDataSet[];
+    specList: IVisSpec[];
+    dataSources: IDataSource[];
+}
+
+export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/stoinfo_v2.json';
+
+export interface IStoInfoV2 {
+    $schema: typeof IStoInfoV2SchemaUrl;
+    metaDict: Record<string, IMutField[]>;
+    datasets: Required<IDataSource>[];
+    specDict: Record<string, string[]>;
+}
+
+export type IStoInfo = IStoInfoOld | IStoInfoV2;

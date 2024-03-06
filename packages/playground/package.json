@@ -7,7 +7,7 @@
     "dev": "vite",
     "build:gw": "yarn workspace @kanaries/graphic-walker build",
     "build:db": "yarn workspace @kanaries/duckdb-computation build",
-    "build": "npm run build:gw && npm run build:db && tsc && vite build",
+    "build": "npm run build:gw && npm run build:db && tsc && cp ../graphic-walker/public/* ./public && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
