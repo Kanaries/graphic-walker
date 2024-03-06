@@ -1,4 +1,4 @@
-import parser from 'pgsql-ast-parser';
+import * as parser from 'pgsql-ast-parser';
 import { IMutField, IRow, ISemanticType } from '../interfaces';
 import { sum, mean, median, stdev, variance, max, min, countTruly, distinctCount } from './op/stat';
 import { dataframe2Dataset } from './execExp';

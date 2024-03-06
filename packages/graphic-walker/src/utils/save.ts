@@ -1,8 +1,6 @@
 import {
     DraggableFieldState,
-    IDataSet,
-    IDataSource,
-    IMutField,
+    IStoInfoOld,
     IVisSpec,
     IVisualConfig,
     IVisualConfigNew,
@@ -141,23 +139,6 @@ export const forwardVisualConfigs = (content: IStoInfoOld['specList'][number]): 
         },
     };
 };
-export interface IStoInfoOld {
-    $schema: undefined;
-    datasets: IDataSet[];
-    specList: IVisSpec[];
-    dataSources: IDataSource[];
-}
-
-export const IStoInfoV2SchemaUrl = 'https://graphic-walker.kanaries.net/stoinfo_v2.json';
-
-export interface IStoInfoV2 {
-    $schema: typeof IStoInfoV2SchemaUrl;
-    metaDict: Record<string, IMutField[]>;
-    datasets: Required<IDataSource>[];
-    specDict: Record<string, string[]>;
-}
-
-export type IStoInfo = IStoInfoOld | IStoInfoV2;
 
 export function download(data: string, filename: string, type: string) {
     var file = new Blob([data], { type: type });

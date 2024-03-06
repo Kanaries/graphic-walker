@@ -1,5 +1,5 @@
-import { IAnalyticType, IDataSource, IMutField, IRow, ISemanticType } from '../interfaces';
-import { IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
+import { IAnalyticType, IDataSource, IMutField, IRow, ISemanticType, IStoInfo, IStoInfoV2, IStoInfoV2SchemaUrl } from '../interfaces';
+import { forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { uniqueId } from '../models/utils';
 import { convertChart, exportFullRaw, fromFields, fromSnapshot } from '../models/visSpecHistory';
 
