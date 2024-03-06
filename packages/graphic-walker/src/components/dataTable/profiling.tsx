@@ -114,8 +114,6 @@ function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantita
         themeKey,
     });
 
-    const color = useContext(colorContext);
-
     const vegaConfig = useMemo(() => {
         const config: any = {
             ...theme,

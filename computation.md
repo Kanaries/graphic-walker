@@ -22,11 +22,11 @@ type IFilterRule = (
     }
     | {
         type: 'one of';
-        value: Array<string | number>;
+        value: Array<any>;
     }
     | {
         type: 'not in';
-        value: Array<string | number>;
+        value: Array<any>;
     }
 );
 

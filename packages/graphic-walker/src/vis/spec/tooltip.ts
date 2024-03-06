@@ -3,10 +3,10 @@ import { getMeaAggKey, getMeaAggName } from '../../utils';
 
 export function addTooltipEncode(encoding: { [key: string]: any }, details: Readonly<IViewField[]> = [], defaultAggregated = false) {
     const encs = Object.keys(encoding)
-        .filter((ck) => ck !== 'tooltip')
+        .filter((ck) => ck !== 'tooltip' && ck !== 'x2' && ck !== 'y2')
         .map((ck) => {
             return {
-                field: encoding[ck].field,
+                field: encoding[ck].field.replace('[0]', ''),
                 type: encoding[ck].type,
                 title: encoding[ck].title,
                 ...(encoding[ck].timeUnit

@@ -7,18 +7,19 @@ import { addFilterForQuery, addTransformForQuery, processExpression } from '../u
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { isNotEmpty } from '../utils';
 import { Dialog, DialogContent } from './ui/dialog';
-import { encodeFilterRule } from '@/utils/filter';
+import { toJS } from "mobx";
 
 const DataBoard = observer(function DataBoardModal() {
     const vizStore = useVizStore();
     const computation = useCompututaion();
     const { showDataBoard, selectedMarkObject, allFields, config, viewFilters } = vizStore;
     const filters = useMemo(() => {
-        const entries: [string, string | number][] = Object.entries(selectedMarkObject).filter(
-            (x): x is [string, string | number] => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x[0]) && isNotEmpty(x[1])
+        const mark = toJS(selectedMarkObject);
+        const entries: [string, any][] = Object.entries(mark).filter(
+            (x): x is [string, any] => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x[0]) && isNotEmpty(x[1])
         );
-        if (isNotEmpty(selectedMarkObject[MEA_KEY_ID]) && isNotEmpty(selectedMarkObject[MEA_VAL_ID])) {
-            entries.push([selectedMarkObject[MEA_KEY_ID] as string, selectedMarkObject[MEA_VAL_ID]]);
+        if (isNotEmpty(mark[MEA_KEY_ID]) && isNotEmpty(mark[MEA_VAL_ID])) {
+            entries.push([mark[MEA_KEY_ID] as string, mark[MEA_VAL_ID]]);
         }
         return entries.map(([k, v]): IVisFilter => ({ fid: k, rule: { type: 'one of', value: [v] } }));
     }, [selectedMarkObject]);
@@ -31,7 +32,7 @@ const DataBoard = observer(function DataBoardModal() {
                     addFilterForQuery(
                         query,
                         viewFilters
-                            .map((f) => ({ fid: f.fid, rule: encodeFilterRule(f.rule) }))
+                            .map((f) => ({ fid: f.fid, rule: f.rule }))
                             .filter((x): x is IVisFilter => !!x.rule)
                             .concat(filters)
                     ),
