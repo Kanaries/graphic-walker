@@ -1,3 +1,4 @@
+import { _unstable_encodeRuleValue } from '@/utils';
 import { IRow, IFilterFiledSimple } from '../interfaces';
 import { newOffsetDate } from './op/offset';
 
@@ -8,10 +9,12 @@ const toFilterFunc = (filter: IFilterFiledSimple): ((row: IRow) => boolean) => {
     }
     switch (rule.type) {
         case 'one of': {
-            return (which) => rule.value.has(which[fid]);
+            const set = new Set(rule.value.map(x => _unstable_encodeRuleValue(x)));
+            return (which) => set.has(_unstable_encodeRuleValue(which[fid]));
         }
         case 'not in': {
-            return (which) => !rule.value.has(which[fid]);
+            const set = new Set(rule.value.map(x => _unstable_encodeRuleValue(x)));
+            return (which) => !set.has(_unstable_encodeRuleValue(which[fid]));
         }
         case 'range': {
             return (which) => rule.value[0] <= which[fid] && which[fid] <= rule.value[1];

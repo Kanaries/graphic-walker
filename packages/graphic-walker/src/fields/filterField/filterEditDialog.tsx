@@ -29,7 +29,7 @@ const NominalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, 
 };
 
 const OrdinalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
+    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} displayOffset={displayOffset} />;
 };
 
 const TemporalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {

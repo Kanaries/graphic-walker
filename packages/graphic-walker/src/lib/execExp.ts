@@ -79,7 +79,7 @@ function bin(resKey: string, params: IExpParameter[], data: IDataFrame, binSize:
         if (Number.isNaN(bIndex)) {
             bIndex = 0;
         }
-        return Number((bIndex * step + _min).toFixed(safeBeaStep));
+        return [Number((bIndex * step + _min).toFixed(safeBeaStep)), Number(((bIndex + 1) * step + _min).toFixed(safeBeaStep))];
     });
     return {
         ...data,

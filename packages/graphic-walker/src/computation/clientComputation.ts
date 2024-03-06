@@ -17,16 +17,8 @@ export const dataQueryClient = async (
                 res = await applyFilter(res, step.filters.map(filter => {
                     const res: IFilterFiledSimple = {
                         fid: filter.fid,
-                        rule: null,
+                        rule: filter.rule,
                     };
-                    if (filter.rule.type === 'one of' || filter.rule.type === 'not in') {
-                        res.rule = {
-                            type: filter.rule.type,
-                            value: new Set(filter.rule.value),
-                        };
-                    } else {
-                        res.rule = filter.rule;
-                    }
                     return res;
                 }).filter(Boolean));
                 break;

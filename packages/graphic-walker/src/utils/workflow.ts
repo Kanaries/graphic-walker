@@ -10,10 +10,10 @@ import type {
     IDataQueryPayload,
     IPaintMap,
     IFilterField,
-    IChartForExport,
+    IChart,
     IMutField,
     IPaintMapV2,
-    IVisSpecForExport,
+    IVisSpec,
 } from '../interfaces';
 import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
@@ -344,7 +344,7 @@ export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[
     };
 };
 
-export function chartToWorkflow(chart: IVisSpecForExport | IChartForExport): IDataQueryPayload {
+export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     const parsedChart = parseChart(chart);
     const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
     const rows = parsedChart.encodings?.rows ?? [];

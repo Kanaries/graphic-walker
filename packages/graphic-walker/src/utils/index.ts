@@ -408,3 +408,10 @@ export function startTask(task: () => void) {
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
+
+export function _unstable_encodeRuleValue(value: any) {
+    if (typeof value === 'object') {
+        return JSON.stringify(value);
+    }
+    return value;
+}

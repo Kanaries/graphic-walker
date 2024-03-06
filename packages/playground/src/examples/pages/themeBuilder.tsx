@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { GraphicWalker, IChartForExport, IColorConfig, getPaletteFromColor } from '@kanaries/graphic-walker';
+import { GraphicWalker, IChart, IColorConfig, getPaletteFromColor } from '@kanaries/graphic-walker';
 import { IDataSource, extractHSL, extractRGB, toHex, useFetch } from '../util';
 import { Picker } from '../components/colorPicker';
 import spec from '../specs/student-chart.json';
@@ -7,7 +7,7 @@ import React from 'react';
 import rgb from 'color-space/rgb.js';
 import hsl from 'color-space/hsl.js';
 
-const chart = [spec[0] as IChartForExport];
+const chart = [spec[0] as IChart];
 
 function reversedColor(hex: string) {
     const { r, g, b } = extractRGB(hex);

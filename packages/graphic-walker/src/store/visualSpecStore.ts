@@ -33,11 +33,9 @@ import {
     IVisualLayout,
     Specification,
     ICoordMode,
-    IVisSpecForExport,
     IGeoUrl,
     ICreateField,
     ISemanticType,
-    IChartForExport,
     IPaintMap,
     IPaintMapV2,
     IDefaultConfig,
@@ -47,7 +45,6 @@ import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
-import { encodeFilterRule } from '../utils/filter';
 import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
@@ -454,7 +451,7 @@ export class VizSpecStore {
     }
 
     writeFilter(index: number, rule: IFilterRule | null) {
-        this.visList[this.visIndex] = performers.writeFilter(this.visList[this.visIndex], index, encodeFilterRule(rule));
+        this.visList[this.visIndex] = performers.writeFilter(this.visList[this.visIndex], index, rule);
     }
 
     transpose() {
@@ -547,8 +544,8 @@ export class VizSpecStore {
         return this.visList.map((x) => exportNow(x));
     }
 
-    importCode(data: IChartForExport[] | IVisSpecForExport[]) {
-        this.visList = data.map((x: IChartForExport | IVisSpecForExport) => {
+    importCode(data: IChart[] | IVisSpec[]) {
+        this.visList = data.map((x: IChart | IVisSpec) => {
             if ('layout' in x) {
                 return importNow(x);
             } else {
@@ -572,7 +569,7 @@ export class VizSpecStore {
         this.visIndex = 0;
     }
 
-    appendFromCode(data: IVisSpecForExport | IChartForExport) {
+    appendFromCode(data: IVisSpec | IChart) {
         const newChart = fromSnapshot(parseChart(data));
         this.visList.push(newChart);
         this.createdVis += 1;
