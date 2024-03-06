@@ -9,6 +9,10 @@ code {
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+.dark.App {
+    color-scheme: dark;
+}
+
 * {
     border-color: hsl(var(--border));
 }
