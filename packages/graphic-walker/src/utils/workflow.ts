@@ -15,12 +15,13 @@ import type {
     IPaintMapV2,
     IVisSpec,
 } from '../interfaces';
-import { viewEncodingKeys, type VizSpecStore } from '../store/visualSpecStore';
+import type { VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { parseChart } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
 import { replaceAggForFold } from '../lib/op/fold';
+import { viewEncodingKeys } from '@/models/visSpec';
 
 const walkExpression = (expression: IExpression, each: (field: string) => void): void => {
     for (const param of expression.params) {
@@ -97,12 +98,11 @@ export const createFilter = (f: IFilterField): IVisFilter => {
             },
         };
     } else if (rule.type === 'range') {
-        const range = [Number(rule.value[0]), Number(rule.value[1])] as const;
         return {
             fid,
             rule: {
                 type: 'range',
-                value: range,
+                value: [rule.value[0] ? Number(rule.value[0]) : rule.value[0], rule.value[1] ? Number(rule.value[1]) : rule.value[1]],
             },
         };
     } else if (rule.type === 'regexp') {

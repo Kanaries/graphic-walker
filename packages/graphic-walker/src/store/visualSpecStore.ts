@@ -49,31 +49,10 @@ import { INestNode } from '../components/pivotTable/inteface';
 import { getSort, getSortedEncoding } from '../utils';
 import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
 import { IPaintMapAdapter } from '../lib/paint';
+import { toChatMessage } from '@/models/chat';
+import { viewEncodingKeys } from '@/models/visSpec';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
-export const viewEncodingKeys = (geom: string) => {
-    switch (geom) {
-        case 'choropleth':
-            return ['geoId', 'color', 'opacity', 'text', 'details'];
-        case 'poi':
-            return ['longitude', 'latitude', 'color', 'opacity', 'size', 'details'];
-        case 'arc':
-            return ['radius', 'theta', 'color', 'opacity', 'size', 'details', 'text'];
-        case 'bar':
-        case 'tick':
-        case 'line':
-        case 'area':
-        case 'boxplot':
-            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'text'];
-        case 'text':
-            return ['columns', 'rows', 'color', 'opacity', 'size', 'text'];
-        case 'table':
-            return ['columns', 'rows'];
-        default:
-            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'shape'];
-    }
-};
-
 export class VizSpecStore {
     visList: VisSpecWithHistory[];
     visIndex: number = 0;
@@ -243,6 +222,10 @@ export class VizSpecStore {
     get canRedo() {
         const viz = this.visList[this.visIndex];
         return viz.cursor !== viz.timeline.length;
+    }
+
+    get chatMessages() {
+        return toChatMessage(this.visList[this.visIndex]);
     }
 
     paintFields() {
@@ -749,6 +732,10 @@ export class VizSpecStore {
         if (oriF.computed) {
             this.visList[this.visIndex] = performers.removeAllField(this.visList[this.visIndex], oriF.fid);
         }
+    }
+
+    replaceWithNLPQuery(query: string, response: string) {
+        this.visList[this.visIndex] = performers.replaceWithNLPQuery(this.visList[this.visIndex], query, response);
     }
 }
 

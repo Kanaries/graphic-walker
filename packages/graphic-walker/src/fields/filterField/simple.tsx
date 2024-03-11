@@ -257,7 +257,10 @@ function VirtualList({
     });
 
     const ruleSet = useMemo(
-        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x))) : null),
+        () =>
+            field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of')
+                ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x)))
+                : null,
         [field]
     );
 
@@ -351,7 +354,7 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
     const offset = field.offset ?? new Date().getTimezoneOffset();
 
     const handleChange = React.useCallback(
-        (value: readonly [number, number]) => {
+        (value: [number | null, number | null]) => {
             onChange({
                 type: 'temporal range',
                 value,
@@ -383,8 +386,8 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
                         className="h-9 py-4"
                         displayOffset={displayOffset}
                         min={min}
-                        max={field.rule.value[1]}
-                        value={field.rule.value[0]}
+                        max={field.rule.value[1] ?? max}
+                        value={field.rule.value[0] ?? min}
                         onChange={(value) => handleChange([value, field.rule?.value[1]])}
                     />
                 </div>
@@ -395,9 +398,9 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
                     <CalendarInput
                         className="h-9 py-4"
                         displayOffset={displayOffset}
-                        min={field.rule.value[0]}
+                        min={field.rule.value[0] ?? min}
                         max={max}
-                        value={field.rule.value[1]}
+                        value={field.rule.value[1] ?? max}
                         onChange={(value) => handleChange([field.rule?.value[0], value])}
                     />
                 </div>
@@ -412,7 +415,7 @@ export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, rawField
     const [stats] = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, rawFields);
     const range = stats?.range;
 
-    const handleChange = React.useCallback((value: readonly [number, number]) => {
+    const handleChange = React.useCallback((value: [number | null, number | null]) => {
         onChange({
             type: 'range',
             value,
@@ -442,9 +445,9 @@ function RangeField({
     onChange,
 }: {
     name: string;
-    value: [number, number];
+    value: [number | null, number | null];
     range: [number, number];
-    onChange: (v: [number, number]) => void;
+    onChange: (v: [number | null, number | null]) => void;
 }) {
     const [innerValue, setInnerValue] = useDebounceValueBind(value, onChange);
     // step to last digit
@@ -458,7 +461,13 @@ function RangeField({
                 </span>
             </div>
             <div className="flex items-center h-9">
-                <Slider step={stepDigit} min={range[0]} max={range[1]} value={innerValue} onValueChange={([min, max]) => setInnerValue([min, max])} />
+                <Slider
+                    step={stepDigit}
+                    min={range[0]}
+                    max={range[1]}
+                    value={[innerValue[0] ?? range[0], innerValue[1] ?? range[1]]}
+                    onValueChange={([min, max]) => setInnerValue([min, max])}
+                />
             </div>
         </div>
     );

@@ -90,8 +90,8 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
                         {field.rule.type === 'not in' && <>notIn: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
                         {field.rule.type === 'temporal range' && (
                             <>
-                                range: [{formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0]))},{' '}
-                                {formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[1]))}]
+                                range: [{field.rule.value[0] ? formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0])) : ''}
+                                , {field.rule.value[1] ? formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[1])) : ''}]
                             </>
                         )}
                     </span>

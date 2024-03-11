@@ -59,8 +59,9 @@ export enum Methods {
     addSQLComputedField,
     removeAllField,
     editAllField,
+    replaceWithNLPQuery,
 }
-type PropsMap = {
+export type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
     [Methods.removeField]: [keyof DraggableFieldState, number];
     [Methods.reorderField]: [keyof DraggableFieldState, number, number];
@@ -86,13 +87,14 @@ type PropsMap = {
     [Methods.addSQLComputedField]: [string, string, string];
     [Methods.removeAllField]: [string];
     [Methods.editAllField]: [string, Partial<IField>];
+    [Methods.replaceWithNLPQuery]: [string, string];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
 
-type VisActionOf<T> = T extends Methods ? [T, ...PropsMap[T]] : never;
+export type VisActionOf<T> = T extends Methods ? [T, ...PropsMap[T]] : never;
 // note: should be serializable
-type VisAction = VisActionOf<Methods>;
+export type VisAction = VisActionOf<Methods>;
 
 const actions: {
     [a in Methods]: (d: IChart, ...a: PropsMap[a]) => IChart;
@@ -180,8 +182,7 @@ const actions: {
                 dragId: f.dragId,
             }));
         }),
-    [Methods.writeFilter]: (data, index, rule) =>
-        mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule }))),
+    [Methods.writeFilter]: (data, index, rule) => mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule }))),
     [Methods.setName]: (data, name) => ({
         ...data,
         name,
@@ -463,6 +464,9 @@ const actions: {
                 ) as typeof e
         );
     },
+    [Methods.replaceWithNLPQuery]: (data, _query, response) => {
+        return { ...JSON.parse(response), visId: data.visId, name: data.name };
+    },
 };
 
 const diffChangedEncodings = (prev: IChart, next: IChart) => {
@@ -608,7 +612,7 @@ type VisSpecHistoryInfoForExport = {
 };
 export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string {
     const result: VisSpecHistoryInfoForExport = {
-        base: (data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base),
+        base: data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base,
         timeline: data.timeline.slice(Math.max(0, data.cursor - maxHistory)),
     };
     return JSON.stringify(result);

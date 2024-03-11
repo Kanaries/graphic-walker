@@ -310,11 +310,11 @@ export interface IDraggableViewStateKey {
 export type IFilterRule =
     | {
           type: 'range';
-          value: readonly [number, number];
+          value: [number | null, number | null];
       }
     | {
           type: 'temporal range';
-          value: readonly [number, number];
+          value: [number | null, number | null];
           offset?: number;
           format?: string;
       }
@@ -462,6 +462,7 @@ export interface IVisSpec {
 export enum ISegmentKey {
     vis = 'vis',
     data = 'data',
+    chat = 'chat',
 }
 
 export type IThemeKey = 'vega' | 'g2' | 'streamlit';
@@ -869,6 +870,19 @@ export interface IErrorHandlerProps {
     onError?: (err: Error) => void;
 }
 
+export interface IUserChatMessage {
+    content: string;
+    role: 'user';
+    type: 'generated' | 'normal';
+}
+
+export interface IAssistantChatMessage {
+    chart: IChart;
+    role: 'assistant';
+    type: 'generated' | 'normal';
+}
+
+export type IChatMessage = IUserChatMessage | IAssistantChatMessage;
 export interface IVizProps {
     themeConfig?: GWGlobalConfig;
     /** @default "vega" */
@@ -883,11 +897,12 @@ export interface IVizProps {
     enhanceAPI?: {
         header?: Record<string, string>;
         features?: {
-            askviz?:
+            askviz?: string | boolean | ((metas: IViewField[], query: string) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
+            feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
+            vlChat?:
                 | string
                 | boolean
-                | ((metas: IViewField[], query: string) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
-            feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
+                | ((metas: IViewField[], chats: IChatMessage[]) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
         };
     };
     geoList?: IGeoDataItem[];

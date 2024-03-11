@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { IChart, IViewField } from '../interfaces';
+import { IChart, IFilterFiledSimple, IViewField, IVisualConfig } from '../interfaces';
 import { fillChart } from '../models/visSpecHistory';
 
 type markType =
@@ -190,6 +190,30 @@ function getGeom(mark: markChannel): GWGeoms {
     return mapper(mark.type);
 }
 
+const encodeOP = (op: string) => {
+    switch (op) {
+        case '==':
+        case '===':
+        case 'equal':
+        case 'oneOf':
+            return 'one of';
+        case '!=':
+        case '!==':
+            return 'not in';
+        case '>':
+        case '>=':
+        case '<':
+        case '<=':
+        case 'lt':
+        case 'lte':
+        case 'gt':
+        case 'gte':
+        case 'range':
+            return 'range';
+    }
+    return 'one of';
+};
+
 export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, name: string): IChart {
     let geom: GWGeoms = 'tick';
     const encodings: {
@@ -211,9 +235,76 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
             encodings.push(...entries(vl.spec.encoding));
         }
     }
+    const config: Partial<IVisualConfig> = {};
+    const rules = new Map<string, { field: string; rule: 'one of' | 'not in' | 'range'; value: any[] }>();
     const dict = new Map<string, IViewField>();
     allFields.forEach((v) => {
-        dict.set(v.fid, v);
+        dict.set(v.name, v);
+    });
+    const addRule = (field: string, op: string, value: any) => {
+        const key = `${field}|${encodeOP(op)}`;
+        if (!rules.has(key)) {
+            rules.set(key, { field: field[1], rule: encodeOP(op), value: [] });
+        }
+        if (op.startsWith('>') || op.startsWith('gt')) {
+            rules.get(key)!.value = [value, rules.get(key)!.value[1] ?? null];
+        } else if (op.startsWith('<') || op.startsWith('lt')) {
+            rules.get(key)!.value = [rules.get(key)!.value[0] ?? null, value];
+        } else if (op === 'range') {
+            rules.get(key)!.value = value;
+        } else if (op === 'oneOf') {
+            rules.get(key)!.value.push(...value);
+        } else {
+            rules.get(key)!.value.push(value);
+        }
+    };
+    if (vl.transform) {
+        vl.transform.forEach((t) => {
+            if (t.fold) {
+                config.folds = t.fold.map((name) => dict.get(name)?.fid ?? name);
+            }
+            if (t.filter) {
+                if (typeof t.filter === 'string') {
+                    const filters = (t.filter as string).split(/[\&\&|\|\|]/g);
+                    filters.forEach((f) => {
+                        const result = /datum(\.[A-z_]+|\[['"][A-z\s_]+['"]\])\s*((\!=|==|>|<)=?)\s*(.*)/.exec(f);
+                        if (result) {
+                            const field = /(?:\.|\[["'])([A-z\s_]*)(?:["']\])?/.exec(result[1]);
+                            if (!field) {
+                                return;
+                            }
+                            const op = result[2];
+                            const value = result[4];
+                            addRule(field[1], op, JSON.parse(value));
+                        }
+                    });
+                }
+                if (typeof t.filter === 'object') {
+                    if (t.filter.field === 'rank') {
+                        if (t.filter.lte) {
+                            config.limit = t.filter.lte;
+                        } else if (t.filter.lt) {
+                            config.limit = Math.floor(t.filter.lt);
+                            if (config.limit == t.filter.lt) {
+                                config.limit -= 1;
+                            }
+                        }
+                    } else {
+                        const op = Object.keys(t.filter).find((k) => ['equal', 'oneOf', 'lt', 'lte', 'gt', 'gte', 'range'].includes(k));
+                        op && addRule(t.filter.field, op, t.filter[op]);
+                    }
+                }
+            }
+        });
+    }
+    const filterFields = Array.from(rules.values()).map(({ field, rule, value }): IFilterFiledSimple => {
+        return {
+            fid: field,
+            rule: {
+                type: rule,
+                value: value as any,
+            },
+        };
     });
     const results = encodings.flatMap(({ name, value }) => (isSupportedChannel(name) ? [encodingToDimension(name, value, dict)] : []));
     const defaultAggregated = results.reduce((x, y) => x || !!y.aggregate, false);
@@ -231,6 +322,7 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                     {
                         name: x.dimensionType,
                         value: binFields.get(x.binDimension.name) ?? x.binDimension,
+                        dragId: `gw_${nanoid(4)}`,
                     },
                 ];
             }
@@ -240,6 +332,7 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                     name: x.dimensionType,
                     value: {
                         ...x.dimension,
+                        dragId: `gw_${nanoid(4)}`,
                         analyticType,
                         ...(x.aggregate
                             ? {
@@ -283,6 +376,14 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
             text: resultFields.filter(is('text')).map(get),
             theta: resultFields.filter(is('theta')).map(get),
             color: resultFields.filter(is('color')).map(get),
+            filters: filterFields.map((f) => {
+                const originalField = dict.get(f.fid)!;
+                return {
+                    ...originalField,
+                    dragId: `gw_${nanoid(4)}`,
+                    rule: f.rule,
+                };
+            }),
         },
         layout: {
             stack,
@@ -290,6 +391,7 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
         config: {
             defaultAggregated,
             geoms: [geom],
+            ...config,
         },
     });
 }

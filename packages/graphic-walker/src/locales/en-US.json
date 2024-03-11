@@ -134,7 +134,8 @@
         },
         "segments": {
             "vis": "Visualization",
-            "data": "Data"
+            "data": "Data",
+            "chat": "Chat"
         },
         "feedback": {
             "vote": "Is the result of Askviz good?",
