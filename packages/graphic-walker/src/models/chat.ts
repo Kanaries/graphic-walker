@@ -102,7 +102,7 @@ export function toVegaSimplified(chart: IChart) {
             if (!newSpec.transform) {
                 newSpec.transform = [];
             }
-            newSpec.transform.push(...filters.map(transformFilter));
+            newSpec.transform.push(...filters.map(transformFilter).map((filter) => ({ filter })));
         }
         return newSpec;
     });
