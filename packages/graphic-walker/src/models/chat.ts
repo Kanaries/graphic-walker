@@ -109,7 +109,14 @@ export function toVegaSimplified(chart: IChart) {
     if (specs.length === 1) {
         return specs[0];
     }
-    return specs;
+    const concat = specs.map((spec) => {
+        const { transform, config, ...rest } = spec;
+        return rest;
+    });
+    return {
+        ...(specs[0].transform ? { transform: specs[0].transform } : {}),
+        concat,
+    };
 }
 
 const actionMessageMapper: {

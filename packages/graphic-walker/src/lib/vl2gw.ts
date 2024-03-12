@@ -214,6 +214,20 @@ const encodeOP = (op: string) => {
     return 'one of';
 };
 
+function deduper<T>(arr: T[], keyFunction: (item: T) => string) {
+    const set = new Set<string>();
+    const result: T[] = [];
+    arr.forEach((item) => {
+        const key = keyFunction(item);
+        if (set.has(key)) {
+            return;
+        }
+        set.add(key);
+        result.push(item);
+    });
+    return result;
+}
+
 export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, name: string): IChart {
     let geom: GWGeoms = 'tick';
     const encodings: {
@@ -235,6 +249,27 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
             encodings.push(...entries(vl.spec.encoding));
         }
     }
+    vl.concat &&
+        vl.concat.forEach((v) => {
+            geom = getGeom(v.mark);
+            if (v.encoding) {
+                encodings.push(...entries(v.encoding));
+            }
+        });
+    vl.hconcat &&
+        vl.hconcat.forEach((v) => {
+            geom = getGeom(v.mark);
+            if (v.encoding) {
+                encodings.push(...entries(v.encoding));
+            }
+        });
+    vl.vconcat &&
+        vl.vconcat.forEach((v) => {
+            geom = getGeom(v.mark);
+            if (v.encoding) {
+                encodings.push(...entries(v.encoding));
+            }
+        });
     const config: Partial<IVisualConfig> = {};
     const rules = new Map<string, { field: string; rule: 'one of' | 'not in' | 'range'; value: any[] }>();
     const dict = new Map<string, IViewField>();
@@ -354,36 +389,45 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
     const is = (v: string) => (x: { name: string }) => x.name === v;
     const get = <T>(x: { value: T }) => x.value;
 
+    const deduperFields = <T extends { fid: string }>(fields: T[]) => deduper(fields, (f) => f.fid);
+
     return fillChart({
         visId,
         name,
         encodings: {
             dimensions: allFields.filter((x) => x.analyticType === 'dimension').concat(...binFields.values()),
             measures: allFields.filter((x) => x.analyticType === 'measure' && x.fid !== countField.fid).concat(countField),
-            columns: resultFields
-                .filter(is('facetX'))
-                .concat(resultFields.filter(is('column')))
-                .map(get),
-            rows: resultFields
-                .filter(is('facetY'))
-                .concat(resultFields.filter(is('row')))
-                .map(get),
-            details: resultFields.filter(is('details')).map(get),
-            opacity: resultFields.filter(is('opacity')).map(get),
-            radius: resultFields.filter(is('radius')).map(get),
-            shape: resultFields.filter(is('shape')).map(get),
-            size: resultFields.filter(is('size')).map(get),
-            text: resultFields.filter(is('text')).map(get),
-            theta: resultFields.filter(is('theta')).map(get),
-            color: resultFields.filter(is('color')).map(get),
-            filters: filterFields.map((f) => {
-                const originalField = dict.get(f.fid)!;
-                return {
-                    ...originalField,
-                    dragId: `gw_${nanoid(4)}`,
-                    rule: f.rule,
-                };
-            }),
+            columns: deduperFields(
+                resultFields
+                    .filter(is('facetX'))
+                    .concat(resultFields.filter(is('column')))
+                    .map(get)
+            ),
+            rows: deduperFields(
+                resultFields
+                    .filter(is('facetY'))
+                    .concat(resultFields.filter(is('row')))
+                    .map(get)
+            ),
+            details: deduperFields(resultFields.filter(is('details')).map(get)),
+            opacity: deduperFields(resultFields.filter(is('opacity')).map(get)),
+            radius: deduperFields(resultFields.filter(is('radius')).map(get)),
+            shape: deduperFields(resultFields.filter(is('shape')).map(get)),
+            size: deduperFields(resultFields.filter(is('size')).map(get)),
+            text: deduperFields(resultFields.filter(is('text')).map(get)),
+            theta: deduperFields(resultFields.filter(is('theta')).map(get)),
+            color: deduperFields(resultFields.filter(is('color')).map(get)),
+            filters: deduper(
+                filterFields.map((f) => {
+                    const originalField = dict.get(f.fid)!;
+                    return {
+                        ...originalField,
+                        dragId: `gw_${nanoid(4)}`,
+                        rule: f.rule,
+                    };
+                }),
+                (f) => `${f.fid}_${f.rule?.type}`
+            ),
         },
         layout: {
             stack,
