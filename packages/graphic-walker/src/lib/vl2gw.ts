@@ -279,7 +279,7 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
     const addRule = (field: string, op: string, value: any) => {
         const key = `${field}|${encodeOP(op)}`;
         if (!rules.has(key)) {
-            rules.set(key, { field: field[1], rule: encodeOP(op), value: [] });
+            rules.set(key, { field, rule: encodeOP(op), value: [] });
         }
         if (op.startsWith('>') || op.startsWith('gt')) {
             rules.get(key)!.value = [value, rules.get(key)!.value[1] ?? null];
