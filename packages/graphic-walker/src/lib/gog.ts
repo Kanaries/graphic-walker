@@ -57,13 +57,14 @@ function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
  * @param encodings
  * @returns
  */
-export function algebraLint<T extends Partial<DraggableFieldState>>(encodings: T): Partial<T> {
+export function algebraLint<T extends Partial<DraggableFieldState>>(geom: string, encodings: T): Partial<T> {
+
     const result: Partial<T> = {};
     if (encodings.rows && encodings.rows.length > 0) {
-        result.rows = applyOperations(encodings.rows, [LR.measureAfterDimension, LR.crossLimit(2)]);
+        result.rows = applyOperations(encodings.rows, [LR.measureAfterDimension, LR.crossLimit(geom === 'table' ? Infinity : 2)]);
     }
     if (encodings.columns && encodings.columns.length > 0) {
-        result.columns = applyOperations(encodings.columns, [LR.measureAfterDimension, LR.crossLimit(2)]);
+        result.columns = applyOperations(encodings.columns, [LR.measureAfterDimension, LR.crossLimit(geom === 'table' ? Infinity : 2)]);
     }
     if (encodings.latitude && encodings.latitude.length > 0) {
         result.latitude = applyOperations(encodings.latitude, [LR.forceAnalyticType('dimension'), LR.forceSemanticType('quantitative'), LR.crossLimit(1)]);

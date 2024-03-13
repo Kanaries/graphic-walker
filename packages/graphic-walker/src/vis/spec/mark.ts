@@ -2,19 +2,19 @@ import { ISemanticType } from "../../interfaces";
 
 /**
  *
- * @param semanticTypeList semanticTypeList.length <= 2，调用时，手动将columns 和 rows的最后一个元素组合传进来
+ * @param subViewFieldsSemanticTypes subViewFieldsSemanticTypes.length <= 2, subView means the single view visualization in facet system, we only need to consider the semantic types of the fields in the subView
  * @returns geom(mark) type
  */
-export function autoMark(semanticTypeList: ISemanticType[]): string {
-    if (semanticTypeList.length < 2) {
-        if (semanticTypeList[0] === "temporal" || semanticTypeList[0] === 'quantitative') return "tick";
+export function autoMark(subViewFieldsSemanticTypes: ISemanticType[]): string {
+    if (subViewFieldsSemanticTypes.length < 2) {
+        if (subViewFieldsSemanticTypes[0] === "temporal" || subViewFieldsSemanticTypes[0] === 'quantitative') return "tick";
         return "bar";
     }
     const couter: Map<ISemanticType, number> = new Map();
     (["nominal", "ordinal", "quantitative", "temporal"] as ISemanticType[]).forEach((s) => {
         couter.set(s, 0);
     });
-    for (let st of semanticTypeList) {
+    for (let st of subViewFieldsSemanticTypes) {
         couter.set(st, couter.get(st)! + 1);
     }
     if (couter.get("nominal") === 1 || couter.get("ordinal") === 1) {

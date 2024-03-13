@@ -21,7 +21,7 @@ import {
     IDefaultConfig,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
-import { createCountField, createVirtualFields, isNotEmpty } from '../utils';
+import { arrayEqual, createCountField, createVirtualFields, isNotEmpty } from '../utils';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout, visSpecDecoder, forwardVisualConfigs } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
@@ -504,8 +504,12 @@ type reducerMiddleware<T> = (item: T, original: T) => T;
 
 const diffLinter: reducerMiddleware<IChart> = (item, original) => {
     const diffs = diffChangedEncodings(original, item);
-    if (Object.keys(diffs).length === 0) return item;
-    return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(diffs), ...lintExtraFields(diffs) }));
+    const geom = item.config.geoms[0];
+    if (Object.keys(diffs).length === 0 && arrayEqual(item.config.geoms, original.config.geoms)) return item;
+    if (!arrayEqual(item.config.geoms, original.config.geoms)) {
+        return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, x), ...lintExtraFields(x) }));
+    }
+    return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, diffs), ...lintExtraFields(diffs) }));
 };
 
 const reducerMiddleWares: reducerMiddleware<IChart>[] = [diffLinter];
