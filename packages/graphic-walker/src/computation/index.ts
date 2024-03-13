@@ -49,6 +49,7 @@ export const datasetStats = async (service: IComputationFunction): Promise<IData
 
 export const dataReadRaw = async (
     service: IComputationFunction,
+    fields: string[],
     pageSize: number,
     pageOffset = 0,
     option?: {
@@ -71,7 +72,7 @@ export const dataReadRaw = async (
                 query: [
                     {
                         op: 'raw',
-                        fields: ['*'],
+                        fields,
                     },
                 ],
             },
