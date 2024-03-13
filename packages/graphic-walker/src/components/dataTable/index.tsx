@@ -305,7 +305,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
-        dataReadRaw(computationFunction, size, pageIndex, {
+        dataReadRaw(computationFunction, metas.map(m => m.fid), size, pageIndex, {
             sorting,
             filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
         })
