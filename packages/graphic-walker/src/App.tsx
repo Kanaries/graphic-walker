@@ -38,8 +38,9 @@ import { newChart } from './models/visSpecHistory';
 import ComputedFieldDialog from './components/computedField';
 import { VizAppContext } from './store/context';
 import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
-import { ChartPieIcon, CircleStackIcon } from '@heroicons/react/24/outline';
+import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
+import { VegaliteChat } from './components/chat';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -161,6 +162,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <TabsTrigger value={ISegmentKey.vis}>
                                             <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
                                         </TabsTrigger>
+                                        {enhanceAPI?.features?.vlChat && (
+                                            <TabsTrigger value={ISegmentKey.chat}>
+                                                <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                            </TabsTrigger>
+                                        )}
                                     </TabsList>
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
@@ -247,6 +253,15 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             </div>
                                         </div>
                                     </TabsContent>
+                                    {enhanceAPI?.features?.vlChat && (
+                                        <TabsContent value={ISegmentKey.chat}>
+                                            <VegaliteChat
+                                                api={typeof enhanceAPI.features.vlChat === 'boolean' ? '' : enhanceAPI.features.vlChat}
+                                                headers={enhanceAPI?.header}
+                                                channelScales={props.channelScales}
+                                            />
+                                        </TabsContent>
+                                    )}
                                 </Tabs>
                             </div>
                         </FieldsContextWrapper>

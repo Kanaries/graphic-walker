@@ -134,7 +134,8 @@
         },
         "segments": {
             "vis": "可视化",
-            "data": "数据"
+            "data": "数据",
+            "chat": "会话"
         },
         "feedback": {
             "vote": "对Askviz的结果满意吗？",

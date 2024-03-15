@@ -40,7 +40,7 @@ interface ValueInputProps {
 
 const ValueInput: React.FC<ValueInputProps> = (props) => {
     const { min, max, value, step, resetValue, onChange } = props;
-    const [innerValue, setInnerValue] = useState(`${value}`);
+    const [innerValue, setInnerValue] = useState(`${value ?? resetValue}`);
 
     const handleSubmitValue = () => {
         const v = Number(innerValue);
@@ -53,7 +53,7 @@ const ValueInput: React.FC<ValueInputProps> = (props) => {
     };
 
     useEffect(() => {
-        setInnerValue(`${value}`);
+        setInnerValue(`${value ?? resetValue}`);
     }, [value]);
 
     return (
@@ -77,8 +77,8 @@ const ValueInput: React.FC<ValueInputProps> = (props) => {
 interface SliderProps {
     min: number;
     max: number;
-    value: readonly [number, number];
-    onChange: (value: readonly [number, number]) => void;
+    value: [number | null, number | null];
+    onChange: (value: [number, number]) => void;
 }
 
 const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, value, onChange }) {
@@ -89,18 +89,18 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, val
 
     return (
         <SliderContainer>
-            <RangeSlider value={value as [number, number]} min={min} max={max} step={stepDigit} onValueChange={([min, max]) => onChange([min, max])} />
+            <RangeSlider value={[value[0] ?? min, value[1] ?? max]} min={min} max={max} step={stepDigit} onValueChange={([min, max]) => onChange([min, max])} />
             <div className="output">
                 <output htmlFor="slider:min">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     {
                         <ValueInput
                             min={min}
-                            max={value[1]}
-                            value={value[0]}
+                            max={value[1] ?? max}
+                            value={value[0] ?? min}
                             step={stepDigit}
                             resetValue={min}
-                            onChange={(newValue) => onChange([newValue, value[1]])}
+                            onChange={(newValue) => onChange([newValue, value[1] ?? max])}
                         />
                     }
                 </output>
@@ -108,12 +108,12 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, val
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     {
                         <ValueInput
-                            min={value[0]}
+                            min={value[0] ?? min}
                             max={max}
-                            value={value[1]}
+                            value={value[1] ?? max}
                             step={stepDigit}
                             resetValue={max}
-                            onChange={(newValue) => onChange([value[0], newValue])}
+                            onChange={(newValue) => onChange([value[0] ?? min, newValue])}
                         />
                     }
                 </output>

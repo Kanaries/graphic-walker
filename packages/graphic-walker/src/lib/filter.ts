@@ -9,21 +9,21 @@ const toFilterFunc = (filter: IFilterFiledSimple): ((row: IRow) => boolean) => {
     }
     switch (rule.type) {
         case 'one of': {
-            const set = new Set(rule.value.map(x => _unstable_encodeRuleValue(x)));
+            const set = new Set(rule.value.map((x) => _unstable_encodeRuleValue(x)));
             return (which) => set.has(_unstable_encodeRuleValue(which[fid]));
         }
         case 'not in': {
-            const set = new Set(rule.value.map(x => _unstable_encodeRuleValue(x)));
+            const set = new Set(rule.value.map((x) => _unstable_encodeRuleValue(x)));
             return (which) => !set.has(_unstable_encodeRuleValue(which[fid]));
         }
         case 'range': {
-            return (which) => rule.value[0] <= which[fid] && which[fid] <= rule.value[1];
+            return (which) => (rule.value[0] ?? -Infinity) <= which[fid] && which[fid] <= (rule.value[1] ?? Infinity);
         }
         case 'temporal range': {
             return (which) => {
                 try {
                     const time = rule.offset ? newOffsetDate(rule.offset)(which[fid]).getTime() : new Date(which[fid]).getTime();
-                    return rule.value[0] <= time && time <= rule.value[1];
+                    return (rule.value[0] ?? -Infinity) <= time && time <= (rule.value[1] ?? Infinity);
                 } catch (error) {
                     console.error(error);
                     return false;
