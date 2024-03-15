@@ -128,7 +128,8 @@
         },
         "segments": {
             "vis": "可視化",
-            "data": "データ"
+            "data": "データ",
+            "chat": "会話"
         },
         "feedback": {
             "vote": "Askvizの結果はどうですか？",

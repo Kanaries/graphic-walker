@@ -17,7 +17,7 @@ import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
-import { viewEncodingKeys } from '../store/visualSpecStore';
+import { viewEncodingKeys } from '@/models/visSpec';
 
 interface RendererProps {
     themeKey?: IThemeKey;

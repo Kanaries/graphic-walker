@@ -486,7 +486,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
     });
 
     const ruleSet = useMemo(
-        () => (field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of') ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x))) : null),
+        () =>
+            field.rule && (field.rule.type === 'not in' || field.rule?.type === 'one of')
+                ? new Set(field.rule.value.map((x) => _unstable_encodeRuleValue(x)))
+                : null,
         [field]
     );
 
@@ -768,7 +771,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     }, [onChange, field, min, max, format, offset, active]);
 
     const handleChange = React.useCallback(
-        (value: readonly [number, number]) => {
+        (value: [number, number]) => {
             onChange({
                 type: 'temporal range',
                 value,
@@ -797,8 +800,8 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                     <CalendarInput
                         displayOffset={displayOffset}
                         min={min}
-                        max={field.rule.value[1]}
-                        value={field.rule.value[0]}
+                        max={field.rule.value[1] ?? max}
+                        value={field.rule.value[0] ?? min}
                         onChange={(value) => handleChange([value, field.rule?.value[1]])}
                     />
                 </div>
@@ -806,9 +809,9 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     <CalendarInput
                         displayOffset={displayOffset}
-                        min={field.rule.value[0]}
+                        min={field.rule.value[0] ?? min}
                         max={max}
-                        value={field.rule.value[1]}
+                        value={field.rule.value[1] ?? max}
                         onChange={(value) => handleChange([field.rule?.value[0], value])}
                     />
                 </div>
@@ -833,7 +836,7 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({
         }
     }, [onChange, field, range, active]);
 
-    const handleChange = React.useCallback((value: readonly [number, number]) => {
+    const handleChange = React.useCallback((value: [number, number]) => {
         onChange({
             type: 'range',
             value,
