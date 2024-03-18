@@ -4,6 +4,7 @@ import { ShadowDomContext } from '../../shadow-dom';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { StyledPicker } from '../color-picker';
+import { ErrorBoundary } from 'react-error-boundary';
 
 export const PixelCursor = (props: { color: string; dia: number; factor: number; style?: React.CSSProperties; className?: string }) => {
     const { className, color, dia, factor, style } = props;
@@ -212,44 +213,58 @@ export const ColorEditor = (props: { color: string; onChangeColor: (color: strin
 
     const [color, setColor] = React.useState(props.color);
     return (
-        <div className="relative" ref={ref}>
-            <div
-                className="w-8 h-5 border-2"
-                style={{ backgroundColor: props.color }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setShowColorEdit(true);
-                    setColorEdited(false);
-                    setColor(props.color);
-                }}
-            ></div>
-            {showColorEdit && (
-                <div className="absolute right-0 top-8 z-40 flex-col space-y-1 bg-popover shadow-lg rounded-md border">
-                    <StyledPicker
-                        presetColors={props.colors}
-                        color={color}
-                        onChange={(color) => {
-                            setColorEdited(true);
-                            setColor(color.hex);
+        <ErrorBoundary
+            fallback={
+                <div className="flex space-x-2">
+                    <div className="w-4 h-4" style={{ backgroundColor: props.color }} />
+                    <Input
+                        value={props.color}
+                        onChange={(e) => {
+                            props.onChangeColor(e.target.value);
                         }}
-                        noShadow
-                        noBorder
                     />
-                    <div className="flex justify-end p-2">
-                        <Button
-                            variant="outline"
-                            children="Save"
-                            onClick={() => {
-                                setShowColorEdit(false);
-                                if (colorEdited) {
-                                    props.onChangeColor(color);
-                                }
-                            }}
-                        ></Button>
-                    </div>
                 </div>
-            )}
-        </div>
+            }
+        >
+            <div className="relative" ref={ref}>
+                <div
+                    className="w-8 h-5 border-2"
+                    style={{ backgroundColor: props.color }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowColorEdit(true);
+                        setColorEdited(false);
+                        setColor(props.color);
+                    }}
+                ></div>
+                {showColorEdit && (
+                    <div className="absolute right-0 top-8 z-40 flex-col space-y-1 bg-popover shadow-lg rounded-md border">
+                        <StyledPicker
+                            presetColors={props.colors}
+                            color={color}
+                            onChange={(color) => {
+                                setColorEdited(true);
+                                setColor(color.hex);
+                            }}
+                            noShadow
+                            noBorder
+                        />
+                        <div className="flex justify-end p-2">
+                            <Button
+                                variant="outline"
+                                children="Save"
+                                onClick={() => {
+                                    setShowColorEdit(false);
+                                    if (colorEdited) {
+                                        props.onChangeColor(color);
+                                    }
+                                }}
+                            ></Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </ErrorBoundary>
     );
 };

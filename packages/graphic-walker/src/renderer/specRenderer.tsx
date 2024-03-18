@@ -8,7 +8,8 @@ import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVis
 import LoadingLayer from '../components/loadingLayer';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
-import { themeContext } from '@/store/theme';
+import { colorContext, themeContext } from '@/store/theme';
+import { parseColorToHex } from '@/utils/colors';
 
 interface SpecRendererProps {
     name?: string;
@@ -86,6 +87,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useContext(themeContext);
+    const colorConfig = useContext(colorContext);
     const themeConfig = getTheme({
         themeKey,
         mediaTheme,
@@ -97,7 +99,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
             ...themeConfig,
-            background: 'transparent',
+            background: parseColorToHex(colorConfig[mediaTheme].background),
         };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
