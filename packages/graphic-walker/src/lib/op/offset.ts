@@ -63,9 +63,9 @@ export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
     return creator;
 }
 
-export function parsedOffsetDate(displayOffset = new Date().getTimezoneOffset(), parseOffset = new Date().getTimezoneOffset()) {
-    const toOffset = newOffsetDate(displayOffset);
-    const parse = newOffsetDate(parseOffset);
+export function parsedOffsetDate(displayOffset: number | null | undefined, parseOffset: number | null | undefined) {
+    const toOffset = newOffsetDate(displayOffset ?? new Date().getTimezoneOffset());
+    const parse = newOffsetDate(parseOffset ?? new Date().getTimezoneOffset());
     function creator(): OffsetDate;
     function creator(value: number | string | Date): OffsetDate;
     function creator(year: number, monthIndex: number, date?: number, hours?: number, minutes?: number, seconds?: number, ms?: number): OffsetDate;

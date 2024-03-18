@@ -73,20 +73,22 @@ export function getSingleView(props: SingleViewProps) {
     const transform = fields
         .filter((f) => f.semanticType === 'temporal')
         .map((f) => {
-            let offsetTime = (displayOffset ?? new Date().getTimezoneOffset() - (f.offset ?? new Date().getTimezoneOffset())) * -60000;
+            let offsetTime = (displayOffset ?? new Date().getTimezoneOffset()) * -60000;
             const fid = encodeFid(f.fid);
             const sample = dataSource[0]?.[f.fid];
             if (sample) {
                 const format = getTimeFormat(sample);
                 if (format !== 'timestamp') {
-                    if (unexceptedUTCParsedPatternFormats.includes(format)) {
-                        offsetTime += new Date().getTimezoneOffset() * 60000;
+                    offsetTime += (f.offset ?? new Date().getTimezoneOffset()) * 60000;
+                    if (!unexceptedUTCParsedPatternFormats.includes(format)) {
+                        // the raw data will be parsed as local timezone, so reduce the offset with the local time zone.
+                        offsetTime -= new Date().getTimezoneOffset() * 60000;
                     }
                     if (offsetTime === 0) {
                         return null;
                     }
                     return {
-                        calculate: `toDate(datum.${fid})${formatOffset(offsetTime)}`,
+                        calculate: `toDate(datum[${JSON.stringify(fid)}])${formatOffset(offsetTime)}`,
                         as: fid,
                     };
                 }
@@ -95,7 +97,7 @@ export function getSingleView(props: SingleViewProps) {
                 return null;
             }
             return {
-                calculate: `datum.${fid}${formatOffset(offsetTime)}`,
+                calculate: `datum[${JSON.stringify(fid)}]${formatOffset(offsetTime)}`,
                 as: fid,
             };
         })
