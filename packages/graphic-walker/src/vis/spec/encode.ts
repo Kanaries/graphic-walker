@@ -91,7 +91,7 @@ export function channelEncode(props: IEncodeProps) {
                 if (field.analyticType === 'measure') {
                     encoding[c].type = 'quantitative';
                 }
-                if (field.semanticType === 'temporal' && isNotEmpty(props.displayOffset)) {
+                if (field.semanticType === 'temporal') {
                     encoding[c].scale = { type: 'utc' };
                 }
                 if (field.semanticType === 'temporal' && field.timeUnit) {
