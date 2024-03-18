@@ -18,6 +18,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
 import Combobox from '../dropdownSelect/combobox';
 import { StyledPicker } from '../color-picker';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
@@ -146,37 +147,72 @@ const VisualConfigPanel: React.FC = () => {
                             <div className="flex space-x-6">
                                 <div>
                                     <label className="block text-xs font-medium leading-6">{t('config.primary_color')}</label>
-                                    <div
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                        }}
+                                    <ErrorBoundary
+                                        fallback={
+                                            <div className="flex space-x-2">
+                                                <div
+                                                    className="w-4 h-4"
+                                                    style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
+                                                />
+                                                <Input
+                                                    value={defaultColor.r}
+                                                    type="number"
+                                                    onChange={(e) => {
+                                                        setColorEdited(true);
+                                                        setDefaultColor((x) => ({ ...x, r: Number(e.target.value) }));
+                                                    }}
+                                                />
+                                                <Input
+                                                    value={defaultColor.g}
+                                                    type="number"
+                                                    onChange={(e) => {
+                                                        setColorEdited(true);
+                                                        setDefaultColor((x) => ({ ...x, g: Number(e.target.value) }));
+                                                    }}
+                                                />
+                                                <Input
+                                                    value={defaultColor.b}
+                                                    type="number"
+                                                    onChange={(e) => {
+                                                        setColorEdited(true);
+                                                        setDefaultColor((x) => ({ ...x, b: Number(e.target.value) }));
+                                                    }}
+                                                />
+                                            </div>
+                                        }
                                     >
                                         <div
-                                            className="w-8 h-5 border-2"
-                                            style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 e.preventDefault();
-                                                setDisplayColorPicker(true);
                                             }}
-                                        ></div>
-                                        <div className="absolute left-32 top-22 z-40 shadow-sm">
-                                            {displayColorPicker && (
-                                                <StyledPicker
-                                                    presetColors={DEFAULT_COLOR_SCHEME}
-                                                    color={defaultColor}
-                                                    onChange={(color) => {
-                                                        setColorEdited(true);
-                                                        setDefaultColor({
-                                                            ...color.rgb,
-                                                            a: color.rgb.a ?? 1,
-                                                        });
-                                                    }}
-                                                />
-                                            )}
+                                        >
+                                            <div
+                                                className="w-8 h-5 border-2"
+                                                style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    setDisplayColorPicker(true);
+                                                }}
+                                            ></div>
+                                            <div className="absolute left-32 top-22 z-40 shadow-sm">
+                                                {displayColorPicker && (
+                                                    <StyledPicker
+                                                        presetColors={DEFAULT_COLOR_SCHEME}
+                                                        color={defaultColor}
+                                                        onChange={(color) => {
+                                                            setColorEdited(true);
+                                                            setDefaultColor({
+                                                                ...color.rgb,
+                                                                a: color.rgb.a ?? 1,
+                                                            });
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    </ErrorBoundary>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium leading-6">{t('config.color_palette')}</label>
