@@ -89,7 +89,7 @@ export type PropsMap = {
     [Methods.setFilterAggregator]: [number, IAggregator | ''];
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
     [Methods.upsertPaintField]: [IPaintMap | IPaintMapV2 | null, string];
-    [Methods.addSQLComputedField]: [string, string, string];
+    [Methods.addSQLComputedField]: [string, string, string, string | null];
     [Methods.removeAllField]: [string, FieldIdentifier | null];
     [Methods.editAllField]: [string, Partial<IField>, FieldIdentifier | null];
     [Methods.replaceWithNLPQuery]: [string, string];
@@ -417,7 +417,7 @@ const actions: {
             return result;
         });
     },
-    [Methods.addSQLComputedField]: (data, fid, name, sql) => {
+    [Methods.addSQLComputedField]: (data, fid, name, sql, dataset) => {
         const [type, isAgg] = getSQLItemAnalyticType(parseSQLExpr(sql), data.encodings.dimensions.concat(data.encodings.measures));
         const analyticType = type === 'quantitative' ? 'measure' : 'dimension';
         return mutPath(data, `encodings.${analyticType}s`, (f) =>
@@ -433,6 +433,7 @@ const actions: {
                     as: fid,
                     params: [{ type: 'sql', value: sql }],
                 },
+                dataset: dataset ?? undefined
             })
         );
     },
