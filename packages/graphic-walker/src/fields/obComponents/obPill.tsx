@@ -23,7 +23,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const vizStore = useVizStore();
-    const { config, allFields, datasetJoinPaths } = vizStore;
+    const { config, foldOptions, datasetJoinPaths } = vizStore;
     const field = vizStore.allEncodings[dkey.id][fIndex];
     const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
@@ -33,14 +33,6 @@ const OBPill: React.FC<PillProps> = (props) => {
             label: t(op),
         }));
     }, []);
-
-    const foldOptions = useMemo<ISelectContextOption[]>(() => {
-        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
-        return validFoldBy.map<ISelectContextOption>((f) => ({
-            key: f.fid,
-            label: f.name,
-        }));
-    }, [allFields]);
 
     const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
 

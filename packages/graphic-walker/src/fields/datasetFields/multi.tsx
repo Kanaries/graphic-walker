@@ -11,7 +11,7 @@ import { useMenuActions } from '../datasetFields/utils';
 import { refMapper } from '../fieldsContext';
 import DataTypeIcon from '@/components/dataTypeIcon';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
-import { MEA_KEY_ID } from '@/constants';
+import { MEA_KEY_ID, MEA_VAL_ID } from '@/constants';
 import { deduper } from '@/utils';
 
 const getDiffDesc = (path: IJoinPath, paths: IJoinPath[], fields: { fid: string; dataset?: string; name?: string }[]) => {
@@ -228,7 +228,8 @@ const MultiDatasetFields = observer(() => {
                     {(provided, snapshot) => (
                         <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
                             {dimensions.map((f, index) => {
-                                if (!f.dataset) {
+                                // TODO add support for fold
+                                if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
                                     return (
                                         <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                                             {(provided, snapshot) => {
@@ -287,7 +288,7 @@ const MultiDatasetFields = observer(() => {
                     {(provided, snapshot) => (
                         <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
                             {measures.map((f, index) => {
-                                if (!f.dataset) {
+                                if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
                                     return (
                                         <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
                                             {(provided, snapshot) => {

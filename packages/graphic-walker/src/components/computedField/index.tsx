@@ -1,14 +1,15 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useVizStore } from '../../store';
+import React, { useState, useRef, useMemo, useContext, useEffect } from 'react';
+import { DatasetNamesContext, useVizStore } from '../../store';
 import { getFieldIdentifier, isNotEmpty, parseErrorMessage } from '../../utils';
 import { highlightField } from '../highlightField';
 import { aggFuncs, reservedKeywords, sqlFunctions } from '../../lib/sql';
-import { COUNT_FIELD_ID, EMPTY_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
+import { COUNT_FIELD_ID, DEFAULT_DATASET, EMPTY_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import Combobox from '../dropdownSelect/combobox';
 
 const keywordRegex = new RegExp(`\\b(${Array.from(reservedKeywords).join('|')})\\b`, 'gi');
 const bulitInRegex = new RegExp(`\\b(${Array.from(sqlFunctions).join('|')})(\\s*)\\(`, 'gi');
@@ -18,16 +19,18 @@ const stringRegex = /('[^']*'?)/g;
 
 const ComputedFieldDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingComputedFieldFid } = vizStore;
+    const { editingComputedFieldFid, datasets, isMultiDataset } = vizStore;
     const [name, setName] = useState<string>('');
     const [sql, setSql] = useState<string>('');
     const [error, setError] = useState<string>('');
     const ref = useRef<HTMLDivElement>(null);
-    // TODO bind a dataset to computed field.
+    const [dataset, setDataset] = useState(DEFAULT_DATASET);
+    const datasetNames = useContext(DatasetNamesContext);
 
     const SQLField = useMemo(() => {
         const fields = vizStore.allFields
             .filter((x) => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID].includes(x.fid))
+            .filter((x) => !isMultiDataset || x.dataset === dataset)
             .map((x) => x.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
             .join('|');
         const fieldRegex = fields.length > 0 ? new RegExp(`\\b(${fields})\\b`, 'gi') : null;
@@ -51,7 +54,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
 
             return sql;
         });
-    }, [vizStore.allFields]);
+    }, [vizStore.allFields, dataset]);
 
     useEffect(() => {
         if (isNotEmpty(editingComputedFieldFid)) {
@@ -61,6 +64,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                     idx++;
                 }
                 unstable_batchedUpdates(() => {
+                    setDataset(datasets[0]);
                     setName(`Computed ${idx}`);
                     setSql('');
                     setError('');
@@ -78,6 +82,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                     return;
                 }
                 unstable_batchedUpdates(() => {
+                    setDataset(datasets[0]);
                     setName(f.name);
                     setSql(sql.value);
                     setError('');
@@ -111,6 +116,16 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             </a>
                         </span>
                     </div>
+                    {isMultiDataset && (
+                        <div className="flex flex-col space-y-2 w-[300px]">
+                            <label className="text-ml whitespace-nowrap">Dataset</label>
+                            <Combobox
+                                options={datasets.map((dataset) => ({ label: datasetNames?.[dataset] ?? dataset, value: dataset }))}
+                                selectedKey={dataset}
+                                onSelect={(v) => v && setDataset(v)}
+                            />
+                        </div>
+                    )}
                     <div className="flex flex-col space-y-2">
                         <label className="text-ml whitespace-nowrap">Name</label>
                         <Input
@@ -131,7 +146,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             children={editingComputedFieldFid === '' ? 'Add' : 'Edit'}
                             onClick={() => {
                                 try {
-                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, sql);
+                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, sql, isMultiDataset ? dataset : null);
                                     vizStore.setComputedFieldFid();
                                 } catch (e) {
                                     setError(parseErrorMessage(e));

@@ -31,7 +31,7 @@ interface MultiEncodeEditorProps {
 const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const vizStore = useVizStore();
-    const { currentEncodings, config, allFields, datasetJoinPaths } = vizStore;
+    const { currentEncodings, config, foldOptions, datasetJoinPaths } = vizStore;
     const folds = config.folds ?? [];
     const channelItems = currentEncodings[dkey.id];
     const { t } = useTranslation();
@@ -42,14 +42,6 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
             label: t(`constant.aggregator.${op}`),
         }));
     }, []);
-
-    const foldOptions = useMemo<ISelectContextOption[]>(() => {
-        const validFoldBy = allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
-        return validFoldBy.map<ISelectContextOption>((f) => ({
-            key: f.fid,
-            label: f.name,
-        }));
-    }, [allFields]);
 
     const datasetNames = useContext(DatasetNamesContext);
 

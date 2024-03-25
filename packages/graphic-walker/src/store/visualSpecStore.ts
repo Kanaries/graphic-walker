@@ -374,6 +374,14 @@ export class VizSpecStore {
         });
     }
 
+    get foldOptions() {
+        const validFoldBy = this.allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
+        return validFoldBy.map((f) => ({
+            key: f.fid,
+            label: f.name,
+        }));
+    }
+
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number, joinPath: IJoinPath[] | null) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID || oriF.aggName === 'expr') {
@@ -858,9 +866,9 @@ export class VizSpecStore {
         this.editingComputedFieldFid = fid;
     }
 
-    upsertComputedField(fid: FieldIdentifier, name: string, sql: string) {
+    upsertComputedField(fid: FieldIdentifier, name: string, sql: string, dataset: string | null) {
         if (fid === '') {
-            this.visList[this.visIndex] = performers.addSQLComputedField(this.visList[this.visIndex], uniqueId(), name, sql);
+            this.visList[this.visIndex] = performers.addSQLComputedField(this.visList[this.visIndex], uniqueId(), name, sql, dataset);
         } else {
             const originalField = this.allFields.find((x) => getFieldIdentifier(x) === fid);
             if (!originalField) return;
