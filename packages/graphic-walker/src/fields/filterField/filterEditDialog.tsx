@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
+import type { FieldIdentifier, IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
 import { ComputationContext, useCompututaion, useVizStore } from '../../store';
 import Tabs, { RuleFormProps } from './tabs';
 import DropdownSelect, { IDropdownSelectOption } from '../../components/dropdownSelect';
@@ -9,7 +9,7 @@ import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { GLOBAL_CONFIG } from '../../config';
 import { toWorkflow } from '../../utils/workflow';
 import { useRefControledState } from '../../hooks';
-import { getFilterMeaAggKey, getMeaAggKey } from '../../utils';
+import { getFieldIdentifier, getFilterMeaAggKey, getMeaAggKey } from '../../utils';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -40,11 +40,11 @@ const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 export const PureFilterEditDialog = (props: {
     viewFilters: IFilterField[];
-    options: { label: string; value: string }[];
+    options: { label: string; value: FieldIdentifier }[];
     meta: IMutField[];
     editingFilterIdx: number | null;
     displayOffset?: number;
-    onSelectFilter: (field: string) => void;
+    onSelectFilter: (field: FieldIdentifier) => void;
     onWriteFilter: (index: number, rule: IFilterRule | null) => void;
     onSelectAgg?: (index: number, aggName: IAggregator | null) => void;
     onClose: () => void;
@@ -102,7 +102,7 @@ export const PureFilterEditDialog = (props: {
                                 buttonClassName="w-96"
                                 className="mb-2"
                                 options={options}
-                                selectedKey={uncontrolledField.fid}
+                                selectedKey={getFieldIdentifier(uncontrolledField)}
                                 onSelect={onSelectFilter}
                             />
                         </div>
@@ -154,7 +154,7 @@ const FilterEditDialog: React.FC = observer(() => {
 
     const transformedComputation = useMemo((): IComputationFunction => {
         if (originalField && viewDimensions.length > 0) {
-            const preWorkflow = toWorkflow(
+            const { workflow, datasets } = toWorkflow(
                 [],
                 allFields,
                 viewDimensions,
@@ -164,24 +164,27 @@ const FilterEditDialog: React.FC = observer(() => {
                 [],
                 undefined,
                 timezoneDisplayOffset
-            ).map((x) => {
-                if (x.type === 'view') {
-                    return {
-                        ...x,
-                        query: x.query.map((q) => {
-                            if (q.op === 'aggregate') {
-                                return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
-                            }
-                            return q;
-                        }),
-                    };
-                }
-                return x;
-            });
+            );
             return (query) =>
                 computation({
                     ...query,
-                    workflow: preWorkflow.concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    workflow: workflow
+                        .map((x) => {
+                            if (x.type === 'view') {
+                                return {
+                                    ...x,
+                                    query: x.query.map((q) => {
+                                        if (q.op === 'aggregate') {
+                                            return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
+                                        }
+                                        return q;
+                                    }),
+                                };
+                            }
+                            return x;
+                        })
+                        .concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    datasets: Array.from(new Set(query.datasets.concat(datasets))),
                 });
         } else {
             return computation;
@@ -213,14 +216,16 @@ const FilterEditDialog: React.FC = observer(() => {
         }
     };
 
+
     const allFieldOptions = React.useMemo(() => {
         return allFields
+            .filter((x) => x.dataset === viewFilters[editingFilterIdx || 0]?.dataset)
             .filter((x) => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID].includes(x.fid))
             .map((d) => ({
                 label: d.name,
-                value: d.fid,
+                value: getFieldIdentifier(d),
             }));
-    }, [allFields]);
+    }, [allFields, viewFilters[editingFilterIdx || 0]?.dataset]);
 
     const handleChangeAgg = (index: number, agg: IAggregator | null) => {
         vizStore.setFilterAggregator(index, agg ?? '');

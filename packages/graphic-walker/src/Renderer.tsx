@@ -18,13 +18,12 @@ import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { renderSpec } from './store/visualSpecStore';
-import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
-import { classNames, getFilterMeaAggKey, parseErrorMessage } from './utils';
+import { classNames, getFilterMeaAggKey, isSameField, parseErrorMessage } from './utils';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import { SimpleOneOfSelector, SimpleRange, SimpleSearcher, SimpleTemporalRange } from './fields/filterField/simple';
@@ -137,6 +136,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                     themeContext={darkMode}
                     vegaThemeContext={{ themeConfig, themeKey }}
                     portalContainerContext={portal}
+                    DatasetNamesContext={props.datasetNames}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
                         <div className="flex flex-col space-y-2 bg-background text-foreground">
@@ -170,12 +170,12 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
 
     const computation = useCompututaion();
 
-    const originalField = filter.enableAgg ? allFields.find((x) => x.fid === filter.fid) : undefined;
+    const originalField = filter.enableAgg ? allFields.find(isSameField(filter)) : undefined;
     const filterAggName = filter?.enableAgg ? filter.aggName : undefined;
 
     const transformedComputation = useMemo((): IComputationFunction => {
         if (originalField && viewDimensions.length > 0) {
-            const preWorkflow = toWorkflow(
+            const { workflow, datasets } = toWorkflow(
                 [],
                 allFields,
                 viewDimensions,
@@ -185,24 +185,26 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
                 [],
                 undefined,
                 timezoneDisplayOffset
-            ).map((x) => {
-                if (x.type === 'view') {
-                    return {
-                        ...x,
-                        query: x.query.map((q) => {
-                            if (q.op === 'aggregate') {
-                                return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
-                            }
-                            return q;
-                        }),
-                    };
-                }
-                return x;
-            });
+            );
             return (query) =>
                 computation({
                     ...query,
-                    workflow: preWorkflow.concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    workflow: workflow
+                        .map((x) => {
+                            if (x.type === 'view') {
+                                return {
+                                    ...x,
+                                    query: x.query.map((q) => {
+                                        if (q.op === 'aggregate') {
+                                            return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
+                                        }
+                                        return q;
+                                    }),
+                                };
+                            }
+                            return x;
+                        })
+                        .concat(query.workflow.filter((x) => x.type !== 'transform')),
                 });
         } else {
             return computation;
@@ -273,7 +275,7 @@ const FilterSection = observer(function FilterSection() {
 export function RendererAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
 
     const {
         computation: safeComputation,
@@ -281,19 +283,6 @@ export function RendererAppWithContext(
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
         if (props.dataSource) {
-            if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
-                return {
-                    safeMetas,
-                    computation: getComputation(safeData),
-                    onMetaChange: (safeFID, meta) => {
-                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                        if (index >= 0) {
-                            props.onMetaChange?.(props.rawFields[index].fid, meta);
-                        }
-                    },
-                };
-            }
             return {
                 safeMetas: props.rawFields,
                 computation: getComputation(props.dataSource),
@@ -305,7 +294,7 @@ export function RendererAppWithContext(
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(props.dark);
 

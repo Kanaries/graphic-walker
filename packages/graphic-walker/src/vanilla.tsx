@@ -14,7 +14,16 @@ function FullGraphicWalker(props: IGWProps) {
             colorConfig={props.colorConfig}
         >
             {(p) => {
-                return <GraphicWalker {...props} storeRef={p.storeRef} computation={p.computation} rawFields={p.meta} onMetaChange={p.onMetaChange} />;
+                return (
+                    <GraphicWalker
+                        {...props}
+                        datasetNames={p.datasetNames}
+                        storeRef={p.storeRef}
+                        computation={p.computation}
+                        rawFields={p.meta}
+                        onMetaChange={p.onMetaChange}
+                    />
+                );
             }}
         </DataSourceSegmentComponent>
     );

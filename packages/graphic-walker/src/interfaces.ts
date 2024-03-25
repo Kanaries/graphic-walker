@@ -55,6 +55,8 @@ export interface IMutField {
     analyticType: IAnalyticType;
     path?: string[];
     offset?: number;
+    dataset?: string;
+    foreign?: { dataset: string; fid: string };
 }
 
 export interface IUncertainMutField {
@@ -98,6 +100,8 @@ export interface IPaintMap {
 
 export interface IPaintDimension {
     fid: string;
+    joinPath?: IJoinPath[];
+    dataset?: string;
     domain:
         | {
               type: 'nominal';
@@ -208,10 +212,20 @@ export interface IField {
     path?: string[];
     offset?: number;
     aggergated?: boolean;
+    dataset?: string;
+    foreign?: { dataset: string; fid: string };
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
+
+export interface IJoinPath {
+    from: string;
+    fid: string;
+    to: string;
+    tid: string;
+}
 export interface IViewField extends IField {
     sort?: ISortMode;
+    joinPath?: IJoinPath[];
 }
 
 export type FieldIdentifier = string & { _tagFieldId: never };
@@ -394,7 +408,7 @@ export interface IVisualConfig {
     geoKey?: string;
     geoUrl?: IGeoUrl;
     limit: number;
-    folds?: string[];
+    folds?: FieldIdentifier[];
 }
 
 export interface IVisualLayout {
@@ -435,6 +449,7 @@ export interface IVisualLayout {
     background?: string;
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
+    baseDataset?: string;
 }
 
 export interface IVisualConfigNew {
@@ -445,6 +460,7 @@ export interface IVisualConfigNew {
     limit: number;
     folds?: string[];
     timezoneDisplayOffset?: number;
+    baseDataset?: string;
 }
 
 export interface IGeoUrl {
@@ -604,6 +620,15 @@ export interface IVisFilter {
     rule: IFilterRule;
 }
 
+export interface IDatasetForeign {
+    type: 'inner' | 'left' | 'right';
+    keys: { dataset: string; as: string; field: string }[];
+}
+export interface IJoinWorkflowStep {
+    type: 'join';
+    foreigns: IDatasetForeign[];
+}
+
 export interface IFilterWorkflowStep {
     type: 'filter';
     filters: IVisFilter[];
@@ -625,10 +650,12 @@ export interface ISortWorkflowStep {
     by: string[];
 }
 
-export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
+export type IDataQueryWorkflowStep = IJoinWorkflowStep | IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
+export type IBasicDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowStep | IViewWorkflowStep | ISortWorkflowStep;
 
 export interface IDataQueryPayload {
     workflow: IDataQueryWorkflowStep[];
+    datasets: string[];
     limit?: number;
     offset?: number;
 }
@@ -860,6 +887,7 @@ export interface IChannelScales {
 export interface IAppI18nProps {
     i18nLang?: string;
     i18nResources?: { [lang: string]: Record<string, string | any> };
+    datasetNames?: Record<string, string>;
 }
 
 export interface IThemeProps {
@@ -921,16 +949,12 @@ export interface IVizStoreProps {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
     rawFields: IMutField[];
-    onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    onMetaChange?: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
 }
 
 export interface ILocalComputationProps {
-    /**
-     * auto parse field key into a safe string. default is true
-     */
-    fieldKeyGuard?: boolean;
-    dataSource: any[];
+    dataSource: any[] | Record<string, any[]>;
     computationTimeout?: number;
 }
 

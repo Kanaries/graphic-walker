@@ -1,4 +1,4 @@
-import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
+import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField, IDatasetForeign } from './interfaces';
 import { INestNode } from './components/pivotTable/inteface';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
@@ -13,6 +13,7 @@ import TransformDataWorker from './workers/transform.worker?worker&inline';
 import ViewQueryWorker from './workers/viewQuery.worker?worker&inline';
 import BuildMetricTableWorker from './workers/buildMetricTable.worker?worker&inline';
 import SortWorker from './workers/sort.worker?worker&inline';
+import JoinWorker from './workers/join.worker?worker&inline';
 
 function workerService<T, R>(worker: Worker, data: R): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -111,6 +112,21 @@ export const applyFilter = async (data: IRow[], filters: readonly IFilterFiledSi
             filters: filters,
         });
 
+        return res;
+    } catch (error: any) {
+        throw new Error(error.message);
+    } finally {
+        worker.terminate();
+    }
+};
+
+export const joinDataService = async (rawDatasets: Record<string, IRow[]>, foreigns: IDatasetForeign[]): Promise<IRow[]> => {
+    const worker = new JoinWorker();
+    try {
+        const res: IRow[] = await workerService(worker, {
+            rawDatasets,
+            foreigns,
+        });
         return res;
     } catch (error: any) {
         throw new Error(error.message);

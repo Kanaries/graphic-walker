@@ -1,16 +1,19 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
-import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { IAggregator, IDraggableViewStateKey } from '../../interfaces';
-import { useVizStore } from '../../store';
+import { DatasetNamesContext, useVizStore } from '../../store';
 import { Pill } from '../components';
 import { GLOBAL_CONFIG } from '../../config';
 import DropdownContext from '../../components/dropdownContext';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
+import Tooltip from '@/components/tooltip';
+import { EditNamePopover } from '../renamePanel';
 
 interface PillProps {
     provided: DraggableProvided;
@@ -20,7 +23,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const vizStore = useVizStore();
-    const { config, allFields } = vizStore;
+    const { config, allFields, datasetJoinPaths } = vizStore;
     const field = vizStore.allEncodings[dkey.id][fIndex];
     const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
@@ -41,6 +44,9 @@ const OBPill: React.FC<PillProps> = (props) => {
 
     const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
 
+    const datasetNames = useContext(DatasetNamesContext);
+    const hasMultiJoins = datasetJoinPaths[field.dataset ?? DEFAULT_DATASET]?.length > 1;
+
     return (
         <Pill
             ref={refMapper(provided.innerRef)}
@@ -60,7 +66,26 @@ const OBPill: React.FC<PillProps> = (props) => {
                     <span className="flex-1 truncate">{field.name}</span>
                 </SelectContext>
             )}
-            {!folds && <span className="flex-1 truncate">{field.name}</span>}
+            {!folds && (
+                <span className="flex-1 truncate">
+                    {field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : ''}
+                    {field.name}
+                </span>
+            )}
+            {hasMultiJoins && field.joinPath && (
+                <EditNamePopover
+                    defaultValue={field.name}
+                    onSubmit={(name) => vizStore.editFieldName(props.dkey.id, props.fIndex, name)}
+                    desc={
+                        <div className="text-xs">
+                            This Field is Joined with below:
+                            <pre className="my-1">{vizStore.renderJoinPath(field.joinPath ?? [], datasetNames)}</pre>
+                        </div>
+                    }
+                >
+                    <PencilSquareIcon className="w-3 h-3 ml-1" />
+                </EditNamePopover>
+            )}
             &nbsp;
             {field.analyticType === 'measure' && field.fid !== COUNT_FIELD_ID && config.defaultAggregated && field.aggName !== 'expr' && (
                 <DropdownContext

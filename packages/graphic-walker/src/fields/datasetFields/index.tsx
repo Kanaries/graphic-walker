@@ -17,12 +17,12 @@ const DatasetFields: React.FC = (props) => {
     return (
         <DSContainer className="p-1 sm:mr-0.5 my-0.5 border flex sm:flex-col" style={{ paddingBlock: 0, paddingInline: '0.6em' }}>
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t('field_list')}</h4>
-            <div className="pd-1 overflow-y-auto" style={{ maxHeight: '380px', minHeight: '100px' }}>
+            <div className="pd-1 overflow-y-auto relative" style={{ maxHeight: '380px', minHeight: '100px' }}>
                 <Droppable droppableId="dimensions" direction="vertical">
                     {(provided, snapshot) => <DimFields provided={provided} />}
                 </Droppable>
             </div>
-            <div className="border-t flex-grow pd-1 overflow-y-auto">
+            <div className="border-t flex-grow pd-1 overflow-y-auto relative">
                 <Droppable droppableId="measures" direction="vertical">
                     {(provided, snapshot) => <MeaFields provided={provided} />}
                 </Droppable>

@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IDefaultConfig, IMutField, IRow } from '../interfaces';
+import { FieldIdentifier, IComputationFunction, IDefaultConfig, IMutField, IRow } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -19,7 +19,7 @@ const getVizStore = createKeepAliveContext(
         meta: IMutField[],
         opts?: {
             empty?: boolean;
-            onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            onMetaChange?: (fid: FieldIdentifier, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
         }
     ) => new VizSpecStore(meta, opts)
@@ -34,7 +34,7 @@ interface VizStoreWrapperProps {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     children?: React.ReactNode;
     meta: IMutField[];
-    onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
+    onMetaChange?: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
 }
 
@@ -82,6 +82,7 @@ export function useVizStore() {
 }
 
 export const ComputationContext = createContext<IComputationFunction>(async () => []);
+export const DatasetNamesContext = createContext<Record<string, string> | undefined>(undefined);
 
 export function useCompututaion() {
     return useContext(ComputationContext);

@@ -20,7 +20,6 @@ import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
 import AskViz from './components/askViz';
 import { renderSpec } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
-import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
@@ -40,7 +39,9 @@ import { VizAppContext } from './store/context';
 import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
+import MultiDatasetFields from './fields/datasetFields/multi';
 import { VegaliteChat } from './components/chat';
+import { LinkDataset } from './components/linkDataset';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -66,6 +67,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         chart,
         vlSpec,
         onError,
+        datasetNames,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -143,12 +145,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     return (
         <ErrorContext value={{ reportError }}>
-            <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
+            <ErrorBoundary fallback={<div>Something went wrong</div>} onError={console.log}>
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
                     vegaThemeContext={{ themeConfig, themeKey }}
                     portalContainerContext={portal}
+                    DatasetNamesContext={props.datasetNames}
                 >
                     <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
                         <FieldsContextWrapper>
@@ -203,6 +206,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <BinPanel />
                                             <ComputedFieldDialog />
                                             <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            <LinkDataset />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                             <div className="sm:flex">
                                                 <SideResize
@@ -211,7 +215,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                     className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
                                                     handlerClassName="hidden sm:block"
                                                 >
-                                                    <DatasetFields />
+                                                    {!vizStore.isMultiDataset && <DatasetFields />}
+                                                    {vizStore.isMultiDataset && <MultiDatasetFields />}
                                                 </SideResize>
                                                 <SideResize
                                                     defaultWidth={180}
@@ -274,26 +279,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
     const {
         computation: safeComputation,
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
         if (props.dataSource) {
-            if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
-                return {
-                    safeMetas,
-                    computation: getComputation(safeData),
-                    onMetaChange: (safeFID, meta) => {
-                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                        if (index >= 0) {
-                            props.onMetaChange?.(props.rawFields[index].fid, meta);
-                        }
-                    },
-                };
-            }
             return {
                 safeMetas: props.rawFields,
                 computation: getComputation(props.dataSource),
@@ -305,7 +297,7 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(props.dark);
 

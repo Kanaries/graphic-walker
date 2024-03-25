@@ -141,6 +141,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 themeContext={darkMode}
                 vegaThemeContext={{ themeConfig, themeKey }}
                 portalContainerContext={portal}
+                DatasetNamesContext={undefined}
             >
                 <div className={`relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                     {isSpatial && (

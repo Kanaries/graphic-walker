@@ -68,7 +68,7 @@ export const useColorScale = (
 
     const continuousScale = useMemo(() => {
         const [min, max] = domain;
-        const linearDomains = quantitativePalette.map((_, i) => min + (max - min) * i / (quantitativePalette.length - 1));
+        const linearDomains = quantitativePalette.map((_, i) => min + ((max - min) * i) / (quantitativePalette.length - 1));
         const scale = scaleLinear<string, string>().domain(linearDomains).range(quantitativePalette);
         return function ColorScale(row: IRow) {
             return scale(Number(row[key]));

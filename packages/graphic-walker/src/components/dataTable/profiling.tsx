@@ -13,13 +13,19 @@ import { parseColorToHSL } from '@/utils/colors';
 
 export interface FieldProfilingProps {
     field: string;
+    dataset: string;
     computation: IComputationFunction;
 }
 
-function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }: FieldProfilingProps & { valueRenderer?: (v: string | number) => string }) {
+function NominalProfiling({
+    computation,
+    field,
+    dataset,
+    valueRenderer = (s) => `${s}`,
+}: FieldProfilingProps & { valueRenderer?: (v: string | number) => string }) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileNonmialField>>>();
     useEffect(() => {
-        profileNonmialField(computation, field).then(setStat);
+        profileNonmialField(computation, field, dataset).then(setStat);
     }, [computation, field]);
 
     if (!isNotEmpty(stat)) {
@@ -82,10 +88,10 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
 
 const formatter = format('~s');
 
-function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
+function QuantitativeProfiling({ computation, field, dataset }: FieldProfilingProps) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileQuantitativeField>>>();
     useEffect(() => {
-        profileQuantitativeField(computation, field).then(setStat);
+        profileQuantitativeField(computation, field, dataset).then(setStat);
     }, [computation, field]);
     if (!isNotEmpty(stat)) {
         return <div className="h-24 flex items-center justify-center">Loading...</div>;

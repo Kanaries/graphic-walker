@@ -751,7 +751,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
 
     React.useEffect(() => {
         withComputedField(field, rawFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
-            getTemporalRange(service, field.fid, field.offset)
+            getTemporalRange(service, field.fid, field.dataset, field.offset)
         ).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 

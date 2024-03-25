@@ -32,8 +32,18 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
-    const workflow = useMemo(() => {
-        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined, timezoneDisplayOffset);
+    const { workflow, datasets } = useMemo(() => {
+        return toWorkflow(
+            filters,
+            allFields,
+            viewDimensions,
+            viewMeasures,
+            defaultAggregated,
+            sort,
+            folds,
+            limit > 0 ? limit : undefined,
+            timezoneDisplayOffset
+        );
     }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -45,7 +55,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined)
+        dataQuery(computationFunction, workflow, datasets, limit > 0 ? limit : undefined)
             .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, viewDimensions, folds))
             .then((data) => {
                 if (taskId !== taskIdRef.current) {

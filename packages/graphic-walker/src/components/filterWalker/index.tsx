@@ -3,6 +3,7 @@ import { IComputationFunction, IMutField, IRow, ISemanticType, IVisFilter } from
 import { getFieldDistinctCounts, getRange, getTemporalRange } from '../../computation';
 import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
+import { DEFAULT_DATASET } from '@/constants';
 
 type rangeValue = [number, number];
 type temporalRangeValue = [number, number, string];
@@ -115,7 +116,7 @@ export function createFilterContext(components: {
                         return domainsRef.current.get(k)!;
                     }
                     if (x.mode === 'single' || x.mode === 'multi') {
-                        const p = getFieldDistinctCounts(computation, x.fid, { sortBy: 'count_dsc' }).then((x) => x.map((i) => i.value));
+                        const p = getFieldDistinctCounts(computation, x.fid, DEFAULT_DATASET, { sortBy: 'count_dsc' }).then((x) => x.map((i) => i.value));
                         domainsRef.current.set(k, p);
                         return p;
                     }
@@ -126,7 +127,7 @@ export function createFilterContext(components: {
                             return p;
                         }
                         case 'temporal': {
-                            const p = getTemporalRange(computation, x.fid, x.offset);
+                            const p = getTemporalRange(computation, x.fid, DEFAULT_DATASET, x.offset);
                             domainsRef.current.set(k, p);
                             return p;
                         }
@@ -392,7 +393,7 @@ export const useNominalFilter = (
     const [domain, setDomain] = React.useState<string[]>([]);
     useEffect(() => {
         (async () => {
-            const domain = await getFieldDistinctCounts(computation, fid, { sortBy: 'count_dsc' });
+            const domain = await getFieldDistinctCounts(computation, fid, DEFAULT_DATASET, { sortBy: 'count_dsc' });
             setDomain(domain.map((x) => x.value));
         })();
     }, [computation, fid]);
