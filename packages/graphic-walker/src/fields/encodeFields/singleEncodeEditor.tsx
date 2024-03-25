@@ -1,17 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import { DraggableFieldState, IAggregator, IDraggableStateKey } from '../../interfaces';
 import { observer } from 'mobx-react-lite';
-import { useVizStore } from '../../store';
+import { DatasetNamesContext, useVizStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
-import { ChevronUpDownIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ChevronUpDownIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
+import Tooltip from '@/components/tooltip';
+import { EditNamePopover } from '../renamePanel';
 import { getFieldIdentifier } from '@/utils';
 
 const PillActions = styled.div`
@@ -29,7 +31,7 @@ interface SingleEncodeEditorProps {
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const vizStore = useVizStore();
-    const { allEncodings, config, allFields } = vizStore;
+    const { allEncodings, config, allFields, datasetJoinPaths } = vizStore;
     const folds = config.folds ?? [];
     const channelItem = allEncodings[dkey.id][0];
     const { t } = useTranslation();
@@ -49,6 +51,8 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
         }));
     }, [allFields]);
 
+    const datasetNames = useContext(DatasetNamesContext);
+
     return (
         <div className="p-1 select-none relative touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             <div
@@ -61,6 +65,8 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
             {channelItem && (
                 <Draggable draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={0}>
                     {(provided, snapshot) => {
+                        const hasMultiJoins = datasetJoinPaths[channelItem.dataset ?? DEFAULT_DATASET]?.length > 1;
+
                         return (
                             <div
                                 ref={refMapper(provided.innerRef)}
@@ -95,7 +101,26 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                             </span>
                                         </SelectContext>
                                     )}
-                                    {channelItem.fid !== MEA_KEY_ID && <span className="flex-1 truncate">{channelItem.name}</span>}{' '}
+                                    {channelItem.fid !== MEA_KEY_ID && (
+                                        <span className="flex-1 truncate">
+                                            {channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
+                                            {channelItem.name}
+                                        </span>
+                                    )}
+                                    {hasMultiJoins && channelItem.joinPath && (
+                                        <EditNamePopover
+                                            defaultValue={channelItem.name}
+                                            onSubmit={(name) => vizStore.editFieldName(props.dkey.id, 0, name)}
+                                            desc={
+                                                <div className="text-xs">
+                                                    This Field is Joined with below:
+                                                    <pre className="my-1">{vizStore.renderJoinPath(channelItem.joinPath ?? [], datasetNames)}</pre>
+                                                </div>
+                                            }
+                                        >
+                                            <PencilSquareIcon className="w-3 h-3 ml-1" />
+                                        </EditNamePopover>
+                                    )}
                                     {channelItem.analyticType === 'measure' &&
                                         channelItem.fid !== COUNT_FIELD_ID &&
                                         config.defaultAggregated &&

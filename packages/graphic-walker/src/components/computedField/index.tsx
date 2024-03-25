@@ -1,10 +1,10 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useVizStore } from '../../store';
-import { isNotEmpty, parseErrorMessage } from '../../utils';
+import { getFieldIdentifier, isNotEmpty, parseErrorMessage } from '../../utils';
 import { highlightField } from '../highlightField';
 import { aggFuncs, reservedKeywords, sqlFunctions } from '../../lib/sql';
-import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
+import { COUNT_FIELD_ID, EMPTY_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -23,6 +23,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
     const [sql, setSql] = useState<string>('');
     const [error, setError] = useState<string>('');
     const ref = useRef<HTMLDivElement>(null);
+    // TODO bind a dataset to computed field.
 
     const SQLField = useMemo(() => {
         const fields = vizStore.allFields
@@ -66,14 +67,14 @@ const ComputedFieldDialog: React.FC = observer(() => {
                 });
                 ref.current && (ref.current.innerHTML = '');
             } else {
-                const f = vizStore.allFields.find((x) => x.fid === editingComputedFieldFid);
+                const f = vizStore.allFields.find((x) => getFieldIdentifier(x) === editingComputedFieldFid);
                 if (!f || !f.computed || f.expression?.op !== 'expr') {
-                    vizStore.setComputedFieldFid('');
+                    vizStore.setComputedFieldFid(EMPTY_FIELD_ID);
                     return;
                 }
                 const sql = f.expression.params.find((x) => x.type === 'sql');
                 if (!sql) {
-                    vizStore.setComputedFieldFid('');
+                    vizStore.setComputedFieldFid(EMPTY_FIELD_ID);
                     return;
                 }
                 unstable_batchedUpdates(() => {

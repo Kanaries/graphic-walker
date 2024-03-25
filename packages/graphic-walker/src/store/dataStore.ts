@@ -48,7 +48,7 @@ export class DataStore {
                 dataSources.push({
                     data: ds.data,
                     id: dsId,
-                    metaId: id,
+                    metaId: dsId,
                     name,
                 });
             });
@@ -77,6 +77,10 @@ export class DataStore {
             metaDict: this.metaDict,
             specDict: resultSpecList,
         };
+    }
+
+    createVis(key: string, fields: IMutField[]) {
+        this.visDict[key] = [exportFullRaw(fromFields(fields, 'Chart 1'))];
     }
 
     addDataSource(data: { data: IRow[]; fields: IMutField[]; name: string }) {

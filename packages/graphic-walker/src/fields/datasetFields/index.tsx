@@ -21,7 +21,7 @@ const DatasetFields: React.FC = (props) => {
             <Droppable droppableId="dimensions" direction="vertical">
                 {(provided, snapshot) => (
                     <div className="flex-shrink min-w-[0px] min-h-[100px] max-h-[380px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                        <div className="pd-1 overflow-y-auto h-full">
+                        <div className="pd-1 overflow-y-auto relative h-full">
                             <DimFields />
                         </div>
                     </div>
@@ -30,7 +30,7 @@ const DatasetFields: React.FC = (props) => {
             <Droppable droppableId="measures" direction="vertical">
                 {(provided, snapshot) => (
                     <div className="flex-shrink flex-grow min-w-[0px] min-h-[200px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                        <div className="border-t flex-grow pd-1 overflow-y-auto h-full">
+                        <div className="border-t flex-grow pd-1 overflow-y-auto relative h-full">
                             <MeaFields />
                         </div>
                     </div>

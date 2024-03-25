@@ -93,9 +93,15 @@ export const FieldsContextWrapper: React.FC<{ children?: React.ReactNode | Itera
                 if (destination.index === result.source.index) return;
                 vizStore.reorderField(destination.droppableId as keyof DraggableFieldState, result.source.index, destination.index);
             } else {
-                let sourceKey = result.source.droppableId as keyof DraggableFieldState;
-                let targetKey = destination.droppableId as keyof DraggableFieldState;
-                vizStore.moveField(sourceKey, result.source.index, targetKey, destination.index);
+                let sourceKey = result.source.droppableId.split('_')[0] as keyof DraggableFieldState;
+                let targetKey = destination.droppableId.split('_')[0] as keyof DraggableFieldState;
+                if (result.draggableId.startsWith('_')) {
+                    const pathId = result.draggableId.split('_')[1];
+                    const joinPath = vizStore.decodeJoinPath(pathId);
+                    vizStore.moveField(sourceKey, result.source.index, targetKey, destination.index, joinPath, true);
+                } else {
+                    vizStore.moveField(sourceKey, result.source.index, targetKey, destination.index, null, true);
+                }
             }
         },
         [vizStore]

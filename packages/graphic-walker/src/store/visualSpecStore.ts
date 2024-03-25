@@ -39,19 +39,22 @@ import {
     IPaintMap,
     IPaintMapV2,
     IDefaultConfig,
+    IJoinPath,
+    FieldIdentifier,
     FieldIdentifier,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
-import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, DEFAULT_DATASET } from '../constants';
 
 import { toWorkflow } from '../utils/workflow';
 import { KVTuple, uniqueId } from '../models/utils';
 import { INestNode } from '../components/pivotTable/inteface';
-import { getSort, getSortedEncoding } from '../utils';
+import { deduper, getFieldIdentifier, getSort, getSortedEncoding, isSameField } from '../utils';
 import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
 import { IPaintMapAdapter } from '../lib/paint';
 import { toChatMessage } from '@/models/chat';
 import { viewEncodingKeys } from '@/models/visSpec';
+import { encodePath, getMap, getReachedDatasets, getRoute, transformMultiDatasetFields } from '@/utils/route';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 export class VizSpecStore {
@@ -69,7 +72,6 @@ export class VizSpecStore {
     showVisualConfigPanel: boolean = false;
     showGeoJSONConfigPanel: boolean = false;
     removeConfirmIdx: number | null = null;
-    filters: Filters = {};
     tableCollapsedHeaderMap: Map<string, INestNode['path']> = new Map();
     selectedMarkObject: Record<string, string | number | undefined> = {};
     showLogSettingPanel: boolean = false;
@@ -82,16 +84,17 @@ export class VizSpecStore {
     lastErrorMessage: string = '';
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = '';
-    editingComputedFieldFid: string | undefined = undefined;
+    editingComputedFieldFid: FieldIdentifier | undefined = undefined;
     defaultConfig: IDefaultConfig | undefined;
+    linkingDataset: string | undefined = undefined;
 
-    onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+    onMetaChange?: (fid: FieldIdentifier, diffMeta: Partial<IMutField>) => void;
 
     constructor(
         meta: IMutField[],
         options?: {
             empty?: boolean;
-            onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+            onMetaChange?: (fid: FieldIdentifier, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
         }
     ) {
@@ -103,7 +106,6 @@ export class VizSpecStore {
         makeAutoObservable(this, {
             visList: observable.shallow,
             allEncodings: computed.struct,
-            filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
     }
@@ -179,8 +181,37 @@ export class VizSpecStore {
         return result;
     }
 
+    get datasets() {
+        return Array.from(new Set(this.meta.map((x) => x.dataset ?? DEFAULT_DATASET)));
+    }
+
+    get baseDataset() {
+        return this.layout.baseDataset ?? this.datasets[0];
+    }
+
+    get logicBaseDataset() {
+        return this.config.baseDataset ?? this.datasets[0];
+    }
+
+    get isMultiDataset() {
+        return this.datasets.length > 1;
+    }
+
+    get routeMap() {
+        return getMap(this.meta);
+    }
+
+    get basePath() {
+        return getRoute(this.baseDataset, this.logicBaseDataset, this.routeMap);
+    }
+
+    get unReachedDatasets() {
+        const reached = getReachedDatasets(this.baseDataset, this.routeMap);
+        return this.datasets.filter((x) => !reached.has(x));
+    }
+
     get viewEncodings() {
-        const result: Record<string, IViewField[]> = {};
+        const result: Partial<Record<keyof DraggableFieldState, IViewField[]>> = {};
         viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
             result[k] = this.currentEncodings[k];
         });
@@ -228,6 +259,21 @@ export class VizSpecStore {
 
     get chatMessages() {
         return toChatMessage(this.visList[this.visIndex]);
+    }
+
+    get datasetJoinPaths() {
+        return Object.fromEntries(
+            this.datasets.map(
+                (dataset) =>
+                    [
+                        dataset,
+                        deduper(
+                            this.viewEncodingFields.filter((x) => x.dataset === dataset).map((x) => x.joinPath ?? []),
+                            encodePath
+                        ),
+                    ] as const
+            )
+        );
     }
 
     get paintFields() {
@@ -318,16 +364,64 @@ export class VizSpecStore {
                 } as const;
             }
         }
-        return this.paintFields;
+        return this.paintFields();
     }
 
-    private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
+    get multiViewInfo() {
+        return transformMultiDatasetFields({
+            filters: this.viewFilters,
+            views: this.viewEncodings,
+        });
+    }
+
+    private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number, joinPath: IJoinPath[] | null) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID || oriF.aggName === 'expr') {
             return;
         }
-        this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, null);
+        this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, null, joinPath);
         this.editingFilterIdx = index;
+    }
+
+    setViewBaseDataset(dataset: string) {
+        if (this.unReachedDatasets.includes(dataset)) {
+            const reached = getReachedDatasets(dataset, this.routeMap);
+            const unreached = this.datasets.filter((x) => !reached.has(x));
+            this.visList[this.visIndex] = performers.resetBaseDataset(this.visList[this.visIndex], dataset, unreached);
+        }
+        this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], [['baseDataset', dataset]]);
+    }
+
+    setLinkingDataset(dataset?: string) {
+        this.linkingDataset = dataset;
+    }
+
+    encodeJoinPath(path: IJoinPath[]) {
+        const base = this.datasets.length;
+        let result = 1;
+        path.forEach((x) => {
+            const i = this.datasets.findIndex((y) => y === x.from);
+            const j = (this.routeMap[x.from] ?? []).findIndex((y) => y.to === x.to && y.tid === x.tid && y.fid === x.fid);
+            if (i > -1 && j > -1) {
+                result = (result * this.routeMap[x.from].length + j) * base + i;
+            }
+        });
+        return result.toString(36);
+    }
+
+    decodeJoinPath(id: string) {
+        const base = this.datasets.length;
+        let num = parseInt(id, 36);
+        const result: IJoinPath[] = [];
+        while (num > 1) {
+            const i = num % base;
+            num = (num - i) / base;
+            const arr = this.routeMap[this.datasets[i]];
+            const j = num % arr.length;
+            num = (num - j) / arr.length;
+            result.unshift(arr[j]);
+        }
+        return result;
     }
 
     undo() {
@@ -346,7 +440,7 @@ export class VizSpecStore {
         this.meta = meta;
     }
 
-    setOnMetaChange(onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void) {
+    setOnMetaChange(onMetaChange?: (fid: FieldIdentifier, diffMeta: Partial<IMutField>) => void) {
         this.onMetaChange = onMetaChange;
     }
 
@@ -415,16 +509,24 @@ export class VizSpecStore {
     }
 
     reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
+        if (this.isMultiDataset) return;
         if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
         this.visList[this.visIndex] = performers.reorderField(this.visList[this.visIndex], stateKey, sourceIndex, destinationIndex);
     }
 
-    moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
+    moveField(
+        sourceKey: keyof DraggableFieldState,
+        sourceIndex: number,
+        destinationKey: keyof DraggableFieldState,
+        destinationIndex: number,
+        joinPath: IJoinPath[] | null,
+        isFromDrag?: boolean
+    ) {
         if (sourceKey === 'filters') {
             return this.removeField(sourceKey, sourceIndex);
         } else if (destinationKey === 'filters') {
-            return this.appendFilter(destinationIndex, sourceKey, sourceIndex);
+            return this.appendFilter(destinationIndex, sourceKey, sourceIndex, joinPath);
         }
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         const sourceMeta = GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey);
@@ -434,6 +536,7 @@ export class VizSpecStore {
         }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
+            if (this.isMultiDataset && destMeta && isFromDrag) return;
             this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
         } else if (destMeta) {
             this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
@@ -458,7 +561,8 @@ export class VizSpecStore {
                 destinationKey,
                 destinationIndex,
                 uniqueId(),
-                limit
+                limit,
+                joinPath
             );
         }
     }
@@ -640,12 +744,9 @@ export class VizSpecStore {
     closeEmbededMenu() {
         this.vizEmbededMenu.show = false;
     }
-    setFilters(props: Filters) {
-        this.filters = props;
-    }
 
-    updateCurrentDatasetMetas(fid: string, diffMeta: Partial<IMutField>) {
-        const field = this.meta.find((f) => f.fid === fid);
+    updateCurrentDatasetMetas(fid: FieldIdentifier, diffMeta: Partial<IMutField>) {
+        const field = this.meta.find((f) => getFieldIdentifier(f) === fid);
         if (field) {
             for (let mk in diffMeta) {
                 field[mk] = diffMeta[mk];
@@ -753,40 +854,76 @@ export class VizSpecStore {
         this.lastSpec = spec;
     }
 
-    setComputedFieldFid(fid?: string) {
+    setComputedFieldFid(fid?: FieldIdentifier) {
         this.editingComputedFieldFid = fid;
     }
 
-    upsertComputedField(fid: string, name: string, sql: string) {
+    upsertComputedField(fid: FieldIdentifier, name: string, sql: string) {
         if (fid === '') {
             this.visList[this.visIndex] = performers.addSQLComputedField(this.visList[this.visIndex], uniqueId(), name, sql);
         } else {
-            const originalField = this.allFields.find((x) => x.fid === fid);
+            const originalField = this.allFields.find((x) => getFieldIdentifier(x) === fid);
             if (!originalField) return;
             const [semanticType, isAgg] = getSQLItemAnalyticType(parseSQLExpr(sql), this.allFields);
             const analyticType = semanticType === 'quantitative' ? 'measure' : 'dimension';
             const newAggName = isAgg ? 'expr' : analyticType === 'dimension' ? undefined : 'sum';
             const preAggName = originalField.aggName === 'expr' ? 'expr' : originalField.aggName === undefined ? undefined : 'sum';
 
-            this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], fid, {
-                name,
-                analyticType,
-                semanticType,
-                ...(preAggName !== newAggName ? { aggName: newAggName } : {}),
-                expression: { as: fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
-            });
+            this.visList[this.visIndex] = performers.editAllField(
+                this.visList[this.visIndex],
+                fid,
+                {
+                    name,
+                    analyticType,
+                    semanticType,
+                    ...(preAggName !== newAggName ? { aggName: newAggName } : {}),
+                    expression: { as: fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
+                },
+                fid
+            );
         }
     }
 
     removeComputedField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         if (oriF.computed) {
-            this.visList[this.visIndex] = performers.removeAllField(this.visList[this.visIndex], oriF.fid);
+            this.visList[this.visIndex] = performers.removeAllField(this.visList[this.visIndex], oriF.fid, getFieldIdentifier(oriF));
         }
+    }
+
+    linkDataset(fid: FieldIdentifier, targetDataset: string, targetField: string) {
+        const oriF = this.allFields.find((x) => getFieldIdentifier(x) === fid);
+        if (!oriF) return;
+        const source = oriF.analyticType === 'dimension' ? 'dimensions' : 'measures';
+        const index = this.currentEncodings[source].findIndex(isSameField(oriF));
+        this.visList[this.visIndex] = performers.linkDataset(this.visList[this.visIndex], source, index, targetDataset, targetField);
     }
 
     replaceWithNLPQuery(query: string, response: string) {
         this.visList[this.visIndex] = performers.replaceWithNLPQuery(this.visList[this.visIndex], query, response);
+    }
+
+    renderJoinPath(path: IJoinPath[], datasetNames?: Record<string, string>) {
+        return path
+            .map(({ fid, from, tid, to }) => [
+                this.allFields.find(isSameField({ fid, dataset: from })),
+                this.allFields.find(isSameField({ fid: tid, dataset: to })),
+            ])
+            .map((x) =>
+                x
+                    .filter(Boolean)
+                    .map((f) => {
+                        const { dataset = DEFAULT_DATASET, name } = f!;
+                        const datasetName = datasetNames?.[dataset] ?? dataset;
+                        return `${datasetName}.${name}`;
+                    })
+                    .join('->')
+            )
+            .join('\n');
+    }
+
+    editFieldName(sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number, newName: string) {
+        this.visList[this.visIndex] = performers.renameField(this.visList[this.visIndex], sourceKey, sourceIndex, newName);
     }
 }
 

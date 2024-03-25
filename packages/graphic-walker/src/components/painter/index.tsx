@@ -24,6 +24,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
 import { parseColorToHex } from '@/utils/colors';
+import { encodePath, transformMultiDatasetFields } from '@/utils/route';
+import { encodeFid } from '@/vis/spec/encode';
+import produce from 'immer';
+import { isSameField } from '@/utils';
 import { getMeaAggKey, getMeaAggName } from '@/utils';
 import rbush from 'rbush';
 
@@ -153,12 +157,13 @@ const produceChannel = (
     channel: IViewField,
     domain: IPaintDimension,
     options?: {
+        fid?: string;
         reverseNominalDomain?: boolean;
     }
 ) => {
     if (domain.domain.value.every((x) => x instanceof Array)) {
         return {
-            field: `${channel.fid}[0]`,
+            field: `${options?.fid ?? channel.fid}[0]`,
             title: channel.name,
             type: domain.domain.type,
             axis: { labelOverlap: true },
@@ -171,7 +176,7 @@ const produceChannel = (
         };
     }
     return {
-        field: channel.fid,
+        field: options?.fid ?? channel.fid,
         title: channel.name,
         type: domain.domain.type,
         axis: { labelOverlap: true },
@@ -578,24 +583,10 @@ const PainterContent = (props: {
     const computation = useCompututaion();
     const fields = useMemo(
         () =>
-            deduper(
-                [
-                    {
-                        ...props.x,
-                        analyticType: 'measure' as const,
-                    },
-                    {
-                        ...props.y,
-                        analyticType: 'measure' as const,
-                    },
-                ].concat(
-                    props.facets.flatMap((x) =>
-                        x.dimensions.map((d) => ({ fid: d.fid, name: d.fid, semanticType: d.domain.type, analyticType: 'measure' as const }))
-                    )
-                ),
-                (x) => x.fid
+            [props.x, props.y].concat(
+                props.facets.flatMap((f) => f.dimensions.flatMap((x) => props.allFields.filter(isSameField(x)).map((y) => ({ ...y, joinPath: x.joinPath }))))
             ),
-        [props.x, props.y]
+        [props.x, props.y, props.facets, props.allFields]
     );
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
@@ -615,9 +606,30 @@ const PainterContent = (props: {
         viewMeasures: fields,
         timezoneDisplayOffset: props.displayOffset,
     });
-    const indexes = useMemo(() => viewData.map(calcIndexesByDimensions([props.domainY, props.domainX])), [viewData, props.domainX, props.domainY]);
+    const processFid = useMemo(() => {
+        return transformMultiDatasetFields({ views: { fields }, filters: [] }).processFid;
+    }, [fields]);
+    const indexes = useMemo(
+        () =>
+            viewData.map(
+                calcIndexesByDimensions([props.domainY, props.domainX].map((domain) => ({ ...domain, fid: processFid(domain.joinPath)(domain.fid) })))
+            ),
+        [viewData, props.domainX, props.domainY, processFid]
+    );
+
     const [data, loadingResult] = useAsyncMemo(async () => {
-        const facetResult = await calcPaintMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
+        const transformedFacets = produce(props.facets, (facets) => {
+            facets.forEach((facet) => {
+                facet.dimensions.forEach((dimension) => {
+                    dimension.fid = processFid(dimension.joinPath)(dimension.fid);
+                });
+            });
+        });
+        const facetResult = await calcPaintMapV2(viewData, {
+            dict: props.dict,
+            facets: transformedFacets,
+            usedColor: [],
+        });
         return viewData.map((x, i) => {
             const pid = props.paintMapRef.current![indexes[i]];
             return {
@@ -626,8 +638,7 @@ const PainterContent = (props: {
                 [PIXEL_INDEX]: indexes[i],
             };
         });
-    }, [indexes, viewData, props.dict, props.facets]);
-
+    }, [indexes, viewData, props.dict, props.facets, processFid]);
     const [pixelOffset, setPixelOffset] = useState([0, 0]);
 
     const resetRef = useRef(() => {});
@@ -646,8 +657,8 @@ const PainterContent = (props: {
                 },
                 mark: { type: markWhitelist.includes(mark) ? mark : fallbackMark, opacity: 0.66 },
                 encoding: {
-                    x: produceChannel(props.x, props.domainX),
-                    y: produceChannel(props.y, props.domainY, { reverseNominalDomain: true }),
+                    x: produceChannel(props.x, props.domainX, { fid: encodeFid(processFid(props.x.joinPath)(props.x.fid)) }),
+                    y: produceChannel(props.y, props.domainY, { fid: encodeFid(processFid(props.y.joinPath)(props.y.fid)), reverseNominalDomain: true }),
                     color: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
@@ -950,6 +961,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
                             },
                             fid: f.fid,
+                            dataset: f.dataset,
+                            joinPath: f.joinPath,
                         };
                     } else {
                         const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
@@ -961,6 +974,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 width: value.length,
                             },
                             fid: f.fid,
+                            dataset: f.dataset,
+                            joinPath: f.joinPath,
                         };
                     }
                 };
@@ -1001,7 +1016,11 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                             // is non-aggergated paint map
                             if (
                                 lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
+                                lastFacet.dimensions[0]?.dataset !== paintInfo.new.y.dataset ||
+                                encodePath(lastFacet.dimensions[0]?.joinPath ?? []) !== encodePath(paintInfo.new.y.joinPath ?? []) ||
                                 lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
+                                lastFacet.dimensions[1]?.dataset !== paintInfo.new.x.dataset ||
+                                encodePath(lastFacet.dimensions[1]?.joinPath ?? []) !== encodePath(paintInfo.new.x.joinPath ?? []) ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale)
                             ) {
@@ -1024,17 +1043,17 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 });
                             } else {
                                 // editing the existing paint map
-                                const x = lastFacet.dimensions.at(-1)?.fid;
-                                const y = lastFacet.dimensions.at(-2)?.fid;
-                                const xf = allFields.find((a) => a.fid === x);
-                                const yf = allFields.find((a) => a.fid === y);
+                                const x = lastFacet.dimensions.at(-1);
+                                const y = lastFacet.dimensions.at(-2);
+                                const xf = allFields.find((a) => a.fid === x?.fid && a.dataset === x?.dataset);
+                                const yf = allFields.find((a) => a.fid === y?.fid && a.dataset === y?.dataset);
                                 unstable_batchedUpdates(() => {
                                     setDict(paintInfo.item.dict);
                                     setDomainX(lastFacet.dimensions.at(-1));
                                     setDomainY(lastFacet.dimensions.at(-2));
                                     setFacets(paintInfo.item.facets.slice(0, -1));
-                                    setX(xf);
-                                    setY(yf);
+                                    setX({ ...xf, joinPath: x?.joinPath } as typeof xf);
+                                    setY({ ...yf, joinPath: y?.joinPath } as typeof yf);
                                     setAggInfo(null);
                                     setLoading(false);
                                 });
@@ -1126,7 +1145,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                 {
                     map: await compressBitMap(paintMapRef.current),
                     dimensions,
-                    usedColor: Array.from(new Set(paintMapRef.current)).map((x) => x || 1),
+                    usedColor: Array.from(new Set(paintMapRef.current).add(1)).map((x) => x || 1),
                 },
             ];
             // all colors in map

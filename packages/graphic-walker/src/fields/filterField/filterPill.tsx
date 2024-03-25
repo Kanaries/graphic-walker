@@ -1,10 +1,10 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useContext } from 'react';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
-import { useVizStore } from '../../store';
+import { DatasetNamesContext, useVizStore } from '../../store';
 import { refMapper } from '../fieldsContext';
 import { formatDate } from '../../utils';
 import { parsedOffsetDate } from '../../lib/op/offset';
@@ -68,7 +68,11 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
-    const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
+    const datasetNames = useContext(DatasetNamesContext);
+
+    const datasetName = field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : '';
+
+    const fieldName = field.enableAgg ? `${datasetName}${field.aggName}(${field.name})` : `${datasetName}${field.name}`;
 
     return (
         <Pill className="text-foreground touch-none" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>

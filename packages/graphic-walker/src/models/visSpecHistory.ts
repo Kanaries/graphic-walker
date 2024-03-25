@@ -19,9 +19,11 @@ import {
     IField,
     IPaintMapV2,
     IDefaultConfig,
+    IJoinPath,
+    FieldIdentifier,
 } from '../interfaces';
 import type { FeatureCollection } from 'geojson';
-import { arrayEqual, createCountField, createVirtualFields, isNotEmpty } from '../utils';
+import { arrayEqual, createCountField, createVirtualFields, getFieldIdentifier, isNotEmpty } from '../utils';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout, visSpecDecoder, forwardVisualConfigs } from '../utils/save';
 import { AssertSameKey, KVTuple, insert, mutPath, remove, replace, uniqueId } from './utils';
 import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } from './withHistory';
@@ -61,15 +63,18 @@ export enum Methods {
     removeAllField,
     editAllField,
     replaceWithNLPQuery,
+    resetBaseDataset,
+    linkDataset,
+    renameField,
 }
 export type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
     [Methods.removeField]: [keyof DraggableFieldState, number];
     [Methods.reorderField]: [keyof DraggableFieldState, number, number];
     [Methods.moveField]: [normalKeys, number, normalKeys, number, number | null];
-    [Methods.cloneField]: [normalKeys, number, normalKeys, number, string, number | null];
+    [Methods.cloneField]: [normalKeys, number, normalKeys, number, string, number | null, IJoinPath[] | null];
     [Methods.createBinlogField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2' | 'log', string, number];
-    [Methods.appendFilter]: [number, normalKeys, number, null];
+    [Methods.appendFilter]: [number, normalKeys, number, null, IJoinPath[] | null];
     [Methods.modFilter]: [number, normalKeys, number];
     [Methods.writeFilter]: [number, IFilterRule | null];
     [Methods.setName]: [string];
@@ -86,9 +91,12 @@ export type PropsMap = {
     [Methods.addFoldField]: [normalKeys, number, normalKeys, number, string, number | null];
     [Methods.upsertPaintField]: [IPaintMap | IPaintMapV2 | null, string];
     [Methods.addSQLComputedField]: [string, string, string];
-    [Methods.removeAllField]: [string];
-    [Methods.editAllField]: [string, Partial<IField>];
+    [Methods.removeAllField]: [string, FieldIdentifier | null];
+    [Methods.editAllField]: [string, Partial<IField>, FieldIdentifier | null];
     [Methods.replaceWithNLPQuery]: [string, string];
+    [Methods.resetBaseDataset]: [string, string[]];
+    [Methods.linkDataset]: [normalKeys, number, string, string];
+    [Methods.renameField]: [normalKeys, number, string];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -124,8 +132,8 @@ const actions: {
             [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
         }));
     },
-    [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit) => {
-        const field = { ...data.encodings[from][findex] };
+    [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit, joinPath) => {
+        const field = { ...data.encodings[from][findex], joinPath: joinPath ?? [] };
         return mutPath(data, 'encodings', (e) => ({
             ...e,
             [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
@@ -153,13 +161,14 @@ const actions: {
                 ],
                 num,
             },
+            dataset: originField.dataset,
         };
         if (!isBin) {
             newField.aggName = 'sum';
         }
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
-    [Methods.appendFilter]: (data, index, from, findex, _dragId) => {
+    [Methods.appendFilter]: (data, index, from, findex, _dragId, joinPath) => {
         const originField = data.encodings[from][findex];
         return mutPath(data, 'encodings.filters', (filters) =>
             insert(
@@ -167,6 +176,7 @@ const actions: {
                 {
                     ...originField,
                     rule: null,
+                    joinPath: joinPath ?? [],
                 },
                 index
             )
@@ -253,6 +263,7 @@ const actions: {
                         : []),
                 ],
             },
+            dataset: originField.dataset,
         };
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
@@ -295,6 +306,7 @@ const actions: {
                         : []),
                 ],
             },
+            dataset: originField.dataset,
         };
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
@@ -314,7 +326,7 @@ const actions: {
             data = actions[Methods.setConfig](
                 data,
                 'folds',
-                validFoldBy.filter((_, i) => i === 0).map((x) => x.fid)
+                validFoldBy.filter((_, i) => i === 0).map((x) => getFieldIdentifier(x))
             );
         }
         if (originalField.fid === MEA_VAL_ID) {
@@ -325,10 +337,10 @@ const actions: {
             if (meaKeyIndexes.length === 1) {
                 // there is no Measure Name in Chart, add it in Details channel (which has no limit)
                 const [fromKey, fromIndex] = meaKeyIndexes[0];
-                data = actions[Methods.cloneField](data, fromKey, fromIndex, 'details', 0, `${newVarKey}_auto`, Infinity);
+                data = actions[Methods.cloneField](data, fromKey, fromIndex, 'details', 0, `${newVarKey}_auto`, Infinity, null);
             }
         }
-        return actions[Methods.cloneField](data, from, findex, to, tindex, newVarKey, limit);
+        return actions[Methods.cloneField](data, from, findex, to, tindex, newVarKey, limit, null);
     },
     [Methods.upsertPaintField]: (data, map, name) => {
         if (!map) {
@@ -425,14 +437,14 @@ const actions: {
             })
         );
     },
-    [Methods.removeAllField]: (data, fid) => {
+    [Methods.removeAllField]: (data, fid, identifier) => {
         return mutPath(
             data,
             'encodings',
             (e) =>
                 Object.fromEntries(
                     Object.entries(e).map(([fname, fields]) => {
-                        const newFields = fields.filter((x) => x.fid !== fid);
+                        const newFields = fields.filter(identifier ? (x) => getFieldIdentifier(x) !== identifier : (x) => x.fid !== fid);
                         if (fields.length === newFields.length) {
                             return [fname, fields];
                         }
@@ -441,7 +453,7 @@ const actions: {
                 ) as typeof e
         );
     },
-    [Methods.editAllField]: (data, fid, newData) => {
+    [Methods.editAllField]: (data, fid, newData, identifier) => {
         if (Object.keys(newData).includes('name')) {
             const originalField = data.encodings.dimensions.concat(data.encodings.measures).find((x) => x.fid === fid);
             // if name is changed, update all computed fields
@@ -472,9 +484,12 @@ const actions: {
             (e) =>
                 Object.fromEntries(
                     Object.entries(e).map(([fname, fields]) => {
-                        const hasField = fields.find((x) => x.fid === fid);
+                        const hasField = fields.find(identifier ? (x) => getFieldIdentifier(x) !== identifier : (x) => x.fid !== fid);
                         if (hasField) {
-                            return [fname, fields.map((x) => (x.fid === fid ? { ...x, ...newData } : x))];
+                            return [
+                                fname,
+                                fields.map((x) => ((identifier ? getFieldIdentifier(x) !== identifier : x.fid === fid) ? { ...x, ...newData } : x)),
+                            ];
                         }
                         return [fname, fields];
                     })
@@ -483,6 +498,52 @@ const actions: {
     },
     [Methods.replaceWithNLPQuery]: (data, _query, response) => {
         return { ...JSON.parse(response), visId: data.visId, name: data.name };
+    },
+    [Methods.resetBaseDataset]: (data, newBaseDataset, datasets) => {
+        const set = new Set(datasets);
+        return actions[Methods.setLayout](
+            actions[Methods.setConfig](
+                mutPath(
+                    data,
+                    'encodings',
+                    (e) =>
+                        Object.fromEntries(
+                            Object.entries(e).map(([fname, fields]) => {
+                                if (['dimensions', 'measures'].includes(fname)) {
+                                    return [fname, fields];
+                                }
+                                const newFields = fields.filter((x) => !set.has(x.dataset));
+                                if (fields.length === newFields.length) {
+                                    return [fname, fields];
+                                }
+                                return [fname, newFields];
+                            })
+                        ) as typeof e
+                ),
+                'baseDataset',
+                newBaseDataset
+            ),
+            [['baseDataset', newBaseDataset]]
+        );
+    },
+    [Methods.linkDataset]: (data, channel, index, targetDataset, field) => {
+        return mutPath(data, `encodings.${channel}`, (f) =>
+            replace(f, index, (x) => ({
+                ...x,
+                foreign: {
+                    dataset: targetDataset,
+                    fid: field,
+                },
+            }))
+        );
+    },
+    [Methods.renameField]: (data, channel, index, newName) => {
+        return mutPath(data, `encodings.${channel}`, (f) =>
+            replace(f, index, (x) => ({
+                ...x,
+                name: newName,
+            }))
+        );
     },
 };
 
@@ -580,6 +641,8 @@ export function newChart(fields: IMutField[], name: string, visId?: string, defa
                     semanticType: f.semanticType,
                     analyticType: f.analyticType,
                     offset: f.offset,
+                    dataset: f.dataset,
+                    foreign: f.foreign,
                 })
             )
             .concat(extraDimensions),
@@ -594,6 +657,8 @@ export function newChart(fields: IMutField[], name: string, visId?: string, defa
                     semanticType: f.semanticType,
                     aggName: 'sum',
                     offset: f.offset,
+                    dataset: f.dataset,
+                    foreign: f.foreign,
                 })
             )
             .concat(extraMeasures),

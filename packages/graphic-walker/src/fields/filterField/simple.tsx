@@ -345,7 +345,7 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, allFields,
 
     React.useEffect(() => {
         withComputedField(field, allFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
-            getTemporalRange(service, field.fid, field.offset)
+            getTemporalRange(service, field.fid, field.dataset, field.offset)
         ).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
 

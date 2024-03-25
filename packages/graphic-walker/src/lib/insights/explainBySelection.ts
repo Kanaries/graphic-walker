@@ -1,4 +1,15 @@
-import { IAggregator, IExplainProps, IPredicate, IField, IRow, IViewField, IFilterField, IComputationFunction, IViewWorkflowStep, IDataQueryWorkflowStep } from '../../interfaces';
+import {
+    IAggregator,
+    IExplainProps,
+    IPredicate,
+    IField,
+    IRow,
+    IViewField,
+    IFilterField,
+    IComputationFunction,
+    IViewWorkflowStep,
+    IDataQueryWorkflowStep,
+} from '../../interfaces';
 import { filterByPredicates, getMeaAggKey } from '../../utils';
 import { compareDistribution, compareDistributionKL, compareDistributionJS, normalizeWithParent } from '../../utils/normalization';
 import { aggregate } from '../op/aggregate';
@@ -44,22 +55,44 @@ export async function explainBySelection(props: {
                             op: 'bin',
                             as: extendDimFid,
                             num: QUANT_BIN_NUM,
-                            params: [{
-                                type: 'field',
-                                value: extendDim.fid,
-                            }]
-                        }
-                    }
+                            params: [
+                                {
+                                    type: 'field',
+                                    value: extendDim.fid,
+                                },
+                            ],
+                        },
+                    },
                 ],
             });
         }
         for (let mea of viewMeasures) {
-            const overallWorkflow = toWorkflow(viewFilters, allFields, [extendDim], [mea], true, 'none', [], undefined, timezoneDisplayOffset);
+            const { workflow: overallWorkflow, datasets } = toWorkflow(
+                viewFilters,
+                allFields,
+                [extendDim],
+                [mea],
+                true,
+                'none',
+                [],
+                undefined,
+                timezoneDisplayOffset
+            );
             const fullOverallWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...overallWorkflow] : overallWorkflow;
-            const overallData = await dataQuery(computationFunction, fullOverallWorkflow);
-            const viewWorkflow = toWorkflow(viewFilters, allFields, [...viewDimensions, extendDim], [mea], true, 'none', [], undefined, timezoneDisplayOffset);
+            const overallData = await dataQuery(computationFunction, fullOverallWorkflow, datasets);
+            const { workflow: viewWorkflow, datasets: viewDatasets } = toWorkflow(
+                viewFilters,
+                allFields,
+                [...viewDimensions, extendDim],
+                [mea],
+                true,
+                'none',
+                [],
+                undefined,
+                timezoneDisplayOffset
+            );
             const fullViewWorkflow = extraPreWorkflow ? [...extraPreWorkflow, ...viewWorkflow] : viewWorkflow;
-            const viewData = await dataQuery(computationFunction, fullViewWorkflow);
+            const viewData = await dataQuery(computationFunction, fullViewWorkflow, viewDatasets);
             const subData = filterByPredicates(viewData, predicates);
             let outlierNormalization = normalizeWithParent(subData, overallData, [getMeaAggKey(mea.fid, mea.aggName ?? 'sum')], false);
             let outlierScore = compareDistributionJS(

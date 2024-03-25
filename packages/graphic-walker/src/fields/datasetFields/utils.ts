@@ -5,6 +5,7 @@ import type { IActionMenuItem } from '../../components/actionMenu/list';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { getSample } from '../../computation';
 import { getTimeFormat } from '../../lib/inferMeta';
+import { getFieldIdentifier } from '@/utils';
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
     return array.filter(Boolean) as T[];
@@ -25,14 +26,14 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                     label: t('to_mea'),
                     disabled: isInnerField,
                     onPress() {
-                        vizStore.moveField('dimensions', index, 'measures', vizStore.viewMeasures.length);
+                        vizStore.moveField('dimensions', index, 'measures', vizStore.viewMeasures.length, null);
                     },
                 },
                 channel === 'measures' && {
                     label: t('to_dim'),
                     disabled: isInnerField,
                     onPress() {
-                        vizStore.moveField('measures', index, 'dimensions', vizStore.viewDimensions.length);
+                        vizStore.moveField('measures', index, 'dimensions', vizStore.viewDimensions.length, null);
                     },
                 },
                 {
@@ -164,7 +165,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                     f.expression?.op === 'expr' && {
                         label: 'Edit Computed Field',
                         onPress() {
-                            vizStore.setComputedFieldFid(f.fid);
+                            vizStore.setComputedFieldFid(getFieldIdentifier(f));
                         },
                     },
                 f.computed &&

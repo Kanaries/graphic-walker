@@ -52,6 +52,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         config: visualConfig,
         layout,
         currentVis: chart,
+        multiViewInfo,
         visIndex,
         visLength,
         sort,
@@ -65,8 +66,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         }),
         [layout, overrideSize]
     );
-
-    const draggableFieldState = chart.encodings;
+    const draggableFieldState = { ...emptyEncodings, ...multiViewInfo.views, filters: multiViewInfo.filters };
 
     const { i18n } = useTranslation();
 
@@ -142,14 +142,19 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (_values: any, e: MouseEvent & { item: Item }) => {
             e.stopPropagation();
             if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
                     vizStore.showEmbededMenu([e.clientX, e.clientY]);
-                    vizStore.setFilters(values);
                 });
-                const selectedMarkObject = values.vlPoint.or[0];
+                const viewKeys = new Set(
+                    viewEncodingKeys(visualConfig.geoms[0])
+                        .flatMap((k) => encodings[k] as IViewField[])
+                        .map((x) => x.fid)
+                );
+                // getting fields from event, because vega cannot pass selection including dot in key.
+                const selectedMarkObject = Object.fromEntries(Object.entries<string | number | undefined>(e.item.datum).filter(([k]) => viewKeys.has(k)));
                 // check selected fields include temporal, and return temporal timestamp to original data
                 const allFields = viewEncodingKeys(visualConfig.geoms[0]).flatMap((k) => encodings[k] as IViewField[]);
                 const selectedTemporalFields = Object.keys(selectedMarkObject)
@@ -164,7 +169,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 if (e.item.mark.marktype === 'line') {
                     // use the filter in mark group
                     const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}));
-                    vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries<string | number>(selectedMarkObject).filter(([k]) => keys.has(k))));
+                    vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries(selectedMarkObject).filter(([k]) => keys.has(k))));
                 } else {
                     vizStore.updateSelectedMarkObject(selectedMarkObject);
                 }

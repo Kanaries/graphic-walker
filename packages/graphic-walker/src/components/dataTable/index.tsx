@@ -1,6 +1,14 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField } from '../../interfaces';
+import type {
+    IMutField,
+    IRow,
+    IComputationFunction,
+    IFilterRule,
+    IFilterField,
+    IFilterWorkflowStep,
+    FieldIdentifier,
+} from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -11,11 +19,12 @@ import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog'
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
 import { parsedOffsetDate } from '../../lib/op/offset';
-import { cn, formatDate } from '../../utils';
+import { getFieldIdentifier, cn, formatDate } from '../../utils';
 import { FieldProfiling } from './profiling';
 import { addFilterForQuery, createFilter } from '../../utils/workflow';
 import { Button, buttonVariants } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { DEFAULT_DATASET } from '@/constants';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 
 interface DataTableProps {
@@ -92,9 +101,9 @@ type wrapMutField = {
 const getHeaders = (metas: IMutField[]): wrapMutField[][] => {
     const height = metas.map((x) => x.path?.length ?? 1).reduce((a, b) => Math.max(a, b), 0);
     const result: wrapMutField[][] = [...Array(height)].map(() => []);
-    let now = 1;
     metas.forEach((x, fIndex) => {
         const path = x.path ?? [x.name ?? x.fid];
+        const now = path.findIndex((p, i) => !(result[i] && result[i].at(-1)?.value === p)) + 1;
         if (path.length > now) {
             for (let i = now - 1; i < path.length - 1; i++) {
                 result[i].push({
@@ -105,7 +114,6 @@ const getHeaders = (metas: IMutField[]): wrapMutField[][] => {
                 });
             }
         }
-        now = path.length;
         for (let i = 0; i < path.length - 1; i++) {
             result[i][result[i].length - 1].colSpan++;
         }
@@ -131,15 +139,15 @@ function useFilters(metas: IMutField[]) {
     const [filters, setFilters] = useState<IFilterField[]>([]);
     const [editingFilterIdx, setEditingFilterIdx] = useState<number | null>(null);
     const options = useMemo(() => {
-        return metas.map((x) => ({ label: x.name ?? x.fid, value: x.fid }));
+        return metas.map((x) => ({ label: x.name ?? x.fid, value: getFieldIdentifier(x) }));
     }, [metas]);
     const onSelectFilter = useCallback(
-        (fid: string) => {
-            const i = filters.findIndex((x) => x.fid === fid);
+        (fid: FieldIdentifier) => {
+            const i = filters.findIndex((x) => getFieldIdentifier(x) === fid);
             if (i > -1) {
                 setEditingFilterIdx(i);
             } else {
-                const meta = metas.find((x) => x.fid === fid);
+                const meta = metas.find((x) => getFieldIdentifier(x) === fid);
                 if (!meta) return;
                 const newFilter: IFilterField = {
                     fid,
@@ -256,6 +264,8 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const [total, setTotal] = useState(0);
     const [statLoading, setStatLoading] = useState(false);
 
+    const datasets = useMemo(() => Array.from(new Set(metas.map((x) => x.dataset ?? DEFAULT_DATASET))), [metas]);
+
     // Get count when filter changed
     useEffect(() => {
         const f = filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule }));
@@ -287,11 +297,12 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ],
                 },
             ],
+            datasets,
         }).then((v) => {
             setTotal(v[0]?.count ?? 0);
             setStatLoading(false);
         });
-    }, [disableFilter, filters, computation]);
+    }, [disableFilter, filters, computation, datasets]);
 
     const from = pageIndex * size;
     const to = Math.min((pageIndex + 1) * size - 1, total - 1);
@@ -305,10 +316,17 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
-        dataReadRaw(computationFunction, metas.map(m => m.fid), size, pageIndex, {
-            sorting,
-            filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
-        })
+        dataReadRaw(
+            computationFunction,
+            metas.map((m) => m.fid),
+            size,
+            datasets,
+            pageIndex,
+            {
+                sorting,
+                filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
+            }
+        )
             .then((data) => {
                 if (taskId === taskIdRef.current) {
                     setDataLoading(false);
@@ -325,10 +343,10 @@ const DataTable: React.FC<DataTableProps> = (props) => {
         return () => {
             taskIdRef.current++;
         };
-    }, [computationFunction, pageIndex, size, sorting, filters]);
+    }, [computationFunction, pageIndex, size, sorting, filters, datasets]);
 
     const filteredComputation = useMemo((): IComputationFunction => {
-        const filterRules = filters.filter((f) => f.rule).map(createFilter);
+        const filterRules = filters.filter((f) => f.rule).map((f) => createFilter(f));
         return (query) => computation(addFilterForQuery(query, filterRules));
     }, [computation, filters]);
 
@@ -357,7 +375,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                 <div className="flex items-center p-2 space-x-2">
                     <span>Filters: </span>
                     {filters.map((x, i) => (
-                        <FilterPill key={x.fid} name={x.name} onClick={() => onSelectFilter(x.fid)} onRemove={() => onDeleteFilter(i)} />
+                        <FilterPill key={x.fid} name={x.name} onClick={() => onSelectFilter(getFieldIdentifier(x))} onRemove={() => onDeleteFilter(i)} />
                     ))}
                 </div>
             )}
@@ -397,7 +415,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                     <th
                                         colSpan={f.colSpan}
                                         rowSpan={f.rowSpan}
-                                        key={getHeaderKey(f)}
+                                        key={`${getHeaderKey(f)}_${i}`}
                                         className="align-top p-0 border-b bg-background"
                                         style={{ zIndex: row.length - i }}
                                     >
@@ -475,7 +493,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                             className: 'cursor-pointer invisible group-hover:visible',
                                                             size: 'icon-sm',
                                                         })}
-                                                        onClick={() => onSelectFilter(f.value.fid)}
+                                                        onClick={() => onSelectFilter(getFieldIdentifier(f.value))}
                                                     >
                                                         <FunnelIcon className="w-4 inline-block" />
                                                     </div>
@@ -491,6 +509,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                 {metas.map((field) => (
                                     <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
                                         <FieldProfiling
+                                            dataset={field.dataset ?? DEFAULT_DATASET}
                                             field={field.fid}
                                             semanticType={field.semanticType}
                                             computation={filteredComputation}

@@ -1,26 +1,37 @@
-import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IRow } from "../interfaces";
-import { applyFilter, applySort, applyViewQuery, transformDataService } from "../services";
+import { DEFAULT_DATASET } from '@/constants';
+import type { IDataQueryPayload, IDataQueryWorkflowStep, IFilterFiledSimple, IRow, IBasicDataQueryWorkflowStep, IJoinWorkflowStep } from '../interfaces';
+import { applyFilter, applySort, applyViewQuery, joinDataService, transformDataService } from '../services';
 
 export const dataQueryClient = async (
-    rawData: IRow[],
+    rawDatas: Record<string, IRow[]>,
     workflow: IDataQueryWorkflowStep[],
+    datasets: string[],
     offset?: number,
-    limit?: number,
+    limit?: number
 ): Promise<IRow[]> => {
-    if (process.env.NODE_ENV !== "production") {
-        console.log('local query triggered', workflow);
+    const steps = workflow.filter((step): step is IBasicDataQueryWorkflowStep => step.type !== 'join');
+    const joins = workflow.find((step): step is IJoinWorkflowStep => step.type === 'join');
+    let res: IRow[];
+    if (joins) {
+        res = await joinDataService(rawDatas, joins.foreigns);
+    } else {
+        res = datasets.flatMap((dataset) => rawDatas[dataset]);
     }
-    let res = rawData;
-    for await (const step of workflow) {
+    for await (const step of steps) {
         switch (step.type) {
             case 'filter': {
-                res = await applyFilter(res, step.filters.map(filter => {
-                    const res: IFilterFiledSimple = {
-                        fid: filter.fid,
-                        rule: filter.rule,
-                    };
-                    return res;
-                }).filter(Boolean));
+                res = await applyFilter(
+                    res,
+                    step.filters
+                        .map((filter) => {
+                            const res: IFilterFiledSimple = {
+                                fid: filter.fid,
+                                rule: filter.rule,
+                            };
+                            return res;
+                        })
+                        .filter(Boolean)
+                );
                 break;
             }
             case 'transform': {
@@ -44,7 +55,17 @@ export const dataQueryClient = async (
             }
         }
     }
-    return res.slice(offset ?? 0, limit ? ((offset ?? 0) + limit) : undefined);
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('local query triggered', workflow, datasets, res);
+    }
+
+    return res.slice(offset ?? 0, limit ? (offset ?? 0) + limit : undefined);
 };
 
-export const getComputation = (rawData: IRow[]) => (payload: IDataQueryPayload) => dataQueryClient(rawData, payload.workflow, payload.offset, payload.limit)
+export const getComputation = (rawDatas: Record<string, IRow[]> | IRow[]) => {
+    if (rawDatas instanceof Array) {
+        return (payload: IDataQueryPayload) =>
+            dataQueryClient({ [DEFAULT_DATASET]: rawDatas }, payload.workflow, [DEFAULT_DATASET], payload.offset, payload.limit);
+    }
+    return (payload: IDataQueryPayload) => dataQueryClient(rawDatas, payload.workflow, payload.datasets, payload.offset, payload.limit);
+};

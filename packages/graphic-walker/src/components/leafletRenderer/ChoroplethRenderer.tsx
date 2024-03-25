@@ -19,7 +19,6 @@ import { themeContext } from '@/store/theme';
 export interface IChoroplethRendererProps {
     name?: string;
     data: IRow[];
-    allFields: DeepReadonly<IViewField[]>;
     features: FeatureCollection | undefined;
     featuresUrl?: IGeoUrl;
     geoKey: string;
@@ -101,7 +100,6 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     const {
         name,
         data,
-        allFields,
         features: localFeatures,
         featuresUrl,
         geoKey,

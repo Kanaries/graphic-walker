@@ -4,16 +4,17 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
 import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField } from './interfaces';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
-import { useVizStore, withErrorReport, withTimeout, ComputationContext, VizStoreWrapper } from './store';
-import { parseErrorMessage } from './utils';
+import { useVizStore, withErrorReport, withTimeout, VizStoreWrapper } from './store';
+import { getFieldIdentifier, parseErrorMessage } from './utils';
 import { ErrorContext } from './utils/reportError';
-import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
-import DatasetTable from './components/dataTable';
 import { useCurrentMediaTheme } from './utils/media';
 import { toJS } from 'mobx';
 import Errorpanel from './components/errorpanel';
 import { VizAppContext } from './store/context';
+import { DEFAULT_DATASET } from './constants';
+import DataTable from './components/dataTable';
+import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 
 export type BaseTableProps = IAppI18nProps &
     IErrorHandlerProps &
@@ -73,6 +74,9 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     const metas = toJS(vizStore.meta);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
+    const datasets = Array.from(new Set(metas.map((x) => x.dataset ?? DEFAULT_DATASET)));
+    const [dataset, setDataset] = useState(datasets[0] ?? DEFAULT_DATASET);
+
     return (
         <ErrorContext value={{ reportError }}>
             <ErrorBoundary fallback={<div>Something went wrong</div>} onError={props.onError}>
@@ -81,13 +85,27 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                     themeContext={darkMode}
                     vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
                     portalContainerContext={portal}
+                    DatasetNamesContext={props.datasetNames}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground h-full m-0 p-0`}>
                         <div className="bg-background text-foreground h-full">
-                            <DatasetTable
-                                onMetaChange={vizStore.onMetaChange ? (fid, fIndex, diffMeta) => {
-                                    vizStore.updateCurrentDatasetMetas(fid, diffMeta);
-                                } : undefined}
+                            {datasets.length > 1 && (
+                                <Tabs value={dataset} onValueChange={setDataset}>
+                                    <TabsList>
+                                        {datasets.map((ds) => (
+                                            <TabsTrigger value={ds}>{props.datasetNames?.[ds] ?? ds}</TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
+                            )}
+                            <DataTable
+                                onMetaChange={
+                                    vizStore.onMetaChange
+                                        ? (fid, fIndex, diffMeta) => {
+                                            vizStore.updateCurrentDatasetMetas(getFieldIdentifier(metas[fIndex]), diffMeta);
+                                        }
+                                        : undefined
+                                }
                                 size={pageSize}
                                 metas={metas}
                                 computation={wrappedComputation}
@@ -106,7 +124,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
 });
 
 export function TableAppWithContext(props: ITableProps & IComputationProps) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -118,21 +136,6 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
         if (data) {
-            if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(data, fields);
-                return {
-                    safeMetas,
-                    computation: getComputation(safeData),
-                    onMetaChange: onMetaChange
-                        ? (safeFID, meta) => {
-                              const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                              if (index >= 0) {
-                                  onMetaChange(fields[index].fid, meta);
-                              }
-                          }
-                        : undefined,
-                };
-            }
             return {
                 safeMetas: fields,
                 computation: getComputation(data),
@@ -144,7 +147,7 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
             computation: props.computation,
             onMetaChange,
         };
-    }, [fields, data ? data : props.computation, props.fieldKeyGuard, onMetaChange]);
+    }, [fields, data ? data : props.computation, onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(appearance);
 

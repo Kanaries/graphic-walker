@@ -14,56 +14,68 @@ import type {
     IMutField,
     IPaintMapV2,
     IVisSpec,
+    IJoinWorkflowStep,
+    FieldIdentifier,
+    IJoinPath,
 } from '../interfaces';
 import type { VizSpecStore } from '../store/visualSpecStore';
-import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
-import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+import { deduper, getFieldIdentifier, getFilterMeaAggKey, getMeaAggKey, getSort, isSameField } from '.';
+import { DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { parseChart } from '../models/visSpecHistory';
 import { replaceFid, walkFid } from '../lib/sql';
 import { replaceAggForFold } from '../lib/op/fold';
 import { viewEncodingKeys } from '@/models/visSpec';
+import { encodePath, transformMultiDatasetFields } from './route';
 
-const walkExpression = (expression: IExpression, each: (field: string) => void): void => {
-    for (const param of expression.params) {
+const walkExpression = (
+    field: {
+        dataset?: string;
+        joinPath?: IJoinPath[];
+        expression: IExpression;
+    },
+    each: (field: { fid: string; dataset?: string; joinPath?: IJoinPath[] }) => void
+): void => {
+    for (const param of field.expression.params) {
         if (param.type === 'field') {
-            each(param.value);
+            each({ fid: param.value, dataset: field.dataset, joinPath: field.joinPath });
         } else if (param.type === 'expression') {
-            walkExpression(param.value, each);
+            walkExpression({ dataset: field.dataset, joinPath: field.joinPath, expression: param.value }, each);
         } else if (param.type === 'sql') {
-            walkFid(param.value).forEach(each);
+            walkFid(param.value).forEach((fid) => each({ fid, dataset: field.dataset, joinPath: field.joinPath }));
         } else if (param.type === 'map') {
-            each(param.value.x);
-            each(param.value.y);
+            each({ fid: param.value.x, dataset: field.dataset, joinPath: field.joinPath });
+            each({ fid: param.value.y, dataset: field.dataset, joinPath: field.joinPath });
         } else if (param.type === 'newmap') {
-            param.value.facets.flatMap((x) => x.dimensions).forEach((x) => each(x.fid));
+            param.value.facets.flatMap((x) => x.dimensions).forEach((x) => each({ fid: x.fid, dataset: x.dataset ?? DEFAULT_DATASET, joinPath: x.joinPath }));
         }
     }
 };
 
-const deduper = <T>(items: T[], keyF: (k: T) => string) => {
-    const map = new Map<string, T>();
-    items.forEach((x) => map.set(keyF(x), x));
-    return [...map.values()];
-};
-
-const treeShake = (
-    computedFields: readonly { key: string; expression: IExpression }[],
-    viewKeys: readonly string[]
-): { key: string; expression: IExpression }[] => {
-    const usedFields = new Set(viewKeys);
-    let result = computedFields.filter((f) => usedFields.has(f.key));
+const treeShake = <T extends { fid: string; dataset?: string; expression: IExpression }>(
+    computedFields: T[],
+    viewKeys: { fid: string; dataset?: string; joinPath?: IJoinPath[] }[]
+): (T & { joinPath?: IJoinPath[] })[] => {
+    const keyF = (item: { fid: string; dataset?: string; joinPath?: IJoinPath[] }) =>
+        JSON.stringify([getFieldIdentifier(item), encodePath(item.joinPath ?? [])]);
+    let result = viewKeys.flatMap((i) => computedFields.filter(isSameField(i)).map((x) => ({ ...x, joinPath: i.joinPath })));
     let currentFields = result.slice();
-    let rest = computedFields.filter((f) => !usedFields.has(f.key));
-    while (currentFields.length && rest.length) {
-        const dependencies = new Set<string>();
+    const reachedFields = new Set<string>(result.map(keyF));
+    while (currentFields.length) {
+        const dependencies = new Map<
+            string,
+            {
+                fid: string;
+                dataset?: string;
+                joinPath?: IJoinPath[];
+            }
+        >();
         for (const f of currentFields) {
-            walkExpression(f.expression, (field) => dependencies.add(field));
+            walkExpression(f, (field) => dependencies.set(keyF(field), field));
         }
-        const nextFields = rest.filter((f) => dependencies.has(f.key));
-        const deps = computedFields.filter((f) => dependencies.has(f.key));
-        result = deps.concat(result.filter((f) => !dependencies.has(f.key)));
-        currentFields = nextFields;
-        rest = rest.filter((f) => !dependencies.has(f.key));
+        const deps = Array.from(dependencies.values()).flatMap((d) => computedFields.filter(isSameField(d)).map((x) => ({ ...x, joinPath: d.joinPath })));
+        result = deps.concat(result.filter((f) => !dependencies.has(keyF(f))));
+        currentFields = deps.filter((x) => !reachedFields.has(keyF(x)));
+        deps.forEach((x) => reachedFields.add(keyF(x)));
     }
     return result;
 };
@@ -125,7 +137,7 @@ export const createFilter = (f: IFilterField): IVisFilter => {
 };
 
 export const toWorkflow = (
-    viewFilters: VizSpecStore['viewFilters'],
+    viewFiltersRaw: VizSpecStore['viewFilters'],
     allFields: IViewField[],
     viewDimensionsRaw: IViewField[],
     viewMeasuresRaw: IViewField[],
@@ -134,20 +146,42 @@ export const toWorkflow = (
     folds = [] as string[],
     limit?: number,
     timezoneDisplayOffset?: number
-): IDataQueryWorkflowStep[] => {
+): {
+    workflow: IDataQueryWorkflowStep[];
+    datasets: string[];
+} => {
+    const viewDimensionsGuarded = viewDimensionsRaw.filter((x) => x.fid !== MEA_KEY_ID);
+    const viewMeasuresGuarded = viewMeasuresRaw.filter((x) => x.fid !== MEA_VAL_ID);
     const hasFold = viewDimensionsRaw.find((x) => x.fid === MEA_KEY_ID) && viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID);
-    const viewDimensions = viewDimensionsRaw.filter((x) => x.fid !== MEA_KEY_ID);
-    const viewMeasures = viewMeasuresRaw.filter((x) => x.fid !== MEA_VAL_ID);
     if (hasFold) {
         const aggName = viewMeasuresRaw.find((x) => x.fid === MEA_VAL_ID)!.aggName;
         const newFields = folds
-            .map((k) => allFields.find((x) => x.fid === k)!)
+            .map((k) => allFields.find((x) => getFieldIdentifier(x) === k)!)
             .filter(Boolean)
             .map((x) => replaceAggForFold(x, aggName));
-        viewDimensions.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
-        viewMeasures.push(...newFields.filter((x) => x?.analyticType === 'measure'));
+        viewDimensionsGuarded.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
+        viewMeasuresGuarded.push(...newFields.filter((x) => x?.analyticType === 'measure'));
     }
-    const viewKeys = new Set<string>([...viewDimensions, ...viewMeasures, ...viewFilters].map((f) => f.fid));
+    const allComputedRaw = treeShake(
+        allFields.filter((f) => f.computed && f.expression) as (IViewField & { expression: IExpression })[],
+        deduper([...viewDimensionsGuarded, ...viewMeasuresGuarded, ...viewFiltersRaw], (x) =>
+            JSON.stringify([getFieldIdentifier(x), encodePath(x.joinPath ?? [])])
+        )
+    );
+    const {
+        datasets,
+        filters: viewFilters,
+        foreignKeys,
+        processFid,
+        views: { viewDimensions, viewMeasures, allComputed },
+    } = transformMultiDatasetFields({
+        filters: viewFiltersRaw,
+        views: {
+            viewDimensions: viewDimensionsGuarded,
+            viewMeasures: viewMeasuresGuarded,
+            allComputed: allComputedRaw,
+        },
+    });
 
     let filterWorkflow: IFilterWorkflowStep | null = null;
     let transformWorkflow: ITransformWorkflowStep | null = null;
@@ -156,16 +190,8 @@ export const toWorkflow = (
     let sortWorkflow: ISortWorkflowStep | null = null;
     let aggFilterWorkflow: IFilterWorkflowStep | null = null;
 
-    // TODO: apply **fold** before filter
-
-    const buildFilter = (f: IFilterField) => {
-        const filter = createFilter(f);
-        viewKeys.add(filter.fid);
-        return filter;
-    };
-
     // First, to apply filters on the detailed data
-    const filters = viewFilters.filter((f) => !f.computed && f.rule && !f.enableAgg).map<IVisFilter>(buildFilter);
+    const filters = viewFilters.filter((f) => !f.computed && f.rule && !f.enableAgg).map<IVisFilter>(createFilter);
     if (filters.length) {
         filterWorkflow = {
             type: 'filter',
@@ -174,17 +200,18 @@ export const toWorkflow = (
     }
 
     // Second, to transform the data by rows 1 by 1
-    const computedFields = treeShake(
-        allFields
-            .filter((f) => f.computed && f.expression && !(f.expression.op === 'expr' && f.aggName === 'expr'))
-            .map((f) => {
-                return {
-                    key: f.fid,
-                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
-                };
-            }),
-        [...viewKeys]
-    );
+    const computedFields = allComputed
+        .filter((f) => !(f.expression.op === 'expr' && f.aggName === 'expr'))
+        .map((f) => {
+            return {
+                key: f.fid,
+                expression: processExpression(
+                    f.expression!,
+                    allFields.filter((x) => x.dataset === f.dataset),
+                    { timezoneDisplayOffset, transformFid: processFid(f.joinPath) }
+                ),
+            };
+        });
     if (computedFields.length) {
         transformWorkflow = {
             type: 'transform',
@@ -193,7 +220,7 @@ export const toWorkflow = (
     }
 
     // Third, apply filter on the transformed data
-    const computedFilters = viewFilters.filter((f) => f.computed && f.rule && !f.enableAgg).map<IVisFilter>(buildFilter);
+    const computedFilters = viewFilters.filter((f) => f.computed && f.rule && !f.enableAgg).map<IVisFilter>(createFilter);
     if (computedFilters.length) {
         computedWorkflow = {
             type: 'filter',
@@ -206,17 +233,19 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggergatedFilter = viewFilters.filter((f) => f.enableAgg && f.aggName && f.rule);
-    const aggergatedComputed = treeShake(
-        allFields
-            .filter((f) => f.computed && f.expression && f.expression.op === 'expr' && f.aggName === 'expr')
-            .map((f) => {
-                return {
-                    key: f.fid,
-                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
-                };
-            }),
-        [...viewKeys]
-    );
+    const aggergatedComputed = allComputed
+        .filter((f) => f.expression.op === 'expr' && f.aggName === 'expr')
+        .map((f) => {
+            return {
+                key: f.fid,
+                expression: processExpression(
+                    f.expression!,
+                    allFields.filter((x) => x.dataset === f.dataset),
+                    { timezoneDisplayOffset, transformFid: processFid(f.joinPath) }
+                ),
+            };
+        });
+
     const aggregateOn = viewMeasures
         .filter((f) => f.aggName)
         .map((f) => [f.fid, f.aggName as string])
@@ -270,7 +299,7 @@ export const toWorkflow = (
     if (aggergated && viewDimensions.length > 0 && aggergatedFilter.length > 0) {
         aggFilterWorkflow = {
             type: 'filter',
-            filters: aggergatedFilter.map(buildFilter),
+            filters: aggergatedFilter.map(createFilter),
         };
     }
 
@@ -282,7 +311,15 @@ export const toWorkflow = (
         };
     }
 
+    const joinWorkflow: IJoinWorkflowStep | null = foreignKeys
+        ? {
+              type: 'join',
+              foreigns: foreignKeys,
+          }
+        : null;
+
     const steps: IDataQueryWorkflowStep[] = [
+        joinWorkflow!,
         filterWorkflow!,
         transformWorkflow!,
         computedWorkflow!,
@@ -290,7 +327,7 @@ export const toWorkflow = (
         aggFilterWorkflow!,
         sortWorkflow!,
     ].filter(Boolean);
-    return steps;
+    return { workflow: steps, datasets };
 };
 
 export const addTransformForQuery = (
@@ -344,6 +381,21 @@ export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[
     };
 };
 
+export const addJoinForQuery = (query: IDataQueryPayload, join: IJoinWorkflowStep[]): IDataQueryPayload => {
+    if (join.length === 0) return query;
+    return {
+        ...query,
+        workflow: [...join, ...query.workflow.filter((x) => x.type !== 'join')],
+    };
+};
+
+export const changeDatasetForQuery = (query: IDataQueryPayload, datasets: string[]) => {
+    return {
+        ...query,
+        datasets,
+    };
+};
+
 export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     const parsedChart = parseChart(chart);
     const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
@@ -351,7 +403,7 @@ export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     const columns = parsedChart.encodings?.columns ?? [];
     const limit = parsedChart.config?.limit ?? -1;
     return {
-        workflow: toWorkflow(
+        ...toWorkflow(
             parsedChart.encodings?.filters ?? [],
             [...(parsedChart.encodings?.dimensions ?? []), ...(parsedChart.encodings?.measures ?? [])],
             viewEncodingFields.filter((x) => x.analyticType === 'dimension'),
@@ -366,14 +418,20 @@ export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     };
 }
 
-export const processExpression = (exp: IExpression, allFields: IMutField[], config: { timezoneDisplayOffset?: number }): IExpression => {
+export const processExpression = (
+    exp: IExpression,
+    allFields: IMutField[],
+    config: { timezoneDisplayOffset?: number; transformFid?: (fid: string) => string }
+): IExpression => {
+    const { transformFid = (x) => x } = config;
     if (exp?.op === 'expr') {
+        // not processed with multi dataset yet, process transformFid here
         return {
             ...exp,
             params: [
                 {
                     type: 'sql',
-                    value: replaceFid(exp.params.find((x) => x.type === 'sql')!.value, allFields).trim(),
+                    value: replaceFid(exp.params.find((x) => x.type === 'sql')!.value, allFields, transformFid).trim(),
                 },
             ],
         };
@@ -402,8 +460,8 @@ export const processExpression = (exp: IExpression, allFields: IMutField[], conf
                     return {
                         type: 'map' as const,
                         value: {
-                            x: x.value.x,
-                            y: x.value.y,
+                            x: transformFid(x.value.x),
+                            y: transformFid(x.value.y),
                             domainX: x.value.domainX,
                             domainY: x.value.domainY,
                             map: x.value.map,
@@ -423,6 +481,7 @@ export const processExpression = (exp: IExpression, allFields: IMutField[], conf
                         ...x.value.dict,
                         '255': { name: '' },
                     };
+                    // facets multi dataset is already dealt in createTransformerForComputed
                     const colors = Array.from(new Set(x.value.usedColor.concat(1)));
                     return {
                         type: 'newmap',

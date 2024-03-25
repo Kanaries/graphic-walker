@@ -1,21 +1,21 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-export interface IDropdownSelectOption {
+export interface IDropdownSelectOption<T extends string = string> {
     label: React.ReactNode;
-    value: string;
+    value: T;
 }
-export interface IDropdownSelectProps {
-    options?: IDropdownSelectOption[];
+export interface IDropdownSelectProps<T extends string> {
+    options?: IDropdownSelectOption<T>[];
     disable?: boolean;
-    selectedKey: string;
-    onSelect?: (value: string) => void;
+    selectedKey: T;
+    onSelect?: (value: T) => void;
     placeholder?: string;
     className?: string;
     buttonClassName?: string;
     children?: React.ReactNode | Iterable<React.ReactNode>;
 }
-const DropdownSelect: React.FC<IDropdownSelectProps> = (props) => {
+const DropdownSelect = function <T extends string>(props: IDropdownSelectProps<T>) {
     const { options = [], disable, selectedKey, onSelect, placeholder = 'Select an option', className } = props;
     return (
         <Select
@@ -23,9 +23,9 @@ const DropdownSelect: React.FC<IDropdownSelectProps> = (props) => {
             value={selectedKey}
             onValueChange={(newKey) => {
                 if (newKey === '_none') {
-                    onSelect?.('');
+                    onSelect?.('' as T);
                 } else {
-                    onSelect?.(newKey);
+                    onSelect?.(newKey as T);
                 }
             }}
         >

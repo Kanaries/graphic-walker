@@ -72,6 +72,17 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
     };
 }
 
+function fallbackRender({ error, resetErrorBoundary }) {
+    // Call resetErrorBoundary() to reset the error boundary and retry the render.
+
+    return (
+        <div role="alert">
+            <p>Something went wrong:</p>
+            <pre style={{ color: 'red' }}>{error.message}</pre>
+        </div>
+    );
+}
+
 const VisualConfigPanel: React.FC = () => {
     const vizStore = useVizStore();
     const { layout, showVisualConfigPanel, config } = vizStore;
@@ -148,40 +159,7 @@ const VisualConfigPanel: React.FC = () => {
                             <div className="flex space-x-6">
                                 <div>
                                     <label className="block text-xs font-medium leading-6">{t('config.primary_color')}</label>
-                                    <ErrorBoundary
-                                        fallback={
-                                            <div className="flex space-x-2">
-                                                <div
-                                                    className="w-4 h-4"
-                                                    style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
-                                                />
-                                                <Input
-                                                    value={defaultColor.r}
-                                                    type="number"
-                                                    onChange={(e) => {
-                                                        setColorEdited(true);
-                                                        setDefaultColor((x) => ({ ...x, r: Number(e.target.value) }));
-                                                    }}
-                                                />
-                                                <Input
-                                                    value={defaultColor.g}
-                                                    type="number"
-                                                    onChange={(e) => {
-                                                        setColorEdited(true);
-                                                        setDefaultColor((x) => ({ ...x, g: Number(e.target.value) }));
-                                                    }}
-                                                />
-                                                <Input
-                                                    value={defaultColor.b}
-                                                    type="number"
-                                                    onChange={(e) => {
-                                                        setColorEdited(true);
-                                                        setDefaultColor((x) => ({ ...x, b: Number(e.target.value) }));
-                                                    }}
-                                                />
-                                            </div>
-                                        }
-                                    >
+                                    <ErrorBoundary fallbackRender={fallbackRender}>
                                         <div
                                             onClick={(e) => {
                                                 e.stopPropagation();

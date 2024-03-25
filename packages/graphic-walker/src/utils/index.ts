@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord, FieldIdentifier, IField } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -266,7 +266,7 @@ export function createVirtualFields(): IViewField[] {
 }
 
 export function getFieldIdentifier(field: IField): FieldIdentifier {
-    return field.fid as FieldIdentifier;
+    return JSON.stringify([field.fid, field.dataset]) as FieldIdentifier;
 }
 
 export function getRange(nums: number[]): [number, number] {
@@ -428,3 +428,14 @@ export function arrayEqual(list1: any[], list2: any[]): boolean {
     }
     return true;
 }
+
+export const deduper = <T>(items: T[], keyF: (k: T) => string) => {
+    const map = new Map<string, T>();
+    items.forEach((x) => map.set(keyF(x), x));
+    return [...map.values()];
+};
+
+export const isSameField = (x: { fid: string; dataset?: string }) => {
+    const myid = getFieldIdentifier(x);
+    return (y: { fid: string; dataset?: string }) => getFieldIdentifier(y) === myid;
+};
