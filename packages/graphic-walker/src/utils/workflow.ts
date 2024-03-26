@@ -126,9 +126,9 @@ export const createFilter = (f: IFilterField): IVisFilter => {
 
 export const toWorkflow = (
     viewFilters: VizSpecStore['viewFilters'],
-    allFields: Omit<IViewField, 'dragId'>[],
-    viewDimensionsRaw: Omit<IViewField, 'dragId'>[],
-    viewMeasuresRaw: Omit<IViewField, 'dragId'>[],
+    allFields: IViewField[],
+    viewDimensionsRaw: IViewField[],
+    viewMeasuresRaw: IViewField[],
     defaultAggregated: VizSpecStore['config']['defaultAggregated'],
     sort: 'none' | 'ascending' | 'descending',
     folds = [] as string[],

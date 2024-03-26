@@ -7,9 +7,9 @@ import { dataQuery } from '../computation';
 import { fold2 } from '../lib/op/fold';
 
 interface UseRendererProps {
-    allFields: Omit<IViewField, 'dragId'>[];
-    viewDimensions: Omit<IViewField, 'dragId'>[];
-    viewMeasures: Omit<IViewField, 'dragId'>[];
+    allFields: IViewField[];
+    viewDimensions: IViewField[];
+    viewMeasures: IViewField[];
     filters: IFilterField[];
     defaultAggregated: boolean;
     sort: 'none' | 'ascending' | 'descending';

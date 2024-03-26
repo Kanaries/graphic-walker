@@ -12,6 +12,7 @@ import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd
 import styled from 'styled-components';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
+import { getFieldIdentifier } from '@/utils';
 
 const PillActions = styled.div`
     overflow: visible !important;
@@ -58,7 +59,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                 {t('actions.drop_field')}
             </div>
             {channelItem && (
-                <Draggable key={channelItem.dragId} draggableId={channelItem.dragId} index={0}>
+                <Draggable key={getFieldIdentifier(channelItem)} draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={0}>
                     {(provided, snapshot) => {
                         return (
                             <div
