@@ -93,6 +93,7 @@ const VisualConfigPanel: React.FC = () => {
     const [zeroScale, setZeroScale] = useState<boolean>(layout.zeroScale);
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
+    const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
     const [background, setBackground] = useState<string | undefined>(layout.background);
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [colorEdited, setColorEdited] = useState(false);
@@ -385,6 +386,13 @@ const VisualConfigPanel: React.FC = () => {
                                             setScaleIncludeUnmatchedChoropleth(en);
                                         }}
                                     />
+                                    <Toggle
+                                        label="include shapes without data"
+                                        enabled={showAllGeoshapeInChoropleth}
+                                        onChange={(en) => {
+                                            setShowAllGeoshapeInChoropleth(en);
+                                        }}
+                                    />
                                 </div>
                                 <div className="flex flex-col space-y-2">
                                     <Toggle
@@ -431,6 +439,7 @@ const VisualConfigPanel: React.FC = () => {
                                         ['format', format],
                                         ['zeroScale', zeroScale],
                                         ['scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth],
+                                        ['showAllGeoshapeInChoropleth', showAllGeoshapeInChoropleth],
                                         ['background', background],
                                         ['resolve', resolve],
                                         ['colorPalette', colorPalette],

@@ -434,6 +434,7 @@ export interface IVisualLayout {
     background?: string;
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
+    showAllGeoshapeInChoropleth?: boolean;
 }
 
 export interface IVisualConfigNew {

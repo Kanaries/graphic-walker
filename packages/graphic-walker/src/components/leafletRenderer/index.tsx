@@ -40,7 +40,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
         defaultAggregated,
         geoms: [markType],
     } = visualConfig;
-    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false, geoMapTileUrl } = visualLayout;
+    const { geojson, geoKey = '', geoUrl, scaleIncludeUnmatchedChoropleth = false, showAllGeoshapeInChoropleth = false, geoMapTileUrl } = visualLayout;
     const allFields = useMemo(() => [...dimensions, ...measures], [dimensions, measures]);
     const latField = useMemo(() => allFields.find((f) => f.geoRole === 'latitude'), [allFields]);
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);
@@ -64,7 +64,6 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     }, [channelScaleRaw, scale]);
 
     const tileUrl = geoMapTileUrl ?? vegaConfig.leafletGeoTileUrl;
-    
 
     if (markType === 'poi') {
         return (
@@ -102,6 +101,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 details={details}
                 vegaConfig={vegaConfig}
                 scaleIncludeUnmatchedChoropleth={scaleIncludeUnmatchedChoropleth}
+                showAllGeoshapeInChoropleth={showAllGeoshapeInChoropleth}
                 channelScales={channelScales}
             />
         );
