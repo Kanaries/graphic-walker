@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useVizStore } from '../../store';
 import { isNotEmpty, parseErrorMessage } from '../../utils';
 import { highlightField } from '../highlightField';
@@ -22,7 +22,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
     const [name, setName] = useState<string>('');
     const [sql, setSql] = useState<string>('');
     const [error, setError] = useState<string>('');
-    const ref = useRef<{ clear(): void; setValue(v: string): void }>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     const SQLField = useMemo(() => {
         const fields = vizStore.allFields
@@ -64,7 +64,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                     setSql('');
                     setError('');
                 });
-                ref.current?.clear();
+                ref.current && (ref.current.innerHTML = '');
             } else {
                 const f = vizStore.allFields.find((x) => x.fid === editingComputedFieldFid);
                 if (!f || !f.computed || f.expression?.op !== 'expr') {
@@ -81,14 +81,16 @@ const ComputedFieldDialog: React.FC = observer(() => {
                     setSql(sql.value);
                     setError('');
                 });
-                ref.current?.setValue(sql.value);
+                ref.current && (ref.current.innerHTML = sql.value);
             }
         }
     }, [editingComputedFieldFid, vizStore]);
 
+    if (!isNotEmpty(editingComputedFieldFid)) return null;
+
     return (
         <Dialog
-            open={isNotEmpty(editingComputedFieldFid)}
+            open={true}
             onOpenChange={() => {
                 vizStore.setComputedFieldFid();
             }}
@@ -119,7 +121,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             }}
                         />
                         <label className="text-ml whitespace-nowrap">SQL</label>
-                        <SQLField ref={ref} onChange={setSql} placeholder="Enter SQL..." />
+                        <SQLField ref={ref} value={sql} onChange={setSql} placeholder="Enter SQL..." />
                     </div>
                     {error && <div className="text-xs text-red-500">{error}</div>}
                     <div className="flex justify-end space-x-2">
