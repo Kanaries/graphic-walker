@@ -1,6 +1,6 @@
 import { MEA_VAL_ID, MEA_KEY_ID } from '../../constants';
-import { IRow, IViewField } from '../../interfaces';
-import { getMeaAggKey, getMeaAggName } from '../../utils';
+import { FieldIdentifier, IRow, IViewField } from '../../interfaces';
+import { getFieldIdentifier, getFilterMeaAggKey, getMeaAggKey, getMeaAggName } from '../../utils';
 import { IFoldQuery } from '../../interfaces';
 
 export function fold(data: IRow[], query: IFoldQuery): IRow[] {
@@ -34,7 +34,7 @@ export function fold2(
     allFields: IViewField[],
     viewMeasures: IViewField[],
     viewDimensions: IViewField[],
-    folds?: string[]
+    folds?: FieldIdentifier[]
 ) {
     const meaVal = viewMeasures.find((x) => x.fid === MEA_VAL_ID);
     if (viewDimensions.find((x) => x.fid === MEA_KEY_ID) && meaVal) {
@@ -42,7 +42,7 @@ export function fold2(
             return [];
         }
         const foldedFields = (folds ?? [])
-            .map((x) => allFields.find((y) => y.fid === x)!)
+            .map((x) => allFields.find((y) => getFieldIdentifier(y) === x)!)
             .filter(Boolean)
             .filter(x => defaultAggregated || x.aggName !== 'expr')
             .map((x) => {
