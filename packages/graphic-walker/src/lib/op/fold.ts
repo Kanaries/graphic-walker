@@ -31,9 +31,9 @@ export function replaceAggForFold<T extends { aggName?: string }>(x: T, newAggNa
 export function fold2(
     data: IRow,
     defaultAggregated: boolean,
-    allFields: Omit<IViewField, 'dragId'>[],
-    viewMeasures: Omit<IViewField, 'dragId'>[],
-    viewDimensions: Omit<IViewField, 'dragId'>[],
+    allFields: IViewField[],
+    viewMeasures: IViewField[],
+    viewDimensions: IViewField[],
     folds?: string[]
 ) {
     const meaVal = viewMeasures.find((x) => x.fid === MEA_VAL_ID);

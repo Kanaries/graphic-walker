@@ -34,7 +34,6 @@ const aggNames = new Set(['sum', 'count', 'max', 'min', 'mean', 'median', 'varia
 const isValidAggregate = (aggName?: string): aggName is AggregateName => !!aggName && aggNames.has(aggName);
 
 const countField: IViewField = {
-    dragId: 'gw_count_fid',
     fid: 'gw_count_fid',
     name: 'Row count',
     analyticType: 'measure',
@@ -106,7 +105,6 @@ function createBinField(field: IViewField): IViewField {
     const newId = `gw_${nanoid(4)}`;
     return {
         fid: newId,
-        dragId: newId,
         name: `bin(${field.name})`,
         semanticType: 'ordinal',
         analyticType: 'dimension',
@@ -357,7 +355,6 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                     {
                         name: x.dimensionType,
                         value: binFields.get(x.binDimension.name) ?? x.binDimension,
-                        dragId: `gw_${nanoid(4)}`,
                     },
                 ];
             }
@@ -367,7 +364,6 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                     name: x.dimensionType,
                     value: {
                         ...x.dimension,
-                        dragId: `gw_${nanoid(4)}`,
                         analyticType,
                         ...(x.aggregate
                             ? {
@@ -422,7 +418,6 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                     const originalField = dict.get(f.fid)!;
                     return {
                         ...originalField,
-                        dragId: `gw_${nanoid(4)}`,
                         rule: f.rule,
                     };
                 }),

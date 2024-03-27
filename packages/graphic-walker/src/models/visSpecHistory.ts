@@ -68,7 +68,7 @@ export type PropsMap = {
     [Methods.moveField]: [normalKeys, number, normalKeys, number, number | null];
     [Methods.cloneField]: [normalKeys, number, normalKeys, number, string, number | null];
     [Methods.createBinlogField]: [normalKeys, number, 'bin' | 'binCount' | 'log10' | 'log2' | 'log', string, number];
-    [Methods.appendFilter]: [number, normalKeys, number, string];
+    [Methods.appendFilter]: [number, normalKeys, number, null];
     [Methods.modFilter]: [number, normalKeys, number];
     [Methods.writeFilter]: [number, IFilterRule | null];
     [Methods.setName]: [string];
@@ -124,7 +124,7 @@ const actions: {
         }));
     },
     [Methods.cloneField]: (data, from, findex, to, tindex, newVarKey, limit) => {
-        const field = { ...data.encodings[from][findex], dragId: newVarKey };
+        const field = { ...data.encodings[from][findex] };
         return mutPath(data, 'encodings', (e) => ({
             ...e,
             [to]: insert(data.encodings[to], field, tindex).slice(0, limit ?? Infinity),
@@ -137,7 +137,6 @@ const actions: {
         const prefix = isBin ? `${op}${num}` : `log${num}`;
         const newField: IViewField = {
             fid: newVarKey,
-            dragId: newVarKey,
             name: `${prefix}(${originField.name})`,
             semanticType: isBin ? 'ordinal' : 'quantitative',
             analyticType: isBin ? 'dimension' : originField.analyticType,
@@ -159,7 +158,7 @@ const actions: {
         }
         return mutPath(data, `encodings.${channel}`, (a) => a.concat(newField));
     },
-    [Methods.appendFilter]: (data, index, from, findex, dragId) => {
+    [Methods.appendFilter]: (data, index, from, findex, _dragId) => {
         const originField = data.encodings[from][findex];
         return mutPath(data, 'encodings.filters', (filters) =>
             insert(
@@ -167,7 +166,6 @@ const actions: {
                 {
                     ...originField,
                     rule: null,
-                    dragId,
                 },
                 index
             )
@@ -179,7 +177,6 @@ const actions: {
             return replace(filters, index, (f) => ({
                 ...originField,
                 rule: null,
-                dragId: f.dragId,
             }));
         }),
     [Methods.writeFilter]: (data, index, rule) => mutPath(data, 'encodings.filters', (filters) => replace(filters, index, (x) => ({ ...x, rule }))),
@@ -219,7 +216,6 @@ const actions: {
         const originField = data.encodings[channel][index];
         const newField: IViewField = {
             fid: newVarKey,
-            dragId: newVarKey,
             name: newName,
             semanticType: 'temporal',
             analyticType: originField.analyticType,
@@ -263,7 +259,6 @@ const actions: {
         const originField = data.encodings[channel][index];
         const newField: IViewField = {
             fid: newVarKey,
-            dragId: newVarKey,
             name: newName,
             semanticType: 'ordinal',
             analyticType: originField.analyticType,
@@ -374,7 +369,6 @@ const actions: {
             });
             const erasedFilter: IFilterField = {
                 fid: PAINT_FIELD_ID,
-                dragId: PAINT_FIELD_ID + '_filter',
                 analyticType: 'dimension',
                 name,
                 semanticType: 'nominal',
@@ -394,7 +388,6 @@ const actions: {
             // if is creating paint field, add it to color encoding.
             const field: IViewField = {
                 fid: PAINT_FIELD_ID,
-                dragId: PAINT_FIELD_ID,
                 analyticType: 'dimension',
                 name,
                 semanticType: 'nominal',
@@ -404,7 +397,7 @@ const actions: {
             const result = mutPath(
                 mutPath(enc, 'dimensions', (f) => insert(f, field, f.length)),
                 'color',
-                () => [{ ...field, dragId: `auto_${PAINT_FIELD_ID}` }]
+                () => [{ ...field }]
             );
             if (hasErased) {
                 return mutPath(result, 'filters', (f) => f.concat(erasedFilter));
@@ -418,7 +411,6 @@ const actions: {
         return mutPath(data, `encodings.${analyticType}s`, (f) =>
             f.concat({
                 analyticType,
-                dragId: fid,
                 fid,
                 name,
                 semanticType: type,
@@ -557,7 +549,6 @@ export function newChart(fields: IMutField[], name: string, visId?: string, defa
             .filter((f) => f.analyticType === 'dimension')
             .map(
                 (f): IViewField => ({
-                    dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
                     basename: f.basename || f.name || f.fid,
@@ -571,7 +562,6 @@ export function newChart(fields: IMutField[], name: string, visId?: string, defa
             .filter((f) => f.analyticType === 'measure')
             .map(
                 (f): IViewField => ({
-                    dragId: uniqueId(),
                     fid: f.fid,
                     name: f.name || f.fid,
                     basename: f.basename || f.name || f.fid,

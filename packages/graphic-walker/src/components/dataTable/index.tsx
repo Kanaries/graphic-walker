@@ -139,7 +139,6 @@ function useFilters(metas: IMutField[]) {
                     fid,
                     rule: null,
                     analyticType: meta.analyticType,
-                    dragId: '',
                     name: meta.name ?? meta.fid,
                     semanticType: meta.semanticType,
                 };
