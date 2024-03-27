@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
+import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction, FieldIdentifier } from '../interfaces';
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQuery } from '../computation';
@@ -15,7 +15,7 @@ interface UseRendererProps {
     sort: 'none' | 'ascending' | 'descending';
     limit: number;
     computationFunction: IComputationFunction;
-    folds?: string[];
+    folds?: FieldIdentifier[];
     timezoneDisplayOffset?: number;
 }
 

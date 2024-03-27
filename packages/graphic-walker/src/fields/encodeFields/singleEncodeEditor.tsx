@@ -1,18 +1,17 @@
 import React, { useMemo, useContext } from 'react';
-import { DraggableFieldState, IAggregator, IDraggableStateKey } from '../../interfaces';
+import { DraggableFieldState, IAggregator } from '../../interfaces';
 import { observer } from 'mobx-react-lite';
 import { DatasetNamesContext, useVizStore } from '../../store';
 import { DroppableProvided } from 'react-beautiful-dnd';
 import { ChevronUpDownIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
 import styled from 'styled-components';
-import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
+import SelectContext from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
-import Tooltip from '@/components/tooltip';
 import { EditNamePopover } from '../renamePanel';
 import { getFieldIdentifier } from '@/utils';
 
