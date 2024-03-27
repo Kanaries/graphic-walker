@@ -214,6 +214,7 @@ export interface IViewField extends IField {
     sort?: ISortMode;
 }
 
+// shadow type of identifier of a Field, getting it using "getFieldIdentifier" in "@/utils"
 export type FieldIdentifier = string & { _tagFieldId: never };
 
 export interface DataSet {
