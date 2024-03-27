@@ -8,6 +8,7 @@ import ActionMenu from '../../components/actionMenu';
 import { FieldPill } from './fieldPill';
 import { useMenuActions } from './utils';
 import { refMapper } from '../fieldsContext';
+import { getFieldIdentifier } from '@/utils';
 
 interface Props {
     provided: DroppableProvided;
@@ -20,7 +21,7 @@ const DimFields: React.FC<Props> = (props) => {
     return (
         <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {dimensions.map((f, index) => (
-                <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
+                <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return (
                             <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu disabled={snapshot.isDragging}>

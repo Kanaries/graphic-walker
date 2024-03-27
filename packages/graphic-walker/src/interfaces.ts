@@ -211,9 +211,11 @@ export interface IField {
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
 export interface IViewField extends IField {
-    dragId: string;
     sort?: ISortMode;
 }
+
+// shadow type of identifier of a Field, getting it using "getFieldIdentifier" in "@/utils"
+export type FieldIdentifier = string & { _tagFieldId: never };
 
 export interface DataSet {
     id: string;
@@ -899,10 +901,7 @@ export interface IVizProps {
         features?: {
             askviz?: string | boolean | ((metas: IViewField[], query: string) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
             feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
-            vlChat?:
-                | string
-                | boolean
-                | ((metas: IViewField[], chats: IChatMessage[]) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
+            vlChat?: string | boolean | ((metas: IViewField[], chats: IChatMessage[]) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
         };
     };
     geoList?: IGeoDataItem[];

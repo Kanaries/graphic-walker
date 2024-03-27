@@ -9,6 +9,7 @@ import { useMenuActions } from './utils';
 import { FieldPill } from './fieldPill';
 import { MEA_KEY_ID } from '../../constants';
 import { refMapper } from '../fieldsContext';
+import { getFieldIdentifier } from '@/utils';
 
 interface Props {
     provided: DroppableProvided;
@@ -23,7 +24,7 @@ const MeaFields: React.FC<Props> = (props) => {
     return (
         <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {measures.map((f, index) => (
-                <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
+                <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`}  index={index}>
                     {(provided, snapshot) => {
                         return (
                             <div className="block">

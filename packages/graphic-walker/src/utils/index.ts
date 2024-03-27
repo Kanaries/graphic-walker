@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField, IKeyWord } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -233,7 +233,6 @@ export function applyFilters(dataSource: IRow[], filters: Filters): IRow[] {
 export function createCountField(): IViewField {
     return {
         // viewId: "",
-        dragId: COUNT_FIELD_ID,
         fid: COUNT_FIELD_ID,
         name: i18next.t('constant.row_count'),
         analyticType: 'measure',
@@ -251,14 +250,12 @@ export function createCountField(): IViewField {
 export function createVirtualFields(): IViewField[] {
     return [
         {
-            dragId: MEA_KEY_ID,
             fid: MEA_KEY_ID,
             name: i18next.t('constant.mea_key'),
             analyticType: 'dimension',
             semanticType: 'nominal',
         },
         {
-            dragId: MEA_VAL_ID,
             fid: MEA_VAL_ID,
             name: i18next.t('constant.mea_val'),
             analyticType: 'measure',
@@ -266,6 +263,10 @@ export function createVirtualFields(): IViewField[] {
             aggName: 'sum',
         },
     ];
+}
+
+export function getFieldIdentifier(field: IField): FieldIdentifier {
+    return field.fid as FieldIdentifier;
 }
 
 export function getRange(nums: number[]): [number, number] {
@@ -416,7 +417,7 @@ export function _unstable_encodeRuleValue(value: any) {
     return value;
 }
 
-export function arrayEqual (list1: any[], list2: any[]): boolean {
+export function arrayEqual(list1: any[], list2: any[]): boolean {
     if (list1.length !== list2.length) {
         return false;
     }

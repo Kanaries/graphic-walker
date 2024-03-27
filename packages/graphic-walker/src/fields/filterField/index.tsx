@@ -10,6 +10,7 @@ import { FilterFieldContainer, FilterFieldsContainer } from '../components';
 import FilterPill from './filterPill';
 import FilterEditDialog from './filterEditDialog';
 import { refMapper } from '../fieldsContext';
+import { getFieldIdentifier } from '@/utils';
 
 
 interface FieldContainerProps {
@@ -26,7 +27,7 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
             ref={refMapper(provided.innerRef)}
         >
             {filters.map((f, index) => (
-                <Draggable key={f.dragId} draggableId={f.dragId} index={index}>
+                <Draggable key={getFieldIdentifier(f)} draggableId={`filters_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return (
                             <FilterPill
