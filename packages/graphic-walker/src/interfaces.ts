@@ -225,6 +225,8 @@ export interface IJoinPath {
 }
 export interface IViewField extends IField {
     sort?: ISortMode;
+    // used For field Identifier of transformed fields
+    originalFid?: string;
     joinPath?: IJoinPath[];
 }
 

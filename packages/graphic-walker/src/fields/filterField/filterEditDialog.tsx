@@ -138,28 +138,24 @@ export const PureFilterEditDialog = (props: {
 
 const FilterEditDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions, config } = vizStore;
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions, viewMeasures, config, multiViewInfo } = vizStore;
     const { timezoneDisplayOffset } = config;
 
     const computation = useCompututaion();
 
-    const originalField =
-        editingFilterIdx !== null
-            ? viewFilters[editingFilterIdx]?.enableAgg
-                ? allFields.find((x) => x.fid === viewFilters[editingFilterIdx].fid)
-                : undefined
-            : undefined;
+    const originalField = editingFilterIdx !== null ? viewFilters[editingFilterIdx] : undefined;
     const filterAggName =
         editingFilterIdx !== null ? (viewFilters[editingFilterIdx]?.enableAgg ? viewFilters[editingFilterIdx].aggName : undefined) : undefined;
 
     const transformedComputation = useMemo((): IComputationFunction => {
-        if (originalField && viewDimensions.length > 0) {
+        const useTransformedComputation = multiViewInfo.datasets.length > 1 || filterAggName;
+        if (useTransformedComputation) {
             const { workflow, datasets } = toWorkflow(
-                [],
+                viewFilters,
                 allFields,
                 viewDimensions,
-                [{ ...originalField, aggName: filterAggName }],
-                true,
+                viewMeasures.concat(filterAggName ? [{ ...originalField, aggName: filterAggName }] : []),
+                !!filterAggName,
                 'none',
                 [],
                 undefined,
@@ -169,6 +165,7 @@ const FilterEditDialog: React.FC = observer(() => {
                 computation({
                     ...query,
                     workflow: workflow
+                        .filter((x) => (filterAggName ? true : x.type !== 'view'))
                         .map((x) => {
                             if (x.type === 'view') {
                                 return {
@@ -189,7 +186,7 @@ const FilterEditDialog: React.FC = observer(() => {
         } else {
             return computation;
         }
-    }, [computation, viewDimensions, originalField, filterAggName]);
+    }, [computation, viewDimensions, viewMeasures, originalField, viewFilters, multiViewInfo.datasets.length, filterAggName]);
 
     const handelClose = React.useCallback(() => vizStore.closeFilterEditing(), [vizStore]);
 
@@ -202,20 +199,21 @@ const FilterEditDialog: React.FC = observer(() => {
         [vizStore]
     );
 
-    const handleSelectFilterField = (fieldKey) => {
-        const existingFilterIdx = viewFilters.findIndex((field) => field.fid === fieldKey);
+    const handleSelectFilterField = (fieldKey: FieldIdentifier) => {
+        const existingFilterIdx = viewFilters.findIndex((field) => getFieldIdentifier(field) === fieldKey);
         if (existingFilterIdx >= 0) {
             vizStore.setFilterEditing(existingFilterIdx);
         } else {
-            const sourceKey = dimensions.find((field) => field.fid === fieldKey) ? 'dimensions' : 'measures';
+            const sourceKey = dimensions.find((field) => getFieldIdentifier(field) === fieldKey) ? 'dimensions' : 'measures';
             const sourceIndex =
-                sourceKey === 'dimensions' ? dimensions.findIndex((field) => field.fid === fieldKey) : measures.findIndex((field) => field.fid === fieldKey);
+                sourceKey === 'dimensions'
+                    ? dimensions.findIndex((field) => getFieldIdentifier(field) === fieldKey)
+                    : measures.findIndex((field) => getFieldIdentifier(field) === fieldKey);
             if (editingFilterIdx !== null) {
                 vizStore.modFilter(editingFilterIdx, sourceKey, sourceIndex);
             }
         }
     };
-
 
     const allFieldOptions = React.useMemo(() => {
         return allFields
@@ -241,7 +239,7 @@ const FilterEditDialog: React.FC = observer(() => {
                 onClose={handelClose}
                 onSelectFilter={handleSelectFilterField}
                 onWriteFilter={handleWriteFilter}
-                viewFilters={viewFilters}
+                viewFilters={multiViewInfo.filters}
                 onSelectAgg={handleChangeAgg}
             />
         </ComputationContext.Provider>

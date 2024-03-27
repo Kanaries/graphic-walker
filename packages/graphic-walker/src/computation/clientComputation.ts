@@ -9,6 +9,10 @@ export const dataQueryClient = async (
     offset?: number,
     limit?: number
 ): Promise<IRow[]> => {
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('local query triggered', workflow, datasets);
+    }
+
     const steps = workflow.filter((step): step is IBasicDataQueryWorkflowStep => step.type !== 'join');
     const joins = workflow.find((step): step is IJoinWorkflowStep => step.type === 'join');
     let res: IRow[];
@@ -54,9 +58,6 @@ export const dataQueryClient = async (
                 break;
             }
         }
-    }
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('local query triggered', workflow, datasets, res);
     }
 
     return res.slice(offset ?? 0, limit ? (offset ?? 0) + limit : undefined);
