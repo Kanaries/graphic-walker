@@ -1,14 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import type {
-    IMutField,
-    IRow,
-    IComputationFunction,
-    IFilterRule,
-    IFilterField,
-    IFilterWorkflowStep,
-    FieldIdentifier,
-} from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IFilterRule, IFilterField, IFilterWorkflowStep, FieldIdentifier } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -257,7 +249,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const [dataLoading, setDataLoading] = useState(false);
     const taskIdRef = useRef(0);
 
-    const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
+    const [sorting, setSorting] = useState<{ fid: FieldIdentifier; sort: 'ascending' | 'descending' } | undefined>();
 
     const { filters, editingFilterIdx, onClose, onDeleteFilter, onSelectFilter, onWriteFilter, options } = useFilters(metas);
 
@@ -316,6 +308,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     useEffect(() => {
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
+        const sortingItem = sorting && metas.find((x) => getFieldIdentifier(x) === sorting.fid);
         dataReadRaw(
             computationFunction,
             metas.map((m) => m.fid),
@@ -323,7 +316,12 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             datasets,
             pageIndex,
             {
-                sorting,
+                sorting: sortingItem
+                    ? {
+                          fid: sortingItem.fid,
+                          sort: sorting.sort,
+                      }
+                    : undefined,
                 filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
             }
         )
@@ -375,7 +373,12 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                 <div className="flex items-center p-2 space-x-2">
                     <span>Filters: </span>
                     {filters.map((x, i) => (
-                        <FilterPill key={x.fid} name={x.name} onClick={() => onSelectFilter(getFieldIdentifier(x))} onRemove={() => onDeleteFilter(i)} />
+                        <FilterPill
+                            key={getFieldIdentifier(x)}
+                            name={x.name}
+                            onClick={() => onSelectFilter(getFieldIdentifier(x))}
+                            onRemove={() => onDeleteFilter(i)}
+                        />
                     ))}
                 </div>
             )}
@@ -465,14 +468,14 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                     className="inline-block"
                                                     onClick={() =>
                                                         setSorting((s) => {
-                                                            if (s?.fid === f.value.fid && s.sort === 'descending') {
+                                                            if (s?.fid === getFieldIdentifier(f.value) && s.sort === 'descending') {
                                                                 return {
-                                                                    fid: f.value.fid,
+                                                                    fid: getFieldIdentifier(f.value),
                                                                     sort: 'ascending',
                                                                 };
                                                             }
                                                             return {
-                                                                fid: f.value.fid,
+                                                                fid: getFieldIdentifier(f.value),
                                                                 sort: 'descending',
                                                             };
                                                         })
@@ -480,7 +483,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                                 >
                                                     {f.value.basename || f.value.name || f.value.fid}
                                                 </b>
-                                                {sorting?.fid === f.value.fid && (
+                                                {sorting?.fid === getFieldIdentifier(f.value) && (
                                                     <div className="mx-1">
                                                         {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
                                                         {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
@@ -507,7 +510,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                         {!props.hideProfiling && (
                             <tr className="divide-x divide-border border-b">
                                 {metas.map((field) => (
-                                    <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
+                                    <th key={getFieldIdentifier(field)} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
                                         <FieldProfiling
                                             dataset={field.dataset ?? DEFAULT_DATASET}
                                             field={field.fid}

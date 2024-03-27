@@ -265,8 +265,8 @@ export function createVirtualFields(): IViewField[] {
     ];
 }
 
-export function getFieldIdentifier(field: IField): FieldIdentifier {
-    return JSON.stringify([field.fid, field.dataset]) as FieldIdentifier;
+export function getFieldIdentifier(field: { fid: string; dataset?: string; originalFid?: string }): FieldIdentifier {
+    return JSON.stringify([field.originalFid ?? field.fid, field.dataset]) as FieldIdentifier;
 }
 
 export function getRange(nums: number[]): [number, number] {
@@ -435,7 +435,8 @@ export const deduper = <T>(items: T[], keyF: (k: T) => string) => {
     return [...map.values()];
 };
 
-export const isSameField = (x: { fid: string; dataset?: string }) => {
+export const isSameField = (x?: { fid: string; dataset?: string }) => {
+    if (!x) return () => false;
     const myid = getFieldIdentifier(x);
     return (y: { fid: string; dataset?: string }) => getFieldIdentifier(y) === myid;
 };

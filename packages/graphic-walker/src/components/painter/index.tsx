@@ -1045,8 +1045,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 // editing the existing paint map
                                 const x = lastFacet.dimensions.at(-1);
                                 const y = lastFacet.dimensions.at(-2);
-                                const xf = allFields.find((a) => a.fid === x?.fid && a.dataset === x?.dataset);
-                                const yf = allFields.find((a) => a.fid === y?.fid && a.dataset === y?.dataset);
+                                const xf = allFields.find(isSameField(x));
+                                const yf = allFields.find(isSameField(y));
                                 unstable_batchedUpdates(() => {
                                     setDict(paintInfo.item.dict);
                                     setDomainX(lastFacet.dimensions.at(-1));

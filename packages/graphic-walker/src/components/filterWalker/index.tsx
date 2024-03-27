@@ -4,6 +4,7 @@ import { getFieldDistinctCounts, getRange, getTemporalRange } from '../../comput
 import { addFilterForQuery } from '../../utils/workflow';
 import { getComputation } from '../../computation/clientComputation';
 import { DEFAULT_DATASET } from '@/constants';
+import { isSameField } from '@/utils';
 
 type rangeValue = [number, number];
 type temporalRangeValue = [number, number, string];
@@ -96,7 +97,7 @@ export function createFilterContext(components: {
         const resolvedFields = React.useMemo(
             () =>
                 configs.flatMap((x) => {
-                    const f = fields.find((a) => a.fid === x.fid);
+                    const f = fields.find(isSameField(x));
                     if (!f) return [];
                     return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset, defaultValue: x.defaultValue }];
                 }),

@@ -265,7 +265,7 @@ function createTransformerForComputed<T extends { fid: string; dataset?: string;
     return result;
 }
 
-export function transformMultiDatasetFields<V extends Record<string, readonly Omit<IViewField, 'dragId'>[] | Omit<IViewField, 'dragId'> | undefined>>(
+export function transformMultiDatasetFields<V extends Record<string, readonly IViewField[] | IViewField | undefined>>(
     fieldsSet: Readonly<{ views: V; filters: IFilterField[] }>
 ) {
     return produce(
@@ -288,6 +288,7 @@ export function transformMultiDatasetFields<V extends Record<string, readonly Om
                             return f;
                         },
                         update(fid) {
+                            f.originalFid = f.fid;
                             f.fid = fid;
                         },
                     });
@@ -302,6 +303,7 @@ export function transformMultiDatasetFields<V extends Record<string, readonly Om
                         return f;
                     },
                     update(fid) {
+                        f.originalFid = f.fid;
                         f.fid = fid;
                     },
                 });

@@ -23,7 +23,7 @@ import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
-import { classNames, getFilterMeaAggKey, isSameField, parseErrorMessage } from './utils';
+import { classNames, getFieldIdentifier, getFilterMeaAggKey, isSameField, parseErrorMessage } from './utils';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import { SimpleOneOfSelector, SimpleRange, SimpleSearcher, SimpleTemporalRange } from './fields/filterField/simple';
@@ -266,7 +266,7 @@ const FilterSection = observer(function FilterSection() {
     return (
         <div className={classNames('grid gap-2 px-2', cols)} ref={ref}>
             {vizStore.viewFilters.map((filter, idx) => (
-                <FilterItem key={filter.fid} filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
+                <FilterItem key={getFieldIdentifier(filter)} filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
             ))}
         </div>
     );

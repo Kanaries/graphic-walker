@@ -5,7 +5,7 @@ import React, { useContext, useMemo } from 'react';
 import { IComputationFunction, IJoinWorkflowStep, IViewField, IVisFilter } from '../interfaces';
 import { addFilterForQuery, addJoinForQuery, addTransformForQuery, changeDatasetForQuery, processExpression } from '../utils/workflow';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { deduper, isNotEmpty } from '../utils';
+import { deduper, getFieldIdentifier, isNotEmpty } from '../utils';
 import { Dialog, DialogContent } from './ui/dialog';
 import { computed, toJS } from 'mobx';
 
@@ -102,7 +102,7 @@ const DataBoard = observer(function DataBoardModal() {
                                     timezoneDisplayOffset: config.timezoneDisplayOffset,
                                     transformFid: multiViewInfo.processFid(x.joinPath),
                                 }),
-                                key: x.fid!,
+                                key: getFieldIdentifier(x),
                             }))
                         ),
                         joinWorkflow

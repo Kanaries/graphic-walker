@@ -1,3 +1,4 @@
+import { isSameField } from '@/utils';
 import { IField } from '../../interfaces';
 
 export function groupByAnalyticTypes(fields: IField[]) {
@@ -10,5 +11,5 @@ export function groupByAnalyticTypes(fields: IField[]) {
 }
 
 export function complementaryFields(props: { selection: IField[]; all: IField[] }): IField[] {
-    return props.all.filter((f) => f.analyticType === 'dimension').filter((f) => !props.selection.find((vf) => vf.fid === f.fid));
+    return props.all.filter((f) => f.analyticType === 'dimension').filter((f) => !props.selection.find(isSameField(f)));
 }
