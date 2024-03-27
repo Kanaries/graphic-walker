@@ -1,9 +1,9 @@
-import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { Fragment, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip, AttributionControl } from 'react-leaflet';
 import { type Map, divIcon } from 'leaflet';
 import type { DeepReadonly, IChannelScales, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from '../../interfaces';
 import type { FeatureCollection, Geometry } from 'geojson';
-import { getMeaAggKey } from '../../utils';
+import { getMeaAggKey, getMeaAggName } from '../../utils';
 import { useColorScale, useOpacityScale } from './encodings';
 import { isValidLatLng } from './POIRenderer';
 import { TooltipContent } from './tooltip';
@@ -12,6 +12,9 @@ import { useGeoJSON } from '../../hooks/service';
 import { useTranslation } from 'react-i18next';
 import { ChangeView } from './utils';
 import ColorPanel from './color';
+import { getColor } from '@/utils/useTheme';
+import { field } from 'vega';
+import { themeContext } from '@/store/theme';
 
 export interface IChoroplethRendererProps {
     name?: string;
@@ -28,6 +31,7 @@ export interface IChoroplethRendererProps {
     details: readonly DeepReadonly<IViewField>[];
     vegaConfig: VegaGlobalConfig;
     scaleIncludeUnmatchedChoropleth: boolean;
+    showAllGeoshapeInChoropleth: boolean;
     channelScales: IChannelScales;
     tileUrl?: string;
 }
@@ -109,16 +113,19 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         details,
         vegaConfig,
         scaleIncludeUnmatchedChoropleth,
+        showAllGeoshapeInChoropleth,
         channelScales,
         tileUrl,
     } = props;
+
+    const darkMode = useContext(themeContext);
 
     useImperativeHandle(ref, () => ({}));
 
     const features = useGeoJSON(localFeatures, featuresUrl);
     const { t } = useTranslation('translation');
 
-    const geoIndices = useMemo(() => {
+    const geoIndices: string[] = useMemo(() => {
         if (geoId) {
             return data.map((row) => row[geoId.fid]);
         }
@@ -129,7 +136,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         if (geoIndices.length && geoKey && features) {
             const indices: number[] = [];
             const shapes = geoIndices.map((id, i) => {
-                const feature = id ? features.features.find((f) => f.properties?.[geoKey] === id) : undefined;
+                const feature = id ? features.features.find((f) => f.properties && f.properties[geoKey] === id) : undefined;
                 if (feature) {
                     indices.push(i);
                 }
@@ -139,6 +146,17 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         }
         return [[], []];
     }, [geoIndices, features, geoKey]);
+
+    const missingDataGeoShapes = useMemo(() => {
+        if (showAllGeoshapeInChoropleth && features) {
+            const indices = new Set(geoIndices);
+            return features.features
+                .filter((x) => x.properties)
+                .filter((x) => !indices.has(x.properties![geoKey]))
+                .map((f) => ({ coords: resolveCoords(f.geometry), name: f.properties![geoKey] }));
+        }
+        return [];
+    }, [geoIndices, features, showAllGeoshapeInChoropleth, geoKey]);
 
     useEffect(() => {
         if (geoShapes.length > 0) {
@@ -251,94 +269,164 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>;
     }
 
+    const border = darkMode === 'dark' ? '#fff4' : '#0004';
+
     return (
-        <MapContainer preferCanvas attributionControl={false} center={center} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+        <MapContainer
+            preferCanvas
+            attributionControl={false}
+            center={center}
+            ref={mapRef}
+            zoom={5}
+            bounds={bounds}
+            style={{ width: '100%', height: '100%', zIndex: 1 }}
+        >
             <ChangeView bounds={bounds} />
-            {tileUrl === undefined && <TileLayer
-                className="map-tile"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />}
-            {tileUrl && <TileLayer
-                className="map-tile"
-                url={tileUrl}
-            />}
+            {tileUrl === undefined && (
+                <TileLayer
+                    className="map-tile"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+            )}
+            {tileUrl && <TileLayer className="map-tile" url={tileUrl} />}
             <AttributionControl prefix="Leaflet" />
             {lngLat.length > 0 &&
-                data.map((row, i) => {
+                data.flatMap((row, i) => {
                     const coords = lngLat[i];
                     const opacity = opacityScale(row);
                     const color = colorScale(row);
+                    return coords.map((coord, j) => {
+                        if (coord.length === 0) {
+                            return null;
+                        }
+                        if (coord.length === 1) {
+                            return (
+                                <CircleMarker
+                                    key={`${i}-${opacity}-${color}-${j}`}
+                                    center={coord[0]}
+                                    radius={3}
+                                    opacity={0.8}
+                                    fillOpacity={opacity}
+                                    fillColor={color}
+                                    color={border}
+                                    weight={1}
+                                    stroke
+                                    fill
+                                >
+                                    {tooltipFields.length > 0 && (
+                                        <Tooltip>
+                                            <header>{data[i][geoId.fid]}</header>
+                                            {tooltipFields.map((f, j) => (
+                                                <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                            ))}
+                                        </Tooltip>
+                                    )}
+                                </CircleMarker>
+                            );
+                        }
+                        const center: [lat: number, lng: number] = text && coord.length >= 3 ? resolveCenter(coord) : [NaN, NaN];
+                        return (
+                            <Fragment key={`${i}-${opacity}-${color}-${j}`}>
+                                <Polygon
+                                    positions={coord}
+                                    pathOptions={{
+                                        fillOpacity: opacity * 0.8,
+                                        fillColor: color,
+                                        color: border,
+                                        weight: 1,
+                                        stroke: true,
+                                        fill: true,
+                                    }}
+                                >
+                                    <Tooltip>
+                                        <header>{data[i][geoId.fid]}</header>
+                                        {tooltipFields.map((f, j) => (
+                                            <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                        ))}
+                                    </Tooltip>
+                                </Polygon>
+                                {text && data[i][text.fid] && isValidLatLng(center[0], center[1]) && (
+                                    <Marker
+                                        position={center}
+                                        interactive={false}
+                                        icon={divIcon({
+                                            className: '!bg-transparent !border-none',
+                                            html: `<div style="font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;">${data[i][text.fid]}</div>`,
+                                        })}
+                                    />
+                                )}
+                            </Fragment>
+                        );
+                    });
+                })}
+            {missingDataGeoShapes.flatMap(({ coords, name }, i) => {
+                const opacity = 0.3;
+                const color = '#808080';
+                return coords.map((coord, j) => {
+                    if (coord.length === 0) {
+                        return null;
+                    }
+                    if (coord.length === 1) {
+                        return (
+                            <CircleMarker
+                                key={`missing-${i}-${j}`}
+                                center={coord[0]}
+                                radius={3}
+                                opacity={0.8}
+                                fillOpacity={opacity}
+                                fillColor={color}
+                                color={border}
+                                weight={1}
+                                stroke
+                                fill
+                            >
+                                {tooltipFields.length > 0 && (
+                                    <Tooltip>
+                                        <header>{name}</header>
+                                        {tooltipFields.map((f, j) => (
+                                            <p key={j}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
+                                        ))}
+                                    </Tooltip>
+                                )}
+                            </CircleMarker>
+                        );
+                    }
+                    const center: [lat: number, lng: number] = text && coord.length >= 3 ? resolveCenter(coord) : [NaN, NaN];
                     return (
-                        <Fragment key={`${i}-${opacity}-${color}`}>
-                            {coords.map((coord, j) => {
-                                if (coord.length === 0) {
-                                    return null;
-                                }
-                                if (coord.length === 1) {
-                                    return (
-                                        <CircleMarker
-                                            key={j}
-                                            center={coord[0]}
-                                            radius={3}
-                                            opacity={0.8}
-                                            fillOpacity={opacity}
-                                            fillColor={color}
-                                            color="#0004"
-                                            weight={1}
-                                            stroke
-                                            fill
-                                        >
-                                            {tooltipFields.length > 0 && (
-                                                <Tooltip>
-                                                    <header>{data[i][geoId.fid]}</header>
-                                                    {tooltipFields.map((f, j) => (
-                                                        <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
-                                                    ))}
-                                                </Tooltip>
-                                            )}
-                                        </CircleMarker>
-                                    );
-                                }
-                                const center: [lat: number, lng: number] = text && coord.length >= 3 ? resolveCenter(coord) : [NaN, NaN];
-                                return (
-                                    <Fragment key={j}>
-                                        <Polygon
-                                            positions={coord}
-                                            pathOptions={{
-                                                fillOpacity: opacity * 0.8,
-                                                fillColor: color,
-                                                color: '#0004',
-                                                weight: 1,
-                                                stroke: true,
-                                                fill: true,
-                                            }}
-                                        >
-                                            <Tooltip>
-                                                <header>{data[i][geoId.fid]}</header>
-                                                {tooltipFields.map((f, j) => (
-                                                    <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
-                                                ))}
-                                            </Tooltip>
-                                        </Polygon>
-                                        {text && data[i][text.fid] && isValidLatLng(center[0], center[1]) && (
-                                            <Marker
-                                                position={center}
-                                                interactive={false}
-                                                icon={divIcon({
-                                                    className: '!bg-transparent !border-none',
-                                                    html: `<div style="font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;">${
-                                                        data[i][text.fid]
-                                                    }</div>`,
-                                                })}
-                                            />
-                                        )}
-                                    </Fragment>
-                                );
-                            })}
+                        <Fragment key={`missing-${i}-${j}`}>
+                            <Polygon
+                                positions={coord}
+                                pathOptions={{
+                                    fillOpacity: opacity * 0.8,
+                                    fillColor: color,
+                                    color: border,
+                                    weight: 1,
+                                    stroke: true,
+                                    fill: true,
+                                }}
+                            >
+                                <Tooltip>
+                                    <header>{name}</header>
+                                    {tooltipFields.map((f, j) => (
+                                        <p key={j}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
+                                    ))}
+                                </Tooltip>
+                            </Polygon>
+                            {text && data[i][text.fid] && isValidLatLng(center[0], center[1]) && (
+                                <Marker
+                                    position={center}
+                                    interactive={false}
+                                    icon={divIcon({
+                                        className: '!bg-transparent !border-none',
+                                        html: `<div style="font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;">${data[i][text.fid]}</div>`,
+                                    })}
+                                />
+                            )}
                         </Fragment>
                     );
-                })}
+                });
+            })}
             {colorDisplay && <ColorPanel display={colorDisplay} field={color!} />}
         </MapContainer>
     );
