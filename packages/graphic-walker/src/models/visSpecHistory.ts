@@ -28,7 +28,8 @@ import { WithHistory, atWith, create, freeze, performWith, redoWith, undoWith } 
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../constants';
 import { algebraLint } from '../lib/gog';
-import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
+import { getSQLItemAnalyticType, parseSQLExpr, replaceFid } from '../lib/sql';
+import produce from 'immer';
 
 type normalKeys = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -441,6 +442,30 @@ const actions: {
         );
     },
     [Methods.editAllField]: (data, fid, newData) => {
+        if (Object.keys(newData).includes('name')) {
+            const originalField = data.encodings.dimensions.concat(data.encodings.measures).find((x) => x.fid === fid);
+            // if name is changed, update all computed fields
+            return produce(data, (draft) => {
+                if (!originalField) return;
+                Object.values(draft.encodings).forEach((fields) =>
+                    fields.forEach((field, i) => {
+                        if (field.fid === fid) {
+                            fields[i] = { ...field, ...newData };
+                        } else if (field.expression?.op === 'expr') {
+                            const sqlParam = field.expression.params.find((x) => x.type === 'sql');
+                            if (sqlParam) {
+                                const newVal = replaceFid(sqlParam.value, [
+                                    { ...originalField, fid: newData.name!, name: originalField.name ?? originalField.fid },
+                                ]);
+                                if (newVal !== sqlParam.value) {
+                                    sqlParam.value = newVal;
+                                }
+                            }
+                        }
+                    })
+                );
+            });
+        }
         return mutPath(
             data,
             'encodings',
