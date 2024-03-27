@@ -152,6 +152,13 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                         },
                     })),
                 },
+                {
+                    label: "Rename Field",
+                    onPress() {
+                        vizStore.setShowRenamePanel(true);
+                        vizStore.setCreateField({ channel: channel, index: index });
+                    },
+                },
                 f.computed &&
                     !isInnerField &&
                     f.expression?.op === 'expr' && {

@@ -39,6 +39,7 @@ import {
     IPaintMap,
     IPaintMapV2,
     IDefaultConfig,
+    FieldIdentifier,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
@@ -73,6 +74,7 @@ export class VizSpecStore {
     selectedMarkObject: Record<string, string | number | undefined> = {};
     showLogSettingPanel: boolean = false;
     showBinSettingPanel: boolean = false;
+    showRenamePanel: boolean = false;
     createField: ICreateField | undefined = undefined;
     localGeoJSON: FeatureCollection | undefined = undefined;
     showErrorResolutionPanel: number = 0;
@@ -463,6 +465,14 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId(), logNumber);
     }
 
+    renameFieldInChart(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, newName: string) {
+        const origianlField = this.currentEncodings[stateKey][index];
+        if (!origianlField) {
+            return;
+        }
+        this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName });
+    }
+
     public createDateTimeDrilledField(
         stateKey: keyof Omit<DraggableFieldState, 'filters'>,
         index: number,
@@ -679,6 +689,10 @@ export class VizSpecStore {
 
     setShowLogSettingPanel(show: boolean) {
         this.showLogSettingPanel = show;
+    }
+
+    setShowRenamePanel(show: boolean) {
+        this.showRenamePanel = show;
     }
 
     setCreateField(field: ICreateField) {
