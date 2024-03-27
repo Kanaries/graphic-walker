@@ -462,7 +462,7 @@ export interface IVisualConfigNew {
     /** @default "generic" */
     coordSystem?: ICoordMode;
     limit: number;
-    folds?: string[];
+    folds?: FieldIdentifier[];
     timezoneDisplayOffset?: number;
     baseDataset?: string;
 }

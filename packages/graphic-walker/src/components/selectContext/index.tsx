@@ -5,24 +5,24 @@ import { Float } from '@headlessui-float/react';
 import { blockContext } from '../../fields/fieldsContext';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
-export interface ISelectContextOption {
-    key: string;
+export interface ISelectContextOption<T extends string> {
+    key: T;
     label: string;
     disabled?: boolean;
 }
-interface ISelectContextProps {
-    options?: ISelectContextOption[];
+interface ISelectContextProps<T extends string> {
+    options?: ISelectContextOption<T>[];
     disable?: boolean;
-    selectedKeys?: string[];
-    onSelect?: (selectedKeys: string[]) => void;
+    selectedKeys?: T[];
+    onSelect?: (selectedKeys: T[]) => void;
     className?: string;
     required?: boolean;
     children?: React.ReactNode | Iterable<React.ReactNode>;
 }
-const SelectContext: React.FC<ISelectContextProps> = (props) => {
+function SelectContext <T extends string>(props: ISelectContextProps<T>) {
     const { options = [], disable = false, selectedKeys = [], onSelect, className = '', required } = props;
 
-    const [selected, setSelected] = useState<ISelectContextOption[]>(options.filter((opt) => selectedKeys.includes(opt.key)));
+    const [selected, setSelected] = useState<ISelectContextOption<T>[]>(options.filter((opt) => selectedKeys.includes(opt.key)));
 
     useEffect(() => {
         setSelected(options.filter((opt) => selectedKeys.includes(opt.key)));

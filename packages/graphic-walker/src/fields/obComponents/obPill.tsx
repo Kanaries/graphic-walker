@@ -4,7 +4,7 @@ import React, { useMemo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
 import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
-import { IAggregator, IDraggableViewStateKey } from '../../interfaces';
+import { FieldIdentifier, IAggregator, IDraggableViewStateKey } from '../../interfaces';
 import { DatasetNamesContext, useVizStore } from '../../store';
 import { Pill } from '../components';
 import { GLOBAL_CONFIG } from '../../config';
