@@ -377,7 +377,7 @@ export class VizSpecStore {
     get foldOptions() {
         const validFoldBy = this.allFields.filter((f) => f.analyticType === 'measure' && f.fid !== MEA_VAL_ID);
         return validFoldBy.map((f) => ({
-            key: f.fid,
+            key: getFieldIdentifier(f),
             label: f.name,
         }));
     }

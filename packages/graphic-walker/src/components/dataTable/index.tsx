@@ -142,11 +142,12 @@ function useFilters(metas: IMutField[]) {
                 const meta = metas.find((x) => getFieldIdentifier(x) === fid);
                 if (!meta) return;
                 const newFilter: IFilterField = {
-                    fid,
+                    fid: meta.fid,
                     rule: null,
                     analyticType: meta.analyticType,
                     name: meta.name ?? meta.fid,
                     semanticType: meta.semanticType,
+                    dataset: meta.dataset,
                 };
                 if (editingFilterIdx === null || !filters[editingFilterIdx]) {
                     setFilters(filters.concat(newFilter));

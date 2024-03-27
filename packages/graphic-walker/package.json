@@ -48,7 +48,7 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@headlessui-float/react": "^0.11.4",
+    "@headlessui-float/react": "^0.13.2",
     "@headlessui/react": "1.7.12",
     "@heroicons/react": "^2.0.8",
     "@kanaries/react-beautiful-dnd": "^0.1.1",
