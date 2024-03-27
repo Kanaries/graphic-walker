@@ -1,4 +1,4 @@
-import React, { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { Fragment, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip, AttributionControl } from 'react-leaflet';
 import { type Map, divIcon } from 'leaflet';
 import type { DeepReadonly, IChannelScales, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from '../../interfaces';
@@ -14,6 +14,7 @@ import { ChangeView } from './utils';
 import ColorPanel from './color';
 import { getColor } from '@/utils/useTheme';
 import { field } from 'vega';
+import { themeContext } from '@/store/theme';
 
 export interface IChoroplethRendererProps {
     name?: string;
@@ -116,6 +117,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         channelScales,
         tileUrl,
     } = props;
+
+    const darkMode = useContext(themeContext);
 
     useImperativeHandle(ref, () => ({}));
 
@@ -265,6 +268,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>;
     }
 
+    const border = darkMode === 'dark' ? '#fff4' : '#0004';
+
     return (
         <MapContainer
             preferCanvas
@@ -305,7 +310,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                             opacity={0.8}
                                             fillOpacity={opacity}
                                             fillColor={color}
-                                            color="#0004"
+                                            color={border}
                                             weight={1}
                                             stroke
                                             fill
@@ -329,7 +334,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                             pathOptions={{
                                                 fillOpacity: opacity * 0.8,
                                                 fillColor: color,
-                                                color: '#0004',
+                                                color: border,
                                                 weight: 1,
                                                 stroke: true,
                                                 fill: true,
@@ -362,7 +367,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                 })}
             {missingDataGeoShapes.map(({ coords, name }, i) => {
                 const opacity = 0.3;
-                const { primaryColor } = getColor(vegaConfig);
+                const color = '#808080';
                 return (
                     <Fragment key={`missing-${i}`}>
                         {coords.map((coord, j) => {
@@ -377,8 +382,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         radius={3}
                                         opacity={0.8}
                                         fillOpacity={opacity}
-                                        fillColor={primaryColor}
-                                        color="#0004"
+                                        fillColor={color}
+                                        color={border}
                                         weight={1}
                                         stroke
                                         fill
@@ -401,8 +406,8 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         positions={coord}
                                         pathOptions={{
                                             fillOpacity: opacity * 0.8,
-                                            fillColor: primaryColor,
-                                            color: '#0004',
+                                            fillColor: color,
+                                            color: border,
                                             weight: 1,
                                             stroke: true,
                                             fill: true,
