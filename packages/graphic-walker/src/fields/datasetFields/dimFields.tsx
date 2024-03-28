@@ -10,16 +10,13 @@ import { useMenuActions } from './utils';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
 
-interface Props {
-    provided: DroppableProvided;
-}
-const DimFields: React.FC<Props> = (props) => {
-    const { provided } = props;
+
+const DimFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { dimensions } = vizStore;
     const menuActions = useMenuActions('dimensions');
     return (
-        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+        <div>
             {dimensions.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {

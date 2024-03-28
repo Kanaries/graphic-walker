@@ -11,20 +11,16 @@ import { MEA_KEY_ID } from '../../constants';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
 
-interface Props {
-    provided: DroppableProvided;
-}
-const MeaFields: React.FC<Props> = (props) => {
-    const { provided } = props;
+const MeaFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { measures } = vizStore;
 
     const menuActions = useMenuActions('measures');
 
     return (
-        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+        <div>
             {measures.map((f, index) => (
-                <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`}  index={index}>
+                <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return (
                             <div className="block">
