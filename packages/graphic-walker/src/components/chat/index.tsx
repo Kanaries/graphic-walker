@@ -13,6 +13,7 @@ import { getSort, parseErrorMessage } from '@/utils';
 import { useReporter } from '@/utils/reportError';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Textarea } from '../ui/textarea';
+import LoadingLayer from '../loadingLayer';
 
 async function fetchQueryChat(api: string, metas: IViewField[], messages: IChatMessage[], headers: Record<string, string>) {
     const res = await fetch(api, {
@@ -143,10 +144,10 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
                 )}
             </div>
             <CardContent className="pl-16">
+                {waiting && <LoadingLayer />}
                 <SpecRenderer
                     themeConfig={themeConfig}
                     name={name}
-                    loading={waiting}
                     data={data}
                     themeKey={themeKey}
                     draggableFieldState={encodings}
