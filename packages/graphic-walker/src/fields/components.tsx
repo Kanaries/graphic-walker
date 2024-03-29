@@ -130,6 +130,7 @@ export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
     font-size: 12px;
     height: 20px;
     min-width: 150px;
+    max-width: 300px;
     /* overflow-y: hidden; */
     padding: 0 10px;
     user-select: none;
