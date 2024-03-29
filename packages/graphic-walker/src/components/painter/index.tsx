@@ -299,7 +299,7 @@ const PainterContent = (props: {
                     };
                     if (e instanceof MouseEvent && e.buttons & MouseButtons.PRIMARY) {
                         paint(e.offsetX - origin[0] - MAGIC_PADDING, e.offsetY - origin[1] - MAGIC_PADDING);
-                    } else if (e instanceof TouchEvent) {
+                    } else if (window.TouchEvent && e instanceof TouchEvent) {
                         const rect = containerRef.current!.getBoundingClientRect();
                         paint(
                             e.changedTouches[0].pageX - rect.left - origin[0] - MAGIC_PADDING,

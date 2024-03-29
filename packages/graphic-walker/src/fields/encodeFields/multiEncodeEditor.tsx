@@ -29,9 +29,9 @@ interface MultiEncodeEditorProps {
 const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const vizStore = useVizStore();
-    const { allEncodings, config, allFields } = vizStore;
+    const { currentEncodings, config, allFields } = vizStore;
     const folds = config.folds ?? [];
-    const channelItems = allEncodings[dkey.id];
+    const channelItems = currentEncodings[dkey.id];
     const { t } = useTranslation();
 
     const aggregationOptions = useMemo(() => {
@@ -50,7 +50,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
     }, [allFields]);
 
     return (
-        <div className="relative select-none flex flex-col py-0.5 px-1" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+        <div className="relative select-none flex flex-col py-0.5 px-1 touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {channelItems.map((channelItem, index) => {
                 return (
                     <Draggable key={getFieldIdentifier(channelItem)} draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={index}>
@@ -61,7 +61,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
                                     className={
-                                        'flex items-stretch h-[30px] my-0.5 relative' +
+                                        'flex items-stretch h-[30px] my-0.5 relative touch-none' +
                                         (provided.draggableProps.style?.transform ? ' z-10' : '') +
                                         (channelItem.aggName === 'expr' && !config.defaultAggregated ? ' !opacity-50' : '')
                                     }

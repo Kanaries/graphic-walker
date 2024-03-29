@@ -50,7 +50,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     }, [allFields]);
 
     return (
-        <div className="p-1 select-none relative" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+        <div className="p-1 select-none relative touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             <div
                 className={`p-1.5 bg-muted text-muted-foreground border flex item-center justify-center grow ${
                     snapshot.draggingFromThisWith || snapshot.isDraggingOver || !channelItem ? 'opacity-100' : 'opacity-0'
@@ -67,7 +67,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 className={
-                                    'flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1' +
+                                    'flex items-stretch absolute top-0 left-0 right-0 bottom-0 m-1 touch-none' +
                                     (provided.draggableProps.style?.transform ? ' z-10' : '') +
                                     (channelItem.aggName === 'expr' && !config.defaultAggregated ? ' !opacity-50' : '')
                                 }

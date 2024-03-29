@@ -25,6 +25,7 @@ import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
 import { VizAppContext } from '../store/context';
 import { useCurrentMediaTheme } from '../utils/media';
+import LoadingLayer from '@/components/loadingLayer';
 
 type IPureRendererProps = {
     className?: string;
@@ -142,6 +143,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 vegaThemeContext={{ themeConfig, themeKey }}
                 portalContainerContext={portal}
             >
+                {waiting && <LoadingLayer />}
                 <div className={`relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
@@ -152,7 +154,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                         <SpecRenderer
                             themeConfig={themeConfig}
                             name={name}
-                            loading={waiting}
                             data={viewData}
                             ref={ref}
                             themeKey={themeKey}

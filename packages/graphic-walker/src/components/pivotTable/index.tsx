@@ -18,7 +18,6 @@ import { getSort, getSortedEncoding } from '../../utils';
 interface PivotTableProps {
     themeKey?: IThemeKey;
     data: IRow[];
-    loading: boolean;
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
@@ -27,7 +26,7 @@ interface PivotTableProps {
 const emptyMap = new Map();
 
 const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableComponent(props) {
-    const { data, visualConfig, loading, layout, draggableFieldState } = props;
+    const { data, visualConfig, layout, draggableFieldState } = props;
     const computation = useCompututaion();
     const appRef = useAppRootContext();
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
@@ -191,7 +190,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
     // const { leftTree, topTree, metricTable } = store;
     return (
         <div className="relative">
-            {(isLoading || loading) && <LoadingLayer />}
+            {isLoading && <LoadingLayer />}
             <div className="flex">
                 <table className="border border-collapse">
                     <thead className="border">

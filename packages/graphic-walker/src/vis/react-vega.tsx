@@ -287,7 +287,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                     config: vegaConfig,
                     tooltip: {
                         theme: mediaTheme,
-                    },    
+                    },
                 }).then((res) => {
                     const container = res.view.container();
                     const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
@@ -310,12 +310,15 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                 height: Math.max(rect.height - (areaHeight || height), 0),
                             };
                             if (res.view.width() === 0) {
-                                // is faceted view
-                                res.view.signal('child_width', specs[0].width - modifier.width / Math.round((areaWidth || width) / specs[0].width));
-                                res.view.signal('child_height', specs[0].height - modifier.height / Math.round((areaHeight || height) / specs[0].height));
+                                try {
+                                    res.view.signal('child_width', specs[0].width - modifier.width / Math.round((areaWidth || width) / specs[0].width));
+                                    res.view.signal('child_height', specs[0].height - modifier.height / Math.round((areaHeight || height) / specs[0].height));
+                                } catch (e) {
+                                    // ignore when width is just 0 because of extreamly small size
+                                }
                             } else {
-                            res.view.width(specs[0].width - modifier.width);
-                            res.view.height(specs[0].height - modifier.height);
+                                res.view.width(specs[0].width - modifier.width);
+                                res.view.height(specs[0].height - modifier.height);
                             }
                             res.view.runAsync();
                         }
@@ -373,7 +376,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                             tooltip: {
                                 theme: mediaTheme,
                             },
-            
                         }).then((res) => {
                             const container = res.view.container();
                             const canvas = container?.querySelector('canvas') ?? container?.querySelector('svg') ?? null;
@@ -398,15 +400,18 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         height: Math.max(rect.height - (areaHeight || height) / rowRepeatFields.length, 0),
                                     };
                                     if (res.view.width() === 0) {
-                                        // is faceted view
-                                        res.view.signal(
-                                            'child_width',
-                                            specs[0].width - modifier.width / Math.round((areaWidth || width) / colRepeatFields.length / specs[0].width)
-                                        );
-                                        res.view.signal(
-                                            'child_height',
-                                            specs[0].height - modifier.height / Math.round((areaHeight || height) / rowRepeatFields.length / specs[0].height)
-                                        );
+                                        if (res.view.signal('child_width') !== undefined) {
+                                            // is faceted view
+                                            res.view.signal(
+                                                'child_width',
+                                                specs[0].width - modifier.width / Math.round((areaWidth || width) / colRepeatFields.length / specs[0].width)
+                                            );
+                                            res.view.signal(
+                                                'child_height',
+                                                specs[0].height -
+                                                    modifier.height / Math.round((areaHeight || height) / rowRepeatFields.length / specs[0].height)
+                                            );
+                                        }
                                     } else {
                                         res.view.width(specs[0].width - modifier.width);
                                         res.view.height(specs[0].height - modifier.height);
