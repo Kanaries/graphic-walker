@@ -45,7 +45,7 @@ const OBPill: React.FC<PillProps> = (props) => {
         <Pill
             ref={refMapper(provided.innerRef)}
             colType={field.analyticType === 'dimension' ? 'discrete' : 'continuous'}
-            className={`${field.aggName === 'expr' && !config.defaultAggregated ? '!opacity-50' : ''}`}
+            className={`${field.aggName === 'expr' && !config.defaultAggregated ? '!opacity-50 touch-none' : 'touch-none'}`}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
         >

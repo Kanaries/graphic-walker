@@ -40,9 +40,7 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
     const [coord, setCoord] = useState<[x: number, y: number]>([0, 0]);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
-    if (disabled || menu.length === 0) {
-        return <div {...attrs}>{props.children}</div>;
-    }
+    const isDisabled = disabled || menu.length === 0;
 
     const block = useContext(blockContext);
 
@@ -71,6 +69,7 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                         <Menu.Button ref={buttonRef} className="sr-only" aria-hidden />
                         <div
                             onContextMenu={(e) => {
+                                if (isDisabled) return;
                                 e.preventDefault();
                                 e.stopPropagation();
                                 const blockRect = block.current?.getBoundingClientRect();
@@ -85,7 +84,7 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                             {props.children}
                         </div>
                         {open && <div className="fixed inset-0 z-50 bg-transparent" aria-hidden="true" />}
-                        <Transition
+                        {!isDisabled && <Transition
                             as={Fragment}
                             enter="transition ease-out duration-100"
                             enterFrom="transform opacity-0 scale-95"
@@ -103,7 +102,7 @@ const ActionMenu: React.FC<IActionMenuProps & Omit<HTMLAttributes<HTMLDivElement
                             >
                                 <ActionMenuItemList title={title} items={menu} onDismiss={close} />
                             </Menu.Items>
-                        </Transition>
+                        </Transition>}
                     </Context.Provider>
                 );
             }}

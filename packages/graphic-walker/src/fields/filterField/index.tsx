@@ -23,6 +23,7 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
 
     return (
         <FilterFieldsContainer
+            className='touch-none'
             {...provided.droppableProps}
             ref={refMapper(provided.innerRef)}
         >

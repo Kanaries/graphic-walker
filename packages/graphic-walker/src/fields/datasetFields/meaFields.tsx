@@ -18,7 +18,7 @@ const MeaFields: React.FC = (props) => {
     const menuActions = useMenuActions('measures');
 
     return (
-        <div>
+        <div className='touch-none'>
             {measures.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
@@ -31,7 +31,7 @@ const MeaFields: React.FC = (props) => {
                                     disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}
                                 >
                                     <FieldPill
-                                        className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
+                                        className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
                                             snapshot.isDragging ? 'bg-measure/20' : ''
                                         }`}
                                         isDragging={snapshot.isDragging}
