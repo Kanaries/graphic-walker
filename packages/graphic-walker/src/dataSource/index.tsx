@@ -32,14 +32,14 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
 
     const { showDSPanel } = commonStore;
     return (
-        <div className="font-sans flex items-center m-4 p-4 border rounded-md">
+        <div className="font-sans gap-2 flex flex-wrap items-center m-4 p-4 border rounded-md">
             {props.onLoad && <GwFile onImport={props.onLoad} fileRef={gwFileRef} />}
             {/* <label className="text-xs mr-1 whitespace-nowrap self-center h-4">
                 {t("DataSource.labels.cur_dataset")}
             </label> */}
-            <div className="mr-2">
+            <div>
                 <DropdownSelect
-                    className='text-xs !h-8'
+                    className="text-xs !h-8"
                     options={dataSources.map((d) => ({ label: d.name, value: d.id }))}
                     selectedKey={selectedId}
                     onSelect={onSelectId}
@@ -49,7 +49,6 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
 
             <Button
                 size="sm"
-                className="mr-2"
                 onClick={() => {
                     commonStore.startDSBuildingTask();
                 }}
@@ -59,7 +58,6 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
             {onSave && (
                 <Button
                     size="sm"
-                    className="mr-2"
                     variant="outline"
                     onClick={async () => {
                         const blob = await onSave();
@@ -71,7 +69,6 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
             )}
             {props.onLoad && (
                 <Button
-                    className="mr-2"
                     size="sm"
                     variant="outline"
                     onClick={() => {

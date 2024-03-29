@@ -1,6 +1,16 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo } from 'react';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IComputationFunction, IVisualConfigNew, IChannelScales, IViewField, IVisualLayout } from '../interfaces';
+import {
+    DraggableFieldState,
+    IDarkMode,
+    IRow,
+    IThemeKey,
+    IComputationFunction,
+    IVisualConfigNew,
+    IChannelScales,
+    IViewField,
+    IVisualLayout,
+} from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction } from 'mobx';
@@ -18,6 +28,7 @@ import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
 import { viewEncodingKeys } from '@/models/visSpec';
+import LoadingLayer from '@/components/loadingLayer';
 
 interface RendererProps {
     themeKey?: IThemeKey;
@@ -56,7 +67,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         }),
         [layout, overrideSize]
     );
-
 
     const draggableFieldState = chart.encodings;
 
@@ -198,24 +208,28 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [isSpatial, vizStore]);
 
     return (
-        <SpecRenderer
-            name={chart?.name}
-            loading={waiting}
-            data={viewData}
-            ref={ref}
-            themeKey={themeKey}
-            themeConfig={themeConfig}
-            locale={i18n.language}
-            draggableFieldState={encodings}
-            visualConfig={viewConfig}
-            onGeomClick={handleGeomClick}
-            onChartResize={handleChartResize}
-            layout={visualLayout}
-            channelScales={props.channelScales}
-            onReportSpec={(spec) => {
-                vizStore.updateLastSpec(spec);
-            }}
-        />
+        <div className='w-full h-full'>
+            {waiting && <LoadingLayer />}
+            <div className='overflow-auto w-full h-full'>
+                <SpecRenderer
+                    name={chart?.name}
+                    data={viewData}
+                    ref={ref}
+                    themeKey={themeKey}
+                    themeConfig={themeConfig}
+                    locale={i18n.language}
+                    draggableFieldState={encodings}
+                    visualConfig={viewConfig}
+                    onGeomClick={handleGeomClick}
+                    onChartResize={handleChartResize}
+                    layout={visualLayout}
+                    channelScales={props.channelScales}
+                    onReportSpec={(spec) => {
+                        vizStore.updateLastSpec(spec);
+                    }}
+                />
+            </div>
+        </div>
     );
 });
 

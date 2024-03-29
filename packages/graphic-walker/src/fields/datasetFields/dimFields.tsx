@@ -10,23 +10,19 @@ import { useMenuActions } from './utils';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
 
-interface Props {
-    provided: DroppableProvided;
-}
-const DimFields: React.FC<Props> = (props) => {
-    const { provided } = props;
+const DimFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { dimensions } = vizStore;
     const menuActions = useMenuActions('dimensions');
     return (
-        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+        <div className="touch-none">
             {dimensions.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return (
-                            <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu disabled={snapshot.isDragging}>
+                            <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu={false} disabled={snapshot.isDragging}>
                                 <FieldPill
-                                    className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
+                                    className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
                                         snapshot.isDragging ? 'bg-dimension/20' : ''
                                     }`}
                                     ref={refMapper(provided.innerRef)}

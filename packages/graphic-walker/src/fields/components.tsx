@@ -54,6 +54,7 @@ export const FieldsContainer = styled.div`
     > div {
         margin: 1px;
     }
+    touch-action: none;
 `;
 
 export const FilterFieldsContainer = styled.div({
@@ -129,6 +130,7 @@ export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
     font-size: 12px;
     height: 20px;
     min-width: 150px;
+    max-width: 300px;
     /* overflow-y: hidden; */
     padding: 0 10px;
     user-select: none;

@@ -71,7 +71,7 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
 
     return (
-        <Pill className="text-foreground" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <Pill className="text-foreground touch-none" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
             <header className="bg-secondary">{fieldName}</header>
             <div
                 className="bg-background  text-muted-foreground hover:bg-accent flex flex-row output"
