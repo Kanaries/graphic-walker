@@ -135,7 +135,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     return (
         <Resizable
-            className={enableResize ? 'border-primary border-2 overflow-hidden max-h-screen max-w-[100vw]' : 'max-h-screen max-w-[100vw]'}
+            className={enableResize ? 'border-primary border-2 max-h-screen max-w-[100vw]' : 'max-h-screen max-w-[100vw]'}
             style={{ padding: '12px' }}
             onResizeStop={(e, direction, ref, d) => {
                 onChartResize?.(size.width + d.width, size.height + d.height);
