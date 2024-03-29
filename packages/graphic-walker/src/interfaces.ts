@@ -932,7 +932,7 @@ export interface IVizStoreProps {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
     /** @deprecated renamed to fields */
-    rawFields: IMutField[];
+    rawFields?: IMutField[];
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
@@ -944,7 +944,7 @@ export interface ILocalComputationProps {
      */
     fieldKeyGuard?: boolean;
     /** @deprecated renamed to data */
-    dataSource: any[];
+    dataSource?: any[];
     data?: any[];
     computationTimeout?: number;
 }

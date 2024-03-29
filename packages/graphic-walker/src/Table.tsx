@@ -100,7 +100,7 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
-    const fields = props.fields ?? props.rawFields;
+    const fields = props.fields ?? props.rawFields ?? [];
 
     const {
         computation: safeComputation,
