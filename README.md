@@ -109,10 +109,10 @@ In your app:
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
 const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
-    const { dataSource, fields } = props;
+    const { data, fields } = props;
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         chart={graphicWalkerSpec}
         i18nLang={langStore.lang}
     />;
@@ -145,10 +145,10 @@ The `GraphicRenderer` component accepts same props as `GraphicWalker`, and would
 import { GraphicRenderer } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC<IYourChartProps> = props => {
-    const { dataSource, fields, spec } = props;
+    const { data, fields, spec } = props;
     return <GraphicRenderer
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         chart={spec}
     />;
 }
@@ -162,10 +162,10 @@ You can use `TableWalker` component to make a single table view with your data. 
 import { TableWalker } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC<IYourChartProps> = props => {
-    const { dataSource, fields, spec } = props;
+    const { data, fields, spec } = props;
     return <TableWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         pageSize={50}
     />;
 }
@@ -200,8 +200,8 @@ const YourApp = props => {
     const curLang = /* get your i18n language */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
     />
 }
@@ -228,8 +228,8 @@ const YourApp = props => {
     const curLang = /* get your i18n language */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
         i18nResources={yourResources}
     />
@@ -248,32 +248,32 @@ Graphic Walker Props & Ref interface
 
 ```ts
 export interface IGWProps {
-	dataSource?: IRow[];
-	rawFields?: IMutField[];
+	data?: IRow[];
+	fields?: IMutField[];
 	spec?: Specification;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean | string;
     fieldKeyGuard?: boolean;
-    themeKey?: IThemeKey;
-    dark?: IDarkMode;
+    vizThemeConfig?: IThemeKey;
+    apperence?: IDarkMode;
     storeRef?: React.MutableRefObject<IGlobalStore | null>;
     computation?: IComputationConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
-    colorConfig?: IUIThemeConfig;
+    uiTheme?: IUIThemeConfig;
 }
 ```
 
-#### `dataSource`: optional _{ `Array<{[key: string]: any}>` }_
+#### `data`: optional _{ `Array<{[key: string]: any}>` }_
 
-Array of key-value object data. Provide this prop with `rawFields` prop together.
+Array of key-value object data. Provide this prop with `fields` prop together.
 
-#### `rawFields`: optional _{ [`IMutField`](./packages/graphic-walker/src/interfaces.ts) }_
+#### `fields`: optional _{ [`IMutField`](./packages/graphic-walker/src/interfaces.ts) }_
 
-Array of fields(columns) of the data. Provide this prop with `dataSource` prop together.
+Array of fields(columns) of the data. Provide this prop with `data` prop together.
 
 #### ~~`spec`: optional _{ [`Specification`](./packages/graphic-walker/src/interfaces.ts) }_~~
 
@@ -291,11 +291,11 @@ Customize locale resources. See [Customize I18n](#customize-i18n) for more detai
 
 Whether to keep the component state when it is unmounted. If provided, after you unmount the graphic-walker component, the state will still be stored, and will be restored when the component is mount again. If you need to enable `keepAlive` for multiple graphic-walker components, you can provide a unique string value for each component to distinguish them.
 
-#### `themeKey`: optional _{ `IThemeKey = "vega"` }_
+#### `vizThemeConfig`: optional _{ `IThemeKey = "vega"` }_
 
 Specify the chart theme to use.
 
-#### `dark`: optional _{ `IDarkMode = "media"` }_
+#### `appearance`: optional _{ `IDarkMode = "media"` }_
 
 Specify the dark mode preference. There're three valid values:
 
@@ -319,13 +319,13 @@ Provide noting to use client-side computation. In this mode, the computation wil
 
 Graphic Walker will call given computation function with [`IDataQueryPayload`](./packages/graphic-walker/src/interfaces.ts) as parameter. 
 The function should returns a [`IRow[]`](./packages/graphic-walker/src/interfaces.ts) as result.
-When you are using Server-side computation, you should provide `rawFields` together.
+When you are using Server-side computation, you should provide `fields` together.
 
 #### `toolbar`: optional _{ `ToolbarProps` }_
 
 Customize the toolbar.
 
-#### `channelScales`: optional _{ [`IChannelScales`](./packages/graphic-walker/src/interfaces.ts) }_
+#### `scales`: optional _{ [`IChannelScales`](./packages/graphic-walker/src/interfaces.ts) }_
 
 Customize the scale of color, opacity, and size channel.
 see [Vega Docs](https://vega.github.io/vega/docs/schemes/#reference) for available color schemes.
@@ -375,7 +375,7 @@ const channelScales = {
 
 ```
 
-#### `colorConfig`: optional _{ `IUIThemeConfig` }_ (beta stage)
+#### `uiTheme`: optional _{ `IUIThemeConfig` }_ (beta stage)
 
 Specify the color that graphic walker use, so the background of Graphic Walker will match to your website.
 
@@ -390,7 +390,7 @@ Here are some examples:
 ```tsx
 import { getColorConfigFromPalette, getPaletteFromColor } from '@kanaries/graphic-walker'
 
-const colorConfig: IUIThemeConfig = {
+const uiTheme: IUIThemeConfig = {
     light: {
         background: 'amber-100',
         foreground: 'amber-950',
@@ -414,11 +414,11 @@ const colorConfig: IUIThemeConfig = {
 };
 
 import colors from 'tailwindcss/colors';
-const colorConfig = getColorConfigFromPalette(colors.zinc);
+const uiTheme = getColorConfigFromPalette(colors.zinc);
 
-const colorConfig = getColorConfigFromPalette(getPaletteFromColor('#6366f1'));
+const uiTheme = getColorConfigFromPalette(getPaletteFromColor('#6366f1'));
 
-<GraphicWalker colorConfig={colorConfig} />
+<GraphicWalker uiTheme={uiTheme} />
 ```
 
 ### Ref

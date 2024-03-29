@@ -101,10 +101,10 @@ In your app:
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
 const YourEmbeddingApp: React.FC = props => {
-    const { dataSource, fields } = props;
+    const { data, fields } = props;
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         spec={graphicWalkerSpec}
         i18nLang={langStore.lang}
     />
@@ -148,8 +148,8 @@ const YourApp = props => {
     const curLang = /* 这里是你的语言标签 */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
     />
 }
@@ -176,8 +176,8 @@ const YourApp = props => {
     const curLang = /* get your i18n language */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
         i18nResources={yourResources}
     />

@@ -99,10 +99,10 @@ npm i --save @kanaries/graphic-walker
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
 const YourEmbeddingApp: React.FC = props => {
-    const { dataSource, fields } = props;
+    const { data, fields } = props;
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         spec={graphicWalkerSpec}
         i18nLang={langStore.lang}
     />
@@ -155,8 +155,8 @@ const YourApp = props => {
     const curLang = /* get your i18n language */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
     />
 }
@@ -184,8 +184,8 @@ const YourApp = props => {
     const curLang = /* get your i18n language */;
 
     return <GraphicWalker
-        dataSource={dataSource}
-        rawFields={fields}
+        data={data}
+        fields={fields}
         i18nLang={curLang}
         i18nResources={yourResources}
     />
@@ -200,8 +200,8 @@ Graphic Walker Props interface
 
 ```ts
 export interface IGWProps {
-	dataSource?: IRow[];
-	rawFields?: IMutField[];
+	data?: IRow[];
+	fields?: IMutField[];
 	spec?: Specification;
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
@@ -211,8 +211,8 @@ export interface IGWProps {
 
 関数
 
-+ `dataSource`, type `Array<{[key: string]: any}>`, key-value オブジェクトの配列。
-+ `rawFields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts). 列の配列。
++ `data`, type `Array<{[key: string]: any}>`, key-value オブジェクトの配列。
++ `fields`, type [IMutField](./packages/graphic-walker/src/interfaces.ts). 列の配列。
 + `spec`, type [Specification](./packages/graphic-walker/src/interfaces.ts). 可視化の配置データ。
 + `i18nLang`, type `string`. 言語コード。
 + `i18nResources` 多言語データ。
