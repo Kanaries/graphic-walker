@@ -38,7 +38,7 @@ export default function GraphicWalkerInModal() {
                     boxSizing: 'border-box',
                 }}
             >
-                <GraphicWalker colorConfig={grayTheme} rawFields={fields} dataSource={dataSource} storeRef={ref} dark={theme} />
+                <GraphicWalker uiTheme={grayTheme} fields={fields} data={dataSource} storeRef={ref} appearance={theme} />
             </div>
         </div>
     );

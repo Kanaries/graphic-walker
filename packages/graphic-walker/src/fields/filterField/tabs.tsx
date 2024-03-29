@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Tooltip from '@/components/tooltip';
 
 export type RuleFormProps = {
-    rawFields: IMutField[];
+    allFields: IMutField[];
     field: IFilterField;
     onChange: (rule: IFilterRule) => void;
     displayOffset?: number;
@@ -408,7 +408,7 @@ const SortButton: React.FC<{ id: string; config: SortConfig; currentKey: SortCon
     );
 };
 
-export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields, displayOffset }) => {
+export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, allFields, displayOffset }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig>({
         key: 'count',
         ascending: true,
@@ -469,7 +469,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         loadData,
         loading,
         loadingPageData,
-    } = useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, rawFields, {
+    } = useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, allFields, {
         displayOffset,
         keyword: searchKeyword,
     });
@@ -742,7 +742,7 @@ export const CalendarInput: React.FC<CalendarInputProps> = (props) => {
     );
 };
 
-export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, rawFields, onChange, displayOffset }) => {
+export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, allFields, onChange, displayOffset }) => {
     const { t } = useTranslation('translation');
 
     const computationFunction = useCompututaion();
@@ -750,7 +750,7 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        withComputedField(field, rawFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
+        withComputedField(field, allFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
             getTemporalRange(service, field.fid, field.offset)
         ).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
@@ -820,11 +820,11 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     ) : null;
 };
 
-export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, rawFields, displayOffset }) => {
+export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({ active, field, onChange, allFields, displayOffset }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
     const computation = useCompututaion();
 
-    const [stats] = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, rawFields);
+    const [stats] = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, allFields);
     const range = stats?.range;
 
     React.useEffect(() => {
@@ -893,7 +893,7 @@ const getType = (type?: 'range' | 'temporal range' | 'one of' | 'not in' | 'rege
     return type;
 };
 
-const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs, displayOffset }) => {
+const Tabs: React.FC<TabsProps> = ({ allFields, field, onChange, tabs, displayOffset }) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.filter_type' });
 
     const [which, setWhich] = React.useState(getType(field.rule?.type) ?? tabs[0]!);
@@ -933,7 +933,7 @@ const Tabs: React.FC<TabsProps> = ({ rawFields, field, onChange, tabs, displayOf
                             hidden={which !== tab}
                             tabIndex={0}
                         >
-                            <Component displayOffset={displayOffset} field={field} onChange={onChange} active={which === tab} rawFields={rawFields} />
+                            <Component displayOffset={displayOffset} field={field} onChange={onChange} active={which === tab} allFields={allFields} />
                         </TabItem>
                     );
                 })}

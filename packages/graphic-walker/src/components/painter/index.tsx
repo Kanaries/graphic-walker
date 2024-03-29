@@ -21,7 +21,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Slider } from '../ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { colorContext, themeContext } from '@/store/theme';
+import { uiThemeContext, themeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
 import { parseColorToHex } from '@/utils/colors';
 
@@ -612,16 +612,16 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     }, []);
 
     const mediaTheme = useContext(themeContext);
-    const colorConfig = useContext(colorContext);
+    const uiTheme = useContext(uiThemeContext);
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
         const config: VegaGlobalConfig = {
             ...presetConfig?.[mediaTheme],
-            background: parseColorToHex(colorConfig[mediaTheme].background),
+            background: parseColorToHex(uiTheme[mediaTheme].background),
         };
         return config;
-    }, [colorConfig, themeConfig, themeKey, mediaTheme]);
+    }, [uiTheme, themeConfig, themeKey, mediaTheme]);
 
     return (
         <Dialog

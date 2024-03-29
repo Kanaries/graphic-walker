@@ -20,20 +20,20 @@ const aggregationList = GLOBAL_CONFIG.AGGREGATOR_LIST.map(
     })
 ).concat([{ label: '-', value: '_none' }]);
 
-const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
+const QuantitativeRuleForm: React.FC<RuleFormProps> = ({ allFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['range', 'one of']} allFields={allFields} displayOffset={displayOffset} />;
 };
 
-const NominalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} displayOffset={displayOffset} />;
+const NominalRuleForm: React.FC<RuleFormProps> = ({ allFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['one of']} allFields={allFields} displayOffset={displayOffset} />;
 };
 
-const OrdinalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['one of']} rawFields={rawFields} displayOffset={displayOffset} />;
+const OrdinalRuleForm: React.FC<RuleFormProps> = ({ allFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['one of']} allFields={allFields} displayOffset={displayOffset} />;
 };
 
-const TemporalRuleForm: React.FC<RuleFormProps> = ({ rawFields, field, onChange, displayOffset }) => {
-    return <Tabs field={field} onChange={onChange} tabs={['temporal range', 'one of']} rawFields={rawFields} displayOffset={displayOffset} />;
+const TemporalRuleForm: React.FC<RuleFormProps> = ({ allFields, field, onChange, displayOffset }) => {
+    return <Tabs field={field} onChange={onChange} tabs={['temporal range', 'one of']} allFields={allFields} displayOffset={displayOffset} />;
 };
 
 const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
@@ -120,7 +120,7 @@ export const PureFilterEditDialog = (props: {
                         )}
                     </div>
                     <Form
-                        rawFields={meta}
+                        allFields={meta}
                         key={getFilterMeaAggKey(uncontrolledField)}
                         field={uncontrolledField}
                         onChange={handleChange}

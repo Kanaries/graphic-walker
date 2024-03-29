@@ -263,7 +263,7 @@ export interface IGWProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
-    colorConfig?: IColorConfig;
+    colorConfig?: IUIThemeConfig;
 }
 ```
 
@@ -375,7 +375,7 @@ const channelScales = {
 
 ```
 
-#### `colorConfig`: optional _{ `IColorConfig` }_ (beta stage)
+#### `colorConfig`: optional _{ `IUIThemeConfig` }_ (beta stage)
 
 Specify the color that graphic walker use, so the background of Graphic Walker will match to your website.
 
@@ -390,7 +390,7 @@ Here are some examples:
 ```tsx
 import { getColorConfigFromPalette, getPaletteFromColor } from '@kanaries/graphic-walker'
 
-const colorConfig: IColorConfig = {
+const colorConfig: IUIThemeConfig = {
     light: {
         background: 'amber-100',
         foreground: 'amber-950',

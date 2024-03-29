@@ -16,9 +16,9 @@ export default function DataSourceSegment() {
                     <GraphicWalker
                         storeRef={p.storeRef}
                         computation={p.computation}
-                        rawFields={p.meta}
+                        fields={p.meta}
                         onMetaChange={p.onMetaChange}
-                        dark={theme}
+                        appearance={theme}
                         experimentalFeatures={{ computedField: true }}
                     />
                 );

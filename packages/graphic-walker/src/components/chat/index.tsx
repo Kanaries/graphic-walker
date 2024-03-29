@@ -88,10 +88,10 @@ function UserMessage(props: { message: IUserChatMessage; onRemove?: () => void }
     );
 }
 
-const AssistantMessage = observer(function AssistantMessage(props: { message: IAssistantChatMessage; onRemove?: () => void; channelScales?: IChannelScales }) {
+const AssistantMessage = observer(function AssistantMessage(props: { message: IAssistantChatMessage; onRemove?: () => void; scales?: IChannelScales }) {
     const computation = useCompututaion();
     const { config, encodings, layout, name } = props.message.chart;
-    const { themeConfig, themeKey } = useContext(vegaThemeContext);
+    const { vizThemeConfig } = useContext(vegaThemeContext);
 
     const sort = getSort(encodings);
 
@@ -146,10 +146,9 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
             <CardContent className="pl-16">
                 {waiting && <LoadingLayer />}
                 <SpecRenderer
-                    themeConfig={themeConfig}
+                    vizThemeConfig={vizThemeConfig}
                     name={name}
                     data={data}
-                    themeKey={themeKey}
                     draggableFieldState={encodings}
                     visualConfig={config}
                     layout={{
@@ -161,7 +160,7 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
                         },
                     }}
                     locale={i18n.language}
-                    channelScales={props.channelScales}
+                    scales={props.scales}
                 />
             </CardContent>
         </Card>
@@ -173,7 +172,7 @@ const api = 'https://api.kanaries.net/vis/chat2gw';
 export const VegaliteChat = observer(function VegaliteChat(props: {
     api: string | ((metas: IViewField[], chats: IChatMessage[]) => PromiseLike<any> | any);
     headers?: Record<string, string>;
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
 }) {
     const [query, setQuery] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
@@ -203,7 +202,7 @@ export const VegaliteChat = observer(function VegaliteChat(props: {
                     return (
                         <AssistantMessage
                             message={m}
-                            channelScales={props.channelScales}
+                            scales={props.scales}
                             key={i}
                             onRemove={i === arr.length - 1 && m.type === 'normal' ? () => vizStore.undo() : undefined}
                         />

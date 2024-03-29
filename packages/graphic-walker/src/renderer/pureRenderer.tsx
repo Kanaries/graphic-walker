@@ -15,7 +15,7 @@ import type {
     IComputationFunction,
     IVisualLayout,
     IChannelScales,
-    IColorConfig,
+    IUIThemeConfig,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -30,15 +30,24 @@ import LoadingLayer from '@/components/loadingLayer';
 type IPureRendererProps = {
     className?: string;
     name?: string;
+    /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
+    /** @deprecated use vizThemeConfig instead */
     themeConfig?: GWGlobalConfig;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
+    /** @deprecated renamed to appearance */
     dark?: IDarkMode;
+    appearance?: IDarkMode;
     visualState: DraggableFieldState;
     visualConfig: IVisualConfigNew | IVisualConfig;
     visualLayout?: IVisualLayout;
-    colorConfig?: IColorConfig;
+    /** @deprecated renamed to uiTheme */
+    colorConfig?: IUIThemeConfig;
+    uiTheme?: IUIThemeConfig;
     locale?: string;
+    /** @deprecated renamed to scales */
     channelScales?: IChannelScales;
+    scales?: IChannelScales;
     overrideSize?: IVisualLayout['size'];
 };
 
@@ -60,7 +69,25 @@ export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.Re
  * This is a pure component, which means it will not depend on any global state.
  */
 const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
-    const { name, className, themeKey, dark, visualState, visualConfig, visualLayout: layout, overrideSize, locale, type, themeConfig, channelScales, colorConfig } = props;
+    const {
+        name,
+        className,
+        themeKey,
+        uiTheme,
+        colorConfig,
+        vizThemeConfig,
+        appearance,
+        dark,
+        visualState,
+        visualConfig,
+        visualLayout: layout,
+        overrideSize,
+        locale,
+        type,
+        themeConfig,
+        channelScales,
+        scales,
+    } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -132,15 +159,15 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
 
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
-    const darkMode = useCurrentMediaTheme(dark);
+    const darkMode = useCurrentMediaTheme(appearance ?? dark);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
-        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} colorConfig={colorConfig}>
+        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} uiTheme={uiTheme ?? colorConfig}>
             <VizAppContext
                 ComputationContext={computation}
                 themeContext={darkMode}
-                vegaThemeContext={{ themeConfig, themeKey }}
+                vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
                 portalContainerContext={portal}
             >
                 {waiting && <LoadingLayer />}
@@ -152,16 +179,15 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                     )}
                     {isSpatial || (
                         <SpecRenderer
-                            themeConfig={themeConfig}
                             name={name}
                             data={viewData}
                             ref={ref}
-                            themeKey={themeKey}
                             draggableFieldState={visualState}
                             visualConfig={visualConfig}
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}
-                            channelScales={channelScales}
+                            scales={scales ?? channelScales}
+                            vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
                         />
                     )}
                     <div className={`App ${darkMode === 'dark' ? 'dark' : ''}`} ref={setPortal} />

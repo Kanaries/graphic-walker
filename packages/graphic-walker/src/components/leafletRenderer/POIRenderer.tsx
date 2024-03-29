@@ -21,7 +21,7 @@ export interface IPOIRendererProps {
     size: DeepReadonly<IViewField> | undefined;
     details: readonly DeepReadonly<IViewField>[];
     vegaConfig: VegaGlobalConfig;
-    channelScales: IChannelScales;
+    scales: IChannelScales;
     tileUrl?: string;
 }
 
@@ -40,7 +40,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer(props, ref) {
-    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, channelScales, tileUrl } = props;
+    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, scales, tileUrl } = props;
 
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
@@ -118,8 +118,8 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
         }
     }, []);
 
-    const sizeScale = useSizeScale(data, size, defaultAggregated, channelScales);
-    const opacityScale = useOpacityScale(data, opacity, defaultAggregated, channelScales);
+    const sizeScale = useSizeScale(data, size, defaultAggregated, scales);
+    const opacityScale = useOpacityScale(data, opacity, defaultAggregated, scales);
     const { mapper: colorScale, display: colorDisplay } = useColorScale(data, color, defaultAggregated, vegaConfig);
 
     const tooltipFields = useMemo(() => {
