@@ -60,6 +60,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         i18nResources,
         themeKey = 'vega',
         themeConfig,
+        vizThemeConfig,
         toolbar,
         geographicData,
         computationTimeout = 60000,
@@ -148,7 +149,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ themeConfig, themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey }}
                     portalContainerContext={portal}
                 >
                     <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
@@ -241,11 +242,10 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                             <ReactiveRenderer
                                                                 csvRef={downloadCSVRef}
                                                                 ref={rendererRef}
-                                                                themeKey={themeKey}
-                                                                dark={darkMode}
-                                                                themeConfig={themeConfig}
+                                                                vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
                                                                 computationFunction={wrappedComputation}
-                                                                channelScales={props.channelScales}
+                                                                // @TODO remove channelScales
+                                                                scales={props.scales ?? props.channelScales}
                                                             />
                                                         )}
                                                         <VizEmbedMenu />
@@ -259,7 +259,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <VegaliteChat
                                                 api={typeof enhanceAPI.features.vlChat === 'boolean' ? '' : enhanceAPI.features.vlChat}
                                                 headers={enhanceAPI?.header}
-                                                channelScales={props.channelScales}
+                                                // @TODO remove channelScales
+                                                scales={props.scales ?? props.channelScales}
                                             />
                                         </TabsContent>
                                     )}
@@ -275,40 +276,44 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    // @TODO remove deprecated props
+    const appearance = props.appearance ?? props.dark;
+    const data = props.data ?? props.dataSource;
+    const fields = props.fields ?? props.rawFields ?? [];
     const {
         computation: safeComputation,
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
-        if (props.dataSource) {
+        if (data) {
             if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
+                const { safeData, safeMetas } = guardDataKeys(data, fields);
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
                     onMetaChange: (safeFID, meta) => {
                         const index = safeMetas.findIndex((x) => x.fid === safeFID);
                         if (index >= 0) {
-                            props.onMetaChange?.(props.rawFields[index].fid, meta);
+                            props.onMetaChange?.(fields[index].fid, meta);
                         }
                     },
                 };
             }
             return {
-                safeMetas: props.rawFields,
-                computation: getComputation(props.dataSource),
+                safeMetas: fields,
+                computation: getComputation(data),
                 onMetaChange: props.onMetaChange,
             };
         }
         return {
-            safeMetas: props.rawFields,
+            safeMetas: fields,
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
 
-    const darkMode = useCurrentMediaTheme(props.dark);
+    const darkMode = useCurrentMediaTheme(appearance);
 
     return (
         <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>

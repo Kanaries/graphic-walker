@@ -74,7 +74,7 @@ interface ReactVegaProps {
     locale?: string;
     useSvg?: boolean;
     dark?: IDarkMode;
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
     scale?: {
         opacity: IConfigScale;
         size: IConfigScale;
@@ -133,13 +133,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         // format
         locale = 'en-US',
         useSvg,
-        channelScales: channelScaleRaw,
+        scales: channelScaleRaw,
         scale,
         displayOffset,
     } = props;
     const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
     const mediaTheme = useContext(themeContext);
-    const channelScales = useMemo(() => {
+    const scales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
         if (scale?.opacity) {
             cs.opacity = {
@@ -227,7 +227,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 rows: guardedRows,
                 stack,
                 width: vegaWidth,
-                channelScales,
+                scales,
                 color,
                 details,
                 opacity,
@@ -249,7 +249,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             mediaTheme,
             guardedRows,
             stack,
-            channelScales,
+            scales,
             color,
             details,
             opacity,

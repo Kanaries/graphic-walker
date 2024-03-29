@@ -10,7 +10,7 @@ export interface ILeafletRendererProps {
     visualConfig: IVisualConfigNew;
     visualLayout: IVisualLayout;
     data: IRow[];
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
     scale?: {
         opacity: IConfigScale;
         size: IConfigScale;
@@ -23,7 +23,7 @@ export const LEAFLET_DEFAULT_WIDTH = 800;
 export const LEAFLET_DEFAULT_HEIGHT = 600;
 
 const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(function LeafletRenderer(props, ref) {
-    const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {}, channelScales: channelScaleRaw, scale } = props;
+    const { name, draggableFieldState, data, visualConfig, visualLayout, vegaConfig = {}, scales: channelScaleRaw, scale } = props;
     const {
         latitude: [lat],
         longitude: [lng],
@@ -46,7 +46,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     const lngField = useMemo(() => allFields.find((f) => f.geoRole === 'longitude'), [allFields]);
     const latitude = useMemo(() => lat ?? latField, [lat, latField]);
     const longitude = useMemo(() => lng ?? lngField, [lng, lngField]);
-    const channelScales = useMemo(() => {
+    const scales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
         if (scale?.opacity) {
             cs.opacity = {
@@ -80,7 +80,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 size={size}
                 details={details}
                 vegaConfig={vegaConfig}
-                channelScales={channelScales}
+                scales={scales}
             />
         );
     } else if (markType === 'choropleth') {
@@ -102,7 +102,7 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
                 vegaConfig={vegaConfig}
                 scaleIncludeUnmatchedChoropleth={scaleIncludeUnmatchedChoropleth}
                 showAllGeoshapeInChoropleth={showAllGeoshapeInChoropleth}
-                channelScales={channelScales}
+                scales={scales}
             />
         );
     }

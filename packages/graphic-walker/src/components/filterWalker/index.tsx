@@ -74,32 +74,32 @@ export function createFilterContext(components: {
 }) {
     return function FilterContext(props: {
         configs: FilterConfig[];
-        dataSource?: IRow[];
+        data?: IRow[];
         computation?: IComputationFunction;
         loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
-        rawFields: IMutField[];
+        fields: IMutField[];
         children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
     }) {
-        const { configs, dataSource, computation: remoteComputation, rawFields, children, loadingContent } = props;
+        const { configs, data, computation: remoteComputation, fields, children, loadingContent } = props;
         const computation = React.useMemo(() => {
             if (remoteComputation) return remoteComputation;
-            if (dataSource) return getComputation(dataSource);
+            if (data) return getComputation(data);
             throw new Error('You should provide either dataSource or computation to use FilterContext.');
-        }, [dataSource, remoteComputation]);
+        }, [data, remoteComputation]);
         const [loading, setLoading] = React.useState(true);
         const computationRef = React.useRef(computation);
         const valuesRef = React.useRef<Map<string, values>>(new Map());
         const domainsRef = React.useRef<Map<string, Promise<domains>>>(new Map());
         const [values, setValues] = React.useState<values[]>([]);
         const [domains, setDomains] = React.useState<domains[]>([]);
-        const fields = React.useMemo(
+        const resolvedFields = React.useMemo(
             () =>
                 configs.flatMap((x) => {
-                    const f = rawFields.find((a) => a.fid === x.fid);
+                    const f = fields.find((a) => a.fid === x.fid);
                     if (!f) return [];
                     return [{ fid: x.fid, name: f.name ?? f.fid, mode: x.mode, type: f.semanticType, offset: f.offset, defaultValue: x.defaultValue }];
                 }),
-            [configs, rawFields]
+            [configs, fields]
         );
         useEffect(() => {
             (async () => {
@@ -109,7 +109,7 @@ export function createFilterContext(components: {
                     domainsRef.current.clear();
                 }
                 setLoading(true);
-                const domainsP = fields.map(async (x) => {
+                const domainsP = resolvedFields.map(async (x) => {
                     const k = `${x.mode === 'range' ? x.type : x.mode}__${x.fid}`;
                     if (domainsRef.current.has(k)) {
                         return domainsRef.current.get(k)!;
@@ -135,7 +135,7 @@ export function createFilterContext(components: {
                     }
                 });
                 const domains = await Promise.all(domainsP);
-                const values = fields.map((x, i) => {
+                const values = resolvedFields.map((x, i) => {
                     const k = `${x.mode}__${x.fid}__${isNominalType(x.type) ? 'n' : 'q'}`;
                     if (x.defaultValue) {
                         return x.defaultValue instanceof Array ? x.defaultValue : [x.defaultValue];
@@ -161,7 +161,7 @@ export function createFilterContext(components: {
         const filters = wrapArray(
             React.useMemo(() => {
                 const defaultOffset = new Date().getTimezoneOffset();
-                return fields
+                return resolvedFields
                     .map(({ mode, type, fid, offset }, i) => {
                         const data = getDomainAndValue(mode, i, domains, values);
                         if (!data) return null;
@@ -195,7 +195,7 @@ export function createFilterContext(components: {
         }, [filters, computation]);
         const elements = React.useMemo(
             () =>
-                fields.map(({ mode, type, name, fid }, i) => {
+            resolvedFields.map(({ mode, type, name, fid }, i) => {
                     const data = getDomainAndValue(mode, i, domains, values);
                     if (!data) return <></>;
                     const { tag, domain, value } = data;
@@ -268,16 +268,16 @@ export function createFilterContext(components: {
     } as {
         (props: {
             configs: FilterConfig[];
-            dataSource: IRow[];
+            data: IRow[];
             loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
-            rawFields: IMutField[];
+            fields: IMutField[];
             children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
         }): JSX.Element;
         (props: {
             configs: FilterConfig[];
             computation: IComputationFunction;
             loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
-            rawFields: IMutField[];
+            fields: IMutField[];
             children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
         }): JSX.Element;
     };

@@ -1,4 +1,4 @@
-import { IColorConfig, IColorPalette, IColorSet } from '../interfaces';
+import { IUIThemeConfig, IColorPalette, IColorSet } from '../interfaces';
 import colorString from 'color-string';
 import rgb from 'color-space/rgb.js';
 import hsl from 'color-space/hsl.js';
@@ -80,11 +80,11 @@ function fillColorConfig(config: IColorSet, baseColors: (typeof baseTheme)['ligh
     };
 }
 
-export function ColorConfigToCSS(config: IColorConfig) {
+export function ColorConfigToCSS(config: IUIThemeConfig) {
     return `:host{${ColorSetToCss(fillColorConfig(config.light, baseTheme.light))}}\n.dark{${ColorSetToCss(fillColorConfig(config.dark, baseTheme.dark))}}`;
 }
 
-export function getColorConfigFromPalette(colors: IColorPalette): IColorConfig {
+export function getColorConfigFromPalette(colors: IColorPalette): IUIThemeConfig {
     return {
         light: {
             background: 'white',
@@ -128,8 +128,8 @@ export function getPaletteFromColor(color: string): IColorPalette {
     };
 }
 
-export const zincTheme: IColorConfig = getColorConfigFromPalette(colors.zinc);
-export const slateTheme: IColorConfig = getColorConfigFromPalette(colors.slate);
-export const grayTheme: IColorConfig = getColorConfigFromPalette(colors.gray);
-export const neutralTheme: IColorConfig = getColorConfigFromPalette(colors.neutral);
-export const stoneTheme: IColorConfig = getColorConfigFromPalette(colors.stone);
+export const zincTheme: IUIThemeConfig = getColorConfigFromPalette(colors.zinc);
+export const slateTheme: IUIThemeConfig = getColorConfigFromPalette(colors.slate);
+export const grayTheme: IUIThemeConfig = getColorConfigFromPalette(colors.gray);
+export const neutralTheme: IUIThemeConfig = getColorConfigFromPalette(colors.neutral);
+export const stoneTheme: IUIThemeConfig = getColorConfigFromPalette(colors.stone);

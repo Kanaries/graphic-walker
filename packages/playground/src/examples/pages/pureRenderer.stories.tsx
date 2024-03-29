@@ -11,6 +11,6 @@ export default function PureRendererComponent() {
     const chart = spec[0] as IChart;
 
     return (
-        <PureRenderer type="local" rawData={dataSource} visualConfig={chart.config} visualState={chart.encodings} visualLayout={chart.layout} dark={theme} />
+        <PureRenderer type="local" rawData={dataSource} visualConfig={chart.config} visualState={chart.encodings} visualLayout={chart.layout} appearance={theme} />
     );
 }

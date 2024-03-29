@@ -32,7 +32,7 @@ export interface IChoroplethRendererProps {
     vegaConfig: VegaGlobalConfig;
     scaleIncludeUnmatchedChoropleth: boolean;
     showAllGeoshapeInChoropleth: boolean;
-    channelScales: IChannelScales;
+    scales: IChannelScales;
     tileUrl?: string;
 }
 
@@ -114,7 +114,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         vegaConfig,
         scaleIncludeUnmatchedChoropleth,
         showAllGeoshapeInChoropleth,
-        channelScales,
+        scales,
         tileUrl,
     } = props;
 
@@ -224,7 +224,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return indices.map((i) => data[i]);
     }, [data, indices, scaleIncludeUnmatchedChoropleth]);
 
-    const opacityScale = useOpacityScale(distribution, opacity, defaultAggregated, channelScales);
+    const opacityScale = useOpacityScale(distribution, opacity, defaultAggregated, scales);
     const { mapper: colorScale, display: colorDisplay } = useColorScale(distribution, color, defaultAggregated, vegaConfig);
 
     const tooltipFields = useMemo(() => {

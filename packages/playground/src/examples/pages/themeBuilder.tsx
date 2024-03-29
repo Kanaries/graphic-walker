@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { GraphicWalker, IChart, IColorConfig, getPaletteFromColor } from '@kanaries/graphic-walker';
+import { GraphicWalker, IChart, IUIThemeConfig, getPaletteFromColor } from '@kanaries/graphic-walker';
 import { IDataSource, extractHSL, extractRGB, toHex, useFetch } from '../util';
 import { Picker } from '../components/colorPicker';
 import spec from '../specs/student-chart.json';
@@ -31,7 +31,7 @@ function ThemeBuilder() {
     const [destructive, setDestructive] = useState('');
     const [dimension, setDimension] = useState('');
     const [measure, setMeasure] = useState('');
-    const colorConfig = useMemo((): IColorConfig => {
+    const uiTheme = useMemo((): IUIThemeConfig => {
         const neutralColors = getPaletteFromColor(neutral);
         const destructiveColors = destructive ? getPaletteFromColor(destructive) : null;
         return {
@@ -138,7 +138,7 @@ function ThemeBuilder() {
                             className="px-2 py-1 text-sm bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-md"
                             onClick={() => {
                                 navigator.clipboard
-                                    .writeText(`const colorConfig = ${JSON.stringify(colorConfig, undefined, 2)};`)
+                                    .writeText(`const uiTheme = ${JSON.stringify(uiTheme, undefined, 2)};`)
                                     .then(() => {
                                         alert('Code copied to clipboard');
                                     })
@@ -150,16 +150,16 @@ function ThemeBuilder() {
                             Copy
                         </button>
                     </div>
-                    <textarea className="border p-2 flex-1 rounded" value={`const colorConfig = ${JSON.stringify(colorConfig, undefined, 2)};`} />
+                    <textarea className="border p-2 flex-1 rounded" value={`const uiTheme = ${JSON.stringify(uiTheme, undefined, 2)};`} />
                 </div>
             </div>
             <div className="flex w-full border-t pt-2">
                 <div className="flex-1 overflow-auto">
-                    <GraphicWalker rawFields={fields} dataSource={dataSource} dark="light" chart={chart} colorConfig={colorConfig} />
+                    <GraphicWalker rawFields={fields} dataSource={dataSource} dark="light" chart={chart} uiTheme={uiTheme} />
                 </div>
                 <div className="w-px h-full bg-gray-500"></div>
                 <div className="dark flex-1 overflow-auto">
-                    <GraphicWalker rawFields={fields} dataSource={dataSource} dark="dark" chart={chart} colorConfig={colorConfig} />
+                    <GraphicWalker rawFields={fields} dataSource={dataSource} dark="dark" chart={chart} uiTheme={uiTheme} />
                 </div>
             </div>
         </div>

@@ -23,7 +23,7 @@ export function toVegaSpec({
     defaultAggregated,
     geomType,
     stack,
-    channelScales,
+    scales,
     mediaTheme,
     vegaConfig,
     displayOffset,
@@ -46,7 +46,7 @@ export function toVegaSpec({
     defaultAggregated: boolean;
     stack: IStackMode;
     geomType: string;
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
     mediaTheme: 'dark' | 'light';
     vegaConfig: VegaGlobalConfig;
     displayOffset?: number;
@@ -128,7 +128,7 @@ export function toVegaSpec({
             displayOffset,
             dataSource,
         });
-        const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
+        const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
 
         spec.mark = singleView.mark;
         if ('encoding' in singleView) {
@@ -192,7 +192,7 @@ export function toVegaSpec({
                     displayOffset,
                     dataSource,
                 });
-                const singleView = channelScales ? resolveScales(channelScales, v, dataSource, mediaTheme) : v;
+                const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
                 let commonSpec = { ...spec };
 
                 const ans = { ...commonSpec, ...singleView };

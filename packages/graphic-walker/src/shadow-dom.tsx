@@ -4,19 +4,19 @@ import root from 'react-shadow';
 
 import tailwindStyle from 'tailwindcss/tailwind.css?inline';
 import style from './index.css?inline';
-import { IColorConfig } from './interfaces';
+import { IUIThemeConfig } from './interfaces';
 import { ColorConfigToCSS, zincTheme } from './utils/colors';
-import { colorContext } from './store/theme';
+import { uiThemeContext } from './store/theme';
 
 export const ShadowDomContext = createContext<{ root: ShadowRoot | null }>({ root: null });
 
 interface IShadowDomProps extends HTMLAttributes<HTMLDivElement> {
-    colorConfig?: IColorConfig;
+    uiTheme?: IUIThemeConfig;
     onMount?: (shadowRoot: ShadowRoot) => void;
     onUnmount?: () => void;
 }
 
-export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount, onUnmount, children, colorConfig = zincTheme, ...attrs }) {
+export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount, onUnmount, children, uiTheme = zincTheme, ...attrs }) {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +25,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
     const onUnmountRef = useRef(onUnmount);
     onUnmountRef.current = onUnmount;
 
-    const colorStyle = useMemo(() => ColorConfigToCSS(colorConfig), [colorConfig]);
+    const colorStyle = useMemo(() => ColorConfigToCSS(uiTheme), [uiTheme]);
 
     useEffect(() => {
         if (rootRef.current) {
@@ -40,7 +40,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
 
     return (
         <root.div {...attrs} mode="open" ref={rootRef}>
-            <colorContext.Provider value={colorConfig}>
+            <uiThemeContext.Provider value={uiTheme}>
                 <style>{tailwindStyle}</style>
                 <style>{style}</style>
                 <style>{colorStyle}</style>
@@ -56,7 +56,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
                         <ShadowDomContext.Provider value={{ root: shadowRoot }}>{children}</ShadowDomContext.Provider>
                     </StyleSheetManager>
                 )}
-            </colorContext.Provider>
+            </uiThemeContext.Provider>
         </root.div>
     );
 };
