@@ -5,7 +5,7 @@ import { downloadBlob } from '../utils/save';
 import GwFile from './dataSelection/gwFile';
 import DataSelection from './dataSelection';
 import DropdownSelect from '../components/dropdownSelect';
-import { IColorConfig, IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
+import { IUIThemeConfig, IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
 import { ShadowDom } from '../shadow-dom';
 import { CommonStore } from '../store/commonStore';
 import { VizSpecStore } from '../store/visualSpecStore';
@@ -112,10 +112,17 @@ const DataSourceThemeContext = composeContext({ themeContext, vegaThemeContext, 
 export function DataSourceSegmentComponent(props: {
     provider: IDataSourceProvider;
     displayOffset?: number;
+    /** @deprecated renamed to appearence */
     dark?: IDarkMode;
+    appearance?: IDarkMode;
+    /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
+    /** @deprecated use vizThemeConfig instead */
     themeConfig?: GWGlobalConfig;
-    colorConfig?: IColorConfig;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
+    /** @deprecated renamed to uiTheme */
+    colorConfig?: IUIThemeConfig;
+    uiTheme?: IUIThemeConfig;
     children: (props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
@@ -231,15 +238,15 @@ export function DataSourceSegmentComponent(props: {
         }
     }, [selectedId, props.provider]);
 
-    const darkMode = useCurrentMediaTheme(props.dark);
+    const darkMode = useCurrentMediaTheme(props.appearance ?? props.dark);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
         <>
-            <ShadowDom colorConfig={props.colorConfig}>
+            <ShadowDom uiTheme={props.uiTheme ?? props.colorConfig}>
                 <DataSourceThemeContext
                     themeContext={darkMode}
-                    vegaThemeContext={{ themeConfig: props.themeConfig, themeKey: props.themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey}}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App`}>

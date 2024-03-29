@@ -8,12 +8,12 @@ import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVis
 import LoadingLayer from '../components/loadingLayer';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
-import { colorContext, themeContext } from '@/store/theme';
+import { uiThemeContext, themeContext } from '@/store/theme';
 import { parseColorToHex } from '@/utils/colors';
 
 interface SpecRendererProps {
     name?: string;
-    themeKey?: IThemeKey;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
     data: IRow[];
     draggableFieldState: DraggableFieldState;
     visualConfig: IVisualConfigNew;
@@ -21,8 +21,7 @@ interface SpecRendererProps {
     onGeomClick?: ((values: any, e: any) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
-    themeConfig?: GWGlobalConfig;
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
     onReportSpec?: (spec: string) => void;
 }
 /**
@@ -33,7 +32,6 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     {
         name,
         layout,
-        themeKey,
         data,
         draggableFieldState,
         visualConfig,
@@ -41,8 +39,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         onChartResize,
         locale,
         onReportSpec,
-        themeConfig: customizedThemeConfig,
-        channelScales,
+        vizThemeConfig,
+        scales,
     },
     ref
 ) {
@@ -85,11 +83,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
     const mediaTheme = useContext(themeContext);
-    const colorConfig = useContext(colorContext);
+    const uiTheme = useContext(uiThemeContext);
     const themeConfig = getTheme({
-        themeKey,
+        vizThemeConfig,
         mediaTheme,
-        themeConfig: customizedThemeConfig,
         primaryColor,
         colorPalette,
     });
@@ -97,7 +94,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
             ...themeConfig,
-            background: parseColorToHex(colorConfig[mediaTheme].background),
+            background: parseColorToHex(uiTheme[mediaTheme].background),
         };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
@@ -128,7 +125,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
-        return <PivotTable data={data} draggableFieldState={draggableFieldState} visualConfig={visualConfig} layout={layout} themeKey={themeKey} />;
+        return <PivotTable data={data} draggableFieldState={draggableFieldState} visualConfig={visualConfig} layout={layout} vizThemeConfig={vizThemeConfig} />;
     }
 
     const isSpatial = coordSystem === 'geographic';
@@ -182,7 +179,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     visualConfig={visualConfig}
                     visualLayout={layout}
                     vegaConfig={vegaConfig}
-                    channelScales={channelScales}
+                    scales={scales}
                     scale={scale}
                 />
             )}
@@ -214,7 +211,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     onGeomClick={onGeomClick}
                     locale={locale}
                     useSvg={useSvg}
-                    channelScales={channelScales}
+                    scales={scales}
                     scale={scale}
                     onReportSpec={onReportSpec}
                     displayOffset={timezoneDisplayOffset}

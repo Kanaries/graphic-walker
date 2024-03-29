@@ -18,15 +18,17 @@ export default function GraphicWalkerInModal() {
     }, []);
     return (
         <div
+            className='bg-white dark:bg-gray-950'
             style={{
                 position: 'fixed',
-                left: 30,
-                right: 30,
-                top: 30,
-                bottom: 30,
+                left: 80,
+                right: 80,
+                top: 80,
+                bottom: 80,
                 borderRadius: 20,
                 border: '1px solid gray',
                 overflow: 'hidden',
+                zIndex: 9999,
             }}
         >
             <div
@@ -38,7 +40,7 @@ export default function GraphicWalkerInModal() {
                     boxSizing: 'border-box',
                 }}
             >
-                <GraphicWalker colorConfig={grayTheme} rawFields={fields} dataSource={dataSource} storeRef={ref} dark={theme} />
+                <GraphicWalker uiTheme={grayTheme} fields={fields} data={dataSource} storeRef={ref} appearance={theme} />
             </div>
         </div>
     );

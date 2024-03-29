@@ -31,11 +31,9 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 
 interface RendererProps {
-    themeKey?: IThemeKey;
-    themeConfig?: GWGlobalConfig;
-    dark?: IDarkMode;
+    vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
-    channelScales?: IChannelScales;
+    scales?: IChannelScales;
     csvRef?: React.MutableRefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
 }
@@ -44,7 +42,7 @@ interface RendererProps {
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { themeKey, dark, computationFunction, themeConfig, csvRef, overrideSize } = props;
+    const { computationFunction, vizThemeConfig, csvRef, overrideSize } = props;
     const vizStore = useVizStore();
     const {
         allFields,
@@ -208,22 +206,21 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [isSpatial, vizStore]);
 
     return (
-        <div className='w-full h-full'>
+        <div className="w-full h-full">
             {waiting && <LoadingLayer />}
-            <div className='overflow-auto w-full h-full'>
+            <div className="overflow-auto w-full h-full">
                 <SpecRenderer
                     name={chart?.name}
                     data={viewData}
                     ref={ref}
-                    themeKey={themeKey}
-                    themeConfig={themeConfig}
+                    vizThemeConfig={vizThemeConfig}
                     locale={i18n.language}
                     draggableFieldState={encodings}
                     visualConfig={viewConfig}
                     onGeomClick={handleGeomClick}
                     onChartResize={handleChartResize}
                     layout={visualLayout}
-                    channelScales={props.channelScales}
+                    scales={props.scales}
                     onReportSpec={(spec) => {
                         vizStore.updateLastSpec(spec);
                     }}

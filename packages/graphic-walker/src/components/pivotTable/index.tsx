@@ -14,9 +14,10 @@ import LoadingLayer from '../loadingLayer';
 import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
 import { getSort, getSortedEncoding } from '../../utils';
+import { GWGlobalConfig } from '@/vis/theme';
 
 interface PivotTableProps {
-    themeKey?: IThemeKey;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
     data: IRow[];
     draggableFieldState: DeepReadonly<DraggableFieldState>;
     visualConfig: IVisualConfigNew;

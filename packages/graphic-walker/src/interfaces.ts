@@ -8,6 +8,7 @@ import { GWGlobalConfig } from './vis/theme';
 import { VizSpecStore } from './store/visualSpecStore';
 import { CommonStore } from './store/commonStore';
 import type { XOR } from 'ts-xor';
+import { ThemeConfig } from 'tailwindcss/types/config';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -865,8 +866,12 @@ export interface IAppI18nProps {
 }
 
 export interface IThemeProps {
+    /** @deprecated renamed to appearence */
     dark?: IDarkMode;
-    colorConfig?: IColorConfig;
+    appearance?: IDarkMode;
+    /** @deprecated renamed to uiTheme */
+    colorConfig?: IUIThemeConfig;
+    uiTheme?: IUIThemeConfig;
 }
 
 export interface IErrorHandlerProps {
@@ -887,9 +892,11 @@ export interface IAssistantChatMessage {
 
 export type IChatMessage = IUserChatMessage | IAssistantChatMessage;
 export interface IVizProps {
-    themeConfig?: GWGlobalConfig;
-    /** @default "vega" */
+    /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
+    /** @deprecated use vizThemeConfig instead */
+    themeConfig?: GWGlobalConfig;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
         exclude?: string[];
@@ -906,7 +913,9 @@ export interface IVizProps {
         };
     };
     geoList?: IGeoDataItem[];
+    /** @deprecated renamed to scales */
     channelScales?: IChannelScales;
+    scales?: IChannelScales;
     experimentalFeatures?: IExperimentalFeatures;
 }
 
@@ -922,17 +931,21 @@ export interface IDefaultConfig {
 export interface IVizStoreProps {
     storeRef?: React.MutableRefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
-    rawFields: IMutField[];
+    /** @deprecated renamed to fields */
+    rawFields?: IMutField[];
+    fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
 }
 
 export interface ILocalComputationProps {
     /**
-     * auto parse field key into a safe string. default is true
+     * @deprecated will be removed in the future
      */
     fieldKeyGuard?: boolean;
-    dataSource: any[];
+    /** @deprecated renamed to data */
+    dataSource?: any[];
+    data?: any[];
     computationTimeout?: number;
 }
 
@@ -964,8 +977,11 @@ export interface ISpecProps {
 export interface ITableSpecProps {
     pageSize?: number;
     displayOffset?: number;
+    /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
+    /** @deprecated use vizThemeConfig instead */
     themeConfig?: GWGlobalConfig;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}
@@ -1107,7 +1123,7 @@ export interface IColorSet {
     ring: string;
 }
 
-export interface IColorConfig {
+export interface IUIThemeConfig {
     light: IColorSet;
     dark: IColorSet;
 }

@@ -9,9 +9,12 @@ function FullGraphicWalker(props: IGWProps) {
         <DataSourceSegmentComponent
             provider={provider}
             dark={props.dark}
+            appearance={props.appearance}
             themeConfig={props.themeConfig}
             themeKey={props.themeKey}
+            vizThemeConfig={props.vizThemeConfig}
             colorConfig={props.colorConfig}
+            uiTheme={props.uiTheme}
         >
             {(p) => {
                 return <GraphicWalker {...props} storeRef={p.storeRef} computation={p.computation} rawFields={p.meta} onMetaChange={p.onMetaChange} />;

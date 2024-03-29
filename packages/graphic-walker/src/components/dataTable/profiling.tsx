@@ -4,7 +4,7 @@ import { profileNonmialField, profileQuantitativeField } from '../../computation
 import React from 'react';
 import { formatDate, isNotEmpty } from '../../utils';
 import Tooltip from '../tooltip';
-import { colorContext, themeContext, vegaThemeContext } from '../../store/theme';
+import { uiThemeContext, themeContext, vegaThemeContext } from '../../store/theme';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
@@ -106,12 +106,11 @@ function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
 
 function BinRenderer({ data }: { data: Awaited<ReturnType<typeof profileQuantitativeField>> }) {
     const mediaTheme = useContext(themeContext);
-    const { themeConfig, themeKey } = useContext(vegaThemeContext);
+    const { vizThemeConfig } = useContext(vegaThemeContext);
 
     const theme = getTheme({
         mediaTheme,
-        themeConfig,
-        themeKey,
+        vizThemeConfig,
     });
 
     const vegaConfig = useMemo(() => {

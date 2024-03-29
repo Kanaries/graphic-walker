@@ -83,7 +83,7 @@ function Toggle(props: { children?: React.ReactNode; value: boolean; onChange?: 
     );
 }
 
-export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field, onChange, rawFields, displayOffset }: RuleFormProps) {
+export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field, onChange, allFields, displayOffset }: RuleFormProps) {
     const computation = useCompututaion();
 
     const [keywordValue, setKeyword] = useState('');
@@ -121,7 +121,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
         `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`,
         computation,
         onChange,
-        rawFields,
+        allFields,
         {
             displayOffset,
             keyword: searchKeyword,
@@ -338,13 +338,13 @@ const Effecter = (props: { effect: () => void; effectId: any }) => {
     return null;
 };
 
-export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields, onChange, displayOffset }) => {
+export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, allFields, onChange, displayOffset }) => {
     const computationFunction = useCompututaion();
 
     const [res, setRes] = useState<[number, number, string, boolean]>(() => [0, 0, '', false]);
 
     React.useEffect(() => {
-        withComputedField(field, rawFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
+        withComputedField(field, allFields, computationFunction, { timezoneDisplayOffset: displayOffset })((service) =>
             getTemporalRange(service, field.fid, field.offset)
         ).then(([min, max, format]) => setRes([min, max, format, true]));
     }, [field.fid]);
@@ -409,10 +409,10 @@ export const SimpleTemporalRange: React.FC<RuleFormProps> = ({ field, rawFields,
     );
 };
 
-export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, rawFields, displayOffset }) => {
+export const SimpleRange: React.FC<RuleFormProps> = ({ field, onChange, allFields, displayOffset }) => {
     const computation = useCompututaion();
 
-    const [stats] = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, rawFields);
+    const [stats] = useFieldStats(field, { values: false, range: true, valuesMeta: false, displayOffset }, 'none', computation, allFields);
     const range = stats?.range;
 
     const handleChange = React.useCallback((value: [number | null, number | null]) => {

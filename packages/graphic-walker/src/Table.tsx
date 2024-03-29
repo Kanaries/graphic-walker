@@ -33,6 +33,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
         pageSize = 20,
         themeConfig,
         themeKey,
+        vizThemeConfig,
     } = props;
 
     const { i18n } = useTranslation();
@@ -78,7 +79,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ themeConfig, themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
@@ -96,39 +97,44 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
 
 export function TableAppWithContext(props: ITableProps & IComputationProps) {
     const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    // @TODO remove deprecated props
+    const appearance = props.appearance ?? props.dark;
+    const data = props.data ?? props.dataSource;
+    const fields = props.fields ?? props.rawFields ?? [];
+
     const {
         computation: safeComputation,
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
-        if (props.dataSource) {
+        if (data) {
             if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
+                const { safeData, safeMetas } = guardDataKeys(data, fields);
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
                     onMetaChange: (safeFID, meta) => {
                         const index = safeMetas.findIndex((x) => x.fid === safeFID);
                         if (index >= 0) {
-                            props.onMetaChange?.(props.rawFields[index].fid, meta);
+                            props.onMetaChange?.(fields[index].fid, meta);
                         }
                     },
                 };
             }
             return {
-                safeMetas: props.rawFields,
-                computation: getComputation(props.dataSource),
+                safeMetas: fields,
+                computation: getComputation(data),
                 onMetaChange: props.onMetaChange,
             };
         }
         return {
-            safeMetas: props.rawFields,
+            safeMetas: fields,
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
 
-    const darkMode = useCurrentMediaTheme(props.dark);
+    const darkMode = useCurrentMediaTheme(appearance);
 
     return (
         <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>

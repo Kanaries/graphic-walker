@@ -54,6 +54,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
         i18nResources,
         themeKey = 'vega',
         themeConfig,
+        vizThemeConfig,
         geographicData,
         computationTimeout = 60000,
         spec,
@@ -135,7 +136,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ themeConfig, themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
@@ -145,11 +146,10 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                             <div className={props.containerClassName} style={props.containerStyle}>
                                 {computation && (
                                     <ReactiveRenderer
-                                        themeKey={themeKey}
-                                        dark={darkMode}
-                                        themeConfig={themeConfig}
+                                        vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
                                         computationFunction={wrappedComputation}
-                                        channelScales={props.channelScales}
+                                        // @TODO remove channelScales
+                                        scales={props.scales ?? props.channelScales}
                                         overrideSize={props.overrideSize}
                                     />
                                 )}
@@ -213,7 +213,7 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
         <ComputationContext.Provider value={transformedComputation}>
             {filter.rule?.type === 'regexp' && (
                 <SimpleSearcher
-                    rawFields={allFields}
+                    allFields={allFields}
                     key={getFilterMeaAggKey(filter)}
                     field={filter}
                     onChange={onChange}
@@ -222,7 +222,7 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
             )}
             {(filter.rule?.type === 'not in' || filter.rule?.type === 'one of') && (
                 <SimpleOneOfSelector
-                    rawFields={allFields}
+                    allFields={allFields}
                     key={getFilterMeaAggKey(filter)}
                     field={filter}
                     onChange={onChange}
@@ -230,11 +230,11 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
                 />
             )}
             {filter.rule?.type === 'range' && (
-                <SimpleRange rawFields={allFields} key={getFilterMeaAggKey(filter)} field={filter} onChange={onChange} displayOffset={timezoneDisplayOffset} />
+                <SimpleRange allFields={allFields} key={getFilterMeaAggKey(filter)} field={filter} onChange={onChange} displayOffset={timezoneDisplayOffset} />
             )}
             {filter.rule?.type === 'temporal range' && (
                 <SimpleTemporalRange
-                    rawFields={allFields}
+                    allFields={allFields}
                     key={getFilterMeaAggKey(filter)}
                     field={filter}
                     onChange={onChange}
@@ -274,40 +274,44 @@ export function RendererAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
     const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    // @TODO remove deprecated props
+    const appearance = props.appearance ?? props.dark;
+    const data = props.data ?? props.dataSource;
+    const fields = props.fields ?? props.rawFields ?? [];
 
     const {
         computation: safeComputation,
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
-        if (props.dataSource) {
+        if (data) {
             if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(props.dataSource, props.rawFields);
+                const { safeData, safeMetas } = guardDataKeys(data, fields);
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
                     onMetaChange: (safeFID, meta) => {
                         const index = safeMetas.findIndex((x) => x.fid === safeFID);
                         if (index >= 0) {
-                            props.onMetaChange?.(props.rawFields[index].fid, meta);
+                            props.onMetaChange?.(fields[index].fid, meta);
                         }
                     },
                 };
             }
             return {
-                safeMetas: props.rawFields,
-                computation: getComputation(props.dataSource),
+                safeMetas: fields,
+                computation: getComputation(data),
                 onMetaChange: props.onMetaChange,
             };
         }
         return {
-            safeMetas: props.rawFields,
+            safeMetas: fields,
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [props.rawFields, props.dataSource ? props.dataSource : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
 
-    const darkMode = useCurrentMediaTheme(props.dark);
+    const darkMode = useCurrentMediaTheme(appearance);
 
     return (
         <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
