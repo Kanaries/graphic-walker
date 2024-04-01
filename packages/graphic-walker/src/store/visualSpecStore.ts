@@ -41,7 +41,6 @@ import {
     IDefaultConfig,
     IJoinPath,
     FieldIdentifier,
-    FieldIdentifier,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, DEFAULT_DATASET } from '../constants';
@@ -619,7 +618,7 @@ export class VizSpecStore {
         if (!origianlField) {
             return;
         }
-        this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName });
+        this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName }, getFieldIdentifier(origianlField));
     }
 
     public createDateTimeDrilledField(

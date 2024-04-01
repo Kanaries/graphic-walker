@@ -316,7 +316,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         <Tooltip>
                                             <header>{data[i][geoId.fid]}</header>
                                             {tooltipFields.map((f, j) => (
-                                                <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                                <TooltipContent key={j} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
                                             ))}
                                         </Tooltip>
                                     )}
@@ -340,7 +340,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                     <Tooltip>
                                         <header>{data[i][geoId.fid]}</header>
                                         {tooltipFields.map((f, j) => (
-                                            <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                            <TooltipContent key={j} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
                                         ))}
                                     </Tooltip>
                                 </Polygon>

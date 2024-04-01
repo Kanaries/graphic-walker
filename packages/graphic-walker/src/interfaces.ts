@@ -975,8 +975,8 @@ export interface ILocalComputationProps {
      */
     fieldKeyGuard?: boolean;
     /** @deprecated renamed to data */
-    dataSource: any[] | Record<string, any[]>;
-    data?: any[];
+    dataSource?: any[] | Record<string, any[]>;
+    data?: any[] | Record<string, any[]>;
     computationTimeout?: number;
 }
 

@@ -299,7 +299,7 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
-        if (props.dataSource) {
+        if (data) {
             return {
                 safeMetas: fields,
                 computation: getComputation(data),

@@ -456,7 +456,7 @@ const actions: {
     },
     [Methods.editAllField]: (data, fid, newData, identifier) => {
         if (Object.keys(newData).includes('name')) {
-            const originalField = data.encodings.dimensions.concat(data.encodings.measures).find((x) => x.fid === fid);
+            const originalField = data.encodings.dimensions.concat(data.encodings.measures).find(identifier ? (x) => getFieldIdentifier(x) !== identifier : (x) => x.fid !== fid);
             // if name is changed, update all computed fields
             return produce(data, (draft) => {
                 if (!originalField) return;
