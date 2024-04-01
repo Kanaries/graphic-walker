@@ -5,7 +5,7 @@ import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
 import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
-import initWasm, { parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
+import initWasm, { parser_dsl_with_meta, parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
 import dslWasm from '@kanaries/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
 import type { IDataSourceProvider, IMutField, IDataSourceListener } from '@kanaries/graphic-walker';
@@ -101,7 +101,11 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
         async getSpecs(datasetId) {
             const specs = specDict.get(datasetId);
             if (!specs) {
-                throw new Error('cannot find specs');
+                const selectedDatasets: string[] = JSON.parse(datasetId);
+                const fields = selectedDatasets.flatMap((dataset) => metaDict.get(dataset)?.map((x) => ({ ...x, dataset })) ?? []);
+                const specs = JSON.stringify([exportFullRaw(fromFields(fields, 'Chart 1'))]);
+                specDict.set(datasetId, specs);
+                return specs;
             }
             return specs;
         },
@@ -110,7 +114,13 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             listeners.forEach((cb) => cb(4, datasetId));
         },
         async queryData(query, datasetIds) {
-            const sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
+            let sql: string;
+            if (datasetIds.length === 1) {
+                sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
+            } else {
+                const metas = Object.fromEntries(datasetIds.map((id) => [id, metaDict.get(id)!.map((x) => ({ key: x.fid, type: 'string' }))]));
+                sql = parser_dsl_with_meta(query.datasets[0], JSON.stringify(query), JSON.stringify(metas));
+            }
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }

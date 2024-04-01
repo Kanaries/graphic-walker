@@ -126,7 +126,7 @@ export function DataSourceSegmentComponent(props: {
     colorConfig?: IUIThemeConfig;
     uiTheme?: IUIThemeConfig;
     children: (props: {
-        meta: IMutField[];
+        fields: IMutField[];
         onMetaChange: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
         computation: IComputationFunction;
         storeRef: React.RefObject<VizSpecStore>;
@@ -281,7 +281,7 @@ export function DataSourceSegmentComponent(props: {
             <props.children
                 computation={computation}
                 datasetNames={Object.fromEntries(datasets.map((x) => [x.id, x.name]))}
-                meta={meta}
+                fields={meta}
                 onMetaChange={onMetaChange}
                 storeRef={vizSpecStoreRef}
                 syncSpecs={syncSpecs}
