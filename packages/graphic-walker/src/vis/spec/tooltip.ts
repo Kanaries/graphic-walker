@@ -19,6 +19,16 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
                           scale: encoding[ck].scale,
                       }
                     : {}),
+                ...(encoding[ck].formatType
+                    ? {
+                          formatType: encoding[ck].formatType,
+                      }
+                    : {}),
+                ...(encoding[ck].format
+                    ? {
+                        format: encoding[ck].format,
+                      }
+                    : {}),
             };
         })
         .concat(

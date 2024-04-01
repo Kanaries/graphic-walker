@@ -19,6 +19,7 @@ export interface IEncodeProps {
     details: Readonly<IViewField[]>;
     text: IViewField;
     displayOffset?: number;
+    vegaConfig?: any;
 }
 export function availableChannels(geomType: string): Set<string> {
     if (geomType === 'text') {
@@ -77,9 +78,13 @@ export function channelEncode(props: IEncodeProps) {
                     encoding[c].bin = {
                         binned: true,
                     };
+                    encoding[c].formatType = 'formatBin';
+                    encoding[c].format = props.vegaConfig?.numberFormat;
                     if (c === 'x' || c === 'y') {
                         encoding[`${c}2`] = {
                             field: `${fid}[1]`,
+                            formatType: 'formatBin',
+                            format: props.vegaConfig?.numberFormat,
                         };
                     }
                 }

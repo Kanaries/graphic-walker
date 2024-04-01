@@ -127,6 +127,7 @@ export function toVegaSpec({
             geomType,
             displayOffset,
             dataSource,
+            vegaConfig
         });
         const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
 
