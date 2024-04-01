@@ -504,7 +504,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     useVegaExportApi(name, vegaRefs, ref, renderTaskRefs, containerRef);
 
     return (
-        <div className="w-full h-full relative" style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}>
+        <div
+            className={layoutMode === 'auto' ? 'w-fit h-fit relative' : 'w-full h-full relative'}
+            style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}
+        >
             <div ref={areaRef} className="inset-0 absolute" />
             <CanvaContainer
                 style={{
