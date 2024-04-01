@@ -102,10 +102,10 @@ export const fieldStat = async (
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
     const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset, keyword } = options;
-    const COUNT_ID = `count_${field.fid}`;
-    const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
-    const MIN_ID = `min_${field.fid}`;
-    const MAX_ID = `max_${field.fid}`;
+    const COUNT_ID = `${field.fid}_count`;
+    const TOTAL_DISTINCT_ID = `${field.fid}_total_distinct`;
+    const MIN_ID = `${field.fid}_min`;
+    const MAX_ID = `${field.fid}_max`;
     const datasets = [field.dataset ?? DEFAULT_DATASET];
     const k = isNotEmpty(keyword) ? parseKeyword(keyword) : undefined;
     const filterWork: IFilterWorkflowStep[] = k
@@ -305,8 +305,8 @@ export const fieldStat = async (
 };
 
 export async function getRange(service: IComputationFunction, field: string, dataset?: string) {
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+    const MIN_ID = `${field}_min`;
+    const MAX_ID = `${field}_max`;
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -392,8 +392,8 @@ export async function getTemporalRange(service: IComputationFunction, field: str
     const format = getTimeFormat(sample);
     const usedOffset = offset ?? new Date().getTimezoneOffset();
     const newDate = newOffsetDate(usedOffset);
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+    const MIN_ID = `${field}_min`;
+    const MAX_ID = `${field}_max`;
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -434,8 +434,8 @@ export async function getTemporalRange(service: IComputationFunction, field: str
 }
 
 export async function getFieldDistinctMeta(service: IComputationFunction, field: string, dataset?: string) {
-    const COUNT_ID = `count_${field}`;
-    const TOTAL_DISTINCT_ID = `total_distinct_${field}`;
+    const COUNT_ID = `${field}_count`;
+    const TOTAL_DISTINCT_ID = `${field}_distinct_total`;
     const workflow: IDataQueryWorkflowStep[] = [
         {
             type: 'view',
@@ -493,7 +493,7 @@ export async function getFieldDistinctCounts(
     } = {}
 ) {
     const { sortBy = 'none', valuesLimit, valuesOffset } = options;
-    const COUNT_ID = `count_${field}`;
+    const COUNT_ID = `${field}_count`;
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -541,7 +541,7 @@ export async function profileNonmialField(service: IComputationFunction, field: 
 }
 
 export async function profileQuantitativeField(service: IComputationFunction, field: string, dataset?: string) {
-    const BIN_FIELD = `bin_${field}`;
+    const BIN_FIELD = `${field}_bin`;
     const ROW_NUM_FIELD = `${COUNT_FIELD_ID}_sum`;
     const BIN_SIZE = 10;
 
