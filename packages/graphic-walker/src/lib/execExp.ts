@@ -68,18 +68,13 @@ function bin(resKey: string, params: IExpParameter[], data: IDataFrame, binSize:
         if (val < _min) _min = val;
     }
     const step = (_max - _min) / binSize;
-    // prevent (_max - _min) to be 0
-    const safeWidth = Math.min(Number.MAX_SAFE_INTEGER, Math.max(_max - _min, Number.MIN_VALUE));
-    const beaStep = Math.max(-Math.round(Math.log10(safeWidth)) + 2, 0);
-    // toFix() accepts 0-100
-    const safeBeaStep = Math.min(100, Math.max(0, Math.max(Number.isFinite(beaStep) ? beaStep : 0, 0)));
     const newValues = fieldValues.map((v: number) => {
         let bIndex = Math.floor((v - _min) / step);
         if (bIndex === binSize) bIndex = binSize - 1;
         if (Number.isNaN(bIndex)) {
             bIndex = 0;
         }
-        return [Number((bIndex * step + _min).toFixed(safeBeaStep)), Number(((bIndex + 1) * step + _min).toFixed(safeBeaStep))];
+        return [Number((bIndex * step + _min)), Number(((bIndex + 1) * step + _min))];
     });
     return {
         ...data,

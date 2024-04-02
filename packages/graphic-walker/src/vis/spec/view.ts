@@ -45,6 +45,7 @@ export function getSingleView(props: SingleViewProps) {
         hideLegend = false,
         displayOffset,
         dataSource,
+        vegaConfig,
     } = props;
     const fields: IViewField[] = [x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text];
     let markType = geomType;
@@ -120,6 +121,7 @@ export function getSingleView(props: SingleViewProps) {
         details,
         text,
         displayOffset,
+        vegaConfig,
     });
     if (defaultAggregated) {
         channelAggregate(encoding, fields);
