@@ -22,16 +22,14 @@
   },
   "sideEffects": [
     "./dist/graphic-walker.es.js",
-    "./dist/graphic-walker.cjs.js",
-    "./dist/component.es.js",
-    "./dist/component.cjs.js"
+    "./dist/graphic-walker.umd.js"
   ],
-  "main": "./dist/graphic-walker.cjs.js",
+  "main": "./dist/graphic-walker.umd.js",
   "module": "./dist/graphic-walker.es.js",
   "exports": {
     ".": {
       "import": "./dist/graphic-walker.es.js",
-      "require": "./dist/graphic-walker.cjs.js",
+      "require": "./dist/graphic-walker.umd.js",
       "types": "./dist/index.d.ts"
     },
     "./dist/style.css": {
