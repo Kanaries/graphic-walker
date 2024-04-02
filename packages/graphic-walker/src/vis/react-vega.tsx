@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, forwardRef, useRef, useContext } f
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
-import type { ScenegraphEvent } from 'vega';
+import { expressionFunction, type ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScale } from '../interfaces';
@@ -13,6 +13,22 @@ import { toVegaSpec } from '../lib/vega';
 import { useResizeDetector } from 'react-resize-detector';
 import { startTask } from '../utils';
 import { themeContext } from '@/store/theme';
+import { format } from 'd3-format';
+
+expressionFunction('formatBin', (datum: [number, number] | number, formatString?: string) => {
+    const formatter = formatString ? format(formatString) : (x) => x;
+    // only append on the tooltip field
+    if (!Array.isArray(datum)) {
+        return formatter(datum);
+    }
+    const [min, max] = datum;
+    const step = max - min;
+    if (step === 0) {
+        return `[${formatter(min)},${formatter(max)}]`;
+    }
+    const beaStep = Math.max(-Math.round(Math.log10(step)) + 2, 0);
+    return `[${formatter(Number(min.toFixed(beaStep)))},${formatter(Number(max.toFixed(beaStep)))}]`;
+});
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     display: grid;

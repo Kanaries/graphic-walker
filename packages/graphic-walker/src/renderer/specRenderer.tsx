@@ -95,6 +95,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         const config: VegaGlobalConfig = {
             ...themeConfig,
             background: parseColorToHex(uiTheme[mediaTheme].background),
+            customFormatTypes: true,
         };
         if (format.normalizedNumberFormat && format.normalizedNumberFormat.length > 0) {
             // @ts-ignore
