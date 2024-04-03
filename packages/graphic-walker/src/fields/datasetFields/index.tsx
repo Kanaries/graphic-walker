@@ -20,8 +20,8 @@ const DatasetFields: React.FC = (props) => {
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t('field_list')}</h4>
             <Droppable droppableId="dimensions" direction="vertical">
                 {(provided, snapshot) => (
-                    <div className="flex-1 min-w-[0px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                        <div className="pd-1 overflow-y-auto" style={{ maxHeight: '380px', minHeight: '100px' }}>
+                    <div className="flex-shrink min-w-[0px] min-h-[100px] max-h-[380px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+                        <div className="pd-1 overflow-y-auto h-full">
                             <DimFields />
                         </div>
                     </div>
@@ -29,8 +29,8 @@ const DatasetFields: React.FC = (props) => {
             </Droppable>
             <Droppable droppableId="measures" direction="vertical">
                 {(provided, snapshot) => (
-                    <div className="flex-1 min-w-[0px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                        <div className="border-t flex-grow pd-1 overflow-y-auto">
+                    <div className="flex-shrink flex-grow min-w-[0px] min-h-[200px]" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+                        <div className="border-t flex-grow pd-1 overflow-y-auto h-full">
                             <MeaFields />
                         </div>
                     </div>
