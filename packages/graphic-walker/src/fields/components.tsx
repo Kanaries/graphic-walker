@@ -15,7 +15,7 @@ export const FieldListContainer: React.FC<{
             <div className="fl-header border-r cursor-default select-none">
                 <h4 className="font-normal">{t(props.name)}</h4>
             </div>
-            <div className="fl-container">{props.children}</div>
+            <div className="fl-container overflow-hidden">{props.children}</div>
         </FieldListSegment>
     );
 };
