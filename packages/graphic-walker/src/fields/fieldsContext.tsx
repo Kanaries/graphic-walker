@@ -31,6 +31,7 @@ export function refMapper<T extends HTMLElement>(refCallback: (node: T | null) =
                         return new DOMRect(rect.x - blockRect.x, rect.y - blockRect.y, rect.width, rect.height);
                     };
                 },
+                configurable: true,
             });
             refCallback(n);
         },
