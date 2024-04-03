@@ -33,7 +33,7 @@ jobs:
 
     - name: Update Wasm dependecy
       run: |
-        yarn add @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
+        yarn add -D @kanaries/graphic-walker@${{ github.event.inputs.newVersion }}
       working-directory: ./packages/duckdb-wasm-computation
 
     - name: Commit Changes
