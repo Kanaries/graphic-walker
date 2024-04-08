@@ -8,7 +8,6 @@ import { GWGlobalConfig } from './vis/theme';
 import { VizSpecStore } from './store/visualSpecStore';
 import { CommonStore } from './store/commonStore';
 import type { XOR } from 'ts-xor';
-import { ThemeConfig } from 'tailwindcss/types/config';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -901,6 +900,8 @@ export interface IVizProps {
         extra?: ToolbarItemProps[];
         exclude?: string[];
     };
+    /** hide the chart navigation so make user can only edit on the only chart. */
+    hideChartNav?: boolean;
     geographicData?: IGeographicData & {
         key: string;
     };
