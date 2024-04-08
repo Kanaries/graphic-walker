@@ -30,7 +30,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
 import Painter from './components/painter';
-import { classNames, parseErrorMessage } from './utils';
+import { classNames, cn, parseErrorMessage } from './utils';
 import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
 import SideResize from './components/side-resize';
@@ -176,10 +176,18 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         </div>
                                     </TabsContent>
                                     <TabsContent value={ISegmentKey.vis}>
-                                        <div className="px-2 mx-2 mt-2">
-                                            <VisNav />
-                                        </div>
-                                        <div style={{ marginTop: '0em' }} className="m-4 p-4 border border-border rounded-md rounded-tl-none">
+                                        {!props.hideChartNav && (
+                                            <div className="px-2 mx-2 mt-2">
+                                                <VisNav />
+                                            </div>
+                                        )}
+                                        <div
+                                            style={{ marginTop: '0em' }}
+                                            className={cn(
+                                                'm-4 p-4 border border-border rounded-md rounded-tl-none',
+                                                props.hideChartNav ? 'border-t-0 rounded-t-none' : ''
+                                            )}
+                                        >
                                             {enhanceAPI?.features?.askviz && (
                                                 <AskViz
                                                     api={typeof enhanceAPI.features.askviz === 'boolean' ? '' : enhanceAPI.features.askviz}
