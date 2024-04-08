@@ -59,7 +59,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                 {t('actions.drop_field')}
             </div>
             {channelItem && (
-                <Draggable key={getFieldIdentifier(channelItem)} draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={0}>
+                <Draggable draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={0}>
                     {(provided, snapshot) => {
                         return (
                             <div

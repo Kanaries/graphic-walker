@@ -55,7 +55,7 @@ export function aggregate(data: IRow[], query: IAggQuery): IRow[] {
                 const values: number[] = subGroup
                     .map((r) => r[mea.field])
                     .map((x) => {
-                        if (mea.format) {
+                        if (mea.format !== undefined) {
                             return newDate(x).getTime();
                         }
                         return x;

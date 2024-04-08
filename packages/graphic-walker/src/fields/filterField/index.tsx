@@ -28,7 +28,7 @@ const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided 
             ref={refMapper(provided.innerRef)}
         >
             {filters.map((f, index) => (
-                <Draggable key={getFieldIdentifier(f)} draggableId={`filters_${getFieldIdentifier(f)}`} index={index}>
+                <Draggable key={`filters_${index}_${getFieldIdentifier(f)}`} draggableId={`filters_${index}_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return (
                             <FilterPill
