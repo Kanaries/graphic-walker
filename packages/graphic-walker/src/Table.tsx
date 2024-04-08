@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps } from './interfaces';
+import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField } from './interfaces';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { useVizStore, withErrorReport, withTimeout, ComputationContext, VizStoreWrapper } from './store';
 import { parseErrorMessage } from './utils';
@@ -84,7 +84,15 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
                         <div className="bg-background text-foreground">
-                            <DatasetTable size={pageSize} metas={metas} computation={wrappedComputation} displayOffset={props.displayOffset} />
+                            <DatasetTable
+                                onMetaChange={vizStore.onMetaChange ? (fid, fIndex, diffMeta) => {
+                                    vizStore.updateCurrentDatasetMetas(fid, diffMeta);
+                                } : undefined}
+                                size={pageSize}
+                                metas={metas}
+                                computation={wrappedComputation}
+                                displayOffset={props.displayOffset}
+                            />
                         </div>
                         <div ref={setPortal} />
                     </div>
@@ -113,26 +121,28 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
                 return {
                     safeMetas,
                     computation: getComputation(safeData),
-                    onMetaChange: (safeFID, meta) => {
-                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                        if (index >= 0) {
-                            props.onMetaChange?.(fields[index].fid, meta);
-                        }
-                    },
+                    onMetaChange: onMetaChange
+                        ? (safeFID, meta) => {
+                              const index = safeMetas.findIndex((x) => x.fid === safeFID);
+                              if (index >= 0) {
+                                  onMetaChange(fields[index].fid, meta);
+                              }
+                          }
+                        : undefined,
                 };
             }
             return {
                 safeMetas: fields,
                 computation: getComputation(data),
-                onMetaChange: props.onMetaChange,
+                onMetaChange,
             };
         }
         return {
             safeMetas: fields,
             computation: props.computation,
-            onMetaChange: props.onMetaChange,
+            onMetaChange,
         };
-    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [fields, data ? data : props.computation, props.fieldKeyGuard, onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(appearance);
 

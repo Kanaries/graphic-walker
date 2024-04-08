@@ -85,7 +85,7 @@ export class VizSpecStore {
     editingComputedFieldFid: string | undefined = undefined;
     defaultConfig: IDefaultConfig | undefined;
 
-    private onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+    onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
     constructor(
         meta: IMutField[],
