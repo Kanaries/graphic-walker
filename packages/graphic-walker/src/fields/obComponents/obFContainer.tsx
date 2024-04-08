@@ -23,7 +23,7 @@ const OBFieldContainer: React.FC<FieldContainerProps> = (props) => {
         <FieldsContainer {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {/* {provided.placeholder} */}
             {allEncodings[dkey.id].map((f, index) => (
-                <Draggable key={getFieldIdentifier(f)} draggableId={`encode_${dkey.id}_${getFieldIdentifier(f)}`} index={index}>
+                <Draggable key={`encode_${dkey.id}_${index}_${getFieldIdentifier(f)}`} draggableId={`encode_${dkey.id}_${index}_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
                         return <OBPill dkey={dkey} fIndex={index} provided={provided} />;
                     }}

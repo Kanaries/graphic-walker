@@ -53,7 +53,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
         <div className="relative select-none flex flex-col py-0.5 px-1 touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {channelItems.map((channelItem, index) => {
                 return (
-                    <Draggable key={getFieldIdentifier(channelItem)} draggableId={`encode_${dkey.id}_${getFieldIdentifier(channelItem)}`} index={index}>
+                    <Draggable key={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`} draggableId={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`} index={index}>
                         {(provided, snapshot) => {
                             return (
                                 <div
