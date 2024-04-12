@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { useTranslation } from 'react-i18next';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { IComputationFunction, IJoinPath } from '@/interfaces';
-import { addJoinForQuery } from '@/utils/workflow';
+import { addJoinForQuery, changeDatasetForQuery } from '@/utils/workflow';
 import DataTable from '../dataTable';
 import { getFieldIdentifier } from '@/utils';
 
@@ -19,20 +19,23 @@ const Preview = observer(function Preview({ path }: { path: IJoinPath }) {
     const transformedComputation = useMemo((): IComputationFunction => {
         return (query) =>
             computation(
-                addJoinForQuery(query, [
-                    {
-                        type: 'join',
-                        foreigns: [
-                            {
-                                type: 'inner',
-                                keys: [
-                                    { as: 'left', dataset: path.from, field: path.fid },
-                                    { as: 'right', dataset: path.to, field: path.tid },
-                                ],
-                            },
-                        ],
-                    },
-                ])
+                changeDatasetForQuery(
+                    addJoinForQuery(query, [
+                        {
+                            type: 'join',
+                            foreigns: [
+                                {
+                                    type: 'inner',
+                                    keys: [
+                                        { as: 'left', dataset: path.from, field: path.fid },
+                                        { as: 'right', dataset: path.to, field: path.tid },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]),
+                    [path.from, path.to]
+                )
             );
     }, [computation, path]);
     const meta = useMemo(
