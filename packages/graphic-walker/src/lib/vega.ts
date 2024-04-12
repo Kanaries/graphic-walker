@@ -103,8 +103,8 @@ export function toVegaSpec({
         } else {
             const rowNums = rowFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[rowFacetField.fid])).size : 1;
             const colNums = colFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[colFacetField.fid])).size : 1;
-            spec.width = Math.floor((width - (rowFacetField === NULL_FIELD ? 40 : 94)) / colNums - 23);
-            spec.height = Math.floor((height - (colFacetField === NULL_FIELD ? 24 : 94)) / rowNums - 23);
+            spec.width = Math.floor(width / colNums);
+            spec.height = Math.floor(height / rowNums);
         }
 
         const v = getSingleView({
@@ -127,7 +127,7 @@ export function toVegaSpec({
             geomType,
             displayOffset,
             dataSource,
-            vegaConfig
+            vegaConfig,
         });
         const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
 
@@ -160,8 +160,8 @@ export function toVegaSpec({
         } else {
             const rowNums = rowFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[rowFacetField.fid])).size : 1;
             const colNums = colFacetField !== NULL_FIELD ? new Set(dataSource.map((x) => x[colFacetField.fid])).size : 1;
-            spec.width = Math.floor((width / colRepeatFields.length - (rowFacetField === NULL_FIELD ? 40 : 94)) / colNums - 23);
-            spec.height = Math.floor((height / rowRepeatFields.length - (colFacetField === NULL_FIELD ? 24 : 94)) / rowNums - 23);
+            spec.width = Math.floor(width / colRepeatFields.length / colNums);
+            spec.height = Math.floor(height / rowRepeatFields.length / rowNums);
         }
 
         let index = 0;

@@ -417,7 +417,6 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                     };
                                     if (res.view.width() === 0) {
                                         if (res.view.signal('child_width') !== undefined) {
-                                            // is faceted view
                                             res.view.signal(
                                                 'child_width',
                                                 specs[0].width - modifier.width / Math.round((areaWidth || width) / colRepeatFields.length / specs[0].width)
@@ -527,7 +526,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             <div ref={areaRef} className="inset-0 absolute" />
             <CanvaContainer
                 style={{
-                    ...(layoutMode === 'full' ? { width: '100%', height: '100%' } : {}),
+                    ...(layoutMode === 'auto' ? {} : { width: '100%', height: '100%' }),
                 }}
                 rowSize={Math.max(rowRepeatFields.length, 1)}
                 colSize={Math.max(colRepeatFields.length, 1)}
@@ -535,7 +534,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             >
                 {/* <div ref={container}></div> */}
                 {viewPlaceholders.map((view, i) => (
-                    <div key={i} ref={view}></div>
+                    <div key={i} ref={view} className={layoutMode === 'auto' ? '' : 'overflow-hidden'}></div>
                 ))}
             </CanvaContainer>
         </div>
