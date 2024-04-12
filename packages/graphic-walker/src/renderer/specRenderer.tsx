@@ -74,14 +74,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const text = draggableFieldState.text;
     const format = _format;
 
-    const rowLeftFacetFields = useMemo(() => rows.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [rows]);
-    const colLeftFacetFields = useMemo(() => columns.slice(0, -1).filter((f) => f.analyticType === 'dimension'), [columns]);
-
     const isPivotTable = geoms[0] === 'table';
 
-    const hasFacet = rowLeftFacetFields.length > 0 || colLeftFacetFields.length > 0;
-
-    const enableResize = size.mode === 'fixed' && !hasFacet && Boolean(onChartResize);
+    const enableResize = size.mode === 'fixed' && Boolean(onChartResize);
     const mediaTheme = useContext(themeContext);
     const uiTheme = useContext(uiThemeContext);
     const themeConfig = getTheme({
