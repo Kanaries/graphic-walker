@@ -68,6 +68,7 @@ const transformData = (table: Table) => {
 export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     await init();
     const conn = await db.connect();
+    const files: { id: string; content: any }[] = [];
     const datasets: { name: string; id: string }[] = [];
     const metaDict = new Map<string, IMutField[]>();
     const specDict = new Map<string, string>();
@@ -82,6 +83,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             const filename = `${id}.json`;
             await db.registerFileText(filename, JSON.stringify(data));
             await conn.insertJSONFromPath(filename, { name: id });
+            files.push({ id, content: data });
             datasets.push({ id, name });
             metaDict.set(id, meta);
             specDict.set(id, JSON.stringify([exportFullRaw(fromFields(meta, 'Chart 1'))]));
@@ -132,6 +134,40 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             return () => {
                 listeners.filter((x) => x !== cb);
             };
+        },
+        async onExportFile() {
+            const data = {
+                files,
+                datasets,
+                metaDict: Array.from(metaDict.entries()),
+                specDict: Array.from(specDict.entries()),
+            };
+            const result = new Blob([JSON.stringify(data)], { type: 'text/plain' });
+            return result;
+        },
+        async onImportFile(file) {
+            const data = JSON.parse(await file.text()) as {
+                files: {
+                    id: string;
+                    content: any;
+                }[];
+                datasets: {
+                    name: string;
+                    id: string;
+                }[];
+                metaDict: [string, IMutField[]][];
+                specDict: [string, string][];
+            };
+            files.push(...data.files);
+            for (const { id, content } of data.files) {
+                const filename = `${id}.json`;
+                await db.registerFileText(filename, JSON.stringify(content));
+                await conn.insertJSONFromPath(filename, { name: id });
+            }
+            data.datasets.forEach((x) => datasets.push(x));
+            data.metaDict.forEach(([k, v]) => metaDict.set(k, v));
+            data.specDict.forEach(([k, v]) => specDict.set(k, v));
+            listeners.forEach((cb) => cb(1, ''));
         },
     };
 }

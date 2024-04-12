@@ -98,7 +98,7 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
         async onImportFile(file) {
             const data = await file.text();
             store.importData(JSON.parse(data));
-            listeners.forEach((cb) => cb(IDataSourceEventType.updateList, ''));
+            listeners.forEach((cb) => cb(1, ''));
         },
         registerCallback(cb) {
             listeners.push(cb);
