@@ -121,6 +121,8 @@ interface ParamStoreEntry {
     data: any;
 }
 
+const leastOne = (x: number) => Math.max(x, 1);
+
 const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVega(props, ref) {
     const {
         name,
@@ -215,7 +217,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     useEffect(() => {
         setCrossFilterTriggerIdx(-1);
         setViewPlaceholders((views) => {
-            const viewNum = Math.max(1, rowRepeatFields.length * colRepeatFields.length);
+            const viewNum = Math.max(1, leastOne(rowRepeatFields.length) * leastOne(colRepeatFields.length));
             if (viewNum === views.length) return views;
             const nextViews = new Array(viewNum).fill(null).map((v, i) => views[i] || React.createRef());
             return nextViews;
@@ -279,6 +281,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             vegaHeight,
         ]
     );
+
     // Render
     useEffect(() => {
         props.onReportSpec?.(
@@ -376,10 +379,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 subscriptions.push(throttledParamStore$.subscribe(cb));
             };
 
-            for (let i = 0; i < rowRepeatFields.length; i++) {
-                for (let j = 0; j < colRepeatFields.length; j++, index++) {
+            for (let i = 0; i < leastOne(rowRepeatFields.length); i++) {
+                for (let j = 0; j < leastOne(colRepeatFields.length); j++, index++) {
                     const sourceId = index;
-                    const node = i * colRepeatFields.length + j < viewPlaceholders.length ? viewPlaceholders[i * colRepeatFields.length + j].current : null;
+                    const node = i * leastOne(colRepeatFields.length) + j < viewPlaceholders.length ? viewPlaceholders[i * leastOne(colRepeatFields.length) + j].current : null;
                     const ans = specs[index];
                     if (node) {
                         const id = index;

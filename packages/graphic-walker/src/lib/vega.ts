@@ -4,6 +4,8 @@ import { encodeFid } from '../vis/spec/encode';
 import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, resolveScales } from '../vis/spec/view';
 
+const leastOne = (x: number) => Math.max(x, 1);
+
 export function toVegaSpec({
     rows: rowsRaw,
     columns: columnsRaw,
@@ -127,7 +129,7 @@ export function toVegaSpec({
             geomType,
             displayOffset,
             dataSource,
-            vegaConfig
+            vegaConfig,
         });
         const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
 
@@ -166,8 +168,8 @@ export function toVegaSpec({
 
         let index = 0;
         let result = new Array(rowRepeatFields.length * colRepeatFields.length);
-        for (let i = 0; i < rowRepeatFields.length; i++) {
-            for (let j = 0; j < colRepeatFields.length; j++, index++) {
+        for (let i = 0; i < leastOne(rowRepeatFields.length); i++) {
+            for (let j = 0; j < leastOne(colRepeatFields.length); j++, index++) {
                 const hasLegend = j === colRepeatFields.length - 1;
                 const showLegend = i == 0;
                 const v = getSingleView({
