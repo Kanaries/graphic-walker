@@ -60,7 +60,15 @@ export const LinkDataset = observer(function LinkDataset() {
     const { t } = useTranslation();
 
     return (
-        <Dialog open={linkingDataset !== undefined}>
+        <Dialog
+            open={linkingDataset !== undefined}
+            onOpenChange={() => {
+                vizStore.setLinkingDataset();
+                setRefDataset('');
+                setFromKey('');
+                setToKey('');
+            }}
+        >
             <DialogContent>
                 <DialogHeader className="mb-2">
                     <DialogTitle>Create a Foreign Key</DialogTitle>
