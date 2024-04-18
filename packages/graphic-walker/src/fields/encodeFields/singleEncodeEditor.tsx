@@ -30,7 +30,7 @@ interface SingleEncodeEditorProps {
 const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const vizStore = useVizStore();
-    const { allEncodings, config, foldOptions, datasetJoinPaths } = vizStore;
+    const { allEncodings, config, foldOptions, datasetJoinPaths, isMultiDataset } = vizStore;
     const folds = config.folds ?? [];
     const channelItem = allEncodings[dkey.id][0];
     const { t } = useTranslation();
@@ -94,7 +94,7 @@ const SingleEncodeEditor: React.FC<SingleEncodeEditorProps> = (props) => {
                                     )}
                                     {channelItem.fid !== MEA_KEY_ID && (
                                         <span className="flex-1 truncate">
-                                            {channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
+                                            {isMultiDataset && channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
                                             {channelItem.name}
                                         </span>
                                     )}

@@ -23,7 +23,7 @@ interface PillProps {
 const OBPill: React.FC<PillProps> = (props) => {
     const { provided, dkey, fIndex } = props;
     const vizStore = useVizStore();
-    const { config, foldOptions, datasetJoinPaths } = vizStore;
+    const { config, foldOptions, datasetJoinPaths, isMultiDataset } = vizStore;
     const field = vizStore.allEncodings[dkey.id][fIndex];
     const { t } = useTranslation('translation', { keyPrefix: 'constant.aggregator' });
 
@@ -60,7 +60,7 @@ const OBPill: React.FC<PillProps> = (props) => {
             )}
             {!folds && (
                 <span className="flex-1 truncate">
-                    {field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : ''}
+                    {isMultiDataset && field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : ''}
                     {field.name}
                 </span>
             )}

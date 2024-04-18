@@ -60,7 +60,7 @@ const Pill = styled.div`
 const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { provided, fIndex } = props;
     const vizStore = useVizStore();
-    const { viewFilters, config } = vizStore;
+    const { viewFilters, config, isMultiDataset } = vizStore;
 
     const { timezoneDisplayOffset } = config;
 
@@ -70,7 +70,7 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
 
     const datasetNames = useContext(DatasetNamesContext);
 
-    const datasetName = field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : '';
+    const datasetName = isMultiDataset && field.dataset ? `${datasetNames?.[field.dataset] ?? field.dataset}.` : '';
 
     const fieldName = field.enableAgg ? `${datasetName}${field.aggName}(${field.name})` : `${datasetName}${field.name}`;
 

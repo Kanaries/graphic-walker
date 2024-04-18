@@ -31,7 +31,7 @@ interface MultiEncodeEditorProps {
 const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
     const { dkey, provided, snapshot } = props;
     const vizStore = useVizStore();
-    const { currentEncodings, config, foldOptions, datasetJoinPaths } = vizStore;
+    const { currentEncodings, config, foldOptions, datasetJoinPaths, isMultiDataset } = vizStore;
     const folds = config.folds ?? [];
     const channelItems = currentEncodings[dkey.id];
     const { t } = useTranslation();
@@ -83,7 +83,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                                 className="flex-1"
                                             >
                                                 <span className="flex-1 truncate" title={channelItem.name}>
-                                                    {channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
+                                                    {isMultiDataset && channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
                                                     {channelItem.name}
                                                 </span>
                                             </SelectContext>
