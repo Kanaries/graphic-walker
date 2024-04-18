@@ -51,7 +51,7 @@ const ArrowToJSON = (v: any): any => {
     if (typeof v === 'object') {
         if (v instanceof Vector) {
             return Array.from(v).map(ArrowToJSON);
-        } else {
+        } else if (v !== null) {
             return parseInt(bigNumToString(v as any));
         }
     }

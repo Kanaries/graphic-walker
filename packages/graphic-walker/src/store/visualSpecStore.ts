@@ -1,4 +1,4 @@
-import { computed, makeAutoObservable, observable } from 'mobx';
+import { computed, makeAutoObservable, observable, toJS } from 'mobx';
 import {
     VisSpecWithHistory,
     convertChart,
@@ -368,8 +368,8 @@ export class VizSpecStore {
 
     get multiViewInfo() {
         return transformMultiDatasetFields({
-            filters: this.viewFilters,
-            views: this.viewEncodings,
+            filters: toJS(this.viewFilters),
+            views: toJS(this.viewEncodings),
         });
     }
 
