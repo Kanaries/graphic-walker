@@ -72,10 +72,12 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     );
 
     const metas = toJS(vizStore.meta);
+
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     const datasets = Array.from(new Set(metas.map((x) => x.dataset ?? DEFAULT_DATASET)));
     const [dataset, setDataset] = useState(datasets[0] ?? DEFAULT_DATASET);
+    const tableMeta = metas.filter((x) => dataset === (x.dataset ?? DEFAULT_DATASET));
 
     return (
         <ErrorContext value={{ reportError }}>
@@ -107,7 +109,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                         : undefined
                                 }
                                 size={pageSize}
-                                metas={metas}
+                                metas={tableMeta}
                                 computation={wrappedComputation}
                                 displayOffset={props.displayOffset}
                                 hidePaginationAtOnepage={props.hidePaginationAtOnepage}
