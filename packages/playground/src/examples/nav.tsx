@@ -28,6 +28,10 @@ export const pages = [
         name: 'TableWalker',
     },
     {
+        comp: () => import('./pages/filterContext'),
+        name: 'Filter Context',
+    },
+    {
         comp: () => import('./pages/themeBuilder'),
         name: 'ThemeBuilder',
     },
