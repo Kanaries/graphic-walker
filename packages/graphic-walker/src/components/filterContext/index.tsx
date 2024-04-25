@@ -2,6 +2,7 @@ import { getFieldDistinctCounts, getRange, getTemporalRange } from '@/computatio
 import { getComputation } from '@/computation/clientComputation';
 import { SimpleOneOfSelector, SimpleRange, SimpleTemporalRange } from '@/fields/filterField/simple';
 import {
+    IAggregator,
     IChannelScales,
     IChart,
     IComputationFunction,
@@ -310,7 +311,7 @@ export function useComputedValue(payload: IDataQueryPayload) {
     return value;
 }
 
-export function useAggergateValue(fid: string, aggName: 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev'): number | undefined {
+export function useAggergateValue(fid: string, aggName: IAggregator): number | undefined {
     const payload = useMemo<IDataQueryPayload>(() => {
         return {
             workflow: [
