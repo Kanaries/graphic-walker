@@ -1,7 +1,19 @@
 import { getFieldDistinctCounts, getRange, getTemporalRange } from '@/computation';
 import { getComputation } from '@/computation/clientComputation';
 import { SimpleOneOfSelector, SimpleRange, SimpleTemporalRange } from '@/fields/filterField/simple';
-import { IChannelScales, IChart, IComputationFunction, IDarkMode, IFilterField, IFilterRule, IThemeKey, IUIThemeConfig, IVisualLayout } from '@/interfaces';
+import {
+    IChannelScales,
+    IChart,
+    IComputationFunction,
+    IDarkMode,
+    IDataQueryPayload,
+    IFilterField,
+    IFilterRule,
+    IRow,
+    IThemeKey,
+    IUIThemeConfig,
+    IVisualLayout,
+} from '@/interfaces';
 import PureRenderer from '@/renderer/pureRenderer';
 import { ShadowDom } from '@/shadow-dom';
 import { ComputationContext } from '@/store';
@@ -283,4 +295,38 @@ export function TemporalFilter(props: { fid: string; name: string; defaultValue?
             </ComputationContext.Provider>
         </ShadowDom>
     );
+}
+
+export function useComputedValue(payload: IDataQueryPayload) {
+    const { dataComputation } = useContext(FilterComputationContext)!;
+    const [value, setValue] = useState<IRow[] | null>(null);
+    useEffect(() => {
+        (async () => {
+            setValue(null);
+            const result = await dataComputation(payload);
+            setValue(result);
+        })();
+    }, [dataComputation, payload]);
+    return value;
+}
+
+export function useAggergateValue(fid: string, aggName: 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev'): number | undefined {
+    const payload = useMemo<IDataQueryPayload>(() => {
+        return {
+            workflow: [
+                {
+                    type: 'view',
+                    query: [
+                        {
+                            op: 'aggregate',
+                            groupBy: [],
+                            measures: [{ agg: aggName, field: fid, asFieldKey: 'value' }],
+                        },
+                    ],
+                },
+            ],
+        };
+    }, [fid, aggName]);
+    const result = useComputedValue(payload);
+    return result?.[0]?.value;
 }
