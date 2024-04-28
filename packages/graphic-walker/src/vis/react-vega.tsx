@@ -32,7 +32,7 @@ expressionFunction('formatBin', (datum: [number, number] | number, formatString?
 
 const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
     display: grid;
-    grid-template-columns: repeat(${(props) => props.colSize}, 1fr);
+    grid-template-columns: repeat(${(props) => props.colSize}, auto);
     grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
 `;
 
