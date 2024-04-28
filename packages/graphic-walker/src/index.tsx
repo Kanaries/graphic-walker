@@ -11,5 +11,5 @@ export * from './models/visSpecHistory';
 export * from './dataSourceProvider';
 export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
-export * from './components/filterWalker';
 export * from './utils/colors';
+export * from './components/filterContext';
