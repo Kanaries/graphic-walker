@@ -423,12 +423,13 @@ export const processExpression = (exp: IExpression, allFields: IMutField[], conf
                         ...x.value.dict,
                         '255': { name: '' },
                     };
+                    const colors = Array.from(new Set(x.value.usedColor.concat(1)));
                     return {
                         type: 'newmap',
                         value: {
                             facets: x.value.facets.map(({ dimensions, map }) => ({ dimensions, map })),
                             dict: Object.fromEntries(
-                                x.value.usedColor.map((i) => [
+                                colors.map((i) => [
                                     i,
                                     {
                                         name: dict[i].name,
