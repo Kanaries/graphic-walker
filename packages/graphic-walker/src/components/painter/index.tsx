@@ -301,7 +301,7 @@ const AggPainterContent = (props: {
             Object.values(spec.encoding).forEach((c: any) => {
                 if (!c) return;
                 if (c.aggregate === null) return;
-                const targetField = props.allFields.find((f) => f.fid === c.field && f.analyticType === 'measure');
+                const targetField = viewMeasures.find((f) => f.fid === c.field);
                 if (targetField) {
                     c.title = getMeaAggName(targetField.name, targetField.aggName);
                     c.field = getMeaAggKey(targetField.fid, targetField.aggName);
