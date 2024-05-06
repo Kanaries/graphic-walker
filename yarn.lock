@@ -1018,11 +1018,6 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@kanaries/gw-dsl-parser@^0.1.47-debug1":
-  version "0.1.47-debug1"
-  resolved "https://registry.yarnpkg.com/@kanaries/gw-dsl-parser/-/gw-dsl-parser-0.1.47-debug1.tgz#b31f990bb66940b0b94434b2e016be72fb3fcc81"
-  integrity sha512-aFdu/+0bJeR5J06j7r1Upj/B8WQnsssEpCWIif93dn1xup0HvYq+5iKm1lxW4OIvYi0/Ti1vCqjOuqVPB6D+ow==
-
 "@kanaries/react-beautiful-dnd@^0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@kanaries/react-beautiful-dnd/-/react-beautiful-dnd-0.1.1.tgz#a107472ccc835340609b6457490282334ef6c4e6"
