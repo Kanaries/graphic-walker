@@ -966,12 +966,14 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                     if (paintInfo.type === 'exist') {
                         const lastFacet = paintInfo.item.facets.at(-1)!;
                         if (paintInfo.new.type === 'new') {
+                            // is non-aggergated paint map
                             if (
                                 lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
                                 lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale)
                             ) {
+                                // is not same channel, create a new facet
                                 const { domainX, domainY, map } = await getNewMap(paintInfo.new);
                                 // adapter for old single facet
                                 if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
@@ -989,6 +991,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                     setLoading(false);
                                 });
                             } else {
+                                // editing the existing paint map
                                 const x = lastFacet.dimensions.at(-1)?.fid;
                                 const y = lastFacet.dimensions.at(-2)?.fid;
                                 const xf = allFields.find((a) => a.fid === x);
@@ -1005,12 +1008,14 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 });
                             }
                         } else if (paintInfo.new.type === 'agg') {
+                            // is aggergated paint map
                             if (
                                 !getAggDimensionFields(paintInfo.new).every((f, i) => {
                                     const last = lastFacet.dimensions[i];
                                     return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
                                 })
                             ) {
+                                // is not same channel, create a new facet
                                 const { map, ...info } = await getNewAggMap(paintInfo.new);
                                 paintMapRef.current = map;
                                 unstable_batchedUpdates(() => {
@@ -1024,6 +1029,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                     setLoading(false);
                                 });
                             } else {
+                                // editing the existing aggergated paint map
                                 paintMapRef.current = await decompressBitMap(lastFacet.map);
                                 const { map, ...info } = await getNewAggMap(paintInfo.new);
 
