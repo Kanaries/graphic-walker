@@ -1018,10 +1018,10 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@kanaries/gw-dsl-parser@^0.1.45-rc4":
-  version "0.1.45-rc4"
-  resolved "https://registry.npmjs.org/@kanaries/gw-dsl-parser/-/gw-dsl-parser-0.1.45-rc4.tgz#5ac6c41fda03ae3d0e8b5f7e136d2e751040d58f"
-  integrity sha512-RpvxPyct7qw8NBjHgTjGNQv0V/3NB17OJ1g8/jbysyrO02L+o6h9MLwiJBIE7vzpk9sBVeQzXjw3fU/nclxj0g==
+"@kanaries/gw-dsl-parser@^0.1.47-rc2":
+  version "0.1.47"
+  resolved "https://registry.yarnpkg.com/@kanaries/gw-dsl-parser/-/gw-dsl-parser-0.1.47.tgz#b31f990bb66940b0b94434b2e016be72fb3fcc81"
+  integrity sha512-aFdu/+0bJeR5J06j7r1Upj/B8WQnsssEpCWIif93dn1xup0HvYq+5iKm1lxW4OIvYi0/Ti1vCqjOuqVPB6D+ow==
 
 "@kanaries/react-beautiful-dnd@^0.1.1":
   version "0.1.1"
@@ -2036,10 +2036,10 @@
     "@types/react" "*"
     "@types/reactcss" "*"
 
-"@types/react-dom@*", "@types/react-dom@^18.2.15":
-  version "18.2.21"
-  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.2.21.tgz#b8c81715cebdebb2994378616a8d54ace54f043a"
-  integrity sha512-gnvBA/21SA4xxqNXEwNiVcP0xSGHh/gi1VhWv9Bl46a0ItbTT5nFY+G9VSQpaG/8N/qdJpJ+vftQ4zflTtnjLw==
+"@types/react-dom@*", "@types/react-dom@^18.2.15", "@types/react-dom@^18.x":
+  version "18.3.0"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.3.0.tgz#0cbc818755d87066ab6ca74fbedb2547d74a82b0"
+  integrity sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==
   dependencies:
     "@types/react" "*"
 
@@ -2050,13 +2050,12 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^18.2.37":
-  version "18.2.64"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.64.tgz#3700fbb6b2fa60a6868ec1323ae4cbd446a2197d"
-  integrity sha512-MlmPvHgjj2p3vZaxbQgFUQFvD8QiZwACfGqEdDSWou5yISWxDQ4/74nCAwsUiX7UFLKZz3BbVSPj+YxeoGGCfg==
+"@types/react@*", "@types/react@^18.2.37", "@types/react@^18.x":
+  version "18.3.1"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.3.1.tgz#fed43985caa834a2084d002e4771e15dfcbdbe8e"
+  integrity sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==
   dependencies:
     "@types/prop-types" "*"
-    "@types/scheduler" "*"
     csstype "^3.0.2"
 
 "@types/reactcss@*":
@@ -2065,11 +2064,6 @@
   integrity sha512-dN2TtynLIZaZZ4gQNK6WM0Nff8GWYCXKl1Kvsp59WgROtx03ixCwuC1UWdesgt2O1P5Qk+0+SIfsy3eiwblMEA==
   dependencies:
     "@types/react" "*"
-
-"@types/scheduler@*":
-  version "0.16.6"
-  resolved "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.6.tgz#eb26db6780c513de59bee0b869ef289ad3068711"
-  integrity sha512-Vlktnchmkylvc9SnwwwozTv04L/e1NykF5vgoQ0XTmI8DD+wxfjQuHuvHS3p0r2jz2x2ghPs2h1FVeDirIteWA==
 
 "@types/semver@^7.5.0":
   version "7.5.5"
