@@ -230,7 +230,7 @@ export class VizSpecStore {
         return toChatMessage(this.visList[this.visIndex]);
     }
 
-    paintFields() {
+    get paintFields() {
         if (!this.currentVis.config.defaultAggregated) {
             const { columns, rows } = this.currentEncodings;
             if (columns.length !== 1 || rows.length !== 1) {
@@ -248,7 +248,9 @@ export class VizSpecStore {
                 col.fid === MEA_KEY_ID ||
                 col.fid === MEA_VAL_ID ||
                 row.fid === MEA_KEY_ID ||
-                row.fid === MEA_VAL_ID
+                row.fid === MEA_VAL_ID ||
+                col.fid === PAINT_FIELD_ID ||
+                row.fid === PAINT_FIELD_ID
             ) {
                 return { type: 'error', key: 'count' } as const;
             }
@@ -257,8 +259,43 @@ export class VizSpecStore {
                 x: col,
                 y: row,
             } as const;
+        } else {
+            const { columns, rows, color, shape, size, opacity } = this.currentEncodings;
+            if (columns.length !== 1 || rows.length !== 1) {
+                return { type: 'error', key: 'count' } as const;
+            }
+            const col = columns[0];
+            const row = rows[0];
+            if (
+                col.aggName === 'expr' ||
+                row.aggName === 'expr' ||
+                col.fid === MEA_KEY_ID ||
+                col.fid === MEA_VAL_ID ||
+                row.fid === MEA_KEY_ID ||
+                row.fid === MEA_VAL_ID ||
+                col.fid === PAINT_FIELD_ID ||
+                row.fid === PAINT_FIELD_ID
+            ) {
+                return { type: 'error', key: 'count' } as const;
+            }
+            const guard = (f?: IViewField) => (f?.fid === PAINT_FIELD_ID ? undefined : f);
+            if (col.analyticType === 'dimension' && row.analyticType === 'dimension') {
+                return {
+                    type: 'new',
+                    x: col,
+                    y: row,
+                } as const;
+            }
+            return {
+                type: 'agg',
+                x: col,
+                y: row,
+                color: guard(color[0]),
+                shape: guard(shape[0]),
+                size: guard(size[0]),
+                opacity: guard(opacity[0]),
+            } as const;
         }
-        return { type: 'error', key: 'aggergation' } as const;
     }
 
     get paintInfo() {
@@ -269,7 +306,7 @@ export class VizSpecStore {
                 return {
                     type: 'exist',
                     item: IPaintMapAdapter(param),
-                    new: this.paintFields(),
+                    new: this.paintFields,
                 } as const;
             }
             const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
@@ -277,11 +314,11 @@ export class VizSpecStore {
                 return {
                     type: 'exist',
                     item: paramV2,
-                    new: this.paintFields(),
+                    new: this.paintFields,
                 } as const;
             }
         }
-        return this.paintFields();
+        return this.paintFields;
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {

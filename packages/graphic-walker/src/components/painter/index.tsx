@@ -8,7 +8,7 @@ import { IDarkMode, IPaintDimension, IPaintMapFacet, ISemanticType, IThemeKey, I
 import embed from 'vega-embed';
 import { PAINT_FIELD_ID } from '../../constants';
 import { Scene, SceneGroup, SceneItem, ScenegraphEvent } from 'vega-typings';
-import { renderModule, sceneVisit, CanvasHandler } from 'vega';
+import { renderModule, sceneVisit, CanvasHandler, Item } from 'vega';
 import throttle from '../../utils/throttle';
 import { useTranslation } from 'react-i18next';
 import { ClickInput, ColorEditor, CursorDef, PixelContainer } from './components';
@@ -24,6 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
 import { parseColorToHex } from '@/utils/colors';
+import { getMeaAggKey, getMeaAggName } from '@/utils';
+import rbush from 'rbush';
 
 //@ts-ignore
 CanvasHandler.prototype.context = function () {
@@ -96,6 +98,16 @@ function selectInteractive(scene: { root: Scene }) {
 const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
+function getMarkForAgg(types: ISemanticType[]) {
+    if (types.every((x) => x === 'quantitative')) {
+        return 'circle';
+    }
+    if (types.find((x) => x === 'quantitative')) {
+        return 'bar';
+    }
+    return 'square';
+}
+
 function getMarkFor(types: ISemanticType[]) {
     if (types.every((x) => x === 'quantitative')) {
         return 'circle';
@@ -105,6 +117,405 @@ function getMarkFor(types: ISemanticType[]) {
     }
     return 'square';
 }
+
+
+type Dimension = {
+    field: IViewField;
+    domain?: IPaintDimension;
+};
+
+const aggMarkWhitelist = ['circle', 'bar'];
+
+const getDomainType = (type: ISemanticType) => (type === 'quantitative' ? 'quantitative' : 'nominal');
+
+const deduper = function <T>(items: T[], keyF: (k: T) => string) {
+    const map = new Map<string, T>();
+    items.forEach((x) => map.set(keyF(x), x));
+    return [...map.values()];
+};
+
+const getAggDimensionFields = (fields: {
+    x: IViewField;
+    y: IViewField;
+    color?: IViewField;
+    size?: IViewField;
+    opacity?: IViewField;
+    shape?: IViewField;
+}): IViewField[] => {
+    return deduper(
+        [fields.x, fields.y, fields.color, fields.size, fields.opacity, fields.shape]
+            .filter((x): x is IViewField => !!x)
+            .filter((x) => x!.analyticType === 'dimension'),
+        (x) => x.fid
+    );
+};
+
+const AggPainterContent = (props: {
+    mark: string;
+    x: Dimension;
+    y: Dimension;
+    color?: Dimension;
+    size?: Dimension;
+    opacity?: Dimension;
+    shape?: Dimension;
+    facets: IPaintMapFacet[];
+    vegaConfig: VegaGlobalConfig;
+    dict: typeof defaultScheme;
+    onChangeDict: (d: typeof defaultScheme) => void;
+    paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
+    allFields: IViewField[];
+    displayOffset?: number;
+    onReset: () => void;
+    onDelete: () => void;
+    onCancel: () => void;
+    onSave: () => void;
+}) => {
+    const { t } = useTranslation();
+    const mediaTheme = useContext(themeContext);
+    const computation = useCompututaion();
+    const [viewDimensions, viewMeasures] = useMemo(() => {
+        const fields = [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).map((x) => x!.field);
+        return [fields.filter((x) => x.analyticType === 'dimension'), fields.filter((x) => x.analyticType === 'measure')];
+    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+    const paintDimensions = useMemo(() => {
+        return deduper(
+            [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).filter((x) => x!.domain),
+            (x) => x!.field.fid
+        ).map((x) => x!.domain!);
+    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+    const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
+    const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
+    brushSizeRef.current = brushSize;
+    const brushIdRef = useRef(2);
+    const [brushId, setBrushId] = useState(2);
+    brushIdRef.current = brushId;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const { loading: loadingData, viewData } = useRenderer({
+        computationFunction: computation,
+        defaultAggregated: true,
+        filters: emptyField,
+        allFields: props.allFields,
+        limit: -1,
+        sort: 'none',
+        viewDimensions,
+        viewMeasures,
+        timezoneDisplayOffset: props.displayOffset,
+    });
+    const indexes = useMemo(() => viewData.map(calcIndexesByDimensions(paintDimensions)), [viewData, paintDimensions]);
+    const [data, loadingResult] = useAsyncMemo(async () => {
+        const facetResult = await calcPaintMapV2(viewData, { dict: props.dict, facets: props.facets, usedColor: [] });
+        return viewData.map((x, i) => {
+            const pid = props.paintMapRef.current![indexes[i]];
+            return {
+                ...x,
+                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] : props.dict[pid]?.name,
+                [PIXEL_INDEX]: indexes[i],
+            };
+        });
+    }, [indexes, viewData, props.dict, props.facets]);
+
+    const [pixelOffset, setPixelOffset] = useState([0, 0]);
+
+    const resetRef = useRef(() => {});
+
+    const loading = loadingData || loadingResult;
+
+    useEffect(() => {
+        if (!loading && containerRef.current) {
+            const fallbackMark = getMarkForAgg([getDomainType(props.y.field.semanticType), getDomainType(props.x.field.semanticType)]);
+            const mark = props.mark === 'auto' ? autoMark([props.x.field.semanticType, props.y.field.semanticType]) : props.mark;
+            const colors = Object.entries(props.dict);
+            const finalMark = aggMarkWhitelist.includes(mark) ? mark : fallbackMark;
+            const spec: any = {
+                data: {
+                    name: 'data',
+                    values: data,
+                },
+                mark: { type: finalMark, fillOpacity: 0.66, strokeWidth: 4, strokeOpacity: 1, size: finalMark === 'circle' ? 600 : undefined },
+                encoding: {
+                    x: {
+                        field: props.x.field.fid,
+                        title: props.x.field.name,
+                        type: getDomainType(props.x.field.semanticType),
+                        axis: { labelOverlap: true },
+                        scale: props.x.domain ? { domain: props.x.domain.domain.value } : undefined,
+                        aggregate: props.x.field.analyticType === 'measure',
+                    },
+                    y: {
+                        field: props.y.field.fid,
+                        title: props.y.field.name,
+                        type: getDomainType(props.y.field.semanticType),
+                        axis: { labelOverlap: true },
+                        scale: props.y.domain
+                            ? {
+                                  domain:
+                                      props.y.domain.domain.type === 'quantitative' ? props.y.domain.domain.value : props.y.domain.domain.value.toReversed(),
+                              }
+                            : undefined,
+                        aggregate: props.y.field.analyticType === 'measure',
+                    },
+                    fill: {
+                        field: PAINT_FIELD_ID,
+                        type: 'nominal',
+                        title: 'custom feature',
+                        scale: {
+                            domain: colors.map(([_, x]) => x.name),
+                            range: colors.map(([_, x]) => x.color),
+                        },
+                    },
+                    stroke: props.color
+                        ? {
+                              field: props.color.field.fid,
+                              title: props.color.field.name,
+                              scale: props.color.domain ? { domain: props.color.domain.domain.value } : undefined,
+                              aggregate: props.color.field.analyticType === 'measure',
+                          }
+                        : undefined,
+                    opacity: props.opacity
+                        ? {
+                              field: props.opacity.field.fid,
+                              title: props.opacity.field.name,
+                              scale: props.opacity.domain ? { domain: props.opacity.domain.domain.value } : undefined,
+                              aggregate: props.opacity.field.analyticType === 'measure',
+                          }
+                        : undefined,
+                    size: props.size
+                        ? {
+                              field: props.size.field.fid,
+                              title: props.size.field.name,
+                              scale: props.size.domain ? { domain: props.size.domain.domain.value } : undefined,
+                              aggregate: props.size.field.analyticType === 'measure',
+                          }
+                        : undefined,
+                    shape: props.shape
+                        ? {
+                              field: props.shape.field.fid,
+                              title: props.shape.field.name,
+                              scale: props.shape.domain ? { domain: props.shape.domain.domain.value } : undefined,
+                              aggregate: props.shape.field.analyticType === 'measure',
+                          }
+                        : undefined,
+                },
+                width: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
+                height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
+            };
+            Object.values(spec.encoding).forEach((c: any) => {
+                if (!c) return;
+                if (c.aggregate === null) return;
+                const targetField = props.allFields.find((f) => f.fid === c.field && f.analyticType === 'measure');
+                if (targetField) {
+                    c.title = getMeaAggName(targetField.name, targetField.aggName);
+                    c.field = getMeaAggKey(targetField.fid, targetField.aggName);
+                }
+            });
+
+            embed(containerRef.current, spec, {
+                renderer: 'svg' as any,
+                config: props.vegaConfig,
+                actions: false,
+                tooltip: {
+                    theme: mediaTheme,
+                },
+            }).then((res) => {
+                const scene = res.view.scenegraph() as unknown as { root: Scene };
+                const origin = res.view.origin();
+                setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
+                const itemsMap: Map<number, SceneItem[]> = new Map();
+                const interactive = selectInteractive(scene);
+                const tree = new rbush<{ id: number; minX: number; minY: number; maxX: number; maxY: number }>();
+                interactive.forEach((item) =>
+                    sceneVisit(item, (item) => {
+                        if ('datum' in item) {
+                            const id = item.datum![PIXEL_INDEX];
+                            if (!itemsMap.has(id)) {
+                                itemsMap.set(id, []);
+                            }
+                            itemsMap.get(id)?.push(item);
+                            item.bounds && tree.insert({ minX: item.bounds.x1, minY: item.bounds.y1, maxX: item.bounds.x2, maxY: item.bounds.y2, id });
+                        }
+                    })
+                );
+                //@ts-ignore
+                const rerender = throttle(() => res.view._renderer._render(scene.root), 15, { trailing: true });
+                resetRef.current = () => {
+                    props.onReset();
+                    props.paintMapRef.current! = createBitMapForMap(paintDimensions);
+                    const { name, color } = props.dict[1];
+                    interactive.forEach((item) =>
+                        sceneVisit(item, (item) => {
+                            if ('datum' in item) {
+                                item['fill'] = color;
+                                item.datum![PAINT_FIELD_ID] = name;
+                            }
+                        })
+                    );
+                    rerender();
+                };
+                const handleDraw = (e: ScenegraphEvent, item: Item<any> | null | undefined) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const paint = (x: number, y: number) => {
+                        const targetColor =
+                            brushIdRef.current === ERASER
+                                ? {
+                                      name: '',
+                                      color: 'transparent',
+                                  }
+                                : props.dict[brushIdRef.current];
+                        if (!targetColor) return;
+                        const pts = tree
+                            .search({
+                                minX: x - brushSizeRef.current,
+                                minY: y - brushSizeRef.current,
+                                maxX: x + brushSizeRef.current,
+                                maxY: y + brushSizeRef.current,
+                            })
+                            .map((i) => i.id);
+
+                        let i = 0;
+                        pts.forEach((x) => {
+                            itemsMap.get(x)?.forEach((item) => {
+                                item['fill'] = targetColor.color;
+                                item.datum![PAINT_FIELD_ID] = targetColor.name;
+                                i++;
+                            });
+                            props.paintMapRef.current![x] = brushIdRef.current;
+                        });
+                        i > 0 && rerender();
+                    };
+                    if (e instanceof MouseEvent && e.buttons & MouseButtons.PRIMARY) {
+                        paint(e.offsetX - origin[0] - MAGIC_PADDING, e.offsetY - origin[1] - MAGIC_PADDING);
+                    } else if (window.TouchEvent && e instanceof TouchEvent) {
+                        const rect = containerRef.current!.getBoundingClientRect();
+                        paint(
+                            e.changedTouches[0].pageX - rect.left - origin[0] - MAGIC_PADDING,
+                            e.changedTouches[0].pageY - rect.top - origin[1] - MAGIC_PADDING
+                        );
+                    }
+                };
+                res.view.addEventListener('mousedown', handleDraw);
+                res.view.addEventListener('mousemove', handleDraw);
+                res.view.addEventListener('touchstart', handleDraw);
+                res.view.addEventListener('touchmove', handleDraw);
+            });
+        }
+    }, [loading, data, props.dict, props.vegaConfig, paintDimensions, props.onReset, props.mark]);
+
+    const [showCursorPreview, setShowCursorPreview] = React.useState(false);
+
+    const cursor = useMemo((): CursorDef => {
+        return { type: 'rect', x: brushSize, y: brushSize, xFactor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR, yFactor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR };
+    }, [brushSize]);
+
+    useEffect(() => {
+        setShowCursorPreview(true);
+        const timer = setTimeout(() => {
+            setShowCursorPreview(false);
+        }, 1_000);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [brushSize, brushId]);
+
+    return (
+        <div className="flex">
+            <PixelContainer
+                color={props.dict[brushId]?.color ?? '#333'}
+                cursor={cursor}
+                offsetX={pixelOffset[0]}
+                offsetY={pixelOffset[1]}
+                showPreview={showCursorPreview}
+            >
+                <div ref={containerRef} id="painter-container" className="!cursor-none min-w-[600px] min-h-[512px]"></div>
+            </PixelContainer>
+            <div className="flex flex-col space-y-2 pt-10 w-40 flex-shrink-0 px-1">
+                <Tabs
+                    value={brushId === ERASER ? 'eraser' : 'palette'}
+                    onValueChange={(v) => {
+                        if (v === 'palette') {
+                            setBrushId(2);
+                        } else {
+                            setBrushId(ERASER);
+                        }
+                    }}
+                >
+                    <TabsList>
+                        <TabsTrigger value="palette"> {t('main.tabpanel.settings.paint.palette')}</TabsTrigger>
+                        <TabsTrigger value="eraser"> {t('main.tabpanel.settings.paint.eraser')}</TabsTrigger>
+                    </TabsList>
+                    {brushId !== ERASER && (
+                        <TabsContent value="palette">
+                            <div className="grid grid-cols-5 gap-2 p-2">
+                                {Object.entries(props.dict).map(([id, { color }]) => (
+                                    <div
+                                        key={id}
+                                        className={`box-border rounded-full border-primary hover: ${
+                                            id === `${brushId}` ? 'border-2' : 'hover:border-2'
+                                        } active:ring-ring active:ring-1 w-4 h-4`}
+                                        style={{
+                                            background: color,
+                                        }}
+                                        onClick={() => setBrushId(Number(id))}
+                                    ></div>
+                                ))}
+                            </div>
+                            <div className="flex space-x-2">
+                                <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.color')}</label>
+                                <ColorEditor
+                                    color={props.dict[brushId].color}
+                                    colors={scheme}
+                                    onChangeColor={(color) => {
+                                        props.onChangeDict({
+                                            ...props.dict,
+                                            [brushId]: {
+                                                color,
+                                                name: props.dict[brushId].name,
+                                            },
+                                        });
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <label className="block text-xs font-medium">{t('main.tabpanel.settings.paint.label')}</label>
+                                <ClickInput
+                                    value={props.dict[brushId].name}
+                                    onChange={(name) => {
+                                        props.onChangeDict({
+                                            ...props.dict,
+                                            [brushId]: {
+                                                color: props.dict[brushId].color,
+                                                name,
+                                            },
+                                        });
+                                    }}
+                                />
+                            </div>
+                        </TabsContent>
+                    )}
+                </Tabs>
+                <div className="pt-2">
+                    <output className="text-sm">
+                        {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
+                    </output>
+                    <Slider
+                        className="mt-2"
+                        value={[brushSize]}
+                        min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
+                        max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
+                        onValueChange={([v]) => setBrushSize(v)}
+                    />
+                </div>
+                <div className="flex-1 flex flex-col space-y-2 justify-end">
+                    <Button variant="destructive" children={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
+                    <Button variant="outline" children={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
+                    <Button variant="outline" children={t('main.tabpanel.settings.paint.cancel')} onClick={props.onCancel} />
+                    <Button children={t('main.tabpanel.settings.paint.save_paint')} onClick={props.onSave} />
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // TODO: add text: fetch the text channel to show
 const markWhitelist = ['point', 'circle', 'tick'];
@@ -423,18 +834,20 @@ const PainterContent = (props: {
                         </TabsContent>
                     )}
                 </Tabs>
-                <div className="pt-2">
-                    <output className="text-sm">
-                        {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
-                    </output>
-                    <Slider
-                        className="mt-2"
-                        value={[brushSize]}
-                        min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
-                        max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
-                        onValueChange={([v]) => setBrushSize(v)}
-                    />
-                </div>
+                {(props.domainX.domain.type === 'quantitative' || props.domainY.domain.type === 'quantitative') && (
+                    <div className="pt-2">
+                        <output className="text-sm">
+                            {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
+                        </output>
+                        <Slider
+                            className="mt-2"
+                            value={[brushSize]}
+                            min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
+                            max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
+                            onValueChange={([v]) => setBrushSize(v)}
+                        />
+                    </div>
+                )}
                 <div className="flex-1 flex flex-col space-y-2 justify-end">
                     <Button variant="destructive" children={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
                     <Button variant="outline" children={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
@@ -477,6 +890,14 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     const [loading, setLoading] = useState(true);
     const paintMapRef = useRef<Uint8Array>();
     const [dict, setDict] = useState(defaultScheme);
+    const [aggInfo, setAggInfo] = useState<{
+        x: Dimension;
+        y: Dimension;
+        color?: Dimension;
+        size?: Dimension;
+        opacity?: Dimension;
+        shape?: Dimension;
+    } | null>(null);
     const [fieldX, setX] = useState<IViewField>();
     const [fieldY, setY] = useState<IViewField>();
     const [domainX, setDomainX] = useState<IPaintDimension>();
@@ -488,31 +909,31 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
             setLoading(true);
             (async () => {
                 const { paintInfo, allFields } = vizStore;
+                const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
+                    if (f.semanticType === 'quantitative') {
+                        const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);
+                        return {
+                            domain: {
+                                type: 'quantitative',
+                                value: zeroScale ? toZeroscaled(res.range) : res.range,
+                                width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
+                            },
+                            fid: f.fid,
+                        };
+                    } else {
+                        const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
+                        const value = res.values.map((x) => x.value);
+                        return {
+                            domain: {
+                                type: 'nominal',
+                                value,
+                                width: value.length,
+                            },
+                            fid: f.fid,
+                        };
+                    }
+                };
                 const getNewMap = async (paintInfo: { x: IViewField; y: IViewField }) => {
-                    const getDomain = async (f: IViewField): Promise<IPaintDimension> => {
-                        if (f.semanticType === 'quantitative') {
-                            const res = await fieldStat(compuation, f, { range: true, values: false, valuesMeta: false }, allFields);
-                            return {
-                                domain: {
-                                    type: 'quantitative',
-                                    value: zeroScale ? toZeroscaled(res.range) : res.range,
-                                    width: GLOBAL_CONFIG.PAINT_MAP_SIZE,
-                                },
-                                fid: f.fid,
-                            };
-                        } else {
-                            const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
-                            const value = res.values.map((x) => x.value);
-                            return {
-                                domain: {
-                                    type: 'nominal',
-                                    value,
-                                    width: value.length,
-                                },
-                                fid: f.fid,
-                            };
-                        }
-                    };
                     const [domainX, domainY] = await Promise.all([getDomain(paintInfo.x), getDomain(paintInfo.y)]);
                     return {
                         x: paintInfo.x,
@@ -520,6 +941,26 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                         domainX,
                         domainY,
                         map: createBitMapForMap([domainY, domainX]),
+                    };
+                };
+                const getNewAggMap = async (paintInfo: {
+                    x: IViewField;
+                    y: IViewField;
+                    color?: IViewField;
+                    size?: IViewField;
+                    opacity?: IViewField;
+                    shape?: IViewField;
+                }) => {
+                    const paintDimensionFields = getAggDimensionFields(paintInfo);
+                    const domains = await Promise.all(paintDimensionFields.map((x) => getDomain(x!)));
+                    return {
+                        x: { field: paintInfo.x, domain: domains.find((x) => x.fid === paintInfo.x.fid) },
+                        y: { field: paintInfo.y, domain: domains.find((x) => x.fid === paintInfo.y.fid) },
+                        color: paintInfo.color ? { field: paintInfo.color, domain: domains.find((x) => x.fid === paintInfo.color!.fid) } : undefined,
+                        size: paintInfo.size ? { field: paintInfo.size, domain: domains.find((x) => x.fid === paintInfo.size!.fid) } : undefined,
+                        opacity: paintInfo.opacity ? { field: paintInfo.opacity, domain: domains.find((x) => x.fid === paintInfo.opacity!.fid) } : undefined,
+                        shape: paintInfo.shape ? { field: paintInfo.shape, domain: domains.find((x) => x.fid === paintInfo.shape!.fid) } : undefined,
+                        map: createBitMapForMap(domains),
                     };
                 };
                 if (paintInfo) {
@@ -545,6 +986,26 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 setFacets(paintInfo.item.facets);
                                 setX(paintInfo.new.x);
                                 setY(paintInfo.new.y);
+                                setAggInfo(null);
+                                setLoading(false);
+                            });
+                        } else if (
+                            paintInfo.new.type === 'agg' &&
+                            !getAggDimensionFields(paintInfo.new).every((f, i) => {
+                                const last = lastFacet.dimensions[i];
+                                return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
+                            })
+                        ) {
+                            const { map, ...info } = await getNewAggMap(paintInfo.new);
+                            paintMapRef.current = map;
+                            unstable_batchedUpdates(() => {
+                                setDict(defaultScheme);
+                                setAggInfo(info);
+                                setFacets([]);
+                                setDomainX(undefined);
+                                setDomainY(undefined);
+                                setX(undefined);
+                                setY(undefined);
                                 setLoading(false);
                             });
                         } else {
@@ -560,6 +1021,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 setFacets(paintInfo.item.facets.slice(0, -1));
                                 setX(xf);
                                 setY(yf);
+                                setAggInfo(null);
                                 setLoading(false);
                             });
                         }
@@ -572,7 +1034,21 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                             setDomainY(domainY);
                             setX(paintInfo.x);
                             setY(paintInfo.y);
+                            setAggInfo(null);
                             setFacets([]);
+                            setLoading(false);
+                        });
+                    } else if (paintInfo.type === 'agg') {
+                        const { map, ...info } = await getNewAggMap(paintInfo);
+                        paintMapRef.current = map;
+                        unstable_batchedUpdates(() => {
+                            setDict(defaultScheme);
+                            setAggInfo(info);
+                            setFacets([]);
+                            setDomainX(undefined);
+                            setDomainY(undefined);
+                            setX(undefined);
+                            setY(undefined);
                             setLoading(false);
                         });
                     }
@@ -582,12 +1058,20 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     }, [showPainterPanel, vizStore, compuation, zeroScale]);
 
     const saveMap = async () => {
-        if (domainX && domainY && paintMapRef.current) {
+        const dimensions =
+            domainX && domainY
+                ? [domainY, domainX]
+                : aggInfo
+                ? [aggInfo.x, aggInfo.y, aggInfo.color, aggInfo.size, aggInfo.opacity, aggInfo.shape]
+                      .map((x) => x?.domain)
+                      .filter((x): x is IPaintDimension => !!x)
+                : null;
+        if (dimensions && paintMapRef.current) {
             const newFacets = [
                 ...facets,
                 {
                     map: await compressBitMap(paintMapRef.current),
-                    dimensions: [domainY, domainX],
+                    dimensions,
                     usedColor: Array.from(new Set(paintMapRef.current)).map((x) => x || 1),
                 },
             ];
@@ -631,9 +1115,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
             }}
         >
             <DialogContent>
-                {loading ? (
-                    <LoadingLayer />
-                ) : (
+                {loading && <LoadingLayer />}
+                {!loading && !aggInfo && (
                     <PainterContent
                         mark={geoms[0]}
                         vegaConfig={vegaConfig}
@@ -651,6 +1134,33 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                         allFields={allFields}
                         domainX={domainX!}
                         domainY={domainY!}
+                        dict={dict}
+                        onChangeDict={setDict}
+                        paintMapRef={paintMapRef}
+                        onReset={onReset}
+                        displayOffset={timezoneDisplayOffset}
+                    />
+                )}
+                {!loading && aggInfo && (
+                    <AggPainterContent
+                        mark={geoms[0]}
+                        vegaConfig={vegaConfig}
+                        onSave={saveMap}
+                        onDelete={() => {
+                            vizStore.updatePaint(null, '');
+                            vizStore.setShowPainter(false);
+                        }}
+                        onCancel={() => {
+                            vizStore.setShowPainter(false);
+                        }}
+                        x={aggInfo.x}
+                        y={aggInfo.y}
+                        color={aggInfo.color}
+                        size={aggInfo.size}
+                        opacity={aggInfo.opacity}
+                        shape={aggInfo.shape}
+                        facets={facets}
+                        allFields={allFields}
                         dict={dict}
                         onChangeDict={setDict}
                         paintMapRef={paintMapRef}
