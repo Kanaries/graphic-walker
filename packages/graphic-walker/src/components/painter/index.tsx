@@ -118,7 +118,6 @@ function getMarkFor(types: ISemanticType[]) {
     return 'square';
 }
 
-
 type Dimension = {
     field: IViewField;
     domain?: IPaintDimension;
@@ -966,64 +965,81 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                 if (paintInfo) {
                     if (paintInfo.type === 'exist') {
                         const lastFacet = paintInfo.item.facets.at(-1)!;
-                        if (
-                            paintInfo.new.type === 'new' &&
-                            (lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
+                        if (paintInfo.new.type === 'new') {
+                            if (
+                                lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
                                 lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
-                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale))
-                        ) {
-                            const { domainX, domainY, map } = await getNewMap(paintInfo.new);
-                            // adapter for old single facet
-                            if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
-                                paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
+                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale)
+                            ) {
+                                const { domainX, domainY, map } = await getNewMap(paintInfo.new);
+                                // adapter for old single facet
+                                if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
+                                    paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
+                                }
+                                paintMapRef.current = map;
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setDomainX(domainX);
+                                    setDomainY(domainY);
+                                    setFacets(paintInfo.item.facets);
+                                    setX(paintInfo.new.x);
+                                    setY(paintInfo.new.y);
+                                    setAggInfo(null);
+                                    setLoading(false);
+                                });
+                            } else {
+                                const x = lastFacet.dimensions.at(-1)?.fid;
+                                const y = lastFacet.dimensions.at(-2)?.fid;
+                                const xf = allFields.find((a) => a.fid === x);
+                                const yf = allFields.find((a) => a.fid === y);
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setDomainX(lastFacet.dimensions.at(-1));
+                                    setDomainY(lastFacet.dimensions.at(-2));
+                                    setFacets(paintInfo.item.facets.slice(0, -1));
+                                    setX(xf);
+                                    setY(yf);
+                                    setAggInfo(null);
+                                    setLoading(false);
+                                });
                             }
-                            paintMapRef.current = map;
-                            unstable_batchedUpdates(() => {
-                                setDict(paintInfo.item.dict);
-                                setDomainX(domainX);
-                                setDomainY(domainY);
-                                setFacets(paintInfo.item.facets);
-                                setX(paintInfo.new.x);
-                                setY(paintInfo.new.y);
-                                setAggInfo(null);
-                                setLoading(false);
-                            });
-                        } else if (
-                            paintInfo.new.type === 'agg' &&
-                            !getAggDimensionFields(paintInfo.new).every((f, i) => {
-                                const last = lastFacet.dimensions[i];
-                                return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
-                            })
-                        ) {
-                            const { map, ...info } = await getNewAggMap(paintInfo.new);
-                            paintMapRef.current = map;
-                            unstable_batchedUpdates(() => {
-                                setDict(defaultScheme);
-                                setAggInfo(info);
-                                setFacets([]);
-                                setDomainX(undefined);
-                                setDomainY(undefined);
-                                setX(undefined);
-                                setY(undefined);
-                                setLoading(false);
-                            });
+                        } else if (paintInfo.new.type === 'agg') {
+                            if (
+                                !getAggDimensionFields(paintInfo.new).every((f, i) => {
+                                    const last = lastFacet.dimensions[i];
+                                    return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
+                                })
+                            ) {
+                                const { map, ...info } = await getNewAggMap(paintInfo.new);
+                                paintMapRef.current = map;
+                                unstable_batchedUpdates(() => {
+                                    setDict(defaultScheme);
+                                    setAggInfo(info);
+                                    setFacets([]);
+                                    setDomainX(undefined);
+                                    setDomainY(undefined);
+                                    setX(undefined);
+                                    setY(undefined);
+                                    setLoading(false);
+                                });
+                            } else {
+                                paintMapRef.current = await decompressBitMap(lastFacet.map);
+                                const { map, ...info } = await getNewAggMap(paintInfo.new);
+
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setAggInfo(info);
+                                    setFacets(paintInfo.item.facets);
+                                    setDomainX(undefined);
+                                    setDomainY(undefined);
+                                    setX(undefined);
+                                    setY(undefined);
+                                    setLoading(false);
+                                });
+                            }
                         } else {
-                            paintMapRef.current = await decompressBitMap(lastFacet.map);
-                            const x = lastFacet.dimensions.at(-1)?.fid;
-                            const y = lastFacet.dimensions.at(-2)?.fid;
-                            const xf = allFields.find((a) => a.fid === x);
-                            const yf = allFields.find((a) => a.fid === y);
-                            unstable_batchedUpdates(() => {
-                                setDict(paintInfo.item.dict);
-                                setDomainX(lastFacet.dimensions.at(-1));
-                                setDomainY(lastFacet.dimensions.at(-2));
-                                setFacets(paintInfo.item.facets.slice(0, -1));
-                                setX(xf);
-                                setY(yf);
-                                setAggInfo(null);
-                                setLoading(false);
-                            });
+                            throw new Error('paintInfo.new.type is not supported');
                         }
                     } else if (paintInfo.type === 'new') {
                         const { domainX, domainY, map } = await getNewMap(paintInfo);
