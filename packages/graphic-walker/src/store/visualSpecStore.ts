@@ -230,7 +230,7 @@ export class VizSpecStore {
         return toChatMessage(this.visList[this.visIndex]);
     }
 
-    paintFields() {
+    get paintFields() {
         if (!this.currentVis.config.defaultAggregated) {
             const { columns, rows } = this.currentEncodings;
             if (columns.length !== 1 || rows.length !== 1) {
@@ -293,7 +293,7 @@ export class VizSpecStore {
                 color: guard(color[0]),
                 shape: guard(shape[0]),
                 size: guard(size[0]),
-                opacity: guard(row[0]),
+                opacity: guard(opacity[0]),
             } as const;
         }
     }
@@ -306,7 +306,7 @@ export class VizSpecStore {
                 return {
                     type: 'exist',
                     item: IPaintMapAdapter(param),
-                    new: this.paintFields(),
+                    new: this.paintFields,
                 } as const;
             }
             const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
@@ -314,11 +314,11 @@ export class VizSpecStore {
                 return {
                     type: 'exist',
                     item: paramV2,
-                    new: this.paintFields(),
+                    new: this.paintFields,
                 } as const;
             }
         }
-        return this.paintFields();
+        return this.paintFields;
     }
 
     private appendFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {

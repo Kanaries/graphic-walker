@@ -24,8 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
 import { parseColorToHex } from '@/utils/colors';
-import { get } from 'color-string';
 import { getMeaAggKey, getMeaAggName } from '@/utils';
+import rbush from 'rbush';
 
 //@ts-ignore
 CanvasHandler.prototype.context = function () {
@@ -98,7 +98,7 @@ function selectInteractive(scene: { root: Scene }) {
 const getFactor = (f: IPaintDimension) =>
     f.domain.type === 'nominal' ? (GLOBAL_CONFIG.PAINT_SIZE_FACTOR * GLOBAL_CONFIG.PAINT_MAP_SIZE) / f.domain.width : GLOBAL_CONFIG.PAINT_SIZE_FACTOR;
 
-function getMarkFor(types: ISemanticType[]) {
+function getMarkForAgg(types: ISemanticType[]) {
     if (types.every((x) => x === 'quantitative')) {
         return 'circle';
     }
@@ -108,12 +108,23 @@ function getMarkFor(types: ISemanticType[]) {
     return 'square';
 }
 
+function getMarkFor(types: ISemanticType[]) {
+    if (types.every((x) => x === 'quantitative')) {
+        return 'circle';
+    }
+    if (types.find((x) => x === 'quantitative')) {
+        return 'tick';
+    }
+    return 'square';
+}
+
+
 type Dimension = {
     field: IViewField;
     domain?: IPaintDimension;
 };
 
-const aggMarkWhitelist = ['circle', 'tick', 'bar'];
+const aggMarkWhitelist = ['circle', 'bar'];
 
 const getDomainType = (type: ISemanticType) => (type === 'quantitative' ? 'quantitative' : 'nominal');
 
@@ -211,15 +222,16 @@ const AggPainterContent = (props: {
 
     useEffect(() => {
         if (!loading && containerRef.current) {
-            const fallbackMark = getMarkFor([getDomainType(props.y.field.semanticType), getDomainType(props.x.field.semanticType)]);
+            const fallbackMark = getMarkForAgg([getDomainType(props.y.field.semanticType), getDomainType(props.x.field.semanticType)]);
             const mark = props.mark === 'auto' ? autoMark([props.x.field.semanticType, props.y.field.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
+            const finalMark = aggMarkWhitelist.includes(mark) ? mark : fallbackMark;
             const spec: any = {
                 data: {
                     name: 'data',
                     values: data,
                 },
-                mark: { type: aggMarkWhitelist.includes(mark) ? mark : fallbackMark, fillOpacity: 0.66, strokeWidth: 4, strokeOpacity: 1 },
+                mark: { type: finalMark, fillOpacity: 0.66, strokeWidth: 4, strokeOpacity: 1, size: finalMark === 'circle' ? 600 : undefined },
                 encoding: {
                     x: {
                         field: props.x.field.fid,
@@ -298,7 +310,7 @@ const AggPainterContent = (props: {
             });
 
             embed(containerRef.current, spec, {
-                renderer: 'webgl' as any,
+                renderer: 'svg' as any,
                 config: props.vegaConfig,
                 actions: false,
                 tooltip: {
@@ -310,6 +322,7 @@ const AggPainterContent = (props: {
                 setPixelOffset([origin[0] + MAGIC_PADDING, origin[1] + MAGIC_PADDING]);
                 const itemsMap: Map<number, SceneItem[]> = new Map();
                 const interactive = selectInteractive(scene);
+                const tree = new rbush<{ id: number; minX: number; minY: number; maxX: number; maxY: number }>();
                 interactive.forEach((item) =>
                     sceneVisit(item, (item) => {
                         if ('datum' in item) {
@@ -318,6 +331,7 @@ const AggPainterContent = (props: {
                                 itemsMap.set(id, []);
                             }
                             itemsMap.get(id)?.push(item);
+                            item.bounds && tree.insert({ minX: item.bounds.x1, minY: item.bounds.y1, maxX: item.bounds.x2, maxY: item.bounds.y2, id });
                         }
                     })
                 );
@@ -340,29 +354,44 @@ const AggPainterContent = (props: {
                 const handleDraw = (e: ScenegraphEvent, item: Item<any> | null | undefined) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    if (!(e instanceof MouseEvent && e.buttons & MouseButtons.PRIMARY) && !(window.TouchEvent && e instanceof TouchEvent)) {
-                        return;
-                    }
-                    if (!item || !item.datum) return;
-                    const targetColor =
-                        brushIdRef.current === ERASER
-                            ? {
-                                  name: '',
-                                  color: 'transparent',
-                              }
-                            : props.dict[brushIdRef.current];
-                    if (!targetColor) return;
-                    const pts = [item.datum].map((x) => x[PIXEL_INDEX]);
-                    let i = 0;
-                    pts.forEach((x) => {
-                        itemsMap.get(x)?.forEach((item) => {
-                            item['fill'] = targetColor.color;
-                            item.datum![PAINT_FIELD_ID] = targetColor.name;
-                            i++;
+                    const paint = (x: number, y: number) => {
+                        const targetColor =
+                            brushIdRef.current === ERASER
+                                ? {
+                                      name: '',
+                                      color: 'transparent',
+                                  }
+                                : props.dict[brushIdRef.current];
+                        if (!targetColor) return;
+                        const pts = tree
+                            .search({
+                                minX: x - brushSizeRef.current,
+                                minY: y - brushSizeRef.current,
+                                maxX: x + brushSizeRef.current,
+                                maxY: y + brushSizeRef.current,
+                            })
+                            .map((i) => i.id);
+
+                        let i = 0;
+                        pts.forEach((x) => {
+                            itemsMap.get(x)?.forEach((item) => {
+                                item['fill'] = targetColor.color;
+                                item.datum![PAINT_FIELD_ID] = targetColor.name;
+                                i++;
+                            });
+                            props.paintMapRef.current![x] = brushIdRef.current;
                         });
-                        props.paintMapRef.current![x] = brushIdRef.current;
-                    });
-                    i > 0 && rerender();
+                        i > 0 && rerender();
+                    };
+                    if (e instanceof MouseEvent && e.buttons & MouseButtons.PRIMARY) {
+                        paint(e.offsetX - origin[0] - MAGIC_PADDING, e.offsetY - origin[1] - MAGIC_PADDING);
+                    } else if (window.TouchEvent && e instanceof TouchEvent) {
+                        const rect = containerRef.current!.getBoundingClientRect();
+                        paint(
+                            e.changedTouches[0].pageX - rect.left - origin[0] - MAGIC_PADDING,
+                            e.changedTouches[0].pageY - rect.top - origin[1] - MAGIC_PADDING
+                        );
+                    }
                 };
                 res.view.addEventListener('mousedown', handleDraw);
                 res.view.addEventListener('mousemove', handleDraw);
@@ -375,7 +404,7 @@ const AggPainterContent = (props: {
     const [showCursorPreview, setShowCursorPreview] = React.useState(false);
 
     const cursor = useMemo((): CursorDef => {
-        return { dia: brushSize, factor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR, type: 'circle' };
+        return { type: 'rect', x: brushSize, y: brushSize, xFactor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR, yFactor: GLOBAL_CONFIG.PAINT_SIZE_FACTOR };
     }, [brushSize]);
 
     useEffect(() => {
@@ -805,18 +834,20 @@ const PainterContent = (props: {
                         </TabsContent>
                     )}
                 </Tabs>
-                <div className="pt-2">
-                    <output className="text-sm">
-                        {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
-                    </output>
-                    <Slider
-                        className="mt-2"
-                        value={[brushSize]}
-                        min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
-                        max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
-                        onValueChange={([v]) => setBrushSize(v)}
-                    />
-                </div>
+                {(props.domainX.domain.type === 'quantitative' || props.domainY.domain.type === 'quantitative') && (
+                    <div className="pt-2">
+                        <output className="text-sm">
+                            {t('main.tabpanel.settings.paint.brush_size')}: {`${brushSize}`}
+                        </output>
+                        <Slider
+                            className="mt-2"
+                            value={[brushSize]}
+                            min={GLOBAL_CONFIG.PAINT_MIN_BRUSH_SIZE}
+                            max={GLOBAL_CONFIG.PAINT_MAX_BRUSH_SIZE}
+                            onValueChange={([v]) => setBrushSize(v)}
+                        />
+                    </div>
+                )}
                 <div className="flex-1 flex flex-col space-y-2 justify-end">
                     <Button variant="destructive" children={t('main.tabpanel.settings.paint.delete_paint')} onClick={props.onDelete} />
                     <Button variant="outline" children={t('main.tabpanel.settings.paint.reset_paint')} onClick={() => resetRef.current()} />
@@ -955,6 +986,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 setFacets(paintInfo.item.facets);
                                 setX(paintInfo.new.x);
                                 setY(paintInfo.new.y);
+                                setAggInfo(null);
                                 setLoading(false);
                             });
                         } else if (
@@ -970,6 +1002,10 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 setDict(defaultScheme);
                                 setAggInfo(info);
                                 setFacets([]);
+                                setDomainX(undefined);
+                                setDomainY(undefined);
+                                setX(undefined);
+                                setY(undefined);
                                 setLoading(false);
                             });
                         } else {
@@ -985,6 +1021,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 setFacets(paintInfo.item.facets.slice(0, -1));
                                 setX(xf);
                                 setY(yf);
+                                setAggInfo(null);
                                 setLoading(false);
                             });
                         }
@@ -997,6 +1034,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                             setDomainY(domainY);
                             setX(paintInfo.x);
                             setY(paintInfo.y);
+                            setAggInfo(null);
                             setFacets([]);
                             setLoading(false);
                         });
@@ -1007,6 +1045,10 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                             setDict(defaultScheme);
                             setAggInfo(info);
                             setFacets([]);
+                            setDomainX(undefined);
+                            setDomainY(undefined);
+                            setX(undefined);
+                            setY(undefined);
                             setLoading(false);
                         });
                     }
