@@ -118,7 +118,6 @@ function getMarkFor(types: ISemanticType[]) {
     return 'square';
 }
 
-
 type Dimension = {
     field: IViewField;
     domain?: IPaintDimension;
@@ -173,16 +172,32 @@ const AggPainterContent = (props: {
     const { t } = useTranslation();
     const mediaTheme = useContext(themeContext);
     const computation = useCompututaion();
+    const fields = useMemo(
+        () => [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).map((x) => x!.field),
+        [props.x, props.y, props.color, props.size, props.opacity, props.shape]
+    );
     const [viewDimensions, viewMeasures] = useMemo(() => {
-        const fields = [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).map((x) => x!.field);
-        return [fields.filter((x) => x.analyticType === 'dimension'), fields.filter((x) => x.analyticType === 'measure')];
-    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+        const totalFields = deduper(
+            fields.concat(
+                props.facets.flatMap((x) =>
+                    x.dimensions.map((d) => ({
+                        fid: d.fid,
+                        name: d.fid,
+                        semanticType: d.domain.type,
+                        analyticType: d.domain.type === 'nominal' ? 'dimension' : 'measure',
+                    }))
+                )
+            ),
+            (x) => x.fid
+        );
+        return [totalFields.filter((x) => x.analyticType === 'dimension'), fields.filter((x) => x.analyticType === 'measure')];
+    }, [fields, props.facets]);
     const paintDimensions = useMemo(() => {
         return deduper(
             [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).filter((x) => x!.domain),
             (x) => x!.field.fid
         ).map((x) => x!.domain!);
-    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+    }, []);
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
@@ -208,7 +223,7 @@ const AggPainterContent = (props: {
             const pid = props.paintMapRef.current![indexes[i]];
             return {
                 ...x,
-                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] : props.dict[pid]?.name,
+                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] ?? props.dict[1].name : props.dict[pid]?.name,
                 [PIXEL_INDEX]: indexes[i],
             };
         });
@@ -302,7 +317,7 @@ const AggPainterContent = (props: {
             Object.values(spec.encoding).forEach((c: any) => {
                 if (!c) return;
                 if (c.aggregate === null) return;
-                const targetField = props.allFields.find((f) => f.fid === c.field && f.analyticType === 'measure');
+                const targetField = viewMeasures.find((f) => f.fid === c.field);
                 if (targetField) {
                     c.title = getMeaAggName(targetField.name, targetField.aggName);
                     c.field = getMeaAggKey(targetField.fid, targetField.aggName);
@@ -351,7 +366,7 @@ const AggPainterContent = (props: {
                     );
                     rerender();
                 };
-                const handleDraw = (e: ScenegraphEvent, item: Item<any> | null | undefined) => {
+                const handleDraw = (e: ScenegraphEvent) => {
                     e.stopPropagation();
                     e.preventDefault();
                     const paint = (x: number, y: number) => {
@@ -542,16 +557,24 @@ const PainterContent = (props: {
     const mediaTheme = useContext(themeContext);
     const computation = useCompututaion();
     const fields = useMemo(
-        () => [
-            {
-                ...props.x,
-                analyticType: 'measure' as const,
-            },
-            {
-                ...props.y,
-                analyticType: 'measure' as const,
-            },
-        ],
+        () =>
+            deduper(
+                [
+                    {
+                        ...props.x,
+                        analyticType: 'measure' as const,
+                    },
+                    {
+                        ...props.y,
+                        analyticType: 'measure' as const,
+                    },
+                ].concat(
+                    props.facets.flatMap((x) =>
+                        x.dimensions.map((d) => ({ fid: d.fid, name: d.fid, semanticType: d.domain.type, analyticType: 'measure' as const }))
+                    )
+                ),
+                (x) => x.fid
+            ),
         [props.x, props.y]
     );
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
@@ -922,7 +945,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                         };
                     } else {
                         const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
-                        const value = res.values.map((x) => x.value);
+                        const value = res.values.map((x) => x.value).sort();
                         return {
                             domain: {
                                 type: 'nominal',
@@ -966,64 +989,87 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                 if (paintInfo) {
                     if (paintInfo.type === 'exist') {
                         const lastFacet = paintInfo.item.facets.at(-1)!;
-                        if (
-                            paintInfo.new.type === 'new' &&
-                            (lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
+                        if (paintInfo.new.type === 'new') {
+                            // is non-aggergated paint map
+                            if (
+                                lastFacet.dimensions[0]?.fid !== paintInfo.new.y.fid ||
                                 lastFacet.dimensions[1]?.fid !== paintInfo.new.x.fid ||
                                 !isDomainZeroscaledAs(lastFacet.dimensions[0]?.domain, zeroScale) ||
-                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale))
-                        ) {
-                            const { domainX, domainY, map } = await getNewMap(paintInfo.new);
-                            // adapter for old single facet
-                            if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
-                                paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
+                                !isDomainZeroscaledAs(lastFacet.dimensions[1]?.domain, zeroScale)
+                            ) {
+                                // is not same channel, create a new facet
+                                const { domainX, domainY, map } = await getNewMap(paintInfo.new);
+                                // adapter for old single facet
+                                if (paintInfo.item.facets[0] && !paintInfo.item.facets[0].usedColor) {
+                                    paintInfo.item.facets[0].usedColor = paintInfo.item.usedColor;
+                                }
+                                paintMapRef.current = map;
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setDomainX(domainX);
+                                    setDomainY(domainY);
+                                    setFacets(paintInfo.item.facets);
+                                    setX(paintInfo.new.x);
+                                    setY(paintInfo.new.y);
+                                    setAggInfo(null);
+                                    setLoading(false);
+                                });
+                            } else {
+                                // editing the existing paint map
+                                const x = lastFacet.dimensions.at(-1)?.fid;
+                                const y = lastFacet.dimensions.at(-2)?.fid;
+                                const xf = allFields.find((a) => a.fid === x);
+                                const yf = allFields.find((a) => a.fid === y);
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setDomainX(lastFacet.dimensions.at(-1));
+                                    setDomainY(lastFacet.dimensions.at(-2));
+                                    setFacets(paintInfo.item.facets.slice(0, -1));
+                                    setX(xf);
+                                    setY(yf);
+                                    setAggInfo(null);
+                                    setLoading(false);
+                                });
                             }
-                            paintMapRef.current = map;
-                            unstable_batchedUpdates(() => {
-                                setDict(paintInfo.item.dict);
-                                setDomainX(domainX);
-                                setDomainY(domainY);
-                                setFacets(paintInfo.item.facets);
-                                setX(paintInfo.new.x);
-                                setY(paintInfo.new.y);
-                                setAggInfo(null);
-                                setLoading(false);
-                            });
-                        } else if (
-                            paintInfo.new.type === 'agg' &&
-                            !getAggDimensionFields(paintInfo.new).every((f, i) => {
-                                const last = lastFacet.dimensions[i];
-                                return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
-                            })
-                        ) {
-                            const { map, ...info } = await getNewAggMap(paintInfo.new);
-                            paintMapRef.current = map;
-                            unstable_batchedUpdates(() => {
-                                setDict(defaultScheme);
-                                setAggInfo(info);
-                                setFacets([]);
-                                setDomainX(undefined);
-                                setDomainY(undefined);
-                                setX(undefined);
-                                setY(undefined);
-                                setLoading(false);
-                            });
+                        } else if (paintInfo.new.type === 'agg') {
+                            // is aggergated paint map
+                            if (
+                                !getAggDimensionFields(paintInfo.new).every((f, i) => {
+                                    const last = lastFacet.dimensions[i];
+                                    return f?.fid === last?.fid && isDomainZeroscaledAs(last?.domain, zeroScale);
+                                })
+                            ) {
+                                // is not same channel, create a new facet
+                                const { map, ...info } = await getNewAggMap(paintInfo.new);
+                                paintMapRef.current = map;
+                                unstable_batchedUpdates(() => {
+                                    setDict(defaultScheme);
+                                    setAggInfo(info);
+                                    setFacets(paintInfo.item.facets);
+                                    setDomainX(undefined);
+                                    setDomainY(undefined);
+                                    setX(undefined);
+                                    setY(undefined);
+                                    setLoading(false);
+                                });
+                            } else {
+                                // editing the existing aggergated paint map
+                                paintMapRef.current = await decompressBitMap(lastFacet.map);
+                                const { map, ...info } = await getNewAggMap(paintInfo.new);
+
+                                unstable_batchedUpdates(() => {
+                                    setDict(paintInfo.item.dict);
+                                    setAggInfo(info);
+                                    setFacets(paintInfo.item.facets.slice(0, -1));
+                                    setDomainX(undefined);
+                                    setDomainY(undefined);
+                                    setX(undefined);
+                                    setY(undefined);
+                                    setLoading(false);
+                                });
+                            }
                         } else {
-                            paintMapRef.current = await decompressBitMap(lastFacet.map);
-                            const x = lastFacet.dimensions.at(-1)?.fid;
-                            const y = lastFacet.dimensions.at(-2)?.fid;
-                            const xf = allFields.find((a) => a.fid === x);
-                            const yf = allFields.find((a) => a.fid === y);
-                            unstable_batchedUpdates(() => {
-                                setDict(paintInfo.item.dict);
-                                setDomainX(lastFacet.dimensions.at(-1));
-                                setDomainY(lastFacet.dimensions.at(-2));
-                                setFacets(paintInfo.item.facets.slice(0, -1));
-                                setX(xf);
-                                setY(yf);
-                                setAggInfo(null);
-                                setLoading(false);
-                            });
+                            throw new Error('paintInfo.new.type is not supported');
                         }
                     } else if (paintInfo.type === 'new') {
                         const { domainX, domainY, map } = await getNewMap(paintInfo);
