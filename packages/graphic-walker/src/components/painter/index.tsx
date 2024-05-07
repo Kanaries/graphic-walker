@@ -172,16 +172,32 @@ const AggPainterContent = (props: {
     const { t } = useTranslation();
     const mediaTheme = useContext(themeContext);
     const computation = useCompututaion();
+    const fields = useMemo(
+        () => [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).map((x) => x!.field),
+        [props.x, props.y, props.color, props.size, props.opacity, props.shape]
+    );
     const [viewDimensions, viewMeasures] = useMemo(() => {
-        const fields = [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).map((x) => x!.field);
-        return [fields.filter((x) => x.analyticType === 'dimension'), fields.filter((x) => x.analyticType === 'measure')];
-    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+        const totalFields = deduper(
+            fields.concat(
+                props.facets.flatMap((x) =>
+                    x.dimensions.map((d) => ({
+                        fid: d.fid,
+                        name: d.fid,
+                        semanticType: d.domain.type,
+                        analyticType: d.domain.type === 'nominal' ? 'dimension' : 'measure',
+                    }))
+                )
+            ),
+            (x) => x.fid
+        );
+        return [totalFields.filter((x) => x.analyticType === 'dimension'), fields.filter((x) => x.analyticType === 'measure')];
+    }, [fields, props.facets]);
     const paintDimensions = useMemo(() => {
         return deduper(
             [props.x, props.y, props.color, props.size, props.opacity, props.shape].filter((x) => x).filter((x) => x!.domain),
             (x) => x!.field.fid
         ).map((x) => x!.domain!);
-    }, [props.x, props.y, props.color, props.size, props.opacity, props.shape]);
+    }, []);
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     const [brushSize, setBrushSize] = useState(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
     brushSizeRef.current = brushSize;
@@ -212,7 +228,6 @@ const AggPainterContent = (props: {
             };
         });
     }, [indexes, viewData, props.dict, props.facets]);
-    console.log(data);
 
     const [pixelOffset, setPixelOffset] = useState([0, 0]);
 
@@ -308,7 +323,6 @@ const AggPainterContent = (props: {
                     c.field = getMeaAggKey(targetField.fid, targetField.aggName);
                 }
             });
-            console.log('===', spec);
 
             embed(containerRef.current, spec, {
                 renderer: 'svg' as any,
@@ -543,16 +557,24 @@ const PainterContent = (props: {
     const mediaTheme = useContext(themeContext);
     const computation = useCompututaion();
     const fields = useMemo(
-        () => [
-            {
-                ...props.x,
-                analyticType: 'measure' as const,
-            },
-            {
-                ...props.y,
-                analyticType: 'measure' as const,
-            },
-        ],
+        () =>
+            deduper(
+                [
+                    {
+                        ...props.x,
+                        analyticType: 'measure' as const,
+                    },
+                    {
+                        ...props.y,
+                        analyticType: 'measure' as const,
+                    },
+                ].concat(
+                    props.facets.flatMap((x) =>
+                        x.dimensions.map((d) => ({ fid: d.fid, name: d.fid, semanticType: d.domain.type, analyticType: 'measure' as const }))
+                    )
+                ),
+                (x) => x.fid
+            ),
         [props.x, props.y]
     );
     const brushSizeRef = useRef(GLOBAL_CONFIG.PAINT_DEFAULT_BRUSH_SIZE);
