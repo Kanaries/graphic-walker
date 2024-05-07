@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.28.0",
-    "@kanaries/graphic-walker": "0.4.63",
+    "@kanaries/graphic-walker": "0.4.64",
     "@kanaries/gw-dsl-parser": "^0.1.48-rc3",
     "apache-arrow": "^13.0.0",
     "nanoid": "^5.0.1"
