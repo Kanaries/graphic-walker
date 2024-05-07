@@ -207,11 +207,12 @@ const AggPainterContent = (props: {
             const pid = props.paintMapRef.current![indexes[i]];
             return {
                 ...x,
-                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] : props.dict[pid]?.name,
+                [PAINT_FIELD_ID]: pid === 0 ? facetResult[i] ?? props.dict[1].name : props.dict[pid]?.name,
                 [PIXEL_INDEX]: indexes[i],
             };
         });
     }, [indexes, viewData, props.dict, props.facets]);
+    console.log(data);
 
     const [pixelOffset, setPixelOffset] = useState([0, 0]);
 
@@ -307,6 +308,7 @@ const AggPainterContent = (props: {
                     c.field = getMeaAggKey(targetField.fid, targetField.aggName);
                 }
             });
+            console.log('===', spec);
 
             embed(containerRef.current, spec, {
                 renderer: 'svg' as any,
@@ -350,7 +352,7 @@ const AggPainterContent = (props: {
                     );
                     rerender();
                 };
-                const handleDraw = (e: ScenegraphEvent, item: Item<any> | null | undefined) => {
+                const handleDraw = (e: ScenegraphEvent) => {
                     e.stopPropagation();
                     e.preventDefault();
                     const paint = (x: number, y: number) => {
@@ -921,7 +923,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                         };
                     } else {
                         const res = await fieldStat(compuation, f, { range: false, values: true, valuesMeta: false }, allFields);
-                        const value = res.values.map((x) => x.value);
+                        const value = res.values.map((x) => x.value).sort();
                         return {
                             domain: {
                                 type: 'nominal',
@@ -1021,7 +1023,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 unstable_batchedUpdates(() => {
                                     setDict(defaultScheme);
                                     setAggInfo(info);
-                                    setFacets([]);
+                                    setFacets(paintInfo.item.facets);
                                     setDomainX(undefined);
                                     setDomainY(undefined);
                                     setX(undefined);
@@ -1036,7 +1038,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 unstable_batchedUpdates(() => {
                                     setDict(paintInfo.item.dict);
                                     setAggInfo(info);
-                                    setFacets(paintInfo.item.facets);
+                                    setFacets(paintInfo.item.facets.slice(0, -1));
                                     setDomainX(undefined);
                                     setDomainY(undefined);
                                     setX(undefined);
