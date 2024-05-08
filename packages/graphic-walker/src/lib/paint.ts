@@ -162,8 +162,8 @@ function indexByDimensions(dimensions: IPaintDimension[]) {
 export function calcIndexesByDimensions(dimensions: IPaintDimension[]) {
     const getSingleIndex = dimensions.map(({ domain, fid }) => {
         if (domain.type === 'nominal') {
-            const indexDict = new Map(domain.value.map((x, i) => [x, i]));
-            return (data: IRow) => indexDict.get(data[fid]) ?? 0;
+            const indexDict = new Map(domain.value.map((x, i) => [`${x}`, i]));
+            return (data: IRow) => indexDict.get(`${data[fid]}`) ?? 0;
         }
         if (domain.type === 'quantitative') {
             return (data: IRow) => calcIndexInPaintMap(domain.value, data[fid], domain.width);
