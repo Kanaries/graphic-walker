@@ -149,6 +149,73 @@ const getAggDimensionFields = (fields: {
     );
 };
 
+const produceChannel = (
+    channel: IViewField,
+    domain: IPaintDimension,
+    options?: {
+        reverseNominalDomain?: boolean;
+    }
+) => {
+    if (domain.domain.value.every((x) => x instanceof Array)) {
+        return {
+            field: `${channel.fid}[0]`,
+            title: channel.name,
+            type: domain.domain.type,
+            axis: { labelOverlap: true },
+            scale: {
+                domain:
+                    domain.domain.type === 'nominal' && options?.reverseNominalDomain
+                        ? domain.domain.value.toReversed().map((x) => x[0])
+                        : domain.domain.value.map((x) => x[0]),
+            },
+        };
+    }
+    return {
+        field: channel.fid,
+        title: channel.name,
+        type: domain.domain.type,
+        axis: { labelOverlap: true },
+        scale: { domain: domain.domain.type === 'nominal' && options?.reverseNominalDomain ? domain.domain.value.toReversed() : domain.domain.value },
+    };
+};
+
+const produceAggChannel = (
+    channel: IViewField,
+    domain?: IPaintDimension,
+    options?: {
+        reverseNominalDomain?: boolean;
+        aggregate?: boolean;
+    }
+) => {
+    if (domain?.domain.value.every((x) => x instanceof Array)) {
+        return {
+            field: `${channel.fid}[0]`,
+            title: channel.name,
+            type: getDomainType(channel.semanticType),
+            axis: { labelOverlap: true },
+            scale: domain
+                ? {
+                      domain:
+                          domain.domain.type === 'nominal' && options?.reverseNominalDomain
+                              ? domain.domain.value.toReversed().map((x) => x[0])
+                              : domain.domain.value.map((x) => x[0]),
+                  }
+                : undefined,
+            aggregate: options?.aggregate && channel.analyticType === 'measure',
+        };
+    }
+    return {
+        field: channel.fid,
+        title: channel.name,
+        type: getDomainType(channel.semanticType),
+        axis: { labelOverlap: true },
+        scale: domain
+            ? { domain: domain.domain.type === 'nominal' && options?.reverseNominalDomain ? domain.domain.value.toReversed() : domain.domain.value }
+            : undefined,
+        aggregate: options?.aggregate && channel.analyticType === 'measure',
+    };
+};
+
 const AggPainterContent = (props: {
     mark: string;
     x: Dimension;
@@ -248,27 +315,8 @@ const AggPainterContent = (props: {
                 },
                 mark: { type: finalMark, fillOpacity: 0.66, strokeWidth: 4, strokeOpacity: 1, size: finalMark === 'circle' ? 600 : undefined },
                 encoding: {
-                    x: {
-                        field: props.x.field.fid,
-                        title: props.x.field.name,
-                        type: getDomainType(props.x.field.semanticType),
-                        axis: { labelOverlap: true },
-                        scale: props.x.domain ? { domain: props.x.domain.domain.value } : undefined,
-                        aggregate: props.x.field.analyticType === 'measure',
-                    },
-                    y: {
-                        field: props.y.field.fid,
-                        title: props.y.field.name,
-                        type: getDomainType(props.y.field.semanticType),
-                        axis: { labelOverlap: true },
-                        scale: props.y.domain
-                            ? {
-                                  domain:
-                                      props.y.domain.domain.type === 'quantitative' ? props.y.domain.domain.value : props.y.domain.domain.value.toReversed(),
-                              }
-                            : undefined,
-                        aggregate: props.y.field.analyticType === 'measure',
-                    },
+                    x: produceAggChannel(props.x.field, props.x.domain, { aggregate: true }),
+                    y: produceAggChannel(props.y.field, props.y.domain, { reverseNominalDomain: true, aggregate: true }),
                     fill: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
@@ -278,38 +326,10 @@ const AggPainterContent = (props: {
                             range: colors.map(([_, x]) => x.color),
                         },
                     },
-                    stroke: props.color
-                        ? {
-                              field: props.color.field.fid,
-                              title: props.color.field.name,
-                              scale: props.color.domain ? { domain: props.color.domain.domain.value } : undefined,
-                              aggregate: props.color.field.analyticType === 'measure',
-                          }
-                        : undefined,
-                    opacity: props.opacity
-                        ? {
-                              field: props.opacity.field.fid,
-                              title: props.opacity.field.name,
-                              scale: props.opacity.domain ? { domain: props.opacity.domain.domain.value } : undefined,
-                              aggregate: props.opacity.field.analyticType === 'measure',
-                          }
-                        : undefined,
-                    size: props.size
-                        ? {
-                              field: props.size.field.fid,
-                              title: props.size.field.name,
-                              scale: props.size.domain ? { domain: props.size.domain.domain.value } : undefined,
-                              aggregate: props.size.field.analyticType === 'measure',
-                          }
-                        : undefined,
-                    shape: props.shape
-                        ? {
-                              field: props.shape.field.fid,
-                              title: props.shape.field.name,
-                              scale: props.shape.domain ? { domain: props.shape.domain.domain.value } : undefined,
-                              aggregate: props.shape.field.analyticType === 'measure',
-                          }
-                        : undefined,
+                    stroke: props.color ? produceAggChannel(props.color.field, props.color.domain) : undefined,
+                    opacity: props.opacity ? produceAggChannel(props.opacity.field, props.opacity.domain) : undefined,
+                    size: props.size ? produceAggChannel(props.size.field, props.size.domain) : undefined,
+                    shape: props.shape ? produceAggChannel(props.shape.field, props.shape.domain) : undefined,
                 },
                 width: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
                 height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
@@ -325,7 +345,7 @@ const AggPainterContent = (props: {
             });
 
             embed(containerRef.current, spec, {
-                renderer: 'svg' as any,
+                renderer: 'webgl' as any,
                 config: props.vegaConfig,
                 actions: false,
                 tooltip: {
@@ -626,20 +646,8 @@ const PainterContent = (props: {
                 },
                 mark: { type: markWhitelist.includes(mark) ? mark : fallbackMark, opacity: 0.66 },
                 encoding: {
-                    x: {
-                        field: props.x.fid,
-                        title: props.x.name,
-                        type: props.domainX.domain.type,
-                        axis: { labelOverlap: true },
-                        scale: { domain: props.domainX.domain.value },
-                    },
-                    y: {
-                        field: props.y.fid,
-                        title: props.y.name,
-                        type: props.domainY.domain.type,
-                        axis: { labelOverlap: true },
-                        scale: { domain: props.domainY.domain.type === 'quantitative' ? props.domainY.domain.value : props.domainY.domain.value.toReversed() },
-                    },
+                    x: produceChannel(props.x, props.domainX),
+                    y: produceChannel(props.y, props.domainY, { reverseNominalDomain: true }),
                     color: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
