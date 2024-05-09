@@ -2,6 +2,8 @@ import React, { ReactNode, useMemo } from 'react';
 import { INestNode } from './inteface';
 import { IField } from '../../interfaces';
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { formatDate } from '@/utils';
+import { parsedOffsetDate } from '@/lib/op/offset';
 
 function getChildCount(node: INestNode): number {
     if (node.isCollapsed || node.children.length === 0) {
@@ -25,13 +27,17 @@ function renderTree(
     cellRows: ReactNode[][],
     meaNumber: number,
     onHeaderCollapse: (node: INestNode) => void,
-    enableCollapse: boolean
+    enableCollapse: boolean,
+    displayOffset?: number
 ) {
     const childrenSize = getChildCount(node);
     const { isCollapsed } = node;
     if (depth > dimsInRow.length) {
         return;
     }
+    const field = depth > 0 ? dimsInRow[depth - 1] : undefined;
+    const formatter = field?.semanticType === 'temporal' ? (x) => formatDate(parsedOffsetDate(displayOffset, field.offset)(x)) : (x) => `${x}`;
+
     cellRows[cellRows.length - 1].push(
         <td
             key={`${depth}-${node.fieldKey}-${node.value}`}
@@ -40,7 +46,7 @@ function renderTree(
             rowSpan={isCollapsed ? Math.max(meaNumber, 1) : childrenSize * Math.max(meaNumber, 1)}
         >
             <div className="flex">
-                <div>{node.value}</div>
+                <div>{formatter(node.value)}</div>
                 {node.height > 0 && node.key !== '__total' && enableCollapse && (
                     <>
                         {isCollapsed && <PlusCircleIcon className="w-3 ml-1 self-center cursor-pointer" onClick={() => onHeaderCollapse(node)} />}
@@ -66,12 +72,13 @@ export interface TreeProps {
     measInRow: IField[];
     onHeaderCollapse: (node: INestNode) => void;
     enableCollapse: boolean;
+    displayOffset?: number;
 }
 const LeftTree: React.FC<TreeProps> = (props) => {
     const { data, dimsInRow, measInRow, onHeaderCollapse } = props;
     const nodeCells: ReactNode[] = useMemo(() => {
         const cellRows: ReactNode[][] = [[]];
-        renderTree(data, dimsInRow, 0, cellRows, measInRow.length, onHeaderCollapse, props.enableCollapse);
+        renderTree(data, dimsInRow, 0, cellRows, measInRow.length, onHeaderCollapse, props.enableCollapse, props.displayOffset);
         cellRows[0].shift();
         if (measInRow.length > 0) {
             const ans: ReactNode[][] = [];

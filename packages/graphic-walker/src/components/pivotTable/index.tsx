@@ -227,6 +227,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             measInRow={measInRow}
                             onHeaderCollapse={(n) => vizStore?.updateTableCollapsedHeader(n)}
                             enableCollapse={enableCollapse}
+                            displayOffset={vizStore.config.timezoneDisplayOffset}
                         />
                     )}
                 </table>
@@ -239,6 +240,7 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
                             onHeaderCollapse={(n) => vizStore?.updateTableCollapsedHeader(n)}
                             onTopTreeHeaderRowNumChange={(num) => setTopTreeHeaderRowNum(num)}
                             enableCollapse={enableCollapse}
+                            displayOffset={vizStore.config.timezoneDisplayOffset}
                         />
                     )}
                     {metricTable && (
