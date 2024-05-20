@@ -123,7 +123,7 @@ export function toVegaSpec({
             column: colFacetField,
             xOffset: NULL_FIELD,
             yOffset: NULL_FIELD,
-            details,
+            details: details.map(guard).filter((x) => x !== NULL_FIELD),
             defaultAggregated,
             stack,
             geomType,
