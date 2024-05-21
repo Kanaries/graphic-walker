@@ -1,26 +1,24 @@
 {
-  "name": "@kanaries/duckdb-computation",
-  "version": "0.0.1",
-  "type": "module",
-  "main": "dist/duckdb-computation.js",
-  "types": "dist/index.d.ts",
-  "license": "MIT",
-  "scripts": {
-    "build": "vite build"
-  },
-  "prettier": {
-    "tabWidth": 4,
-    "printWidth": 160,
-    "singleQuote": true
-  },
-  "dependencies": {
-    "@duckdb/duckdb-wasm": "^1.28.0",
-    "@kanaries/graphic-walker": "0.4.65",
-    "@kanaries/gw-dsl-parser": "^0.1.48-rc3",
-    "apache-arrow": "^13.0.0",
-    "nanoid": "^5.0.1"
-  },
-  "devDependencies": {
-    "typescript": "^5.2.2"
-  }
+    "name": "@kanaries/duckdb-computation",
+    "version": "0.0.1",
+    "type": "module",
+    "main": "dist/duckdb-computation.js",
+    "types": "dist/index.d.ts",
+    "license": "Apache-2.0",
+    "scripts": {
+        "build": "vite build"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 160,
+        "singleQuote": true
+    },
+    "devDependencies": {
+        "typescript": "^5.2.2",
+        "@duckdb/duckdb-wasm": "^1.28.0",
+        "@kanaries/graphic-walker": "0.4.65",
+        "@kanaries/gw-dsl-parser": "^0.1.48-rc3",
+        "apache-arrow": "^16.1.0",
+        "nanoid": "^5.0.1"
+    }
 }
