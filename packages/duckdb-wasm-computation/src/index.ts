@@ -8,7 +8,8 @@ import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url'
 import initWasm, { parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
 import dslWasm from '@kanaries/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
-import { IDataSourceProvider, IMutField, IDataSourceListener, exportFullRaw, fromFields } from '@kanaries/graphic-walker';
+import type { IDataSourceProvider, IMutField, IDataSourceListener } from '@kanaries/graphic-walker';
+import { exportFullRaw, fromFields } from '@kanaries/graphic-walker/models/visSpecHistory';
 import { Table, Vector } from 'apache-arrow';
 import { bigNumToString } from 'apache-arrow/util/bn';
 

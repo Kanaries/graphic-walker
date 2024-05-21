@@ -1,0 +1,23 @@
+name: Publish Duckdb Package to npmjs
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install deps
+        run: yarn install
+      - name: npm package build
+        run: yarn workspace @kanaries/graphic-walker build
+      - name: Duckdb build
+        run: yarn workspace @kanaries/duckdb-computation build
+      - run: npm publish
+        working-directory: ./packages/duckdb-wasm-computation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
