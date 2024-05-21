@@ -303,12 +303,12 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                         const result = /datum(\.[A-z_]+|\[['"][A-z\s_]+['"]\])\s*((\!=|==|>|<)=?)\s*(.*)/.exec(f);
                         if (result) {
                             const field = /(?:\.|\[["'])([A-z\s_]*)(?:["']\])?/.exec(result[1]);
-                            if (!field) {
+                            const value = /["'](.*)["']/.exec(result[4]);
+                            if (!field || !value) {
                                 return;
                             }
                             const op = result[2];
-                            const value = result[4];
-                            addRule(field[1], op, JSON.parse(value));
+                            addRule(field[1], op, value[1]);
                         }
                     });
                 }
