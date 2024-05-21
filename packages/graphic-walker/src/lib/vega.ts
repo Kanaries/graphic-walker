@@ -70,7 +70,7 @@ export function toVegaSpec({
 
     const rowFacetField = rowLeftFacetFields.length > 0 ? rowLeftFacetFields[rowLeftFacetFields.length - 1] : NULL_FIELD;
     const colFacetField = colLeftFacetFields.length > 0 ? colLeftFacetFields[colLeftFacetFields.length - 1] : NULL_FIELD;
-    const geomFieldIds = [...rows, ...columns, color, opacity, size]
+    const geomFieldIds = [...rows, ...columns, color, opacity, size, ...details]
         .filter((f) => Boolean(f))
         .filter((f) => f!.aggName !== 'expr')
         .map((f) => (f as IViewField).fid);
