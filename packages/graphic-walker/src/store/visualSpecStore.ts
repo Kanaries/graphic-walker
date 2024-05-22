@@ -363,7 +363,7 @@ export class VizSpecStore {
                 } as const;
             }
         }
-        return this.paintFields();
+        return this.paintFields;
     }
 
     get multiViewInfo() {

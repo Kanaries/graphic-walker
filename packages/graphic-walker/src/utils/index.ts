@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import "../locales/i18n";
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
 import { IRow, Filters, IViewField, IFilterField, IKeyWord, FieldIdentifier, IField } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
