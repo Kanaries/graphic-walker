@@ -33,22 +33,23 @@ export function availableChannels(geomType: string): Set<string> {
 function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
     switch (unit) {
         case 'iso_year':
-            return 'year';
+        case 'year':
+            return 'utcyear';
         case 'quarter':
-            return 'yearquarter';
+            return 'utcyearquarter';
         case 'month':
-            return 'yearmonth';
+            return 'utcyearmonth';
         case 'iso_week':
         case 'week':
-            return 'yearweek';
+            return 'utcyearweek';
         case 'day':
-            return 'yearmonthdate';
+            return 'utcyearmonthdate';
         case 'hour':
-            return 'yearmonthdatehours';
+            return 'utcyearmonthdatehours';
         case 'minute':
-            return 'yearmonthdatehoursminutes';
+            return 'utcyearmonthdatehoursminutes';
         case 'second':
-            return 'yearmonthdatehoursminutesseconds';
+            return 'utcyearmonthdatehoursminutesseconds';
     }
     return unit;
 }
