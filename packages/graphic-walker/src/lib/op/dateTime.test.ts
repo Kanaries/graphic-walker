@@ -470,9 +470,7 @@ describe('feature', () => {
     });
     test('week', () => {
         const { result } = dateTimeFeature('result', getParams('week'), { date });
-        expect(bind(date, result)).toEqual(
-            bind(date, [52, 16, 52, 52, 33, 52, 1, 8, 53, 53, 39, 52, 52, 26, 52, 52, 45, 52, 52, 36, 52, 1, 22, 53, 53, 17, 52])
-        );
+        expect(bind(date, result)).toEqual(bind(date, [0, 16, 52, 0, 33, 52, 1, 8, 53, 0, 39, 52, 0, 26, 52, 0, 45, 52, 0, 36, 52, 1, 22, 53, 0, 17, 52]));
     });
     test('weekday', () => {
         const { result } = dateTimeFeature('result', getParams('weekday'), { date });
@@ -532,7 +530,7 @@ describe('edge', () => {
     ];
     test('week', () => {
         const { result } = dateTimeFeature('result', getParams('week'), { date: edgeDates });
-        expect(bind(edgeDates, result)).toEqual(bind(edgeDates, [53, 1, 1, 1, 1, 1, 53, 53, 53]));
+        expect(bind(edgeDates, result)).toEqual(bind(edgeDates, [53, 1, 1, 1, 1, 1, 53, 0, 0]));
     });
     test('iso_week', () => {
         const { result } = dateTimeFeature('result', getParams('iso_week'), { date: edgeDates });
