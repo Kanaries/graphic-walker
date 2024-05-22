@@ -171,7 +171,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 portalContainerContext={portal}
             >
                 {waiting && <LoadingLayer />}
-                <div className={`relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
+                <div className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                             <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
@@ -190,7 +190,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
                         />
                     )}
-                    <div className={`App ${darkMode === 'dark' ? 'dark' : ''}`} ref={setPortal} />
+                    <div ref={setPortal} />
                 </div>
             </VizAppContext>
         </ShadowDom>

@@ -24,10 +24,15 @@ interface DataTableProps {
     computation: IComputationFunction;
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
     disableFilter?: boolean;
+    hideProfiling?: boolean;
+    hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
 }
 const Container = styled.div`
     overflow-x: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     table {
         box-sizing: content-box;
         border-collapse: collapse;
@@ -173,7 +178,7 @@ function FieldValue(props: { field: IMutField; item: IRow; displayOffset?: numbe
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
-    const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset } = props;
+    const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
     const computationFunction = computation;
@@ -301,32 +306,33 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     ))}
                 </div>
             )}
-            <nav className="flex items-center justify-end space-x-2 p-2" aria-label="Pagination">
-                <div className="hidden sm:block flex-1">
-                    <p className="text-sm text-muted-foreground">
-                        Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
-                        <span className="font-medium">{total}</span> results
-                    </p>
-                </div>
-                <div className="space-x-2">
-                    <Pagination
-                        total={total}
-                        pageSize={size}
-                        pageIndex={pageIndex}
-                        onNext={() => {
-                            setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
-                        }}
-                        onPrev={() => {
-                            setPageIndex(Math.max(0, pageIndex - 1));
-                        }}
-                        onPageChange={(index) => {
-                            setPageIndex(Math.max(0, Math.min(Math.ceil(total / size) - 1, index)));
-                        }}
-                    />
-                </div>
-            </nav>
-
-            <div className="overflow-y-auto" style={{ maxHeight: '600px' }}>
+            {!(hidePaginationAtOnepage && total <= size) && (
+                <nav className="flex items-center justify-end space-x-2 p-2" aria-label="Pagination">
+                    <div className="hidden sm:block flex-1">
+                        <p className="text-sm text-muted-foreground">
+                            Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
+                            <span className="font-medium">{total}</span> results
+                        </p>
+                    </div>
+                    <div className="space-x-2">
+                        <Pagination
+                            total={total}
+                            pageSize={size}
+                            pageIndex={pageIndex}
+                            onNext={() => {
+                                setPageIndex(Math.min(Math.ceil(total / size) - 1, pageIndex + 1));
+                            }}
+                            onPrev={() => {
+                                setPageIndex(Math.max(0, pageIndex - 1));
+                            }}
+                            onPageChange={(index) => {
+                                setPageIndex(Math.max(0, Math.min(Math.ceil(total / size) - 1, index)));
+                            }}
+                        />
+                    </div>
+                </nav>
+            )}
+            <div className="overflow-y-auto h-full" style={{ maxHeight: '600px' }}>
                 <div className="h-0 w-full" ref={stickyDector}></div>
                 <table className="min-w-full relative border-x">
                     <thead className={`sticky top-0 bg-background ${isSticky ? 'shadow-md' : ''}`}>
@@ -425,19 +431,21 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                                 ))}
                             </tr>
                         ))}
-                        <tr className="divide-x divide-border border-b">
-                            {metas.map((field) => (
-                                <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
-                                    <FieldProfiling
-                                        field={field.fid}
-                                        semanticType={field.semanticType}
-                                        computation={filteredComputation}
-                                        displayOffset={displayOffset}
-                                        offset={field.offset}
-                                    />
-                                </th>
-                            ))}
-                        </tr>
+                        {!props.hideProfiling && (
+                            <tr className="divide-x divide-border border-b">
+                                {metas.map((field) => (
+                                    <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
+                                        <FieldProfiling
+                                            field={field.fid}
+                                            semanticType={field.semanticType}
+                                            computation={filteredComputation}
+                                            displayOffset={displayOffset}
+                                            offset={field.offset}
+                                        />
+                                    </th>
+                                ))}
+                            </tr>
+                        )}
                     </thead>
                     <tbody className="divide-y divide-border bg-background font-mono">
                         {rows.map((row, index) => (

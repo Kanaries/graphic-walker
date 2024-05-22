@@ -3,6 +3,7 @@ code {
 }
 
 .App {
+    height: 100%;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
