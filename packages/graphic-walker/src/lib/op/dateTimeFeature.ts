@@ -63,10 +63,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         case 'week': {
             const newValues = fieldValues.map((v) => {
                 const date = newDate(v);
-                const _Y = date.getFullYear();
-                const _firstDayOfYear = toOffsetDate(_Y, 0, 1);
-                const _SundayOfFirstWeek = newDate(_firstDayOfYear.setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay()));
-                const Y = date.getTime() - _SundayOfFirstWeek.getTime() >= 1_000 * 60 * 60 * 24 * 7 ? _Y : _SundayOfFirstWeek.getFullYear();
+                const Y = date.getFullYear();
                 const firstDayOfYear = toOffsetDate(Y, 0, 1);
                 const SundayOfFirstWeek = newDate(firstDayOfYear.setDate(firstDayOfYear.getDate() - firstDayOfYear.getDay()));
                 const FirstSundayOfYear =
