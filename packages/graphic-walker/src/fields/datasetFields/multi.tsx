@@ -13,6 +13,7 @@ import DataTypeIcon from '@/components/dataTypeIcon';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
 import { MEA_KEY_ID, MEA_VAL_ID } from '@/constants';
 import { deduper, getFieldIdentifier } from '@/utils';
+import Combobox from '@/components/dropdownSelect/combobox';
 
 const getDiffDesc = (path: IJoinPath, paths: IJoinPath[], fields: { fid: string; dataset?: string; name?: string }[]) => {
     const result: string[] = [];
@@ -213,15 +214,15 @@ const MultiDatasetFields = observer(() => {
 
     return (
         <div>
-            <Tabs value={baseDataset} onValueChange={(d) => vizStore.setViewBaseDataset(d)}>
-                <TabsList>
-                    {datasets.map((ds) => (
-                        <TabsTrigger key={ds} value={ds}>
-                            {datasetNames?.[ds] ?? ds}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+            <Combobox
+                className="w-full"
+                selectedKey={baseDataset}
+                onSelect={(d) => vizStore.setViewBaseDataset(d)}
+                options={datasets.map((ds) => ({
+                    label: datasetNames?.[ds] ?? ds,
+                    value: ds,
+                }))}
+            />
             <div>
                 <DatasetFields bannedPath={[]} basePath={basePath!} dataset={baseDataset} path={[]} tempBannedPath={[]} />
             </div>
