@@ -13,7 +13,8 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
                     title: encoding[ck].title,
                 } as Record<string, any>,
                 (draft) => {
-                    if (encoding[ck].timeUnit) {
+                    if (encoding[ck].timeUnit && !encoding[ck].format) {
+                        // timeUnit overrides format
                         draft.timeUnit = encoding[ck].timeUnit;
                     }
                     if (encoding[ck].scale) {
@@ -30,8 +31,8 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
         })
         .concat(
             details.map((f) => ({
-                field: defaultAggregated ? getMeaAggKey(f.fid, f.aggName) : f.fid,
-                title: defaultAggregated ? getMeaAggName(f.name, f.aggName) : f.name,
+                field: defaultAggregated && f.analyticType === 'measure' ? getMeaAggKey(f.fid, f.aggName) : f.fid,
+                title: defaultAggregated && f.analyticType === 'measure' ? getMeaAggName(f.name, f.aggName) : f.name,
                 type: f.semanticType,
             }))
         );

@@ -328,7 +328,10 @@
                 "day": "Day",
                 "hour": "Hour",
                 "minute": "Minute",
-                "second": "Second"
+                "second": "Second",
+                "iso_year": "ISO Year",
+                "iso_week": "ISO Week",
+                "iso_weekday": "ISO Weekday"
             }
         }
     },

@@ -29,6 +29,8 @@ import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
 import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
+import { getTimeFormat } from '@/lib/inferMeta';
+import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
 
 interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
@@ -161,9 +163,23 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                     .map((k) => allFields.find((x) => x.fid === k))
                     .filter((x): x is IViewField => !!x && x.semanticType === 'temporal');
                 if (selectedTemporalFields.length > 0) {
+                    const displayOffset = visualConfig.timezoneDisplayOffset ?? new Date().getTimezoneOffset();
                     selectedTemporalFields.forEach((f) => {
+                        const offset = f.offset ?? new Date().getTimezoneOffset();
                         const set = new Set(viewData.map((x) => x[f.fid] as string | number));
-                        selectedMarkObject[f.fid] = [...set.values()].find((x) => new Date(x).getTime() === selectedMarkObject[f.fid]);
+                        selectedMarkObject[f.fid] = Array.from(set).find((x) => {
+                            const format = getTimeFormat(x);
+                            let offsetTime = displayOffset * -60000;
+                            if (format !== 'timestamp') {
+                                offsetTime += offset * 60000;
+                                if (!unexceptedUTCParsedPatternFormats.includes(format)) {
+                                    // the raw data will be parsed as local timezone, so reduce the offset with the local time zone.
+                                    offsetTime -= new Date().getTimezoneOffset() * 60000;
+                                }
+                            }
+                            const time = new Date(x).getTime() + offsetTime;
+                            return time === selectedMarkObject[f.fid];
+                        });
                     });
                 }
                 if (e.item.mark.marktype === 'line') {

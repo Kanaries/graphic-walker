@@ -91,7 +91,7 @@ export default function Pagination(props: PaginationProps) {
                         <PaginationEllipsis />
                     </PaginationItem>
                 )}
-                {showIndices.slice(1, -1).map((page) => pageButton(page.index))}
+                {showIndices.slice(1, showIndices.length > 3 ? -1 : undefined).map((page) => pageButton(page.index))}
                 {showIndices.length > 2 && showIndices[showIndices.length - 1].index > showIndices[showIndices.length - 2].index + 1 && (
                     <PaginationItem>
                         <PaginationEllipsis />

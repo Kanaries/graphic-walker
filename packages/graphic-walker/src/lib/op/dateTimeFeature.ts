@@ -15,6 +15,19 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
     const prepareDate = newOffsetDate(offset);
     const toOffsetDate = newOffsetDate(displayOffset);
     const newDate = ((...x: []) => toOffsetDate(prepareDate(...x))) as typeof prepareDate;
+    function getISOYear(v: any) {
+        const date = newDate(v);
+        const y = date.getFullYear();
+        const dayInFirstWeek = toOffsetDate(y, 0, 4);
+        const firstMondayOfYear = newDate(newDate(dayInFirstWeek).setDate(dayInFirstWeek.getDate() - (dayInFirstWeek.getDay() || 7) + 1));
+        if (date.getTime() < firstMondayOfYear.getTime()) {
+            return y - 1;
+        }
+        const nextY = y + 1;
+        const nextDayInFirstWeek = toOffsetDate(nextY, 0, 4);
+        const nextFirstMondayOfYear = newDate(newDate(nextDayInFirstWeek).setDate(nextDayInFirstWeek.getDate() - (nextDayInFirstWeek.getDay() || 7) + 1));
+        return date.getTime() < nextFirstMondayOfYear.getTime() ? y : nextY;
+    }
     switch (drillLevel) {
         case 'year': {
             const newValues = fieldValues.map((v) => {
@@ -51,12 +64,14 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             const newValues = fieldValues.map((v) => {
                 const date = newDate(v);
                 const _Y = date.getFullYear();
-                const _firstDayOfYear = newDate(_Y, 0, 1);
-                const _SundayOfFirstWeek = newDate(newDate(_firstDayOfYear).setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay()));
-                const Y = date.getTime() - _SundayOfFirstWeek.getTime() > 1_000 * 60 * 60 * 24 * 7 ? _Y : _SundayOfFirstWeek.getFullYear();
-                const firstDayOfYear = newDate(Y, 0, 1);
-                const SundayOfFirstWeek = newDate(newDate(firstDayOfYear).setDate(firstDayOfYear.getDate() - firstDayOfYear.getDay()));
-                const W = Math.floor((date.getTime() - SundayOfFirstWeek.getTime()) / (7 * 24 * 60 * 60 * 1_000)) + 1;
+                const _firstDayOfYear = toOffsetDate(_Y, 0, 1);
+                const _SundayOfFirstWeek = newDate(_firstDayOfYear.setDate(_firstDayOfYear.getDate() - _firstDayOfYear.getDay()));
+                const Y = date.getTime() - _SundayOfFirstWeek.getTime() >= 1_000 * 60 * 60 * 24 * 7 ? _Y : _SundayOfFirstWeek.getFullYear();
+                const firstDayOfYear = toOffsetDate(Y, 0, 1);
+                const SundayOfFirstWeek = newDate(firstDayOfYear.setDate(firstDayOfYear.getDate() - firstDayOfYear.getDay()));
+                const FirstSundayOfYear =
+                    SundayOfFirstWeek.getFullYear() === Y ? SundayOfFirstWeek : newDate(SundayOfFirstWeek.setDate(SundayOfFirstWeek.getDate() + 7));
+                const W = Math.floor((date.getTime() - FirstSundayOfYear.getTime()) / (7 * 24 * 60 * 60 * 1_000)) + 1;
                 return W;
             });
             return {
@@ -68,6 +83,37 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
             const newValues = fieldValues.map((v) => {
                 const date = newDate(v);
                 return date.getDay();
+            });
+            return {
+                ...data,
+                [resKey]: newValues,
+            };
+        }
+        case 'iso_year': {
+            const newValues = fieldValues.map(getISOYear);
+            return {
+                ...data,
+                [resKey]: newValues,
+            };
+        }
+        case 'iso_week': {
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
+                const y = getISOYear(v);
+                const dayInFirstWeek = toOffsetDate(y, 0, 4);
+                const firstMondayOfYear = newDate(newDate(dayInFirstWeek).setDate(dayInFirstWeek.getDate() - (dayInFirstWeek.getDay() || 7) + 1));
+                const W = Math.floor((date.getTime() - firstMondayOfYear.getTime()) / (7 * 24 * 60 * 60 * 1_000)) + 1;
+                return W;
+            });
+            return {
+                ...data,
+                [resKey]: newValues,
+            };
+        }
+        case 'iso_weekday': {
+            const newValues = fieldValues.map((v) => {
+                const date = newDate(v);
+                return date.getDay() || 7;
             });
             return {
                 ...data,

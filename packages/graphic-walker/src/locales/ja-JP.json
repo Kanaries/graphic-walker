@@ -322,7 +322,10 @@
                 "day": "日",
                 "hour": "時",
                 "minute": "分",
-                "second": "秒"
+                "second": "秒",
+                "iso_year": "ISO年",
+                "iso_week": "ISO週",
+                "iso_weekday": "ISO曜日"
             }
         }
     },
