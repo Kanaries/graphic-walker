@@ -69,9 +69,6 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
         async saveSpecs(datasetId, value) {
             const dataSet = store.dataSources.find((x) => x.id === datasetId);
             if (!dataSet) {
-                if (!store.visDict[datasetId]) {
-                    throw new Error('cannot find dataset');
-                }
                 store.visDict[datasetId] = JSON.parse(value);
                 listeners.forEach((cb) => cb(IDataSourceEventType.updateSpec, datasetId));
             } else {

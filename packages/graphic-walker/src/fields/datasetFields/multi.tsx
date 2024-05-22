@@ -213,9 +213,9 @@ const MultiDatasetFields = observer(() => {
     const datasetNames = useContext(DatasetNamesContext);
 
     return (
-        <div>
+        <div className="flex flex-col h-full divide-y divide-border border rounded">
             <Combobox
-                className="w-full"
+                className="w-full flex-shrink-0 border-none shadow-none"
                 selectedKey={baseDataset}
                 onSelect={(d) => vizStore.setViewBaseDataset(d)}
                 options={datasets.map((ds) => ({
@@ -223,109 +223,34 @@ const MultiDatasetFields = observer(() => {
                     value: ds,
                 }))}
             />
-            <div>
-                <DatasetFields bannedPath={[]} basePath={basePath!} dataset={baseDataset} path={[]} tempBannedPath={[]} />
-            </div>
-            <div className="border-t">
-                <Droppable droppableId="dimensions">
-                    {(provided, snapshot) => (
-                        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                            {dimensions.map((f, index) => {
-                                // TODO add support for fold
-                                if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
-                                    return (
-                                        <Draggable key={getFieldIdentifier(f)} draggableId={`dimensions_${getFieldIdentifier(f)}`} index={index}>
-                                            {(provided, snapshot) => {
-                                                return (
-                                                    <ActionMenu
-                                                        title={f.name || f.fid}
-                                                        menu={dimMenuActions[index]}
-                                                        enableContextMenu
-                                                        disabled={snapshot.isDragging}
-                                                    >
-                                                        <FieldPill
-                                                            className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
-                                                                snapshot.isDragging ? 'bg-dimension/20' : ''
-                                                            }`}
-                                                            ref={refMapper(provided.innerRef)}
-                                                            isDragging={snapshot.isDragging}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                        >
-                                                            <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
-                                                            <span className="ml-0.5" title={f.name}>
-                                                                {f.name}
-                                                            </span>
-                                                            <ActionMenu.Button as="div">
-                                                                <EllipsisVerticalIcon className="w-4 h-4" />
-                                                            </ActionMenu.Button>
-                                                        </FieldPill>
-                                                        {
-                                                            <FieldPill
-                                                                className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 rounded-full border border-dimension truncate ${
-                                                                    snapshot.isDragging ? 'bg-dimension/20 flex' : 'hidden'
-                                                                }`}
-                                                                isDragging={snapshot.isDragging}
+            <div className="flex-1 relative">
+                <div className="overflow-y-auto h-full min-h-0 absolute w-full">
+                    <DatasetFields bannedPath={[]} basePath={basePath!} dataset={baseDataset} path={[]} tempBannedPath={[]} />
+                    <div className="border-t">
+                        <Droppable droppableId="dimensions">
+                            {(provided, snapshot) => (
+                                <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+                                    {dimensions.map((f, index) => {
+                                        // TODO add support for fold
+                                        if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
+                                            return (
+                                                <Draggable key={getFieldIdentifier(f)} draggableId={`dimensions_${getFieldIdentifier(f)}`} index={index}>
+                                                    {(provided, snapshot) => {
+                                                        return (
+                                                            <ActionMenu
+                                                                title={f.name || f.fid}
+                                                                menu={dimMenuActions[index]}
+                                                                enableContextMenu
+                                                                disabled={snapshot.isDragging}
                                                             >
-                                                                <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
-                                                                <span className="ml-0.5" title={f.name}>
-                                                                    {f.name}
-                                                                </span>
-                                                                <ActionMenu.Button as="div">
-                                                                    <EllipsisVerticalIcon className="w-4 h-4" />
-                                                                </ActionMenu.Button>
-                                                            </FieldPill>
-                                                        }
-                                                    </ActionMenu>
-                                                );
-                                            }}
-                                        </Draggable>
-                                    );
-                                }
-                                return null;
-                            })}
-                        </div>
-                    )}
-                </Droppable>
-                <Droppable droppableId="measures">
-                    {(provided, snapshot) => (
-                        <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
-                            {measures.map((f, index) => {
-                                if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
-                                    return (
-                                        <Draggable key={getFieldIdentifier(f)} draggableId={`measures_${getFieldIdentifier(f)}`} index={index}>
-                                            {(provided, snapshot) => {
-                                                return (
-                                                    <div className="block">
-                                                        <ActionMenu
-                                                            title={f.name || f.fid}
-                                                            menu={meaMenuActions[index]}
-                                                            enableContextMenu
-                                                            disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}
-                                                        >
-                                                            <FieldPill
-                                                                className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
-                                                                    snapshot.isDragging ? 'bg-measure/20' : ''
-                                                                }`}
-                                                                isDragging={snapshot.isDragging}
-                                                                ref={refMapper(provided.innerRef)}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                            >
-                                                                <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
-                                                                <span className="ml-0.5" title={f.name}>
-                                                                    {f.name}
-                                                                </span>
-                                                                <ActionMenu.Button as="div">
-                                                                    <EllipsisVerticalIcon className="w-4 h-4" />
-                                                                </ActionMenu.Button>
-                                                            </FieldPill>
-                                                            {
                                                                 <FieldPill
-                                                                    className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md border-measure border truncate ${
-                                                                        snapshot.isDragging ? 'bg-measure/20 flex' : 'hidden'
+                                                                    className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
+                                                                        snapshot.isDragging ? 'bg-dimension/20' : ''
                                                                     }`}
+                                                                    ref={refMapper(provided.innerRef)}
                                                                     isDragging={snapshot.isDragging}
+                                                                    {...provided.draggableProps}
+                                                                    {...provided.dragHandleProps}
                                                                 >
                                                                     <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
                                                                     <span className="ml-0.5" title={f.name}>
@@ -335,22 +260,99 @@ const MultiDatasetFields = observer(() => {
                                                                         <EllipsisVerticalIcon className="w-4 h-4" />
                                                                     </ActionMenu.Button>
                                                                 </FieldPill>
-                                                            }
-                                                        </ActionMenu>
-                                                    </div>
-                                                );
-                                            }}
-                                        </Draggable>
-                                    );
-                                }
-                                return null;
-                            })}
-                        </div>
-                    )}
-                </Droppable>
+                                                                {
+                                                                    <FieldPill
+                                                                        className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 rounded-full border border-dimension truncate ${
+                                                                            snapshot.isDragging ? 'bg-dimension/20 flex' : 'hidden'
+                                                                        }`}
+                                                                        isDragging={snapshot.isDragging}
+                                                                    >
+                                                                        <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
+                                                                        <span className="ml-0.5" title={f.name}>
+                                                                            {f.name}
+                                                                        </span>
+                                                                        <ActionMenu.Button as="div">
+                                                                            <EllipsisVerticalIcon className="w-4 h-4" />
+                                                                        </ActionMenu.Button>
+                                                                    </FieldPill>
+                                                                }
+                                                            </ActionMenu>
+                                                        );
+                                                    }}
+                                                </Draggable>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </div>
+                            )}
+                        </Droppable>
+                        <Droppable droppableId="measures">
+                            {(provided, snapshot) => (
+                                <div {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
+                                    {measures.map((f, index) => {
+                                        if (!f.dataset && ![MEA_KEY_ID, MEA_VAL_ID].includes(f.fid)) {
+                                            return (
+                                                <Draggable key={getFieldIdentifier(f)} draggableId={`measures_${getFieldIdentifier(f)}`} index={index}>
+                                                    {(provided, snapshot) => {
+                                                        return (
+                                                            <div className="block">
+                                                                <ActionMenu
+                                                                    title={f.name || f.fid}
+                                                                    menu={meaMenuActions[index]}
+                                                                    enableContextMenu
+                                                                    disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}
+                                                                >
+                                                                    <FieldPill
+                                                                        className={`flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
+                                                                            snapshot.isDragging ? 'bg-measure/20' : ''
+                                                                        }`}
+                                                                        isDragging={snapshot.isDragging}
+                                                                        ref={refMapper(provided.innerRef)}
+                                                                        {...provided.draggableProps}
+                                                                        {...provided.dragHandleProps}
+                                                                    >
+                                                                        <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
+                                                                        <span className="ml-0.5" title={f.name}>
+                                                                            {f.name}
+                                                                        </span>
+                                                                        <ActionMenu.Button as="div">
+                                                                            <EllipsisVerticalIcon className="w-4 h-4" />
+                                                                        </ActionMenu.Button>
+                                                                    </FieldPill>
+                                                                    {
+                                                                        <FieldPill
+                                                                            className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md border-measure border truncate ${
+                                                                                snapshot.isDragging ? 'bg-measure/20 flex' : 'hidden'
+                                                                            }`}
+                                                                            isDragging={snapshot.isDragging}
+                                                                        >
+                                                                            <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
+                                                                            <span className="ml-0.5" title={f.name}>
+                                                                                {f.name}
+                                                                            </span>
+                                                                            <ActionMenu.Button as="div">
+                                                                                <EllipsisVerticalIcon className="w-4 h-4" />
+                                                                            </ActionMenu.Button>
+                                                                        </FieldPill>
+                                                                    }
+                                                                </ActionMenu>
+                                                            </div>
+                                                        );
+                                                    }}
+                                                </Draggable>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </div>
+                            )}
+                        </Droppable>
+                    </div>
+                </div>
             </div>
             {unReachedDatasets.length > 0 && (
-                <div>
+                <div className="flex-shrink-0 p-2">
                     <div className="text-xs text-muted-foreground mb-1">Unlink datasets</div>
                     <ul>
                         {unReachedDatasets.map((ds) => (
