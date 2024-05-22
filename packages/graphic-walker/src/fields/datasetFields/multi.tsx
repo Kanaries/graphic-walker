@@ -223,8 +223,8 @@ const MultiDatasetFields = observer(() => {
                     value: ds,
                 }))}
             />
-            <div className="flex-1 relative">
-                <div className="overflow-y-auto h-full min-h-0 absolute w-full">
+            <div className="flex-shrink flex">
+                <div className="overflow-y-auto min-h-content max-h-full w-full">
                     <DatasetFields bannedPath={[]} basePath={basePath!} dataset={baseDataset} path={[]} tempBannedPath={[]} />
                     <div className="border-t">
                         <Droppable droppableId="dimensions">

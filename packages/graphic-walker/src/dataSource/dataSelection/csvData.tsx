@@ -41,11 +41,11 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
                         onLoading: () => {},
                         encoding,
                     }).then((data) => {
-                        commonStore.updateTempDS(data as IRow[]);
+                        commonStore.updateTempDS(data as IRow[], file.name.split('.')[0]);
                     });
                 } else {
                     jsonReader(file).then((data) => {
-                        commonStore.updateTempDS(data as IRow[]);
+                        commonStore.updateTempDS(data as IRow[], file.name.split('.')[0]);
                     });
                 }
             }

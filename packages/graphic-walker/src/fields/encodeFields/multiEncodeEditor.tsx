@@ -49,7 +49,11 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
         <div className="relative select-none flex flex-col py-0.5 px-1 touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {channelItems.map((channelItem, index) => {
                 return (
-                    <Draggable key={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`} draggableId={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`} index={index}>
+                    <Draggable
+                        key={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`}
+                        draggableId={`encode_${dkey.id}_${index}_${getFieldIdentifier(channelItem)}`}
+                        index={index}
+                    >
                         {(provided, snapshot) => {
                             const hasMultiJoins = datasetJoinPaths[channelItem.dataset ?? DEFAULT_DATASET]?.length > 1;
 
@@ -83,14 +87,17 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                                 className="flex-1"
                                             >
                                                 <span className="flex-1 truncate" title={channelItem.name}>
-                                                    {isMultiDataset && channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
+                                                    {isMultiDataset && channelItem.dataset
+                                                        ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.`
+                                                        : ''}
                                                     {channelItem.name}
                                                 </span>
                                             </SelectContext>
                                         )}
                                         {channelItem.fid !== MEA_KEY_ID && (
                                             <span className="flex-1 truncate">
-                                                {channelItem.dataset ? datasetNames?.[channelItem.dataset] ?? channelItem.dataset : ''}.{channelItem.name}
+                                                {isMultiDataset && channelItem.dataset ? `${datasetNames?.[channelItem.dataset] ?? channelItem.dataset}.` : ''}
+                                                {channelItem.name}
                                             </span>
                                         )}
                                         {hasMultiJoins && channelItem.joinPath && (

@@ -47,6 +47,7 @@ const DataBoard = observer(function DataBoardModal() {
                       .flatMap(({ dataset, as }) =>
                           allFields
                               .filter((x) => x.dataset === dataset)
+                              .filter((x) => !x.computed)
                               .map(
                                   (f): IViewField => ({
                                       ...f,
@@ -55,10 +56,15 @@ const DataBoard = observer(function DataBoardModal() {
                                       fid: `${as}.${f.fid}`,
                                   })
                               )
+                              .concat(
+                                  Object.values(multiViewInfo.views)
+                                      .flat()
+                                      .filter((x) => x.dataset === dataset && x.fid !== COUNT_FIELD_ID && x.computed && x.expression && x.aggName !== 'expr')
+                              )
                       )
                       .concat(allFields.filter((x) => !x.dataset))
                 : allFields,
-        [viewDatasets, allFields]
+        [viewDatasets, multiViewInfo.views, allFields]
     );
 
     const filters = useMemo(
@@ -78,10 +84,12 @@ const DataBoard = observer(function DataBoardModal() {
 
     const computedFileds = useMemo(
         () =>
-            Object.values(multiViewInfo.views)
-                .flat()
-                .filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression && x.aggName !== 'expr'),
-        [allFields]
+            viewDatasets.length > 0
+                ? Object.values(multiViewInfo.views)
+                      .flat()
+                      .filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression && x.aggName !== 'expr')
+                : allFields.filter((x) => x.computed && x.expression && x.aggName !== 'expr'),
+        [viewDatasets, allFields, multiViewInfo.views]
     );
 
     const filteredComputation = useMemo((): IComputationFunction => {
