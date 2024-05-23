@@ -13,7 +13,7 @@ import MetricTable from './metricTable';
 import LoadingLayer from '../loadingLayer';
 import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
-import { getSort, getSortedEncoding } from '../../utils';
+import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
 
 interface PivotTableProps {
@@ -128,6 +128,8 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
             });
     };
 
+    const groupbyCombListRef = useRef<IViewField[][]>([]);
+
     const aggregateGroupbyData = () => {
         if (dimsInRow.length === 0 && dimsInColumn.length === 0) return;
         if (data.length === 0) return;
@@ -148,6 +150,15 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         const groupbyCombList: IViewField[][] = groupbyCombListInCol
             .flatMap((combInCol) => groupbyCombListInRow.map((combInRow) => [...combInCol, ...combInRow]))
             .slice(0, -1);
+        if (
+            groupbyCombListRef.current.length === groupbyCombList.length &&
+            groupbyCombListRef.current.every(
+                (x, i) => x.length === groupbyCombList[i].length && x.every((y, j) => getFieldIdentifier(y) === getFieldIdentifier(groupbyCombList[i][j]))
+            )
+        ) {
+            return;
+        }
+        groupbyCombListRef.current = groupbyCombList;
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
