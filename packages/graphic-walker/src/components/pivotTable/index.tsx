@@ -84,7 +84,11 @@ const PivotTable: React.FC<PivotTableProps> = observer(function PivotTableCompon
         } else {
             aggregateThenGenerate();
         }
-    }, [enableCollapse, vizStore?.tableCollapsedHeaderMap, showTableSummary]);
+    }, [enableCollapse, vizStore?.tableCollapsedHeaderMap]);
+
+    useEffect(() => {
+        aggregateThenGenerate();
+    }, [showTableSummary]);
 
     const aggregateThenGenerate = async () => {
         await aggregateGroupbyData();

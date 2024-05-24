@@ -68,18 +68,18 @@ const TOTAL_KEY = '__total';
 
 function insertSummaryNode(node: INestNode): void {
     if (node.children.length > 0) {
-        node.children.push({
+        node.children.unshift({
             key: TOTAL_KEY,
-            value: 'total',
+            value: `${node.value}(total)`,
             sort: '',
-            fieldKey: node.children[0].fieldKey,
+            fieldKey: TOTAL_KEY,
             uniqueKey: `${node.uniqueKey}${TOTAL_KEY}`,
             children: [],
             path: [],
             height: node.children[0].height,
             isCollapsed: true,
         });
-        for (let i = 0; i < node.children.length - 1; i++) {
+        for (let i = 1; i < node.children.length; i++) {
             insertSummaryNode(node.children[i]);
         }
     }
@@ -197,7 +197,7 @@ export function buildMetricTableFromNestTree(leftTree: INestNode, topTree: INest
             const predicates = iteLeft
                 .predicates()
                 .concat(iteTop.predicates())
-                .filter((ele) => ele.value !== 'total');
+                .filter((ele) => ele.key !== TOTAL_KEY);
             const matchedRows = data.filter((r) => predicates.every((pre) => r[pre.key] === pre.value));
             if (matchedRows.length > 0) {
                 // If multiple rows are matched, then find the most matched one (the row with smallest number of keys)
