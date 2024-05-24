@@ -1015,6 +1015,9 @@ export interface ITableSpecProps {
     /** @deprecated use vizThemeConfig instead */
     themeConfig?: GWGlobalConfig;
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
+    tableFilterRef?: React.Ref<{
+        getFilters: () => IFilterField[];
+    }>;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}

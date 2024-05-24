@@ -101,6 +101,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                 </Tabs>
                             )}
                             <DataTable
+                                ref={props.tableFilterRef}
                                 onMetaChange={
                                     vizStore.onMetaChange
                                         ? (fid, fIndex, diffMeta) => {
