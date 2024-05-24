@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef } from 'react';
 import styled from 'styled-components';
 import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
@@ -232,7 +232,13 @@ function TruncateDector(props: { value: string }) {
     );
 }
 
-const DataTable: React.FC<DataTableProps> = (props) => {
+const DataTable = forwardRef(
+    (
+        props: DataTableProps,
+        ref: ForwardedRef<{
+            getFilters: () => IFilterField[];
+        }>
+    ) => {
     const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
@@ -252,6 +258,13 @@ const DataTable: React.FC<DataTableProps> = (props) => {
     const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
 
     const { filters, editingFilterIdx, onClose, onDeleteFilter, onSelectFilter, onWriteFilter, options } = useFilters(metas);
+
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+
+    useImperativeHandle(ref, () => ({
+        getFilters: () => filtersRef.current,
+    }));
 
     const [total, setTotal] = useState(0);
     const [statLoading, setStatLoading] = useState(false);
@@ -541,7 +554,7 @@ const DataTable: React.FC<DataTableProps> = (props) => {
             )}
         </Container>
     );
-};
+});
 
 export default DataTable;
 
