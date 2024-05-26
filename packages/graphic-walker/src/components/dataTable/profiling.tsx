@@ -52,7 +52,7 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
                         return (
                             <Tooltip key={idx} content={displayValue}>
                                 <div className="w-full rounded-md px-2 py-1 hover:bg-accent flex justify-between space-x-2">
-                                    <div className="min-w-[0px] flex-shrink whitespace-nowrap text-ellipsis overflow-hidden">{displayValue}</div>
+                                    <div className="min-w-[0px] flex-shrink truncate max-w-[180px]">{displayValue}</div>
                                     <div className="flex-shrink-0">{Math.floor((100 * count) / meta.total)}%</div>
                                 </div>
                             </Tooltip>
