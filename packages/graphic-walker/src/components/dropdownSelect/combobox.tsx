@@ -40,11 +40,11 @@ function Combobox({
                                 <CommandItem
                                     key={opt.value}
                                     value={opt.value}
-                                    onSelect={(currentValue) => {
-                                        if (currentValue === '_none') {
+                                    onSelect={() => {
+                                        if (opt.value === '_none') {
                                             onSelect?.('');
                                         } else {
-                                            onSelect?.(currentValue === selectedKey ? '' : currentValue);
+                                            onSelect?.(opt.value === selectedKey ? '' : opt.value);
                                         }
                                         setOpen(false);
                                     }}

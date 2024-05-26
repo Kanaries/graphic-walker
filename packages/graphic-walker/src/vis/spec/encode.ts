@@ -32,22 +32,35 @@ export function availableChannels(geomType: string): Set<string> {
 }
 function encodeTimeunit(unit: (typeof DATE_TIME_DRILL_LEVELS)[number]) {
     switch (unit) {
+        case 'iso_year':
+        case 'year':
+            return 'utcyear';
         case 'quarter':
-            return 'yearquarter';
+            return 'utcyearquarter';
         case 'month':
-            return 'yearmonth';
+            return 'utcyearmonth';
+        case 'iso_week':
         case 'week':
-            return 'yearweek';
+            return 'utcyearweek';
         case 'day':
-            return 'yearmonthdate';
+            return 'utcyearmonthdate';
         case 'hour':
-            return 'yearmonthdatehours';
+            return 'utcyearmonthdatehours';
         case 'minute':
-            return 'yearmonthdatehoursminutes';
+            return 'utcyearmonthdatehoursminutes';
         case 'second':
-            return 'yearmonthdatehoursminutesseconds';
+            return 'utcyearmonthdatehoursminutesseconds';
     }
     return unit;
+}
+
+function isoTimeformat(unit: string) {
+    switch (unit) {
+        case 'iso_year':
+            return '%G';
+        case 'iso_week':
+            return '%G W%V';
+    }
 }
 
 export function encodeFid(fid: string) {
@@ -100,6 +113,9 @@ export function channelEncode(props: IEncodeProps) {
                     encoding[c].scale = { type: 'utc' };
                 }
                 if (field.semanticType === 'temporal' && field.timeUnit) {
+                    if (field.timeUnit.startsWith('iso')) {
+                        encoding[c].format = isoTimeformat(field.timeUnit);
+                    }
                     encoding[c].timeUnit = encodeTimeunit(field.timeUnit);
                 }
                 if (c === 'color' && field.expression?.op === 'paint') {
