@@ -11,11 +11,12 @@ import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog'
 import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
 import { parsedOffsetDate } from '../../lib/op/offset';
-import { formatDate } from '../../utils';
+import { cn, formatDate } from '../../utils';
 import { FieldProfiling } from './profiling';
 import { addFilterForQuery, createFilter } from '../../utils/workflow';
 import { Button, buttonVariants } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
 
 interface DataTableProps {
     /** page limit */
@@ -164,12 +165,66 @@ function useFilters(metas: IMutField[]) {
     return { filters, options, editingFilterIdx, onSelectFilter, onDeleteFilter, onWriteFilter, onClose };
 }
 
-function FieldValue(props: { field: IMutField; item: IRow; displayOffset?: number }) {
+function fieldValue(props: { field: IMutField; item: IRow; displayOffset?: number }) {
     const { field, item } = props;
     if (field.semanticType === 'temporal') {
-        return <>{formatDate(parsedOffsetDate(props.displayOffset, field.offset)(item[field.fid]))}</>;
+        return formatDate(parsedOffsetDate(props.displayOffset, field.offset)(item[field.fid]));
     }
-    return <>{`${item[field.fid]}`}</>;
+    return `${item[field.fid]}`;
+}
+
+function CopyButton(props: { value: string }) {
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (copied) {
+            const timer = setTimeout(() => {
+                setCopied(false);
+            }, 2000);
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [copied]);
+    return (
+        <Button
+            variant="secondary"
+            className="h-6 px-2 text-xs w-14"
+            size="sm"
+            onClick={() => {
+                try {
+                    navigator.clipboard.writeText(props.value);
+                    setCopied(true);
+                } catch (e) {
+                    console.error(e);
+                }
+            }}
+            disabled={copied}
+        >
+            {copied ? 'Copied' : 'Copy'}
+        </Button>
+    );
+}
+
+function TruncateDector(props: { value: string }) {
+    const ref = useRef<HTMLAnchorElement>(null);
+    const [isTruncate, setIsTruncate] = useState(false);
+    const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (ref.current) {
+            setIsTruncate(ref.current.offsetWidth < ref.current.scrollWidth);
+        }
+    }, [ref.current]);
+    return (
+        <HoverCard open={open && isTruncate} onOpenChange={setOpen}>
+            <HoverCardTrigger ref={ref} className="truncate block">
+                {props.value}
+            </HoverCardTrigger>
+            <HoverCardContent className="flex space-x-2 items-center w-fit py-2 px-3">
+                <p className="text-xs max-w-[360px] line-clamp-4 break-all">{props.value}</p>
+                <CopyButton value={props.value} />
+            </HoverCardContent>
+        </HoverCard>
+    );
 }
 
 const DataTable: React.FC<DataTableProps> = (props) => {
@@ -442,11 +497,17 @@ const DataTable: React.FC<DataTableProps> = (props) => {
                     <tbody className="divide-y divide-border bg-background font-mono">
                         {rows.map((row, index) => (
                             <tr className="divide-x divide-border" key={index}>
-                                {metas.map((field) => (
-                                    <td key={field.fid + index} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-muted-foreground'}>
-                                        <FieldValue field={field} item={row} displayOffset={displayOffset} />
-                                    </td>
-                                ))}
+                                {metas.map((field) => {
+                                    const value = fieldValue({ field, item: row, displayOffset });
+                                    return (
+                                        <td
+                                            key={field.fid + index}
+                                            className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]'}
+                                        >
+                                            <TruncateDector value={value} />
+                                        </td>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </tbody>
