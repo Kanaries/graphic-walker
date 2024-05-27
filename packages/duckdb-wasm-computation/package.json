@@ -14,11 +14,11 @@
         "singleQuote": true
     },
     "devDependencies": {
-        "typescript": "^5.2.2",
         "@duckdb/duckdb-wasm": "^1.28.0",
-        "@kanaries/graphic-walker": "0.4.65",
+        "@kanaries/graphic-walker": "0.4.66",
         "@kanaries/gw-dsl-parser": "^0.1.48-rc3",
         "apache-arrow": "^16.1.0",
-        "nanoid": "^5.0.1"
+        "nanoid": "^5.0.1",
+        "typescript": "^5.2.2"
     }
 }
