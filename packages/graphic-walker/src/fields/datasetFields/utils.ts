@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useCompututaion, useVizStore } from '../../store';
 import type { IActionMenuItem } from '../../components/actionMenu/list';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
-import { getSample } from '../../computation';
+import { getSample, withTransform } from '../../computation';
 import { getTimeFormat } from '../../lib/inferMeta';
 import { getFieldIdentifier } from '@/utils';
+import { treeShakeComputeds } from '@/utils/workflow';
+import { IExpression, IViewField } from '@/interfaces';
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
     return array.filter(Boolean) as T[];
@@ -110,7 +112,19 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                     : null) ?? f;
                             const originChannel = originField.analyticType === 'dimension' ? 'dimensions' : 'measures';
                             const originIndex = vizStore.allFields.findIndex((x) => x.fid === originField.fid);
-                            getSample(computation, originField.fid)
+                            getSample(
+                                withTransform(
+                                    computation,
+                                    treeShakeComputeds(
+                                        vizStore.allFields.filter((f) => f.computed && f.expression) as (IViewField & { expression: IExpression })[],
+                                        [{ fid: originField.fid, dataset: originField.dataset }]
+                                    ).map((x) => ({
+                                        key: x.fid,
+                                        expression: x.expression,
+                                    }))
+                                ),
+                                originField.fid
+                            )
                                 .then(getTimeFormat)
                                 .then((format) =>
                                     vizStore.createDateTimeDrilledField(
@@ -154,7 +168,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                     })),
                 },
                 {
-                    label: "Rename Field",
+                    label: 'Rename Field',
                     onPress() {
                         vizStore.setShowRenamePanel(true);
                         vizStore.setCreateField({ channel: channel, index: index });

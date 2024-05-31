@@ -51,7 +51,7 @@ const walkExpression = (
     }
 };
 
-const treeShake = <T extends { fid: string; dataset?: string; expression: IExpression }>(
+export const treeShakeComputeds = <T extends { fid: string; dataset?: string; expression: IExpression }>(
     computedFields: T[],
     viewKeys: { fid: string; dataset?: string; joinPath?: IJoinPath[] }[]
 ): (T & { joinPath?: IJoinPath[] })[] => {
@@ -162,7 +162,7 @@ export const toWorkflow = (
         viewDimensionsGuarded.push(...newFields.filter((x) => x?.analyticType === 'dimension'));
         viewMeasuresGuarded.push(...newFields.filter((x) => x?.analyticType === 'measure'));
     }
-    const allComputedRaw = treeShake(
+    const allComputedRaw = treeShakeComputeds(
         allFields.filter((f) => f.computed && f.expression) as (IViewField & { expression: IExpression })[],
         deduper([...viewDimensionsGuarded, ...viewMeasuresGuarded, ...viewFiltersRaw], (x) =>
             JSON.stringify([getFieldIdentifier(x), encodePath(x.joinPath ?? [])])

@@ -3,6 +3,7 @@ import type {
     IDataQueryPayload,
     IDataQueryWorkflowStep,
     IDatasetStats,
+    IExpression,
     IField,
     IFieldStats,
     IFilterWorkflowStep,
@@ -16,7 +17,7 @@ import type {
 } from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
-import { processExpression } from '../utils/workflow';
+import { addTransformForQuery, processExpression } from '../utils/workflow';
 import { binarySearchClosest, isNotEmpty, parseKeyword } from '../utils';
 import { COUNT_FIELD_ID, DEFAULT_DATASET } from '../constants';
 import { range } from 'lodash-es';
@@ -531,6 +532,18 @@ export async function getFieldDistinctCounts(
         value: row[field] as string,
         count: row[COUNT_ID] as number,
     }));
+}
+
+export function withTransform(
+    service: IComputationFunction,
+    transforms: {
+        key: string;
+        expression: IExpression;
+    }[]
+) {
+    return (payload: IDataQueryPayload) => {
+        return service(addTransformForQuery(payload, transforms));
+    };
 }
 
 export async function profileNonmialField(service: IComputationFunction, field: string, dataset?: string) {
