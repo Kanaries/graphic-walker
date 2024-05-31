@@ -52,6 +52,7 @@ type IPureRendererProps = {
     channelScales?: IChannelScales;
     scales?: IChannelScales;
     overrideSize?: IVisualLayout['size'];
+    disableCollapse?: boolean;
 };
 
 type LocalProps = {
@@ -90,6 +91,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         themeConfig,
         channelScales,
         scales,
+        disableCollapse,
     } = props;
     const computation = useMemo(() => {
         if (props.type === 'remote') {
@@ -209,6 +211,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             locale={locale ?? 'en-US'}
                             scales={scales ?? channelScales}
                             vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                            disableCollapse={disableCollapse}
                         />
                     )}
                     <div ref={setPortal} />
