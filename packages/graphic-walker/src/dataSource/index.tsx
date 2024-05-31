@@ -239,8 +239,9 @@ export function DataSourceSegmentComponent(props: {
         if (exportFile) {
             return async () => {
                 const data = vizSpecStoreRef.current?.exportAllCharts();
+                const specKey = selectedIds.length > 1 ? JSON.stringify(selectedIds.map((x) => x).sort()) : selectedIds[0];
                 if (data) {
-                    await saveSpecs(JSON.stringify(selectedIds.map((x) => x).sort()), JSON.stringify(data));
+                    await saveSpecs(specKey, JSON.stringify(data));
                 }
                 return exportFile();
             };
@@ -250,7 +251,8 @@ export function DataSourceSegmentComponent(props: {
     const syncSpecs = useCallback(() => {
         const data = vizSpecStoreRef.current?.exportAllCharts();
         if (data) {
-            props.provider.saveSpecs(JSON.stringify(selectedIds.map((x) => x).sort()), JSON.stringify(data));
+            const specKey = selectedIds.length > 1 ? JSON.stringify(selectedIds.map((x) => x).sort()) : selectedIds[0];
+            props.provider.saveSpecs(specKey, JSON.stringify(data));
         }
     }, [selectedIds, props.provider]);
 

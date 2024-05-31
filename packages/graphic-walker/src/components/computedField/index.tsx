@@ -146,7 +146,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             children={editingComputedFieldFid === '' ? 'Add' : 'Edit'}
                             onClick={() => {
                                 try {
-                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, sql, isMultiDataset ? dataset : null);
+                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, sql, dataset);
                                     vizStore.setComputedFieldFid();
                                 } catch (e) {
                                     setError(parseErrorMessage(e));

@@ -26,7 +26,7 @@ function FullGraphicWalker(props: IGWProps) {
                         datasetNames={p.datasetNames}
                         storeRef={p.storeRef}
                         computation={p.computation}
-                        rawFields={p.fields}
+                        fields={p.fields}
                         onMetaChange={p.onMetaChange}
                     />
                 );

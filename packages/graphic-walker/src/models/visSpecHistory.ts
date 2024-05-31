@@ -434,7 +434,7 @@ const actions: {
                     as: fid,
                     params: [{ type: 'sql', value: sql }],
                 },
-                dataset: dataset ?? undefined
+                dataset: dataset ?? undefined,
             })
         );
     },
@@ -456,7 +456,9 @@ const actions: {
     },
     [Methods.editAllField]: (data, fid, newData, identifier) => {
         if (Object.keys(newData).includes('name')) {
-            const originalField = data.encodings.dimensions.concat(data.encodings.measures).find(identifier ? (x) => getFieldIdentifier(x) !== identifier : (x) => x.fid !== fid);
+            const originalField = data.encodings.dimensions
+                .concat(data.encodings.measures)
+                .find(identifier ? (x) => getFieldIdentifier(x) === identifier : (x) => x.fid === fid);
             // if name is changed, update all computed fields
             return produce(data, (draft) => {
                 if (!originalField) return;
@@ -487,10 +489,7 @@ const actions: {
                     Object.entries(e).map(([fname, fields]) => {
                         const hasField = fields.find(identifier ? (x) => getFieldIdentifier(x) !== identifier : (x) => x.fid !== fid);
                         if (hasField) {
-                            return [
-                                fname,
-                                fields.map((x) => ((identifier ? getFieldIdentifier(x) !== identifier : x.fid === fid) ? { ...x, ...newData } : x)),
-                            ];
+                            return [fname, fields.map((x) => ((identifier ? getFieldIdentifier(x) !== identifier : x.fid === fid) ? { ...x, ...newData } : x))];
                         }
                         return [fname, fields];
                     })

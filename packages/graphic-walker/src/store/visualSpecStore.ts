@@ -878,13 +878,13 @@ export class VizSpecStore {
 
             this.visList[this.visIndex] = performers.editAllField(
                 this.visList[this.visIndex],
-                fid,
+                originalField.fid,
                 {
                     name,
                     analyticType,
                     semanticType,
                     ...(preAggName !== newAggName ? { aggName: newAggName } : {}),
-                    expression: { as: fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
+                    expression: { as: originalField.fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
                 },
                 fid
             );
