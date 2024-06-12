@@ -6,7 +6,7 @@ import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, MEA_K
 import { getSample, withTransform } from '../../computation';
 import { getTimeFormat } from '../../lib/inferMeta';
 import { getFieldIdentifier } from '@/utils';
-import { treeShakeComputeds } from '@/utils/workflow';
+import { processExpression, treeShakeComputeds } from '@/utils/workflow';
 import { IExpression, IViewField } from '@/interfaces';
 
 const keepTrue = <T extends string | number | object | Function | symbol>(array: (T | 0 | null | false | undefined | void)[]): T[] => {
@@ -120,7 +120,9 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                                         [{ fid: originField.fid, dataset: originField.dataset }]
                                     ).map((x) => ({
                                         key: x.fid,
-                                        expression: x.expression,
+                                        expression: processExpression(x.expression, vizStore.allFields, {
+                                            timezoneDisplayOffset: vizStore.config.timezoneDisplayOffset,
+                                        }),
                                     }))
                                 ),
                                 originField.fid
