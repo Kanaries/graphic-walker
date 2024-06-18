@@ -222,7 +222,7 @@
                     "cancel": "Cancel",
                     "delete_paint": "Delete Painting"
                 },
-                "limit": "Limit",
+                "limit": "enable query limit (rows)",
                 "size": "Resize",
                 "size_setting": {
                     "width": "Width",
