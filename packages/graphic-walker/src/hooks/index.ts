@@ -30,7 +30,9 @@ export function createStreamedValueBindHook(wrapper: <T>(emitter: (v: T) => void
     };
 }
 
-export const useDebounceValueBind = createStreamedValueBindHook((f) => debounce(f, 200));
+export const createUseDebounceValueBind = (delay: number) => createStreamedValueBindHook((f) => debounce(f, delay));
+
+export const useDebounceValueBind = createUseDebounceValueBind(200);
 
 /**
  * hook of state that change of value will change innerValue inplace, make reduced re-render.
