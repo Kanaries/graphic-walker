@@ -10,7 +10,7 @@ const useDebounceValueBind  = createStreamedValueBindHook((f) => debounce(f, 600
 export default function LimitSetting(props: { value: number; setValue: (v: number) => void }) {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
     const [enable, setEnable] = React.useState(props.value > 0);
-    const [innerValue, setInnerValue] = useDebounceValueBind(props.value <= 0 ? 100: props.value, (v) => enable && props.setValue(v));
+    const [innerValue, setInnerValue] = useDebounceValueBind(props.value > 0 ? props.value : 100, (v) => enable && props.setValue(v));
 
     return (
         <div className="w-60 mt-2 p-2">
