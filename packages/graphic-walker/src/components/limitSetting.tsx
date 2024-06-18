@@ -9,7 +9,8 @@ const useDebounceValueBind  = createStreamedValueBindHook((f) => debounce(f, 600
 
 export default function LimitSetting(props: { value: number; setValue: (v: number) => void }) {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
-    const [innerValue, setInnerValue] = useDebounceValueBind(props.value, (v) => props.setValue(v));
+    const [enable, setEnable] = React.useState(props.value > 0);
+    const [innerValue, setInnerValue] = useDebounceValueBind(props.value <= 0 ? 100: props.value, (v) => enable && props.setValue(v));
 
     return (
         <div className="w-60 mt-2 p-2">
@@ -19,17 +20,19 @@ export default function LimitSetting(props: { value: number; setValue: (v: numbe
                 min={0}
                 step={10}
                 value={innerValue}
+                disabled={!enable}
                 onChange={(e) => setInnerValue(parseInt(e.target.value))}
             />
             <div className="ml-1 mt-3 flex items-center">
                 <Checkbox
                     className="mr-1"
-                    checked={innerValue > 0}
+                    checked={enable}
                     onCheckedChange={(v) => {
-                        setInnerValue(v ? 30 : -1);
+                        setEnable(!!v);
+                        v ? props.setValue(innerValue) : props.setValue(0);
                     }}
                 ></Checkbox>
-                {`${t('limit')}${innerValue > 0 ? `: ${innerValue}` : ''}`}
+                { t('limit') }
             </div>
         </div>
     );
