@@ -1,4 +1,6 @@
-export const viewEncodingKeys = (geom: string) => {
+import { DraggableFieldState } from '..';
+
+export const viewEncodingKeys = (geom: string): Exclude<keyof DraggableFieldState, 'filters'>[] => {
     switch (geom) {
         case 'choropleth':
             return ['geoId', 'color', 'opacity', 'text', 'details'];

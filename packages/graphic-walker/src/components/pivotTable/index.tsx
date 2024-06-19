@@ -14,11 +14,12 @@ import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
 import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
+import { getAllFields, getViewEncodingFields } from '@/store/storeStateLib';
 
 interface PivotTableProps {
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
     data: IRow[];
-    draggableFieldState: DeepReadonly<DraggableFieldState>;
+    draggableFieldState: DraggableFieldState;
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
     disableCollapse?: boolean;
@@ -183,9 +184,9 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         setIsLoading(true);
         appRef.current?.updateRenderStatus('computing');
         const groupbyPromises: Promise<IRow[]>[] = groupbyCombList.map((dimComb) => {
-            const viewFilters = draggableFieldState.filters.map((x) => ({ ...x }));
-            const allFields = [...draggableFieldState.dimensions, ...draggableFieldState.measures];
-            const viewFields = [...draggableFieldState.columns, ...draggableFieldState.rows];
+            const viewFilters = draggableFieldState.filters;
+            const allFields = getAllFields(draggableFieldState);
+            const viewFields = getViewEncodingFields(draggableFieldState, 'table');
             const viewMeasures = viewFields.filter((f) => f.analyticType === 'measure');
             const sort = getSort(draggableFieldState);
             const { limit } = visualConfig;

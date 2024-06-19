@@ -52,6 +52,7 @@ import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
 import { IPaintMapAdapter } from '../lib/paint';
 import { toChatMessage } from '@/models/chat';
 import { viewEncodingKeys } from '@/models/visSpec';
+import { getAllFields, getViewEncodingFields } from './storeStateLib';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 export class VizSpecStore {
@@ -153,7 +154,7 @@ export class VizSpecStore {
     }
 
     get allFields() {
-        return [...this.dimensions, ...this.measures];
+        return getAllFields(this);
     }
 
     get config() {
@@ -179,7 +180,7 @@ export class VizSpecStore {
         return result;
     }
 
-    get viewEncodings() {
+    get viewEncodings(): Partial<Omit<DraggableFieldState, 'filters'>> {
         const result: Record<string, IViewField[]> = {};
         viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
             result[k] = this.currentEncodings[k];
@@ -188,7 +189,7 @@ export class VizSpecStore {
     }
 
     get viewEncodingFields() {
-        return viewEncodingKeys(this.config.geoms[0]).flatMap((k) => this.viewEncodings[k]);
+        return getViewEncodingFields(this.viewEncodings, this.config.geoms[0]);
     }
 
     get viewDimensions() {
