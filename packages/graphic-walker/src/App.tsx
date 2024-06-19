@@ -227,7 +227,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 <SideResize
                                                     defaultWidth={180}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <FilterField />
