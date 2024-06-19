@@ -50,10 +50,14 @@ const CodeExport: React.FC = observer((props) => {
             key: 'vega-lite',
             label: 'Vega-Lite',
         },
-        {
-            key: 'workflow',
-            label: 'Workflow',
-        },
+        ...(vizStore.layout.showActions
+            ? [
+                  {
+                      key: 'workflow',
+                      label: 'Workflow',
+                  },
+              ]
+            : []),
     ];
 
     useEffect(() => {
