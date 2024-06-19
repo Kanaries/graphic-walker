@@ -1,35 +1,43 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDebounceValueBind } from '../hooks';
+import { createStreamedValueBindHook } from '../hooks';
 import { Checkbox } from './ui/checkbox';
-import { Slider } from './ui/slider';
+import { Input } from './ui/input';
+import debounce from 'lodash-es/debounce';
+
+const useDebounceValueBind  = createStreamedValueBindHook((f) => debounce(f, 600));
+const default_limit_value = 100;
 
 export default function LimitSetting(props: { value: number; setValue: (v: number) => void }) {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
-    const [innerValue, setInnerValue] = useDebounceValueBind(props.value, (v) => props.setValue(v));
-    const sliderValue = useMemo(() => (innerValue > 0 ? [innerValue] : [0]), [innerValue]);
+    const setInnerValue = useDebounceValueBind(0, (v) => props.setValue(v))[1];
+    const [inputValue, setInputValue] = React.useState(props.value > 0 ? props.value : default_limit_value);
+    const [enable, setEnable] = React.useState(props.value > 0);
 
     return (
         <div className="w-60 mt-2 p-2">
-            <Slider
-                min={1}
-                max={50}
-                step={1}
-                name="limit"
-                className="w-full"
-                disabled={innerValue < 0}
-                onValueChange={([v]) => setInnerValue(v)}
-                value={sliderValue}
+            <Input
+                className='h-8'
+                type='number'
+                min={0}
+                step={10}
+                value={inputValue}
+                disabled={!enable}
+                onChange={(e) => {
+                    setInnerValue(parseInt(e.target.value))
+                    setInputValue(parseInt(e.target.value))
+                }}
             />
             <div className="ml-1 mt-3 flex items-center">
                 <Checkbox
                     className="mr-1"
-                    checked={innerValue > 0}
+                    checked={enable}
                     onCheckedChange={(v) => {
-                        setInnerValue(v ? 30 : -1);
+                        setEnable(!!v);
+                        v ? props.setValue(inputValue) : props.setValue(0);
                     }}
                 ></Checkbox>
-                {`${t('limit')}${innerValue > 0 ? `: ${innerValue}` : ''}`}
+                { t('limit') }
             </div>
         </div>
     );
