@@ -14,7 +14,7 @@ import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
 import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
-import { getAllFields, getViewEncodingFields } from '@/store/storeStateLib';
+import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
 
 interface PivotTableProps {
     vizThemeConfig?: IThemeKey | GWGlobalConfig;

@@ -1,4 +1,4 @@
-import { DraggableFieldState } from '..';
+import { DraggableFieldState } from '../interfaces';
 
 export const viewEncodingKeys = (geom: string): Exclude<keyof DraggableFieldState, 'filters'>[] => {
     switch (geom) {
