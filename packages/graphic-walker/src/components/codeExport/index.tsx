@@ -50,6 +50,10 @@ const CodeExport: React.FC = observer((props) => {
             key: 'vega-lite',
             label: 'Vega-Lite',
         },
+        {
+            key: 'workflow',
+            label: 'Workflow',
+        },
     ];
 
     useEffect(() => {
@@ -57,8 +61,13 @@ const CodeExport: React.FC = observer((props) => {
             if (tabKey === 'graphic-walker') {
                 const res = vizStore.exportCode();
                 setCode(res);
-            } else {
+            } else if (tabKey === 'vega-lite') {
                 setCode(vizStore.lastSpec);
+            } else if (tabKey === 'workflow') {
+                const workflow = vizStore.workflow;
+                setCode(workflow);
+            } else {
+                console.error('unknown tabKey');
             }
         }
     }, [tabKey, showCodeExportPanel, vizStore]);
@@ -74,7 +83,9 @@ const CodeExport: React.FC = observer((props) => {
                 <Tabs value={tabKey} onValueChange={setTabKey}>
                     <TabsList className="my-1">
                         {specTabs.map((tab) => (
-                            <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
+                            <TabsTrigger key={tab.key} value={tab.key}>
+                                {tab.label}
+                            </TabsTrigger>
                         ))}
                     </TabsList>
                     <div className="border rounded-md overflow-hidden">
