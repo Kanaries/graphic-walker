@@ -4,8 +4,7 @@ import React, { forwardRef, useMemo, useContext } from 'react';
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DraggableFieldState, IDarkMode, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
-import LoadingLayer from '../components/loadingLayer';
+import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
 import { uiThemeContext, themeContext } from '@/store/theme';
@@ -23,25 +22,14 @@ interface SpecRendererProps {
     locale?: string;
     scales?: IChannelScales;
     onReportSpec?: (spec: string) => void;
+    disableCollapse?: boolean;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    {
-        name,
-        layout,
-        data,
-        draggableFieldState,
-        visualConfig,
-        onGeomClick,
-        onChartResize,
-        locale,
-        onReportSpec,
-        vizThemeConfig,
-        scales,
-    },
+    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -121,7 +109,16 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
     if (isPivotTable) {
-        return <PivotTable data={data} draggableFieldState={draggableFieldState} visualConfig={visualConfig} layout={layout} vizThemeConfig={vizThemeConfig} />;
+        return (
+            <PivotTable
+                data={data}
+                draggableFieldState={draggableFieldState}
+                visualConfig={visualConfig}
+                layout={layout}
+                vizThemeConfig={vizThemeConfig}
+                disableCollapse={disableCollapse}
+            />
+        );
     }
 
     const isSpatial = coordSystem === 'geographic';
