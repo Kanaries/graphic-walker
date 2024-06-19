@@ -222,7 +222,7 @@
                     "cancel": "取消改动",
                     "delete_paint": "删除画板"
                 },
-                "limit": "上限",
+                "limit": "启用查询限制（行）",
                 "size": "调整尺寸",
                 "size_setting": {
                     "width": "宽度",
