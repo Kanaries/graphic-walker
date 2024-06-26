@@ -78,6 +78,8 @@ export default function Pagination(props: PaginationProps) {
         return (
             <PaginationItem key={index}>
                 <PaginationLink
+                    size="default"
+                    className='px-3 min-w-[2.25rem]'
                     isActive={index === pageIndex}
                     onClick={() => {
                         onPageChange && onPageChange(index);
