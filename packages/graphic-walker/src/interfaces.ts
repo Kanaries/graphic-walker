@@ -631,6 +631,7 @@ export type IDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkflowSte
 
 export interface IDataQueryPayload {
     workflow: IDataQueryWorkflowStep[];
+    tag?: string;
     limit?: number;
     offset?: number;
 }
