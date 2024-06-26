@@ -1,15 +1,14 @@
 import { ComponentType, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { IComputationFunction, ISemanticType } from '../../interfaces';
-import { profileNonmialField, profileQuantitativeField } from '../../computation';
+import { profileNonmialField, profileQuantitativeField, wrapComputationWithTag } from '../../computation';
 import React from 'react';
 import { formatDate, isNotEmpty } from '../../utils';
 import Tooltip from '../tooltip';
-import { uiThemeContext, themeContext, vegaThemeContext } from '../../store/theme';
+import { themeContext, vegaThemeContext } from '../../store/theme';
 import { parsedOffsetDate } from '../../lib/op/offset';
 import embed, { VisualizationSpec } from 'vega-embed';
 import { format } from 'd3-format';
 import { getTheme } from '../../utils/useTheme';
-import { parseColorToHSL } from '@/utils/colors';
 
 export interface FieldProfilingProps {
     field: string;
@@ -19,7 +18,7 @@ export interface FieldProfilingProps {
 function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }: FieldProfilingProps & { valueRenderer?: (v: string | number) => string }) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileNonmialField>>>();
     useEffect(() => {
-        profileNonmialField(computation, field).then(setStat);
+        profileNonmialField(wrapComputationWithTag(computation, "profiling"), field).then(setStat);
     }, [computation, field]);
 
     if (!isNotEmpty(stat)) {
@@ -85,7 +84,7 @@ const formatter = format('~s');
 function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileQuantitativeField>>>();
     useEffect(() => {
-        profileQuantitativeField(computation, field).then(setStat);
+        profileQuantitativeField(wrapComputationWithTag(computation, "profiling"), field).then(setStat);
     }, [computation, field]);
     if (!isNotEmpty(stat)) {
         return <div className="h-24 flex items-center justify-center">Loading...</div>;
