@@ -644,3 +644,12 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
         binValues,
     };
 }
+
+export function wrapComputationWithTag(service: IComputationFunction, tag: string) {
+    return (payload: IDataQueryPayload) => {
+        return service({
+            ...payload,
+            tag,
+        });
+    };
+}
