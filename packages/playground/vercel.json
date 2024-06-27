@@ -3,6 +3,10 @@
       {
         "source": "/examples(/.*)?",
         "destination": "/examples.html"
+      },
+      {
+        "source": "/gallery(/.*)?",
+        "destination": "/gallery.html"
       }
     ]
   }
