@@ -660,6 +660,7 @@ export type IBasicDataQueryWorkflowStep = IFilterWorkflowStep | ITransformWorkfl
 export interface IDataQueryPayload {
     workflow: IDataQueryWorkflowStep[];
     datasets: string[];
+    tag?: string;
     limit?: number;
     offset?: number;
 }
