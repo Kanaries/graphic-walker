@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { useMemo } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 
 function GalleryItem(props: IGalleryItem) {
     const {
@@ -17,7 +17,7 @@ function GalleryItem(props: IGalleryItem) {
                     transition: "background-position 2s",
                 }}
             ></div>
-            <p className="group-hover:underline text-center text-black dark:text-white">{title}</p>
+            <p className="px-0.5 group-hover:underline text-center text-black dark:text-white">{title}</p>
         </Link>
     )
 }
@@ -26,8 +26,8 @@ export interface IGalleryItem {
     name: string,
     title: string,
     imageURL: string,
-    datasetURL?: string,
-    specURL?: string,
+    datasetName?: string,
+    specName?: string,
 }
 export default function GalleryGroup(props: {
     title: string,
@@ -38,7 +38,7 @@ export default function GalleryGroup(props: {
     const location = useLocation();
     const isActive = useMemo(() => {
         return location.pathname.endsWith(path) || location.pathname.endsWith(path + '/')
-    }, [location.pathname, path])
+    }, [location.pathname, path]);
 
     return (
         <>

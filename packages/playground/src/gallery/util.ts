@@ -1,4 +1,10 @@
 import { IMutField, IRow } from '@kanaries/graphic-walker';
+
+export interface IDataSource {
+    dataSource: IRow[];
+    fields: IMutField[];
+}
+
 export function promiseWrapper<T>(promise: Promise<T>): () => T {
     let status = 'pending';
     let result: T;
@@ -28,38 +34,6 @@ export function promiseWrapper<T>(promise: Promise<T>): () => T {
     };
 }
 
-const cache: Map<string, () => unknown> = new Map();
-
-export function useFetch<T>(url: string): T {
-    if (!cache.has(url)) {
-        cache.set(url, promiseWrapper(fetch(url).then((resp) => resp.json() as T)));
-    }
-    return cache.get(url)!() as T;
+export function toRouterPath(name: string): string {
+    return name.replace(/[\s,]/g, '_');
 }
-
-export interface IDataSource {
-    dataSource: IRow[];
-    fields: IMutField[];
-}
-
-export const extractRGB = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return {
-        r: parseInt(result![1], 16),
-        g: parseInt(result![2], 16),
-        b: parseInt(result![3], 16),
-    };
-};
-
-export const extractHSL = (hsl: string) => {
-    const result = /^hsl\(([\d.]+)\s([\d.]+)%\s([\d.]+)%\)$/i.exec(hsl);
-    return {
-        h: parseInt(result![1]),
-        s: parseInt(result![2]),
-        l: parseInt(result![3]),
-    };
-};
-
-export const toHex = (r: number, g: number, b: number) => {
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-};
