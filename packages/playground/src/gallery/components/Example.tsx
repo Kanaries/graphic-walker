@@ -1,27 +1,22 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
 import { IChart, PureRenderer } from '@kanaries/graphic-walker';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { IDataSource, promiseWrapper } from '../util';
-import { useContext } from 'react';
 import { themeContext } from '../context';
-import { Link } from 'react-router-dom';
 import { IGalleryItem } from './GalleryGroup';
+import { specDict } from '../resources';
+import { IDataSource, useFetch } from '../util';
 
-interface ExampleProps {
-    title: string,
-    dataURL: string,
-    specURL: string,
-}
-
-const cache: Map<string, () => unknown> = new Map();
-function useFetch<T>(folder: "datasets" | "specs", name: string): T {
-    const key = folder + '-' + name;
-    if (!cache.has(key)) {
-        cache.set(key, promiseWrapper(import(`../${folder}/${name}.json`).then(module => module.default)));
+function getResourceURL(type: "datasets" | "specs", name: string): string {
+    if (type === "specs") {
+        return specDict.get(name)!;
+    } else if (type === "datasets") {
+        return `https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/${name}.json`;
+    } else {
+        throw new Error(`Unknown fetch type: "${type}".`);
     }
-    return cache.get(key)!() as T;
 }
 
 const BackButton = () =>
@@ -29,15 +24,23 @@ const BackButton = () =>
         <ArrowUturnLeftIcon className="h-4 w-4"/>
     </button>;
 
+interface ExampleProps {
+    title: string,
+    specName: string,
+    datasetName: string,
+}
+
 function Example(props: ExampleProps) {
     const {
         title,
-        dataURL,
-        specURL,
+        specName,
+        datasetName,
     } = props;
     const { theme } = useContext(themeContext);
-    const { dataSource } = useFetch<IDataSource>("datasets", dataURL);
-    const spec = useFetch<IChart[]>("specs", specURL);
+    const datasetURL = getResourceURL("datasets", datasetName);
+    const specsURL = getResourceURL("specs", specName);
+    const { dataSource } = useFetch<IDataSource>(datasetURL);
+    const spec = useFetch<IChart[]>(specsURL);
     const chart = spec[0] as IChart;
 
     return (
@@ -71,8 +74,8 @@ export default function ExampleWrapper(props: {
         <React.Suspense fallback={<p>Loading component...</p>}>
             <Example
                 title={options.title}
-                dataURL={options.datasetName || `../datasets/ds-${options.name}.json`}
-                specURL={options.specName || `../specs/${options.name}.json`}
+                specName={options.name}
+                datasetName={options.datasetName}
             />
         </React.Suspense>
     );

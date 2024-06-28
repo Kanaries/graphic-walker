@@ -1,13 +1,13 @@
 {
-    "rewrites": [
-      {
-        "source": "/examples(/.*)?",
-        "destination": "/examples.html"
-      },
-      {
-        "source": "/gallery(/.*)?",
-        "destination": "/gallery.html"
-      }
-    ]
-  }
+  "rewrites": [
+    {
+      "source": "/examples(/.*)?",
+      "destination": "/examples.html"
+    },
+    {
+      "source": "/gallery(/.*)?",
+      "destination": "/gallery.html"
+    }
+  ]
+}
   

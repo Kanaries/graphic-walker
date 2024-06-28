@@ -1,31 +1,22 @@
-import BikeSharingServiceBar from '../imgs/bike-sharing-service-bar.png';
-import StudentsServiceBar from '../imgs/students-service-bar.png';
-import BtcgoldServiceBox from '../imgs/btcgold-service-box.png';
 import ExampleWrapper from '../components/Example';
 import GalleryGroup, { IGalleryItem } from '../components/GalleryGroup';
 import { toRouterPath } from '../util';
 
 const groupItems: IGalleryItem[] = [
     {
-        name: "bike-sharing-service",
+        name: "bike-sharing-service-bar",
         title: "Seasonal Change of Causal Bike Sharing Users on Working Days and Weekends",
-        imageURL: BikeSharingServiceBar,
-        datasetName: "ds-bike-sharing-service",
-        specName: "bike-sharing-service-bar",
+        datasetName: "ds-bikesharing-service",
     },
     {
-        name: "students-service",
+        name: "students-service-bar",
         title: "What Affects the Students' Math Scores?",
-        imageURL: StudentsServiceBar,
         datasetName: "ds-students-service",
-        specName: "students-service-bar",
     },
     {
-        name: "btcgold-service",
+        name: "btcgold-service-box",
         title: "Monitor the Price Change of BTC and Gold by Year",
-        imageURL: BtcgoldServiceBox,
         datasetName: "ds-btcgold-service",
-        specName: "btcgold-service-box",
     }
 ];
 

@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { imageDict } from '../resources';
 
-function GalleryItem(props: IGalleryItem) {
-    const {
-        name,
-        title,
-        imageURL,
-    } = props
+function GalleryItem(props: {
+    name: string,
+    title: string,
+}) {
+    const {name, title} = props;
+    const imageURL = imageDict.get(name);
 
     return (
         <Link to={name} className="bg-card group flex flex-col">
@@ -19,15 +20,13 @@ function GalleryItem(props: IGalleryItem) {
             ></div>
             <p className="px-0.5 group-hover:underline text-center text-black dark:text-white">{title}</p>
         </Link>
-    )
+    );
 }
 
 export interface IGalleryItem {
     name: string,
     title: string,
-    imageURL: string,
-    datasetName?: string,
-    specName?: string,
+    datasetName: string,
 }
 export default function GalleryGroup(props: {
     title: string,
@@ -37,7 +36,7 @@ export default function GalleryGroup(props: {
     const { title, path, items } = props;
     const location = useLocation();
     const isActive = useMemo(() => {
-        return location.pathname.endsWith(path) || location.pathname.endsWith(path + '/')
+        return location.pathname.endsWith(path) || location.pathname.endsWith(path + '/');
     }, [location.pathname, path]);
 
     return (
@@ -50,8 +49,8 @@ export default function GalleryGroup(props: {
                     style={{gridTemplateColumns: "repeat(auto-fill, minmax(12rem, 1fr))"}}
                 >
                     {
-                        items.map(({name, title, imageURL}, index) =>
-                            <GalleryItem key={index} name={name} imageURL={imageURL} title={title}/>)
+                        items.map(({name, title}, index) =>
+                            <GalleryItem key={index} name={name} title={title}/>)
                     }
                 </div>
             </>

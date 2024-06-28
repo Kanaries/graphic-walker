@@ -1,23 +1,17 @@
-import CarsalesServicePie from '../imgs/carsales-service-pie.png'
-import BikeSharingServiceTable from '../imgs/bike-sharing-service-table.png'
 import ExampleWrapper from '../components/Example';
 import GalleryGroup, { IGalleryItem } from '../components/GalleryGroup';
 import { toRouterPath } from '../util';
 
 const groupItems: IGalleryItem[] = [
     {
-        name: "cars-service",
+        name: "carsales-service-pie",
         title: "Car Manufacturer Sales Tracker",
-        imageURL: CarsalesServicePie,
         datasetName: "ds-carsales-service",
-        specName: "carsales-service-pie",
     },
     {
-        name: "bike-sharing-service",
+        name: "bike-sharing-service-table",
         title: "Bike Sharing Service Usage Tracker",
-        imageURL: BikeSharingServiceTable,
-        datasetName: "ds-bike-sharing-service",
-        specName: "bike-sharing-service-table",
+        datasetName: "ds-bikesharing-service",
     }
 ];
 

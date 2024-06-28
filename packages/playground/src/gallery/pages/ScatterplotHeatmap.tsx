@@ -1,31 +1,22 @@
-import BikeSharingServiceCircle from '../imgs/bike-sharing-service-circle.png';
-import StudentsServiceHeatmap from '../imgs/students-service-heatmap.png';
-import CollegeScatterplot from '../imgs/college-service-scatterplot.png';
 import ExampleWrapper from '../components/Example';
 import GalleryGroup, { IGalleryItem } from '../components/GalleryGroup';
 import { toRouterPath } from '../util';
 
 const groupItems: IGalleryItem[] = [
     {
-        name: "bike-sharing-service",
+        name: "bike-sharing-service-circle",
         title: "Compare the Seasonal Changes of Casual and Registered Users for a Bike Sharing Service",
-        imageURL: BikeSharingServiceCircle,
-        datasetName: "ds-bike-sharing-service",
-        specName: "bike-sharing-service-circle",
+        datasetName: "ds-bikesharing-service",
     },
     {
-        name: "student-service",
+        name: "students-service-heatmap",
         title: "Monitor Students' Performance in Reading and Writing",
-        imageURL: StudentsServiceHeatmap,
         datasetName: "ds-students-service",
-        specName: "students-service-heatmap",
     },
     {
-        name: "college",
+        name: "college-service-scatterplot",
         title: "How State Funding Model Affects U.S. Colleges",
-        imageURL: CollegeScatterplot,
-        datasetName: "ds-college-service",
-        specName: "college-service-scatterplot",
+        datasetName: "ds-collage-service",
     }
 ];
 
