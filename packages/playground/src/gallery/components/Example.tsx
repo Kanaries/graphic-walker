@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
-import { IChart, PureRenderer } from '@kanaries/graphic-walker';
+import { IChart, PureRenderer, GraphicWalker } from '@kanaries/graphic-walker';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { themeContext } from '../context';
@@ -19,11 +19,6 @@ function getResourceURL(type: "datasets" | "specs", name: string): string {
     }
 }
 
-const BackButton = () =>
-    <button type="button" className="flex items-center justify-center rounded-md px-1 py-1 transition hover:bg-zinc-900/5 dark:text-white dark:hover:bg-white/5">
-        <ArrowUturnLeftIcon className="h-4 w-4"/>
-    </button>;
-
 interface ExampleProps {
     title: string,
     specName: string,
@@ -37,11 +32,17 @@ function Example(props: ExampleProps) {
         datasetName,
     } = props;
     const { theme } = useContext(themeContext);
+    const [ showMode, setShowMode ] = useState<'preview' | 'editor'>('preview');
     const datasetURL = getResourceURL("datasets", datasetName);
     const specsURL = getResourceURL("specs", specName);
-    const { dataSource } = useFetch<IDataSource>(datasetURL);
+    const { dataSource, fields } = useFetch<IDataSource>(datasetURL);
     const spec = useFetch<IChart[]>(specsURL);
     const chart = spec[0] as IChart;
+
+    const BackButton = () =>
+        <button type="button" className="flex items-center justify-center rounded-md px-1 py-1 transition hover:bg-zinc-900/5 dark:text-white dark:hover:bg-white/5">
+            <ArrowUturnLeftIcon className="h-4 w-4"/>
+        </button>;
 
     return (
         <div>
@@ -50,18 +51,47 @@ function Example(props: ExampleProps) {
                 <span className="text-xl font-bold text-black dark:text-white">{title}</span>
             </div>
 
-            <PureRenderer
-                className="my-6"
-                rawData={dataSource} 
-                visualConfig={chart.config}
-                visualState={chart.encodings} 
-                visualLayout={chart.layout} 
-                appearance={theme}
-            />
-            <div className="text-lg font-bold text-black dark:text-white">Graphic Walker JSON Specification</div>
-            <SyntaxHighlighter language="tsx" style={a11yDark}>
-                {JSON.stringify(spec, null, 2)}
-            </SyntaxHighlighter>
+            {showMode === 'preview' && <>
+                <PureRenderer
+                    className="mt-6 border rounded-md overflow-hidden"
+                    rawData={dataSource} 
+                    visualConfig={chart.config}
+                    visualState={chart.encodings} 
+                    visualLayout={chart.layout} 
+                    appearance={theme}
+                />
+                <button
+                    type="button"
+                    className="rounded-md bg-gray-950 px-3 py-2 mt-4 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
+                    onClick={() => setShowMode('editor')}
+                >
+                    Click Here to Edit
+                </button>
+
+                <div className="w-full mt-6 border-t border-gray-300" />
+
+                <div className="text-lg my-6 font-bold text-black dark:text-white">Graphic Walker JSON Specification</div>
+                <SyntaxHighlighter language="tsx" style={a11yDark}>
+                    {JSON.stringify(spec, null, 2)}
+                </SyntaxHighlighter>
+            </>}
+            {showMode === 'editor' && <>
+                <div className="mt-6 border rounded-md overflow-hidden">
+                    <GraphicWalker
+                        fields={fields}
+                        data={dataSource}
+                        chart={spec}
+                        appearance={theme}
+                    />
+                </div>
+                <button
+                    type="button"
+                    className="rounded-md bg-gray-950 px-3 py-2 mt-4 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
+                    onClick={() => setShowMode('preview')}
+                >
+                    Back to PureRenderer
+                </button>
+            </>}
         </div>
     )
 }

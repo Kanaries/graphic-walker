@@ -10,15 +10,15 @@ function GalleryItem(props: {
     const imageURL = imageDict.get(name);
 
     return (
-        <Link to={name} className="bg-card group flex flex-col">
+        <Link to={name} className="col-span-1 flex flex-col rounded-lg text-center shadow overflow-hidden bg-white dark:bg-neutral-900 group">
             <div
-                className="w-full h-32 border rounded bg-cover bg-no-repeat overflow-hidden hover:bg-right-bottom"
+                className="w-full h-32 bg-cover bg-no-repeat border-b-2 overflow-hidden hover:bg-right-bottom"
                 style={{
                     backgroundImage: `url(${imageURL})`,
                     transition: "background-position 2s",
                 }}
             ></div>
-            <p className="px-0.5 group-hover:underline text-center text-black dark:text-white">{title}</p>
+            <p className="mx-1 my-2 text-sm text-gray-600 dark:text-white group-hover:underline">{title}</p>
         </Link>
     );
 }
