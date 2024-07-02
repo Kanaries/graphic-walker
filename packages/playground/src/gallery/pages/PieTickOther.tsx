@@ -5,7 +5,7 @@ import { toRouterPath } from '../util';
 const groupItems: IGalleryItem[] = [
     {
         name: "carsales-service-pie",
-        title: "Car Manufacturer Sales Tracker",
+        title: "Compare Sales of Main Car Manufacturer",
         datasetName: "ds-carsales-service",
     },
     {

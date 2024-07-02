@@ -17,6 +17,11 @@ const groupItems: IGalleryItem[] = [
         name: "students-service-area",
         title: "Compare Math Performance of Male and Female Students",
         datasetName: "ds-students-service",
+    },
+    {
+        name: "cars-service-line",
+        title: "Compare Miles per Gallon between Three Different Countries",
+        datasetName: "ds-cars-service",
     }
 ];
 

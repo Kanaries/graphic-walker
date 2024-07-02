@@ -9,6 +9,11 @@ const groupItems: IGalleryItem[] = [
         datasetName: "ds-bikesharing-service",
     },
     {
+        name: "cars-service-heatmap",
+        title: "Show the Relationship between Horsepower, Acceleration and Miles per Gallon",
+        datasetName: "ds-cars-service",
+    },
+    {
         name: "students-service-heatmap",
         title: "Monitor Students' Performance in Reading and Writing",
         datasetName: "ds-students-service",

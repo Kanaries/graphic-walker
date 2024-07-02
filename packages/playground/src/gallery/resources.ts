@@ -24,8 +24,20 @@ export const imageDict: Map<string, string> = new Map([
         "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/btcgold-service-box-g2jfOCyHxdK3VKiB7YZIkTzBgEWmNM.png?download=1"
     ],
     [
+        "cars-service-line",
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/cars-service-line-IicBy6Gqltdb2K9TB9csfgni8wIq3A.png?download=1"
+    ],
+    [
+        "cars-service-heatmap",
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/cars-service-heatmap-8NUM5hz4yesUINOyWCPU16OGMNm4Ct.png?download=1"
+    ],
+    [
+        "carsales-service-bar",
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-bar-39OEXjUgiyzyvYBtpiM3sT4UpBwHxX.png?download=1"
+    ],
+    [
         "carsales-service-pie",
-        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-pie-B1QpjLMdy8VQj5kEo8hEdYc817j7bA.png?download=1"
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-pie-M6jLNO62sjdBiNvzctBCgVpMz8jIZ7.png?download=1"
     ],
     [
         "college-service-scatterplot",
@@ -71,8 +83,20 @@ export const specDict: Map<string, string> = new Map([
         "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/btcgold-service-box-xHfJ78VSN4EILmOhuUiOhAJPaV0NB4.json?download=1"
     ],
     [
+        "cars-service-line",
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/cars-service-line-Cd27pRigYmgADKbQdWUQyR3dmN3rvP.json?download=1"
+    ],
+    [
+        "cars-service-heatmap",
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/cars-service-heatmap-5NE50rmMaeTDSXupCuDyWv6cDRRXrt.json?download=1"
+    ],
+    [
+        "carsales-service-bar",
+         "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-bar-ESV23TThDRsEpF9xcyjxQAZ519uctM.json?download=1"
+    ],
+    [
         "carsales-service-pie",
-        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-pie-FdYiesDWmEbT2M0bznyA8BxPMnFULr.json?download=1"
+        "https://lyov3r453gmssqgy.public.blob.vercel-storage.com/carsales-service-pie-qLgMmVQyAbxfEB3mMml2jZUe0V4WD7.json?download=1"
     ],
     [
         "college-service-scatterplot",

@@ -9,6 +9,11 @@ const groupItems: IGalleryItem[] = [
         datasetName: "ds-bikesharing-service",
     },
     {
+        name: "carsales-service-bar",
+        title: "Compare Sales from Different Manufacturers and Different Models",
+        datasetName: "ds-carsales-service"
+    },
+    {
         name: "students-service-bar",
         title: "What Affects the Students' Math Scores?",
         datasetName: "ds-students-service",
