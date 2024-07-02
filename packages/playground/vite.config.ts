@@ -13,6 +13,8 @@ export default defineConfig({
           viteDevServer.middlewares.use(async (req, res, next) => {
             if (req.originalUrl.startsWith("/examples")) {
               req.url = "/examples.html";
+            } else if (req.originalUrl.startsWith("/gallery")) {
+              req.url = "/gallery.html"
             }
 
             next();
@@ -26,6 +28,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         examples: "examples.html",
+        gallery: "gallery.html",
       },
     },
   },
