@@ -82,8 +82,8 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                     vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
                     portalContainerContext={portal}
                 >
-                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
-                        <div className="bg-background text-foreground">
+                    <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground h-full m-0 p-0`}>
+                        <div className="bg-background text-foreground h-full">
                             <DatasetTable
                                 onMetaChange={vizStore.onMetaChange ? (fid, fIndex, diffMeta) => {
                                     vizStore.updateCurrentDatasetMetas(fid, diffMeta);
@@ -92,6 +92,8 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                 metas={metas}
                                 computation={wrappedComputation}
                                 displayOffset={props.displayOffset}
+                                hidePaginationAtOnepage={props.hidePaginationAtOnepage}
+                                hideProfiling={props.hideProfiling}
                             />
                         </div>
                         <div ref={setPortal} />
