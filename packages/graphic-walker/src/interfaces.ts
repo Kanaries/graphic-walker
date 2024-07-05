@@ -978,6 +978,8 @@ export interface ISpecProps {
 
 export interface ITableSpecProps {
     pageSize?: number;
+    hideProfiling?: boolean;
+    hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
     /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
