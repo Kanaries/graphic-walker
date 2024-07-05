@@ -96,7 +96,12 @@ export const TableWalker = observer(
 
         return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
-                <ShadowDom onMount={handleMount} onUnmount={handleUnmount} uiTheme={props.uiTheme ?? props.colorConfig}>
+                <ShadowDom
+                    style={{ width: '100%', height: '100%' }}
+                    onMount={handleMount}
+                    onUnmount={handleUnmount}
+                    uiTheme={props.uiTheme ?? props.colorConfig}
+                >
                     <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
                         <TableAppWithContext {...props} />
                     </DOMProvider>

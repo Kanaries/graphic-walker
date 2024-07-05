@@ -4,7 +4,7 @@ import Comp from './renderer.stories';
 
 export default function GraphicWalkerComponent() {
     return (
-        <Example name="Filter Walker" code={code}>
+        <Example name="Graphic Renderer" code={code}>
             <Comp />
         </Example>
     );
