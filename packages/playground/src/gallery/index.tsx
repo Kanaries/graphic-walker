@@ -6,9 +6,9 @@ import { pages } from './pages';
 import ErrorPage from './components/ErrorPage';
 import './index.css';
 
-export const homeRoute = "/gallery"
+export const homeRoute = '/gallery';
 
-const root = createRoot(document.getElementById("root") as HTMLElement);
+const root = createRoot(document.getElementById('root') as HTMLElement);
 
 const router = createBrowserRouter([
     {
@@ -22,5 +22,5 @@ const router = createBrowserRouter([
 root.render(
     <React.StrictMode>
         <RouterProvider router={router} />
-    </React.StrictMode>
+    </React.StrictMode>,
 );
