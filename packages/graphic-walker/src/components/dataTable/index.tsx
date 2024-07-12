@@ -24,7 +24,10 @@ interface DataTableProps {
     size?: number;
     metas: IMutField[];
     computation: IComputationFunction;
+    /** for data clean profiling */
+    profilingComputation?: IComputationFunction | IComputationFunction[];
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
+    cellClassName?: (value: string | number, field: IMutField, row: IRow) => string;
     disableFilter?: boolean;
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
@@ -362,6 +365,19 @@ const DataTable = forwardRef(
             return (query) => computation(addFilterForQuery(query, filterRules));
         }, [computation, filters]);
 
+        const filteredProfilingComputation = useMemo((): IComputationFunction | IComputationFunction[] | undefined => {
+            if (props.profilingComputation) {
+                const filterRules = filters.filter((f) => f.rule).map((f) => createFilter(f));
+                const profilingComputation = props.profilingComputation;
+                if (Array.isArray(profilingComputation)) {
+                    return profilingComputation.map((comp) => (query) => comp(addFilterForQuery(query, filterRules)));
+                } else {
+                    return (query) => profilingComputation(addFilterForQuery(query, filterRules));
+                }
+            }
+            return undefined;
+        }, [props.profilingComputation, filters]);
+
         const loading = statLoading || dataLoading;
 
         const headers = useMemo(() => getHeaders(metas), [metas]);
@@ -532,7 +548,7 @@ const DataTable = forwardRef(
                                                 dataset={field.dataset ?? DEFAULT_DATASET}
                                                 field={field.fid}
                                                 semanticType={field.semanticType}
-                                                computation={filteredComputation}
+                                                computation={filteredProfilingComputation ?? filteredComputation}
                                                 displayOffset={displayOffset}
                                                 offset={field.offset}
                                             />
@@ -549,7 +565,11 @@ const DataTable = forwardRef(
                                         return (
                                             <td
                                                 key={field.fid + index}
-                                                className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]'}
+                                                className={cn(
+                                                    getHeaderType(field),
+                                                    'whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]',
+                                                    props.cellClassName?.(value, field, row) ?? ''
+                                                )}
                                             >
                                                 <TruncateDector value={value} />
                                             </td>

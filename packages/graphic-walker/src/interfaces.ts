@@ -1019,6 +1019,8 @@ export interface ITableSpecProps {
     tableFilterRef?: React.Ref<{
         getFilters: () => IFilterField[];
     }>;
+    profilingComputation?: IComputationFunction | IComputationFunction[];
+    cellClassName?: (value: string | number, field: IMutField, row: IRow) => string;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}
