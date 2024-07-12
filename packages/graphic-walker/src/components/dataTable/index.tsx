@@ -381,7 +381,9 @@ const DataTable = forwardRef(
 
         const loading = statLoading || dataLoading;
 
-        const headers = useMemo(() => getHeaders(metas), [metas]);
+        const displayMetas = useMemo(() => metas.filter((x) => !x.disable), [metas]);
+
+        const headers = useMemo(() => getHeaders(displayMetas), [displayMetas]);
 
         const [isSticky, setIsSticky] = useState(false);
 
@@ -543,7 +545,7 @@ const DataTable = forwardRef(
                             ))}
                             {!hideProfiling && (
                                 <tr className="divide-x divide-border border-b">
-                                    {metas.map((field) => (
+                                    {displayMetas.map((field) => (
                                         <th
                                             key={getFieldIdentifier(field)}
                                             className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}
@@ -564,7 +566,7 @@ const DataTable = forwardRef(
                         <tbody className="divide-y divide-border bg-background font-mono">
                             {rows.map((row, index) => (
                                 <tr className="divide-x divide-border" key={index}>
-                                    {metas.map((field) => {
+                                    {displayMetas.map((field) => {
                                         const value = fieldValue({ field, item: row, displayOffset });
                                         return (
                                             <td
