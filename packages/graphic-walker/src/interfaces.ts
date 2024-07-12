@@ -1020,7 +1020,7 @@ export interface ITableSpecProps {
         getFilters: () => IFilterField[];
     }>;
     profilingComputation?: IComputationFunction | IComputationFunction[];
-    cellClassName?: (value: string | number, field: IMutField, row: IRow) => string;
+    cellStyle?: (value: string | number, field: IMutField, row: IRow, dark: boolean) => React.CSSProperties;
 }
 
 export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}

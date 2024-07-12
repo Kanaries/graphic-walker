@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef, useContext } from 'react';
 import styled from 'styled-components';
 import type { IMutField, IRow, IComputationFunction, IFilterRule, IFilterField, IFilterWorkflowStep, FieldIdentifier } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ import { Button, buttonVariants } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { DEFAULT_DATASET } from '@/constants';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
+import { themeContext } from '@/store/theme';
 
 interface DataTableProps {
     /** page limit */
@@ -27,7 +28,7 @@ interface DataTableProps {
     /** for data clean profiling */
     profilingComputation?: IComputationFunction | IComputationFunction[];
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
-    cellClassName?: (value: string | number, field: IMutField, row: IRow) => string;
+    cellStyle?: (value: string | number, field: IMutField, row: IRow, dark: boolean) => React.CSSProperties;
     disableFilter?: boolean;
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
@@ -397,6 +398,9 @@ const DataTable = forwardRef(
                 obRef.current = observer;
             }
         }, []);
+
+        const darkMode = useContext(themeContext);
+
         return (
             <Container className="relative">
                 {!disableFilter && filters.length > 0 && (
@@ -565,11 +569,8 @@ const DataTable = forwardRef(
                                         return (
                                             <td
                                                 key={field.fid + index}
-                                                className={cn(
-                                                    getHeaderType(field),
-                                                    'whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]',
-                                                    props.cellClassName?.(value, field, row) ?? ''
-                                                )}
+                                                className={cn(getHeaderType(field), 'whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]')}
+                                                style={props.cellStyle?.(value, field, row, darkMode === 'dark')}
                                             >
                                                 <TruncateDector value={value} />
                                             </td>

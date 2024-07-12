@@ -116,7 +116,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                 hidePaginationAtOnepage={props.hidePaginationAtOnepage}
                                 hideProfiling={props.hideProfiling}
                                 profilingComputation={props.profilingComputation}
-                                cellClassName={props.cellClassName}
+                                cellStyle={props.cellStyle}
                             />
                         </div>
                         <div ref={setPortal} />
