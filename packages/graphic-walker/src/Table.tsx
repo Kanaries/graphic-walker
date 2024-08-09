@@ -85,6 +85,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground h-full m-0 p-0`}>
                         <div className="bg-background text-foreground h-full">
                             <DatasetTable
+                                ref={props.tableFilterRef}
                                 onMetaChange={vizStore.onMetaChange ? (fid, fIndex, diffMeta) => {
                                     vizStore.updateCurrentDatasetMetas(fid, diffMeta);
                                 } : undefined}
