@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef } from 'react';
 import styled from 'styled-components';
-import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField, IVisFilter } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -236,7 +236,7 @@ const DataTable = forwardRef(
     (
         props: DataTableProps,
         ref: ForwardedRef<{
-            getFilters: () => IFilterField[];
+            getFilters: () => IVisFilter[];
         }>
     ) => {
     const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
@@ -263,7 +263,7 @@ const DataTable = forwardRef(
     filtersRef.current = filters;
 
     useImperativeHandle(ref, () => ({
-        getFilters: () => filtersRef.current,
+        getFilters: () => filtersRef.current.filter(x => x.rule) as IVisFilter[],
     }));
 
     const [total, setTotal] = useState(0);

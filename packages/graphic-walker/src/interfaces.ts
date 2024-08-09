@@ -987,7 +987,7 @@ export interface ITableSpecProps {
     themeConfig?: GWGlobalConfig;
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
     tableFilterRef?: React.Ref<{
-        getFilters: () => IFilterField[];
+        getFilters: () => IVisFilter[];
     }>;
 }
 

@@ -1,19 +1,23 @@
 import { useContext, useRef } from 'react';
-import { getComputation, IFilterField, IVisFilter, TableWalker } from '@kanaries/graphic-walker';
+import { getComputation, IVisFilter, TableWalker } from '@kanaries/graphic-walker';
 import { themeContext } from '../context';
 import { useFetch, IDataSource } from '../util';
 
 export default function GraphicWalkerComponent() {
     const { theme } = useContext(themeContext);
     const { dataSource, fields } = useFetch<IDataSource>('https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-students-service.json');
-    const tableRef = useRef<{ getFilters: () => IFilterField[] }>(null);
+    const tableRef = useRef<{ getFilters: () => IVisFilter[] }>(null);
 
     const downloadCSV = async () => {
-        const filters = (tableRef.current?.getFilters() ?? []).filter((x) => x.rule);
+        const filters = tableRef.current?.getFilters() ?? [];
 
-        const result = await getComputation(dataSource)({
+        // or use a remote computation service
+        // const computation = async (workflow) => fetch(endPoint, { body: JSON.stringify(workflow) }).then(resp => resp.json())
+        const computation = getComputation(dataSource);
+
+        const result = await computation({
             workflow: [
-                ...(filters.length > 0 ? [{ type: 'filter' as const, filters: filters.map((x): IVisFilter => ({ ...x, rule: x.rule! })) }] : []),
+                { type: 'filter', filters },
                 {
                     type: 'view',
                     query: [
