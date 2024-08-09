@@ -48,11 +48,11 @@ export default function GraphicWalkerComponent() {
         <div className="flex flex-col gap-2">
             <button
                 onClick={downloadCSV}
-                className="h-9 px-4 py-2 bg-primary text-primary-foreground shadow hover:bg-primary/90 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                className="h-9 px-4 py-2 w-fit m-2 bg-zinc-950 text-white shadow hover:bg-primary/90 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             >
                 Export CSV
             </button>
-            <TableWalker tableFilterRef={tableRef} fields={fields} data={dataSource} appearance={theme} pageSize={50} />
+            <TableWalker tableFilterRef={tableRef} fields={fields} data={dataSource} appearance={theme} pageSize={50} vizThemeConfig="g2" />
         </div>
     );
 }
