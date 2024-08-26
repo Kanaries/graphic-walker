@@ -8,7 +8,7 @@ if (!import.meta.env.DEV) {
 
 embedGraphicWalker(document.getElementById('root') as HTMLElement, {
     geoList: [
-        { name: 'World Countries', type: 'TopoJSON', url: 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json' },
+        { name: 'World Countries', type: 'TopoJSON', url: 'https://raw.githubusercontent.com/openlayers/openlayers/main/examples/data/topojson/world-110m.json' },
         {
             name: 'World Cities',
             type: 'GeoJSON',
