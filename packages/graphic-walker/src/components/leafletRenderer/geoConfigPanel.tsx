@@ -78,6 +78,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
             const item = geoList[selectItem];
             if (!item) {
                 vizStore.clearGeographicData();
+                vizStore.updateGeoKey(featureId);
             } else {
                 vizStore.setVisualLayout('geoUrl', {
                     type: item.type,
@@ -139,6 +140,11 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         <div className="my-2">
                             <label className="block text-xs font-medium leading-6">GeoData</label>
                             <DropdownSelect options={options} selectedKey={`${selectItem}`} onSelect={setSelectItem} />
+                        </div>
+                    )}
+                    {!isCustom && selectItem >= 0 && (
+                        <div className={`relative justify-center flex w-full h-80 rounded border shadow-sm`}>
+                            <GeojsonRenderer type={geoList[selectItem].type} url={geoList[selectItem]} />
                         </div>
                     )}
                     {isCustom && (
