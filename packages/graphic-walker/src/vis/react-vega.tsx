@@ -228,8 +228,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const renderTaskRefs = useRef<Promise<unknown>[]>([]);
     const { width: areaWidth, height: areaHeight, ref: areaRef } = useResizeDetector();
 
-    const vegaWidth = layoutMode === 'auto' ? 0 : areaWidth || width;
-    const vegaHeight = layoutMode === 'auto' ? 0 : areaHeight || height;
+    const vegaWidth = layoutMode === 'auto' ? 0 : layoutMode === 'full' ? areaWidth || width : width;
+    const vegaHeight = layoutMode === 'auto' ? 0 : layoutMode === 'full' ? areaHeight || height : height;
 
     const specs = useMemo(
         () =>
@@ -382,7 +382,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             for (let i = 0; i < leastOne(rowRepeatFields.length); i++) {
                 for (let j = 0; j < leastOne(colRepeatFields.length); j++, index++) {
                     const sourceId = index;
-                    const node = i * leastOne(colRepeatFields.length) + j < viewPlaceholders.length ? viewPlaceholders[i * leastOne(colRepeatFields.length) + j].current : null;
+                    const node =
+                        i * leastOne(colRepeatFields.length) + j < viewPlaceholders.length
+                            ? viewPlaceholders[i * leastOne(colRepeatFields.length) + j].current
+                            : null;
                     const ans = specs[index];
                     if (node) {
                         const id = index;
