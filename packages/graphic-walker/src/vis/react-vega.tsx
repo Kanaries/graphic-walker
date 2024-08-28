@@ -228,8 +228,26 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const renderTaskRefs = useRef<Promise<unknown>[]>([]);
     const { width: areaWidth, height: areaHeight, ref: areaRef } = useResizeDetector();
 
-    const vegaWidth = layoutMode === 'auto' ? 0 : areaWidth || width;
-    const vegaHeight = layoutMode === 'auto' ? 0 : areaHeight || height;
+    const getSize = () => {
+        if (layoutMode === 'auto') {
+            return {
+                width: 0,
+                height: 0,
+            };
+        }
+        if (layoutMode === 'full' && areaWidth && areaHeight) {
+            return {
+                width: areaWidth,
+                height: areaHeight,
+            };
+        }
+        return {
+            width,
+            height,
+        };
+    };
+
+    const { width: vegaWidth, height: vegaHeight } = getSize();
 
     const specs = useMemo(
         () =>
