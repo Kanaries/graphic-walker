@@ -8,7 +8,7 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, R
         <SliderPrimitive.Root
             ref={ref}
             minStepsBetweenThumbs={1}
-            className={cn('relative flex w-full touch-none select-none items-center', className)}
+            className={cn('relative flex w-full touch-none select-none items-center data-[disabled]:opacity-50', className)}
             {...props}
         >
             <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">

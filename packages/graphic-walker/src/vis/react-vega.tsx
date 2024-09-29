@@ -5,7 +5,7 @@ import * as op from 'rxjs/operators';
 import { expressionFunction, type ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScale } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScaleSet } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
@@ -91,10 +91,7 @@ interface ReactVegaProps {
     useSvg?: boolean;
     dark?: IDarkMode;
     scales?: IChannelScales;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     onReportSpec?: (spec: string) => void;
     displayOffset?: number;
 }
@@ -159,17 +156,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const mediaTheme = useContext(themeContext);
     const scales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
-        if (scale?.opacity) {
-            cs.opacity = {
-                ...(cs.opacity ?? {}),
-                ...scale.opacity,
-            };
-        }
-        if (scale?.size) {
-            cs.size = {
-                ...(cs.size ?? {}),
-                ...scale.size,
-            };
+        if (scale) {
+            for (const key of Object.keys(scale)) {
+                cs[key] = {
+                    ...(cs[key] ?? {}),
+                    ...scale[key],
+                };
+            }
         }
         return cs;
     }, [channelScaleRaw, scale]);
@@ -382,7 +375,10 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             for (let i = 0; i < leastOne(rowRepeatFields.length); i++) {
                 for (let j = 0; j < leastOne(colRepeatFields.length); j++, index++) {
                     const sourceId = index;
-                    const node = i * leastOne(colRepeatFields.length) + j < viewPlaceholders.length ? viewPlaceholders[i * leastOne(colRepeatFields.length) + j].current : null;
+                    const node =
+                        i * leastOne(colRepeatFields.length) + j < viewPlaceholders.length
+                            ? viewPlaceholders[i * leastOne(colRepeatFields.length) + j].current
+                            : null;
                     const ans = specs[index];
                     if (node) {
                         const id = index;
