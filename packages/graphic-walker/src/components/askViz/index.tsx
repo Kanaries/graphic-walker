@@ -112,7 +112,7 @@ const AskViz: React.FC<{
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
-                    if (e.key === 'Enter' && loading === false && query.length > 0) {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing && loading === false && query.length > 0) {
                         startQuery();
                     }
                 }}
