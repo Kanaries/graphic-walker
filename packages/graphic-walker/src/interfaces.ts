@@ -350,6 +350,7 @@ export type IConfigScale = {
     rangeMin?: number;
     domainMin?: number;
     domainMax?: number;
+    type?: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog';
 };
 
 export interface IVisualConfig {
@@ -374,10 +375,7 @@ export interface IVisualConfig {
     };
     primaryColor?: string;
     colorPalette?: string;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     resolve: {
         x?: boolean;
         y?: boolean;
@@ -398,6 +396,16 @@ export interface IVisualConfig {
     folds?: string[];
 }
 
+export interface IConfigScaleSet {
+    row?: IConfigScale;
+    column?: IConfigScale;
+    color?: IConfigScale;
+    opacity?: IConfigScale;
+    size?: IConfigScale;
+    radius?: IConfigScale;
+    theta?: IConfigScale;
+}
+
 export interface IVisualLayout {
     showTableSummary: boolean;
     format: {
@@ -407,10 +415,7 @@ export interface IVisualLayout {
     };
     primaryColor?: string;
     colorPalette?: string;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     resolve: {
         x?: boolean;
         y?: boolean;
@@ -853,6 +858,8 @@ export type IFieldInfos = {
 };
 
 export interface IChannelScales {
+    row?: IScale | ((info: IFieldInfos) => IScale);
+    column?: IScale | ((info: IFieldInfos) => IScale);
     color?: IColorScale | ((info: IFieldInfos) => IColorScale);
     opacity?: IScale | ((info: IFieldInfos) => IScale);
     size?: IScale | ((info: IFieldInfos) => IScale);
