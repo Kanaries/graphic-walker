@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import type { DraggableFieldState, IChannelScales, IConfigScale, IRow, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../../interfaces';
+import type { DraggableFieldState, IChannelScales, IConfigScaleSet, IRow, IVisualConfigNew, IVisualLayout, VegaGlobalConfig } from '../../interfaces';
 import POIRenderer from './POIRenderer';
 import ChoroplethRenderer from './ChoroplethRenderer';
 
@@ -11,10 +11,7 @@ export interface ILeafletRendererProps {
     visualLayout: IVisualLayout;
     data: IRow[];
     scales?: IChannelScales;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
 }
 
 export interface ILeafletRendererRef {}
@@ -48,17 +45,13 @@ const LeafletRenderer = forwardRef<ILeafletRendererRef, ILeafletRendererProps>(f
     const longitude = useMemo(() => lng ?? lngField, [lng, lngField]);
     const scales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
-        if (scale?.opacity) {
-            cs.opacity = {
-                ...(cs.opacity ?? {}),
-                ...scale.opacity,
-            };
-        }
-        if (scale?.size) {
-            cs.size = {
-                ...(cs.size ?? {}),
-                ...scale.size,
-            };
+        if (scale) {
+            for (const key of Object.keys(scale)) {
+                cs[key] = {
+                    ...(cs[key] ?? {}),
+                    ...scale[key],
+                };
+            }
         }
         return cs;
     }, [channelScaleRaw, scale]);

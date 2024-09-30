@@ -302,7 +302,7 @@ export class VizSpecStore {
     get paintInfo() {
         const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
         if (existPaintField) {
-            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
+            const param = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
             if (param) {
                 return {
                     type: 'exist',
@@ -310,7 +310,7 @@ export class VizSpecStore {
                     new: this.paintFields,
                 } as const;
             }
-            const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
+            const paramV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
             if (paramV2) {
                 return {
                     type: 'exist',

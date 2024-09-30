@@ -162,21 +162,24 @@ export function resolveScale<T extends Object>(
 
 export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {
     const newEncoding = { ...view.encoding };
-    function addScale(c: string) {
-        if (scale[c] && newEncoding[c]) {
+    function addScale(c: string, encodingName?: string) {
+        encodingName = encodingName ?? c;
+        if (scale[c] && newEncoding[encodingName]) {
             if (typeof scale[c] === 'function') {
-                const field = newEncoding[c].field;
+                const field = newEncoding[encodingName].field;
                 const values = data.map((x) => x[field]);
-                newEncoding[c].scale = scale[c]({
-                    semanticType: newEncoding[c].type,
+                newEncoding[encodingName].scale = scale[c]({
+                    semanticType: newEncoding[encodingName].type,
                     theme,
                     values,
                 });
             } else {
-                newEncoding[c].scale = scale[c];
+                newEncoding[encodingName].scale = scale[c];
             }
         }
     }
+    addScale('row', 'y');
+    addScale('column', 'x');
     addScale('color');
     addScale('opacity');
     addScale('size');
