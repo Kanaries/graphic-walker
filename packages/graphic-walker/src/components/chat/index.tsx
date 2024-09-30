@@ -219,7 +219,7 @@ export const VegaliteChat = observer(function VegaliteChat(props: {
                     rows={1}
                     value={query}
                     onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && loading === false && query.length > 0) {
+                        if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey && loading === false && query.length > 0) {
                             e.preventDefault();
                             submit();
                         }
