@@ -53,6 +53,7 @@ import { VegaliteChat } from './components/chat';
 import { GWGlobalConfig } from './vis/theme';
 import { themeContext, vegaThemeContext } from './store/theme';
 import { autorun } from 'mobx';
+import { useResizeDetector } from 'react-resize-detector';
 
 export interface IGraphicWalkerContextProps {
     data?: any[];
@@ -262,17 +263,28 @@ export function ReactVegaRenderer() {
     return <ReactiveRenderer vizThemeConfig={vizThemeConfig ?? 'vega'} computationFunction={computation} />;
 }
 
-export const RemoteRenderer = observer(function RemoteRenderer(props: { onChartChange?: (chart: IChart, setImage: (image: string) => void) => void }) {
+export const RemoteRenderer = observer(function RemoteRenderer(props: {
+    onChartChange?: (
+        chart: IChart,
+        size: { width: number; height: number },
+        setImage: (image: string, size?: { width: number; height: number }) => void
+    ) => void;
+}) {
     const [image, setImage] = useState<string | null>(null);
+    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
     const vizStore = useVizStore();
+    const { width = 0, height = 0, ref } = useResizeDetector();
     useEffect(() => {
         return autorun(() => {
-            props.onChartChange?.(vizStore.currentVis, setImage);
+            props.onChartChange?.(vizStore.currentVis, { width, height }, (image, size) => {
+                setImage(image);
+                setImageSize(size ?? null);
+            });
         });
     }, [props.onChartChange]);
     return (
-        <div>
-            <img src={image ?? undefined} />
+        <div className="w-full h-full" ref={ref}>
+            <img src={image ?? undefined} width={imageSize?.width} height={imageSize?.height} className={imageSize === null ? 'w-full h-full' : ''} />
         </div>
     );
 });
