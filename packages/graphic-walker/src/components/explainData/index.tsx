@@ -6,11 +6,11 @@ import { getMeaAggKey } from '../../utils';
 import styled from 'styled-components';
 import embed from 'vega-embed';
 import { VegaGlobalConfig, IDarkMode, IThemeKey, IField, IRow, IPredicate } from '../../interfaces';
-import { builtInThemes } from '../../vis/theme';
 import { explainBySelection } from '../../lib/insights/explainBySelection';
 import { Dialog, DialogContent } from '../ui/dialog';
 import LoadingLayer from '../loadingLayer';
-import { themeContext } from '@/store/theme';
+import { themeContext, vegaThemeContext } from '@/store/theme';
+import { getTheme } from '@/utils/useTheme';
 
 const Container = styled.div`
     height: 50vh;
@@ -42,9 +42,7 @@ const getCategoryName = (row: IRow, field: IField) => {
     }
 };
 
-const ExplainData: React.FC<{
-    themeKey: IThemeKey;
-}> = observer(({ themeKey }) => {
+const ExplainData: React.FC = observer(() => {
     const vizStore = useVizStore();
     const dark = useContext(themeContext);
     const computationFunction = useCompututaion();
@@ -61,13 +59,14 @@ const ExplainData: React.FC<{
     >([]);
     const [selectedInfoIndex, setSelectedInfoIndex] = useState(0);
     const chartRef = useRef<HTMLDivElement>(null);
+    const { vizThemeConfig } = useContext(vegaThemeContext);
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
-        const config: VegaGlobalConfig = {
-            ...builtInThemes[themeKey ?? 'vega']?.[dark],
-        };
-        return config;
-    }, [themeKey, dark]);
+        return getTheme({
+            vizThemeConfig,
+            mediaTheme: dark,
+        });
+    }, [vizThemeConfig, dark]);
 
     const { t } = useTranslation();
 

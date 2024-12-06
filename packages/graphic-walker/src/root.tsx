@@ -18,6 +18,7 @@ import type {
 import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
 import { RendererAppWithContext } from './Renderer';
+import { GraphicWalkerContext } from './Base';
 
 export type ILocalVizAppProps = IVizAppProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
 export type IRemoteVizAppProps = IVizAppProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
@@ -47,6 +48,34 @@ export const GraphicWalker = observer(
     (p: ILocalVizAppProps): JSX.Element;
     (p: IRemoteVizAppProps): JSX.Element;
 };
+
+export const GraphicWalkerShell = observer(
+    forwardRef<IGWHandler, IVizAppProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+        const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
+
+        const handleMount = (shadowRoot: ShadowRoot) => {
+            setShadowRoot(shadowRoot);
+        };
+        const handleUnmount = () => {
+            setShadowRoot(null);
+        };
+
+        return (
+            <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
+                <ShadowDom onMount={handleMount} onUnmount={handleUnmount} uiTheme={props.uiTheme ?? props.colorConfig}>
+                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                        <GraphicWalkerContext {...props} />
+                    </DOMProvider>
+                </ShadowDom>
+            </AppRoot>
+        );
+    })
+) as {
+    (p: ILocalVizAppProps & { children?: React.ReactNode }): JSX.Element;
+    (p: IRemoteVizAppProps & { children?: React.ReactNode }): JSX.Element;
+};
+
+export { ReactVegaRenderer, RemoteRenderer, GraphicWalkerEditor } from './Base';
 
 export type IRendererProps = {
     containerClassName?: string;

@@ -206,14 +206,14 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 extra={toolbar?.extra}
                                             />
                                             <CodeExport />
-                                            <ExplainData themeKey={themeKey} />
+                                            <ExplainData />
                                             {vizStore.showDataBoard && <DataBoard />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
                                             <RenamePanel />
                                             <ComputedFieldDialog />
-                                            <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            <Painter />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                             <div className="sm:flex">
                                                 <SideResize

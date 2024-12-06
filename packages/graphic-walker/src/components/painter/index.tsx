@@ -21,11 +21,12 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Slider } from '../ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { uiThemeContext, themeContext } from '@/store/theme';
+import { uiThemeContext, themeContext, vegaThemeContext } from '@/store/theme';
 import { WebGLRenderer } from 'vega-webgl-renderer';
 import { parseColorToHex } from '@/utils/colors';
 import { getMeaAggKey, getMeaAggName } from '@/utils';
 import rbush from 'rbush';
+import { getTheme } from '@/utils/useTheme';
 
 //@ts-ignore
 CanvasHandler.prototype.context = function () {
@@ -910,7 +911,7 @@ function toZeroscaled([min, max]: [number, number]): [number, number] {
     return [min, max];
 }
 
-const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; themeKey?: IThemeKey }) => {
+const Painter = () => {
     const vizStore = useVizStore();
     const { showPainterPanel, allFields, layout, config } = vizStore;
     const { geoms, timezoneDisplayOffset } = config;
@@ -1152,14 +1153,19 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     const mediaTheme = useContext(themeContext);
     const uiTheme = useContext(uiThemeContext);
 
+    const { vizThemeConfig } = useContext(vegaThemeContext);
+
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
-        const presetConfig = themeConfig ?? builtInThemes[themeKey ?? 'vega'];
+        const presetConfig = getTheme({
+            vizThemeConfig,
+            mediaTheme,
+        });
         const config: VegaGlobalConfig = {
-            ...presetConfig?.[mediaTheme],
+            ...presetConfig,
             background: parseColorToHex(uiTheme[mediaTheme].background),
         };
         return config;
-    }, [uiTheme, themeConfig, themeKey, mediaTheme]);
+    }, [uiTheme, vizThemeConfig, mediaTheme]);
 
     return (
         <Dialog
