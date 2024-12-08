@@ -54,6 +54,7 @@ import { GWGlobalConfig } from './vis/theme';
 import { themeContext, vegaThemeContext } from './store/theme';
 import { autorun } from 'mobx';
 import { useResizeDetector } from 'react-resize-detector';
+import { is } from 'immer/dist/internal';
 
 export interface IGraphicWalkerContextProps {
     data?: any[];
@@ -264,6 +265,23 @@ export function ReactVegaRenderer() {
 }
 
 export const RemoteRenderer = observer(function RemoteRenderer(props: {
+    onChartChange?: (
+        chart: IChart,
+        size: { width: number; height: number },
+        setImage: (image: string, size?: { width: number; height: number }) => void
+    ) => void;
+}) {
+    const vizStore = useVizStore();
+
+    const isSpatial = vizStore.currentVis.config.coordSystem === 'geographic';
+    const isPivotTable = vizStore.currentVis.config.geoms[0] === 'table';
+    if (isSpatial || isPivotTable) {
+        return <ReactVegaRenderer />;
+    }
+    return <RemoteRendererContent onChartChange={props.onChartChange} />;
+});
+
+export const RemoteRendererContent = observer(function RemoteRendererContent(props: {
     onChartChange?: (
         chart: IChart,
         size: { width: number; height: number },
