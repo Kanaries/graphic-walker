@@ -55,6 +55,8 @@ import { themeContext, vegaThemeContext } from './store/theme';
 import { autorun } from 'mobx';
 import { useResizeDetector } from 'react-resize-detector';
 import { is } from 'immer/dist/internal';
+import LoadingLayer from './components/loadingLayer';
+import { Resizable } from 're-resizable';
 
 export interface IGraphicWalkerContextProps {
     data?: any[];
@@ -290,19 +292,80 @@ export const RemoteRendererContent = observer(function RemoteRendererContent(pro
 }) {
     const [image, setImage] = useState<string | null>(null);
     const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+    const [waiting, setWaiting] = useState(false);
     const vizStore = useVizStore();
-    const { width = 0, height = 0, ref } = useResizeDetector();
+    const size = vizStore.layout.size;
+    const { width = 0, height = 0, ref } = useResizeDetector({ skipOnMount: false });
+    const enableResize = size.mode === 'fixed';
+    const handleChartResize = useCallback(
+        (width: number, height: number) => {
+            vizStore.setVisualLayout('size', {
+                mode: 'fixed',
+                width,
+                height,
+            });
+        },
+        [vizStore]
+    );
     useEffect(() => {
         return autorun(() => {
+            setWaiting(true);
             props.onChartChange?.(vizStore.currentVis, { width, height }, (image, size) => {
                 setImage(image);
+                setWaiting(false);
                 setImageSize(size ?? null);
             });
         });
-    }, [props.onChartChange]);
+    }, [props.onChartChange, width, height]);
     return (
-        <div className="w-full h-full" ref={ref}>
-            <img src={image ?? undefined} width={imageSize?.width} height={imageSize?.height} className={imageSize === null ? 'w-full h-full' : ''} />
+        <div className="w-full h-full">
+            {waiting && <LoadingLayer />}
+            <div className="overflow-auto w-full h-full">
+                <Resizable
+                    className={enableResize ? 'border-primary border-2 max-h-screen max-w-[100vw]' : 'max-h-screen max-w-[100vw]'}
+                    style={{ padding: '12px' }}
+                    onResizeStop={(e, direction, ref, d) => {
+                        handleChartResize(size.width + d.width, size.height + d.height);
+                    }}
+                    enable={
+                        enableResize
+                            ? undefined
+                            : {
+                                  top: false,
+                                  right: false,
+                                  bottom: false,
+                                  left: false,
+                                  topRight: false,
+                                  bottomRight: false,
+                                  bottomLeft: false,
+                                  topLeft: false,
+                              }
+                    }
+                    size={
+                        // ensure PureRenderer with Auto size is correct
+                        size.mode === 'fixed'
+                            ? {
+                                  width: size.width + 'px',
+                                  height: size.height + 'px',
+                              }
+                            : size.mode === 'full'
+                            ? {
+                                  width: '100%',
+                                  height: '100%',
+                              }
+                            : { width: 'auto', height: 'auto' }
+                    }
+                >
+                    <div className="w-full h-full" ref={ref}>
+                        <img
+                            src={image ?? undefined}
+                            width={imageSize?.width || undefined}
+                            height={imageSize?.height || undefined}
+                            className={imageSize === null ? 'w-full h-full' : ''}
+                        />
+                    </div>
+                </Resizable>
+            </div>
         </div>
     );
 });
