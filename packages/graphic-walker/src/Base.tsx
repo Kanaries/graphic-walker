@@ -57,6 +57,7 @@ import { useResizeDetector } from 'react-resize-detector';
 import { is } from 'immer/dist/internal';
 import LoadingLayer from './components/loadingLayer';
 import { Resizable } from 're-resizable';
+import { ToolbarItemProps } from './components/toolbar';
 
 export interface IGraphicWalkerContextProps {
     data?: any[];
@@ -149,6 +150,7 @@ const VizApp = observer(function VizApp(props: {
 export const GraphicWalkerEditor = observer(function GraphicWalkerEditor({
     children,
     enhanceAPI,
+    toolbar,
 }: {
     enhanceAPI?: {
         header?: Record<string, string>;
@@ -157,6 +159,10 @@ export const GraphicWalkerEditor = observer(function GraphicWalkerEditor({
             feedbackAskviz?: string | boolean | ((data: IAskVizFeedback) => void);
             vlChat?: string | boolean | ((metas: IViewField[], chats: IChatMessage[]) => PromiseLike<IVisSpec | IChart> | IVisSpec | IChart);
         };
+    };
+    toolbar?: {
+        extra?: ToolbarItemProps[];
+        exclude?: string[];
     };
     children?: React.ReactNode | Iterable<React.ReactNode>;
 }) {
@@ -201,7 +207,11 @@ export const GraphicWalkerEditor = observer(function GraphicWalkerEditor({
                                 headers={enhanceAPI?.header}
                             />
                         )}
-                        <VisualSettings darkModePreference={darkMode} />
+                        <VisualSettings
+                            darkModePreference={darkMode}
+                            exclude={toolbar?.exclude}
+                            extra={toolbar?.extra}
+                        />
                         <CodeExport />
                         <ExplainData />
                         {vizStore.showDataBoard && <DataBoard />}
@@ -316,7 +326,7 @@ export const RemoteRendererContent = observer(function RemoteRendererContent(pro
                 setImageSize(size ?? null);
             });
         });
-    }, [props.onChartChange, width, height]);
+    }, [props.onChartChange, width, height, vizStore]);
     return (
         <div className="w-full h-full">
             {waiting && <LoadingLayer />}
@@ -404,13 +414,7 @@ export function GraphicWalkerContext({ children, ...props }: IGraphicWalkerConte
             storeRef={props.storeRef}
             defaultConfig={props.defaultConfig}
         >
-            <VizApp
-                computation={safeComputation}
-                darkMode={darkMode}
-                i18nLang={props.i18nLang}
-                i18nResources={props.i18nResources}
-                vizThemeConfig={props.vizThemeConfig}
-            >
+            <VizApp {...props} computation={safeComputation} darkMode={darkMode}>
                 {children}
             </VizApp>
         </VizStoreWrapper>
