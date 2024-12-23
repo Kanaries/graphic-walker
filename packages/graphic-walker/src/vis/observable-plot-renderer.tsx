@@ -170,13 +170,14 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
     const mediaTheme = useContext(themeContext);
     const { reportError: reportGWError } = useReporter();
 
-    // Replicates your row/col dimension logic
-    const rowDims = useMemo(() => rows.filter((f) => defaultAggregate || f.aggName !== 'expr'), [rows, defaultAggregate]);
-    const colDims = useMemo(() => columns.filter((f) => defaultAggregate || f.aggName !== 'expr'), [columns, defaultAggregate]);
-    // For simplicity, just replicate the same logic as your Vega-Lite code:
-    const rowRepeatFields = useMemo(() => (rowDims.length === 0 ? rowDims.slice(-1) : rowDims), [rowDims]);
-    const colRepeatFields = useMemo(() => (colDims.length === 0 ? colDims.slice(-1) : colDims), [colDims]);
-
+    const guardedRows = useMemo(() => rows.filter((x) => defaultAggregate || x.aggName !== 'expr'), [rows, defaultAggregate]);
+    const guardedCols = useMemo(() => columns.filter((x) => defaultAggregate || x.aggName !== 'expr'), [columns, defaultAggregate]);
+    const rowDims = useMemo(() => guardedRows.filter((f) => f.analyticType === 'dimension'), [guardedRows]);
+    const colDims = useMemo(() => guardedCols.filter((f) => f.analyticType === 'dimension'), [guardedCols]);
+    const rowMeas = useMemo(() => guardedRows.filter((f) => f.analyticType === 'measure'), [guardedRows]);
+    const colMeas = useMemo(() => guardedCols.filter((f) => f.analyticType === 'measure'), [guardedCols]);
+    const rowRepeatFields = useMemo(() => (rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas), [rowDims, rowMeas]); //rowMeas.slice(0, -1);
+    const colRepeatFields = useMemo(() => (colMeas.length === 0 ? colDims.slice(-1) : colMeas), [colDims, colMeas]); //colMeas.slice(0, -1);
     // track placeholders for each sub-view:
     const [plotPlaceholders, setPlotPlaceholders] = useState<React.MutableRefObject<HTMLDivElement | null>[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -205,10 +206,12 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
     const specs = useMemo(() => {
         const specsArr: any[] = [];
         const count = rowRepeatFields.length * colRepeatFields.length;
+
+        console.log({ count, rowRepeatFields, colRepeatFields });
         for (let i = 0; i < count; i++) {
             specsArr.push(
                 ...toObservablePlotSpec({
-                    columns: colRepeatFields,
+                    columns: guardedCols,
                     dataSource,
                     defaultAggregated: defaultAggregate,
                     geomType,
@@ -216,7 +219,7 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
                     interactiveScale,
                     layoutMode,
                     mediaTheme,
-                    rows: rowRepeatFields,
+                    rows: guardedRows,
                     stack,
                     width: computedSize.w ?? 400,
                     scales: channelScaleRaw,

@@ -33,9 +33,13 @@ function vegaLiteToPlot(spec: any): any {
     const enc = spec.encoding || {};
     const xField = enc.x?.field || null;
     const yField = enc.y?.field || null;
+    const xFacetField = enc.column?.field || null;
+    const yFacetField = enc.row?.field || null;
     const colorField = enc.color?.field || null;
     const sizeField = enc.size?.field || null;
     const tooltipEnc = enc.tooltip;
+
+    console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, tooltipEnc });
     // etc. shape, opacity, text, etc. if present
 
     // 4) Attempt to interpret transforms (like aggregate or stack)
@@ -65,6 +69,8 @@ function vegaLiteToPlot(spec: any): any {
                 x: xField || undefined,
                 y: yField || undefined,
                 fill: colorField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
                 // If stacked, we might do something else, like Plot.stackY(...)
             });
             break;
@@ -75,13 +81,17 @@ function vegaLiteToPlot(spec: any): any {
                 y: yField || undefined,
                 fill: colorField || undefined,
                 r: sizeField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
             });
             break;
         case 'tick':
             mark = Plot.tickY(data, {
                 x: xField || undefined,
                 y: yField || undefined,
-                fill: colorField || undefined
+                fill: colorField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
             });
             break;
 
@@ -90,6 +100,8 @@ function vegaLiteToPlot(spec: any): any {
                 x: xField || undefined,
                 y: yField || undefined,
                 stroke: colorField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
             });
             break;
 
@@ -102,6 +114,8 @@ function vegaLiteToPlot(spec: any): any {
                         x: xField || undefined,
                         y: yField || undefined,
                         fill: colorField || undefined,
+                        fx: xFacetField || undefined,
+                        fy: yFacetField || undefined,
                     })
                 );
             } else {
@@ -109,6 +123,8 @@ function vegaLiteToPlot(spec: any): any {
                     x: xField || undefined,
                     y: yField || undefined,
                     fill: colorField || undefined,
+                    fx: xFacetField || undefined,
+                    fy: yFacetField || undefined,
                 });
             }
             break;
@@ -240,8 +256,10 @@ export function toObservablePlotSpec({
         displayOffset,
     });
 
-    console.log(vlSpecs);
+    console.log({ vlSpecs });
 
     const plotSpecs: any[] = vlSpecs.map((vlSpec) => vegaLiteToPlot(vlSpec));
+
+    console.log({ plotSpecs });
     return plotSpecs;
 }
