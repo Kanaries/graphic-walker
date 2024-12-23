@@ -166,16 +166,23 @@ function vegaLiteToPlot(spec: any): any {
         marks: [mark],
         // Possibly define top-level x, y, color scales
         x: {
-            label: xField || undefined,
+            label: enc.x?.title || undefined,
+            type: enc.x.type === 'temporal' ? 'utc' : undefined,
             // If your spec had e.g. "type": "temporal", you'd do Plot.scale({type: "utc"})
         },
         y: {
-            label: yField || undefined,
+            label: enc.y?.title || undefined,
             // If stacked, you can do y: {stack: "zero"} as an alternative approach
         },
         color: {
-            label: colorField || undefined,
+            label: enc.color?.title || undefined,
         },
+        // fx: {
+        //     label: enc.column?.title || undefined,
+        // },
+        // fy: {
+        //     label: enc.row?.title || undefined,
+        // },
     };
 
     return plotOptions;
