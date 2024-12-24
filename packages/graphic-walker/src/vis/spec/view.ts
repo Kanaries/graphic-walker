@@ -68,7 +68,7 @@ export function getSingleView(props: SingleViewProps) {
         const types: ISemanticType[] = [];
         if (x !== NULL_FIELD) types.push(x.semanticType); //types.push(getFieldType(x));
         if (y !== NULL_FIELD) types.push(y.semanticType); //types.push(getFieldType(yField));
-        markType = autoMark(types);
+        markType = autoMark(types, defaultAggregated);
     }
 
     const transform = fields
