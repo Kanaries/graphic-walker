@@ -89,7 +89,7 @@ function vegaLiteToPlot(spec: any): any {
             mark = Plot.tickY(data, {
                 x: xField || undefined,
                 y: yField || undefined,
-                fill: colorField || undefined,
+                stroke: colorField || undefined,
                 fx: xFacetField || undefined,
                 fy: yFacetField || undefined,
             });
