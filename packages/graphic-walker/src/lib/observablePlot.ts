@@ -167,7 +167,7 @@ function vegaLiteToPlot(spec: any): any {
         // Possibly define top-level x, y, color scales
         x: {
             label: enc.x?.title || undefined,
-            type: enc.x.type === 'temporal' ? 'utc' : undefined,
+            type: enc.x?.type === 'temporal' ? 'utc' : undefined,
             // If your spec had e.g. "type": "temporal", you'd do Plot.scale({type: "utc"})
         },
         y: {

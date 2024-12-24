@@ -204,38 +204,66 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
 
     // In a multi-view scenario, we build one “Plot.Options” per sub-view:
     const specs = useMemo(() => {
-        const specsArr: any[] = [];
+        let specsArr: any[] = [];
+        if (rowRepeatFields.length === 0 && colRepeatFields.length === 0) {
+            return []
+        }
         const count = rowRepeatFields.length * colRepeatFields.length;
 
         console.log({ count, rowRepeatFields, colRepeatFields });
-        for (let i = 0; i < count; i++) {
-            specsArr.push(
-                ...toObservablePlotSpec({
-                    columns: guardedCols,
-                    dataSource,
-                    defaultAggregated: defaultAggregate,
-                    geomType,
-                    height: computedSize.h ?? 300,
-                    interactiveScale,
-                    layoutMode,
-                    mediaTheme,
-                    rows: guardedRows,
-                    stack,
-                    width: computedSize.w ?? 400,
-                    scales: channelScaleRaw,
-                    color,
-                    details,
-                    opacity,
-                    radius,
-                    shape,
-                    size,
-                    text,
-                    theta,
-                    vegaConfig,
-                    displayOffset,
-                })
-            );
-        }
+        specsArr = toObservablePlotSpec({
+            columns: guardedCols,
+            dataSource,
+            defaultAggregated: defaultAggregate,
+            geomType,
+            height: computedSize.h ?? 300,
+            interactiveScale,
+            layoutMode,
+            mediaTheme,
+            rows: guardedRows,
+            stack,
+            width: computedSize.w ?? 400,
+            scales: channelScaleRaw,
+            color,
+            details,
+            opacity,
+            radius,
+            shape,
+            size,
+            text,
+            theta,
+            vegaConfig,
+            displayOffset,
+        })
+        // for (let i = 0; i < count; i++) {
+        //     specsArr.push(
+        //         ...toObservablePlotSpec({
+        //             columns: guardedCols,
+        //             dataSource,
+        //             defaultAggregated: defaultAggregate,
+        //             geomType,
+        //             height: computedSize.h ?? 300,
+        //             interactiveScale,
+        //             layoutMode,
+        //             mediaTheme,
+        //             rows: guardedRows,
+        //             stack,
+        //             width: computedSize.w ?? 400,
+        //             scales: channelScaleRaw,
+        //             color,
+        //             details,
+        //             opacity,
+        //             radius,
+        //             shape,
+        //             size,
+        //             text,
+        //             theta,
+        //             vegaConfig,
+        //             displayOffset,
+        //         })
+        //     );
+        // }
+        console.log({ specsArr });
         return specsArr;
     }, [props, rowRepeatFields, colRepeatFields]);
 
