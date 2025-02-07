@@ -960,6 +960,7 @@ export interface ILocalComputationProps {
 
 export interface IRemoteComputationProps {
     computation: IComputationFunction;
+    computationTimeout?: number;
 }
 
 export interface IComputationContextProps {
