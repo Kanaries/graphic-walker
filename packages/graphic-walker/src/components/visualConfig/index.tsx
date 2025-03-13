@@ -17,11 +17,8 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogNormalContent } from '../ui/dialog';
 import Combobox from '../dropdownSelect/combobox';
-import { StyledPicker } from '../color-picker';
-import { ErrorBoundary } from 'react-error-boundary';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
-
-const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
+import { ColorPickerComponent } from './color-picker';
 
 function useDomainScale() {
     const [enableMinDomain, setEnableMinDomain] = useState(false);
@@ -147,10 +144,12 @@ const VisualConfigPanel: React.FC = () => {
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
-    const [background, setBackground] = useState<string | undefined>(layout.background);
+    const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
-    const [colorEdited, setColorEdited] = useState(false);
+    const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
+    const [backgroundEdited, setBackgroundEdited] = useState(false);
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
+    const [displayBackgroundPicker, setDisplayBackgroundPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
     const [geoMapTileUrl, setGeoMapTileUrl] = useState<string | undefined>(undefined);
     const [displayOffset, setDisplayOffset] = useState<number | undefined>(undefined);
@@ -169,10 +168,21 @@ const VisualConfigPanel: React.FC = () => {
     useEffect(() => {
         setZeroScale(layout.zeroScale);
         setSvg(layout.useSvg ?? false);
-        setBackground(layout.background);
+        setBackground(
+            extractRGBA(
+                {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                    a: 0,
+                },
+                layout.background
+            )
+        );
         setResolve(layout.resolve);
-        setDefaultColor(extractRGBA(layout.primaryColor));
-        setColorEdited(false);
+        setDefaultColor(extractRGBA({ r: 91, g: 143, b: 249, a: 1 }, layout.primaryColor));
+        setPrimaryColorEdited(false);
+        setBackgroundEdited(false);
         setScaleIncludeUnmatchedChoropleth(layout.scaleIncludeUnmatchedChoropleth ?? false);
         setFormat({
             numberFormat: layout.format.numberFormat,
@@ -207,6 +217,7 @@ const VisualConfigPanel: React.FC = () => {
                 className="p-0"
                 onClick={() => {
                     setDisplayColorPicker(false);
+                    setDisplayBackgroundPicker(false);
                 }}
             >
                 <div className="flex flex-col max-h-[calc(min(800px,90vh))] py-6">
@@ -219,74 +230,25 @@ const VisualConfigPanel: React.FC = () => {
                                 <div className="flex gap-6 flex-col md:flex-row">
                                     <div>
                                         <label className="block text-xs font-medium leading-6">{t('config.primary_color')}</label>
-                                        <ErrorBoundary
-                                            fallback={
-                                                <div className="flex space-x-2">
-                                                    <div
-                                                        className="w-4 h-4"
-                                                        style={{
-                                                            backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})`,
-                                                        }}
-                                                    />
-                                                    <Input
-                                                        value={defaultColor.r}
-                                                        type="number"
-                                                        onChange={(e) => {
-                                                            setColorEdited(true);
-                                                            setDefaultColor((x) => ({ ...x, r: Number(e.target.value) }));
-                                                        }}
-                                                    />
-                                                    <Input
-                                                        value={defaultColor.g}
-                                                        type="number"
-                                                        onChange={(e) => {
-                                                            setColorEdited(true);
-                                                            setDefaultColor((x) => ({ ...x, g: Number(e.target.value) }));
-                                                        }}
-                                                    />
-                                                    <Input
-                                                        value={defaultColor.b}
-                                                        type="number"
-                                                        onChange={(e) => {
-                                                            setColorEdited(true);
-                                                            setDefaultColor((x) => ({ ...x, b: Number(e.target.value) }));
-                                                        }}
-                                                    />
-                                                </div>
-                                            }
-                                        >
-                                            <div
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    e.preventDefault();
-                                                }}
-                                            >
-                                                <div
-                                                    className="w-8 h-5 border-2"
-                                                    style={{ backgroundColor: `rgba(${defaultColor.r},${defaultColor.g},${defaultColor.b},${defaultColor.a})` }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        setDisplayColorPicker(true);
-                                                    }}
-                                                ></div>
-                                                <div className="absolute left-32 top-22 z-40 shadow-sm">
-                                                    {displayColorPicker && (
-                                                        <StyledPicker
-                                                            presetColors={DEFAULT_COLOR_SCHEME}
-                                                            color={defaultColor}
-                                                            onChange={(color) => {
-                                                                setColorEdited(true);
-                                                                setDefaultColor({
-                                                                    ...color.rgb,
-                                                                    a: color.rgb.a ?? 1,
-                                                                });
-                                                            }}
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </ErrorBoundary>
+                                        <ColorPickerComponent
+                                            defaultColor={defaultColor}
+                                            setDefaultColor={setDefaultColor}
+                                            setPrimaryColorEdited={setPrimaryColorEdited}
+                                            displayColorPicker={displayColorPicker}
+                                            setDisplayColorPicker={setDisplayColorPicker}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium leading-6">
+                                            {t('config.background')} {t(`config.color`)}
+                                        </label>
+                                        <ColorPickerComponent
+                                            defaultColor={background}
+                                            setDefaultColor={setBackground}
+                                            setPrimaryColorEdited={setBackgroundEdited}
+                                            displayColorPicker={displayBackgroundPicker}
+                                            setDisplayColorPicker={setDisplayBackgroundPicker}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium leading-6">{t('config.color_palette')}</label>
@@ -314,18 +276,6 @@ const VisualConfigPanel: React.FC = () => {
                                                 value: '_none',
                                                 label: <>{t('config.default_color_palette')}</>,
                                             })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">
-                                            {t('config.background')} {t(`config.color`)}
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            value={background ?? ''}
-                                            onChange={(e) => {
-                                                setBackground(e.target.value);
-                                            }}
                                         />
                                     </div>
                                 </div>
@@ -571,7 +521,6 @@ const VisualConfigPanel: React.FC = () => {
                                         ['zeroScale', zeroScale],
                                         ['scaleIncludeUnmatchedChoropleth', scaleIncludeUnmatchedChoropleth],
                                         ['showAllGeoshapeInChoropleth', showAllGeoshapeInChoropleth],
-                                        ['background', background],
                                         ['resolve', resolve],
                                         ['colorPalette', colorPalette],
                                         ['useSvg', svg],
@@ -587,7 +536,15 @@ const VisualConfigPanel: React.FC = () => {
                                                 radius: radiusValue.value,
                                             },
                                         ],
-                                        ...(colorEdited
+                                        ...(backgroundEdited
+                                            ? [
+                                                  [
+                                                      'background',
+                                                      `rgba(${background.r},${background.g},${background.b},${background.a})`,
+                                                  ] as KVTuple<IVisualLayout>,
+                                              ]
+                                            : []),
+                                        ...(primaryColorEdited
                                             ? [
                                                   [
                                                       'primaryColor',
