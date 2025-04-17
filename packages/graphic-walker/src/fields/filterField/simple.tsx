@@ -15,6 +15,7 @@ import { createStreamedValueHook, useDebounceValueBind } from '../../hooks';
 import { GLOBAL_CONFIG } from '../../config';
 import { debounce } from 'lodash-es';
 import { Input } from '@/components/ui/input';
+import { SparseArray } from './array';
 
 const sortConfig = {
     key: 'value',
@@ -242,7 +243,7 @@ function VirtualList({
 }: {
     field: IFilterField;
     distinctTotal?: number;
-    data: ({ value: string | number; count: number } | null)[];
+    data: SparseArray<{ value: string | number; count: number }>;
     handleSelect: (value: string | number, checked: boolean, itemNum: number) => void;
     loadData: (index: number) => void;
     displayOffset?: number;
@@ -275,7 +276,7 @@ function VirtualList({
             >
                 {rowVirtualizer.getVirtualItems().map((vItem) => {
                     const idx = vItem.index;
-                    const item = data?.[idx];
+                    const item = data?.get(idx);
                     if (!item) {
                         return (
                             <div
