@@ -19,11 +19,28 @@ import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
 import { RendererAppWithContext } from './Renderer';
 
-export type ILocalVizAppProps = IVizAppProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
-export type IRemoteVizAppProps = IVizAppProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
+export type ILocalVizAppProps = IVizAppProps &
+    ILocalComputationProps &
+    React.RefAttributes<IGWHandler> & {
+        className?: string;
+        style?: React.CSSProperties;
+    };
+export type IRemoteVizAppProps = IVizAppProps &
+    IRemoteComputationProps &
+    React.RefAttributes<IGWHandler> & {
+        className?: string;
+        style?: React.CSSProperties;
+    };
 
 export const GraphicWalker = observer(
-    forwardRef<IGWHandler, IVizAppProps & (ILocalComputationProps | IRemoteComputationProps)>((props, ref) => {
+    forwardRef<
+        IGWHandler,
+        IVizAppProps &
+            (ILocalComputationProps | IRemoteComputationProps) & {
+                className?: string;
+                style?: React.CSSProperties;
+            }
+    >((props, ref) => {
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
@@ -35,7 +52,13 @@ export const GraphicWalker = observer(
 
         return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
-                <ShadowDom onMount={handleMount} onUnmount={handleUnmount} uiTheme={props.uiTheme ?? props.colorConfig}>
+                <ShadowDom
+                    className={props.className}
+                    style={props.style}
+                    onMount={handleMount}
+                    onUnmount={handleUnmount}
+                    uiTheme={props.uiTheme ?? props.colorConfig}
+                >
                     <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
                         <VizAppWithContext {...props} />
                     </DOMProvider>
@@ -80,11 +103,28 @@ export const GraphicRenderer = observer(
     (p: IRemoteVizAppProps & IRendererProps): JSX.Element;
 };
 
-export type ILocalTableProps = ITableProps & ILocalComputationProps & React.RefAttributes<IGWHandler>;
-export type IRemoteTableProps = ITableProps & IRemoteComputationProps & React.RefAttributes<IGWHandler>;
+export type ILocalTableProps = ITableProps &
+    ILocalComputationProps &
+    React.RefAttributes<IGWHandler> & {
+        className?: string;
+        style?: React.CSSProperties;
+    };
+export type IRemoteTableProps = ITableProps &
+    IRemoteComputationProps &
+    React.RefAttributes<IGWHandler> & {
+        className?: string;
+        style?: React.CSSProperties;
+    };
 
 export const TableWalker = observer(
-    forwardRef<IGWHandler, ITableProps & IComputationProps>((props, ref) => {
+    forwardRef<
+        IGWHandler,
+        ITableProps &
+            IComputationProps & {
+                className?: string;
+                style?: React.CSSProperties;
+            }
+    >((props, ref) => {
         const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
 
         const handleMount = (shadowRoot: ShadowRoot) => {
@@ -97,7 +137,13 @@ export const TableWalker = observer(
         return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom
-                    style={{ width: '100%', height: '100%' }}
+                    style={
+                        props.style ?? {
+                            width: '100%',
+                            height: '100%',
+                        }
+                    }
+                    className={props.className}
                     onMount={handleMount}
                     onUnmount={handleUnmount}
                     uiTheme={props.uiTheme ?? props.colorConfig}
