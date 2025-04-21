@@ -102,7 +102,7 @@ export const FieldsContextWrapper: React.FC<{ children?: React.ReactNode | Itera
     );
     return (
         <blockContext.Provider value={blockRef}>
-            <div className="scale-100" ref={blockRef}>
+            <div className="scale-100 w-full h-full" ref={blockRef}>
                 <DragDropContext enableDefaultSensors={false} sensors={sensors} onDragEnd={onDragEnd} onDragStart={() => {}} onDragUpdate={() => {}}>
                     {props.children}
                 </DragDropContext>
