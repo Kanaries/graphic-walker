@@ -301,6 +301,27 @@ export class VizSpecStore {
 
     get paintInfo() {
         const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
+        const { columns, rows } = this.currentEncodings;
+        if (columns.length !== 1 || rows.length !== 1) {
+            return { type: 'error', key: 'count' } as const;
+        }
+        const col = columns[0];
+        const row = rows[0];
+        if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
+            return { type: 'error', key: 'temporal' } as const;
+        }
+        if (
+            col.aggName === 'expr' ||
+            row.aggName === 'expr' ||
+            col.fid === MEA_KEY_ID ||
+            col.fid === MEA_VAL_ID ||
+            row.fid === MEA_KEY_ID ||
+            row.fid === MEA_VAL_ID ||
+            col.fid === PAINT_FIELD_ID ||
+            row.fid === PAINT_FIELD_ID
+        ) {
+            return { type: 'error', key: 'count' } as const;
+        }
         if (existPaintField) {
             const param = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
             if (param) {
