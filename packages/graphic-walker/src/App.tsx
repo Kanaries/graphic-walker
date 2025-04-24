@@ -68,6 +68,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         chart,
         vlSpec,
         onError,
+        hideSegmentNav,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -156,26 +157,32 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                         <FieldsContextWrapper>
                             <div className="bg-background text-foreground w-full h-full">
                                 <Errorpanel />
-                                <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)} className='w-full h-full flex flex-col'>
-                                    <TabsList className="mx-4">
-                                        <TabsTrigger value={ISegmentKey.data}>
-                                            <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
-                                        </TabsTrigger>
-                                        <TabsTrigger value={ISegmentKey.vis}>
-                                            <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
-                                        </TabsTrigger>
-                                        {enhanceAPI?.features?.vlChat && (
-                                            <TabsTrigger value={ISegmentKey.chat}>
-                                                <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                <Tabs
+                                    value={segmentKey}
+                                    onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)}
+                                    className="w-full h-full flex flex-col"
+                                >
+                                    {!hideSegmentNav && (
+                                        <TabsList className="mx-4">
+                                            <TabsTrigger value={ISegmentKey.data}>
+                                                <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
                                             </TabsTrigger>
-                                        )}
-                                    </TabsList>
+                                            <TabsTrigger value={ISegmentKey.vis}>
+                                                <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
+                                            </TabsTrigger>
+                                            {enhanceAPI?.features?.vlChat && (
+                                                <TabsTrigger value={ISegmentKey.chat}>
+                                                    <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                                </TabsTrigger>
+                                            )}
+                                        </TabsList>
+                                    )}
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
                                             <DatasetConfig />
                                         </div>
                                     </TabsContent>
-                                    <TabsContent value={ISegmentKey.vis} className='flex-1 min-h-0 flex flex-col'>
+                                    <TabsContent value={ISegmentKey.vis} className="flex-1 min-h-0 flex flex-col">
                                         {!props.hideChartNav && (
                                             <div className="px-2 mx-2 mt-2">
                                                 <VisNav />

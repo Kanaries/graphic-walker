@@ -910,6 +910,8 @@ export interface IVizProps {
     };
     /** hide the chart navigation so make user can only edit on the only chart. */
     hideChartNav?: boolean;
+    /** hide the segment navigation so make user can only edit on the only segment. */
+    hideSegmentNav?: boolean;
     geographicData?: IGeographicData & {
         key: string;
     };
