@@ -1024,6 +1024,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 });
                             } else {
                                 // editing the existing paint map
+                                paintMapRef.current = await decompressBitMap(lastFacet.map);
+
                                 const x = lastFacet.dimensions.at(-1)?.fid;
                                 const y = lastFacet.dimensions.at(-2)?.fid;
                                 const xf = allFields.find((a) => a.fid === x);
