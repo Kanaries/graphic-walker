@@ -226,7 +226,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 <SideResize
                                                     defaultWidth={240}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0 sm:h-full"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0 sm:min-h-full flex flex-col"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <DatasetFields />
