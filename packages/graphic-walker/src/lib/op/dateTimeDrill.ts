@@ -26,6 +26,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
     switch (drillLevel) {
         case 'year': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 return formatDate(toOffsetDate(Y, 0, 1));
@@ -37,6 +38,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'quarter': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const Q = Math.floor(date.getMonth() / 3);
@@ -49,6 +51,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'month': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
@@ -61,6 +64,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'week': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const today = newDate(v);
                 const date = newDate(today.setDate(today.getDate() - today.getDay()));
                 const Y = date.getFullYear();
@@ -75,6 +79,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'day': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
@@ -88,6 +93,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'iso_year': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const _Y = date.getFullYear();
                 const dayInFirstWeek = toOffsetDate(_Y, 0, 4);
@@ -108,6 +114,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'iso_week': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const today = newDate(v);
                 const date = newDate(today.setDate(today.getDate() - (today.getDay() || 7) + 1));
                 const Y = date.getFullYear();
@@ -122,6 +129,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'hour': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
@@ -136,6 +144,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'minute': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
@@ -151,6 +160,7 @@ function dateTimeDrill(resKey: string, params: IExpParameter[], data: IDataFrame
         }
         case 'second': {
             const newValues = fieldValues.map((v) => {
+                if (!v) return null;
                 const date = newDate(v);
                 const Y = date.getFullYear();
                 const M = date.getMonth();
