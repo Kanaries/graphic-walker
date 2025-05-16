@@ -350,7 +350,10 @@ export function parseErrorMessage(errorLike: any): string {
     return String(errorLike);
 }
 
-export const formatDate = (date: Date) => {
+export const formatDate = (date: Date | null) => {
+    if (!date) {
+        return 'null';
+    }
     const Y = date.getFullYear();
     const M = date.getMonth() + 1;
     const D = date.getDate();
