@@ -30,8 +30,9 @@ export const unexceptedUTCParsedPatternFormats = ['%Y', '%Y-%m', '%Y-%m-%d'];
 export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
     function creator(): OffsetDate;
     function creator(value: number | string | Date): OffsetDate;
+    function creator(value: number | string | Date | null): OffsetDate | null;
     function creator(year: number, monthIndex: number, date?: number, hours?: number, minutes?: number, seconds?: number, ms?: number): OffsetDate;
-    function creator(...args): OffsetDate {
+    function creator(...args): OffsetDate | null {
         if (args.length > 1) {
             const timestamp =
                 offset * 60000 +
@@ -56,6 +57,9 @@ export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
                 const utcDate = currentDate.getTime() - currentDate.getTimezoneOffset() * 60000;
                 return getOffsetDate(new Date(utcDate + offset * 60000), offset);
             }
+            if (!v) {
+                return null
+            }
             return getOffsetDate(new Date(v), offset);
         }
         return getOffsetDate(new Date(), offset);
@@ -68,8 +72,9 @@ export function parsedOffsetDate(displayOffset: number | null | undefined, parse
     const parse = newOffsetDate(parseOffset ?? new Date().getTimezoneOffset());
     function creator(): OffsetDate;
     function creator(value: number | string | Date): OffsetDate;
+    function creator(value: number | string | Date | null): OffsetDate | null;
     function creator(year: number, monthIndex: number, date?: number, hours?: number, minutes?: number, seconds?: number, ms?: number): OffsetDate;
-    function creator(...args: []): OffsetDate {
+    function creator(...args: []): OffsetDate | null {
         return toOffset(parse(...args));
     }
     return creator;

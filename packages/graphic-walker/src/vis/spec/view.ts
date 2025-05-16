@@ -89,7 +89,7 @@ export function getSingleView(props: SingleViewProps) {
                         return null;
                     }
                     return {
-                        calculate: `toDate(datum[${JSON.stringify(fid)}])${formatOffset(offsetTime)}`,
+                        calculate: `datum[${JSON.stringify(fid)}]!==null?(toDate(datum[${JSON.stringify(fid)}])${formatOffset(offsetTime)}):null`,
                         as: fid,
                     };
                 }
@@ -98,7 +98,7 @@ export function getSingleView(props: SingleViewProps) {
                 return null;
             }
             return {
-                calculate: `datum[${JSON.stringify(fid)}]${formatOffset(offsetTime)}`,
+                calculate: `datum[${JSON.stringify(fid)}]!==null?(datum[${JSON.stringify(fid)}]${formatOffset(offsetTime)}):null`,
                 as: fid,
             };
         })
