@@ -15,7 +15,7 @@ const DimFields: React.FC = (props) => {
     const { dimensions } = vizStore;
     const menuActions = useMenuActions('dimensions');
     return (
-        <div className="touch-none">
+        <div className="relative touch-none">
             {dimensions.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
