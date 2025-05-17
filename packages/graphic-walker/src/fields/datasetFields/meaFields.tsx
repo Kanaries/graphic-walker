@@ -18,7 +18,7 @@ const MeaFields: React.FC = (props) => {
     const menuActions = useMenuActions('measures');
 
     return (
-        <div className='touch-none'>
+        <div className='relative touch-none'>
             {measures.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
