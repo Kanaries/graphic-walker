@@ -215,11 +215,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <ComputedFieldDialog />
                                             <Painter themeConfig={themeConfig} themeKey={themeKey} />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                            <div className="sm:flex">
+                                            <div className="sm:flex h-[600px]">
                                                 <SideResize
                                                     defaultWidth={240}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0 h-full"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <DatasetFields />
@@ -227,7 +227,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 <SideResize
                                                     defaultWidth={180}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0 h-full"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <FilterField />

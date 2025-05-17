@@ -8,7 +8,7 @@ import { refMapper } from '../fieldsContext';
 
 const DSContainer = styled.div`
     @media (min-width: 640px) {
-        height: 680px;
+        height: 100%;
     }
 `;
 
