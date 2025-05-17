@@ -5,12 +5,10 @@ import Table from '../table';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import DropdownSelect from '../../components/dropdownSelect';
-import { SUPPORTED_FILE_TYPES, charsetOptions } from './config';
-import { classNames } from '../../utils';
-import { RadioGroup } from '@headlessui/react';
+import { charsetOptions } from './config';
 import { jsonReader } from './utils';
 import { CommonStore } from '../../store/commonStore';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface ICSVData {
@@ -20,7 +18,6 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
     const fileRef = useRef<HTMLInputElement>(null);
     const { tmpDSName, tmpDataSource, tmpDSRawFields } = commonStore;
     const [encoding, setEncoding] = useState<string>('utf-8');
-    const [fileType, setFileType] = useState<string>('csv');
 
     const onSubmitData = useCallback(() => {
         commonStore.commitTempDS();
@@ -34,7 +31,9 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
             const files = e.target.files;
             if (files !== null) {
                 const file = files[0];
-                if (fileType === 'csv') {
+                const name = file.name.toLowerCase();
+                const ext = name.endsWith('.json') ? 'json' : 'csv';
+                if (ext === 'csv') {
                     FileReader.csvReader({
                         file,
                         config: { type: 'reservoirSampling', size: Infinity },
@@ -50,7 +49,7 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
                 }
             }
         },
-        [commonStore, fileType, encoding]
+        [commonStore, encoding]
     );
 
     return (
@@ -70,34 +69,16 @@ const CSVData: React.FC<ICSVData> = ({ commonStore }) => {
                     <p className="mt-1 text-sm text-muted-foreground">{t('get_start_desc')}</p>
                 </div>
             )}
-            <input style={{ display: 'none' }} type="file" ref={fileRef} onChange={fileUpload} />
+            <input
+                style={{ display: 'none' }}
+                type="file"
+                ref={fileRef}
+                onChange={fileUpload}
+                accept=".csv,.json"
+            />
             {!fileLoaded && (
                 <div className="my-1">
                     <div className="flex flex-col items-center gap-1 w-fit mx-auto">
-                        <div className="w-full">
-                            <RadioGroup value={fileType} onChange={setFileType} className="mt-2">
-                                <RadioGroup.Label className="sr-only"> Choose a memory option </RadioGroup.Label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {SUPPORTED_FILE_TYPES.map((option) => (
-                                        <RadioGroup.Option
-                                            key={option.value}
-                                            value={option.value}
-                                            className={({ checked }) =>
-                                                classNames(
-                                                    buttonVariants({
-                                                        variant: checked ? 'default' : 'outline',
-                                                        className: checked ? 'border-transparent' : '',
-                                                    }),
-                                                    'cursor-pointer px-8 border'
-                                                )
-                                            }
-                                        >
-                                            <RadioGroup.Label as="span">{option.label}</RadioGroup.Label>
-                                        </RadioGroup.Option>
-                                    ))}
-                                </div>
-                            </RadioGroup>
-                        </div>
                         <div className="flex w-full">
                             <Button
                                 className="mr-2"
