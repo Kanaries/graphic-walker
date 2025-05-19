@@ -1,3 +1,7 @@
+import { version } from '../package.json';
+
+console.log(`Graphic Walker version: ${version}`);
+
 export * from './root';
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
