@@ -426,79 +426,176 @@ const VisualConfigPanel: React.FC = () => {
                                 <ConfigItemTitle>{t('config.misc')}</ConfigItemTitle>
                             </ConfigItemHeader>
                             <ConfigItemContent>
-                                <div className="flex flex-col space-y-2">
-                                    <div className="flex flex-col space-y-2">
-                                        <Toggle
-                                            label={t(`config.customTile`)}
-                                            enabled={isNotEmpty(geoMapTileUrl)}
-                                            onChange={(e) => {
-                                                setGeoMapTileUrl(e ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : undefined);
-                                            }}
-                                        />
-                                        {isNotEmpty(geoMapTileUrl) && (
-                                            <Input
-                                                type="text"
-                                                value={geoMapTileUrl}
-                                                onChange={(e) => {
-                                                    setGeoMapTileUrl(e.target.value);
-                                                }}
-                                            />
-                                        )}
+                                <div className="flex flex-col space-y-6">
+                                    {/* Map Configuration Group */}
+                                    <div className="space-y-2 border-b pb-4">
+                                        <h3 className="text-sm font-medium">{t('config.map_settings')}</h3>
+                                        <p className="text-xs text-gray-500 mb-4">
+                                            {t('config.map_settings_desc')}
+                                        </p>
+                                        
+                                        <div className="border rounded-md p-4">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <label className="text-xs font-medium leading-6">{t(`config.customTile`)}</label>
+                                                    <p className="text-xs text-gray-500">
+                                                        {t('config.customTile_desc')}
+                                                    </p>
+                                                </div>
+                                                <Toggle
+                                                    enabled={isNotEmpty(geoMapTileUrl)}
+                                                    onChange={(e) => {
+                                                        setGeoMapTileUrl(e ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : undefined);
+                                                    }}
+                                                />
+                                            </div>
+                                            
+                                            {isNotEmpty(geoMapTileUrl) && (
+                                                <Input
+                                                    type="text"
+                                                    value={geoMapTileUrl}
+                                                    onChange={(e) => {
+                                                        setGeoMapTileUrl(e.target.value);
+                                                    }}
+                                                    className="mt-4 max-w-md"
+                                                    placeholder="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                />
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex gap-x-6 gap-y-2 flex-wrap">
-                                        <Toggle
-                                            label={t(`config.zeroScale`)}
-                                            enabled={zeroScale}
-                                            onChange={(en) => {
-                                                setZeroScale(en);
-                                            }}
-                                        />
-                                        <Toggle
-                                            label={t(`config.svg`)}
-                                            enabled={svg}
-                                            onChange={(en) => {
-                                                setSvg(en);
-                                            }}
-                                        />
-                                        <Toggle
-                                            label="include unmatched choropleth in scale"
-                                            enabled={scaleIncludeUnmatchedChoropleth}
-                                            onChange={(en) => {
-                                                setScaleIncludeUnmatchedChoropleth(en);
-                                            }}
-                                        />
-                                        <Toggle
-                                            label="include shapes without data"
-                                            enabled={showAllGeoshapeInChoropleth}
-                                            onChange={(en) => {
-                                                setShowAllGeoshapeInChoropleth(en);
-                                            }}
-                                        />
+
+                                    {/* Choropleth Settings Group */}
+                                    <div className="space-y-2 border-b pb-4">
+                                        <h3 className="text-sm font-medium">{t('config.choropleth_settings')}</h3>
+                                        <p className="text-xs text-gray-500 mb-4">
+                                            {t('config.choropleth_settings_desc')}
+                                        </p>
+                                        
+                                        <div className="border rounded-md">
+                                            <div className="p-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <label className="text-xs font-medium leading-6">{t('config.include_unmatched')}</label>
+                                                        <p className="text-xs text-gray-500">
+                                                            {t('config.include_unmatched_desc')}
+                                                        </p>
+                                                    </div>
+                                                    <Toggle
+                                                        enabled={scaleIncludeUnmatchedChoropleth}
+                                                        onChange={(en) => {
+                                                            setScaleIncludeUnmatchedChoropleth(en);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <hr />
+                                            
+                                            <div className="p-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <label className="text-xs font-medium leading-6">{t('config.include_shapes')}</label>
+                                                        <p className="text-xs text-gray-500">
+                                                            {t('config.include_shapes_desc')}
+                                                        </p>
+                                                    </div>
+                                                    <Toggle
+                                                        enabled={showAllGeoshapeInChoropleth}
+                                                        onChange={(en) => {
+                                                            setShowAllGeoshapeInChoropleth(en);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col space-y-2">
-                                        <Toggle
-                                            label={t(`config.customOffset`)}
-                                            enabled={isNotEmpty(displayOffset)}
-                                            onChange={(e) => {
-                                                setDisplayOffsetEdited(true);
-                                                setDisplayOffset(e ? new Date().getTimezoneOffset() : undefined);
-                                            }}
-                                        />
-                                        {isNotEmpty(displayOffset) && (
-                                            <Combobox
-                                                className="w-full"
-                                                popClassName="w-[400px]"
-                                                selectedKey={`${displayOffset}`}
-                                                onSelect={(e) => {
-                                                    setDisplayOffsetEdited(true);
-                                                    setDisplayOffset(parseInt(e));
-                                                }}
-                                                options={timezones.map((tz) => ({
-                                                    value: `${tz.value}`,
-                                                    label: <span title={tz.name}>{tz.name}</span>,
-                                                }))}
-                                            />
-                                        )}
+
+                                    {/* Visualization Settings Group */}
+                                    <div className="space-y-2 border-b pb-4">
+                                        <h3 className="text-sm font-medium">{t('config.visualization_settings')}</h3>
+                                        <p className="text-xs text-gray-500 mb-4">
+                                            {t('config.visualization_settings_desc')}
+                                        </p>
+                                        
+                                        <div className="border rounded-md">
+                                            <div className='p-4'>
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <label className="text-xs font-medium leading-6">{t(`config.zeroScale`)}</label>
+                                                        <p className="text-xs text-gray-500">
+                                                            {t('config.zeroScale_desc')}
+                                                        </p>
+                                                    </div>
+                                                    <Toggle
+                                                        enabled={zeroScale}
+                                                        onChange={(en) => {
+                                                            setZeroScale(en);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <hr />
+                                            
+                                            <div className='p-4'>
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <label className="text-xs font-medium leading-6">{t(`config.svg`)}</label>
+                                                        <p className="text-xs text-gray-500">
+                                                            {t('config.svg_desc')}
+                                                        </p>
+                                                    </div>
+                                                    <Toggle
+                                                        enabled={svg}
+                                                        onChange={(en) => {
+                                                            setSvg(en);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Timezone Settings Group */}
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-medium">{t('config.timezone_settings')}</h3>
+                                        <p className="text-xs text-gray-500 mb-4">
+                                            {t('config.timezone_settings_desc')}
+                                        </p>
+                                        
+                                        <div className="border rounded-md p-4">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <label className="text-xs font-medium leading-6">{t(`config.customOffset`)}</label>
+                                                    <p className="text-xs text-gray-500">
+                                                        {t('config.customOffset_desc')}
+                                                    </p>
+                                                </div>
+                                                <Toggle
+                                                    enabled={isNotEmpty(displayOffset)}
+                                                    onChange={(e) => {
+                                                        setDisplayOffsetEdited(true);
+                                                        setDisplayOffset(e ? new Date().getTimezoneOffset() : undefined);
+                                                    }}
+                                                />
+                                            </div>
+                                            
+                                            {isNotEmpty(displayOffset) && (
+                                                <Combobox
+                                                    className="mt-4 max-w-md"
+                                                    popClassName="w-[400px]"
+                                                    selectedKey={`${displayOffset}`}
+                                                    onSelect={(e) => {
+                                                        setDisplayOffsetEdited(true);
+                                                        setDisplayOffset(parseInt(e));
+                                                    }}
+                                                    options={timezones.map((tz) => ({
+                                                        value: `${tz.value}`,
+                                                        label: <span title={tz.name}>{tz.name}</span>,
+                                                    }))}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </ConfigItemContent>
