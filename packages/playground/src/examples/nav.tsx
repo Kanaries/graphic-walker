@@ -24,6 +24,10 @@ export const pages = [
         name: 'CustomColor',
     },
     {
+        comp: () => import('./pages/exportChart'),
+        name: 'Export Chart',
+    },
+    {
         comp: () => import('./pages/table'),
         name: 'TableWalker',
     },
