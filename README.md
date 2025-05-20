@@ -114,6 +114,7 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
         data={data}
         fields={fields}
         chart={graphicWalkerSpec}
+        pageSize={50}
         i18nLang={langStore.lang}
     />;
 }
@@ -127,13 +128,8 @@ If you have a configuration of GraphicWalker chart, you can use the `PureRendere
 import { PureRenderer } from '@kanaries/graphic-walker';
 
 const YourChart: React.FC<IYourChartProps> = props => {
-    const { rawData, visualState, visualConfig, visualLayout } = props;
-    return <PureRenderer
-        rawData={rawData}
-        visualState={visualState}
-        visualConfig={visualConfig}
-        visualLayout={visualLayout}
-    />;
+    const { data, spec } = props;
+    return <PureRenderer rawData={data} chart={spec} containerStyle={{ height: 300 }} />;
 }
 
 export default YourChart;
@@ -156,7 +152,7 @@ const YourChart: React.FC<IYourChartProps> = props => {
 export default YourChart;
 ```
 
-You can use `TableWalker` component to make a single table view with your data. it accepts same props as `GraphicWalker`, but you don't need to pass the chart prop, and you can control the page size by pageSize prop(default value is 20).
+You can use `TableWalker` component to make a single table view with your data. It accepts the same props as `GraphicWalker`, and both components allow you to control the dataset page size via the `pageSize` prop (default value is 100 for `GraphicWalker` and 20 for `TableWalker`).
 
 ```typescript
 import { TableWalker } from '@kanaries/graphic-walker';

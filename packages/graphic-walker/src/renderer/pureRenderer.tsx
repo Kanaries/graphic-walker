@@ -16,6 +16,8 @@ import type {
     IVisualLayout,
     IChannelScales,
     IUIThemeConfig,
+    IChart,
+    IVisSpec,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -38,8 +40,8 @@ type IPureRendererProps = {
     /** @deprecated renamed to appearance */
     dark?: IDarkMode;
     appearance?: IDarkMode;
-    visualState: DraggableFieldState;
-    visualConfig: IVisualConfigNew | IVisualConfig;
+    visualState?: DraggableFieldState;
+    visualConfig?: IVisualConfigNew | IVisualConfig;
     visualLayout?: IVisualLayout;
     /** @deprecated renamed to uiTheme */
     colorConfig?: IUIThemeConfig;
@@ -50,17 +52,12 @@ type IPureRendererProps = {
     scales?: IChannelScales;
     overrideSize?: IVisualLayout['size'];
     disableCollapse?: boolean;
+    chart?: IChart | IVisSpec;
+    containerStyle?: React.CSSProperties;
 };
 
-type LocalProps = {
-    type?: 'local';
-    rawData: IRow[];
-};
-
-type RemoteProps = {
-    type: 'remote';
-    computation: IComputationFunction;
-};
+type LocalProps = { rawData: IRow[] };
+type RemoteProps = { computation: IComputationFunction };
 
 export type IRemotePureRendererProps = IPureRendererProps & RemoteProps & React.RefAttributes<IReactVegaHandler>;
 export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.RefAttributes<IReactVegaHandler>;
@@ -84,20 +81,28 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         visualLayout: layout,
         overrideSize,
         locale,
-        type,
         themeConfig,
         channelScales,
         scales,
         disableCollapse,
-    } = props;
-    const computation = useMemo(() => {
-        if (props.type === 'remote') {
-            return props.computation;
-        }
-        return getComputation(props.rawData);
-    }, [type, type === 'remote' ? props.computation : props.rawData]);
+        chart,
+        containerStyle,
+        rawData,
+        computation: computationProp,
+    } = props as IPureRendererProps & Partial<LocalProps & RemoteProps>;
 
-    const rawLayout = layout ?? (visualConfig as IVisualConfig);
+    const chartEncodings = chart ? chart.encodings : visualState;
+    const chartConfig = chart ? chart.config : (visualConfig as IVisualConfigNew | IVisualConfig);
+    const chartLayout = chart ? chart.layout : layout;
+
+    const computation = useMemo(() => {
+        if (computationProp) {
+            return computationProp;
+        }
+        return getComputation(rawData ?? []);
+    }, [computationProp, rawData]);
+
+    const rawLayout = chartLayout ?? (chartConfig as IVisualConfig);
 
     const visualLayout = useMemo(
         () => ({
@@ -109,16 +114,16 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
 
     const sizeMode = visualLayout.size.mode;
 
-    const sort = getSort(visualState);
-    const limit = visualConfig.limit ?? -1;
-    const defaultAggregated = visualConfig?.defaultAggregated ?? false;
+    const sort = getSort(chartEncodings);
+    const limit = chartConfig.limit ?? -1;
+    const defaultAggregated = chartConfig?.defaultAggregated ?? false;
 
     const [viewData, setViewData] = useState<IRow[]>([]);
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
 
-        const { dimensions, measures, filters, ...state } = visualState;
+        const { dimensions, measures, filters, ...state } = chartEncodings;
         const allFields = [...dimensions, ...measures];
 
         const dKeys = Object.keys(state) as (keyof DraggableFieldState)[];
@@ -133,7 +138,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         }
 
         return { allFields, viewDimensions, viewMeasures, filters };
-    }, [visualState]);
+    }, [chartEncodings]);
 
     const { viewData: data, loading: waiting } = useRenderer({
         allFields,
@@ -142,10 +147,10 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         filters,
         defaultAggregated,
         sort,
-        folds: visualConfig.folds,
+        folds: chartConfig.folds,
         limit,
         computationFunction: computation,
-        timezoneDisplayOffset: visualConfig['timezoneDisplayOffset'],
+        timezoneDisplayOffset: (chartConfig as any)['timezoneDisplayOffset'],
     });
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({ data });
@@ -159,13 +164,17 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         }
     }, [waiting]);
 
-    const { coordSystem = 'generic' } = visualConfig;
+    const { coordSystem = 'generic' } = chartConfig as IVisualConfigNew & { coordSystem?: string };
     const isSpatial = coordSystem === 'geographic';
     const darkMode = useCurrentMediaTheme(appearance ?? dark);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
-        <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} uiTheme={uiTheme ?? colorConfig}>
+        <ShadowDom
+            style={{ ...(sizeMode === 'full' ? { width: '100%', height: '100%' } : {}), ...(containerStyle ?? {}) }}
+            className={className}
+            uiTheme={uiTheme ?? colorConfig}
+        >
             <VizAppContext
                 ComputationContext={computation}
                 themeContext={darkMode}
@@ -176,7 +185,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 <div className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
-                            <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
+                            <LeafletRenderer data={data} draggableFieldState={chartEncodings} visualConfig={chartConfig} visualLayout={visualLayout} />
                         </div>
                     )}
                     {isSpatial || (
@@ -184,8 +193,8 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             name={name}
                             data={viewData}
                             ref={ref}
-                            draggableFieldState={visualState}
-                            visualConfig={visualConfig}
+                            draggableFieldState={chartEncodings}
+                            visualConfig={chartConfig}
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}
                             scales={scales ?? channelScales}

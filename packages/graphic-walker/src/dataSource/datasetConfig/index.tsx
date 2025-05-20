@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { toJS } from 'mobx';
 
-const DatasetConfig: React.FC = () => {
+const DatasetConfig: React.FC<{ pageSize?: number }> = ({ pageSize = 100 }) => {
     const vizStore = useVizStore();
     const computation = useCompututaion();
     const metas = toJS(vizStore.meta);
@@ -12,7 +12,7 @@ const DatasetConfig: React.FC = () => {
     return (
         <div className="relative">
             <DatasetTable
-                size={100}
+                size={pageSize}
                 metas={metas}
                 computation={computation}
                 displayOffset={vizStore.config.timezoneDisplayOffset}

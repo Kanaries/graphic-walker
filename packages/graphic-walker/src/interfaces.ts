@@ -1002,7 +1002,9 @@ export interface ITableSpecProps {
     }>;
 }
 
-export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {}
+export interface IVizAppProps extends IAppI18nProps, IVizProps, IThemeProps, IErrorHandlerProps, IVizStoreProps, ISpecProps {
+    pageSize?: number;
+}
 export interface ITableProps extends IAppI18nProps, ITableSpecProps, IThemeProps, IErrorHandlerProps, IVizStoreProps {}
 
 export interface IAskVizFeedback {

@@ -49,6 +49,7 @@ export type BaseVizProps = IAppI18nProps &
     ISpecProps &
     IComputationContextProps & {
         darkMode?: 'light' | 'dark';
+        pageSize?: number;
     };
 
 export const VizApp = observer(function VizApp(props: BaseVizProps) {
@@ -68,6 +69,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         chart,
         vlSpec,
         onError,
+        pageSize = 100,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -172,7 +174,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     </TabsList>
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
-                                            <DatasetConfig />
+                                            <DatasetConfig pageSize={pageSize} />
                                         </div>
                                     </TabsContent>
                                     <TabsContent value={ISegmentKey.vis}>
@@ -207,7 +209,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             />
                                             <CodeExport />
                                             <ExplainData themeKey={themeKey} />
-                                            {vizStore.showDataBoard && <DataBoard />}
+                                            {vizStore.showDataBoard && <DataBoard pageSize={pageSize} />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
