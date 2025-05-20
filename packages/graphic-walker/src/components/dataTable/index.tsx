@@ -25,6 +25,8 @@ interface DataTableProps {
     computation: IComputationFunction;
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
     disableFilter?: boolean;
+    disableSorting?: boolean;
+    hideSemanticType?: boolean;
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
@@ -239,7 +241,18 @@ const DataTable = forwardRef(
             getFilters: () => IVisFilter[];
         }>
     ) => {
-    const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
+    const {
+        size = 10,
+        onMetaChange,
+        metas,
+        computation,
+        disableFilter,
+        disableSorting,
+        hideSemanticType,
+        displayOffset,
+        hidePaginationAtOnepage,
+        hideProfiling,
+    } = props;
     const [pageIndex, setPageIndex] = useState(0);
     const { t } = useTranslation();
     const computationFunction = computation;
@@ -319,7 +332,7 @@ const DataTable = forwardRef(
         setDataLoading(true);
         const taskId = ++taskIdRef.current;
         dataReadRaw(computationFunction, size, pageIndex, {
-            sorting,
+            sorting: disableSorting ? undefined : sorting,
             filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
         })
             .then((data) => {
@@ -338,7 +351,7 @@ const DataTable = forwardRef(
         return () => {
             taskIdRef.current++;
         };
-    }, [computationFunction, pageIndex, size, sorting, filters]);
+    }, [computationFunction, pageIndex, size, sorting, filters, disableSorting]);
 
     const filteredComputation = useMemo((): IComputationFunction => {
         const filterRules = filters.filter((f) => f.rule).map(createFilter);
@@ -431,12 +444,12 @@ const DataTable = forwardRef(
                                                 }
                                             >
                                                 <div className="font-normal block">
-                                                    {!onMetaChange && (
+                                                    {!hideSemanticType && !onMetaChange && (
                                                         <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
                                                             <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
                                                         </span>
                                                     )}
-                                                    {onMetaChange && (
+                                                    {!hideSemanticType && onMetaChange && (
                                                         <DropdownContext
                                                             options={semanticTypeList}
                                                             onSelect={(value) => {
@@ -458,7 +471,8 @@ const DataTable = forwardRef(
                                                 </div>
                                                 <b
                                                     className="inline-block"
-                                                    onClick={() =>
+                                                    onClick={() => {
+                                                        if (disableSorting) return;
                                                         setSorting((s) => {
                                                             if (s?.fid === f.value.fid && s.sort === 'descending') {
                                                                 return {
@@ -470,12 +484,12 @@ const DataTable = forwardRef(
                                                                 fid: f.value.fid,
                                                                 sort: 'descending',
                                                             };
-                                                        })
-                                                    }
+                                                        });
+                                                    }}
                                                 >
                                                     {f.value.basename || f.value.name || f.value.fid}
                                                 </b>
-                                                {sorting?.fid === f.value.fid && (
+                                                {!disableSorting && sorting?.fid === f.value.fid && (
                                                     <div className="mx-1">
                                                         {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
                                                         {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}

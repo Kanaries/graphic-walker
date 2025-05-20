@@ -95,6 +95,9 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                 displayOffset={props.displayOffset}
                                 hidePaginationAtOnepage={props.hidePaginationAtOnepage}
                                 hideProfiling={props.hideProfiling}
+                                disableFilter={props.disableFilter}
+                                disableSorting={props.disableSorting}
+                                hideSemanticType={props.hideSemanticType}
                             />
                         </div>
                         <div ref={setPortal} />

@@ -989,6 +989,9 @@ export interface ITableSpecProps {
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
+    disableFilter?: boolean;
+    disableSorting?: boolean;
+    hideSemanticType?: boolean;
     /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
     /** @deprecated use vizThemeConfig instead */
