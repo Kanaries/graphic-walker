@@ -7,6 +7,7 @@ export const themeContext = createContext<'light' | 'dark'>('light');
 
 export const vegaThemeContext = createContext<{
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
+    setVizThemeConfig?: (cfg: IThemeKey | GWGlobalConfig) => void;
 }>({});
 
 export const portalContainerContext = createContext<HTMLDivElement | null>(null);
