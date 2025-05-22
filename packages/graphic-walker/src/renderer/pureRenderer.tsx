@@ -162,6 +162,9 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
     const darkMode = useCurrentMediaTheme(appearance ?? dark);
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
@@ -169,7 +172,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
             <VizAppContext
                 ComputationContext={computation}
                 themeContext={darkMode}
-                vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                 portalContainerContext={portal}
             >
                 {waiting && <LoadingLayer />}
@@ -189,7 +192,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}
                             scales={scales ?? channelScales}
-                            vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                            vizThemeConfig={currentTheme}
                             disableCollapse={disableCollapse}
                         />
                     )}

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps } from './interfaces';
+import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps, IThemeKey } from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -136,6 +137,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
+    const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey;
+    const appliedThemeConfig = typeof currentTheme === 'object' ? currentTheme : themeConfig;
 
     const wrappedComputation = useMemo(
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
@@ -149,7 +155,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
                     <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
@@ -206,14 +212,14 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 extra={toolbar?.extra}
                                             />
                                             <CodeExport />
-                                            <ExplainData themeKey={themeKey} />
+                                            <ExplainData themeKey={appliedThemeKey} />
                                             {vizStore.showDataBoard && <DataBoard />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
                                             <RenamePanel />
                                             <ComputedFieldDialog />
-                                            <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            <Painter themeConfig={appliedThemeConfig} themeKey={appliedThemeKey} />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                             <div className="sm:flex">
                                                 <SideResize
@@ -250,7 +256,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                             <ReactiveRenderer
                                                                 csvRef={downloadCSVRef}
                                                                 ref={rendererRef}
-                                                                vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                                                vizThemeConfig={currentTheme}
                                                                 computationFunction={wrappedComputation}
                                                                 // @TODO remove channelScales
                                                                 scales={props.scales ?? props.channelScales}

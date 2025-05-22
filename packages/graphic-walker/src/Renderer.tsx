@@ -10,10 +10,12 @@ import {
     IComputationContextProps,
     IComputationProps,
     IComputationFunction,
+    IThemeKey,
     IFilterRule,
     IFilterField,
     IVisualLayout,
 } from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
@@ -79,6 +81,9 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
 
     useEffect(() => {
         if (geographicData) {
@@ -136,7 +141,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
@@ -146,7 +151,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                             <div className={props.containerClassName} style={props.containerStyle}>
                                 {computation && (
                                     <ReactiveRenderer
-                                        vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                        vizThemeConfig={currentTheme}
                                         computationFunction={wrappedComputation}
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}

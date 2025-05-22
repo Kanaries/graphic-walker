@@ -3,6 +3,7 @@
         "scheme": "Scheme",
         "primary_color": "Primary Color",
         "color_palette": "Color Palette",
+        "theme": "Theme",
         "row": "Row",
         "column": "Column",
         "radius": "Radius",

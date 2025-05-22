@@ -239,6 +239,9 @@ export function DataSourceSegmentComponent(props: {
     }, [selectedId, props.provider]);
 
     const darkMode = useCurrentMediaTheme(props.appearance ?? props.dark);
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (props.vizThemeConfig ?? props.themeConfig ?? props.themeKey) as IThemeKey | GWGlobalConfig
+    );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
@@ -246,7 +249,7 @@ export function DataSourceSegmentComponent(props: {
             <ShadowDom uiTheme={props.uiTheme ?? props.colorConfig}>
                 <DataSourceThemeContext
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey}}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App`}>
