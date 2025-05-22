@@ -52,6 +52,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const finalThemeConfig = vizStore.layout.vizThemeConfig ?? vizThemeConfig ?? themeConfig ?? themeKey;
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
@@ -79,7 +80,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: finalThemeConfig }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground h-full m-0 p-0`}>

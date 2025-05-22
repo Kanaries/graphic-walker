@@ -14,6 +14,8 @@ import { KVTuple } from '../../models/utils';
 import { isNotEmpty } from '../../utils';
 import { timezones } from './timezone';
 import { Input } from '../ui/input';
+import { IThemeKey } from '../../interfaces';
+import { builtInThemes } from '../../vis/theme';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogNormalContent } from '../ui/dialog';
 import Combobox from '../dropdownSelect/combobox';
@@ -151,6 +153,7 @@ const VisualConfigPanel: React.FC = () => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const [displayBackgroundPicker, setDisplayBackgroundPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
+    const [themeKey, setThemeKey] = useState<IThemeKey>('vega');
     const [geoMapTileUrl, setGeoMapTileUrl] = useState<string | undefined>(undefined);
     const [displayOffset, setDisplayOffset] = useState<number | undefined>(undefined);
     const [displayOffsetEdited, setDisplayOffsetEdited] = useState(false);
@@ -190,6 +193,7 @@ const VisualConfigPanel: React.FC = () => {
             normalizedNumberFormat: layout.format.normalizedNumberFormat,
         });
         setColorPalette(layout.colorPalette ?? '');
+        setThemeKey((layout as any).vizThemeConfig ?? 'vega');
         const enabledScales = Object.entries(layout.scale ?? {})
             .filter(([_k, scale]) => Object.entries(scale).filter(([_k, v]) => !!v).length > 0)
             .map(([k]) => k);
@@ -276,6 +280,16 @@ const VisualConfigPanel: React.FC = () => {
                                                 value: '_none',
                                                 label: <>{t('config.default_color_palette')}</>,
                                             })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium leading-6">{t('config.theme')}</label>
+                                        <Combobox
+                                            className="w-48 h-fit"
+                                            popClassName="w-48"
+                                            selectedKey={themeKey}
+                                            onSelect={(k) => setThemeKey(k as IThemeKey)}
+                                            options={Object.keys(builtInThemes).map((k) => ({ value: k, label: k }))}
                                         />
                                     </div>
                                 </div>
@@ -620,6 +634,7 @@ const VisualConfigPanel: React.FC = () => {
                                         ['showAllGeoshapeInChoropleth', showAllGeoshapeInChoropleth],
                                         ['resolve', resolve],
                                         ['colorPalette', colorPalette],
+                                        ['vizThemeConfig', themeKey],
                                         ['useSvg', svg],
                                         [
                                             'scale',

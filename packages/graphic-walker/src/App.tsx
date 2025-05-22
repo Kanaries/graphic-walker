@@ -136,6 +136,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
+    const finalThemeConfig = vizStore.layout.vizThemeConfig ?? vizThemeConfig ?? themeConfig ?? themeKey;
+    const finalThemeKey = typeof finalThemeConfig === 'string' ? finalThemeConfig : themeKey;
 
     const wrappedComputation = useMemo(
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
@@ -149,7 +151,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: finalThemeConfig }}
                     portalContainerContext={portal}
                 >
                     <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
@@ -206,14 +208,14 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 extra={toolbar?.extra}
                                             />
                                             <CodeExport />
-                                            <ExplainData themeKey={themeKey} />
+                                            <ExplainData themeKey={finalThemeKey} />
                                             {vizStore.showDataBoard && <DataBoard />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
                                             <RenamePanel />
                                             <ComputedFieldDialog />
-                                            <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            <Painter themeConfig={typeof finalThemeConfig === 'string' ? undefined : finalThemeConfig} themeKey={finalThemeKey} />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
                                             <div className="sm:flex">
                                                 <SideResize
@@ -250,7 +252,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                             <ReactiveRenderer
                                                                 csvRef={downloadCSVRef}
                                                                 ref={rendererRef}
-                                                                vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                                                vizThemeConfig={finalThemeConfig}
                                                                 computationFunction={wrappedComputation}
                                                                 // @TODO remove channelScales
                                                                 scales={props.scales ?? props.channelScales}

@@ -375,6 +375,7 @@ export interface IVisualConfig {
     };
     primaryColor?: string;
     colorPalette?: string;
+    vizThemeConfig?: IThemeKey | GWGlobalConfig;
     scale?: IConfigScaleSet;
     resolve: {
         x?: boolean;

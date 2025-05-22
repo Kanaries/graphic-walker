@@ -3,6 +3,7 @@
         "scheme": "スキーム",
         "primary_color": "プライマリカラー",
         "color_palette": "カラーパレット",
+        "theme": "テーマ",
         "opacity": "不透明度",
         "default_color_palette": "デフォルト",
         "size": "サイズ",

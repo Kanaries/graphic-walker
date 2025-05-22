@@ -79,6 +79,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const finalThemeConfig = vizStore.layout.vizThemeConfig ?? vizThemeConfig ?? themeConfig ?? themeKey;
 
     useEffect(() => {
         if (geographicData) {
@@ -136,7 +137,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: finalThemeConfig }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
@@ -146,7 +147,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                             <div className={props.containerClassName} style={props.containerStyle}>
                                 {computation && (
                                     <ReactiveRenderer
-                                        vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                        vizThemeConfig={finalThemeConfig}
                                         computationFunction={wrappedComputation}
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}

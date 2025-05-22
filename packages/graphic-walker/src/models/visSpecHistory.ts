@@ -704,6 +704,7 @@ export function convertChart(data: IVisSpec): IChart {
         geoKey: data.config.geoKey,
         geoUrl: data.config.geoUrl,
         primaryColor: data.config.primaryColor,
+        vizThemeConfig: (data.config as any).vizThemeConfig,
         scale: data.config.scale,
         scaleIncludeUnmatchedChoropleth: data.config.scaleIncludeUnmatchedChoropleth,
         showTableSummary: data.config.showTableSummary,
