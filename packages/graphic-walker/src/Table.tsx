@@ -2,7 +2,8 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField } from './interfaces';
+import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField, IThemeKey } from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { useVizStore, withErrorReport, withTimeout, ComputationContext, VizStoreWrapper } from './store';
 import { parseErrorMessage } from './utils';
@@ -52,6 +53,9 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
@@ -79,7 +83,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground h-full m-0 p-0`}>

@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction, set } from 'mobx';
 import { useTranslation } from 'react-i18next';
 
 import { useVizStore } from '../../store';
 import { GLOBAL_CONFIG } from '../../config';
-import { IConfigScale, IVisualConfig, IVisualLayout } from '../../interfaces';
+import { IConfigScale, IVisualConfig, IVisualLayout, IThemeKey } from '../../interfaces';
 import Toggle from '../toggle';
 import { ColorSchemes, extractRGBA } from './colorScheme';
 import { DomainScale, RangeScale } from './range-scale';
@@ -18,6 +18,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogNormalContent } from '../ui/dialog';
 import Combobox from '../dropdownSelect/combobox';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { vegaThemeContext } from '../../store/theme';
 import { ColorPickerComponent } from './color-picker';
 
 function useDomainScale() {
@@ -151,6 +152,10 @@ const VisualConfigPanel: React.FC = () => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
     const [displayBackgroundPicker, setDisplayBackgroundPicker] = useState(false);
     const [colorPalette, setColorPalette] = useState('');
+    const { vizThemeConfig, setVizThemeConfig } = useContext(vegaThemeContext);
+    const [themeKey, setThemeKey] = useState<IThemeKey>(
+        typeof vizThemeConfig === 'string' ? vizThemeConfig : 'vega'
+    );
     const [geoMapTileUrl, setGeoMapTileUrl] = useState<string | undefined>(undefined);
     const [displayOffset, setDisplayOffset] = useState<number | undefined>(undefined);
     const [displayOffsetEdited, setDisplayOffsetEdited] = useState(false);
@@ -190,6 +195,7 @@ const VisualConfigPanel: React.FC = () => {
             normalizedNumberFormat: layout.format.normalizedNumberFormat,
         });
         setColorPalette(layout.colorPalette ?? '');
+        setThemeKey(typeof vizThemeConfig === 'string' ? vizThemeConfig : 'vega');
         const enabledScales = Object.entries(layout.scale ?? {})
             .filter(([_k, scale]) => Object.entries(scale).filter(([_k, v]) => !!v).length > 0)
             .map(([k]) => k);
@@ -204,7 +210,7 @@ const VisualConfigPanel: React.FC = () => {
         setGeoMapTileUrl(layout.geoMapTileUrl);
         setDisplayOffset(config.timezoneDisplayOffset);
         setDisplayOffsetEdited(false);
-    }, [showVisualConfigPanel]);
+    }, [showVisualConfigPanel, vizThemeConfig]);
 
     return (
         <Dialog
@@ -248,6 +254,20 @@ const VisualConfigPanel: React.FC = () => {
                                             setPrimaryColorEdited={setBackgroundEdited}
                                             displayColorPicker={displayBackgroundPicker}
                                             setDisplayColorPicker={setDisplayBackgroundPicker}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium leading-6">{t('config.theme')}</label>
+                                        <Combobox
+                                            className="w-48 h-fit"
+                                            popClassName="w-48"
+                                            selectedKey={themeKey}
+                                            onSelect={(v) => setThemeKey(v as IThemeKey)}
+                                            options={[
+                                                { value: 'vega', label: 'vega' },
+                                                { value: 'g2', label: 'g2' },
+                                                { value: 'streamlit', label: 'streamlit' },
+                                            ]}
                                         />
                                     </div>
                                     <div>
@@ -652,6 +672,7 @@ const VisualConfigPanel: React.FC = () => {
                                         ['geoMapTileUrl', geoMapTileUrl]
                                     );
                                     displayOffsetEdited && vizStore.setVisualConfig('timezoneDisplayOffset', displayOffset);
+                                    setVizThemeConfig?.(themeKey);
                                     vizStore.setShowVisualConfigPanel(false);
                                 });
                             }}
