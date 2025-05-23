@@ -108,7 +108,7 @@ export class VizSpecStore {
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
-        reaction(
+        this.reactionDisposer = reaction(
             () => this.currentVis,
             () => {
                 document.dispatchEvent(
