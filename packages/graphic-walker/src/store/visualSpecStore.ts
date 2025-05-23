@@ -88,6 +88,7 @@ export class VizSpecStore {
     defaultConfig: IDefaultConfig | undefined;
 
     onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
+    reactionDisposer: () => void;
 
     constructor(
         meta: IMutField[],
