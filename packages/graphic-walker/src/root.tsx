@@ -19,18 +19,20 @@ import './empty_sheet.css';
 import { TableAppWithContext } from './Table';
 import { RendererAppWithContext } from './Renderer';
 
+export interface IStyleableProps {
+    className?: string;
+    style?: React.CSSProperties;
+}
+
 export type ILocalVizAppProps = IVizAppProps &
     ILocalComputationProps &
-    React.RefAttributes<IGWHandler> & {
-        className?: string;
-        style?: React.CSSProperties;
-    };
+    React.RefAttributes<IGWHandler> &
+    IStyleableProps;
+
 export type IRemoteVizAppProps = IVizAppProps &
     IRemoteComputationProps &
-    React.RefAttributes<IGWHandler> & {
-        className?: string;
-        style?: React.CSSProperties;
-    };
+    React.RefAttributes<IGWHandler> &
+    IStyleableProps;
 
 export const GraphicWalker = observer(
     forwardRef<
