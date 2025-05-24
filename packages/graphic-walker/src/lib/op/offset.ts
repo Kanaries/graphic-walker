@@ -57,7 +57,7 @@ export function newOffsetDate(offset = new Date().getTimezoneOffset()) {
                 const utcDate = currentDate.getTime() - currentDate.getTimezoneOffset() * 60000;
                 return getOffsetDate(new Date(utcDate + offset * 60000), offset);
             }
-            if (!v) {
+            if (v === null || v === undefined) {
                 return null
             }
             return getOffsetDate(new Date(v), offset);
