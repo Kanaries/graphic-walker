@@ -55,6 +55,8 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import { getAllFields, getViewEncodingFields } from './storeStateLib';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
+
+const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(disposer => disposer())) as FinalizationRegistry<() => void> | null;
 export class VizSpecStore {
     instanceID: string = uniqueId();
     visList: VisSpecWithHistory[];
@@ -108,7 +110,7 @@ export class VizSpecStore {
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
-        reaction(
+        const disposer = reaction(
             () => this.currentVis,
             () => {
                 document.dispatchEvent(
@@ -121,6 +123,7 @@ export class VizSpecStore {
                 );
             }
         );
+        disposerRegister?.register(this, disposer);
     }
 
     get visLength() {
