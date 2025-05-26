@@ -90,6 +90,9 @@ export const useVegaExportApi = (
                         nRows: 0,
                         charts: [],
                         chartType: 'vega',
+                        container() {
+                            return null;
+                        },
                     };
                 }
                 if (ctx.renderStatus !== 'idle') {
@@ -116,6 +119,9 @@ export const useVegaExportApi = (
                             nRows: 0,
                             charts: [],
                             chartType: 'vega',
+                            container() {
+                                return null;
+                            },
                         };
                     } finally {
                         dispose?.();
