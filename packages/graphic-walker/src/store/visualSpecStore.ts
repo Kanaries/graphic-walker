@@ -1,4 +1,4 @@
-import { computed, makeAutoObservable, observable } from 'mobx';
+import { autorun, computed, makeAutoObservable, observable, reaction } from 'mobx';
 import {
     VisSpecWithHistory,
     convertChart,
@@ -55,7 +55,10 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import { getAllFields, getViewEncodingFields } from './storeStateLib';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
+
+const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(disposer => disposer())) as FinalizationRegistry<() => void> | null;
 export class VizSpecStore {
+    instanceID: string = uniqueId();
     visList: VisSpecWithHistory[];
     visIndex: number = 0;
     createdVis: number = 0;
@@ -107,6 +110,20 @@ export class VizSpecStore {
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
         });
+        const disposer = reaction(
+            () => this.currentVis,
+            () => {
+                document.dispatchEvent(
+                    new CustomEvent('edit-graphic-walker', {
+                        detail: {
+                            spec: this.currentVis,
+                            instanceID: this.instanceID,
+                        },
+                    })
+                );
+            }
+        );
+        disposerRegister?.register(this, disposer);
     }
 
     get visLength() {
