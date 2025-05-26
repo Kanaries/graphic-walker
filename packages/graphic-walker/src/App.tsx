@@ -158,11 +158,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                     vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
-                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
+                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0 w-full h-full`, darkMode === 'dark' ? 'dark' : '')}>
                         <FieldsContextWrapper>
-                            <div className="bg-background text-foreground">
+                            <div className="bg-background text-foreground w-full h-full">
                                 <Errorpanel />
-                                <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)}>
+                                <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)} className='w-full h-full flex flex-col'>
                                     <TabsList className="mx-4">
                                         <TabsTrigger value={ISegmentKey.data}>
                                             <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
@@ -181,7 +181,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <DatasetConfig />
                                         </div>
                                     </TabsContent>
-                                    <TabsContent value={ISegmentKey.vis}>
+                                    <TabsContent value={ISegmentKey.vis} className='flex-1 min-h-0 flex flex-col'>
                                         {!props.hideChartNav && (
                                             <div className="px-2 mx-2 mt-2">
                                                 <VisNav />
@@ -190,7 +190,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <div
                                             style={{ marginTop: '0em' }}
                                             className={cn(
-                                                'm-4 p-4 border border-border rounded-md rounded-tl-none',
+                                                'm-4 p-4 border border-border rounded-md rounded-tl-none flex-1 min-h-0 flex flex-col',
                                                 props.hideChartNav ? 'border-t-0 rounded-t-none' : ''
                                             )}
                                         >
@@ -221,11 +221,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <ComputedFieldDialog />
                                             <Painter themeConfig={appliedThemeConfig} themeKey={appliedThemeKey} />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                            <div className="sm:flex">
+                                            <div className="sm:flex flex-1 min-h-0">
                                                 <SideResize
                                                     defaultWidth={240}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0 sm:min-h-full flex flex-col"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <DatasetFields />
@@ -233,18 +233,18 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 <SideResize
                                                     defaultWidth={180}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0 flex flex-col"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <FilterField />
                                                     <AestheticFields />
                                                 </SideResize>
-                                                <div className="flex-1 min-w-[0px]">
+                                                <div className="flex-1 min-w-[0px] flex flex-col">
                                                     <div>
                                                         <PosFields />
                                                     </div>
                                                     <div
-                                                        className="my-0.5 sm:ml-0.5 p-1 border relative h-[600px]"
+                                                        className="my-0.5 sm:ml-0.5 p-1 border relative flex-1 min-h-0"
                                                         onMouseLeave={() => {
                                                             vizEmbededMenu.show && vizStore.closeEmbededMenu();
                                                         }}
