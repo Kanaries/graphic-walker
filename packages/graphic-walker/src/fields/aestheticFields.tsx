@@ -5,6 +5,7 @@ import { AestheticFieldContainer } from './components';
 import SingleEncodeEditor from './encodeFields/singleEncodeEditor';
 import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../store';
+import { viewEncodingKeys } from '../models/visSpec';
 import MultiEncodeEditor from './encodeFields/multiEncodeEditor';
 import { GLOBAL_CONFIG } from '../config';
 
@@ -21,25 +22,8 @@ const AestheticFields: React.FC = (props) => {
     const { geoms } = config;
 
     const channels = useMemo(() => {
-        switch (geoms[0]) {
-            case 'bar':
-            case 'tick':
-            case 'arc':
-            case 'line':
-            case 'area':
-            case 'boxplot':
-                return aestheticFields.filter((f) => f.id !== 'shape');
-            case 'text':
-                return aestheticFields.filter((f) => f.id === 'text' || f.id === 'color' || f.id === 'size' || f.id === 'opacity');
-            case 'table':
-                return [];
-            case 'poi':
-                return aestheticFields.filter((f) => f.id === 'color' || f.id === 'opacity' || f.id === 'size' || f.id === 'details');
-            case 'choropleth':
-                return aestheticFields.filter((f) => f.id === 'color' || f.id === 'opacity' || f.id === 'text' || f.id === 'details');
-            default:
-                return aestheticFields.filter((f) => f.id !== 'text');
-        }
+        const keys = viewEncodingKeys(geoms[0]).filter((k) => ['color', 'opacity', 'size', 'shape', 'details', 'text'].includes(k));
+        return aestheticFields.filter((f) => keys.includes(f.id));
     }, [geoms[0]]);
 
     return (
