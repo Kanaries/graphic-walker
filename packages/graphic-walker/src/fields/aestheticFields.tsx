@@ -43,7 +43,7 @@ const AestheticFields: React.FC = (props) => {
     }, [geoms[0]]);
 
     return (
-        <div className='min-h-0 overflow-y-auto'>
+        <div>
             {channels.map((dkey, i, { length }) => {
                 if (GLOBAL_CONFIG.CHANNEL_LIMIT[dkey.id] === 1) {
                     return (
