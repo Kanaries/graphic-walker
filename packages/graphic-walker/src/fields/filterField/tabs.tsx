@@ -361,7 +361,7 @@ export const useVisualCount = (
         } finally {
             setLoadingSelectAll(false);
         }
-    }, [field.rule, onChange, currentMeta, currentCount, currentSum, computation, sortBy, options.keyword, options.displayOffset, allFields, loadedPageData]);
+    }, [field.rule, onChange, currentMeta, currentCount, computation, sortBy, options.keyword, options.displayOffset, allFields, loadedPageData]);
 
     const handleToggleReverseSet = useCallback(() => {
         if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
