@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Tooltip from '@/components/tooltip';
+import Spinner from '@/components/spinner';
 
 export type RuleFormProps = {
     allFields: IMutField[];
@@ -110,7 +111,7 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean }> = (props) => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean; loading?: boolean }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
 
     let checked: boolean | 'indeterminate';
@@ -122,6 +123,9 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
         checked = false;
     }
 
+    if (props.loading) {
+        return <Spinner className="h-4 w-4 text-muted-foreground" />;
+    }
     return <Checkbox checked={checked} disabled={props.disabled} onCheckedChange={() => onChange()} />;
 };
 
@@ -312,7 +316,94 @@ export const useVisualCount = (
             type: currentCount === metaData.valuesMeta.distinctTotal ? 'one of' : 'not in',
             value: [],
         });
-    }, [field.rule, onChange, metaData]);
+    }, [field.rule, onChange, metaData, currentCount]);
+
+    // Add new state for loading select all button
+    const [loadingSelectAll, setLoadingSelectAll] = useState(false);
+
+    // New function to handle selecting all filtered results
+    const handleToggleCurrentFullSet = useCallback(async () => {
+        if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !currentMeta) return;
+        if (!options.keyword) {
+            // If no keyword is set, just toggle the full set
+            handleToggleFullOrEmptySet();
+            return;
+        }
+
+        try {
+            setLoadingSelectAll(true);
+
+            // Fetch all values that match the current search keyword
+            const result = await fieldStat(
+                computation,
+                field,
+                {
+                    range: false,
+                    values: true,
+                    valuesMeta: false,
+                    sortBy,
+                    keyword: options.keyword,
+                    timezoneDisplayOffset: options.displayOffset,
+                },
+                allFields
+            );
+
+            const { values } = result;
+            if (!values || values.length === 0) return;
+
+            if (field.rule.type === 'one of') {
+                const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
+                let totalCount = 0;
+                values.forEach((item) => {
+                    if (existingValues.has(_unstable_encodeRuleValue(item.value))) return; // Skip if already selected
+                    existingValues.add(_unstable_encodeRuleValue(item.value));
+                    totalCount += item.count;
+                });
+                if (totalCount === 0) {
+                    // should deselect all because all values are already selected
+                    values.forEach((item) => {
+                        existingValues.delete(_unstable_encodeRuleValue(item.value));
+                        totalCount += item.count;
+                    });
+                    setSelectedValueSum((prev) => prev - currentSum);
+                } else {
+                    // should select all because not all values are selected
+                    setSelectedValueSum((prev) => prev + totalCount - currentSum);
+                }
+                onChange({
+                    type: field.rule.type,
+                    value: Array.from(existingValues),
+                });
+            } else if (field.rule.type === 'not in') {
+                // For 'not in', we need to select all values that are not currently selected
+                const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
+                let totalCount = 0;
+                values.forEach((item) => {
+                    if (!existingValues.has(_unstable_encodeRuleValue(item.value))) {
+                        existingValues.add(_unstable_encodeRuleValue(item.value));
+                        totalCount += item.count;
+                    }
+                });
+                if (totalCount === 0) {
+                    // should select all because all values are already selected
+                    values.forEach((item) => {
+                        existingValues.delete(_unstable_encodeRuleValue(item.value));
+                        totalCount += item.count;
+                    });
+                    setSelectedValueSum((prev) => prev - totalCount);
+                } else {
+                    setSelectedValueSum((prev) => prev + totalCount);
+                }
+                onChange({
+                    type: field.rule.type,
+                    value: Array.from(existingValues),
+                });
+            }
+        } finally {
+            setLoadingSelectAll(false);
+        }
+    }, [field.rule, onChange, currentMeta, currentCount, currentSum, computation, sortBy, options.keyword, options.displayOffset, allFields, loadedPageData]);
+
     const handleToggleReverseSet = useCallback(() => {
         if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
         onChange({
@@ -347,11 +438,13 @@ export const useVisualCount = (
         currentSum,
         handleToggleFullOrEmptySet,
         handleToggleReverseSet,
+        handleToggleCurrentFullSet,
         handleSelect,
         data,
         loadData,
         loading: !metaData,
         loadingPageData,
+        loadingSelectAll,
     };
 };
 
@@ -465,10 +558,12 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         currentRows,
         handleSelect,
         handleToggleFullOrEmptySet,
+        handleToggleCurrentFullSet,
         handleToggleReverseSet,
         loadData,
         loading,
         loadingPageData,
+        loadingSelectAll,
     } = useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, allFields, {
         displayOffset,
         keyword: searchKeyword,
@@ -551,10 +646,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                     <TableRow>
                         <div className="flex justify-center items-center">
                             <StatusCheckbox
-                                disabled={!!searchKeyword}
                                 currentNum={currentCount}
                                 totalNum={distinctTotal ?? 0}
-                                onChange={handleToggleFullOrEmptySet}
+                                onChange={handleToggleCurrentFullSet}
+                                loading={loadingSelectAll}
                             />
                         </div>
                         <div className="header text-muted-foreground flex items-center">
