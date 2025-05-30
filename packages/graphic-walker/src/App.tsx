@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps, IThemeKey } from './interfaces';
+import {
+    ISegmentKey,
+    IAppI18nProps,
+    IVizProps,
+    IErrorHandlerProps,
+    IVizAppProps,
+    ISpecProps,
+    IComputationContextProps,
+    IComputationProps,
+    IThemeKey,
+} from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
@@ -69,6 +79,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         chart,
         vlSpec,
         onError,
+        hideSegmentNav,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -137,9 +148,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
-    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
-        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
-    );
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>((vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig);
     const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey;
     const appliedThemeConfig = typeof currentTheme === 'object' ? currentTheme : themeConfig;
 
@@ -163,19 +172,21 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                             <div className="bg-background text-foreground w-full h-full">
                                 <Errorpanel />
                                 <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)} className='w-full h-full flex flex-col'>
-                                    <TabsList className="mx-4">
-                                        <TabsTrigger value={ISegmentKey.data}>
-                                            <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
-                                        </TabsTrigger>
-                                        <TabsTrigger value={ISegmentKey.vis}>
-                                            <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
-                                        </TabsTrigger>
-                                        {enhanceAPI?.features?.vlChat && (
-                                            <TabsTrigger value={ISegmentKey.chat}>
-                                                <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                    {!hideSegmentNav && (
+                                        <TabsList className="mx-4">
+                                            <TabsTrigger value={ISegmentKey.data}>
+                                                <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
                                             </TabsTrigger>
-                                        )}
-                                    </TabsList>
+                                            <TabsTrigger value={ISegmentKey.vis}>
+                                                <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
+                                            </TabsTrigger>
+                                            {enhanceAPI?.features?.vlChat && (
+                                                <TabsTrigger value={ISegmentKey.chat}>
+                                                    <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                                </TabsTrigger>
+                                            )}
+                                        </TabsList>
+                                    )}
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
                                             <DatasetConfig />
