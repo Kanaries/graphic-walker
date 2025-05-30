@@ -335,55 +335,29 @@ export const useVisualCount = (
 
             const { values } = result;
             if (!values || values.length === 0) return;
-
-            if (field.rule.type === 'one of') {
-                const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
-                let totalCount = 0;
+            const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
+            let totalCount = 0;
+            values.forEach((item) => {
+                if (existingValues.has(_unstable_encodeRuleValue(item.value))) return; // Skip if already selected
+                existingValues.add(_unstable_encodeRuleValue(item.value));
+                totalCount += item.count;
+            });
+            if (totalCount === 0) {
+                // all values are already selected
+                // deselect all values
                 values.forEach((item) => {
-                    if (existingValues.has(_unstable_encodeRuleValue(item.value))) return; // Skip if already selected
-                    existingValues.add(_unstable_encodeRuleValue(item.value));
+                    existingValues.delete(_unstable_encodeRuleValue(item.value));
                     totalCount += item.count;
                 });
-                if (totalCount === 0) {
-                    // should deselect all because all values are already selected
-                    values.forEach((item) => {
-                        existingValues.delete(_unstable_encodeRuleValue(item.value));
-                        totalCount += item.count;
-                    });
-                    setSelectedValueSum((prev) => prev - currentSum);
-                } else {
-                    // should select all because not all values are selected
-                    setSelectedValueSum((prev) => prev + totalCount - currentSum);
-                }
-                onChange({
-                    type: field.rule.type,
-                    value: Array.from(existingValues),
-                });
-            } else if (field.rule.type === 'not in') {
-                // For 'not in', we need to select all values that are not currently selected
-                const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
-                let totalCount = 0;
-                values.forEach((item) => {
-                    if (!existingValues.has(_unstable_encodeRuleValue(item.value))) {
-                        existingValues.add(_unstable_encodeRuleValue(item.value));
-                        totalCount += item.count;
-                    }
-                });
-                if (totalCount === 0) {
-                    // should select all because all values are already selected
-                    values.forEach((item) => {
-                        existingValues.delete(_unstable_encodeRuleValue(item.value));
-                        totalCount += item.count;
-                    });
-                    setSelectedValueSum((prev) => prev - totalCount);
-                } else {
-                    setSelectedValueSum((prev) => prev + totalCount);
-                }
-                onChange({
-                    type: field.rule.type,
-                    value: Array.from(existingValues),
-                });
+                setSelectedValueSum((x) => x - totalCount);
+            } else {
+                setSelectedValueSum((x) => x + totalCount);
             }
+
+            onChange({
+                type: field.rule.type,
+                value: Array.from(existingValues),
+            });
         } finally {
             setLoadingSelectAll(false);
         }
