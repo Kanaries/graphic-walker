@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Tooltip from '@/components/tooltip';
+import { SparseArray } from './array';
 
 export type RuleFormProps = {
     allFields: IMutField[];
@@ -174,29 +175,11 @@ export const useFieldStats = (
 };
 
 const PAGE_SIZE = 20;
-const emptyArray = [];
+const emptyArray = SparseArray.create<RowCount>();
 type RowCount = {
     value: string | number;
     count: number;
 };
-
-function putDataInArray<T>(arr: T[], dataToPut: T[], fromIndex: number, emptyFill: T) {
-    const putin = (array: T[]) =>
-        array.map((x, i) => {
-            const targetIndex = i - fromIndex;
-            if (targetIndex >= 0 && targetIndex < dataToPut.length) {
-                return dataToPut[targetIndex];
-            }
-            return x;
-        });
-
-    const requiredLength = dataToPut.length + fromIndex;
-    if (arr.length >= requiredLength) {
-        return putin(arr);
-    }
-    const filledArray = arr.concat(new Array<T>(requiredLength - arr.length).fill(emptyFill));
-    return putin(filledArray);
-}
 
 export const useVisualCount = (
     field: IFilterField,
@@ -234,9 +217,9 @@ export const useVisualCount = (
     }, [metaData]);
 
     // unfetched RowCount will be null
-    const [loadedPageData, setLoadedPageDataRaw] = useState<(RowCount | null)[]>(emptyArray);
+    const [loadedPageData, setLoadedPageDataRaw] = useState<SparseArray<RowCount>>(emptyArray);
     const loadedRef = useRef(loadedPageData);
-    const setLoadedPageData = useCallback((data: (RowCount | null)[] | ((prev: (RowCount | null)[]) => (RowCount | null)[])) => {
+    const setLoadedPageData = useCallback((data: SparseArray<RowCount> | ((prev: SparseArray<RowCount>) => SparseArray<RowCount>)) => {
         if (typeof data === 'function') {
             loadedRef.current = data(loadedRef.current);
         } else {
@@ -250,7 +233,7 @@ export const useVisualCount = (
     const loadData = useCallback(
         (index: number) => {
             const page = Math.floor(index / PAGE_SIZE);
-            if (loadedRef.current.length <= index || loadedRef.current[index] === null) {
+            if (loadedRef.current.get(index) === null) {
                 if (loadingRef.current[page] === undefined) {
                     const promise = fieldStat(
                         computation,
@@ -272,7 +255,9 @@ export const useVisualCount = (
                         // check that the list is not cleared
                         if (loadingRef.current[page] === promise) {
                             const { values } = stats;
-                            setLoadedPageData((data) => putDataInArray(data, values, page * PAGE_SIZE, null));
+                            setLoadedPageData((data) => {
+                                return data.putIn(page * PAGE_SIZE, values);
+                            });
                         }
                     });
                 }
@@ -284,15 +269,15 @@ export const useVisualCount = (
     // clear data when field or sort changes
     useEffect(() => {
         loadingRef.current = {};
-        setLoadedPageData(emptyArray);
+        setLoadedPageData(SparseArray.create<RowCount>());
         loadData(0);
     }, [loadData]);
 
     const loadingPageData = loadedPageData === emptyArray || !currentMeta;
 
     const data = useMemo(() => {
-        if (!currentMeta?.valuesMeta.distinctTotal) return [];
-        return loadedPageData.concat(new Array<null>(Math.max(currentMeta.valuesMeta.distinctTotal - loadedPageData.length, 0)).fill(null));
+        if (!currentMeta?.valuesMeta.distinctTotal) return emptyArray;
+        return loadedPageData;
     }, [loadedPageData, currentMeta?.valuesMeta.distinctTotal]);
 
     const currentCount =
@@ -620,7 +605,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                             >
                                 {rowVirtualizer.getVirtualItems().map((vItem) => {
                                     const idx = vItem.index;
-                                    const item = data?.[idx];
+                                    const item = data?.get(idx);
                                     if (!item) {
                                         return (
                                             <TableRow
