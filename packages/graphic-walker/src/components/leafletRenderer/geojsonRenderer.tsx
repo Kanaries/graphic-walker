@@ -8,34 +8,38 @@ import { canvas } from 'leaflet';
 import { useTranslation } from 'react-i18next';
 
 const resolveCoords = (featureGeom: Geometry): [lat: number, lng: number][][] => {
+    if (!featureGeom) return [];
+
     switch (featureGeom.type) {
         case 'Polygon': {
-            const coords = featureGeom.coordinates[0];
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
+            const coords = featureGeom.coordinates?.[0];
+            return coords ? [coords.map((c) => [c[1], c[0]])] : [];
         }
         case 'Point': {
             const coords = featureGeom.coordinates;
             return [[[coords[1], coords[0]]]];
         }
         case 'GeometryCollection': {
-            const coords = featureGeom.geometries.map<[lat: number, lng: number][][]>(resolveCoords);
+            const coords = featureGeom.geometries?.map(resolveCoords) || [];
             return coords.flat();
         }
         case 'LineString': {
             const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
+            return [coords.map((c) => [c[1], c[0]])];
         }
         case 'MultiLineString': {
             const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c.map((c) => [c[1], c[0]]));
+            return coords.map((c) => c.map((c) => [c[1], c[0]]));
         }
         case 'MultiPoint': {
             const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
+            return [coords.map((c) => [c[1], c[0]])];
         }
         case 'MultiPolygon': {
             const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c[0].map((c) => [c[1], c[0]]));
+            return coords.map((polygon) =>
+                polygon[0].map((c: any[]): [lat: number, lng: number] => [c[1], c[0]])
+            );
         }
         default: {
             return [];

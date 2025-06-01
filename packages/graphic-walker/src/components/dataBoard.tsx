@@ -26,23 +26,27 @@ const DataBoard = observer(function DataBoardModal() {
     const computedFileds = useMemo(() => allFields.filter((x) => x.fid !== COUNT_FIELD_ID && x.computed && x.expression && x.aggName !== 'expr'), [allFields]);
 
     const filteredComputation = useMemo((): IComputationFunction => {
+        const transformFilters = (viewFilters: IVisFilter[]) => 
+            viewFilters
+                .map((f) => ({ fid: f.fid, rule: f.rule }))
+                .filter((x): x is IVisFilter => !!x.rule);
+    
+        const transformedFilters = transformFilters(viewFilters);
+        
         return (query) =>
             computation(
                 addTransformForQuery(
                     addFilterForQuery(
                         query,
-                        viewFilters
-                            .map((f) => ({ fid: f.fid, rule: f.rule }))
-                            .filter((x): x is IVisFilter => !!x.rule)
-                            .concat(filters)
+                        transformedFilters.concat(filters ?? [])
                     ),
                     computedFileds.map((x) => ({
-                        expression: processExpression(x.expression!, allFields, config),
+                        expression: processExpression(x.expression ?? '', allFields, config),
                         key: x.fid!,
                     }))
                 )
             );
-    }, [computation, filters, computedFileds, allFields, config]);
+    }, [computation, filters, computedFileds, allFields, config, viewFilters]);
 
     const metas = useMemo(() => {
         return allFields.filter((x) => x.aggName !== 'expr').filter((x) => ![MEA_KEY_ID, MEA_VAL_ID, COUNT_FIELD_ID].includes(x.fid));
