@@ -486,8 +486,8 @@ export interface IVegaChartRef {
     h: number;
     innerWidth: number;
     innerHeight: number;
-    view: View;
-    canvas: HTMLCanvasElement | SVGSVGElement | null;
+    view: View | null;
+    canvas: HTMLElement | SVGSVGElement | HTMLCanvasElement | null;
 }
 
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
