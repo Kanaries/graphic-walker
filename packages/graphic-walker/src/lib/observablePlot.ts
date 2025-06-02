@@ -42,6 +42,97 @@ function vegaLiteToPlot(spec: any): any {
     console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, tooltipEnc });
     // etc. shape, opacity, text, etc. if present
 
+    // Helper function to determine mark direction based on axis types
+    const getMarkDirection = (markType: string, enc: any) => {
+        const xIsQuantitative = enc.x?.type === 'quantitative';
+        const yIsQuantitative = enc.y?.type === 'quantitative';
+        const xIsTemporal = enc.x?.type === 'temporal';
+        const yIsTemporal = enc.y?.type === 'temporal';
+        
+        // For marks that have directional variants, determine the appropriate direction
+        const directionalMarks = {
+            bar: { X: Plot.barX, Y: Plot.barY },
+            area: { X: Plot.areaX, Y: Plot.areaY },
+            line: { X: Plot.lineX, Y: Plot.lineY },
+            tick: { X: Plot.tickX, Y: Plot.tickY },
+            rect: { X: Plot.rectX, Y: Plot.rectY },
+            rule: { X: Plot.ruleX, Y: Plot.ruleY },
+        };
+        
+        if (directionalMarks[markType]) {
+            // If X is quantitative and Y is not quantitative (temporal, ordinal, nominal), use X-direction mark
+            if (xIsQuantitative && !yIsQuantitative) {
+                console.log(`Using X-direction mark for ${markType}: X is quantitative (${enc.x?.type}), Y is ${enc.y?.type}`);
+                return { markFunction: directionalMarks[markType].X, stackAxis: 'X' as const };
+            }
+            // If Y is quantitative and X is not quantitative, use Y-direction mark
+            if (yIsQuantitative && !xIsQuantitative) {
+                console.log(`Using Y-direction mark for ${markType}: Y is quantitative (${enc.y?.type}), X is ${enc.x?.type}`);
+                return { markFunction: directionalMarks[markType].Y, stackAxis: 'Y' as const };
+            }
+            // If both are quantitative, default to Y-direction (most common case)
+            if (xIsQuantitative && yIsQuantitative) {
+                console.log(`Both axes quantitative for ${markType}, defaulting to Y-direction`);
+                return { markFunction: directionalMarks[markType].Y, stackAxis: 'Y' as const };
+            }
+            // If neither is quantitative, default to Y-direction
+            console.log(`Neither axis quantitative for ${markType}, defaulting to Y-direction`);
+            return { markFunction: directionalMarks[markType].Y, stackAxis: 'Y' as const };
+        }
+        
+        // For non-directional marks, return the base mark
+        const nonDirectionalMarks = {
+            point: Plot.dot,
+            circle: Plot.dot,
+            dot: Plot.dot,
+            text: Plot.text,
+        };
+        
+        return { 
+            markFunction: nonDirectionalMarks[markType] || Plot.dot, 
+            stackAxis: 'Y' as const 
+        };
+    };
+
+    // Helper function to create base configuration for any mark type
+    const createBaseConfig = (markType: string, enc: any, fields: any) => {
+        const { xField, yField, colorField, sizeField, xFacetField, yFacetField } = fields;
+        
+        // Base configuration that works for most marks
+        const baseConfig: any = {
+            x: xField || undefined,
+            y: yField || undefined,
+            fx: xFacetField || undefined,
+            fy: yFacetField || undefined,
+        };
+        
+        // Add mark-specific channels
+        switch (markType) {
+            case 'bar':
+            case 'area':
+            case 'rect':
+                baseConfig.fill = colorField || undefined;
+                break;
+            case 'line':
+            case 'tick':
+            case 'rule':
+                baseConfig.stroke = colorField || undefined;
+                break;
+            case 'point':
+            case 'circle':
+            case 'dot':
+                baseConfig.fill = colorField || undefined;
+                baseConfig.r = sizeField || undefined;
+                break;
+            case 'text':
+                baseConfig.text = yField || xField || undefined; // Use the quantitative field for text
+                baseConfig.fill = colorField || undefined;
+                break;
+        }
+        
+        return baseConfig;
+    };
+
     // Helper function to create stack configuration
     const createStackConfig = (stackMode: string | null, baseConfig: any) => {
         if (!stacked || !colorField) {
@@ -66,10 +157,29 @@ function vegaLiteToPlot(spec: any): any {
             return markFunction(data, baseConfig);
         }
         
-        // Sort data for consistent stacking (especially important for temporal data)
+        // Sort data for consistent stacking based on which axis we're stacking along
         const sortedData = [...data].sort((a, b) => {
-            const xCompare = xField ? new Date(a[xField]).getTime() - new Date(b[xField]).getTime() : 0;
-            if (xCompare !== 0) return xCompare;
+            // For X-direction stacking (stackAxis === 'X'), sort by Y field first (usually temporal)
+            // For Y-direction stacking (stackAxis === 'Y'), sort by X field first (usually temporal)
+            let primaryCompare = 0;
+            let primaryField = stackAxis === 'X' ? yField : xField;
+            
+            if (primaryField) {
+                // Check if the primary field is temporal
+                const primaryFieldType = stackAxis === 'X' ? enc.y?.type : enc.x?.type;
+                if (primaryFieldType === 'temporal') {
+                    primaryCompare = new Date(a[primaryField]).getTime() - new Date(b[primaryField]).getTime();
+                } else {
+                    // For non-temporal fields, do string/numeric comparison
+                    if (a[primaryField] < b[primaryField]) primaryCompare = -1;
+                    else if (a[primaryField] > b[primaryField]) primaryCompare = 1;
+                    else primaryCompare = 0;
+                }
+            }
+            
+            if (primaryCompare !== 0) return primaryCompare;
+            
+            // Secondary sort by color field for consistent stacking order
             return colorField && a[colorField] < b[colorField] ? -1 : 1;
         });
         
@@ -81,6 +191,14 @@ function vegaLiteToPlot(spec: any): any {
             ...baseConfig,
             z: colorField || undefined,
         };
+        
+        console.log(`Applying ${stackAxis}-direction stacking:`, {
+            stackFunction: stackFunction.name,
+            stackOptions,
+            dataLength: sortedData.length,
+            primaryField: stackAxis === 'X' ? yField : xField,
+            colorField
+        });
         
         return markFunction(sortedData, stackFunction(stackOptions, configWithZ));
     };
@@ -120,170 +238,103 @@ function vegaLiteToPlot(spec: any): any {
         }
     }
 
-    // 5) Build the Plot mark
-    //    We'll guess a single Mark. If you had multiple encodings in Vega-Lite (like "row", "column", etc.),
-    //    you might do separate plots or facets. For now, let's keep it simple.
-
-    let mark: Plot.Mark;
-    switch (markType) {
-        case 'bar':
-            // Determine which axis is quantitative to decide stacking direction
-            const xIsQuantitative = enc.x?.type === 'quantitative';
-            const yIsQuantitative = enc.y?.type === 'quantitative';
+    // Universal mark creation function
+    const createMark = (markType: string, data: any[], enc: any, fields: any) => {
+        const { colorField } = fields;
+        
+        // Get the appropriate mark function and stack axis
+        const { markFunction, stackAxis } = getMarkDirection(markType, enc);
+        
+        // Create base configuration
+        const baseConfig = createBaseConfig(markType, enc, fields);
+        
+        // Determine if we should stack and how
+        // For area charts, if there's a color field and no explicit stack=false, we should stack
+        const shouldStack = stacked || (colorField && ['bar', 'area'].includes(markType) && stacked !== false);
+        
+        console.log(`Creating ${markType} mark:`, {
+            markFunction: markFunction.name,
+            stackAxis,
+            shouldStack,
+            stacked,
+            stackMode,
+            colorField,
+            hasColorField: !!colorField,
+            isStackableMarkType: ['bar', 'area'].includes(markType),
+            xType: enc.x?.type,
+            yType: enc.y?.type
+        });
+        
+        if (shouldStack && colorField) {
+            // Apply stacking
+            return applyStacking(markFunction, data, baseConfig, stackAxis);
+        } else if (colorField && ['line', 'area'].includes(markType)) {
+            // For multi-series line/area charts without stacking, add z channel for grouping
+            // and ensure proper data sorting for line charts
+            let sortedData = data;
             
-            const baseBarConfig = {
-                x: xField || undefined,
-                y: yField || undefined,
-                fill: colorField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-            };
-            
-            if (xIsQuantitative && !yIsQuantitative) {
-                // X is quantitative, Y is nominal/ordinal -> horizontal bars
-                mark = applyStacking(Plot.barX, data, baseBarConfig, 'X');
-            } else {
-                // Y is quantitative (default case) -> vertical bars
-                mark = applyStacking(Plot.barY, data, baseBarConfig, 'Y');
-            }
-            break;
-
-        case 'point':
-            const basePointConfig = {
-                x: xField || undefined,
-                y: yField || undefined,
-                fill: colorField || undefined,
-                r: sizeField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-            };
-            
-            // Points can be stacked in some cases (like dot plots)
-            if (stacked && colorField && enc.y?.type === 'quantitative') {
-                mark = applyStacking(Plot.dot, data, basePointConfig, 'Y');
-            } else {
-                mark = Plot.dot(data, basePointConfig);
-            }
-            break;
-
-        case 'tick':
-            const baseTickConfig = {
-                x: xField || undefined,
-                y: yField || undefined,
-                stroke: colorField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-            };
-            
-            // Ticks can be stacked for certain visualizations
-            if (stacked && colorField && enc.y?.type === 'quantitative') {
-                mark = applyStacking(Plot.tickY, data, baseTickConfig, 'Y');
-            } else {
-                mark = Plot.tickY(data, baseTickConfig);
-            }
-            break;
-
-        case 'line':
-            const baseLineConfig = {
-                x: xField || undefined,
-                y: yField || undefined,
-                stroke: colorField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-            };
-            
-            // Lines can be stacked for cumulative line charts
-            if (stacked && colorField && enc.y?.type === 'quantitative') {
-                // For lines, we need to add z channel for grouping even when not stacked
-                const lineConfigWithZ = {
-                    ...baseLineConfig,
-                    z: colorField || undefined,
-                };
-                mark = applyStacking(Plot.line, data, lineConfigWithZ, 'Y');
-            } else if (colorField) {
-                // Multiple series lines need z channel for grouping
-                const lineConfigWithZ = {
-                    ...baseLineConfig,
-                    z: colorField || undefined,
-                };
-                mark = Plot.line(data, lineConfigWithZ);
-            } else {
-                mark = Plot.line(data, baseLineConfig);
-            }
-            break;
-
-        case 'area':
-            // In Vega-Lite, "area" often implies stacked area if "stack" is used
-            // Determine which axis is quantitative to decide stacking direction
-            const areaXIsQuantitative = enc.x?.type === 'quantitative';
-            const areaYIsQuantitative = enc.y?.type === 'quantitative';
-            
-            // For area charts with color encoding, default to stacked unless explicitly disabled
-            const shouldStack = stacked || (colorField && stacked !== false);
-            
-            console.log('Area chart debug:', {
-                stacked,
-                stackMode,
-                colorField,
-                shouldStack,
-                areaXIsQuantitative,
-                areaYIsQuantitative,
-                xField,
-                yField,
-                dataLength: data.length,
-                sampleData: data.slice(0, 3)
-            });
-            
-            const baseAreaConfig = {
-                x: xField || undefined,
-                y: yField || undefined,
-                fill: colorField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-            };
-            
-            if (shouldStack && colorField) {
-                console.log('Creating stacked area chart');
-                if (areaXIsQuantitative && !areaYIsQuantitative) {
-                    // X is quantitative, Y is nominal/ordinal -> horizontal area
-                    mark = applyStacking(Plot.areaX, data, baseAreaConfig, 'X');
-                } else {
-                    // Y is quantitative (default case) -> vertical area
-                    mark = applyStacking(Plot.areaY, data, baseAreaConfig, 'Y');
-                }
-            } else if (colorField) {
-                console.log('Creating grouped area chart');
-                // Multiple series but not stacked - need to group by color field
-                const groupedAreaConfig = {
-                    ...baseAreaConfig,
-                    z: colorField || undefined, // Group by color field
-                };
+            if (markType === 'line') {
+                // For line charts, we need special handling based on axis orientation
+                const xIsQuantitative = enc.x?.type === 'quantitative';
+                const yIsTemporal = enc.y?.type === 'temporal';
+                const xIsTemporal = enc.x?.type === 'temporal';
+                const yIsQuantitative = enc.y?.type === 'quantitative';
                 
-                if (areaXIsQuantitative && !areaYIsQuantitative) {
-                    mark = Plot.areaX(data, groupedAreaConfig);
-                } else {
-                    mark = Plot.areaY(data, groupedAreaConfig);
-                }
-            } else {
-                console.log('Creating single series area chart');
-                // Single series area chart
-                if (areaXIsQuantitative && !areaYIsQuantitative) {
-                    mark = Plot.areaX(data, baseAreaConfig);
-                } else {
-                    mark = Plot.areaY(data, baseAreaConfig);
+                // Sort by the temporal field to ensure proper line connection
+                sortedData = [...data].sort((a, b) => {
+                    // Determine which field is temporal and sort by it
+                    let temporalField = null;
+                    if (xIsTemporal) {
+                        temporalField = xField;
+                    } else if (yIsTemporal) {
+                        temporalField = yField;
+                    }
+                    
+                    if (temporalField) {
+                        const timeCompare = new Date(a[temporalField]).getTime() - new Date(b[temporalField]).getTime();
+                        if (timeCompare !== 0) return timeCompare;
+                    }
+                    
+                    // Secondary sort by color field for consistent grouping
+                    return colorField && a[colorField] < b[colorField] ? -1 : 1;
+                });
+                
+                console.log(`Sorted line chart data:`, {
+                    temporalField: xIsTemporal ? xField : yField,
+                    xIsQuantitative,
+                    yIsTemporal,
+                    originalLength: data.length,
+                    sortedLength: sortedData.length,
+                    sampleData: sortedData.slice(0, 3)
+                });
+                
+                // For the case where X is quantitative and Y is temporal,
+                // we need to ensure the line connects properly
+                if (xIsQuantitative && yIsTemporal) {
+                    console.log('Special case: X quantitative, Y temporal - using curve: "linear" for better connection');
+                    const configWithZ = {
+                        ...baseConfig,
+                        z: colorField || undefined,
+                        curve: "linear" // Ensure linear interpolation
+                    };
+                    return markFunction(sortedData, configWithZ);
                 }
             }
-            break;
+            
+            const configWithZ = {
+                ...baseConfig,
+                z: colorField || undefined,
+            };
+            return markFunction(sortedData, configWithZ);
+        } else {
+            // Regular mark without stacking
+            return markFunction(data, baseConfig);
+        }
+    };
 
-        default:
-            // fallback to a "dot" if unknown
-            mark = Plot.dot(data, {
-                x: xField || undefined,
-                y: yField || undefined,
-                fill: colorField || undefined,
-            });
-            break;
-    }
+    // 5) Build the Plot mark using the universal function
+    const fields = { xField, yField, colorField, sizeField, xFacetField, yFacetField };
+    let mark: Plot.Mark = createMark(markType, data, enc, fields);
 
     // 6) Title / tooltip
     //    If Vega-Lite has "encoding.tooltip", we can map that to Plot's "title" channel
