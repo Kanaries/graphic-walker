@@ -24,7 +24,7 @@ function vegaLiteToPlot(spec: any): any {
     // 2) Identify mark type
     let markType = spec.mark;
     // Vega-Lite can have "mark" as an object: e.g. {type: "bar", tooltip: true}
-    // so let's read the actual string if it’s an object
+    // so let's read the actual string if it's an object
     if (typeof markType === 'object' && markType.type) {
         markType = markType.type;
     }
@@ -42,10 +42,25 @@ function vegaLiteToPlot(spec: any): any {
     console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, tooltipEnc });
     // etc. shape, opacity, text, etc. if present
 
-    // 4) Attempt to interpret transforms (like aggregate or stack)
-    //    Very simplified. If your spec.transform includes "stack", we can set y: {stack: "zero"} in Plot
-    //    For grouping or aggregate, you might do Plot.groupX(...) or Plot.groupY(...)
+    // 4) Check for stacking in encoding channels (not just transforms)
+    //    In Vega-Lite, stacking is indicated by the 'stack' property on quantitative encodings
     let stacked = false;
+    
+    // Check if any quantitative encoding has stack property that's not null/false
+    if (enc.x?.stack !== null && enc.x?.stack !== false && enc.x?.type === 'quantitative') {
+        stacked = true;
+    }
+    if (enc.y?.stack !== null && enc.y?.stack !== false && enc.y?.type === 'quantitative') {
+        stacked = true;
+    }
+    if (enc.theta?.stack !== null && enc.theta?.stack !== false && enc.theta?.type === 'quantitative') {
+        stacked = true;
+    }
+    if (enc.radius?.stack !== null && enc.radius?.stack !== false && enc.radius?.type === 'quantitative') {
+        stacked = true;
+    }
+    
+    // Also check transforms for legacy support
     if (Array.isArray(spec.transform)) {
         for (const t of spec.transform) {
             if (t.stack) {
@@ -60,19 +75,62 @@ function vegaLiteToPlot(spec: any): any {
 
     // 5) Build the Plot mark
     //    We'll guess a single Mark. If you had multiple encodings in Vega-Lite (like "row", "column", etc.),
-    //    you might do separate plots or facets. For now, let’s keep it simple.
+    //    you might do separate plots or facets. For now, let's keep it simple.
 
     let mark: Plot.Mark;
     switch (markType) {
         case 'bar':
-            mark = Plot.barY(data, {
-                x: xField || undefined,
-                y: yField || undefined,
-                fill: colorField || undefined,
-                fx: xFacetField || undefined,
-                fy: yFacetField || undefined,
-                // If stacked, we might do something else, like Plot.stackY(...)
-            });
+            // Determine which axis is quantitative to decide stacking direction
+            const xIsQuantitative = enc.x?.type === 'quantitative';
+            const yIsQuantitative = enc.y?.type === 'quantitative';
+            
+            if (stacked && colorField) {
+                if (xIsQuantitative && !yIsQuantitative) {
+                    // X is quantitative, Y is nominal/ordinal -> horizontal bars with X-axis stacking
+                    mark = Plot.barX(
+                        data,
+                        Plot.stackX({
+                            x: xField || undefined,
+                            y: yField || undefined,
+                            fill: colorField || undefined,
+                            fx: xFacetField || undefined,
+                            fy: yFacetField || undefined,
+                        })
+                    );
+                } else {
+                    // Y is quantitative (default case) -> vertical bars with Y-axis stacking
+                    mark = Plot.barY(
+                        data,
+                        Plot.stackY({
+                            x: xField || undefined,
+                            y: yField || undefined,
+                            fill: colorField || undefined,
+                            fx: xFacetField || undefined,
+                            fy: yFacetField || undefined,
+                        })
+                    );
+                }
+            } else {
+                if (xIsQuantitative && !yIsQuantitative) {
+                    // X is quantitative, Y is nominal/ordinal -> horizontal bars
+                    mark = Plot.barX(data, {
+                        x: xField || undefined,
+                        y: yField || undefined,
+                        fill: colorField || undefined,
+                        fx: xFacetField || undefined,
+                        fy: yFacetField || undefined,
+                    });
+                } else {
+                    // Y is quantitative (default case) -> vertical bars
+                    mark = Plot.barY(data, {
+                        x: xField || undefined,
+                        y: yField || undefined,
+                        fill: colorField || undefined,
+                        fx: xFacetField || undefined,
+                        fy: yFacetField || undefined,
+                    });
+                }
+            }
             break;
 
         case 'point':
@@ -107,25 +165,56 @@ function vegaLiteToPlot(spec: any): any {
 
         case 'area':
             // In Vega-Lite, "area" often implies stacked area if "stack" is used
+            // Determine which axis is quantitative to decide stacking direction
+            const areaXIsQuantitative = enc.x?.type === 'quantitative';
+            const areaYIsQuantitative = enc.y?.type === 'quantitative';
+            
             if (stacked) {
-                mark = Plot.areaY(
-                    data,
-                    Plot.stackY({
+                if (areaXIsQuantitative && !areaYIsQuantitative) {
+                    // X is quantitative, Y is nominal/ordinal -> horizontal area with X-axis stacking
+                    mark = Plot.areaX(
+                        data,
+                        Plot.stackX({
+                            x: xField || undefined,
+                            y: yField || undefined,
+                            fill: colorField || undefined,
+                            fx: xFacetField || undefined,
+                            fy: yFacetField || undefined,
+                        })
+                    );
+                } else {
+                    // Y is quantitative (default case) -> vertical area with Y-axis stacking
+                    mark = Plot.areaY(
+                        data,
+                        Plot.stackY({
+                            x: xField || undefined,
+                            y: yField || undefined,
+                            fill: colorField || undefined,
+                            fx: xFacetField || undefined,
+                            fy: yFacetField || undefined,
+                        })
+                    );
+                }
+            } else {
+                if (areaXIsQuantitative && !areaYIsQuantitative) {
+                    // X is quantitative, Y is nominal/ordinal -> horizontal area
+                    mark = Plot.areaX(data, {
                         x: xField || undefined,
                         y: yField || undefined,
                         fill: colorField || undefined,
                         fx: xFacetField || undefined,
                         fy: yFacetField || undefined,
-                    })
-                );
-            } else {
-                mark = Plot.areaY(data, {
-                    x: xField || undefined,
-                    y: yField || undefined,
-                    fill: colorField || undefined,
-                    fx: xFacetField || undefined,
-                    fy: yFacetField || undefined,
-                });
+                    });
+                } else {
+                    // Y is quantitative (default case) -> vertical area
+                    mark = Plot.areaY(data, {
+                        x: xField || undefined,
+                        y: yField || undefined,
+                        fill: colorField || undefined,
+                        fx: xFacetField || undefined,
+                        fy: yFacetField || undefined,
+                    });
+                }
             }
             break;
 
@@ -140,9 +229,9 @@ function vegaLiteToPlot(spec: any): any {
     }
 
     // 6) Title / tooltip
-    //    If Vega-Lite has "encoding.tooltip", we can map that to Plot’s "title" channel
+    //    If Vega-Lite has "encoding.tooltip", we can map that to Plot's "title" channel
     //    If tooltip is an array of fields, you might join them. Alternatively, Plot
-    //    also has "hint"/"tip" patterns, but we’ll do the simplest approach.
+    //    also has "hint"/"tip" patterns, but we'll do the simplest approach.
     let titleFn;
     if (tooltipEnc) {
         if (Array.isArray(tooltipEnc)) {
@@ -157,7 +246,7 @@ function vegaLiteToPlot(spec: any): any {
 
     // If we have a "title" function, apply it to the Mark
     if (titleFn) {
-        // “title” is typically a function in Plot
+        // "title" is typically a function in Plot
         (mark as any).title = titleFn;
     }
 
@@ -190,7 +279,7 @@ function vegaLiteToPlot(spec: any): any {
 
 // ----------------------------------------------------------------------------------
 // The main function that parallels `toVegaSpec(...)`:
-// It returns an array of any, one per sub-view if row/col “repeat” is in effect.
+// It returns an array of any, one per sub-view if row/col "repeat" is in effect.
 export function toObservablePlotSpec({
     rows: rowsRaw,
     columns: columnsRaw,
