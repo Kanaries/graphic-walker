@@ -121,9 +121,14 @@ function vegaLiteToPlot(spec: any): any {
                 baseConfig.stroke = colorField || undefined;
                 break;
             case 'point':
+                baseConfig.stroke = colorField || undefined;
+                baseConfig.fill = 'none';
+                baseConfig.r = sizeField || undefined;
+                break;
             case 'circle':
             case 'dot':
                 baseConfig.fill = colorField || undefined;
+                baseConfig.stroke = undefined;
                 baseConfig.r = sizeField || undefined;
                 break;
             case 'text':
