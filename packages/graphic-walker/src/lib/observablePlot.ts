@@ -401,6 +401,7 @@ function vegaLiteToPlot(spec: any): any {
         },
         color: {
             label: enc.color?.title || undefined,
+            legend: colorField ? true : undefined,
         },
         // fx: {
         //     label: enc.column?.title || undefined,
