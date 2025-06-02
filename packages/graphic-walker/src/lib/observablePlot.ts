@@ -250,17 +250,43 @@ function vegaLiteToPlot(spec: any): any {
         (mark as any).title = titleFn;
     }
 
+    // Helper function to determine if temporal field is being used categorically
+    const isTemporalUsedCategorically = (axis: 'x' | 'y') => {
+        const axisEnc = enc[axis];
+        const otherAxisEnc = enc[axis === 'x' ? 'y' : 'x'];
+        
+        // For bar charts, if one axis is temporal and the other is quantitative,
+        // the temporal axis is likely being used categorically
+        if (markType === 'bar' && axisEnc?.type === 'temporal' && otherAxisEnc?.type === 'quantitative') {
+            return true;
+        }
+        
+        // For tick marks, temporal fields are often used categorically
+        if (markType === 'tick' && axisEnc?.type === 'temporal') {
+            return true;
+        }
+        
+        return false;
+    };
+
     // 7) Build top-level any
     const plotOptions: any = {
         marks: [mark],
         // Possibly define top-level x, y, color scales
         x: {
             label: enc.x?.title || undefined,
-            type: enc.x?.type === 'temporal' ? 'utc' : undefined,
+            // For temporal fields: use 'utc' for continuous scales, 'band' for categorical scales
+            type: enc.x?.type === 'temporal' 
+                ? (isTemporalUsedCategorically('x') ? 'band' : 'utc')
+                : undefined,
             // If your spec had e.g. "type": "temporal", you'd do Plot.scale({type: "utc"})
         },
         y: {
             label: enc.y?.title || undefined,
+            // Apply the same logic for y-axis temporal fields
+            type: enc.y?.type === 'temporal' 
+                ? (isTemporalUsedCategorically('y') ? 'band' : 'utc')
+                : undefined,
             // If stacked, you can do y: {stack: "zero"} as an alternative approach
         },
         color: {
