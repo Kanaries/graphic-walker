@@ -42,22 +42,69 @@ function vegaLiteToPlot(spec: any): any {
     console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, tooltipEnc });
     // etc. shape, opacity, text, etc. if present
 
+    // Helper function to create stack configuration
+    const createStackConfig = (stackMode: string | null, baseConfig: any) => {
+        if (!stacked || !colorField) {
+            return baseConfig;
+        }
+        
+        const stackOptions: any = {};
+        if (stackMode === "normalize") {
+            stackOptions.offset = "normalize";
+        } else if (stackMode === "center") {
+            stackOptions.offset = "center";
+        }
+        
+        console.log('Stack options for mark:', { stackMode, stackOptions });
+        
+        return stackOptions;
+    };
+
+    // Helper function to apply stacking to any mark
+    const applyStacking = (markFunction: any, data: any[], baseConfig: any, stackAxis: 'X' | 'Y') => {
+        if (!stacked || !colorField) {
+            return markFunction(data, baseConfig);
+        }
+        
+        // Sort data for consistent stacking (especially important for temporal data)
+        const sortedData = [...data].sort((a, b) => {
+            const xCompare = xField ? new Date(a[xField]).getTime() - new Date(b[xField]).getTime() : 0;
+            if (xCompare !== 0) return xCompare;
+            return colorField && a[colorField] < b[colorField] ? -1 : 1;
+        });
+        
+        const stackOptions = createStackConfig(stackMode, baseConfig);
+        const stackFunction = stackAxis === 'X' ? Plot.stackX : Plot.stackY;
+        
+        // Ensure z channel is set for grouping
+        const configWithZ = {
+            ...baseConfig,
+            z: colorField || undefined,
+        };
+        
+        return markFunction(sortedData, stackFunction(stackOptions, configWithZ));
+    };
+
     // 4) Check for stacking in encoding channels (not just transforms)
-    //    In Vega-Lite, stacking is indicated by the 'stack' property on quantitative encodings
     let stacked = false;
+    let stackMode = null; // Can be "normalize", "center", etc.
     
     // Check if any quantitative encoding has stack property that's not null/false
     if (enc.x?.stack !== null && enc.x?.stack !== false && enc.x?.type === 'quantitative') {
         stacked = true;
+        stackMode = enc.x.stack;
     }
     if (enc.y?.stack !== null && enc.y?.stack !== false && enc.y?.type === 'quantitative') {
         stacked = true;
+        stackMode = enc.y.stack;
     }
     if (enc.theta?.stack !== null && enc.theta?.stack !== false && enc.theta?.type === 'quantitative') {
         stacked = true;
+        stackMode = enc.theta.stack;
     }
     if (enc.radius?.stack !== null && enc.radius?.stack !== false && enc.radius?.type === 'quantitative') {
         stacked = true;
+        stackMode = enc.radius.stack;
     }
     
     // Also check transforms for legacy support
@@ -84,83 +131,85 @@ function vegaLiteToPlot(spec: any): any {
             const xIsQuantitative = enc.x?.type === 'quantitative';
             const yIsQuantitative = enc.y?.type === 'quantitative';
             
-            if (stacked && colorField) {
-                if (xIsQuantitative && !yIsQuantitative) {
-                    // X is quantitative, Y is nominal/ordinal -> horizontal bars with X-axis stacking
-                    mark = Plot.barX(
-                        data,
-                        Plot.stackX({
-                            x: xField || undefined,
-                            y: yField || undefined,
-                            fill: colorField || undefined,
-                            fx: xFacetField || undefined,
-                            fy: yFacetField || undefined,
-                        })
-                    );
-                } else {
-                    // Y is quantitative (default case) -> vertical bars with Y-axis stacking
-                    mark = Plot.barY(
-                        data,
-                        Plot.stackY({
-                            x: xField || undefined,
-                            y: yField || undefined,
-                            fill: colorField || undefined,
-                            fx: xFacetField || undefined,
-                            fy: yFacetField || undefined,
-                        })
-                    );
-                }
+            const baseBarConfig = {
+                x: xField || undefined,
+                y: yField || undefined,
+                fill: colorField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
+            };
+            
+            if (xIsQuantitative && !yIsQuantitative) {
+                // X is quantitative, Y is nominal/ordinal -> horizontal bars
+                mark = applyStacking(Plot.barX, data, baseBarConfig, 'X');
             } else {
-                if (xIsQuantitative && !yIsQuantitative) {
-                    // X is quantitative, Y is nominal/ordinal -> horizontal bars
-                    mark = Plot.barX(data, {
-                        x: xField || undefined,
-                        y: yField || undefined,
-                        fill: colorField || undefined,
-                        fx: xFacetField || undefined,
-                        fy: yFacetField || undefined,
-                    });
-                } else {
-                    // Y is quantitative (default case) -> vertical bars
-                    mark = Plot.barY(data, {
-                        x: xField || undefined,
-                        y: yField || undefined,
-                        fill: colorField || undefined,
-                        fx: xFacetField || undefined,
-                        fy: yFacetField || undefined,
-                    });
-                }
+                // Y is quantitative (default case) -> vertical bars
+                mark = applyStacking(Plot.barY, data, baseBarConfig, 'Y');
             }
             break;
 
         case 'point':
-            mark = Plot.dot(data, {
+            const basePointConfig = {
                 x: xField || undefined,
                 y: yField || undefined,
                 fill: colorField || undefined,
                 r: sizeField || undefined,
                 fx: xFacetField || undefined,
                 fy: yFacetField || undefined,
-            });
+            };
+            
+            // Points can be stacked in some cases (like dot plots)
+            if (stacked && colorField && enc.y?.type === 'quantitative') {
+                mark = applyStacking(Plot.dot, data, basePointConfig, 'Y');
+            } else {
+                mark = Plot.dot(data, basePointConfig);
+            }
             break;
+
         case 'tick':
-            mark = Plot.tickY(data, {
+            const baseTickConfig = {
                 x: xField || undefined,
                 y: yField || undefined,
                 stroke: colorField || undefined,
                 fx: xFacetField || undefined,
                 fy: yFacetField || undefined,
-            });
+            };
+            
+            // Ticks can be stacked for certain visualizations
+            if (stacked && colorField && enc.y?.type === 'quantitative') {
+                mark = applyStacking(Plot.tickY, data, baseTickConfig, 'Y');
+            } else {
+                mark = Plot.tickY(data, baseTickConfig);
+            }
             break;
 
         case 'line':
-            mark = Plot.line(data, {
+            const baseLineConfig = {
                 x: xField || undefined,
                 y: yField || undefined,
                 stroke: colorField || undefined,
                 fx: xFacetField || undefined,
                 fy: yFacetField || undefined,
-            });
+            };
+            
+            // Lines can be stacked for cumulative line charts
+            if (stacked && colorField && enc.y?.type === 'quantitative') {
+                // For lines, we need to add z channel for grouping even when not stacked
+                const lineConfigWithZ = {
+                    ...baseLineConfig,
+                    z: colorField || undefined,
+                };
+                mark = applyStacking(Plot.line, data, lineConfigWithZ, 'Y');
+            } else if (colorField) {
+                // Multiple series lines need z channel for grouping
+                const lineConfigWithZ = {
+                    ...baseLineConfig,
+                    z: colorField || undefined,
+                };
+                mark = Plot.line(data, lineConfigWithZ);
+            } else {
+                mark = Plot.line(data, baseLineConfig);
+            }
             break;
 
         case 'area':
@@ -169,51 +218,59 @@ function vegaLiteToPlot(spec: any): any {
             const areaXIsQuantitative = enc.x?.type === 'quantitative';
             const areaYIsQuantitative = enc.y?.type === 'quantitative';
             
-            if (stacked) {
-                if (areaXIsQuantitative && !areaYIsQuantitative) {
-                    // X is quantitative, Y is nominal/ordinal -> horizontal area with X-axis stacking
-                    mark = Plot.areaX(
-                        data,
-                        Plot.stackX({
-                            x: xField || undefined,
-                            y: yField || undefined,
-                            fill: colorField || undefined,
-                            fx: xFacetField || undefined,
-                            fy: yFacetField || undefined,
-                        })
-                    );
-                } else {
-                    // Y is quantitative (default case) -> vertical area with Y-axis stacking
-                    mark = Plot.areaY(
-                        data,
-                        Plot.stackY({
-                            x: xField || undefined,
-                            y: yField || undefined,
-                            fill: colorField || undefined,
-                            fx: xFacetField || undefined,
-                            fy: yFacetField || undefined,
-                        })
-                    );
-                }
-            } else {
+            // For area charts with color encoding, default to stacked unless explicitly disabled
+            const shouldStack = stacked || (colorField && stacked !== false);
+            
+            console.log('Area chart debug:', {
+                stacked,
+                stackMode,
+                colorField,
+                shouldStack,
+                areaXIsQuantitative,
+                areaYIsQuantitative,
+                xField,
+                yField,
+                dataLength: data.length,
+                sampleData: data.slice(0, 3)
+            });
+            
+            const baseAreaConfig = {
+                x: xField || undefined,
+                y: yField || undefined,
+                fill: colorField || undefined,
+                fx: xFacetField || undefined,
+                fy: yFacetField || undefined,
+            };
+            
+            if (shouldStack && colorField) {
+                console.log('Creating stacked area chart');
                 if (areaXIsQuantitative && !areaYIsQuantitative) {
                     // X is quantitative, Y is nominal/ordinal -> horizontal area
-                    mark = Plot.areaX(data, {
-                        x: xField || undefined,
-                        y: yField || undefined,
-                        fill: colorField || undefined,
-                        fx: xFacetField || undefined,
-                        fy: yFacetField || undefined,
-                    });
+                    mark = applyStacking(Plot.areaX, data, baseAreaConfig, 'X');
                 } else {
                     // Y is quantitative (default case) -> vertical area
-                    mark = Plot.areaY(data, {
-                        x: xField || undefined,
-                        y: yField || undefined,
-                        fill: colorField || undefined,
-                        fx: xFacetField || undefined,
-                        fy: yFacetField || undefined,
-                    });
+                    mark = applyStacking(Plot.areaY, data, baseAreaConfig, 'Y');
+                }
+            } else if (colorField) {
+                console.log('Creating grouped area chart');
+                // Multiple series but not stacked - need to group by color field
+                const groupedAreaConfig = {
+                    ...baseAreaConfig,
+                    z: colorField || undefined, // Group by color field
+                };
+                
+                if (areaXIsQuantitative && !areaYIsQuantitative) {
+                    mark = Plot.areaX(data, groupedAreaConfig);
+                } else {
+                    mark = Plot.areaY(data, groupedAreaConfig);
+                }
+            } else {
+                console.log('Creating single series area chart');
+                // Single series area chart
+                if (areaXIsQuantitative && !areaYIsQuantitative) {
+                    mark = Plot.areaX(data, baseAreaConfig);
+                } else {
+                    mark = Plot.areaY(data, baseAreaConfig);
                 }
             }
             break;
