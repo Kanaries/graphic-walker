@@ -57,6 +57,7 @@ function vegaLiteToPlot(spec: any): any {
             tick: { X: Plot.tickX, Y: Plot.tickY },
             rect: { X: Plot.rectX, Y: Plot.rectY },
             rule: { X: Plot.ruleX, Y: Plot.ruleY },
+            boxplot: { X: Plot.boxX, Y: Plot.boxY },
         };
         
         if (directionalMarks[markType]) {
@@ -111,6 +112,7 @@ function vegaLiteToPlot(spec: any): any {
             case 'bar':
             case 'area':
             case 'rect':
+            case 'boxplot':
                 baseConfig.fill = colorField || undefined;
                 break;
             case 'line':
