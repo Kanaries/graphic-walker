@@ -92,7 +92,7 @@ export const emptyVisualLayout: IVisualLayout = {
         shape: false,
         size: false,
     },
-    renderer: 'observable-plot',
+    renderer: 'vega-lite',
 };
 
 export const emptyVisualConfig: IVisualConfigNew = {

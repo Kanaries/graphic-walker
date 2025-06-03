@@ -442,7 +442,7 @@ export interface IVisualLayout {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
-    /** @default "observable-plot" */
+    /** @default "vega-lite" */
     renderer?: 'vega-lite' | 'observable-plot';
 }
 

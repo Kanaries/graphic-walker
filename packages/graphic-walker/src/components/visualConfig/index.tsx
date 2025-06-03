@@ -145,7 +145,7 @@ const VisualConfigPanel: React.FC = () => {
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
-    const [renderer, setRenderer] = useState<'vega-lite' | 'observable-plot'>(layout.renderer ?? 'observable-plot');
+    const [renderer, setRenderer] = useState<'vega-lite' | 'observable-plot'>(layout.renderer ?? 'vega-lite');
     const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
@@ -174,7 +174,7 @@ const VisualConfigPanel: React.FC = () => {
     useEffect(() => {
         setZeroScale(layout.zeroScale);
         setSvg(layout.useSvg ?? false);
-        setRenderer(layout.renderer ?? 'observable-plot');
+        setRenderer(layout.renderer ?? 'vega-lite');
         setBackground(
             extractRGBA(
                 {
