@@ -177,7 +177,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {!isSpatial && layout.renderer === 'vega-lite' && (
+            {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (
                 <ReactVega
                     name={name}
                     vegaConfig={vegaConfig}
@@ -211,7 +211,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     displayOffset={timezoneDisplayOffset}
                 />
             )}
-            {!isSpatial && (!layout.renderer || layout.renderer === 'observable-plot') && (
+            {!isSpatial && layout.renderer === 'observable-plot' && (
                 <ObservablePlotRenderer
                     name={name}
                     vegaConfig={vegaConfig}
