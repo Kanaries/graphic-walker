@@ -949,6 +949,7 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
 export interface ILocalComputationProps {

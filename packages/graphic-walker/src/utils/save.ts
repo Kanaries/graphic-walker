@@ -92,6 +92,7 @@ export const emptyVisualLayout: IVisualLayout = {
         shape: false,
         size: false,
     },
+    renderer: 'observable-plot',
 };
 
 export const emptyVisualConfig: IVisualConfigNew = {
