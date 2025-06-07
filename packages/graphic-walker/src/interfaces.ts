@@ -442,6 +442,8 @@ export interface IVisualLayout {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
+    /** @default "vega-lite" */
+    renderer?: 'vega-lite' | 'observable-plot';
 }
 
 export interface IVisualConfigNew {
@@ -486,8 +488,8 @@ export interface IVegaChartRef {
     h: number;
     innerWidth: number;
     innerHeight: number;
-    view: View;
-    canvas: HTMLCanvasElement | SVGSVGElement | null;
+    view: View | null;
+    canvas: HTMLElement | SVGSVGElement | HTMLCanvasElement | null;
 }
 
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
@@ -947,6 +949,7 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
 export interface ILocalComputationProps {

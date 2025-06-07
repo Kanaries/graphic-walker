@@ -92,6 +92,7 @@ export const emptyVisualLayout: IVisualLayout = {
         shape: false,
         size: false,
     },
+    renderer: 'vega-lite',
 };
 
 export const emptyVisualConfig: IVisualConfigNew = {

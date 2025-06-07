@@ -40,6 +40,10 @@ export const pages = [
         name: 'Filter Context',
     },
     {
+        comp: () => import('./pages/defaultRenderer'),
+        name: 'Default Renderer',
+    },
+    {
         comp: () => import('./pages/themeBuilder'),
         name: 'ThemeBuilder',
     },

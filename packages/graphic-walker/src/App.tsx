@@ -301,7 +301,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -341,7 +341,7 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig} defaultRenderer={defaultRenderer}>
             <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
         </VizStoreWrapper>
     );
