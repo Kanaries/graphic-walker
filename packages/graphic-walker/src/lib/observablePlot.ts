@@ -501,3 +501,6 @@ export function toObservablePlotSpec({
     console.log({ plotSpecs });
     return plotSpecs;
 }
+
+// named export for unit testing only
+export const __test__vegaLiteToPlot = vegaLiteToPlot;
