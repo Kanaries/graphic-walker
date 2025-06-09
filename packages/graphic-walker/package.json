@@ -53,6 +53,7 @@
     "@heroicons/react": "^2.0.8",
     "@kanaries/react-beautiful-dnd": "^0.1.1",
     "@kanaries/web-data-loader": "^0.1.7",
+    "@observablehq/plot": "^0.6.16",
     "@radix-ui/react-checkbox": "^1.0.4",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-context-menu": "^2.1.5",

@@ -278,7 +278,7 @@ const FilterSection = observer(function FilterSection() {
 export function RendererAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -319,7 +319,7 @@ export function RendererAppWithContext(
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig} defaultRenderer={defaultRenderer}>
             <RendererApp {...rest} darkMode={darkMode} computation={safeComputation} />
         </VizStoreWrapper>
     );
