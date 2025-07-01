@@ -1,5 +1,4 @@
 import React, { CSSProperties } from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { GLOBAL_CONFIG } from '../config';
 
@@ -11,12 +10,12 @@ export const FieldListContainer: React.FC<{
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <FieldListSegment className="sm:ml-0.5 my-0.5 border relative" style={props.style}>
-            <div className="fl-header border-r cursor-default select-none">
-                <h4 className="font-normal">{t(props.name)}</h4>
+        <div className="flex text-xs sm:ml-0.5 my-0.5 border relative" style={props.style}>
+            <div className="w-[100px] flex-shrink-0 border-r cursor-default select-none">
+                <h4 className="m-2.5 font-normal">{t(props.name)}</h4>
             </div>
-            <div className="fl-container overflow-hidden">{props.children}</div>
-        </FieldListSegment>
+            <div className="flex-grow-[10] relative overflow-hidden">{props.children}</div>
+        </div>
     );
 };
 
@@ -46,100 +45,53 @@ export const FilterFieldContainer: React.FC<{ children?: React.ReactNode | Itera
     );
 };
 
-export const FieldsContainer = styled.div`
-    display: flex;
-    padding: 0.2em;
-    min-height: 2.4em;
-    flex-wrap: wrap;
-    > div {
-        margin: 1px;
-    }
-    touch-action: none;
-`;
+export const FieldsContainer = React.forwardRef<HTMLDivElement, { 
+    children?: React.ReactNode; 
+    className?: string;
+    [key: string]: any;
+}>(({ children, className = '', ...props }, ref) => (
+    <div ref={ref} className={`flex p-0.5 min-h-[2.4em] flex-wrap touch-none [&>div]:m-px ${className}`} {...props}>
+        {children}
+    </div>
+));
 
-export const FilterFieldsContainer = styled.div({
-    display: 'flex',
-    flexDirection: 'column',
-    paddingBlock: '0.5em 0.8em',
-    paddingInline: '0.2em',
-    minHeight: '4em',
-    '> div': {
-        marginBlock: '0.3em',
-        marginInline: '1px',
-    },
+FieldsContainer.displayName = 'FieldsContainer';
+
+export const FilterFieldsContainer = React.forwardRef<HTMLDivElement, { 
+    children?: React.ReactNode; 
+    className?: string;
+    [key: string]: any;
+}>(({ children, className = '', ...props }, ref) => (
+    <div ref={ref} className={`flex flex-col py-2 px-0.5 min-h-16 [&>div]:my-1.5 [&>div]:mx-px ${className}`} {...props}>
+        {children}
+    </div>
+));
+
+FilterFieldsContainer.displayName = 'FilterFieldsContainer';
+
+
+export const FilterFieldSegment: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+    <div className={`border border-gray-200 dark:border-gray-700 text-xs m-0.5 ${className}`}>
+        {children}
+    </div>
+);
+
+export const Pill = React.forwardRef<HTMLDivElement, { 
+    colType: 'discrete' | 'continuous';
+    children?: React.ReactNode;
+    className?: string;
+    [key: string]: any;
+}>(({ colType, children, className = '', ...props }, ref) => {
+    const baseClasses = "flex items-center rounded-sm border box-border cursor-default text-xs h-5 min-w-[150px] max-w-[300px] px-2.5 select-none truncate whitespace-nowrap";
+    const typeClasses = colType === 'continuous' 
+        ? "bg-background border-muted-foreground text-foreground"
+        : "bg-primary border-background text-primary-foreground";
+    
+    return (
+        <div ref={ref} className={`${baseClasses} ${typeClasses} ${className}`} {...props}>
+            {children}
+        </div>
+    );
 });
 
-export const FieldListSegment = styled.div`
-    display: flex;
-    font-size: 12px;
-    div.fl-header {
-        /* flex-basis: 100px; */
-        width: 100px;
-        flex-shrink: 0;
-        h4 {
-            margin: 0.6em;
-            font-weight: 400;
-        }
-    }
-    div.fl-container {
-        flex-grow: 10;
-        position: relative;
-    }
-`;
-
-export const FilterFieldSegment = styled.div`
-    border: 1px solid #e5e7eb;
-    @media (prefers-color-scheme: dark) {
-        border: 1px solid #2d3748;
-    }
-    font-size: 12px;
-    margin: 0.2em;
-
-    .flt-header {
-        border-bottom: 1px solid #e5e7eb;
-        @media (prefers-color-scheme: dark) {
-            border-bottom: 1px solid #2d3748;
-        }
-        padding: 0.6em;
-
-        > h4 {
-            font-weight: 400;
-        }
-    }
-
-    .flt-container {
-    }
-`;
-
-export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
-    background-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--background))' : 'hsl(var(--primary))')};
-    border-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))')};
-    color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))')};
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-align-items: center;
-    -webkit-user-select: none;
-    align-items: center;
-    border-radius: calc(var(--radius) - 2px);
-    border-style: solid;
-    border-width: 1px;
-    box-sizing: border-box;
-    cursor: default;
-    display: -webkit-flex;
-    display: flex;
-    font-size: 12px;
-    height: 20px;
-    min-width: 150px;
-    max-width: 300px;
-    /* overflow-y: hidden; */
-    padding: 0 10px;
-    user-select: none;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    /* --tw-ring-offset-shadow: 0 0 #0000;
-    --tw-ring-shadow: 0 0 #0000;
-    --tw-shadow-color: rgb(6 182 212/0.5);
-    --tw-shadow: var(--tw-shadow-colored);
-    --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);
-    box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
-`;
+Pill.displayName = 'Pill';

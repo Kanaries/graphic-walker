@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 import type { IFilterField, IFilterRule, IFieldStats, IMutField, IComputationFunction, IKeyWord } from '../../interfaces';
@@ -30,87 +29,6 @@ export type RuleFormProps = {
     onChange: (rule: IFilterRule) => void;
     displayOffset?: number;
 };
-
-const Container = styled.div`
-    margin-block: 1em;
-
-    > .btn-grp {
-        display: flex;
-        flex-direction: row;
-        margin-block: 1em;
-
-        > * {
-            margin-inline-start: 0.6em;
-
-            &:first-child {
-                margin-inline-start: 0;
-            }
-        }
-    }
-`;
-
-const Table = styled.div`
-    display: flex;
-    flex-direction: column;
-    max-height: 30vh;
-    overflow-y: scroll;
-`;
-
-const TableRow = styled.div`
-    display: flex;
-    & > input,
-    & > *[for] {
-        cursor: pointer;
-    }
-    & > * {
-        padding-block: 0.6em;
-        padding-inline: 0.2em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        user-select: none;
-        border-bottom: 0.8px solid hsl(var(--border));
-        flex-shink: 0;
-    }
-    & > *:first-child {
-        width: 4em;
-    }
-    & > *:last-child {
-        width: max-content;
-    }
-    & > *:first-child + * {
-        flex: 1;
-    }
-`;
-
-const TabsContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: stretch;
-`;
-
-const CalendarInputContainer = styled.div`
-    display: flex;
-    padding-block: 1em;
-    width: 100%;
-
-    > .calendar-input {
-        width: 100%;
-    }
-
-    > .calendar-input:first-child {
-        margin-right: 0.5em;
-    }
-
-    > .calendar-input:last-child {
-        margin-left: 0.5em;
-    }
-`;
-
-const TabPanel = styled.div``;
-
-const TabItem = styled.div``;
 
 const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean; loading?: boolean }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
@@ -548,10 +466,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
     );
 
     return field.rule?.type === 'one of' || field.rule?.type === 'not in' ? (
-        <Container>
+        <div className="my-4">
             <div>{t('constant.filter_type.one_of')}</div>
             <div className="text-muted-foreground">{t('constant.filter_type.one_of_desc')}</div>
-            <div className="btn-grp">
+            <div className="flex flex-row my-4 space-x-2">
                 <Button variant="outline" size="sm" onClick={() => handleToggleFullOrEmptySet()}>
                     {currentCount === distinctTotal ? t('filters.btn.unselect_all') : t('filters.btn.select_all')}
                 </Button>
@@ -601,8 +519,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                 </div>
             )}
             <div className="relative">
-                <Table>
-                    <TableRow>
+                <div className="flex flex-col max-h-[30vh] overflow-y-scroll">
+                    <div className="flex [&>input]:cursor-pointer [&>*[for]]:cursor-pointer [&>*]:py-2 [&>*]:px-1 [&>*]:whitespace-nowrap [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:select-none [&>*]:border-b [&>*]:border-border [&>*]:flex-shrink-0 [&>*:first-child]:w-16 [&>*:last-child]:w-max [&>*:first-child+*]:flex-1">
                         <div className="flex justify-center items-center">
                             <StatusCheckbox
                                 currentNum={currentCount}
@@ -619,8 +537,8 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                             <label htmlFor="count_sort">{t('filters.header.count')}</label>
                             <SortButton id="count_sort" currentKey="count" setSortConfig={setSortConfig} config={sortConfig} />
                         </div>
-                    </TableRow>
-                </Table>
+                    </div>
+                </div>
                 {loading && (
                     <div className="h-24 w-full relative">
                         <LoadingLayer />
@@ -628,7 +546,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                 )}
                 {/* <hr /> */}
                 {!loading && (
-                    <Table ref={parentRef}>
+                    <div className="flex flex-col max-h-[30vh] overflow-y-scroll" ref={parentRef}>
                         {showLoadingList && rowVirtualizer.getTotalSize() === 0 && <LoadingLayer />}
                         {showLoadingList && (
                             <div
@@ -639,9 +557,9 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                 }}
                             >
                                 {rowVirtualizer.getVirtualItems().map((vItem) => (
-                                    <TableRow
+                                    <div
                                         key={vItem.index}
-                                        className="animate-pulse"
+                                        className="animate-pulse flex [&>*]:py-2 [&>*]:px-1 [&>*]:whitespace-nowrap [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:select-none [&>*]:border-b [&>*]:border-border [&>*]:flex-shrink-0 [&>*:first-child]:w-16 [&>*:last-child]:w-max [&>*:first-child+*]:flex-1"
                                         style={{
                                             height: `${vItem.size}px`,
                                             transform: `translateY(${vItem.start}px)`,
@@ -660,7 +578,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                         <div className="flex justify-right items-center">
                                             <Skeleton className="h-3 w-6" />
                                         </div>
-                                    </TableRow>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -677,9 +595,9 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                     const item = data?.get(idx);
                                     if (!item) {
                                         return (
-                                            <TableRow
+                                            <div
                                                 key={idx}
-                                                className="animate-pulse"
+                                                className="animate-pulse flex [&>*]:py-2 [&>*]:px-1 [&>*]:whitespace-nowrap [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:select-none [&>*]:border-b [&>*]:border-border [&>*]:flex-shrink-0 [&>*:first-child]:w-16 [&>*:last-child]:w-max [&>*:first-child+*]:flex-1"
                                                 style={{
                                                     height: `${vItem.size}px`,
                                                     transform: `translateY(${vItem.start}px)`,
@@ -702,7 +620,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                                     effect={() => loadData(idx)}
                                                     effectId={`${field.fid}_${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}_${idx}`}
                                                 />
-                                            </TableRow>
+                                            </div>
                                         );
                                     }
                                     const { value, count } = item;
@@ -713,8 +631,9 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                     const displayValue =
                                         field.semanticType === 'temporal' ? formatDate(parsedOffsetDate(displayOffset, field.offset)(value)) : `${value}`;
                                     return (
-                                        <TableRow
+                                        <div
                                             key={idx}
+                                            className="flex [&>*]:py-2 [&>*]:px-1 [&>*]:whitespace-nowrap [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:select-none [&>*]:border-b [&>*]:border-border [&>*]:flex-shrink-0 [&>*:first-child]:w-16 [&>*:last-child]:w-max [&>*:first-child+*]:flex-1"
                                             style={{
                                                 height: `${vItem.size}px`,
                                                 transform: `translateY(${vItem.start}px)`,
@@ -738,24 +657,24 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                                 {displayValue}
                                             </label>
                                             <label htmlFor={id}>{count}</label>
-                                        </TableRow>
+                                        </div>
                                     );
                                 })}
                             </div>
                         )}
-                    </Table>
+                    </div>
                 )}
                 {isNotEmpty(distinctTotal) && (
-                    <Table className="text-muted-foreground">
-                        <TableRow>
+                    <div className="flex flex-col max-h-[30vh] overflow-y-scroll text-muted-foreground">
+                        <div className="flex [&>*]:py-2 [&>*]:px-1 [&>*]:whitespace-nowrap [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:select-none [&>*]:border-b [&>*]:border-border [&>*]:flex-shrink-0 [&>*:first-child]:w-16 [&>*:last-child]:w-max [&>*:first-child+*]:flex-1">
                             <label></label>
                             <label>{t('filters.selected_keys', { count: currentCount })}</label>
                             <label>{currentSum}</label>
-                        </TableRow>
-                    </Table>
+                        </div>
+                    </div>
                 )}
             </div>
-        </Container>
+        </div>
     ) : null;
 };
 
@@ -845,10 +764,10 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
     }
 
     return field.rule?.type === 'temporal range' ? (
-        <Container className="overflow-visible">
+        <div className="my-4 overflow-visible">
             <div>{t('constant.filter_type.temporal_range')}</div>
             <div className="text-muted-foreground">{t('constant.filter_type.temporal_range_desc')}</div>
-            <CalendarInputContainer>
+            <div className="flex py-4 w-full [&>.calendar-input]:w-full [&>.calendar-input:first-child]:mr-2 [&>.calendar-input:last-child]:ml-2">
                 <div className="calendar-input">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     <CalendarInput
@@ -869,8 +788,8 @@ export const FilterTemporalRangeRule: React.FC<RuleFormProps & { active: boolean
                         onChange={(value) => handleChange([field.rule?.value[0], value])}
                     />
                 </div>
-            </CalendarInputContainer>
-        </Container>
+            </div>
+        </div>
     ) : null;
 };
 
@@ -906,11 +825,11 @@ export const FilterRangeRule: React.FC<RuleFormProps & { active: boolean }> = ({
     }
 
     return field.rule?.type === 'range' ? (
-        <Container>
+        <div className="my-4">
             <div>{t('range')}</div>
             <div className="text-muted-foreground">{t('range_desc')}</div>
             <Slider min={range[0]} max={range[1]} value={field.rule.value} onChange={handleChange} />
-        </Container>
+        </div>
     ) : null;
 };
 
@@ -956,7 +875,7 @@ const Tabs: React.FC<TabsProps> = ({ allFields, field, onChange, tabs, displayOf
     }, [tabs]);
 
     return (
-        <TabsContainer>
+        <div className="flex flex-col items-stretch justify-stretch">
             <RadioGroup value={which} onValueChange={(s) => setWhich(s as (typeof tabs)[number])}>
                 {tabs.map((option) => {
                     return (
@@ -973,13 +892,13 @@ const Tabs: React.FC<TabsProps> = ({ allFields, field, onChange, tabs, displayOf
                 })}
             </RadioGroup>
             <hr className="my-0.5" />
-            <TabPanel>
+            <div>
                 {tabs.map((tab, i) => {
                     const Component = filterTabs[tab];
                     if (!Component) return null;
 
                     return (
-                        <TabItem
+                        <div
                             key={i}
                             id={`filter-panel-${tabOptionDict[tab]}`}
                             aria-labelledby={`filter-tab-${tabOptionDict[tab]}`}
@@ -988,11 +907,11 @@ const Tabs: React.FC<TabsProps> = ({ allFields, field, onChange, tabs, displayOf
                             tabIndex={0}
                         >
                             <Component displayOffset={displayOffset} field={field} onChange={onChange} active={which === tab} allFields={allFields} />
-                        </TabItem>
+                        </div>
                     );
                 })}
-            </TabPanel>
-        </TabsContainer>
+            </div>
+        </div>
     );
 };
 
