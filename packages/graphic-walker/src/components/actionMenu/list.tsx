@@ -2,10 +2,7 @@ import React, { Fragment, memo, type ComponentProps, type ReactElement, createCo
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Transition } from '@headlessui/react';
 import { Separator } from '../ui/separator';
-
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}
+import { cn } from '@/utils';
 
 export interface IActionMenuItem {
     icon?: ReactElement;
@@ -62,7 +59,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                 role="button"
                 aria-haspopup={children.length ? 'menu' : undefined}
                 aria-disabled={disabled}
-                className={classNames(
+                className={cn(
                     'flex items-center overflow-hidden py-1 px-1 pl-2 bg-inherit cursor-pointer w-full h-full rounded-l-[calc(var(--radius)-4px)]',
                     active ? 'bg-accent text-accent-foreground' : 'text-foreground',
                     disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',
@@ -112,7 +109,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                 {icon}
             </div>
             <div
-                className={classNames(
+                className={cn(
                     'flex items-center overflow-hidden py-1 px-1 bg-inherit cursor-pointer w-full h-full',
                     active ? 'bg-accent text-accent-foreground' : 'text-foreground',
                     disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',
@@ -142,7 +139,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                 <span className="truncate self-start">{label}</span>
             </div>
             <div
-                className={classNames(
+                className={cn(
                     'flex items-center overflow-hidden py-1 px-1 bg-inherit cursor-pointer w-full h-full relative rounded-r-[calc(var(--radius)-4px)]',
                     active ? 'bg-accent text-accent-foreground' : 'text-foreground',
                     disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',

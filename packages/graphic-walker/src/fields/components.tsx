@@ -12,7 +12,7 @@ export const FieldListContainer: React.FC<{
     return (
         <div className="flex text-xs sm:ml-0.5 my-0.5 border relative" style={props.style}>
             <div className="w-[100px] flex-shrink-0 border-r cursor-default select-none">
-                <h4 className="m-2.5 font-normal">{t(props.name)}</h4>
+                <h4 className="m-[0.6em] font-normal text-xs leading-[0.875rem]">{t(props.name)}</h4>
             </div>
             <div className="flex-grow-[10] relative overflow-hidden">{props.children}</div>
         </div>
@@ -62,7 +62,7 @@ export const FilterFieldsContainer = React.forwardRef<HTMLDivElement, {
     className?: string;
     [key: string]: any;
 }>(({ children, className = '', ...props }, ref) => (
-    <div ref={ref} className={`flex flex-col py-2 px-0.5 min-h-16 [&>div]:my-1.5 [&>div]:mx-px ${className}`} {...props}>
+    <div ref={ref} className={`flex flex-col py-2 px-0.5 min-h-[4em] [&>div]:my-1.5 [&>div]:mx-px ${className}`} {...props}>
         {children}
     </div>
 ));
