@@ -74,22 +74,24 @@ export function toVegaSpec({
         .filter((f) => Boolean(f))
         .filter((f) => f!.aggName !== 'expr')
         .map((f) => (f as IViewField).fid);
-
     const spec: any = {
         data: {
             values: dataSource,
         },
-        params: [
-            {
-                name: 'geom',
-                select: {
-                    type: 'point',
-                    fields: geomFieldIds.map(encodeFid),
-                },
-            },
-        ],
+        params:
+            geomType === 'boxplot'
+                ? undefined
+                : [
+                      {
+                          name: 'geom',
+                          select: {
+                              type: 'point',
+                              fields: geomFieldIds.map(encodeFid),
+                          },
+                      },
+                  ],
     };
-    if (interactiveScale) {
+    if (interactiveScale && spec.params) {
         spec.params.push({
             name: 'grid',
             select: 'interval',
