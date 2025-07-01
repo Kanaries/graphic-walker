@@ -1,12 +1,8 @@
 import React, { Fragment, memo, type ComponentProps, type ReactElement, createContext, useState, useContext, useMemo, useEffect } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
-import styled from 'styled-components';
 import { Transition } from '@headlessui/react';
 import { Separator } from '../ui/separator';
-
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}
+import { cn } from '@/utils';
 
 export interface IActionMenuItem {
     icon?: ReactElement;
@@ -15,41 +11,6 @@ export interface IActionMenuItem {
     children?: IActionMenuItem[];
     onPress?: () => void;
 }
-
-const List = styled.div`
-    display: grid;
-    grid-template-columns: max-content 1fr max-content;
-    & > div {
-        /* row */
-        display: contents;
-        > * {
-            background: inherit;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            padding-block: 0.2rem;
-            padding-inline: 0.2rem;
-            &:first-child {
-                padding-left: 0.4rem;
-            }
-        }
-        > *:first-child {
-            border-top-left-radius: calc(var(--radius) - 4px);
-            border-bottom-left-radius: calc(var(--radius) - 4px);
-        }
-        > *:last-child {
-            border-top-right-radius: calc(var(--radius) - 4px);
-            border-bottom-right-radius: calc(var(--radius) - 4px);
-        }
-        &[aria-disabled='true'] > * {
-            opacity: 0.5;
-            cursor: default;
-        }
-    }
-`;
 
 interface IActionMenuRootContext {
     path: number[];
@@ -92,62 +53,119 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
     }, [children.length, hover, focus, ctx, basePath]);
 
     return (
-        <div
-            tabIndex={disabled ? undefined : 0}
-            role="button"
-            aria-haspopup={children.length ? 'menu' : undefined}
-            aria-disabled={disabled}
-            className={classNames(
-                active ? 'bg-accent text-accent-foreground' : 'text-foreground',
-                disabled ? 'text-muted-foreground' : 'cursor-pointer',
-                'transition-colors text-xs'
-            )}
-            onClick={(e) => {
-                if (disabled || children.length) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return;
-                }
-                if (!disabled) {
-                    onPress?.();
-                    ctx.onDismiss();
-                }
-            }}
-            onFocus={() => {
-                if (!disabled) {
-                    setFocus(true);
-                }
-                if (children.length && !expanded) {
-                    ctx.setPath(path);
-                }
-            }}
-            onBlur={() => {
-                setFocus(false);
-            }}
-            onMouseEnter={() => {
-                setHover(true);
-                if (children.length && !expanded && !disabled) {
-                    ctx.setPath(path);
-                }
-            }}
-            onMouseLeave={() => {
-                setHover(false);
-            }}
-            onKeyDown={(e) => {
-                if (disabled || children.length) {
-                    return;
-                }
-                if (e.key === 'Enter' || e.key === 'Space') {
-                    onPress?.();
-                    ctx.onDismiss();
-                }
-            }}
-        >
-            <div aria-hidden="true">{icon}</div>
-            <div>
+        <>
+            <div
+                tabIndex={disabled ? undefined : 0}
+                role="button"
+                aria-haspopup={children.length ? 'menu' : undefined}
+                aria-disabled={disabled}
+                className={cn(
+                    'flex items-center overflow-hidden py-1 px-1 pl-2 bg-inherit cursor-pointer w-full h-full rounded-l-[calc(var(--radius)-4px)]',
+                    active ? 'bg-accent text-accent-foreground' : 'text-foreground',
+                    disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',
+                    'transition-colors text-xs'
+                )}
+                onClick={(e) => {
+                    if (disabled || children.length) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return;
+                    }
+                    if (!disabled) {
+                        onPress?.();
+                        ctx.onDismiss();
+                    }
+                }}
+                onFocus={() => {
+                    if (!disabled) {
+                        setFocus(true);
+                    }
+                    if (children.length && !expanded) {
+                        ctx.setPath(path);
+                    }
+                }}
+                onBlur={() => {
+                    setFocus(false);
+                }}
+                onMouseEnter={() => {
+                    setHover(true);
+                    if (children.length && !expanded && !disabled) {
+                        ctx.setPath(path);
+                    }
+                }}
+                onMouseLeave={() => {
+                    setHover(false);
+                }}
+                onKeyDown={(e) => {
+                    if (disabled || children.length) {
+                        return;
+                    }
+                    if (e.key === 'Enter' || e.key === 'Space') {
+                        onPress?.();
+                        ctx.onDismiss();
+                    }
+                }}
+            >
+                {icon}
+            </div>
+            <div
+                className={cn(
+                    'flex items-center overflow-hidden py-1 px-1 bg-inherit cursor-pointer w-full h-full',
+                    active ? 'bg-accent text-accent-foreground' : 'text-foreground',
+                    disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',
+                    'transition-colors text-xs'
+                )}
+                onClick={(e) => {
+                    if (disabled || children.length) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return;
+                    }
+                    if (!disabled) {
+                        onPress?.();
+                        ctx.onDismiss();
+                    }
+                }}
+                onMouseEnter={() => {
+                    setHover(true);
+                    if (children.length && !expanded && !disabled) {
+                        ctx.setPath(path);
+                    }
+                }}
+                onMouseLeave={() => {
+                    setHover(false);
+                }}
+            >
                 <span className="truncate self-start">{label}</span>
             </div>
-            <div aria-hidden="true" className="relative">
+            <div
+                className={cn(
+                    'flex items-center overflow-hidden py-1 px-1 bg-inherit cursor-pointer w-full h-full relative rounded-r-[calc(var(--radius)-4px)]',
+                    active ? 'bg-accent text-accent-foreground' : 'text-foreground',
+                    disabled ? 'text-muted-foreground opacity-50 cursor-default' : 'cursor-pointer',
+                    'transition-colors text-xs'
+                )}
+                onClick={(e) => {
+                    if (disabled || children.length) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return;
+                    }
+                    if (!disabled) {
+                        onPress?.();
+                        ctx.onDismiss();
+                    }
+                }}
+                onMouseEnter={() => {
+                    setHover(true);
+                    if (children.length && !expanded && !disabled) {
+                        ctx.setPath(path);
+                    }
+                }}
+                onMouseLeave={() => {
+                    setHover(false);
+                }}
+            >
                 {children.length > 0 && (
                     <>
                         <ChevronRightIcon className="w-4 h-4" aria-hidden="true" />
@@ -171,7 +189,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                     </>
                 )}
             </div>
-        </div>
+        </>
     );
 });
 
@@ -186,11 +204,11 @@ const MenuItemList = memo<IActionMenuItemListProps>(function ActionMenuItemList(
         <div className="p-1 -mx-px">
             {title && <header className="px-3 py-1 mb-1.5 text-xs font-medium truncate">{title}</header>}
             {title && <Separator orientation="horizontal" className="-mx-1 my-1" />}
-            <List>
+            <div className="grid grid-cols-[max-content_1fr_max-content]">
                 {items.map((item, index) => (
                     <ActionMenuItem key={index} item={item} path={[...path, index]} />
                 ))}
-            </List>
+            </div>
         </div>
     );
 });

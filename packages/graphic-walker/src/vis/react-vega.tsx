@@ -3,7 +3,6 @@ import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
 import { expressionFunction, type ScenegraphEvent } from 'vega';
-import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScaleSet } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
@@ -29,12 +28,6 @@ expressionFunction('formatBin', (datum: [number, number] | number, formatString?
     const beaStep = Math.max(-Math.round(Math.log10(step)) + 2, 0);
     return `[${formatter(Number(min.toFixed(beaStep)))},${formatter(Number(max.toFixed(beaStep)))}]`;
 });
-
-const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
-    display: grid;
-    grid-template-columns: repeat(${(props) => props.colSize}, auto);
-    grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
-`;
 
 function parseRect(el: HTMLCanvasElement | SVGSVGElement) {
     if (el instanceof HTMLCanvasElement) {
@@ -541,19 +534,20 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
             style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}
         >
             <div ref={areaRef} className="inset-0 absolute" />
-            <CanvaContainer
+            <div
+                className="grid"
                 style={{
                     ...(layoutMode === 'auto' ? {} : { width: '100%', height: '100%' }),
+                    gridTemplateColumns: `repeat(${Math.max(colRepeatFields.length, 1)}, auto)`,
+                    gridTemplateRows: `repeat(${Math.max(rowRepeatFields.length, 1)}, 1fr)`,
                 }}
-                rowSize={Math.max(rowRepeatFields.length, 1)}
-                colSize={Math.max(colRepeatFields.length, 1)}
                 ref={containerRef}
             >
                 {/* <div ref={container}></div> */}
                 {viewPlaceholders.map((view, i) => (
                     <div key={i} ref={view} className={layoutMode === 'auto' ? '' : 'overflow-hidden'}></div>
                 ))}
-            </CanvaContainer>
+            </div>
         </div>
     );
 });

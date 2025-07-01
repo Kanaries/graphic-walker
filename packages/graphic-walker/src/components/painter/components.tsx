@@ -245,10 +245,8 @@ export const ColorEditor = (props: { color: string; onChangeColor: (color: strin
                             color={color}
                             onChange={(color) => {
                                 setColorEdited(true);
-                                setColor(color.hex);
+                                setColor(color);
                             }}
-                            noShadow
-                            noBorder
                         />
                         <div className="flex justify-end p-2">
                             <Button

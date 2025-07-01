@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, useContext, forwardRef, MutableRefObject } from 'react';
 import * as Plot from '@observablehq/plot';
-import styled from 'styled-components';
 import { useResizeDetector } from 'react-resize-detector';
 import { Subject } from 'rxjs';
 
@@ -21,13 +20,6 @@ import { useVegaExportApi } from '../utils/vegaApiExport';
 import canvasSize from 'canvas-size';
 import { startTask } from '../utils';
 import { toObservablePlotSpec } from '@/lib/observablePlot';
-
-// Example container styled similarly to your Vega-Lite container:
-const CanvasContainer = styled.div<{ rowSize: number; colSize: number }>`
-    display: grid;
-    grid-template-columns: repeat(${(props) => props.colSize}, auto);
-    grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
-`;
 
 // For referencing selection events:
 const SELECTION_NAME = 'geom';
@@ -206,7 +198,7 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
     const specs = useMemo(() => {
         let specsArr: any[] = [];
         if (rowRepeatFields.length === 0 && colRepeatFields.length === 0) {
-            return []
+            return [];
         }
         const count = rowRepeatFields.length * colRepeatFields.length;
 
@@ -234,7 +226,7 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
             theta,
             vegaConfig,
             displayOffset,
-        })
+        });
         // for (let i = 0; i < count; i++) {
         //     specsArr.push(
         //         ...toObservablePlotSpec({
@@ -407,18 +399,19 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
             style={{ overflow: layoutMode === 'auto' ? 'visible' : 'hidden' }}
         >
             <div ref={areaRef} className="inset-0 absolute" />
-            <CanvasContainer
+            <div
+                className="grid"
                 style={{
                     ...(layoutMode === 'auto' ? {} : { width: '100%', height: '100%' }),
+                    gridTemplateColumns: `repeat(${Math.max(colRepeatFields.length, 1)}, auto)`,
+                    gridTemplateRows: `repeat(${Math.max(rowRepeatFields.length, 1)}, 1fr)`,
                 }}
-                rowSize={Math.max(rowRepeatFields.length, 1)}
-                colSize={Math.max(colRepeatFields.length, 1)}
                 ref={containerRef}
             >
                 {plotPlaceholders.map((plotRef, i) => (
                     <div key={i} ref={plotRef} className={layoutMode === 'auto' ? '' : 'overflow-hidden'}></div>
                 ))}
-            </CanvasContainer>
+            </div>
         </div>
     );
 });
