@@ -49,7 +49,8 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
               }
             : props.defaultConfig;
         return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig });
-    }, [storeKey, props.meta, props.onMetaChange, props.defaultConfig, props.defaultRenderer]);
+    // IMPORTANT the store is only associated with the storeKey
+    }, [storeKey]);
     const lastMeta = useRef(props.meta);
     useEffect(() => {
         if (lastMeta.current !== props.meta) {

@@ -369,9 +369,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         res.view.addEventListener('click', (e) => {
                             click$.next(e);
                         });
-                        res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                            selection$.next(values);
-                        });
+                        // boxplot don't support selection
+                        if (geomType !== 'boxplot') {
+                            res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
+                                selection$.next(values);
+                            });
+                        }
                     } catch (error) {
                         console.warn(error);
                     }
@@ -508,9 +511,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                 res.view.addEventListener('click', (e) => {
                                     click$.next(e);
                                 });
-                                res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                    selection$.next(values);
-                                });
+                                // boxplot don't support selection
+                                if (geomType !== 'boxplot') {
+                                    res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
+                                        selection$.next(values);
+                                    });
+                                }
                             } catch (error) {
                                 console.warn(error);
                             }
