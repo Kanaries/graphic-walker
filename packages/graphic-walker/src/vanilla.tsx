@@ -1,10 +1,27 @@
 import React, { useMemo } from 'react';
-import ReactDOM from 'react-dom';
+import { version } from 'react-dom';
 import { createMemoryProvider } from './dataSourceProvider/memory';
 import { IGWProps } from './interfaces';
 import { DataSourceSegmentComponent } from './dataSource';
 import { GraphicRenderer, GraphicWalker, ILocalTableProps, ILocalVizAppProps, IRemoteTableProps, IRemoteVizAppProps, TableWalker } from './root';
 import PureRenderer, { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
+
+let render: (element: React.ReactElement, container: HTMLElement) => void;
+const isConcurrentModeAvailable = version.split('.').map(Number)[0] >= 18;
+if (isConcurrentModeAvailable) {
+    render = (element, container) => {
+        import('react-dom/client').then(({ createRoot }) => {
+            const root = createRoot(container);
+            root.render(element);
+        });
+    };
+} else {
+    render = (element, container) => {
+        import('react-dom').then(({ render }) => {
+            render(element, container);
+        });
+    };
+}
 
 function FullGraphicWalker(props: IGWProps) {
     const provider = useMemo(() => createMemoryProvider(), []);
@@ -36,8 +53,6 @@ export function embedGraphicWalker(dom, props: IGWProps | ILocalVizAppProps | IR
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
     if (hasData(props)) {
         if (isConcurrentModeAvailable) {
@@ -46,11 +61,9 @@ export function embedGraphicWalker(dom, props: IGWProps | ILocalVizAppProps | IR
                     'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
                 );
             }
-            // @ts-ignore
-            const root = ReactDOM.createRoot(dom as HTMLElement);
-            root.render(<GraphicWalker themeKey="g2" {...props} />);
+            render(<GraphicWalker themeKey="g2" {...props} />, dom);
         } else {
-            ReactDOM.render(
+            render(
                 <React.StrictMode>
                     <GraphicWalker themeKey="g2" {...props} />
                 </React.StrictMode>,
@@ -60,18 +73,16 @@ export function embedGraphicWalker(dom, props: IGWProps | ILocalVizAppProps | IR
         return;
     }
 
-    // Use the new ReactDOM.createRoot API if available, otherwise fall back to the old ReactDOM.render API
+    // Use the new render function
     if (isConcurrentModeAvailable) {
         if (import.meta.env.DEV) {
             console.warn(
                 'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
             );
         }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<FullGraphicWalker themeKey="g2" {...props} />);
+        render(<FullGraphicWalker themeKey="g2" {...props} />, dom);
     } else {
-        ReactDOM.render(
+        render(
             <React.StrictMode>
                 <FullGraphicWalker themeKey="g2" {...props} />
             </React.StrictMode>,
@@ -86,8 +97,6 @@ export function embedGraphicRenderer(dom, props = {}) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
     if (isConcurrentModeAvailable) {
         if (import.meta.env.DEV) {
@@ -95,11 +104,9 @@ export function embedGraphicRenderer(dom, props = {}) {
                 'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
             );
         }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<GraphicRenderer themeKey="g2" {...props} />);
+        render(<GraphicRenderer themeKey="g2" {...props} />, dom);
     } else {
-        ReactDOM.render(
+        render(
             <React.StrictMode>
                 <GraphicRenderer themeKey="g2" {...props} />
             </React.StrictMode>,
@@ -114,8 +121,6 @@ export function embedTableWalker(dom, props = {}) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
     if (isConcurrentModeAvailable) {
         if (import.meta.env.DEV) {
@@ -123,11 +128,9 @@ export function embedTableWalker(dom, props = {}) {
                 'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
             );
         }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<TableWalker themeKey="g2" {...props} />);
+        render(<TableWalker themeKey="g2" {...props} />, dom);
     } else {
-        ReactDOM.render(
+        render(
             <React.StrictMode>
                 <TableWalker themeKey="g2" {...props} />
             </React.StrictMode>,
@@ -142,8 +145,6 @@ export function embedPureRenderer(dom, props) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
     if (isConcurrentModeAvailable) {
         if (import.meta.env.DEV) {
@@ -151,11 +152,9 @@ export function embedPureRenderer(dom, props) {
                 'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
             );
         }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<PureRenderer themeKey="g2" {...props} />);
+        render(<PureRenderer themeKey="g2" {...props} />, dom);
     } else {
-        ReactDOM.render(
+        render(
             <React.StrictMode>
                 <PureRenderer themeKey="g2" {...props} />
             </React.StrictMode>,
