@@ -1,33 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Slider as RangeSlider } from '@/components/rangeslider';
 import { Input } from '@/components/ui/input';
-const SliderContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: stretch;
-    padding-block: 1em;
-
-    > .output {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 1em;
-
-        > output {
-            width: 100%;
-        }
-
-        > output:first-child {
-            margin-right: 0.5em;
-        }
-
-        > output:last-child {
-            margin-left: 0.5em;
-        }
-    }
-`;
 
 interface ValueInputProps {
     min: number;
@@ -88,10 +62,10 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, val
     const stepDigit = 10 ** Math.floor(Math.log10((max - min) / 100));
 
     return (
-        <SliderContainer>
+        <div className="flex flex-col items-stretch justify-stretch py-4">
             <RangeSlider value={[value[0] ?? min, value[1] ?? max]} min={min} max={max} step={stepDigit} onValueChange={([min, max]) => onChange([min, max])} />
-            <div className="output">
-                <output htmlFor="slider:min">
+            <div className="flex justify-between mt-4">
+                <output htmlFor="slider:min" className="w-full mr-2">
                     <div className="my-1">{t('filters.range.start_value')}</div>
                     {
                         <ValueInput
@@ -104,7 +78,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, val
                         />
                     }
                 </output>
-                <output htmlFor="slider:max">
+                <output htmlFor="slider:max" className="w-full ml-2">
                     <div className="my-1">{t('filters.range.end_value')}</div>
                     {
                         <ValueInput
@@ -118,7 +92,7 @@ const Slider: React.FC<SliderProps> = React.memo(function Slider({ min, max, val
                     }
                 </output>
             </div>
-        </SliderContainer>
+        </div>
     );
 });
 

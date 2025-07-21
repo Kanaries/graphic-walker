@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { getMeaAggKey } from '../../utils';
-import styled from 'styled-components';
 import embed from 'vega-embed';
 import { VegaGlobalConfig, IDarkMode, IThemeKey, IField, IRow, IPredicate } from '../../interfaces';
 import { builtInThemes } from '../../vis/theme';
@@ -11,27 +10,6 @@ import { explainBySelection } from '../../lib/insights/explainBySelection';
 import { Dialog, DialogContent } from '../ui/dialog';
 import LoadingLayer from '../loadingLayer';
 import { themeContext } from '@/store/theme';
-
-const Container = styled.div`
-    height: 50vh;
-    overflow-y: hidden;
-`;
-const TabsList = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: stretch;
-    height: 100%;
-    overflow-y: scroll;
-`;
-
-const Tab = styled.div`
-    margin-block: 0.2em;
-    margin-inline: 0.2em;
-    padding: 0.5em;
-    border-width: 2px;
-    cursor: pointer;
-`;
 
 const getCategoryName = (row: IRow, field: IField) => {
     if (field.semanticType === 'quantitative') {
@@ -193,20 +171,24 @@ const ExplainData: React.FC<{
         >
             <DialogContent>
                 {explainDataInfoList.length === 0 && <LoadingLayer />}
-                <Container className="grid grid-cols-4">
-                    <TabsList className="col-span-1">
+                <div className="h-[50vh] overflow-y-hidden grid grid-cols-4">
+                    <div className="col-span-1 flex flex-col items-stretch justify-stretch h-full overflow-y-scroll">
                         {explainDataInfoList.map((option, i) => {
                             return (
-                                <Tab key={i} className={`${selectedInfoIndex === i ? 'border-primary' : ''} text-xs`} onClick={() => setSelectedInfoIndex(i)}>
+                                <div 
+                                    key={i} 
+                                    className={`my-0.5 mx-0.5 p-2 border-2 cursor-pointer text-xs ${selectedInfoIndex === i ? 'border-primary' : 'border-transparent'}`} 
+                                    onClick={() => setSelectedInfoIndex(i)}
+                                >
                                     {option.targetField.name} {option.score.toFixed(2)}
-                                </Tab>
+                                </div>
                             );
                         })}
-                    </TabsList>
+                    </div>
                     <div className="col-span-3 text-center overflow-y-scroll">
                         <div ref={chartRef}></div>
                     </div>
-                </Container>
+                </div>
             </DialogContent>
         </Dialog>
     );
