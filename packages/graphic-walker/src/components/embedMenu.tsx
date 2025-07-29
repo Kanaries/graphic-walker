@@ -6,8 +6,10 @@ import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { GLOBAL_CONFIG } from '../config';
 import { Transition } from '@headlessui/react';
+import { VizEmbedMenuProps } from '@/interfaces';
 
-export const VizEmbedMenu = observer(function VizEmbedMenu() {
+export const VizEmbedMenu = observer(function VizEmbedMenu(props: VizEmbedMenuProps) {
+    if (props.hideEmbedMenu === true) return null;
     const vizStore = useVizStore();
     const { t } = useTranslation();
     const { vizEmbededMenu } = vizStore;
@@ -25,6 +27,8 @@ export const VizEmbedMenu = observer(function VizEmbedMenu() {
         >
             <ClickMenu x={vizEmbededMenu.position[0]} y={vizEmbededMenu.position[1]}>
                 {GLOBAL_CONFIG.EMBEDED_MENU_LIST.map((key) => {
+                const isItemHidden = Array.isArray(props.hideEmbedMenu) && props.hideEmbedMenu.includes(key);
+                if (isItemHidden) return null;
                     switch (key) {
                         case 'data_interpretation':
                             return (

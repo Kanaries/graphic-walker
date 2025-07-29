@@ -80,6 +80,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         vlSpec,
         onError,
         hideSegmentNav,
+        hideEmbedMenu
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -273,7 +274,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                                 scales={props.scales ?? props.channelScales}
                                                             />
                                                         )}
-                                                        <VizEmbedMenu />
+                                                        <VizEmbedMenu hideEmbedMenu={hideEmbedMenu} />
                                                     </div>
                                                 </div>
                                             </div>
