@@ -23,6 +23,9 @@ export interface IRow {
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
+export interface VizEmbedMenuProps {
+    hideEmbedMenu?: boolean | IEmbedMenuItem[];
+}
 export interface Specification {
     position?: string[];
     color?: string[];
@@ -914,6 +917,8 @@ export interface IVizProps {
     hideChartNav?: boolean;
     /** hide the segment navigation so make user can only edit on the only segment. */
     hideSegmentNav?: boolean;
+    /** hide the embedded menu */
+    hideEmbedMenu?: boolean | IEmbedMenuItem[];
     geographicData?: IGeographicData & {
         key: string;
     };
