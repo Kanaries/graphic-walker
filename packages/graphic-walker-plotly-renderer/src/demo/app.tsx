@@ -1,189 +1,239 @@
-import React, { useRef } from 'react';
-import PlotlyRendererConfig, { PlotlyRenderer } from '../lib';
-import type { IRendererHandler, IRendererProps } from '../lib/interfaces';
+import React, { useState, useEffect } from 'react';
+import { GraphicWalker, registerRenderer, getAllRenderers } from '@kanaries/graphic-walker';
+// CSS is bundled in the main JS file
+import PlotlyRendererConfig from '../lib';
+import './index.css';
 
-// Sample data
+// Sample dataset - Sales data
 const sampleData = [
-    { category: 'A', value: 30, group: 'Group 1', date: '2024-01-01' },
-    { category: 'B', value: 45, group: 'Group 1', date: '2024-01-02' },
-    { category: 'C', value: 60, group: 'Group 1', date: '2024-01-03' },
-    { category: 'D', value: 35, group: 'Group 1', date: '2024-01-04' },
-    { category: 'A', value: 25, group: 'Group 2', date: '2024-01-01' },
-    { category: 'B', value: 55, group: 'Group 2', date: '2024-01-02' },
-    { category: 'C', value: 40, group: 'Group 2', date: '2024-01-03' },
-    { category: 'D', value: 50, group: 'Group 2', date: '2024-01-04' },
+    { date: '2024-01-01', sales: 4500, profit: 1200, category: 'Electronics', region: 'North', quantity: 45 },
+    { date: '2024-01-02', sales: 3200, profit: 800, category: 'Clothing', region: 'South', quantity: 62 },
+    { date: '2024-01-03', sales: 5100, profit: 1500, category: 'Electronics', region: 'East', quantity: 38 },
+    { date: '2024-01-04', sales: 2800, profit: 600, category: 'Food', region: 'West', quantity: 95 },
+    { date: '2024-01-05', sales: 6200, profit: 1800, category: 'Electronics', region: 'North', quantity: 52 },
+    { date: '2024-01-06', sales: 4100, profit: 1100, category: 'Clothing', region: 'South', quantity: 71 },
+    { date: '2024-01-07', sales: 3500, profit: 900, category: 'Food', region: 'East', quantity: 88 },
+    { date: '2024-01-08', sales: 5800, profit: 1600, category: 'Electronics', region: 'West', quantity: 41 },
+    { date: '2024-01-09', sales: 4300, profit: 1200, category: 'Clothing', region: 'North', quantity: 67 },
+    { date: '2024-01-10', sales: 3900, profit: 1000, category: 'Food', region: 'South', quantity: 92 },
+    { date: '2024-01-11', sales: 5500, profit: 1400, category: 'Electronics', region: 'East', quantity: 48 },
+    { date: '2024-01-12', sales: 3100, profit: 700, category: 'Clothing', region: 'West', quantity: 59 },
+    { date: '2024-01-13', sales: 4700, profit: 1300, category: 'Food', region: 'North', quantity: 83 },
+    { date: '2024-01-14', sales: 5900, profit: 1700, category: 'Electronics', region: 'South', quantity: 44 },
+    { date: '2024-01-15', sales: 3600, profit: 850, category: 'Clothing', region: 'East', quantity: 73 },
 ];
 
-const fields = {
-    category: {
-        fid: 'category',
-        name: 'Category',
-        semanticType: 'nominal' as const,
-        analyticType: 'dimension' as const,
+// Field definitions
+const fields = [
+    { 
+        fid: 'date', 
+        name: 'Date', 
+        semanticType: 'temporal' as const, 
+        analyticType: 'dimension' as const 
     },
-    value: {
-        fid: 'value',
-        name: 'Value',
-        semanticType: 'quantitative' as const,
-        analyticType: 'measure' as const,
-        aggName: 'sum',
+    { 
+        fid: 'sales', 
+        name: 'Sales Amount', 
+        semanticType: 'quantitative' as const, 
+        analyticType: 'measure' as const 
     },
-    group: {
-        fid: 'group',
-        name: 'Group',
-        semanticType: 'nominal' as const,
-        analyticType: 'dimension' as const,
+    { 
+        fid: 'profit', 
+        name: 'Profit', 
+        semanticType: 'quantitative' as const, 
+        analyticType: 'measure' as const 
     },
-    date: {
-        fid: 'date',
-        name: 'Date',
-        semanticType: 'temporal' as const,
-        analyticType: 'dimension' as const,
+    { 
+        fid: 'category', 
+        name: 'Product Category', 
+        semanticType: 'nominal' as const, 
+        analyticType: 'dimension' as const 
     },
-};
+    { 
+        fid: 'region', 
+        name: 'Region', 
+        semanticType: 'nominal' as const, 
+        analyticType: 'dimension' as const 
+    },
+    { 
+        fid: 'quantity', 
+        name: 'Quantity Sold', 
+        semanticType: 'quantitative' as const, 
+        analyticType: 'measure' as const 
+    },
+];
 
 function App() {
-    const rendererRef = useRef<IRendererHandler>(null);
-    const [geomType, setGeomType] = React.useState('bar');
-    const [useColor, setUseColor] = React.useState(true);
-    const [stack, setStack] = React.useState<'none' | 'stack' | 'normalize'>('none');
-    const [chartType, setChartType] = React.useState<'bar' | 'line' | 'scatter'>('bar');
+    const [selectedRenderer, setSelectedRenderer] = useState('vega-lite');
+    const [renderers, setRenderers] = useState<any[]>([]);
+    const [showInfo, setShowInfo] = useState(true);
 
-    const handleExportPNG = async () => {
-        if (rendererRef.current) {
-            await rendererRef.current.downloadPNG('chart.png');
+    useEffect(() => {
+        // Register the Plotly renderer
+        registerRenderer(PlotlyRendererConfig);
+        
+        // Get all available renderers
+        const allRenderers = getAllRenderers();
+        setRenderers(allRenderers);
+        
+        // Set Plotly as default if available
+        const plotlyRenderer = allRenderers.find(r => r.id === 'plotly');
+        if (plotlyRenderer) {
+            setSelectedRenderer('plotly');
         }
-    };
-
-    const handleExportSVG = async () => {
-        if (rendererRef.current) {
-            await rendererRef.current.downloadSVG('chart.svg');
-        }
-    };
-
-    const getChartProps = (): Partial<IRendererProps> => {
-        switch (chartType) {
-            case 'bar':
-                return {
-                    rows: [fields.value],
-                    columns: [fields.category],
-                    color: useColor ? fields.group : undefined,
-                    geomType: 'bar',
-                };
-            case 'line':
-                return {
-                    rows: [fields.value],
-                    columns: [fields.date],
-                    color: useColor ? fields.group : undefined,
-                    geomType: 'line',
-                };
-            case 'scatter':
-                return {
-                    rows: [fields.value],
-                    columns: [fields.value], // Would need another measure field
-                    color: useColor ? fields.group : undefined,
-                    size: fields.value,
-                    geomType: 'point',
-                };
-            default:
-                return {};
-        }
-    };
-
-    const chartProps = getChartProps();
+    }, []);
 
     return (
-        <div className="app">
-            <h1>Plotly Renderer Demo</h1>
-            
-            <div className="controls">
-                <h2>Controls</h2>
-                
-                <div>
-                    <label>
-                        Chart Type:
-                        <select value={chartType} onChange={(e) => setChartType(e.target.value as any)}>
-                            <option value="bar">Bar Chart</option>
-                            <option value="line">Line Chart</option>
-                            <option value="scatter">Scatter Plot</option>
-                        </select>
+        <div className="app-container">
+            <header className="app-header">
+                <h1>Graphic Walker with Plotly Renderer</h1>
+                <p>Drag and drop fields to create visualizations using different rendering engines</p>
+            </header>
+
+            <div className="controls-section">
+                <div className="renderer-selector">
+                    <label htmlFor="renderer-select">
+                        <strong>Rendering Engine:</strong>
                     </label>
+                    <select 
+                        id="renderer-select"
+                        value={selectedRenderer} 
+                        onChange={(e) => setSelectedRenderer(e.target.value)}
+                        className="renderer-dropdown"
+                    >
+                        {renderers.map(renderer => (
+                            <option key={renderer.id} value={renderer.id}>
+                                {renderer.displayName}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="renderer-badge">
+                        {selectedRenderer === 'plotly' ? 'Custom Renderer' : 'Built-in'}
+                    </span>
                 </div>
 
-                <div>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={useColor}
-                            onChange={(e) => setUseColor(e.target.checked)}
-                        />
-                        Use Color Encoding
-                    </label>
-                </div>
-
-                {chartType === 'bar' && (
-                    <div>
-                        <label>
-                            Stack Mode:
-                            <select value={stack} onChange={(e) => setStack(e.target.value as any)}>
-                                <option value="none">None</option>
-                                <option value="stack">Stack</option>
-                                <option value="normalize">Normalize</option>
-                            </select>
-                        </label>
-                    </div>
-                )}
-
-                <div className="export-buttons">
-                    <button onClick={handleExportPNG}>Export PNG</button>
-                    <button onClick={handleExportSVG}>Export SVG</button>
-                </div>
+                <button 
+                    className="info-toggle"
+                    onClick={() => setShowInfo(!showInfo)}
+                >
+                    {showInfo ? 'Hide' : 'Show'} Info
+                </button>
             </div>
 
-            <div className="chart-container">
-                <h2>Chart</h2>
-                <PlotlyRenderer
-                    ref={rendererRef}
-                    dataSource={sampleData}
-                    rows={chartProps.rows || []}
-                    columns={chartProps.columns || []}
-                    color={chartProps.color}
-                    size={chartProps.size}
-                    geomType={chartProps.geomType || 'bar'}
-                    stack={stack}
-                    defaultAggregate={true}
-                    interactiveScale={true}
-                    showActions={true}
-                    layoutMode="fixed"
-                    width={800}
-                    height={500}
-                    vegaConfig={{}}
-                    onGeomClick={(values, e) => {
-                        console.log('Click event:', values, e);
+            {showInfo && (
+                <div className="info-panel">
+                    <h3>Quick Start Guide</h3>
+                    <ol>
+                        <li>Drag fields from the left panel to the encoding shelves (X-axis, Y-axis, Color, etc.)</li>
+                        <li>Choose a chart type from the mark type selector</li>
+                        <li>Switch between renderers using the dropdown above</li>
+                        <li>Click the settings icon for more configuration options</li>
+                    </ol>
+                    
+                    <div className="renderer-info">
+                        <h4>Current Renderer: {renderers.find(r => r.id === selectedRenderer)?.displayName}</h4>
+                        {selectedRenderer === 'plotly' && (
+                            <div className="feature-list">
+                                <h5>Plotly Renderer Features:</h5>
+                                <ul>
+                                    <li>✓ Interactive zoom and pan</li>
+                                    <li>✓ Built-in export to PNG/SVG</li>
+                                    <li>✓ Advanced tooltips</li>
+                                    <li>✓ 3D chart support (coming soon)</li>
+                                    <li>✓ Statistical charts</li>
+                                </ul>
+                            </div>
+                        )}
+                        {selectedRenderer === 'vega-lite' && (
+                            <div className="feature-list">
+                                <h5>Vega-Lite Renderer Features:</h5>
+                                <ul>
+                                    <li>✓ Grammar of graphics</li>
+                                    <li>✓ Declarative visualization</li>
+                                    <li>✓ Cross-filtering support</li>
+                                    <li>✓ Faceted views</li>
+                                    <li>✓ Advanced data transformations</li>
+                                </ul>
+                            </div>
+                        )}
+                        {selectedRenderer === 'observable-plot' && (
+                            <div className="feature-list">
+                                <h5>Observable Plot Features:</h5>
+                                <ul>
+                                    <li>✓ Modern JavaScript API</li>
+                                    <li>✓ Lightweight and fast</li>
+                                    <li>✓ D3-based rendering</li>
+                                    <li>✓ Responsive by default</li>
+                                    <li>✓ Clean, minimal design</li>
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <div className="graphic-walker-container">
+                <GraphicWalker
+                    data={sampleData}
+                    fields={fields}
+                    spec=""
+                    i18nLang="en-US"
+                    keepAlive={false}
+                    dark="light"
+                    appearance="light"
+                    toolbar={{
+                        enabled: true,
+                        items: ['export', 'new', 'undo', 'redo']
                     }}
-                    onReportSpec={(spec) => {
-                        console.log('Plotly spec:', spec);
+                    defaultConfig={{
+                        layout: {
+                            renderer: selectedRenderer,
+                            size: {
+                                mode: 'auto',
+                                width: 800,
+                                height: 600
+                            },
+                            showActions: true,
+                            interactiveScale: true,
+                            stack: 'stack',
+                            showTableSummary: true,
+                            format: {
+                                numberFormat: ',.0f',
+                                timeFormat: '%Y-%m-%d',
+                                normalizedNumberFormat: '0.0%'
+                            }
+                        }
                     }}
                 />
             </div>
 
-            <div className="info">
-                <h2>About This Demo</h2>
-                <p>
-                    This demo shows the Plotly.js renderer for Graphic Walker.
-                    The renderer transforms Graphic Walker's configuration into Plotly specifications.
-                </p>
-                <h3>Features:</h3>
-                <ul>
-                    <li>Multiple chart types (bar, line, scatter)</li>
-                    <li>Color encoding for grouping</li>
-                    <li>Stacking for bar charts</li>
-                    <li>Export to PNG and SVG</li>
-                    <li>Interactive tooltips and zoom</li>
-                </ul>
-                <h3>Renderer Configuration:</h3>
-                <pre>{JSON.stringify(PlotlyRendererConfig, null, 2)}</pre>
-            </div>
+            <footer className="app-footer">
+                <div className="footer-content">
+                    <div>
+                        <h4>About This Demo</h4>
+                        <p>
+                            This demo showcases the extensible renderer architecture of Graphic Walker.
+                            The Plotly renderer is a custom plugin that transforms Graphic Walker's
+                            specifications into Plotly.js visualizations.
+                        </p>
+                    </div>
+                    <div>
+                        <h4>Sample Dataset</h4>
+                        <p>
+                            Using sales data with {sampleData.length} records across {fields.length} fields.
+                            Try different combinations of dimensions and measures to explore the data.
+                        </p>
+                    </div>
+                    <div>
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="https://github.com/Kanaries/graphic-walker">Graphic Walker GitHub</a></li>
+                            <li><a href="https://plotly.com/javascript/">Plotly.js Documentation</a></li>
+                            <li><a href="https://vega.github.io/vega-lite/">Vega-Lite Spec</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
