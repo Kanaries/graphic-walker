@@ -1,12 +1,23 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "emitDeclarationOnly": false,
+    "emitDeclarationOnly": true,
     "rootDir": "./src/lib",
-    "types": ["react", "react-dom"]
+    "types": ["react", "react-dom"],
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "verbatimModuleSyntax": false,
+    "lib": ["ES2015", "ES2020", "DOM", "DOM.Iterable"],
+    "target": "ES2015",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true
   },
   "include": ["src/lib/**/*"],
   "exclude": ["src/demo", "**/*.test.ts", "**/*.test.tsx", "**/*.stories.tsx"]

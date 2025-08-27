@@ -1,6 +1,11 @@
 export * from './root';
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
+
+// Export renderer registry and utilities
+export { rendererRegistry, registerRenderer, getRenderer, getAllRenderers } from './renderer/registry';
+export type { IRenderer, IRendererHandler, IRendererProps, IRendererSpec, IRendererRegistry } from './renderer/interfaces';
+
 export { embedGraphicWalker, embedGraphicRenderer, embedPureRenderer, embedTableWalker } from './vanilla';
 export * from './interfaces';
 export * from './store/visualSpecStore';

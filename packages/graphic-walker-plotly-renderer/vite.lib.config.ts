@@ -23,6 +23,8 @@ export default defineConfig({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        'plotly.js',
+        'plotly.js/dist/plotly',
         ...Object.keys(peerDependencies)
       ],
       output: {
