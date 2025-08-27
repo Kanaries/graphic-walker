@@ -443,7 +443,7 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
     /** @default "vega-lite" */
-    renderer?: 'vega-lite' | 'observable-plot';
+    renderer?: string;
 }
 
 export interface IVisualConfigNew {
@@ -949,7 +949,7 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: string;
 }
 
 export interface ILocalComputationProps {

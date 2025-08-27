@@ -36,7 +36,7 @@ interface VizStoreWrapperProps {
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: string;
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {

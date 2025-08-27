@@ -1,0 +1,16 @@
+{
+  "name": "@kanaries/plotly-renderer",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@kanaries/graphic-walker": "*",
+    "react": ">=17.0.0 <19.0.0"
+  },
+  "dependencies": {
+    "plotly.js-dist-min": "^2.27.0"
+  }
+}

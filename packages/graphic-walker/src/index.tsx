@@ -1,3 +1,7 @@
+import { registerDefaultRenderers } from './renderer/registry';
+
+registerDefaultRenderers();
+
 export * from './root';
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
@@ -13,3 +17,4 @@ export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
 export * from './utils/colors';
 export * from './components/filterContext';
+export { registerRenderer, getRendererList, RendererProps, registerDefaultRenderers } from './renderer/registry';
