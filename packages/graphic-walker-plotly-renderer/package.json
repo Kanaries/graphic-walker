@@ -1,0 +1,77 @@
+{
+  "name": "graphic-walker-plotly-renderer",
+  "version": "0.1.0",
+  "description": "A Plotly renderer component library for Graphic Walker",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles": {
+      "import": "./dist/assets/style.css",
+      "require": "./dist/assets/style.css"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:lib && npm run build:types",
+    "build:lib": "vite build -c vite.lib.config.ts",
+    "build:types": "tsc -p tsconfig.lib.json --emitDeclarationOnly",
+    "build:demo": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "plotly.js": "^2.0.0 || ^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@kanaries/graphic-walker": "*",
+    "@types/node": "^20.10.0",
+    "@types/plotly.js": "^3.0.3",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2"
+  },
+  "keywords": [
+    "plotly",
+    "graphic-walker",
+    "chart",
+    "visualization",
+    "react",
+    "component-library"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/graphic-walker-plotly-renderer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/graphic-walker-plotly-renderer/issues"
+  },
+  "homepage": "https://github.com/your-org/graphic-walker-plotly-renderer#readme",
+  "dependencies": {
+    "plotly.js": "^3.1.0"
+  }
+}

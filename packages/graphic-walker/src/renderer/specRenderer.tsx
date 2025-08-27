@@ -3,13 +3,25 @@ import React, { forwardRef, useMemo, useContext } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
-import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
 import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { parseColorToHex } from '@/utils/colors';
-import ObservablePlotRenderer from '@/vis/observable-plot-renderer';
+
+// Import renderer system
+import { getRenderer, rendererRegistry } from './registry';
+import { IRendererHandler } from './interfaces';
+import { VegaLiteRenderer } from './vega-lite';
+import { ObservablePlotRendererConfig } from './observable-plot';
+
+// Register built-in renderers
+if (!rendererRegistry.has('vega-lite')) {
+    rendererRegistry.register(VegaLiteRenderer);
+}
+if (!rendererRegistry.has('observable-plot')) {
+    rendererRegistry.register(ObservablePlotRendererConfig);
+}
 
 interface SpecRendererProps {
     name?: string;
@@ -29,7 +41,7 @@ interface SpecRendererProps {
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
-const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
+const SpecRenderer = forwardRef<IRendererHandler, SpecRendererProps>(function (
     { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse },
     ref
 ) {
@@ -124,6 +136,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const isSpatial = coordSystem === 'geographic';
 
+    // Get the appropriate renderer
+    const rendererId = layout.renderer || 'vega-lite';
+    const renderer = getRenderer(rendererId);
+
     return (
         <Resizable
             className={enableResize ? 'border-primary border-2 max-h-screen max-w-[100vw]' : 'max-h-screen max-w-[100vw]'}
@@ -177,74 +193,80 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (
-                <ReactVega
-                    name={name}
-                    vegaConfig={vegaConfig}
-                    // format={format}
-                    layoutMode={size.mode}
-                    interactiveScale={interactiveScale}
-                    geomType={geoms[0]}
-                    defaultAggregate={defaultAggregated}
-                    stack={stack}
-                    dataSource={data}
-                    rows={rows}
-                    columns={columns}
-                    color={color[0]}
-                    theta={theta[0]}
-                    radius={radius[0]}
-                    shape={shape[0]}
-                    opacity={opacity[0]}
-                    size={sizeChannel[0]}
-                    details={details}
-                    text={text[0]}
-                    showActions={showActions}
-                    width={size.width - 12 * 4}
-                    height={size.height - 12 * 4}
-                    ref={ref}
-                    onGeomClick={onGeomClick}
-                    locale={locale}
-                    useSvg={useSvg}
-                    scales={scales}
-                    scale={scale}
-                    onReportSpec={onReportSpec}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
-            {!isSpatial && layout.renderer === 'observable-plot' && (
-                <ObservablePlotRenderer
-                    name={name}
-                    vegaConfig={vegaConfig}
-                    // format={format
-                    layoutMode={size.mode}
-                    interactiveScale={interactiveScale}
-                    geomType={geoms[0]}
-                    defaultAggregate={defaultAggregated}
-                    stack={stack}
-                    dataSource={data}
-                    rows={rows}
-                    columns={columns}
-                    color={color[0]}
-                    theta={theta[0]}
-                    radius={radius[0]}
-                    shape={shape[0]}
-                    opacity={opacity[0]}
-                    size={sizeChannel[0]}
-                    details={details}
-                    text={text[0]}
-                    showActions={showActions}
-                    width={size.width - 12 * 4}
-                    height={size.height - 12 * 4}
-                    ref={ref}
-                    onGeomClick={onGeomClick}
-                    locale={locale}
-                    useSvg={useSvg}
-                    scales={scales}
-                    scale={scale}
-                    onReportSpec={onReportSpec}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
+            {!isSpatial && (() => {
+                if (!renderer) {
+                    console.warn(`Renderer "${rendererId}" not found. Falling back to vega-lite.`);
+                    const VegaLite = VegaLiteRenderer.component;
+                    return (
+                        <VegaLite
+                            name={name}
+                            vegaConfig={vegaConfig}
+                            layoutMode={size.mode}
+                            interactiveScale={interactiveScale}
+                            geomType={geoms[0]}
+                            defaultAggregate={defaultAggregated}
+                            stack={stack}
+                            dataSource={data}
+                            rows={rows}
+                            columns={columns}
+                            color={color[0]}
+                            theta={theta[0]}
+                            radius={radius[0]}
+                            shape={shape[0]}
+                            opacity={opacity[0]}
+                            size={sizeChannel[0]}
+                            details={details}
+                            text={text[0]}
+                            showActions={showActions}
+                            width={size.width - 12 * 4}
+                            height={size.height - 12 * 4}
+                            ref={ref}
+                            onGeomClick={onGeomClick}
+                            locale={locale}
+                            useSvg={useSvg}
+                            scales={scales}
+                            scale={scale}
+                            onReportSpec={onReportSpec}
+                            displayOffset={timezoneDisplayOffset}
+                        />
+                    );
+                }
+
+                const RendererComponent = renderer.component;
+                return (
+                    <RendererComponent
+                        name={name}
+                        vegaConfig={vegaConfig}
+                        layoutMode={size.mode}
+                        interactiveScale={interactiveScale}
+                        geomType={geoms[0]}
+                        defaultAggregate={defaultAggregated}
+                        stack={stack}
+                        dataSource={data}
+                        rows={rows}
+                        columns={columns}
+                        color={color[0]}
+                        theta={theta[0]}
+                        radius={radius[0]}
+                        shape={shape[0]}
+                        opacity={opacity[0]}
+                        size={sizeChannel[0]}
+                        details={details}
+                        text={text[0]}
+                        showActions={showActions}
+                        width={size.width - 12 * 4}
+                        height={size.height - 12 * 4}
+                        ref={ref}
+                        onGeomClick={onGeomClick}
+                        locale={locale}
+                        useSvg={useSvg}
+                        scales={scales}
+                        scale={scale}
+                        onReportSpec={onReportSpec}
+                        displayOffset={timezoneDisplayOffset}
+                    />
+                );
+            })()}
         </Resizable>
     );
 });
