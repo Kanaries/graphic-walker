@@ -44,6 +44,17 @@ const PlotlyRenderer = forwardRef<IRendererHandler, IRendererProps>(function Plo
 
     // Generate Vega-Lite spec first, then transform to Plotly
     const plotlySpec = useMemo(() => {
+        console.log('PlotlyRenderer - Props:', {
+            dataSource: dataSource.slice(0, 3),
+            dataLength: dataSource.length,
+            defaultAggregate,
+            geomType,
+            rows,
+            columns,
+            color,
+            size
+        });
+        
         // First generate Vega-Lite spec
         const vegaLiteSpecs = toVegaSpec({
             rows,
@@ -70,9 +81,13 @@ const PlotlyRenderer = forwardRef<IRendererHandler, IRendererProps>(function Plo
             displayOffset,
         });
 
+        console.log('PlotlyRenderer - Generated Vega-Lite specs:', vegaLiteSpecs);
+
         // Transform Vega-Lite to Plotly
         if (vegaLiteSpecs.length > 0) {
-            return vegaLiteToPlotly(vegaLiteSpecs[0]);
+            const plotlySpec = vegaLiteToPlotly(vegaLiteSpecs[0]);
+            console.log('PlotlyRenderer - Final Plotly spec:', plotlySpec);
+            return plotlySpec;
         }
         
         return null;

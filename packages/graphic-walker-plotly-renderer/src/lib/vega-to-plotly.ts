@@ -47,6 +47,9 @@ const shapeToPlotlySymbol: Record<string, string> = {
  * Transform a Vega-Lite specification to Plotly specification
  */
 export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
+    // Debug logging
+    console.log('Plotly Renderer - Input Vega Spec:', vegaSpec);
+    
     if (!vegaSpec) {
         return {
             data: [],
@@ -59,10 +62,47 @@ export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
     const encoding = vegaSpec.encoding || {};
     let markType = vegaSpec.mark;
     
+    console.log('Plotly Renderer - Data length:', data.length);
+    console.log('Plotly Renderer - Sample data:', data.slice(0, 3));
+    console.log('Plotly Renderer - Encoding:', encoding);
+    
+    // Log available fields in the data and try to match encoding fields
+    if (data.length > 0) {
+        const availableFields = Object.keys(data[0]);
+        console.log('Plotly Renderer - Available fields in data:', availableFields);
+        
+        // Check if encoding fields exist in data
+        const xField = encoding.x?.field;
+        const yField = encoding.y?.field;
+        
+        if (xField && !availableFields.includes(xField)) {
+            console.warn(`Plotly Renderer - X field "${xField}" not found in data. Available:`, availableFields);
+        }
+        if (yField && !availableFields.includes(yField)) {
+            console.warn(`Plotly Renderer - Y field "${yField}" not found in data. Available:`, availableFields);
+        }
+    }
+    
+    // Handle empty data
+    if (data.length === 0) {
+        console.warn('Plotly Renderer - No data available');
+        return {
+            data: [],
+            layout: {
+                title: 'No data available',
+                xaxis: { title: encoding.x?.title || encoding.x?.field || 'X' },
+                yaxis: { title: encoding.y?.title || encoding.y?.field || 'Y' },
+            },
+            config: {},
+        };
+    }
+    
     // Handle mark as object
     if (typeof markType === 'object' && markType.type) {
         markType = markType.type;
     }
+    
+    console.log('Plotly Renderer - Mark type:', markType);
 
     // Extract field mappings
     const xField = encoding.x?.field;
@@ -72,8 +112,53 @@ export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
     const textField = encoding.text?.field;
     const shapeField = encoding.shape?.field;
     
+    console.log('Plotly Renderer - Field mappings:', {
+        xField,
+        yField,
+        colorField,
+        sizeField,
+        textField,
+        shapeField
+    });
+    
+    // Helper function to find the actual field name in data (handles aggregated field names)
+    const findFieldInData = (fieldName: string, dataItem: any): string | null => {
+        if (!fieldName || !dataItem) return null;
+        
+        const keys = Object.keys(dataItem);
+        
+        // 1. Exact match
+        if (keys.includes(fieldName)) {
+            return fieldName;
+        }
+        
+        // 2. Look for aggregated versions (field_sum, field_mean, field_count, etc.)
+        const aggregateSuffixes = ['_sum', '_mean', '_avg', '_min', '_max', '_count', '_median'];
+        for (const suffix of aggregateSuffixes) {
+            const aggregatedName = fieldName + suffix;
+            if (keys.includes(aggregatedName)) {
+                return aggregatedName;
+        }
+        }
+        
+        // 3. Look for field that starts with the field name
+        const startsWith = keys.find(k => k.startsWith(fieldName + '_'));
+        if (startsWith) {
+            return startsWith;
+        }
+        
+        // 4. Last resort - look for field that contains the field name
+        const contains = keys.find(k => k.includes(fieldName));
+        if (contains) {
+            return contains;
+        }
+        
+        return null;
+    };
+
     // Determine Plotly trace type
     const plotlyType = markToPlotlyType[markType] || 'scatter';
+    console.log('Plotly Renderer - Plotly type:', plotlyType);
     
     // Create base trace
     const trace: any = {
@@ -87,9 +172,16 @@ export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
         case 'square':
             trace.mode = 'markers';
             trace.marker = {
-                size: sizeField ? data.map((d: any) => d[sizeField]) : 10,
+                size: 10,
                 symbol: markType === 'square' ? 'square' : 'circle',
             };
+            // Handle size field if present
+            if (sizeField && data.length > 0) {
+                const actualSizeField = findFieldInData(sizeField, data[0]);
+                if (actualSizeField) {
+                    trace.marker.size = data.map((d: any) => d[actualSizeField]);
+                }
+            }
             break;
             
         case 'line':
@@ -148,52 +240,80 @@ export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
     }
 
     // Set x and y data (except for pie charts)
-    if (markType !== 'arc') {
+    if (markType !== 'arc' && data.length > 0) {
         if (xField) {
-            trace.x = data.map((d: any) => d[xField]);
+            const actualXField = findFieldInData(xField, data[0]);
+            if (actualXField) {
+                trace.x = data.map((d: any) => d[actualXField]);
+                console.log(`Plotly Renderer - X field: "${xField}" mapped to "${actualXField}", data:`, trace.x.slice(0, 5));
+            } else {
+                console.warn(`Plotly Renderer - Could not find X field "${xField}" in data`);
+                trace.x = data.map(() => null);
+            }
         }
         if (yField) {
-            trace.y = data.map((d: any) => d[yField]);
+            const actualYField = findFieldInData(yField, data[0]);
+            if (actualYField) {
+                trace.y = data.map((d: any) => d[actualYField]);
+                console.log(`Plotly Renderer - Y field: "${yField}" mapped to "${actualYField}", data:`, trace.y.slice(0, 5));
+            } else {
+                console.warn(`Plotly Renderer - Could not find Y field "${yField}" in data`);
+                trace.y = data.map(() => null);
+            }
         }
     }
 
     // Handle color encoding
-    if (colorField) {
-        const uniqueColors = Array.from(new Set(data.map((d: any) => d[colorField])));
+    if (colorField && data.length > 0) {
+        const actualColorField = findFieldInData(colorField, data[0]);
+        if (!actualColorField) {
+            console.warn(`Plotly Renderer - Could not find color field "${colorField}" in data`);
+        } else {
+            const uniqueColors = Array.from(new Set(data.map((d: any) => d[actualColorField])));
         
-        // If categorical, split into multiple traces
-        if (encoding.color?.type === 'nominal' || encoding.color?.type === 'ordinal') {
-            const traces = uniqueColors.map(colorValue => {
-                const filteredData = data.filter((d: any) => d[colorField] === colorValue);
-                const newTrace = { ...trace };
-                
-                if (xField) {
-                    newTrace.x = filteredData.map((d: any) => d[xField]);
-                }
-                if (yField) {
-                    newTrace.y = filteredData.map((d: any) => d[yField]);
-                }
+            // If categorical, split into multiple traces
+            if (encoding.color?.type === 'nominal' || encoding.color?.type === 'ordinal') {
+                const traces = uniqueColors.map(colorValue => {
+                    const filteredData = data.filter((d: any) => d[actualColorField] === colorValue);
+                    const newTrace = { ...trace };
+                    
+                    if (xField) {
+                        const actualXField = findFieldInData(xField, filteredData[0]);
+                        if (actualXField) {
+                            newTrace.x = filteredData.map((d: any) => d[actualXField]);
+                        }
+                    }
+                    if (yField) {
+                        const actualYField = findFieldInData(yField, filteredData[0]);
+                        if (actualYField) {
+                            newTrace.y = filteredData.map((d: any) => d[actualYField]);
+                        }
+                    }
                 
                 newTrace.name = String(colorValue);
                 
-                // Preserve marker settings
-                if (trace.marker) {
-                    newTrace.marker = { ...trace.marker };
-                    if (sizeField) {
-                        newTrace.marker.size = filteredData.map((d: any) => d[sizeField]);
+                    // Preserve marker settings
+                    if (trace.marker) {
+                        newTrace.marker = { ...trace.marker };
+                        if (sizeField) {
+                            const actualSizeField = findFieldInData(sizeField, filteredData[0]);
+                            if (actualSizeField) {
+                                newTrace.marker.size = filteredData.map((d: any) => d[actualSizeField]);
+                            }
+                        }
                     }
-                }
+                    
+                    return newTrace;
+                });
                 
-                return newTrace;
-            });
-            
-            return createPlotlySpec(traces, vegaSpec);
-        } else {
-            // For continuous color scales
-            if (trace.marker) {
-                trace.marker.color = data.map((d: any) => d[colorField]);
-                trace.marker.colorscale = 'Viridis';
-                trace.marker.showscale = true;
+                return createPlotlySpec(traces, vegaSpec);
+            } else {
+                // For continuous color scales
+                if (trace.marker) {
+                    trace.marker.color = data.map((d: any) => d[actualColorField]);
+                    trace.marker.colorscale = 'Viridis';
+                    trace.marker.showscale = true;
+                }
             }
         }
     }
@@ -203,34 +323,43 @@ export function vegaLiteToPlotly(vegaSpec: any): PlotlySpec {
         const stackDirection = encoding.y?.stack ? 'v' : 'h';
         
         // For stacked charts, we need to split by color
-        if (colorField) {
-            const uniqueColors = Array.from(new Set(data.map((d: any) => d[colorField])));
-            const traces = uniqueColors.map(colorValue => {
-                const filteredData = data.filter((d: any) => d[colorField] === colorValue);
-                const newTrace = { ...trace };
-                
-                if (xField) {
-                    newTrace.x = filteredData.map((d: any) => d[xField]);
-                }
-                if (yField) {
-                    newTrace.y = filteredData.map((d: any) => d[yField]);
-                }
-                
-                newTrace.name = String(colorValue);
-                
-                return newTrace;
-            });
+        if (colorField && data.length > 0) {
+            const actualColorField = findFieldInData(colorField, data[0]);
+            if (actualColorField) {
+                const uniqueColors = Array.from(new Set(data.map((d: any) => d[actualColorField])));
+                const traces = uniqueColors.map(colorValue => {
+                    const filteredData = data.filter((d: any) => d[actualColorField] === colorValue);
+                    const newTrace = { ...trace };
+                    
+                    if (xField) {
+                        const actualXField = findFieldInData(xField, filteredData[0]);
+                        if (actualXField) {
+                            newTrace.x = filteredData.map((d: any) => d[actualXField]);
+                        }
+                    }
+                    if (yField) {
+                        const actualYField = findFieldInData(yField, filteredData[0]);
+                        if (actualYField) {
+                            newTrace.y = filteredData.map((d: any) => d[actualYField]);
+                        }
+                    }
+                    
+                    newTrace.name = String(colorValue);
+                    
+                    return newTrace;
+                });
             
-            const spec = createPlotlySpec(traces, vegaSpec);
-            
-            // Enable stacking in layout
-            if (stackDirection === 'v') {
-                spec.layout.barmode = encoding.y?.stack === 'normalize' ? 'relative' : 'stack';
-            } else {
-                spec.layout.barmode = encoding.x?.stack === 'normalize' ? 'relative' : 'stack';
+                const spec = createPlotlySpec(traces, vegaSpec);
+                
+                // Enable stacking in layout
+                if (stackDirection === 'v') {
+                    spec.layout.barmode = encoding.y?.stack === 'normalize' ? 'relative' : 'stack';
+                } else {
+                    spec.layout.barmode = encoding.x?.stack === 'normalize' ? 'relative' : 'stack';
+                }
+                
+                return spec;
             }
-            
-            return spec;
         }
     }
 
