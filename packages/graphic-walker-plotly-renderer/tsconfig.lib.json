@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "rootDir": "./src/lib",
+    "types": ["react", "react-dom"]
+  },
+  "include": ["src/lib/**/*"],
+  "exclude": ["src/demo", "**/*.test.ts", "**/*.test.tsx", "**/*.stories.tsx"]
+}
