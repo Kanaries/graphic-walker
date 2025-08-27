@@ -84,8 +84,11 @@ const PlotlyRenderer = forwardRef<IRendererHandler, IRendererProps>(function Plo
         console.log('PlotlyRenderer - Generated Vega-Lite specs:', vegaLiteSpecs);
 
         // Transform Vega-Lite to Plotly
+        // Handle single or multiple specs (for multi-field axes)
         if (vegaLiteSpecs.length > 0) {
-            const plotlySpec = vegaLiteToPlotly(vegaLiteSpecs[0]);
+            const plotlySpec = vegaLiteSpecs.length === 1 
+                ? vegaLiteToPlotly(vegaLiteSpecs[0])
+                : vegaLiteToPlotly(vegaLiteSpecs); // Pass array for multi-field handling
             console.log('PlotlyRenderer - Final Plotly spec:', plotlySpec);
             return plotlySpec;
         }

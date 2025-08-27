@@ -60,7 +60,11 @@ export function toVegaSpec(options: VegaSpecOptions): any[] {
     const rowMeas = rows.filter(f => f.analyticType === 'measure');
     const colMeas = columns.filter(f => f.analyticType === 'measure');
 
-    // Determine x and y fields
+    // Determine facet fields (additional dimensions beyond the first)
+    const rowFacetField = rowDims.length > 1 ? rowDims[rowDims.length - 1] : null;
+    const colFacetField = colDims.length > 1 ? colDims[colDims.length - 1] : null;
+
+    // Determine x and y fields (first dimension or measure)
     const xField = colDims[0] || colMeas[0];
     const yField = rowDims[0] || rowMeas[0];
 
@@ -194,6 +198,23 @@ export function toVegaSpec(options: VegaSpecOptions): any[] {
         }));
     }
 
+    // Add faceting encodings
+    if (rowFacetField) {
+        encoding.row = {
+            field: rowFacetField.fid,
+            type: rowFacetField.semanticType,
+            title: rowFacetField.name || rowFacetField.fid,
+        };
+    }
+
+    if (colFacetField) {
+        encoding.column = {
+            field: colFacetField.fid,
+            type: colFacetField.semanticType,
+            title: colFacetField.name || colFacetField.fid,
+        };
+    }
+
     // Build the spec
     const spec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
@@ -209,17 +230,50 @@ export function toVegaSpec(options: VegaSpecOptions): any[] {
         },
     };
 
-    // Handle faceting (row and column repeats)
-    const rowRepeatFields = rowMeas.length > 1 ? rowMeas : rowDims.length > 1 ? rowDims : [];
-    const colRepeatFields = colMeas.length > 1 ? colMeas : colDims.length > 1 ? colDims : [];
+    // Handle multiple measures on same axis (creates multiple specs)
+    // This is different from faceting - it creates a grid of different charts
+    const rowRepeatFields = rowMeas.length > 1 ? rowMeas : [];
+    const colRepeatFields = colMeas.length > 1 ? colMeas : [];
 
-    if (rowRepeatFields.length > 0 || colRepeatFields.length > 0) {
-        // For faceted views, create multiple specs
+    if (rowRepeatFields.length > 1 || colRepeatFields.length > 1) {
+        // For multiple measures, create multiple specs
         const specs = [];
-        const count = Math.max(1, rowRepeatFields.length) * Math.max(1, colRepeatFields.length);
         
-        for (let i = 0; i < count; i++) {
-            specs.push(spec);
+        // If we have multiple measures, create a spec for each combination
+        const rowCount = Math.max(1, rowRepeatFields.length);
+        const colCount = Math.max(1, colRepeatFields.length);
+        
+        for (let r = 0; r < rowCount; r++) {
+            for (let c = 0; c < colCount; c++) {
+                const newSpec = JSON.parse(JSON.stringify(spec)); // Deep clone
+                
+                // Update x and y fields for this spec
+                if (colRepeatFields.length > 0) {
+                    const colField = colRepeatFields[c];
+                    newSpec.encoding.x = {
+                        field: colField.fid,
+                        type: colField.semanticType,
+                        title: colField.name || colField.fid,
+                    };
+                    if (colField.analyticType === 'measure' && defaultAggregated && colField.aggName) {
+                        newSpec.encoding.x.aggregate = colField.aggName;
+                    }
+                }
+                
+                if (rowRepeatFields.length > 0) {
+                    const rowField = rowRepeatFields[r];
+                    newSpec.encoding.y = {
+                        field: rowField.fid,
+                        type: rowField.semanticType,
+                        title: rowField.name || rowField.fid,
+                    };
+                    if (rowField.analyticType === 'measure' && defaultAggregated && rowField.aggName) {
+                        newSpec.encoding.y.aggregate = rowField.aggName;
+                    }
+                }
+                
+                specs.push(newSpec);
+            }
         }
         
         return specs;
