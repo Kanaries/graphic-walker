@@ -930,6 +930,7 @@ export interface IVizProps {
     channelScales?: IChannelScales;
     scales?: IChannelScales;
     experimentalFeatures?: IExperimentalFeatures;
+    hideProfiling?: boolean;
 }
 
 export interface IExperimentalFeatures {
