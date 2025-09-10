@@ -4,7 +4,7 @@ import Comp from './hideProfiling.stories';
 
 export default function GraphicWalkerComponent() {
     return (
-        <Example name="TableWalker" code={code}>
+        <Example name="Hide Profiling" code={code}>
             <Comp />
         </Example>
     );
