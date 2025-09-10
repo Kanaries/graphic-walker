@@ -19,7 +19,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '18.x' # Adjust as per your project requirement
+        node-version: '20.x' # Adjust as per your project requirement
 
     - name: Bump graphic-walker version
       working-directory: ./packages/graphic-walker
