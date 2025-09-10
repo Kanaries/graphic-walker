@@ -9,7 +9,7 @@ import { isNotEmpty } from '../utils';
 import { Dialog, DialogContent } from './ui/dialog';
 import { toJS } from "mobx";
 
-const DataBoard = observer(function DataBoardModal() {
+const DataBoard = observer(function DataBoardModal({hideProfiling}: {hideProfiling?: boolean}) {
     const vizStore = useVizStore();
     const computation = useCompututaion();
     const { showDataBoard, selectedMarkObject, allFields, config, viewFilters } = vizStore;
@@ -57,7 +57,7 @@ const DataBoard = observer(function DataBoardModal() {
         >
             <DialogContent>
                 <div className="mt-4">
-                    <DataTable size={100} computation={filteredComputation} metas={metas} disableFilter displayOffset={config.timezoneDisplayOffset} />
+                    <DataTable hideProfiling={hideProfiling} size={100} computation={filteredComputation} metas={metas} disableFilter displayOffset={config.timezoneDisplayOffset} />
                 </div>
             </DialogContent>
         </Dialog>

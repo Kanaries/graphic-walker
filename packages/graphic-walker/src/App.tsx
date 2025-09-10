@@ -80,6 +80,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         vlSpec,
         onError,
         hideSegmentNav,
+        hideProfiling,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -189,7 +190,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                     )}
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
-                                            <DatasetConfig />
+                                            <DatasetConfig hideProfiling={hideProfiling} />
                                         </div>
                                     </TabsContent>
                                     <TabsContent value={ISegmentKey.vis} className='flex-1 min-h-0 flex flex-col'>
@@ -224,7 +225,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             />
                                             <CodeExport />
                                             <ExplainData themeKey={appliedThemeKey} />
-                                            {vizStore.showDataBoard && <DataBoard />}
+                                            {vizStore.showDataBoard && <DataBoard hideProfiling={hideProfiling} />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
