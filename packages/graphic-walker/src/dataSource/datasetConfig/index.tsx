@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { useCompututaion, useVizStore } from '../../store';
 import { toJS } from 'mobx';
 
-const DatasetConfig: React.FC = () => {
+const DatasetConfig = ({ hideProfiling }: { hideProfiling?: boolean }) => {
     const vizStore = useVizStore();
     const computation = useCompututaion();
     const metas = toJS(vizStore.meta);
@@ -19,6 +19,7 @@ const DatasetConfig: React.FC = () => {
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     vizStore.updateCurrentDatasetMetas(fid, diffMeta);
                 }}
+                hideProfiling={hideProfiling}
             />
         </div>
     );

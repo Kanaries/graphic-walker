@@ -47,6 +47,10 @@ export const pages = [
         comp: () => import('./pages/themeBuilder'),
         name: 'ThemeBuilder',
     },
+    {
+        comp: () => import('./pages/hideProfiling'),
+        name: 'HideProfiling',
+    },
 ].map((Component) => ({
     name: Component.name,
     path: Component.name.replace(/\s/g, '_'),
