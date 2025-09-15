@@ -23,7 +23,7 @@ const DimFields: React.FC = (props) => {
                             <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu={false} disabled={snapshot.isDragging}>
                                 <FieldPill
                                     className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
-                                        snapshot.isDragging ? 'bg-dimension/20' : ''
+                                        snapshot.isDragging ? 'bg-dimension/20 translate-0' : ''
                                     }`}
                                     ref={refMapper(provided.innerRef)}
                                     isDragging={snapshot.isDragging}

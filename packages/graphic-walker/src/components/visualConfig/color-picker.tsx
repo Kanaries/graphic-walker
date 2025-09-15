@@ -2,9 +2,47 @@ import { StyledPicker } from '../color-picker';
 import { ErrorBoundary } from 'react-error-boundary';
 import React from 'react';
 import { Input } from '../ui/input';
+
 const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
-export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimaryColorEdited, displayColorPicker, setDisplayColorPicker }) => {
+// Utility functions for color conversion
+const rgbaToHex = (r: number, g: number, b: number, a: number = 1): string => {
+    const toHex = (n: number) => {
+        const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const hexToRgba = (hex: string): { r: number; g: number; b: number; a: number } => {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Handle short hex format (e.g., #fff)
+    if (hex.length === 3) {
+        hex = hex.split('').map(char => char + char).join('');
+    }
+    
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    return { r, g, b, a: 1 };
+};
+
+export const ColorPickerComponent = ({
+    defaultColor,
+    setDefaultColor,
+    setPrimaryColorEdited,
+    displayColorPicker,
+    setDisplayColorPicker,
+}: {
+    defaultColor: { r: number; g: number; b: number; a: number };
+    setDefaultColor: (color: { r: number; g: number; b: number; a: number }) => void;
+    setPrimaryColorEdited: (edited: boolean) => void;
+    displayColorPicker: boolean;
+    setDisplayColorPicker: (display: boolean) => void;
+}) => {
     return (
         <ErrorBoundary
             fallback={
@@ -20,7 +58,10 @@ export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimary
                         type="number"
                         onChange={(e) => {
                             setPrimaryColorEdited(true);
-                            setDefaultColor((x) => ({ ...x, r: Number(e.target.value) }));
+                            setDefaultColor({ 
+                                ...defaultColor, 
+                                r: Number(e.target.value) 
+                            });
                         }}
                     />
                     <Input
@@ -28,7 +69,10 @@ export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimary
                         type="number"
                         onChange={(e) => {
                             setPrimaryColorEdited(true);
-                            setDefaultColor((x) => ({ ...x, g: Number(e.target.value) }));
+                            setDefaultColor({ 
+                                ...defaultColor, 
+                                g: Number(e.target.value) 
+                            });
                         }}
                     />
                     <Input
@@ -36,7 +80,10 @@ export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimary
                         type="number"
                         onChange={(e) => {
                             setPrimaryColorEdited(true);
-                            setDefaultColor((x) => ({ ...x, b: Number(e.target.value) }));
+                            setDefaultColor({ 
+                                ...defaultColor, 
+                                b: Number(e.target.value) 
+                            });
                         }}
                     />
                 </div>
@@ -62,12 +109,13 @@ export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimary
                     {displayColorPicker && (
                         <StyledPicker
                             presetColors={DEFAULT_COLOR_SCHEME}
-                            color={defaultColor}
-                            onChange={(color) => {
+                            color={rgbaToHex(defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a)}
+                            onChange={(hexColor) => {
                                 setPrimaryColorEdited(true);
+                                const rgbaColor = hexToRgba(hexColor);
                                 setDefaultColor({
-                                    ...color.rgb,
-                                    a: color.rgb.a ?? 1,
+                                    ...rgbaColor,
+                                    a: defaultColor.a, // preserve alpha
                                 });
                             }}
                         />
