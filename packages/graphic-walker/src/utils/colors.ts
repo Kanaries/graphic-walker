@@ -23,10 +23,12 @@ function toHSL(color: string): [number, number, number, number] {
             return item.value;
         }
         if (item.model === 'rgb') {
-            return rgb.hsl(item.value);
+            const hslValue = rgb.hsl([item.value[0], item.value[1], item.value[2]]);
+            return [hslValue[0], hslValue[1], hslValue[2], item.value[3] ?? 1];
         }
         if (item.model === 'hwb') {
-            return hwb.hsl(item.value);
+            const hslValue = hwb.hsl([item.value[0], item.value[1], item.value[2]]);
+            return [hslValue[0], hslValue[1], hslValue[2], item.value[3] ?? 1];
         }
     }
     throw new Error(`cannot parse color ${color}`);
@@ -38,7 +40,8 @@ export function parseColorToHSL(color: string) {
 }
 
 export function parseColorToHex(color: string) {
-    return colorString.to.hex(hsl.rgb(toHSL(color)));
+    const [h, s, l] = toHSL(color);
+    return colorString.to.hex(hsl.rgb([h, s, l]));
 }
 
 function ColorSetToCss(set: Required<IColorSet>) {

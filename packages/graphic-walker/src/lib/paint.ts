@@ -72,7 +72,8 @@ async function bufferToBase64(buffer: Uint8Array | ArrayBuffer): Promise<string>
     return await new Promise((r) => {
         const reader = new FileReader();
         reader.onload = () => r((reader.result as string).substring(37));
-        reader.readAsDataURL(new Blob([buffer]));
+        const blob = buffer instanceof Uint8Array ? new Blob([buffer.buffer as ArrayBuffer]) : new Blob([buffer as ArrayBuffer]);
+        reader.readAsDataURL(blob);
     });
 }
 /**
@@ -81,7 +82,7 @@ async function bufferToBase64(buffer: Uint8Array | ArrayBuffer): Promise<string>
  * @returns Promise of the compressed data in base64-string.
  */
 export async function compressBitMap(arr: Uint8Array) {
-    const stream = new Response(arr).body!.pipeThrough(new CompressionStream('deflate-raw'));
+    const stream = new Response(arr.buffer as ArrayBuffer).body!.pipeThrough(new CompressionStream('deflate-raw'));
     const result = await new Response(stream).arrayBuffer();
     return bufferToBase64(result);
 }

@@ -146,8 +146,8 @@
     "vite": "^4.1.1"
   },
   "peerDependencies": {
-    "react": ">=17.0.0 <19.0.0",
-    "react-dom": ">=17.0.0 <19.0.0",
+    "react": ">=17.0.0 <20.0.0",
+    "react-dom": ">=17.0.0 <20.0.0",
     "styled-components": "^5.3.6"
   }
 }
