@@ -78,7 +78,7 @@ export function createFilterContext(components: {
         computation?: IComputationFunction;
         loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
         fields: IMutField[];
-        children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
+        children: (computation: IComputationFunction, filterComponents: React.ReactNode[]) => React.ReactNode;
     }) {
         const { configs, data, computation: remoteComputation, fields, children, loadingContent } = props;
         const computation = React.useMemo(() => {
@@ -271,15 +271,15 @@ export function createFilterContext(components: {
             data: IRow[];
             loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
             fields: IMutField[];
-            children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
-        }): JSX.Element;
+            children: (computation: IComputationFunction, filterComponents: React.ReactNode[]) => React.ReactNode;
+        }): React.ReactNode;
         (props: {
             configs: FilterConfig[];
             computation: IComputationFunction;
             loadingContent?: React.ReactNode | Iterable<React.ReactNode>;
             fields: IMutField[];
-            children: (computation: IComputationFunction, filterComponents: JSX.Element[]) => React.ReactNode;
-        }): JSX.Element;
+            children: (computation: IComputationFunction, filterComponents: React.ReactNode[]) => React.ReactNode;
+        }): React.ReactNode;
     };
 }
 

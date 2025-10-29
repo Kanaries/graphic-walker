@@ -67,8 +67,8 @@ export const GraphicWalker = observer(
         );
     })
 ) as {
-    (p: ILocalVizAppProps): JSX.Element;
-    (p: IRemoteVizAppProps): JSX.Element;
+    (p: ILocalVizAppProps): React.ReactNode;
+    (p: IRemoteVizAppProps): React.ReactNode;
 };
 
 export type IRendererProps = {
@@ -99,8 +99,8 @@ export const GraphicRenderer = observer(
         );
     })
 ) as {
-    (p: ILocalVizAppProps & IRendererProps): JSX.Element;
-    (p: IRemoteVizAppProps & IRendererProps): JSX.Element;
+    (p: ILocalVizAppProps & IRendererProps): React.ReactNode;
+    (p: IRemoteVizAppProps & IRendererProps): React.ReactNode;
 };
 
 export type ILocalTableProps = ITableProps &
@@ -156,6 +156,6 @@ export const TableWalker = observer(
         );
     })
 ) as {
-    (p: ILocalTableProps): JSX.Element;
-    (p: IRemoteTableProps): JSX.Element;
+    (p: ILocalTableProps): React.ReactNode;
+    (p: IRemoteTableProps): React.ReactNode;
 };

@@ -41,7 +41,7 @@ export default defineConfig({
         globals: {
           'react': 'React',
           'react-dom': 'ReactDOM',
-          'styled-components': 'styled',
+          'react-dom/client': 'ReactDOMClient',          
         },
       },
     },

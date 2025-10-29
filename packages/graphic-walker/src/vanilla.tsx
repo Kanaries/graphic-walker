@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { createMemoryProvider } from './dataSourceProvider/memory';
 import { IGWProps } from './interfaces';
 import { DataSourceSegmentComponent } from './dataSource';
@@ -36,48 +36,13 @@ export function embedGraphicWalker(dom, props: IGWProps | ILocalVizAppProps | IR
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
     if (hasData(props)) {
-        if (isConcurrentModeAvailable) {
-            if (import.meta.env.DEV) {
-                console.warn(
-                    'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
-                );
-            }
-            // @ts-ignore
-            const root = ReactDOM.createRoot(dom as HTMLElement);
-            root.render(<GraphicWalker themeKey="g2" {...props} />);
-        } else {
-            ReactDOM.render(
-                <React.StrictMode>
-                    <GraphicWalker themeKey="g2" {...props} />
-                </React.StrictMode>,
-                dom as HTMLElement
-            );
-        }
+        createRoot(dom).render(<GraphicWalker themeKey="g2" {...props} />);
         return;
     }
 
-    // Use the new ReactDOM.createRoot API if available, otherwise fall back to the old ReactDOM.render API
-    if (isConcurrentModeAvailable) {
-        if (import.meta.env.DEV) {
-            console.warn(
-                'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
-            );
-        }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<FullGraphicWalker themeKey="g2" {...props} />);
-    } else {
-        ReactDOM.render(
-            <React.StrictMode>
-                <FullGraphicWalker themeKey="g2" {...props} />
-            </React.StrictMode>,
-            dom as HTMLElement
-        );
-    }
+    createRoot(dom).render(<FullGraphicWalker themeKey="g2" {...props} />);
 }
 
 export function embedGraphicRenderer(dom: HTMLElement | null, props: ILocalVizAppProps | undefined);
@@ -86,26 +51,8 @@ export function embedGraphicRenderer(dom, props = {}) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
-    if (isConcurrentModeAvailable) {
-        if (import.meta.env.DEV) {
-            console.warn(
-                'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
-            );
-        }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<GraphicRenderer themeKey="g2" {...props} />);
-    } else {
-        ReactDOM.render(
-            <React.StrictMode>
-                <GraphicRenderer themeKey="g2" {...props} />
-            </React.StrictMode>,
-            dom as HTMLElement
-        );
-    }
+    createRoot(dom).render(<GraphicRenderer themeKey="g2" {...props} />);
 }
 
 export function embedTableWalker(dom: HTMLElement | null, props: ILocalTableProps | undefined);
@@ -114,26 +61,8 @@ export function embedTableWalker(dom, props = {}) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
-    if (isConcurrentModeAvailable) {
-        if (import.meta.env.DEV) {
-            console.warn(
-                'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
-            );
-        }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<TableWalker themeKey="g2" {...props} />);
-    } else {
-        ReactDOM.render(
-            <React.StrictMode>
-                <TableWalker themeKey="g2" {...props} />
-            </React.StrictMode>,
-            dom as HTMLElement
-        );
-    }
+    createRoot(dom).render(<TableWalker themeKey="g2" {...props} />);
 }
 
 export function embedPureRenderer(dom: HTMLElement | null, props: ILocalPureRendererProps);
@@ -142,24 +71,6 @@ export function embedPureRenderer(dom, props) {
     if (!dom) {
         throw 'DOM element not found.';
     }
-    // Example: Detect if Concurrent Mode is available
-    const isConcurrentModeAvailable = 'createRoot' in ReactDOM;
 
-    if (isConcurrentModeAvailable) {
-        if (import.meta.env.DEV) {
-            console.warn(
-                'React 18+ detected, remove strict mode if you meet drag and drop issue. more info at https://docs.kanaries.net/graphic-walker/faq/graphic-walker-react-18'
-            );
-        }
-        // @ts-ignore
-        const root = ReactDOM.createRoot(dom as HTMLElement);
-        root.render(<PureRenderer themeKey="g2" {...props} />);
-    } else {
-        ReactDOM.render(
-            <React.StrictMode>
-                <PureRenderer themeKey="g2" {...props} />
-            </React.StrictMode>,
-            dom as HTMLElement
-        );
-    }
+    createRoot(dom).render(<PureRenderer themeKey="g2" {...props} />);
 }

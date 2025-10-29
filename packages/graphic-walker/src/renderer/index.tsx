@@ -36,7 +36,7 @@ interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
     scales?: IChannelScales;
-    csvRef?: React.MutableRefObject<{ download: () => void }>;
+    csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
 }
 /**

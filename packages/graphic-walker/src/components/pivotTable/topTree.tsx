@@ -80,11 +80,11 @@ const TopTree: React.FC<TreeProps> = (props) => {
 
         // if all children in one layer are collapsed, then we need to reset the rowSpan of all children to 1
         cellRows.forEach((row: ReactNode[], rowIdx: number) => {
-            const rowSpanArr = row.map((child) => (React.isValidElement(child) ? child.props.rowSpan : 0));
+            const rowSpanArr = row.map((child) => (React.isValidElement(child) ? (child.props as { rowSpan: number }).rowSpan : 0));
             if (rowSpanArr.length > 0 && rowSpanArr[0] > 1 && rowSpanArr.every((v) => v === rowSpanArr[0])) {
                 row.forEach((childObj, childIdx) => {
                     if (React.isValidElement(childObj)) {
-                        const newChild = React.cloneElement(childObj, { ...childObj.props, rowSpan: 1 });
+                        const newChild = React.cloneElement(childObj, { ...(childObj.props as any), rowSpan: 1 });
                         cellRows[rowIdx][childIdx] = newChild;
                     }
                 });
