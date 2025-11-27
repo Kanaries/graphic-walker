@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
+import { toVegaSimplifiedWithAggergation } from '@/models/chat';
 
 const syntaxHighlight = (json: any) => {
     if (typeof json != 'string') {
@@ -39,7 +40,7 @@ const CodeExport: React.FC = observer((props) => {
     const { showCodeExportPanel } = vizStore;
     const { t } = useTranslation();
     const [tabKey, setTabKey] = useState<string>('graphic-walker');
-    const [code, setCode] = useState<any>('');
+    const [code, setCode] = useState('');
 
     const specTabs: { key: string; label: string }[] = [
         {
@@ -64,12 +65,12 @@ const CodeExport: React.FC = observer((props) => {
         if (showCodeExportPanel) {
             if (tabKey === 'graphic-walker') {
                 const res = vizStore.exportCode();
-                setCode(res);
+                setCode(JSON.stringify(res, null, 4));
             } else if (tabKey === 'vega-lite') {
-                setCode(vizStore.lastSpec);
+                setCode(JSON.stringify(vizStore.exportCode().map(toVegaSimplifiedWithAggergation), null, 4));
             } else if (tabKey === 'workflow') {
                 const workflow = vizStore.workflow;
-                setCode(workflow);
+                setCode(JSON.stringify(workflow, null, 4));
             } else {
                 console.error('unknown tabKey');
             }
@@ -102,7 +103,7 @@ const CodeExport: React.FC = observer((props) => {
                     <Button
                         children="Copy to Clipboard"
                         onClick={() => {
-                            navigator.clipboard.writeText(JSON.stringify(code));
+                            navigator.clipboard.writeText(code);
                             vizStore.setShowCodeExportPanel(false);
                         }}
                     />

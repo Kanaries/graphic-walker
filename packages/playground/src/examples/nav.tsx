@@ -51,6 +51,10 @@ export const pages = [
         comp: () => import('./pages/hideProfiling'),
         name: 'HideProfiling',
     },
+    {
+        comp: () => import('./pages/vlSpec'),
+        name: 'VlSpec',
+    }
 ].map((Component) => ({
     name: Component.name,
     path: Component.name.replace(/\s/g, '_'),
