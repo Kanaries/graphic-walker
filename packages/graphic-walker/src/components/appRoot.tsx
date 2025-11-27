@@ -3,7 +3,7 @@ import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus }
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
 
-export const useAppRootContext = (): RefObject<IGWHandlerInsider> => {
+export const useAppRootContext = (): RefObject<IGWHandlerInsider | null> => {
     const context = useContext(AppRootContext);
     if (context && 'current' in context) {
         return context;

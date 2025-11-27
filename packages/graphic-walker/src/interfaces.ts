@@ -943,7 +943,7 @@ export interface IDefaultConfig {
 }
 
 export interface IVizStoreProps {
-    storeRef?: React.MutableRefObject<VizSpecStore | null>;
+    storeRef?: React.RefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
     /** @deprecated renamed to fields */
     rawFields?: IMutField[];
@@ -980,7 +980,7 @@ export type IGWProps = IAppI18nProps &
     IVizProps &
     IThemeProps &
     IErrorHandlerProps & {
-        storeRef?: React.MutableRefObject<CommonStore | null>;
+        storeRef?: React.RefObject<CommonStore | null>;
         keepAlive?: boolean | string;
     };
 

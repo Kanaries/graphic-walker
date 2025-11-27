@@ -10,21 +10,27 @@
     "deploy": "yarn workspace playground deploy"
   },
   "workspaces": {
-    "packages": ["packages/*"]
+    "packages": [
+      "packages/*"
+    ]
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kanaries/graphic-walker.git"
   },
-  "keywords": ["visualization", "EDA", "data-analysis"],
+  "keywords": [
+    "visualization",
+    "EDA",
+    "data-analysis"
+  ],
   "author": "Kanaries Data Inc.",
   "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/Kanaries/graphic-walker/issues"
   },
   "resolutions": {
-    "@types/react": "^18.x",
-    "@types/react-dom": "^18.x"
+    "@types/react": "^19.x",
+    "@types/react-dom": "^19.x"
   },
   "homepage": "https://github.com/Kanaries/graphic-walker#readme",
   "engines": {

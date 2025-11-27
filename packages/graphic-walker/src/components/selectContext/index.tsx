@@ -1,8 +1,6 @@
 import React, { Fragment, useEffect, useRef, useState, useContext, useMemo } from 'react';
-import { Listbox, Transition } from '@headlessui/react';
+import { Listbox } from '@headlessui/react';
 import { CheckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { Float } from '@headlessui-float/react';
-import { blockContext } from '../../fields/fieldsContext';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 export interface ISelectContextOption {

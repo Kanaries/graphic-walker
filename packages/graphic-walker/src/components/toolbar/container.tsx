@@ -13,7 +13,7 @@ export function ToolbarItemContainer(props: { children: React.ReactNode | Iterab
     const splitOnly = form && props.splitOnly;
 
     return (
-        <Popover open={opened} onOpenChange={(open) => (open ? setOpenedKey(id) : setOpenedKey(null))}>
+        <Popover open={!!opened} onOpenChange={(open) => (open ? setOpenedKey(id) : setOpenedKey(null))}>
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>

@@ -364,7 +364,7 @@ const DataTable = forwardRef(
 
     const [isSticky, setIsSticky] = useState(false);
 
-    const obRef = useRef<IntersectionObserver>();
+    const obRef = useRef<IntersectionObserver>(null);
     const stickyDector = useCallback((node: HTMLDivElement) => {
         obRef.current?.disconnect();
         if (node) {
