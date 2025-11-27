@@ -122,7 +122,12 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         if (vlSpec) {
             const emptyChart = newChart(vizStore.meta, '');
             vizStore.replaceNow(
-                VegaliteMapper(vlSpec, [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures], 'Chart 1', vizStore.currentVis.visId)
+                VegaliteMapper(
+                    vlSpec,
+                    [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
+                    vizStore.currentVis.visId,
+                    vizStore.currentVis.name ?? 'Chart 1'
+                )
             );
         }
     }, [vlSpec, vizStore]);
