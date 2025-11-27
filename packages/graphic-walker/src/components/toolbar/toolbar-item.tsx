@@ -10,11 +10,11 @@ export interface IToolbarItem {
             title?: string;
             titleId?: string;
         }
-    ) => JSX.Element;
+    ) => React.ReactNode;
     label: string;
     /** @default false */
     disabled?: boolean;
-    form?: JSX.Element;
+    form?: React.ReactNode;
     styles?: ToolbarProps['styles'];
 }
 

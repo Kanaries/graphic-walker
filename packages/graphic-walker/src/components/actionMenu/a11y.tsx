@@ -1,7 +1,7 @@
 import { classNames } from '@/utils';
 import { type HTMLAttributes, type MouseEvent, useCallback, useMemo, type KeyboardEvent, type AriaAttributes, type ComponentPropsWithoutRef } from 'react';
 
-export type ReactTag = keyof JSX.IntrinsicElements;
+export type ReactTag = keyof React.JSX.IntrinsicElements;
 export type ElementType<T extends ReactTag> = Parameters<NonNullable<ComponentPropsWithoutRef<T>['onClick']>>[0] extends MouseEvent<
     infer U,
     globalThis.MouseEvent

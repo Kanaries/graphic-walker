@@ -127,10 +127,10 @@ export function DataSourceSegmentComponent(props: {
         meta: IMutField[];
         onMetaChange: (fid: string, meta: Partial<IMutField>) => void;
         computation: IComputationFunction;
-        storeRef: React.RefObject<VizSpecStore>;
+        storeRef: React.RefObject<VizSpecStore | null>;
         datasetName: string;
         syncSpecs: () => void;
-    }) => JSX.Element;
+    }) => React.ReactNode;
 }) {
     const [selectedId, setSelectedId] = useState('');
     const [datasetList, setDatasetList] = useState<{ name: string; id: string }[]>([]);

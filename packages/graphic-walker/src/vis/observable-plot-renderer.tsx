@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef, useContext, forwardRef, MutableRefObject } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useContext, forwardRef, RefObject } from 'react';
 import * as Plot from '@observablehq/plot';
 import styled from 'styled-components';
 import { useResizeDetector } from 'react-resize-detector';
@@ -179,7 +179,7 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
     const rowRepeatFields = useMemo(() => (rowMeas.length === 0 ? rowDims.slice(-1) : rowMeas), [rowDims, rowMeas]); //rowMeas.slice(0, -1);
     const colRepeatFields = useMemo(() => (colMeas.length === 0 ? colDims.slice(-1) : colMeas), [colDims, colMeas]); //colMeas.slice(0, -1);
     // track placeholders for each sub-view:
-    const [plotPlaceholders, setPlotPlaceholders] = useState<React.MutableRefObject<HTMLDivElement | null>[]>([]);
+    const [plotPlaceholders, setPlotPlaceholders] = useState<React.RefObject<HTMLDivElement | null>[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

@@ -15,7 +15,7 @@ import { proxied } from '../utils/proxy';
 window['__react-beautiful-dnd-disable-dev-warnings'] = true;
 window['__react-beautiful-dnd-disable-scroll-hack'] = true;
 
-export const blockContext = createContext<React.RefObject<HTMLDivElement>>({ current: null });
+export const blockContext = createContext<React.RefObject<HTMLDivElement | null>>({ current: null });
 
 export function refMapper<T extends HTMLElement>(refCallback: (node: T | null) => void) {
     const block = useContext(blockContext);

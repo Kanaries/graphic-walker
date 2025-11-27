@@ -31,7 +31,7 @@ const noop = () => {};
 
 interface VizStoreWrapperProps {
     keepAlive?: boolean | string;
-    storeRef?: React.MutableRefObject<VizSpecStore | null>;
+    storeRef?: React.RefObject<VizSpecStore | null>;
     children?: React.ReactNode;
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;

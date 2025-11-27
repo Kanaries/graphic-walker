@@ -264,7 +264,7 @@ export interface IGWProps {
     fieldKeyGuard?: boolean;
     vizThemeConfig?: IThemeKey;
     apperence?: IDarkMode;
-    storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    storeRef?: React.RefObject<IGlobalStore | null>;
     computation?: IComputationConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
@@ -310,9 +310,9 @@ Specify the dark mode preference. There're three valid values:
 + `"dark"`: Always use dark mode.
 + `"light"`: Always use light mode.
 
-#### `storeRef`: optional _{ `React.MutableRefObject<IGlobalStore | null>` }_
+#### `storeRef`: optional _{ `React.RefObject<IGlobalStore | null>` }_
 
-If you want to control the visualization specification, you can provide a `React.MutableRefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
+If you want to control the visualization specification, you can provide a `React.RefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
 
 #### `computation`: optional _{ [`IComputationFunction`](./packages/graphic-walker/src/interfaces.ts) }_
 

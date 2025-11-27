@@ -29,9 +29,9 @@ interface EditableTabsProps {
 
 const Slider = (props: { className?: string; children: React.ReactNode }) => {
     const [x, setX] = useState(0);
-    const ref = useRef<HTMLDivElement>();
-    const parentDisposeRef = useRef<() => void>();
-    const childDisposeRef = useRef<() => void>();
+    const ref = useRef<HTMLDivElement>(null);
+    const parentDisposeRef = useRef<() => void>(null);
+    const childDisposeRef = useRef<() => void>(null);
 
     const onWheel = useCallback((e: WheelEvent) => {
         e.preventDefault();
