@@ -5753,7 +5753,7 @@ vega-dataflow@^5.7.3, vega-dataflow@^5.7.5, vega-dataflow@~5.7.5:
     vega-loader "^4.5.1"
     vega-util "^1.17.1"
 
-vega-embed@^6.21.0:
+vega-embed@^6.23.0:
   version "6.23.0"
   resolved "https://registry.npmjs.org/vega-embed/-/vega-embed-6.23.0.tgz#640fe1cefef58a8a061da084ec804a1b4abbd5ef"
   integrity sha512-8Iava57LdROsatqsOhMLErHYaBpZBB7yZJlSVU3/xOK3l8Ft5WFnj5fm3OOAVML97/0yULE7LRVjXW5hV3fSpg==
@@ -5866,7 +5866,7 @@ vega-label@~1.2.1:
     vega-scenegraph "^4.9.2"
     vega-util "^1.15.2"
 
-vega-lite@^5.6.0:
+vega-lite@^5.16.3:
   version "5.16.3"
   resolved "https://registry.npmjs.org/vega-lite/-/vega-lite-5.16.3.tgz#4443de18f9f2a76c95ff3565fe1ca201d55659c2"
   integrity sha512-F3HO/BqlyyB1D0tf/+qy1JOmq7bHtG/nvsXcgNVUFjgVgvVKL4sMnxVnYzSsIg10x/6RFxLfwWJSd0cA8MuuUA==
@@ -6074,7 +6074,7 @@ vega-wordcloud@~4.1.4:
     vega-statistics "^1.8.1"
     vega-util "^1.17.1"
 
-vega@^5.22.1:
+vega@^5.26.1:
   version "5.26.1"
   resolved "https://registry.npmjs.org/vega/-/vega-5.26.1.tgz#8d7882eae9579207ec2fff8bd6a6125cdac2c4b4"
   integrity sha512-1IguabCfv5jGUwMg4d8V9Lf/yBxaUc1EXmRwHzV8pMSy6KUB0h7rh9gYU0ja+vOB7b5qygRwppqeL0cATrzLUw==
