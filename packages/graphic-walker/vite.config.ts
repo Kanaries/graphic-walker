@@ -12,6 +12,14 @@ const modulesNotToBundle = Object.keys(peerDependencies);
 export default defineConfig({
   server: {
     port: 2002,
+    proxy: {
+      // Redirect all API calls to the Ollama NLP backend
+      '/api': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, '/api'),
+      },
+    }
   },
   plugins: [
     react(),

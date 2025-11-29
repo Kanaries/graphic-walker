@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-dotenv
+ollama
+pytest
+pytest-asyncio
+pytest-cov
+psutil

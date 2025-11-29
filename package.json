@@ -4,8 +4,11 @@
   "description": "![](https://img.shields.io/github/license/kanaries/graphic-walker) ![](https://img.shields.io/npm/v/@kanaries/graphic-walker) ![](https://img.shields.io/github/workflow/status/kanaries/graphic-walker/auto-build.yml)",
   "private": true,
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
   "scripts": {
+    "dev": "concurrently \"yarn workspace @kanaries/graphic-walker dev:front_end\" \"cd packages/nlp-backend && pip install -r requirements.txt && uvicorn app:app --reload --port 3002\"",
     "build": "yarn workspace @kanaries/graphic-walker build",
     "deploy": "yarn workspace playground deploy"
   },

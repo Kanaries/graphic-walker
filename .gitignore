@@ -16,3 +16,5 @@ app-dist
 .vercel
 chartinfo.json
 stoinfo_v2.json
+
+__pycache__/
