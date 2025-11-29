@@ -223,7 +223,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 csvHandler={downloadCSVRef}
                                                 rendererHandler={rendererRef}
                                                 darkModePreference={darkMode}
-                                                experimentalFeatures={props.experimentalFeatures}
+                                                experimentalFeatures={{ computedField: true }}
                                                 exclude={toolbar?.exclude}
                                                 extra={toolbar?.extra}
                                             />
