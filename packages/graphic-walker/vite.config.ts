@@ -6,7 +6,7 @@ import { peerDependencies } from './package.json'
 
 
 // @see https://styled-components.com/docs/faqs#marking-styledcomponents-as-external-in-your-package-dependencies
-const modulesNotToBundle = Object.keys(peerDependencies);
+const modulesNotToBundle = Object.keys(peerDependencies).concat(["react-dom/client", "react-dom/server"]);
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -42,7 +42,8 @@ export default defineConfig({
           'react': 'React',
           'react-dom': 'ReactDOM',
           'styled-components': 'styled',
-          'react-dom/client': 'ReactDOMClient',          
+          'react-dom/client': 'ReactDOMClient',
+          'react-dom/server': 'ReactDOMServer',
         },
       },
     },
