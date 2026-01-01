@@ -95,6 +95,90 @@ function vegaLiteToPlot(spec: any): any {
         };
     };
 
+    const createArcGeometry = (startAngle: number, endAngle: number, outerRadius: number, innerRadius = 0) => {
+        if (!(outerRadius > 0) || endAngle <= startAngle) {
+            return null;
+        }
+        const angleSpan = endAngle - startAngle;
+        const steps = Math.max(12, Math.ceil(angleSpan / (Math.PI / 12)));
+        const points: [number, number][] = [];
+
+        for (let i = 0; i <= steps; i++) {
+            const angle = startAngle + (angleSpan * i) / steps;
+            points.push([Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius]);
+        }
+
+        if (innerRadius > 0) {
+            for (let i = steps; i >= 0; i--) {
+                const angle = startAngle + (angleSpan * i) / steps;
+                points.push([Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius]);
+            }
+        } else {
+            points.push([0, 0]);
+        }
+
+        if (points.length > 0) {
+            points.push(points[0]);
+        }
+
+        return {
+            type: 'Polygon',
+            coordinates: [points],
+        };
+    };
+
+    const createArcMark = (data: any[], enc: any, fields: any) => {
+        const { colorField } = fields;
+        const thetaField = enc.theta?.field;
+        const radiusField = enc.radius?.field;
+
+        const thetaValues = data.map((d) => {
+            const value = thetaField ? Number(d[thetaField]) : 1;
+            return Number.isFinite(value) ? Math.max(0, value) : 0;
+        });
+        const total = thetaValues.reduce((sum, value) => sum + value, 0);
+        if (!total) {
+            return Plot.geo([], { geometry: () => null });
+        }
+
+        let maxRadius = 1;
+        if (radiusField) {
+            maxRadius = data.reduce((acc, d) => {
+                const value = Number(d[radiusField]);
+                return Number.isFinite(value) ? Math.max(acc, value) : acc;
+            }, 0);
+        }
+
+        const radiusScale = radiusField && maxRadius > 0 ? (value: number) => Math.max(0, value) / maxRadius : () => 1;
+
+        let currentAngle = -Math.PI / 2;
+        const arcData = data
+            .map((d, index) => {
+                const thetaValue = thetaValues[index];
+                const angleSpan = (thetaValue / total) * Math.PI * 2;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angleSpan;
+                currentAngle = endAngle;
+
+                const radiusValue = radiusField ? radiusScale(Number(d[radiusField])) : 1;
+                const geometry = createArcGeometry(startAngle, endAngle, radiusValue);
+                if (!geometry) {
+                    return null;
+                }
+                return {
+                    ...d,
+                    __gwArcGeometry: geometry,
+                };
+            })
+            .filter(Boolean);
+
+        return Plot.geo(arcData, {
+            geometry: (d: any) => d.__gwArcGeometry,
+            fill: colorField || undefined,
+            stroke: colorField ? 'white' : undefined,
+        });
+    };
+
     // Helper function to create base configuration for any mark type
     const createBaseConfig = (markType: string, enc: any, fields: any) => {
         const { xField, yField, colorField, sizeField, xFacetField, yFacetField } = fields;
@@ -248,6 +332,10 @@ function vegaLiteToPlot(spec: any): any {
     // Universal mark creation function
     const createMark = (markType: string, data: any[], enc: any, fields: any) => {
         const { colorField } = fields;
+
+        if (markType === 'arc') {
+            return createArcMark(data, enc, fields);
+        }
         
         // Get the appropriate mark function and stack axis
         const { markFunction, stackAxis } = getMarkDirection(markType, enc);
@@ -385,25 +473,34 @@ function vegaLiteToPlot(spec: any): any {
     };
 
     // 7) Build top-level any
+    const isArcMark = markType === 'arc';
     const plotOptions: any = {
         marks: [mark],
         // Possibly define top-level x, y, color scales
-        x: {
-            label: enc.x?.title || undefined,
-            // For temporal fields: use 'utc' for continuous scales, 'band' for categorical scales
-            type: enc.x?.type === 'temporal' 
-                ? (isTemporalUsedCategorically('x') ? 'band' : 'utc')
-                : undefined,
-            // If your spec had e.g. "type": "temporal", you'd do Plot.scale({type: "utc"})
-        },
-        y: {
-            label: enc.y?.title || undefined,
-            // Apply the same logic for y-axis temporal fields
-            type: enc.y?.type === 'temporal' 
-                ? (isTemporalUsedCategorically('y') ? 'band' : 'utc')
-                : undefined,
-            // If stacked, you can do y: {stack: "zero"} as an alternative approach
-        },
+        x: isArcMark
+            ? {
+                  axis: null,
+                  domain: [-1, 1],
+              }
+            : {
+                  label: enc.x?.title || undefined,
+                  // For temporal fields: use 'utc' for continuous scales, 'band' for categorical scales
+                  type:
+                      enc.x?.type === 'temporal' ? (isTemporalUsedCategorically('x') ? 'band' : 'utc') : undefined,
+                  // If your spec had e.g. "type": "temporal", you'd do Plot.scale({type: "utc"})
+              },
+        y: isArcMark
+            ? {
+                  axis: null,
+                  domain: [-1, 1],
+              }
+            : {
+                  label: enc.y?.title || undefined,
+                  // Apply the same logic for y-axis temporal fields
+                  type:
+                      enc.y?.type === 'temporal' ? (isTemporalUsedCategorically('y') ? 'band' : 'utc') : undefined,
+                  // If stacked, you can do y: {stack: "zero"} as an alternative approach
+              },
         color: {
             label: enc.color?.title || undefined,
             legend: colorField ? true : undefined,
