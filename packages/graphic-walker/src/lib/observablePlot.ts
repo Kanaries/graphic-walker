@@ -37,9 +37,12 @@ function vegaLiteToPlot(spec: any): any {
     const yFacetField = enc.row?.field || null;
     const colorField = enc.color?.field || null;
     const sizeField = enc.size?.field || null;
+    const shapeField = enc.shape?.field || null;
+    const opacityField = enc.opacity?.field || null;
+    const opacityValue = enc.opacity?.value ?? null;
     const tooltipEnc = enc.tooltip;
 
-    console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, tooltipEnc });
+    console.log({ xField, yField, xFacetField, yFacetField, colorField, sizeField, shapeField, opacityField, opacityValue, tooltipEnc });
     // etc. shape, opacity, text, etc. if present
 
     // Helper function to determine mark direction based on axis types
@@ -97,7 +100,7 @@ function vegaLiteToPlot(spec: any): any {
 
     // Helper function to create base configuration for any mark type
     const createBaseConfig = (markType: string, enc: any, fields: any) => {
-        const { xField, yField, colorField, sizeField, xFacetField, yFacetField } = fields;
+        const { xField, yField, colorField, sizeField, shapeField, opacityField, opacityValue, xFacetField, yFacetField } = fields;
         
         // Base configuration that works for most marks
         const baseConfig: any = {
@@ -106,6 +109,12 @@ function vegaLiteToPlot(spec: any): any {
             fx: xFacetField || undefined,
             fy: yFacetField || undefined,
         };
+
+        if (opacityField) {
+            baseConfig.opacity = opacityField;
+        } else if (opacityValue !== null && opacityValue !== undefined) {
+            baseConfig.opacity = opacityValue;
+        }
         
         // Add mark-specific channels
         switch (markType) {
@@ -124,12 +133,14 @@ function vegaLiteToPlot(spec: any): any {
                 baseConfig.stroke = colorField || undefined;
                 baseConfig.fill = 'none';
                 baseConfig.r = sizeField || undefined;
+                baseConfig.symbol = shapeField || undefined;
                 break;
             case 'circle':
             case 'dot':
                 baseConfig.fill = colorField || undefined;
                 baseConfig.stroke = undefined;
                 baseConfig.r = sizeField || undefined;
+                baseConfig.symbol = shapeField || undefined;
                 break;
             case 'text':
                 baseConfig.text = yField || xField || undefined; // Use the quantitative field for text
@@ -340,7 +351,7 @@ function vegaLiteToPlot(spec: any): any {
     };
 
     // 5) Build the Plot mark using the universal function
-    const fields = { xField, yField, colorField, sizeField, xFacetField, yFacetField };
+    const fields = { xField, yField, colorField, sizeField, shapeField, opacityField, opacityValue, xFacetField, yFacetField };
     let mark: Plot.Mark = createMark(markType, data, enc, fields);
 
     // 6) Title / tooltip
