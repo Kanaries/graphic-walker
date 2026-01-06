@@ -94,11 +94,19 @@ Use it here: [Graphic Walker Online](https://graphic-walker.kanaries.net)
 Examples here: [Graphic Walker Examples](https://graphic-walker.kanaries.net/examples/)
 
 ### Method 1: use as an independent app.
+yarn workspace @kanaries/graphic-walker build
+
 ```bash
 yarn install
 
 yarn workspace @kanaries/graphic-walker build
 ```
+
+> **Note:**
+> The dev script requires `concurrently`. It will be installed automatically with `yarn install`. If you see an error like `'concurrently' is not recognized as an internal or external command`, run:
+> ```bash
+> yarn add -D concurrently -W
+> ```
 
 ### Method 2: Use as an embedding component module 🔥
 Using graphic walker can be extremely easy. It provides a single React component which allows you to easily embed it in your app.
