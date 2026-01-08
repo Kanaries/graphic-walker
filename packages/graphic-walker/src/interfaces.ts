@@ -210,8 +210,15 @@ export interface IField {
     aggergated?: boolean;
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
+export type ICustomSortType = 'measure' | 'alphabetical' | 'manual';
+export type IManualSortValue = string | number | boolean | null;
+
 export interface IViewField extends IField {
     sort?: ISortMode;
+    sortType?: ICustomSortType;
+    sortList?: IManualSortValue[];
+    titleOverride?: string;
+    customFormat?: string;
 }
 
 // shadow type of identifier of a Field, getting it using "getFieldIdentifier" in "@/utils"
