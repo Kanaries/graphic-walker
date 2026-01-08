@@ -37,6 +37,7 @@ import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
 import RenamePanel from './components/renameField';
+import FieldConfigDialog from './components/fieldConfigDialog';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
@@ -235,6 +236,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                             <LogPanel />
                                             <BinPanel />
                                             <RenamePanel />
+                                            <FieldConfigDialog />
                                             <ComputedFieldDialog />
                                             <Painter themeConfig={appliedThemeConfig} themeKey={appliedThemeKey} />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}

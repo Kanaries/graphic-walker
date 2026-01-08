@@ -91,6 +91,8 @@ export class VizSpecStore {
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = '';
     editingComputedFieldFid: string | undefined = undefined;
+    showFieldConfigPanel: boolean = false;
+    fieldConfigTarget: { channel: keyof Omit<DraggableFieldState, 'filters'>; index: number } | null = null;
     defaultConfig: IDefaultConfig | undefined;
     /** fields highlighted in the field list (Tableau-style multi-select feeding Auto Viz); UI state, not part of the undo timeline */
     selectedFieldIds: string[] = [];
@@ -555,6 +557,10 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName });
     }
 
+    editEncodingField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, patch: Partial<IViewField>) {
+        this.visList[this.visIndex] = performers.editField(this.visList[this.visIndex], stateKey, index, patch);
+    }
+
     public createDateTimeDrilledField(
         stateKey: keyof Omit<DraggableFieldState, 'filters'>,
         index: number,
@@ -808,6 +814,18 @@ export class VizSpecStore {
 
     setShowRenamePanel(show: boolean) {
         this.showRenamePanel = show;
+    }
+
+    setShowFieldConfigPanel(show: boolean) {
+        this.showFieldConfigPanel = show;
+        if (!show) {
+            this.fieldConfigTarget = null;
+        }
+    }
+
+    openFieldConfig(channel: keyof Omit<DraggableFieldState, 'filters'>, index: number) {
+        this.fieldConfigTarget = { channel, index };
+        this.showFieldConfigPanel = true;
     }
 
     setCreateField(field: ICreateField) {
