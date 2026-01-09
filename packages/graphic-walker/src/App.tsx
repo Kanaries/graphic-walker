@@ -65,7 +65,13 @@ import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroico
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
 import { ShadowDomContext } from './shadow-dom';
-import { buildEncodingFieldTargetId, buildFilterFieldTargetId, buildToolbarActionTargetId, type ToolbarActionKey } from './agent/targets';
+import {
+    buildEncodingFieldTargetId,
+    buildFilterFieldTargetId,
+    buildToolbarActionTargetId,
+    parseAgentTargetId,
+    type ToolbarActionKey,
+} from './agent/targets';
 
 const CLONE_FIELD_SOURCE_CHANNELS = ['dimensions', 'measures'] as const;
 const CLONE_FIELD_DEST_CHANNELS = [
@@ -307,6 +313,17 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         [root]
     );
 
+    const queryVisTabElement = useCallback(
+        (visId?: string): HTMLElement | null => {
+            if (!visId) return null;
+            const rootEl = root.root;
+            if (!rootEl) return null;
+            const selectorId = visId.replace(/"/g, '\"');
+            return rootEl.querySelector<HTMLElement>(`[data-gw-visual-tab="${selectorId}"]`);
+        },
+        [root]
+    );
+
     const spawnRectRipple = useCallback(
         (rect: DOMRect | null, options?: { borderRadius?: number; accentColor?: string; fillColor?: string }) => {
             if (!portal || !rect) return;
@@ -345,7 +362,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const getFieldLabel = useCallback((channel: keyof DraggableFieldState, index: number) => {
         const prevEnc = previousEncodingsRef.current;
-        const fields = prevEnc?.[channel] as (IViewField[] | IFilterField[] | undefined);
+        const fields = prevEnc?.[channel] as IViewField[] | IFilterField[] | undefined;
         const field = fields?.[index];
         return field?.name || field?.fid || 'Field';
     }, []);
@@ -353,21 +370,21 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const triggerToolbarRipple = useCallback(
         (actionKey: ToolbarActionKey) => {
             if (!actionKey) return;
-            const targetId = buildToolbarActionTargetId(instanceId, actionKey);
+            const targetId = buildToolbarActionTargetId(instanceId, currentVisId, actionKey);
             requestAnimationFrame(() => {
                 const element = queryAgentTargetElement(targetId);
                 if (!element) return;
                 spawnRectRipple(element.getBoundingClientRect(), { borderRadius: 8 });
             });
         },
-        [instanceId, queryAgentTargetElement, spawnRectRipple]
+        [instanceId, currentVisId, queryAgentTargetElement, spawnRectRipple]
     );
 
     const triggerFieldRipple = useCallback(
         (channel: keyof DraggableFieldState, index: number) => {
             const prevEnc = previousEncodingsRef.current;
-            const fields = prevEnc?.[channel] as (IViewField[] | IFilterField[] | undefined);
-            const field = fields?.[index] as (IViewField | IFilterField | undefined);
+            const fields = prevEnc?.[channel] as IViewField[] | IFilterField[] | undefined;
+            const field = fields?.[index] as IViewField | IFilterField | undefined;
             requestAnimationFrame(() => {
                 let targetId: string | null = null;
                 if (channel === 'filters') {
@@ -386,13 +403,25 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         [instanceId, currentVisId, queryAgentTargetElement, spawnRectRipple]
     );
 
+    const triggerTabRipple = useCallback(
+        (visId: string) => {
+            if (!visId) return;
+            requestAnimationFrame(() => {
+                const element = queryVisTabElement(visId);
+                if (!element) return;
+                spawnRectRipple(element.getBoundingClientRect(), { borderRadius: 12 });
+            });
+        },
+        [queryVisTabElement, spawnRectRipple]
+    );
+
     const dispatchAgentMethod = useCallback(
         async (request: AgentMethodRequest): Promise<AgentMethodResult> => {
             const validationError = validateAgentMethod(request);
             if (validationError) {
                 return { success: false, error: validationError };
             }
-            return vizStore.applyMethodFromAgent(request.method, request.args);
+            return vizStore.applyMethodFromAgent(request.method, request.args, request.targetVisId);
         },
         [vizStore, validateAgentMethod]
     );
@@ -401,13 +430,31 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         previousEncodingsRef.current = vizStore.currentVis.encodings;
     });
 
-    const handlePresenceUpdate = useCallback((payload: IGWPresenceDisplay | IGWPresenceDisplay[]) => {
-        setPresenceEntries((prev) => {
-            const map = new Map(prev.map((entry) => [entry.userId, entry]));
-            (Array.isArray(payload) ? payload : [payload]).forEach((entry) => map.set(entry.userId, entry));
-            return Array.from(map.values());
-        });
+    const normalizePresenceEntry = useCallback((entry: IGWPresenceDisplay): IGWPresenceDisplay => {
+        if (entry.visId) {
+            return entry;
+        }
+        const parsed = parseAgentTargetId(entry.targetId);
+        if (parsed?.visId) {
+            return {
+                ...entry,
+                visId: parsed.visId,
+            };
+        }
+        return entry;
     }, []);
+
+    const handlePresenceUpdate = useCallback(
+        (payload: IGWPresenceDisplay | IGWPresenceDisplay[]) => {
+            const updates = (Array.isArray(payload) ? payload : [payload]).map(normalizePresenceEntry);
+            setPresenceEntries((prev) => {
+                const map = new Map(prev.map((entry) => [entry.userId, entry]));
+                updates.forEach((entry) => map.set(entry.userId, entry));
+                return Array.from(map.values());
+            });
+        },
+        [normalizePresenceEntry]
+    );
 
     const handlePresenceClear = useCallback((userId?: string) => {
         if (!userId) {
@@ -420,6 +467,10 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const handleAgentMethodEvent = useCallback(
         (event: AgentEvent) => {
             if (event.type !== 'method' || event.status !== 'success' || event.source !== 'api') {
+                return;
+            }
+            if (event.visId && event.visId !== currentVisId) {
+                triggerTabRipple(event.visId);
                 return;
             }
             switch (event.method) {
@@ -483,12 +534,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                     break;
             }
         },
-        [
-            animateChannelTransfer,
-            getFieldLabel,
-            triggerToolbarRipple,
-            triggerFieldRipple,
-        ]
+        [animateChannelTransfer, currentVisId, getFieldLabel, triggerTabRipple, triggerToolbarRipple, triggerFieldRipple]
     );
 
     useEffect(() => {
@@ -498,10 +544,14 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         const defaultDispatch = handler.dispatchMethod;
         const defaultUpdatePresence = handler.updatePresence;
         const defaultClearPresence = handler.clearPresence;
+        const defaultApplyVizEvent = handler.applyVizEvent;
         handler.getAgentState = getAgentState;
         handler.dispatchMethod = dispatchAgentMethod;
         handler.updatePresence = handlePresenceUpdate;
         handler.clearPresence = handlePresenceClear;
+        handler.applyVizEvent = (event) => {
+            vizStore.applyVizEventFromAgent(event);
+        };
         vizStore.setAgentEventEmitter((event) => handler.emitAgentEvent(event));
         return () => {
             if (appRef.current === handler) {
@@ -509,6 +559,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 handler.dispatchMethod = defaultDispatch;
                 handler.updatePresence = defaultUpdatePresence;
                 handler.clearPresence = defaultClearPresence;
+                handler.applyVizEvent = defaultApplyVizEvent;
             }
             vizStore.setAgentEventEmitter(undefined);
         };
@@ -741,12 +792,26 @@ const PresenceOverlay: React.FC<{ entries: IGWPresenceDisplay[] }> = ({ entries 
     const [renderEntries, setRenderEntries] = useState<PresenceRenderEntry[]>([]);
     const root = useContext(ShadowDomContext);
 
-    const queryTargetElement = useCallback((targetId: string): HTMLElement | null => {
-        const rootEl = root.root;
-        if (!rootEl || !targetId) return null;
-        const selectorId = targetId.replace(/"/g, '\\"');
-        return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
-    }, []);
+    const queryTargetElement = useCallback(
+        (targetId: string): HTMLElement | null => {
+            const rootEl = root.root;
+            if (!rootEl || !targetId) return null;
+            const selectorId = targetId.replace(/"/g, '\"');
+            return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
+        },
+        [root]
+    );
+
+    const queryVisTabElement = useCallback(
+        (visId?: string): HTMLElement | null => {
+            if (!visId) return null;
+            const rootEl = root.root;
+            if (!rootEl) return null;
+            const selectorId = visId.replace(/"/g, '\"');
+            return rootEl.querySelector<HTMLElement>(`[data-gw-visual-tab="${selectorId}"]`);
+        },
+        [root]
+    );
 
     const updateRects = useCallback(() => {
         const rootEl = root.root;
@@ -761,7 +826,7 @@ const PresenceOverlay: React.FC<{ entries: IGWPresenceDisplay[] }> = ({ entries 
         }
         const next: PresenceRenderEntry[] = [];
         entries.forEach((entry) => {
-            const targetEl = queryTargetElement(entry.targetId);
+            const targetEl = queryTargetElement(entry.targetId) ?? queryVisTabElement(entry.visId ?? parseAgentTargetId(entry.targetId)?.visId);
             if (!targetEl) return;
             const rects = targetEl.getClientRects();
             if (rects.length === 0) return;
@@ -777,7 +842,7 @@ const PresenceOverlay: React.FC<{ entries: IGWPresenceDisplay[] }> = ({ entries 
             });
         });
         setRenderEntries(next);
-    }, [entries, queryTargetElement]);
+    }, [entries, queryTargetElement, queryVisTabElement]);
 
     useLayoutEffect(() => {
         updateRects();

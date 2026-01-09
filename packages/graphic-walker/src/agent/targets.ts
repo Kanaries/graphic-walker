@@ -2,6 +2,7 @@ import {
     AgentEncodingChannel,
     IGWAgentTargetSummary,
     IAgentTargetDescriptor,
+    AgentTargetKind,
     IMutField,
     DraggableFieldState,
     IViewField,
@@ -11,13 +12,24 @@ import {
 const TARGET_PREFIX = 'gw-target';
 
 const encodePart = (value?: string | number | null) => encodeURIComponent(value ?? '');
+const decodePart = (value: string | undefined) => decodeURIComponent(value ?? '');
+
+export type ParsedAgentTargetId = {
+    instanceId?: string;
+    kind?: AgentTargetKind;
+    visId?: string;
+    channel?: AgentEncodingChannel;
+    index?: number;
+    fid?: string;
+    role?: IMutField['analyticType'];
+    actionKey?: string;
+};
 
 export const composeAgentTargetId = (descriptor: IAgentTargetDescriptor) => {
     const parts = [
         TARGET_PREFIX,
-        descriptor.instanceId,
-        descriptor.kind,
         descriptor.visId ?? '',
+        descriptor.kind,
         descriptor.channel ?? '',
         descriptor.index ?? '',
         descriptor.fid ?? '',
@@ -27,8 +39,8 @@ export const composeAgentTargetId = (descriptor: IAgentTargetDescriptor) => {
     return parts.map((part) => encodePart(part as string)).join(':');
 };
 
-export const buildDatasetFieldTargetId = (instanceId: string, fid: string, role: IMutField['analyticType']) =>
-    composeAgentTargetId({ instanceId, kind: 'dataset-field', fid, role });
+export const buildDatasetFieldTargetId = (instanceId: string, visId: string, fid: string, role: IMutField['analyticType']) =>
+    composeAgentTargetId({ instanceId, visId, kind: 'dataset-field', fid, role });
 
 export const buildEncodingFieldTargetId = (
     instanceId: string,
@@ -60,8 +72,31 @@ export const registerToolbarActionKey = (actionKey: string | string[]) => {
 
 const getToolbarActionKeys = () => Array.from(TOOLBAR_ACTION_KEYS);
 
-export const buildToolbarActionTargetId = (instanceId: string, actionKey: ToolbarActionKey) =>
-    composeAgentTargetId({ instanceId, kind: 'toolbar-action', actionKey });
+export const buildToolbarActionTargetId = (instanceId: string, visId: string, actionKey: ToolbarActionKey) =>
+    composeAgentTargetId({ instanceId, visId, kind: 'toolbar-action', actionKey });
+
+export const parseAgentTargetId = (targetId: string): ParsedAgentTargetId | null => {
+    if (!targetId) {
+        return null;
+    }
+    const parts = targetId.split(':');
+    if (!parts.length) {
+        return null;
+    }
+    const [prefix, visId, kind, channel, index, fid, role, actionKey] = parts.map((part) => decodePart(part));
+    if (prefix !== TARGET_PREFIX) {
+        return null;
+    }
+    return {
+        kind: (kind as AgentTargetKind) || undefined,
+        visId: visId || undefined,
+        channel: (channel as AgentEncodingChannel) || undefined,
+        index: index ? Number(index) : undefined,
+        fid: fid || undefined,
+        role: (role as IMutField['analyticType']) || undefined,
+        actionKey: actionKey || undefined,
+    };
+};
 
 export const collectAgentTargets = (options: {
     instanceId: string;
@@ -85,7 +120,7 @@ export const collectAgentTargets = (options: {
 
     datasetFieldMap.forEach((field) => {
         targets.push({
-            id: buildDatasetFieldTargetId(instanceId, field.fid, field.analyticType),
+            id: buildDatasetFieldTargetId(instanceId, visId, field.fid, field.analyticType),
             kind: 'dataset-field',
             label: field.name ?? field.fid,
             fid: field.fid,
@@ -146,7 +181,7 @@ export const collectAgentTargets = (options: {
 
     getToolbarActionKeys().forEach((actionKey) => {
         targets.push({
-            id: buildToolbarActionTargetId(instanceId, actionKey),
+            id: buildToolbarActionTargetId(instanceId, visId, actionKey),
             kind: 'toolbar-action',
             label: actionKey,
             actionKey,

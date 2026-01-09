@@ -18,11 +18,12 @@ const DimFields: React.FC = (props) => {
     const menuActions = useMenuActions('dimensions');
     const emitHover = useHoverEmitter();
     const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
     return (
         <div className="relative touch-none" data-gw-channel-container="dimensions">
             {dimensions.map((f, index) => (
                 (() => {
-                    const targetId = buildDatasetFieldTargetId(instanceId, f.fid, f.analyticType);
+                    const targetId = buildDatasetFieldTargetId(instanceId, visId, f.fid, f.analyticType);
                     const meta = { fid: f.fid, name: f.name, channel: 'dataset:dimensions', index };
                     return (
                         <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>

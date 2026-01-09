@@ -1,5 +1,5 @@
 import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject } from "react";
-import type { AgentEvent, AgentMethodResult, IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
+import type { AgentEvent, AgentMethodResult, AgentVizEvent, IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
 
@@ -51,6 +51,8 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
         };
         const dispatchMethod: IGWHandler['dispatchMethod'] = async () => notReadyResult;
 
+        const noopVizEvent: IGWHandler['applyVizEvent'] = (_event: AgentVizEvent) => {};
+
         return {
             get renderStatus() {
                 return renderStatus;
@@ -95,6 +97,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
             updatePresence: () => {},
             clearPresence: () => {},
             emitAgentEvent,
+            applyVizEvent: noopVizEvent,
         };
     }, []);
 

@@ -18,6 +18,11 @@ const formatEventLabel = (event: AgentEvent, lookup: Map<string, IGWAgentTargetS
         const label = lookup.get(event.targetId)?.label ?? event.targetId;
         return `${event.action === 'enter' ? 'Entered' : 'Left'} ${label} (${event.targetKind})`;
     }
+    if (event.type === 'viz') {
+        const label = event.name || event.visId;
+        const action = event.action === 'select' ? 'Selected' : event.action === 'remove' ? 'Removed' : 'Added';
+        return `${action} viz ${label}`;
+    }
     const prefix = event.status === 'success' ? '✓' : '⚠️';
     return `${prefix} ${event.method} via ${event.source}${event.status === 'error' ? ` · ${event.error?.message ?? 'Unknown error'}` : ''}`;
 };

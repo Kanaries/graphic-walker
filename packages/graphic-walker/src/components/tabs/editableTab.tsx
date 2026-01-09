@@ -16,6 +16,7 @@ export interface ITabOption {
     label: string;
     key: string;
     editable?: boolean;
+    dataAttrs?: Record<string, string>;
 }
 interface EditableTabsProps {
     tabs: ITabOption[];
@@ -174,6 +175,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                 onSelected(tab.key, tabIndex);
                             }}
                             key={tab.key}
+                            {...(tab.dataAttrs ?? {})}
                             className={classNames(
                                 tab.key === selectedKey ? 'border' : 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
                                 'flex whitespace-nowrap rounded-t group py-1 px-2 pr-2 text-sm cursor-default'

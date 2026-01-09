@@ -18,13 +18,14 @@ const MeaFields: React.FC = (props) => {
     const { measures } = vizStore;
     const emitHover = useHoverEmitter();
     const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
 
     const menuActions = useMenuActions('measures');
 
     return (
         <div className='relative touch-none' data-gw-channel-container='measures'>
             {measures.map((f, index) => {
-                const targetId = buildDatasetFieldTargetId(instanceId, f.fid, f.analyticType);
+                const targetId = buildDatasetFieldTargetId(instanceId, visId, f.fid, f.analyticType);
                 const meta = { fid: f.fid, name: f.name, channel: 'dataset:measures', index };
                 return (
                     <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>

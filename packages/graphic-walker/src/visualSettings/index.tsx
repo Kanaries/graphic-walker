@@ -67,6 +67,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
     const vizStore = useVizStore();
     const { config, layout, canUndo, canRedo, limit, paintInfo } = vizStore;
     const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -116,7 +117,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
         const createToolbarAgentTarget = (actionKey: ToolbarActionKey) => {
             registerToolbarActionKey(actionKey);
             return {
-                id: buildToolbarActionTargetId(instanceId, actionKey),
+                id: buildToolbarActionTargetId(instanceId, visId, actionKey),
                 kind: 'toolbar-action' as const,
                 meta: { actionKey },
             };
@@ -713,6 +714,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
         experimentalFeatures,
         paintInfo,
         instanceId,
+        visId,
     ]);
 
     return <Toolbar items={items} />;

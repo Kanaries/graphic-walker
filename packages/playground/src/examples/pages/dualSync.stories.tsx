@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import type { AgentMethodRequest, IGWAgentState, IGWAgentTargetSummary, IGWHandler } from '@kanaries/graphic-walker';
-import { GraphicWalker } from '@kanaries/graphic-walker';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { AgentMethodRequest, AgentVizEvent, IGWHandler, IChart } from '@kanaries/graphic-walker';
+import { GraphicWalker, createChartFromFields } from '@kanaries/graphic-walker';
 import { IDataSource, useFetch } from '../util';
 import { useTheme } from '../context';
 
@@ -17,90 +17,82 @@ const PRESENCE_PROFILES: Record<'alpha' | 'beta', PresenceProfile> = {
     beta: { userId: 'sync-beta', displayName: 'Explorer Beta', color: '#6366f1' },
 };
 
-type TargetDirection = 'aToB' | 'bToA';
+const PRESENCE_TTL = 30_000;
 
-const fingerprintTarget = (target: IGWAgentTargetSummary) =>
-    [
-        target.kind,
-        target.channel ?? '-',
-        target.index ?? '-',
-        target.fid ?? '-',
-        target.actionKey ?? '-',
-        target.role ?? '-',
-        target.label,
-    ].join('|');
-
-const createTargetMap = (from: IGWAgentState, to: IGWAgentState) => {
-    const toFingerprints = new Map<string, string>();
-    to.targets.forEach((target) => {
-        toFingerprints.set(fingerprintTarget(target), target.id);
-    });
-    const mapping = new Map<string, string>();
-    from.targets.forEach((target) => {
-        const candidate = toFingerprints.get(fingerprintTarget(target));
-        if (candidate) {
-            mapping.set(target.id, candidate);
-        }
-    });
-    return mapping;
-};
 
 export default function DualSyncDemo() {
     const { theme } = useTheme();
     const { dataSource, fields } = useFetch<IDataSource>(DATASET_URL);
     const primaryRef = useRef<IGWHandler | null>(null);
     const secondaryRef = useRef<IGWHandler | null>(null);
+    const [sharedCharts, setSharedCharts] = useState<IChart[] | null>(null);
+    const sharedVisSeed = useMemo(() => `dual-sync-chart-${Math.random().toString(36).slice(2, 8)}`, []);
+    const initializedRef = useRef(false);
     const [status, setStatus] = useState('Waiting for both canvases to mount...');
     const [lastAction, setLastAction] = useState('No mirrored action yet');
     const [lastCursor, setLastCursor] = useState('No remote cursor yet');
+
+    useEffect(() => {
+        if (initializedRef.current) return;
+        if (!fields?.length) return;
+        const baseChart = createChartFromFields(fields, { name: 'Shared Chart 1', visId: sharedVisSeed });
+        const payload = [baseChart];
+        setSharedCharts(payload);
+        initializedRef.current = true;
+    }, [fields, sharedVisSeed]);
 
     useEffect(() => {
         let disposed = false;
         let raf: number | null = null;
         let bound = false;
         const disposers: Array<() => void> = [];
-        let targetIdMaps: Record<TargetDirection, Map<string, string>> = {
-            aToB: new Map(),
-            bToA: new Map(),
-        };
 
-        const refreshTargetMaps = () => {
-            const a = primaryRef.current;
-            const b = secondaryRef.current;
-            if (!a || !b) return;
-            try {
-                const left = a.getAgentState();
-                const right = b.getAgentState();
-                targetIdMaps = {
-                    aToB: createTargetMap(left, right),
-                    bToA: createTargetMap(right, left),
-                };
-            } catch (error) {
-                console.warn('Failed to refresh target maps', error);
-            }
-        };
+        const bindPair = (source: IGWHandler, target: IGWHandler, profile: PresenceProfile, originLabel: string) => {
+            let expiryTimer: number | null = null;
 
-        const bindPair = (source: IGWHandler, target: IGWHandler, profile: PresenceProfile, originLabel: string, direction: TargetDirection) =>
-            source.onAgentEvent((event) => {
+            const resetPresenceExpiry = () => {
+                if (expiryTimer !== null) {
+                    window.clearTimeout(expiryTimer);
+                }
+                expiryTimer = window.setTimeout(() => {
+                    target.clearPresence(profile.userId);
+                    expiryTimer = null;
+                    setLastCursor('No remote cursor yet');
+                }, PRESENCE_TTL);
+            };
+            const describeVizEvent = (event: AgentVizEvent) => {
+                switch (event.action) {
+                    case 'add':
+                        return 'created a new chart';
+                    case 'duplicate':
+                        return 'duplicated a chart';
+                    case 'remove':
+                        return 'removed a chart';
+                    case 'select':
+                        return 'switched charts';
+                    default:
+                        return 'updated charts';
+                }
+            };
+
+            const dispose = source.onAgentEvent((event) => {
+                if (event.type === 'viz') {
+                    target.applyVizEvent(event);
+                    setLastAction(`${originLabel} ${describeVizEvent(event)}`);
+                    return;
+                }
+
                 if (event.type === 'hover') {
-                    const map = targetIdMaps[direction];
                     if (event.action === 'enter') {
-                        const mirroredTargetId = map.get(event.targetId);
-                        if (!mirroredTargetId) {
-                            refreshTargetMaps();
-                            return;
-                        }
                         target.updatePresence({
                             userId: profile.userId,
                             displayName: profile.displayName,
                             color: profile.color,
-                            targetId: mirroredTargetId,
+                            targetId: event.targetId,
                         });
                         setLastCursor(`${originLabel} cursor on ${event.targetKind} (${event.targetId})`);
-                    } else {
-                        target.clearPresence(profile.userId);
-                        setLastCursor('No remote cursor yet');
                     }
+                    resetPresenceExpiry();
                     return;
                 }
 
@@ -108,6 +100,7 @@ export default function DualSyncDemo() {
                     const request = {
                         method: event.method,
                         args: event.args as AgentMethodRequest['args'],
+                        targetVisId: event.visId,
                     } as AgentMethodRequest;
 
                     void target
@@ -115,7 +108,6 @@ export default function DualSyncDemo() {
                         .then((result) => {
                             if (result.success) {
                                 setLastAction(`${originLabel} ran ${event.method}`);
-                                refreshTargetMaps();
                             }
                         })
                         .catch((error) => {
@@ -124,6 +116,15 @@ export default function DualSyncDemo() {
                 }
             });
 
+            return () => {
+                if (expiryTimer !== null) {
+                    window.clearTimeout(expiryTimer);
+                    expiryTimer = null;
+                }
+                dispose();
+            };
+        };
+
         const ensureHandlers = () => {
             if (disposed || bound) return;
             const left = primaryRef.current;
@@ -131,9 +132,8 @@ export default function DualSyncDemo() {
 
             if (left && right) {
                 bound = true;
-                refreshTargetMaps();
-                disposers.push(bindPair(left, right, PRESENCE_PROFILES.alpha, 'Workspace A', 'aToB'));
-                disposers.push(bindPair(right, left, PRESENCE_PROFILES.beta, 'Workspace B', 'bToA'));
+                disposers.push(bindPair(left, right, PRESENCE_PROFILES.alpha, 'Workspace A'));
+                disposers.push(bindPair(right, left, PRESENCE_PROFILES.beta, 'Workspace B'));
                 setStatus('Live sync active. Hover or edit either panel to mirror it in the other.');
                 return;
             }
@@ -159,8 +159,8 @@ export default function DualSyncDemo() {
             <section className="rounded-xl border border-gray-200 bg-white/70 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/40">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dual GraphicWalker sync</h3>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                    This demo mounts two GraphicWalker instances that share hover presence highlights and mirror VisSpec method calls. Drag fields, toggle marks, or
-                    apply filters in either panel to see the other side update automatically.
+                    This demo mounts two GraphicWalker instances that share hover presence highlights and mirror VisSpec method calls. Drag fields, toggle
+                    marks, or apply filters in either panel to see the other side update automatically.
                 </p>
                 <div className="mt-4 grid gap-4 text-sm sm:grid-cols-3">
                     <div className="rounded-lg border border-gray-200 bg-white/60 p-3 text-gray-900 shadow-sm dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-100">
@@ -187,7 +187,14 @@ export default function DualSyncDemo() {
                         </div>
                     </header>
                     <div className="mt-3 h-[60vh] min-h-[360px] rounded-lg border border-dashed border-gray-300 bg-white/60 p-2 dark:border-gray-700 dark:bg-gray-900/60">
-                        <GraphicWalker ref={primaryRef} data={dataSource} fields={fields} appearance={theme} vizThemeConfig="g2" />
+                        <GraphicWalker
+                            ref={primaryRef}
+                            data={dataSource}
+                            fields={fields}
+                            chart={sharedCharts ?? undefined}
+                            appearance={theme}
+                            vizThemeConfig="g2"
+                        />
                     </div>
                 </article>
 
@@ -199,7 +206,14 @@ export default function DualSyncDemo() {
                         </div>
                     </header>
                     <div className="mt-3 h-[60vh] min-h-[360px] rounded-lg border border-dashed border-gray-300 bg-white/60 p-2 dark:border-gray-700 dark:bg-gray-900/60">
-                        <GraphicWalker ref={secondaryRef} data={dataSource} fields={fields} appearance={theme} vizThemeConfig="g2" />
+                        <GraphicWalker
+                            ref={secondaryRef}
+                            data={dataSource}
+                            fields={fields}
+                            chart={sharedCharts ?? undefined}
+                            appearance={theme}
+                            vizThemeConfig="g2"
+                        />
                     </div>
                 </article>
             </section>

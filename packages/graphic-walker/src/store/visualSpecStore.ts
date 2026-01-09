@@ -47,6 +47,7 @@ import {
     AgentMethodResult,
     AgentMethodError,
     IGWAgentState,
+    AgentVizEvent,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
@@ -65,6 +66,7 @@ import { collectAgentTargets } from '../agent/targets';
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 
 const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(disposer => disposer())) as FinalizationRegistry<() => void> | null;
+const cloneChart = (chart: IChart): IChart => JSON.parse(JSON.stringify(chart));
 
 type MethodKey = Extract<keyof typeof Methods, string>;
 type MethodExecutionResult = { success: true } | { success: false; error: AgentMethodError; originalError: unknown };
@@ -174,12 +176,14 @@ export class VizSpecStore {
     ): MethodExecutionResult {
         try {
             this.visList[targetIndex] = (performers as any)[method](this.visList[targetIndex], ...(args as unknown[]));
+            const visId = this.visList[targetIndex]?.now.visId;
             this.emitAgentEvent({
                 type: 'method',
                 method,
                 args,
                 source,
                 status: 'success',
+                visId,
             });
             return { success: true };
         } catch (err) {
@@ -191,6 +195,7 @@ export class VizSpecStore {
                 source,
                 status: 'error',
                 error: normalized,
+                visId: this.visList[targetIndex]?.now.visId,
             });
             return { success: false, error: normalized, originalError: err };
         }
@@ -226,8 +231,22 @@ export class VizSpecStore {
         };
     }
 
-    applyMethodFromAgent<K extends MethodKey>(method: K, args: PropsMap[(typeof Methods)[K]]): AgentMethodResult {
-        const result = this.runMethod(method, args, 'api', this.visIndex);
+    applyMethodFromAgent<K extends MethodKey>(method: K, args: PropsMap[(typeof Methods)[K]], targetVisId?: string): AgentMethodResult {
+        let targetIndex = this.visIndex;
+        if (targetVisId) {
+            const matchIndex = this.visList.findIndex((chart) => chart.now.visId === targetVisId);
+            if (matchIndex === -1) {
+                return {
+                    success: false,
+                    error: {
+                        code: 'ERR_EXECUTION_FAILED',
+                        message: `Visualization ${targetVisId} not found`,
+                    },
+                };
+            }
+            targetIndex = matchIndex;
+        }
+        const result = this.runMethod(method, args, 'api', targetIndex);
         if (result.success) {
             return {
                 success: true,
@@ -238,6 +257,61 @@ export class VizSpecStore {
             success: false,
             error: result.error,
         };
+    }
+
+    applyVizEventFromAgent(event: AgentVizEvent) {
+        if (!this.visList.length) {
+            return;
+        }
+        const currentVisId = this.visList[this.visIndex]?.now.visId;
+        const restoreCurrentVisIndex = () => {
+            if (!currentVisId) {
+                return;
+            }
+            const idx = this.visList.findIndex((chart) => chart.now.visId === currentVisId);
+            if (idx >= 0) {
+                this.visIndex = idx;
+            }
+        };
+        switch (event.action) {
+            case 'add':
+            case 'duplicate': {
+                if (!event.chart) return;
+                const snapshot = fromSnapshot(event.chart);
+                const existingIndex = this.visList.findIndex((chart) => chart.now.visId === event.visId);
+                if (existingIndex >= 0) {
+                    this.visList[existingIndex] = snapshot;
+                } else {
+                    const insertIndex = event.index !== undefined ? Math.max(0, Math.min(event.index, this.visList.length)) : this.visList.length;
+                    this.visList.splice(insertIndex, 0, snapshot);
+                    if (insertIndex <= this.visIndex && event.visId !== currentVisId) {
+                        restoreCurrentVisIndex();
+                    }
+                }
+                this.createdVis = Math.max(this.createdVis, this.visList.length);
+                break;
+            }
+            case 'remove': {
+                const removeIndex = this.visList.findIndex((chart) => chart.now.visId === event.visId);
+                if (removeIndex === -1 || this.visList.length <= 1) {
+                    return;
+                }
+                this.visList.splice(removeIndex, 1);
+                if (event.visId === currentVisId) {
+                    this.visIndex = Math.min(removeIndex, this.visList.length - 1);
+                } else if (removeIndex < this.visIndex) {
+                    restoreCurrentVisIndex();
+                } else if (this.visIndex >= this.visList.length) {
+                    this.visIndex = Math.max(0, this.visList.length - 1);
+                }
+                break;
+            }
+            case 'select': {
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     get visLength() {
@@ -517,24 +591,54 @@ export class VizSpecStore {
         this.visList.push(fromFields(this.meta, name, this.defaultConfig));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        const chart = cloneChart(this.visList[this.visIndex].now);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'add',
+            visId: chart.visId,
+            name: chart.name,
+            index: this.visIndex,
+            chart,
+            source: 'ui',
+        });
     }
 
     removeVisualization(index: number) {
         if (this.visLength === 1) return;
+        const removed = this.visList[index]?.now;
         if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
         this.visList.splice(index, 1);
+        if (removed) {
+            this.emitAgentEvent({
+                type: 'viz',
+                action: 'remove',
+                visId: removed.visId,
+                index,
+                name: removed.name,
+                source: 'ui',
+            });
+        }
     }
 
     duplicateVisualization(index: number) {
-        this.visList.push(
-            fromSnapshot({
-                ...this.visList[index].now,
-                name: this.visList[index].now.name + ' Copy',
-                visId: uniqueId(),
-            })
-        );
+        const duplicate = {
+            ...this.visList[index].now,
+            name: (this.visList[index].now.name ?? 'Chart') + ' Copy',
+            visId: uniqueId(),
+        } as IChart;
+        this.visList.push(fromSnapshot(duplicate));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        const chart = cloneChart(this.visList[this.visIndex].now);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'duplicate',
+            visId: chart.visId,
+            name: chart.name,
+            index: this.visIndex,
+            chart,
+            source: 'ui',
+        });
     }
 
     setFilterEditing(index: number) {
@@ -735,6 +839,17 @@ export class VizSpecStore {
 
     selectVisualization(index: number) {
         this.visIndex = index;
+        const chart = this.visList[index]?.now;
+        if (chart) {
+            this.emitAgentEvent({
+                type: 'viz',
+                action: 'select',
+                visId: chart.visId,
+                name: chart.name,
+                index,
+                source: 'ui',
+            });
+        }
     }
 
     setShowDataConfig(show: boolean) {

@@ -541,13 +541,7 @@ export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
 
 export type AgentEventSource = 'ui' | 'api';
 
-export type AgentTargetKind =
-    | 'dataset-field'
-    | 'encoding-field'
-    | 'encoding-channel'
-    | 'filter-field'
-    | 'filter-channel'
-    | 'toolbar-action';
+export type AgentTargetKind = 'dataset-field' | 'encoding-field' | 'encoding-channel' | 'filter-field' | 'filter-channel' | 'toolbar-action';
 
 export type AgentEncodingChannel = keyof Omit<DraggableFieldState, 'filters'>;
 
@@ -591,6 +585,7 @@ export type AgentMethodName = Extract<keyof typeof Methods, string>;
 export type AgentMethodRequest<K extends AgentMethodName = AgentMethodName> = {
     method: K;
     args: PropsMap[(typeof Methods)[K]];
+    targetVisId?: string;
 };
 
 export type AgentMethodErrorCode = 'ERR_AGENT_NOT_READY' | 'ERR_UNKNOWN_METHOD' | 'ERR_EXECUTION_FAILED';
@@ -626,7 +621,19 @@ export type AgentEvent =
           source: AgentEventSource;
           status: 'success' | 'error';
           error?: AgentMethodError;
+          visId?: string;
+      }
+    | {
+          type: 'viz';
+          action: 'add' | 'remove' | 'duplicate' | 'select';
+          visId: string;
+          index: number;
+          name?: string;
+          chart?: IChart;
+          source: AgentEventSource;
       };
+
+export type AgentVizEvent = Extract<AgentEvent, { type: 'viz' }>;
 
 export type AgentEventHandler = (event: AgentEvent) => void;
 
@@ -635,6 +642,7 @@ export interface IGWPresenceDisplay {
     displayName: string;
     color?: string;
     targetId: string;
+    visId?: string;
 }
 
 export interface IGWHandler {
@@ -700,6 +708,10 @@ export interface IGWHandler {
      * Clears collaborative cursor highlight(s).
      */
     clearPresence: (userId?: string) => void;
+    /**
+     * Applies a visualization-level change (add/remove/select/duplicate) via an agent event payload.
+     */
+    applyVizEvent: (event: AgentVizEvent) => void;
 }
 
 export interface IGWHandlerInsider extends IGWHandler {
