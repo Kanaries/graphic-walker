@@ -61,6 +61,7 @@ const AestheticFields: React.FC = (props) => {
                             key={dkey.id}
                             style={{ position: 'relative' }}
                             agentTargetId={targetId}
+                            channelName={dkey.id}
                             onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
                             onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
                         >
@@ -76,6 +77,7 @@ const AestheticFields: React.FC = (props) => {
                             key={dkey.id}
                             style={{ position: 'relative' }}
                             agentTargetId={targetId}
+                            channelName={dkey.id}
                             onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
                             onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
                         >

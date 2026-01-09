@@ -22,7 +22,7 @@ const MeaFields: React.FC = (props) => {
     const menuActions = useMenuActions('measures');
 
     return (
-        <div className='relative touch-none'>
+        <div className='relative touch-none' data-gw-channel-container='measures'>
             {measures.map((f, index) => {
                 const targetId = buildDatasetFieldTargetId(instanceId, f.fid, f.analyticType);
                 const meta = { fid: f.fid, name: f.name, channel: 'dataset:measures', index };

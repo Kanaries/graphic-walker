@@ -8,6 +8,7 @@ export const FieldListContainer: React.FC<{
     style?: Omit<CSSProperties, 'translate'>;
     children?: React.ReactNode | Iterable<React.ReactNode>;
     agentTargetId?: string;
+    channelName?: string;
     onPointerEnter?: () => void;
     onPointerLeave?: () => void;
 }> = (props) => {
@@ -18,6 +19,7 @@ export const FieldListContainer: React.FC<{
             className="sm:ml-0.5 my-0.5 border relative"
             style={props.style}
             data-gw-target={props.agentTargetId}
+            data-gw-channel-container={props.channelName}
             onPointerEnter={props.onPointerEnter}
             onPointerLeave={props.onPointerLeave}
         >
@@ -34,6 +36,7 @@ export const AestheticFieldContainer: React.FC<{
     style?: CSSProperties;
     children?: React.ReactNode | Iterable<React.ReactNode>;
     agentTargetId?: string;
+    channelName?: string;
     onPointerEnter?: () => void;
     onPointerLeave?: () => void;
 }> = (props) => {
@@ -44,6 +47,7 @@ export const AestheticFieldContainer: React.FC<{
             className="my-0.5 sm:mx-0.5 text-xs border"
             style={props.style}
             data-gw-target={props.agentTargetId}
+            data-gw-channel-container={props.channelName}
             onPointerEnter={props.onPointerEnter}
             onPointerLeave={props.onPointerLeave}
         >

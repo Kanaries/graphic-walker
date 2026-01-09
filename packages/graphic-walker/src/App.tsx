@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useCallback, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState, useLayoutEffect, useContext } from 'react';
+import { animate } from 'animejs';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import {
@@ -58,6 +59,7 @@ import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
+import { ShadowDomContext } from './shadow-dom';
 
 const CLONE_FIELD_SOURCE_CHANNELS = ['dimensions', 'measures'] as const;
 const CLONE_FIELD_DEST_CHANNELS = [
@@ -79,6 +81,8 @@ const CLONE_FIELD_DEST_CHANNELS = [
 const CLONE_FIELD_SOURCE_SET = new Set<string>(CLONE_FIELD_SOURCE_CHANNELS);
 const CLONE_FIELD_DEST_SET = new Set<string>(CLONE_FIELD_DEST_CHANNELS);
 type CloneFieldArgs = PropsMap[(typeof Methods)['cloneField']];
+type MoveFieldArgs = PropsMap[(typeof Methods)['moveField']];
+type ChannelTransfer = { from: string; to: string; sourceIndex: number };
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -127,11 +131,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const vizStore = useVizStore();
     const appRef = useAppRootContext();
     const [presenceEntries, setPresenceEntries] = useState<IGWPresenceDisplay[]>([]);
-    const rootRef = useRef<HTMLDivElement | null>(null);
+    const root = useContext(ShadowDomContext);
 
     const getAgentState = useCallback(() => {
         const snapshot = vizStore.getAgentStateSnapshot();
-        const rootEl = rootRef.current;
+        const rootEl = root.root;
         if (!rootEl) {
             return snapshot;
         }
@@ -169,15 +173,145 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         return null;
     }, []);
 
+    const extractTransferChannels = useCallback((request: AgentMethodRequest): ChannelTransfer | null => {
+        if (request.method === 'moveField') {
+            const [fromChannel, fromIndex, toChannel] = request.args as MoveFieldArgs;
+            if (fromChannel && toChannel && fromChannel !== toChannel && typeof fromIndex === 'number') {
+                return { from: String(fromChannel), to: String(toChannel), sourceIndex: fromIndex };
+            }
+        }
+        if (request.method === 'cloneField') {
+            const [fromChannel, fromIndex, toChannel] = request.args as CloneFieldArgs;
+            if (fromChannel && toChannel && fromChannel !== toChannel && typeof fromIndex === 'number') {
+                return { from: String(fromChannel), to: String(toChannel), sourceIndex: fromIndex };
+            }
+        }
+        return null;
+    }, []);
+
+    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
+
+    const animateChannelTransfer = useCallback(
+        (fromChannel: string, toChannel: string, labelText: string) => {
+            const rootEl = root.root;
+            if (!rootEl || !fromChannel || !toChannel || fromChannel === toChannel) {
+                return;
+            }
+            const run = () => {
+                const sourceEl = rootEl.querySelector<HTMLElement>(`[data-gw-channel-container="${fromChannel}"]`);
+                const targetEl = rootEl.querySelector<HTMLElement>(`[data-gw-channel-container="${toChannel}"]`);
+                if (!sourceEl || !targetEl || !portal) {
+                    return;
+                }
+                const rootRect = rootEl.querySelector('[data-gw-instance]')?.getBoundingClientRect();
+                if (!rootRect) {
+                    return;
+                }
+                const computeAnchor = (channelKey: string, rect: DOMRect) => {
+                    const key = channelKey.toLowerCase();
+                    if (key === 'rows' || key === 'columns') {
+                        return {
+                            x: rect.left + 120 - rootRect.left,
+                            y: rect.top + rect.height / 2 - rootRect.top,
+                        };
+                    }
+                    if (key === 'dimensions' || key === 'measures') {
+                        return {
+                            x: rect.left + rect.width / 2 - rootRect.left,
+                            y: rect.top + rect.height / 2 - rootRect.top,
+                        };
+                    }
+                    return {
+                        x: rect.left + rect.width / 2 - rootRect.left,
+                        y: rect.top + 50 - rootRect.top,
+                    };
+                };
+                const sourceRect = sourceEl.getBoundingClientRect();
+                const targetRect = targetEl.getBoundingClientRect();
+                const sourceAnchor = computeAnchor(fromChannel, sourceRect);
+                const targetAnchor = computeAnchor(toChannel, targetRect);
+                const indicator = document.createElement('div');
+                indicator.className = 'gw-channel-transfer-indicator pointer-events-none';
+                indicator.style.position = 'absolute';
+                indicator.style.left = '0px';
+                indicator.style.top = '0px';
+                indicator.style.padding = '2px 10px';
+                indicator.style.borderRadius = '9999px';
+                indicator.style.color = 'hsl(var(--foreground))';
+                indicator.style.background = 'hsl(var(--background))';
+                indicator.style.borderWidth = '1px';
+                indicator.style.borderColor = 'hsl(var(--border))';
+                indicator.style.fontSize = '11px';
+                indicator.style.fontWeight = '600';
+                indicator.style.letterSpacing = '0.02em';
+                indicator.style.display = 'inline-flex';
+                indicator.style.alignItems = 'center';
+                indicator.style.justifyContent = 'center';
+                indicator.style.textTransform = 'uppercase';
+                indicator.style.zIndex = '60';
+                indicator.style.opacity = '0.95';
+                indicator.textContent = labelText;
+                portal.appendChild(indicator);
+                const indicatorRect = indicator.getBoundingClientRect();
+                const indicatorHalfWidth = indicatorRect.width / 2;
+                const indicatorHalfHeight = indicatorRect.height / 2;
+                const startX = sourceAnchor.x - indicatorHalfWidth;
+                const startY = sourceAnchor.y - indicatorHalfHeight;
+                const endX = targetAnchor.x - indicatorHalfWidth;
+                const endY = targetAnchor.y - indicatorHalfHeight;
+                animate(indicator, {
+                    keyframes: [
+                        {
+                            translateX: startX,
+                            translateY: startY,
+                            scale: 0.9,
+                            opacity: 0.95,
+                            duration: 1,
+                        },
+                        {
+                            translateX: endX,
+                            translateY: endY,
+                            scale: 1.08,
+                            duration: 620,
+                            easing: 'easeInOutCubic',
+                        },
+                        {
+                            opacity: 0,
+                            scale: 1,
+                            duration: 200,
+                            easing: 'easeInQuad',
+                        },
+                    ],
+                    onComplete: () => {
+                        indicator.remove();
+                    },
+                });
+            };
+            requestAnimationFrame(run);
+        },
+        [portal]
+    );
+
     const dispatchAgentMethod = useCallback(
         async (request: AgentMethodRequest): Promise<AgentMethodResult> => {
             const validationError = validateAgentMethod(request);
             if (validationError) {
                 return { success: false, error: validationError };
             }
-            return vizStore.applyMethodFromAgent(request.method, request.args);
+            const transferChannels = extractTransferChannels(request);
+            let transferLabel: string | undefined;
+            if (transferChannels) {
+                const encodings = vizStore.currentVis?.encodings ?? {};
+                const field = encodings[transferChannels.from]?.[transferChannels.sourceIndex];
+                transferLabel = field?.name || field?.fid;
+            }
+            const result = await vizStore.applyMethodFromAgent(request.method, request.args);
+            if (result.success && transferChannels) {
+                animateChannelTransfer(transferChannels.from, transferChannels.to, transferLabel || '');
+            }
+            return result;
         },
-        [vizStore, validateAgentMethod]
+        [vizStore, validateAgentMethod, extractTransferChannels, animateChannelTransfer]
     );
 
     const handlePresenceUpdate = useCallback((payload: IGWPresenceDisplay | IGWPresenceDisplay[]) => {
@@ -276,7 +410,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
         [reportError, computation, computationTimeout]
     );
-    const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
         <ErrorContext value={{ reportError }}>
@@ -288,7 +421,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                     portalContainerContext={portal}
                 >
                     <div
-                        ref={rootRef}
                         data-gw-instance={vizStore.instanceID}
                         className={classNames(`App relative font-sans bg-background text-foreground m-0 p-0 w-full h-full`, darkMode === 'dark' ? 'dark' : '')}
                     >
@@ -420,7 +552,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 </Tabs>
                             </div>
                         </FieldsContextWrapper>
-                        <PresenceOverlay rootRef={rootRef} entries={presenceEntries} />
+                        <PresenceOverlay entries={presenceEntries} />
                         <div ref={setPortal} />
                     </div>
                 </VizAppContext>
@@ -433,26 +565,28 @@ type PresenceRenderEntry = IGWPresenceDisplay & {
     rect: { top: number; left: number; width: number; height: number };
 };
 
-const PresenceOverlay: React.FC<{ rootRef: React.RefObject<HTMLDivElement>; entries: IGWPresenceDisplay[] }> = ({ rootRef, entries }) => {
+const PresenceOverlay: React.FC<{ entries: IGWPresenceDisplay[] }> = ({ entries }) => {
     const [renderEntries, setRenderEntries] = useState<PresenceRenderEntry[]>([]);
+    const root = useContext(ShadowDomContext);
 
-    const queryTargetElement = useCallback(
-        (targetId: string): HTMLElement | null => {
-            const rootEl = rootRef.current;
-            if (!rootEl || !targetId) return null;
-            const selectorId = targetId.replace(/"/g, '\\"');
-            return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
-        },
-        [rootRef]
-    );
+    const queryTargetElement = useCallback((targetId: string): HTMLElement | null => {
+        const rootEl = root.root;
+        if (!rootEl || !targetId) return null;
+        const selectorId = targetId.replace(/"/g, '\\"');
+        return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
+    }, []);
 
     const updateRects = useCallback(() => {
-        const rootEl = rootRef.current;
+        const rootEl = root.root;
         if (!rootEl) {
             setRenderEntries([]);
             return;
         }
-        const rootRect = rootEl.getBoundingClientRect();
+        const rootRect = rootEl.querySelector('[data-gw-instance]')?.getBoundingClientRect();
+        if (!rootRect) {
+            setRenderEntries([]);
+            return;
+        }
         const next: PresenceRenderEntry[] = [];
         entries.forEach((entry) => {
             const targetEl = queryTargetElement(entry.targetId);
@@ -471,7 +605,7 @@ const PresenceOverlay: React.FC<{ rootRef: React.RefObject<HTMLDivElement>; entr
             });
         });
         setRenderEntries(next);
-    }, [entries, queryTargetElement, rootRef]);
+    }, [entries, queryTargetElement]);
 
     useLayoutEffect(() => {
         updateRects();

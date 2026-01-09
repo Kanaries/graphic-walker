@@ -41,6 +41,7 @@ const PosFields: React.FC = (props) => {
                         name={dkey.id}
                         key={dkey.id}
                         agentTargetId={targetId}
+                        channelName={dkey.id}
                         onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
                         onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
                     >

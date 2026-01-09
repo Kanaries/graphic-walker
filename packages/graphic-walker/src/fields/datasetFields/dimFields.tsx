@@ -19,7 +19,7 @@ const DimFields: React.FC = (props) => {
     const emitHover = useHoverEmitter();
     const instanceId = vizStore.instanceID;
     return (
-        <div className="relative touch-none">
+        <div className="relative touch-none" data-gw-channel-container="dimensions">
             {dimensions.map((f, index) => (
                 (() => {
                     const targetId = buildDatasetFieldTargetId(instanceId, f.fid, f.analyticType);
