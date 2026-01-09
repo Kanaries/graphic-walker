@@ -46,8 +46,19 @@ export const buildFilterFieldTargetId = (instanceId: string, visId: string, inde
 
 export const buildFilterChannelTargetId = (instanceId: string, visId: string) => composeAgentTargetId({ instanceId, kind: 'filter-channel', visId });
 
-export const TOOLBAR_ACTION_KEYS = ['transpose', 'sort:asc', 'sort:dec'] as const;
-export type ToolbarActionKey = (typeof TOOLBAR_ACTION_KEYS)[number];
+const TOOLBAR_ACTION_KEYS = new Set<string>(['transpose', 'sort:asc', 'sort:dec']);
+export type ToolbarActionKey = string;
+
+export const registerToolbarActionKey = (actionKey: string | string[]) => {
+    const keys = Array.isArray(actionKey) ? actionKey : [actionKey];
+    keys.forEach((key) => {
+        if (key) {
+            TOOLBAR_ACTION_KEYS.add(key);
+        }
+    });
+};
+
+const getToolbarActionKeys = () => Array.from(TOOLBAR_ACTION_KEYS);
 
 export const buildToolbarActionTargetId = (instanceId: string, actionKey: ToolbarActionKey) =>
     composeAgentTargetId({ instanceId, kind: 'toolbar-action', actionKey });
@@ -122,7 +133,7 @@ export const collectAgentTargets = (options: {
         });
     });
 
-    TOOLBAR_ACTION_KEYS.forEach((actionKey) => {
+    getToolbarActionKeys().forEach((actionKey) => {
         targets.push({
             id: buildToolbarActionTargetId(instanceId, actionKey),
             kind: 'toolbar-action',

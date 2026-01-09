@@ -39,7 +39,7 @@ import LimitSetting from '../components/limitSetting';
 import { omitRedundantSeparator } from './utils';
 import { Button } from '@/components/ui/button';
 import { classNames } from '@/utils';
-import { buildToolbarActionTargetId } from '../agent/targets';
+import { buildToolbarActionTargetId, registerToolbarActionKey } from '../agent/targets';
 import type { ToolbarActionKey } from '../agent/targets';
 
 interface IVisualSettings {
@@ -113,11 +113,28 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
     );
 
     const items = useMemo<ToolbarItemProps[]>(() => {
-        const createToolbarAgentTarget = (actionKey: ToolbarActionKey) => ({
-            id: buildToolbarActionTargetId(instanceId, actionKey),
-            kind: 'toolbar-action' as const,
-            meta: { actionKey },
-        });
+        const createToolbarAgentTarget = (actionKey: ToolbarActionKey) => {
+            registerToolbarActionKey(actionKey);
+            return {
+                id: buildToolbarActionTargetId(instanceId, actionKey),
+                kind: 'toolbar-action' as const,
+                meta: { actionKey },
+            };
+        };
+
+        const attachAgentTargets = (list: ToolbarItemProps[]): ToolbarItemProps[] =>
+            list.map((item) => {
+                if (item === '-') {
+                    return item;
+                }
+                if (item.agentTarget) {
+                    return item;
+                }
+                return {
+                    ...item,
+                    agentTarget: createToolbarAgentTarget(item.key as ToolbarActionKey),
+                } as ToolbarItemProps;
+            });
         const builtInItems = [
             {
                 key: 'undo',
@@ -666,13 +683,13 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
             },
         ].filter(Boolean) as ToolbarItemProps[];
 
-        const items = omitRedundantSeparator(builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key)));
+        const sanitizedItems = omitRedundantSeparator(builtInItems.filter((item) => typeof item === 'string' || !exclude.includes(item.key)));
 
         switch (vizStore.config.geoms[0]) {
             case 'table':
-                return items;
+                return attachAgentTargets(sanitizedItems);
             default:
-                return items.filter((item) => typeof item === 'string' || item.key !== 'table:summary');
+                return attachAgentTargets(sanitizedItems.filter((item) => typeof item === 'string' || item.key !== 'table:summary'));
         }
     }, [
         vizStore,

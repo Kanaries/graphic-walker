@@ -16,6 +16,11 @@ import {
     IGWPresenceDisplay,
     AgentMethodError,
     AgentMethodResult,
+    DraggableFieldState,
+    IViewField,
+    IFilterField,
+    AgentEvent,
+    AgentEncodingChannel,
 } from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
@@ -60,6 +65,7 @@ import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroico
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
 import { ShadowDomContext } from './shadow-dom';
+import { buildEncodingFieldTargetId, buildFilterFieldTargetId, buildToolbarActionTargetId, type ToolbarActionKey } from './agent/targets';
 
 const CLONE_FIELD_SOURCE_CHANNELS = ['dimensions', 'measures'] as const;
 const CLONE_FIELD_DEST_CHANNELS = [
@@ -82,7 +88,12 @@ const CLONE_FIELD_SOURCE_SET = new Set<string>(CLONE_FIELD_SOURCE_CHANNELS);
 const CLONE_FIELD_DEST_SET = new Set<string>(CLONE_FIELD_DEST_CHANNELS);
 type CloneFieldArgs = PropsMap[(typeof Methods)['cloneField']];
 type MoveFieldArgs = PropsMap[(typeof Methods)['moveField']];
-type ChannelTransfer = { from: string; to: string; sourceIndex: number };
+type AppendFilterArgs = PropsMap[(typeof Methods)['appendFilter']];
+type RemoveFieldArgs = PropsMap[(typeof Methods)['removeField']];
+type SetFieldAggregatorArgs = PropsMap[(typeof Methods)['setFieldAggregator']];
+type ApplySortArgs = PropsMap[(typeof Methods)['applySort']];
+type SetConfigArgs = PropsMap[(typeof Methods)['setConfig']];
+type SetCoordSystemArgs = PropsMap[(typeof Methods)['setCoordSystem']];
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -130,6 +141,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const vizStore = useVizStore();
     const appRef = useAppRootContext();
+    const instanceId = vizStore.instanceID;
+    const currentVisId = vizStore.currentVis.visId;
     const [presenceEntries, setPresenceEntries] = useState<IGWPresenceDisplay[]>([]);
     const root = useContext(ShadowDomContext);
 
@@ -173,23 +186,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         return null;
     }, []);
 
-    const extractTransferChannels = useCallback((request: AgentMethodRequest): ChannelTransfer | null => {
-        if (request.method === 'moveField') {
-            const [fromChannel, fromIndex, toChannel] = request.args as MoveFieldArgs;
-            if (fromChannel && toChannel && fromChannel !== toChannel && typeof fromIndex === 'number') {
-                return { from: String(fromChannel), to: String(toChannel), sourceIndex: fromIndex };
-            }
-        }
-        if (request.method === 'cloneField') {
-            const [fromChannel, fromIndex, toChannel] = request.args as CloneFieldArgs;
-            if (fromChannel && toChannel && fromChannel !== toChannel && typeof fromIndex === 'number') {
-                return { from: String(fromChannel), to: String(toChannel), sourceIndex: fromIndex };
-            }
-        }
-        return null;
-    }, []);
-
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
+    const previousEncodingsRef = useRef<DraggableFieldState>(vizStore.currentVis.encodings);
 
     const animateChannelTransfer = useCallback(
         (fromChannel: string, toChannel: string, labelText: string) => {
@@ -292,27 +290,116 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         [portal]
     );
 
+    const getRootInstanceRect = useCallback(() => {
+        const rootEl = root.root;
+        if (!rootEl) return null;
+        const container = rootEl.querySelector('[data-gw-instance]');
+        return container?.getBoundingClientRect() ?? null;
+    }, [root]);
+
+    const queryAgentTargetElement = useCallback(
+        (targetId: string): HTMLElement | null => {
+            const rootEl = root.root;
+            if (!rootEl || !targetId) return null;
+            const selectorId = targetId.replace(/"/g, '\"');
+            return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
+        },
+        [root]
+    );
+
+    const spawnRectRipple = useCallback(
+        (rect: DOMRect | null, options?: { borderRadius?: number; accentColor?: string; fillColor?: string }) => {
+            if (!portal || !rect) return;
+            const rootRect = getRootInstanceRect();
+            if (!rootRect) return;
+            const accent = options?.accentColor ?? 'hsl(var(--primary))';
+            const fill = options?.fillColor ?? 'hsla(var(--primary), 0.1)';
+            const radius = options?.borderRadius ?? Math.min(rect.width, rect.height) / 2;
+            const ripple = document.createElement('div');
+            ripple.className = 'gw-ripple pointer-events-none';
+            ripple.style.position = 'absolute';
+            ripple.style.left = `${rect.left - rootRect.left}px`;
+            ripple.style.top = `${rect.top - rootRect.top}px`;
+            ripple.style.width = `${rect.width}px`;
+            ripple.style.height = `${rect.height}px`;
+            ripple.style.borderRadius = `${radius}px`;
+            ripple.style.border = `2px solid ${accent}`;
+            ripple.style.background = fill;
+            ripple.style.zIndex = '65';
+            ripple.style.pointerEvents = 'none';
+            ripple.style.transformOrigin = 'center';
+            portal.appendChild(ripple);
+            animate(ripple, {
+                keyframes: [
+                    { scale: 0.85, opacity: 0.55, duration: 1 },
+                    { scale: 1.08, opacity: 0.3, duration: 320, easing: 'easeOutQuad' },
+                    { scale: 1.12, opacity: 0, duration: 210, easing: 'easeInQuad' },
+                ],
+                onComplete: () => {
+                    ripple.remove();
+                },
+            });
+        },
+        [portal, getRootInstanceRect]
+    );
+
+    const getFieldLabel = useCallback((channel: keyof DraggableFieldState, index: number) => {
+        const prevEnc = previousEncodingsRef.current;
+        const fields = prevEnc?.[channel] as (IViewField[] | IFilterField[] | undefined);
+        const field = fields?.[index];
+        return field?.name || field?.fid || 'Field';
+    }, []);
+
+    const triggerToolbarRipple = useCallback(
+        (actionKey: ToolbarActionKey) => {
+            if (!actionKey) return;
+            const targetId = buildToolbarActionTargetId(instanceId, actionKey);
+            requestAnimationFrame(() => {
+                const element = queryAgentTargetElement(targetId);
+                if (!element) return;
+                spawnRectRipple(element.getBoundingClientRect(), { borderRadius: 8 });
+            });
+        },
+        [instanceId, queryAgentTargetElement, spawnRectRipple]
+    );
+
+    const triggerFieldRipple = useCallback(
+        (channel: keyof DraggableFieldState, index: number) => {
+            const prevEnc = previousEncodingsRef.current;
+            const fields = prevEnc?.[channel] as (IViewField[] | IFilterField[] | undefined);
+            const field = fields?.[index] as (IViewField | IFilterField | undefined);
+            requestAnimationFrame(() => {
+                let targetId: string | null = null;
+                if (channel === 'filters') {
+                    targetId = buildFilterFieldTargetId(instanceId, currentVisId, index, field?.fid);
+                } else {
+                    targetId = buildEncodingFieldTargetId(instanceId, currentVisId, channel as AgentEncodingChannel, index, field?.fid);
+                }
+                if (!targetId) return;
+                const element = queryAgentTargetElement(targetId);
+                if (!element) return;
+                const rect = element.getBoundingClientRect();
+                const radius = channel === 'filters' ? 10 : Math.max(rect.height / 2, 10);
+                spawnRectRipple(rect, { borderRadius: radius });
+            });
+        },
+        [instanceId, currentVisId, queryAgentTargetElement, spawnRectRipple]
+    );
+
     const dispatchAgentMethod = useCallback(
         async (request: AgentMethodRequest): Promise<AgentMethodResult> => {
             const validationError = validateAgentMethod(request);
             if (validationError) {
                 return { success: false, error: validationError };
             }
-            const transferChannels = extractTransferChannels(request);
-            let transferLabel: string | undefined;
-            if (transferChannels) {
-                const encodings = vizStore.currentVis?.encodings ?? {};
-                const field = encodings[transferChannels.from]?.[transferChannels.sourceIndex];
-                transferLabel = field?.name || field?.fid;
-            }
-            const result = await vizStore.applyMethodFromAgent(request.method, request.args);
-            if (result.success && transferChannels) {
-                animateChannelTransfer(transferChannels.from, transferChannels.to, transferLabel || '');
-            }
-            return result;
+            return vizStore.applyMethodFromAgent(request.method, request.args);
         },
-        [vizStore, validateAgentMethod, extractTransferChannels, animateChannelTransfer]
+        [vizStore, validateAgentMethod]
     );
+
+    useEffect(() => {
+        previousEncodingsRef.current = vizStore.currentVis.encodings;
+    });
 
     const handlePresenceUpdate = useCallback((payload: IGWPresenceDisplay | IGWPresenceDisplay[]) => {
         setPresenceEntries((prev) => {
@@ -329,6 +416,80 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         }
         setPresenceEntries((prev) => prev.filter((entry) => entry.userId !== userId));
     }, []);
+
+    const handleAgentMethodEvent = useCallback(
+        (event: AgentEvent) => {
+            if (event.type !== 'method' || event.status !== 'success') {
+                return;
+            }
+            switch (event.method) {
+                case 'moveField': {
+                    const [fromChannel, fromIndex, toChannel] = event.args as MoveFieldArgs;
+                    if (fromChannel && toChannel && fromChannel !== toChannel) {
+                        animateChannelTransfer(String(fromChannel), String(toChannel), getFieldLabel(fromChannel as keyof DraggableFieldState, fromIndex));
+                    }
+                    break;
+                }
+                case 'cloneField': {
+                    const [fromChannel, fromIndex, toChannel] = event.args as CloneFieldArgs;
+                    if (fromChannel && toChannel && fromChannel !== toChannel) {
+                        animateChannelTransfer(String(fromChannel), String(toChannel), getFieldLabel(fromChannel as keyof DraggableFieldState, fromIndex));
+                    }
+                    break;
+                }
+                case 'appendFilter': {
+                    const [, sourceChannel, sourceIndex] = event.args as AppendFilterArgs;
+                    if (sourceChannel) {
+                        animateChannelTransfer(String(sourceChannel), 'filters', getFieldLabel(sourceChannel as keyof DraggableFieldState, sourceIndex));
+                    }
+                    break;
+                }
+                case 'transpose': {
+                    triggerToolbarRipple('transpose');
+                    break;
+                }
+                case 'applySort': {
+                    const [direction] = event.args as ApplySortArgs;
+                    if (direction === 'ascending') {
+                        triggerToolbarRipple('sort:asc');
+                    } else if (direction === 'descending') {
+                        triggerToolbarRipple('sort:dec');
+                    }
+                    break;
+                }
+                case 'setConfig': {
+                    const [configKey] = event.args as SetConfigArgs;
+                    if (configKey === 'geoms') {
+                        triggerToolbarRipple('mark_type');
+                    }
+                    break;
+                }
+                case 'setCoordSystem': {
+                    const [_mode] = event.args as SetCoordSystemArgs;
+                    triggerToolbarRipple('coord_system');
+                    break;
+                }
+                case 'setFieldAggregator': {
+                    const [channel, index] = event.args as SetFieldAggregatorArgs;
+                    triggerFieldRipple(channel, index);
+                    break;
+                }
+                case 'removeField': {
+                    const [channel, index] = event.args as RemoveFieldArgs;
+                    triggerFieldRipple(channel, index);
+                    break;
+                }
+                default:
+                    break;
+            }
+        },
+        [
+            animateChannelTransfer,
+            getFieldLabel,
+            triggerToolbarRipple,
+            triggerFieldRipple,
+        ]
+    );
 
     useEffect(() => {
         const handler = appRef.current;
@@ -352,6 +513,17 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             vizStore.setAgentEventEmitter(undefined);
         };
     }, [appRef, dispatchAgentMethod, getAgentState, handlePresenceClear, handlePresenceUpdate, vizStore]);
+
+    useEffect(() => {
+        const handler = appRef.current;
+        if (!handler?.onAgentEvent) {
+            return;
+        }
+        const dispose = handler.onAgentEvent(handleAgentMethodEvent);
+        return () => {
+            dispose?.();
+        };
+    }, [appRef, handleAgentMethodEvent]);
 
     useEffect(() => {
         if (geographicData) {
