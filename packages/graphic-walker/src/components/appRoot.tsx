@@ -1,5 +1,5 @@
 import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject } from "react";
-import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
+import type { AgentEvent, AgentMethodResult, IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
 
@@ -17,10 +17,18 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
     useImperativeHandle(ref, () => {
         let renderStatus: IRenderStatus = 'idle';
         let onRenderStatusChangeHandlers: ((status: IRenderStatus) => void)[] = [];
+        let agentEventHandlers: ((event: AgentEvent) => void)[] = [];
         const addRenderStatusChangeListener = (cb: typeof onRenderStatusChangeHandlers[number]): (() => void) => {
             onRenderStatusChangeHandlers.push(cb);
             const dispose = () => {
                 onRenderStatusChangeHandlers = onRenderStatusChangeHandlers.filter(which => which !== cb);
+            };
+            return dispose;
+        };
+        const addAgentEventListener = (cb: typeof agentEventHandlers[number]): (() => void) => {
+            agentEventHandlers.push(cb);
+            const dispose = () => {
+                agentEventHandlers = agentEventHandlers.filter(which => which !== cb);
             };
             return dispose;
         };
@@ -31,11 +39,24 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
             renderStatus = status;
             onRenderStatusChangeHandlers.forEach(cb => cb(renderStatus));
         };
+        const emitAgentEvent = (event: AgentEvent) => {
+            agentEventHandlers.forEach((cb) => cb(event));
+        };
+        const notReadyResult: AgentMethodResult = {
+            success: false,
+            error: {
+                code: 'ERR_AGENT_NOT_READY',
+                message: 'Agent bridge not ready',
+            },
+        };
+        const dispatchMethod: IGWHandler['dispatchMethod'] = async () => notReadyResult;
+
         return {
             get renderStatus() {
                 return renderStatus;
             },
             onRenderStatusChange: addRenderStatusChangeListener,
+            onAgentEvent: addAgentEventListener,
             updateRenderStatus,
             chartCount: 1,
             chartIndex: 0,
@@ -67,6 +88,13 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                     hasNext: false,
                 };
             }) as IGWHandler['exportChartList'],
+            getAgentState: () => {
+                throw new Error('Agent bridge not ready');
+            },
+            dispatchMethod,
+            updatePresence: () => {},
+            clearPresence: () => {},
+            emitAgentEvent,
         };
     }, []);
 

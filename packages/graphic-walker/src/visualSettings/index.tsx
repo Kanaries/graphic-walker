@@ -39,6 +39,8 @@ import LimitSetting from '../components/limitSetting';
 import { omitRedundantSeparator } from './utils';
 import { Button } from '@/components/ui/button';
 import { classNames } from '@/utils';
+import { buildToolbarActionTargetId } from '../agent/targets';
+import type { ToolbarActionKey } from '../agent/targets';
 
 interface IVisualSettings {
     darkModePreference: IDarkMode;
@@ -64,6 +66,7 @@ const KanariesIcon = (props: { className?: string; style?: React.CSSProperties }
 const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler, extra = [], exclude = [], experimentalFeatures }) => {
     const vizStore = useVizStore();
     const { config, layout, canUndo, canRedo, limit, paintInfo } = vizStore;
+    const instanceId = vizStore.instanceID;
     const { t: tGlobal } = useTranslation();
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
@@ -110,6 +113,11 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
     );
 
     const items = useMemo<ToolbarItemProps[]>(() => {
+        const createToolbarAgentTarget = (actionKey: ToolbarActionKey) => ({
+            id: buildToolbarActionTargetId(instanceId, actionKey),
+            kind: 'toolbar-action' as const,
+            meta: { actionKey },
+        });
         const builtInItems = [
             {
                 key: 'undo',
@@ -361,18 +369,21 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
                         ></path>
                     </svg>
                 ),
+                agentTarget: createToolbarAgentTarget('transpose'),
                 onClick: () => vizStore.transpose(),
             },
             {
                 key: 'sort:asc',
                 label: t('button.ascending'),
                 icon: BarsArrowUpIcon,
+                agentTarget: createToolbarAgentTarget('sort:asc'),
                 onClick: () => vizStore.applyDefaultSort('ascending'),
             },
             {
                 key: 'sort:dec',
                 label: t('button.descending'),
                 icon: BarsArrowDownIcon,
+                agentTarget: createToolbarAgentTarget('sort:dec'),
                 onClick: () => vizStore.applyDefaultSort('descending'),
             },
             {
@@ -684,6 +695,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
         showTableSummary,
         experimentalFeatures,
         paintInfo,
+        instanceId,
     ]);
 
     return <Toolbar items={items} />;

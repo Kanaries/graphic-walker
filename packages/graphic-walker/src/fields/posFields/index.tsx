@@ -6,12 +6,17 @@ import { FieldListContainer } from '../components';
 import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
 import OBFieldContainer from '../obComponents/obFContainer';
 
-import { IDraggableViewStateKey } from '../../interfaces';
+import type { AgentEncodingChannel, IDraggableViewStateKey } from '../../interfaces';
+import { buildEncodingChannelTargetId } from '../../agent/targets';
+import { useHoverEmitter } from '../../agent/useHoverEmitter';
 
 const PosFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { config } = vizStore;
     const { geoms, coordSystem = 'generic' } = config;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
 
     const channels = useMemo(() => {
         if (coordSystem === 'geographic') {
@@ -27,13 +32,24 @@ const PosFields: React.FC = (props) => {
     }, [geoms[0], coordSystem]);
     return (
         <div>
-            {channels.map((dkey, i) => (
-                <FieldListContainer name={dkey.id} key={dkey.id}>
-                    <Droppable droppableId={dkey.id} direction="horizontal">
-                        {(provided, snapshot) => <OBFieldContainer dkey={dkey} provided={provided} />}
-                    </Droppable>
-                </FieldListContainer>
-            ))}
+            {channels.map((dkey, i) => {
+                const channelId = dkey.id as AgentEncodingChannel;
+                const targetId = buildEncodingChannelTargetId(instanceId, visId, channelId);
+                const channelMeta = { channel: dkey.id };
+                return (
+                    <FieldListContainer
+                        name={dkey.id}
+                        key={dkey.id}
+                        agentTargetId={targetId}
+                        onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
+                        onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
+                    >
+                        <Droppable droppableId={dkey.id} direction="horizontal">
+                            {(provided, snapshot) => <OBFieldContainer dkey={dkey} provided={provided} />}
+                        </Droppable>
+                    </FieldListContainer>
+                );
+            })}
         </div>
     );
 };

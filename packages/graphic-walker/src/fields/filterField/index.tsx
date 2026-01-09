@@ -11,6 +11,8 @@ import FilterPill from './filterPill';
 import FilterEditDialog from './filterEditDialog';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
+import { buildFilterChannelTargetId } from '../../agent/targets';
+import { useHoverEmitter } from '../../agent/useHoverEmitter';
 
 
 interface FieldContainerProps {
@@ -20,10 +22,18 @@ interface FieldContainerProps {
 const FilterItemContainer: React.FC<FieldContainerProps> = observer(({ provided }) => {
     const vizStore = useVizStore();
     const { viewFilters: filters } = vizStore;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
+    const channelTargetId = buildFilterChannelTargetId(instanceId, visId);
+    const channelMeta = { channel: 'filters' };
 
     return (
         <FilterFieldsContainer
             className='touch-none'
+            data-gw-target={channelTargetId}
+            onPointerEnter={() => emitHover('enter', channelTargetId, 'filter-channel', channelMeta)}
+            onPointerLeave={() => emitHover('leave', channelTargetId, 'filter-channel', channelMeta)}
             {...provided.droppableProps}
             ref={refMapper(provided.innerRef)}
         >

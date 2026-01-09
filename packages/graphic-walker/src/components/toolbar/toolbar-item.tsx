@@ -3,6 +3,7 @@ import ToolbarButton, { ToolbarButtonItem } from './toolbar-button';
 import ToolbarToggleButton, { ToolbarToggleButtonItem } from './toolbar-toggle-button';
 import ToolbarSelectButton, { ToolbarSelectButtonItem } from './toolbar-select-button';
 import { ToolbarProps } from '.';
+import type { AgentTargetKind } from '../../interfaces';
 export interface IToolbarItem {
     key: string;
     icon: (
@@ -16,6 +17,11 @@ export interface IToolbarItem {
     disabled?: boolean;
     form?: React.ReactNode;
     styles?: ToolbarProps['styles'];
+    agentTarget?: {
+        id: string;
+        kind: AgentTargetKind;
+        meta?: Record<string, unknown>;
+    };
 }
 
 export const ToolbarItemSplitter = '-';

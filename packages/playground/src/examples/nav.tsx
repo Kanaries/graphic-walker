@@ -28,6 +28,10 @@ export const pages = [
         name: 'Export Chart',
     },
     {
+        comp: () => import('./pages/agentFeatures'),
+        name: 'Agent Feature Playground',
+    },
+    {
         comp: () => import('./pages/table'),
         name: 'TableWalker',
     },

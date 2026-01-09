@@ -7,11 +7,20 @@ export const FieldListContainer: React.FC<{
     name: string;
     style?: Omit<CSSProperties, 'translate'>;
     children?: React.ReactNode | Iterable<React.ReactNode>;
+    agentTargetId?: string;
+    onPointerEnter?: () => void;
+    onPointerLeave?: () => void;
 }> = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <FieldListSegment className="sm:ml-0.5 my-0.5 border relative" style={props.style}>
+        <FieldListSegment
+            className="sm:ml-0.5 my-0.5 border relative"
+            style={props.style}
+            data-gw-target={props.agentTargetId}
+            onPointerEnter={props.onPointerEnter}
+            onPointerLeave={props.onPointerLeave}
+        >
             <div className="fl-header border-r cursor-default select-none">
                 <h4 className="font-normal">{t(props.name)}</h4>
             </div>
@@ -20,11 +29,24 @@ export const FieldListContainer: React.FC<{
     );
 };
 
-export const AestheticFieldContainer: React.FC<{ name: string; style?: CSSProperties; children?: React.ReactNode | Iterable<React.ReactNode> }> = (props) => {
+export const AestheticFieldContainer: React.FC<{
+    name: string;
+    style?: CSSProperties;
+    children?: React.ReactNode | Iterable<React.ReactNode>;
+    agentTargetId?: string;
+    onPointerEnter?: () => void;
+    onPointerLeave?: () => void;
+}> = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'constant.draggable_key' });
 
     return (
-        <div className="my-0.5 sm:mx-0.5 text-xs border" style={props.style}>
+        <div
+            className="my-0.5 sm:mx-0.5 text-xs border"
+            style={props.style}
+            data-gw-target={props.agentTargetId}
+            onPointerEnter={props.onPointerEnter}
+            onPointerLeave={props.onPointerLeave}
+        >
             <div className="border-b p-2 cursor-default select-none">
                 <h4 className="font-normal">{t(props.name)}</h4>
             </div>

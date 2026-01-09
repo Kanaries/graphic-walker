@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState, useLayoutEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,6 +11,10 @@ import {
     IComputationContextProps,
     IComputationProps,
     IThemeKey,
+    AgentMethodRequest,
+    IGWPresenceDisplay,
+    AgentMethodError,
+    AgentMethodResult,
 } from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
@@ -46,13 +50,35 @@ import { VizEmbedMenu } from './components/embedMenu';
 import DataBoard from './components/dataBoard';
 import SideResize from './components/side-resize';
 import { VegaliteMapper } from './lib/vl2gw';
-import { newChart } from './models/visSpecHistory';
+import { newChart, Methods, type PropsMap } from './models/visSpecHistory';
 import ComputedFieldDialog from './components/computedField';
 import { VizAppContext } from './store/context';
+import { useAppRootContext } from './components/appRoot';
 import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
+
+const CLONE_FIELD_SOURCE_CHANNELS = ['dimensions', 'measures'] as const;
+const CLONE_FIELD_DEST_CHANNELS = [
+    'rows',
+    'columns',
+    'color',
+    'opacity',
+    'size',
+    'shape',
+    'theta',
+    'radius',
+    'longitude',
+    'latitude',
+    'geoId',
+    'details',
+    'text',
+    'tooltip',
+] as const;
+const CLONE_FIELD_SOURCE_SET = new Set<string>(CLONE_FIELD_SOURCE_CHANNELS);
+const CLONE_FIELD_DEST_SET = new Set<string>(CLONE_FIELD_DEST_CHANNELS);
+type CloneFieldArgs = PropsMap[(typeof Methods)['cloneField']];
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -99,6 +125,99 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const appRef = useAppRootContext();
+    const [presenceEntries, setPresenceEntries] = useState<IGWPresenceDisplay[]>([]);
+    const rootRef = useRef<HTMLDivElement | null>(null);
+
+    const getAgentState = useCallback(() => {
+        const snapshot = vizStore.getAgentStateSnapshot();
+        const rootEl = rootRef.current;
+        if (!rootEl) {
+            return snapshot;
+        }
+        const renderedIds = new Set(
+            Array.from(rootEl.querySelectorAll<HTMLElement>('[data-gw-target]'))
+                .map((el) => el.getAttribute('data-gw-target'))
+                .filter((value): value is string => Boolean(value))
+        );
+        if (!renderedIds.size) {
+            return snapshot;
+        }
+        const filteredTargets = snapshot.targets.filter((target) => renderedIds.has(target.id));
+        if (filteredTargets.length === snapshot.targets.length) {
+            return snapshot;
+        }
+        return {
+            ...snapshot,
+            targets: filteredTargets,
+        };
+    }, [vizStore]);
+
+    const validateAgentMethod = useCallback((request: AgentMethodRequest): AgentMethodError | null => {
+        if (request.method === 'cloneField') {
+            const [sourceKey, , destinationKey] = request.args as CloneFieldArgs;
+            const sourceValid = CLONE_FIELD_SOURCE_SET.has(sourceKey);
+            const destinationValid = CLONE_FIELD_DEST_SET.has(destinationKey);
+            if (!sourceValid || !destinationValid) {
+                return {
+                    code: 'ERR_EXECUTION_FAILED',
+                    message: 'cloneField requires a dimension/measure source and an encoding destination.',
+                    details: `source=${sourceKey};destination=${destinationKey}`,
+                };
+            }
+        }
+        return null;
+    }, []);
+
+    const dispatchAgentMethod = useCallback(
+        async (request: AgentMethodRequest): Promise<AgentMethodResult> => {
+            const validationError = validateAgentMethod(request);
+            if (validationError) {
+                return { success: false, error: validationError };
+            }
+            return vizStore.applyMethodFromAgent(request.method, request.args);
+        },
+        [vizStore, validateAgentMethod]
+    );
+
+    const handlePresenceUpdate = useCallback((payload: IGWPresenceDisplay | IGWPresenceDisplay[]) => {
+        setPresenceEntries((prev) => {
+            const map = new Map(prev.map((entry) => [entry.userId, entry]));
+            (Array.isArray(payload) ? payload : [payload]).forEach((entry) => map.set(entry.userId, entry));
+            return Array.from(map.values());
+        });
+    }, []);
+
+    const handlePresenceClear = useCallback((userId?: string) => {
+        if (!userId) {
+            setPresenceEntries([]);
+            return;
+        }
+        setPresenceEntries((prev) => prev.filter((entry) => entry.userId !== userId));
+    }, []);
+
+    useEffect(() => {
+        const handler = appRef.current;
+        if (!handler) return;
+        const defaultGetState = handler.getAgentState;
+        const defaultDispatch = handler.dispatchMethod;
+        const defaultUpdatePresence = handler.updatePresence;
+        const defaultClearPresence = handler.clearPresence;
+        handler.getAgentState = getAgentState;
+        handler.dispatchMethod = dispatchAgentMethod;
+        handler.updatePresence = handlePresenceUpdate;
+        handler.clearPresence = handlePresenceClear;
+        vizStore.setAgentEventEmitter((event) => handler.emitAgentEvent(event));
+        return () => {
+            if (appRef.current === handler) {
+                handler.getAgentState = defaultGetState;
+                handler.dispatchMethod = defaultDispatch;
+                handler.updatePresence = defaultUpdatePresence;
+                handler.clearPresence = defaultClearPresence;
+            }
+            vizStore.setAgentEventEmitter(undefined);
+        };
+    }, [appRef, dispatchAgentMethod, getAgentState, handlePresenceClear, handlePresenceUpdate, vizStore]);
 
     useEffect(() => {
         if (geographicData) {
@@ -168,7 +287,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                     vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
-                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0 w-full h-full`, darkMode === 'dark' ? 'dark' : '')}>
+                    <div
+                        ref={rootRef}
+                        data-gw-instance={vizStore.instanceID}
+                        className={classNames(`App relative font-sans bg-background text-foreground m-0 p-0 w-full h-full`, darkMode === 'dark' ? 'dark' : '')}
+                    >
                         <FieldsContextWrapper>
                             <div className="bg-background text-foreground w-full h-full">
                                 <Errorpanel />
@@ -297,6 +420,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                 </Tabs>
                             </div>
                         </FieldsContextWrapper>
+                        <PresenceOverlay rootRef={rootRef} entries={presenceEntries} />
                         <div ref={setPortal} />
                     </div>
                 </VizAppContext>
@@ -304,6 +428,99 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         </ErrorContext>
     );
 });
+
+type PresenceRenderEntry = IGWPresenceDisplay & {
+    rect: { top: number; left: number; width: number; height: number };
+};
+
+const PresenceOverlay: React.FC<{ rootRef: React.RefObject<HTMLDivElement>; entries: IGWPresenceDisplay[] }> = ({ rootRef, entries }) => {
+    const [renderEntries, setRenderEntries] = useState<PresenceRenderEntry[]>([]);
+
+    const queryTargetElement = useCallback(
+        (targetId: string): HTMLElement | null => {
+            const rootEl = rootRef.current;
+            if (!rootEl || !targetId) return null;
+            const selectorId = targetId.replace(/"/g, '\\"');
+            return rootEl.querySelector<HTMLElement>(`[data-gw-target="${selectorId}"]`);
+        },
+        [rootRef]
+    );
+
+    const updateRects = useCallback(() => {
+        const rootEl = rootRef.current;
+        if (!rootEl) {
+            setRenderEntries([]);
+            return;
+        }
+        const rootRect = rootEl.getBoundingClientRect();
+        const next: PresenceRenderEntry[] = [];
+        entries.forEach((entry) => {
+            const targetEl = queryTargetElement(entry.targetId);
+            if (!targetEl) return;
+            const rects = targetEl.getClientRects();
+            if (rects.length === 0) return;
+            const rect = rects[0];
+            next.push({
+                ...entry,
+                rect: {
+                    top: rect.top - rootRect.top,
+                    left: rect.left - rootRect.left,
+                    width: rect.width,
+                    height: rect.height,
+                },
+            });
+        });
+        setRenderEntries(next);
+    }, [entries, queryTargetElement, rootRef]);
+
+    useLayoutEffect(() => {
+        updateRects();
+    }, [updateRects]);
+
+    useEffect(() => {
+        const handleResize = () => updateRects();
+        const handleScroll = () => updateRects();
+        window.addEventListener('resize', handleResize);
+        document.addEventListener('scroll', handleScroll, true);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            document.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [updateRects]);
+
+    if (renderEntries.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="pointer-events-none absolute inset-0 z-50">
+            {renderEntries.map((entry) => (
+                <div
+                    key={entry.userId}
+                    className="absolute rounded-lg border-2"
+                    style={{
+                        top: Math.max(entry.rect.top - 4, 0),
+                        left: Math.max(entry.rect.left - 4, 0),
+                        width: entry.rect.width + 8,
+                        height: entry.rect.height + 8,
+                        borderColor: entry.color || '#2563eb',
+                        boxShadow: `0 0 12px ${entry.color || '#2563eb'}66`,
+                    }}
+                >
+                    <div
+                        className="absolute -top-6 left-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{
+                            background: entry.color || '#2563eb',
+                            color: '#fff',
+                        }}
+                    >
+                        <span className="truncate max-w-48">{entry.displayName || entry.userId}</span>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
