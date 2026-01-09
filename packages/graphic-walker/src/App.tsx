@@ -419,7 +419,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const handleAgentMethodEvent = useCallback(
         (event: AgentEvent) => {
-            if (event.type !== 'method' || event.status !== 'success') {
+            if (event.type !== 'method' || event.status !== 'success' || event.source !== 'api') {
                 return;
             }
             switch (event.method) {

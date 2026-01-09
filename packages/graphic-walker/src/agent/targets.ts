@@ -72,7 +72,18 @@ export const collectAgentTargets = (options: {
     const { instanceId, visId, encodings, meta } = options;
     const targets: IGWAgentTargetSummary[] = [];
 
+    const datasetFieldMap = new Map<string, IMutField>();
     meta.forEach((field) => {
+        datasetFieldMap.set(field.fid, field);
+    });
+    [...(encodings.dimensions ?? []), ...(encodings.measures ?? [])].forEach((field) => {
+        if (!field || datasetFieldMap.has(field.fid)) {
+            return;
+        }
+        datasetFieldMap.set(field.fid, field as IMutField);
+    });
+
+    datasetFieldMap.forEach((field) => {
         targets.push({
             id: buildDatasetFieldTargetId(instanceId, field.fid, field.analyticType),
             kind: 'dataset-field',

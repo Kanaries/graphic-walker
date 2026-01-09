@@ -32,6 +32,10 @@ export const pages = [
         name: 'Agent Feature Playground',
     },
     {
+        comp: () => import('./pages/dualSync'),
+        name: 'Dual GraphicWalker Sync',
+    },
+    {
         comp: () => import('./pages/table'),
         name: 'TableWalker',
     },
