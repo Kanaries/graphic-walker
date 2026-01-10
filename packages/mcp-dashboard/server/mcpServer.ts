@@ -29,12 +29,23 @@ const DISPATCH_SCHEMA = z.object({
     targetVisId: z.string().trim().min(1).optional(),
 });
 
+const CREATE_VIZ_SCHEMA = z.object({
+    name: z
+        .string()
+        .trim()
+        .min(1, 'Visualization name cannot be empty')
+        .max(120, 'Visualization name is too long')
+        .optional(),
+});
+
 // MCP SDK's generic inference over large schemas can trigger "type instantiation is
 // excessively deep" errors, so keep the runtime schema fully typed for local use
 // while handing a reduced type to registerTool.
 const MCP_DISPATCH_SCHEMA: z.ZodTypeAny = DISPATCH_SCHEMA;
+const MCP_CREATE_VIZ_SCHEMA: z.ZodTypeAny = CREATE_VIZ_SCHEMA;
 
 type DispatchInput = z.infer<typeof DISPATCH_SCHEMA>;
+type CreateVizInput = z.infer<typeof CREATE_VIZ_SCHEMA>;
 
 export const GRAPHIC_WALKER_DOCS = `${STATE_INSTRUCTIONS.trim()}\n\n---\n\n${GRAPHIC_WALKER_METHOD_REFERENCE}`;
 
@@ -59,11 +70,18 @@ export async function mountMcpServer(app: Express, bridge: GraphicWalkerBridge):
         async () => {
             try {
                 const snapshot = await bridge.fetchSnapshot({ fresh: true });
+                const summary = {
+                    capturedAt: snapshot.capturedAt,
+                    totalVisualizations: snapshot.state.visLength,
+                    activeVisIndex: snapshot.state.visIndex,
+                    activeVisId: snapshot.state.visId,
+                    activeChartName: snapshot.state.spec.name ?? null,
+                };
                 return {
                     contents: [
                         {
                             uri: 'gw://state',
-                            text: JSON.stringify(snapshot, null, 2),
+                            text: JSON.stringify({ ...snapshot, summary }, null, 2),
                             mimeType: 'application/json',
                         },
                     ],
@@ -74,6 +92,50 @@ export async function mountMcpServer(app: Express, bridge: GraphicWalkerBridge):
                         {
                             uri: 'gw://state#error',
                             text: `Unable to capture GraphicWalker state: ${(error as Error).message}`,
+                            mimeType: 'text/plain',
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+    mcpServer.registerResource(
+        'graphic-walker-viz-summary',
+        'gw://viz',
+        {
+            description: 'Digest of how many visualizations exist and what the active chart contains.',
+            mimeType: 'application/json',
+        },
+        async () => {
+            try {
+                const snapshot = await bridge.fetchSnapshot();
+                const payload = {
+                    capturedAt: snapshot.capturedAt,
+                    totalVisualizations: snapshot.state.visLength,
+                    activeVisualization: {
+                        index: snapshot.state.visIndex,
+                        visId: snapshot.state.visId,
+                        name: snapshot.state.spec.name ?? null,
+                        spec: snapshot.state.spec,
+                    },
+                };
+                return {
+                    contents: [
+                        {
+                            uri: 'gw://viz',
+                            text: JSON.stringify(payload, null, 2),
+                            mimeType: 'application/json',
+                        },
+                    ],
+                };
+            } catch (error) {
+                return {
+                    contents: [
+                        {
+                            uri: 'gw://viz#error',
+                            text: `Unable to summarize GraphicWalker visualizations: ${(error as Error).message}`,
                             mimeType: 'text/plain',
                         },
                     ],
@@ -140,6 +202,57 @@ export async function mountMcpServer(app: Express, bridge: GraphicWalkerBridge):
                         {
                             type: 'text',
                             text: JSON.stringify({ result, snapshot }, null, 2),
+                        },
+                    ],
+                };
+            } catch (error) {
+                return {
+                    isError: true,
+                    content: [
+                        {
+                            type: 'text',
+                            text: (error as Error).message,
+                        },
+                    ],
+                };
+            }
+        }
+    );
+
+    // @ts-ignore
+    mcpServer.registerTool(
+        'create-graphic-walker-viz',
+        {
+            title: 'Create GraphicWalker visualization',
+            description: 'Adds a blank visualization tab and returns its identifier for downstream method calls.',
+            inputSchema: MCP_CREATE_VIZ_SCHEMA,
+        },
+        async (args) => {
+            const parsed = CREATE_VIZ_SCHEMA.safeParse(args ?? {});
+            if (!parsed.success) {
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Invalid payload: ${parsed.error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+            const { name } = parsed.data as CreateVizInput;
+            try {
+                const event = await bridge.createVisualization({ name });
+                const snapshot = await bridge.fetchSnapshot();
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Created visualization ${event.visId}${event.name ? ` (${event.name})` : ''}.`,
+                        },
+                        {
+                            type: 'text',
+                            text: JSON.stringify({ event, snapshot }, null, 2),
                         },
                     ],
                 };

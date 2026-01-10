@@ -12,15 +12,14 @@ import {
     IComputationContextProps,
     IComputationProps,
     IThemeKey,
-    AgentMethodRequest,
     IGWPresenceDisplay,
-    AgentMethodError,
-    AgentMethodResult,
     DraggableFieldState,
     IViewField,
     IFilterField,
     AgentEvent,
     AgentEncodingChannel,
+    AgentMethodRequest,
+    AgentMethodResult,
 } from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
@@ -72,26 +71,8 @@ import {
     parseAgentTargetId,
     type ToolbarActionKey,
 } from './agent/targets';
+import { validateAgentMethod } from './utils/agentMethodValidation';
 
-const CLONE_FIELD_SOURCE_CHANNELS = ['dimensions', 'measures'] as const;
-const CLONE_FIELD_DEST_CHANNELS = [
-    'rows',
-    'columns',
-    'color',
-    'opacity',
-    'size',
-    'shape',
-    'theta',
-    'radius',
-    'longitude',
-    'latitude',
-    'geoId',
-    'details',
-    'text',
-    'tooltip',
-] as const;
-const CLONE_FIELD_SOURCE_SET = new Set<string>(CLONE_FIELD_SOURCE_CHANNELS);
-const CLONE_FIELD_DEST_SET = new Set<string>(CLONE_FIELD_DEST_CHANNELS);
 type CloneFieldArgs = PropsMap[(typeof Methods)['cloneField']];
 type MoveFieldArgs = PropsMap[(typeof Methods)['moveField']];
 type AppendFilterArgs = PropsMap[(typeof Methods)['appendFilter']];
@@ -175,22 +156,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             targets: filteredTargets,
         };
     }, [vizStore]);
-
-    const validateAgentMethod = useCallback((request: AgentMethodRequest): AgentMethodError | null => {
-        if (request.method === 'cloneField') {
-            const [sourceKey, , destinationKey] = request.args as CloneFieldArgs;
-            const sourceValid = CLONE_FIELD_SOURCE_SET.has(sourceKey);
-            const destinationValid = CLONE_FIELD_DEST_SET.has(destinationKey);
-            if (!sourceValid || !destinationValid) {
-                return {
-                    code: 'ERR_EXECUTION_FAILED',
-                    message: 'cloneField requires a dimension/measure source and an encoding destination.',
-                    details: `source=${sourceKey};destination=${destinationKey}`,
-                };
-            }
-        }
-        return null;
-    }, []);
 
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
     const previousEncodingsRef = useRef<DraggableFieldState>(vizStore.currentVis.encodings);

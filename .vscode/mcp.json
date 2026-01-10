@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"graphic-walker-dashboard": {
+			"type": "sse",
+			"url": "http://localhost:4399/mcp"
+		}
+	},
+	"inputs": []
+}

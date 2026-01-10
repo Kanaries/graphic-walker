@@ -25,8 +25,8 @@ const METHOD_DETAILS: Record<AgentMethodName, MethodDoc> = {
         args: ['`fromChannel`: source encoding name.', '`fromIndex`: position inside the source.', '`toChannel`: destination encoding name.', '`toIndex`: desired insert point.', '`limit`: optional cap on destination array length.'],
     },
     cloneField: {
-        summary: 'Copy a field to another channel while keeping the original in place and optionally renaming the backing fid.',
-        args: ['`fromChannel`: source encoding.', '`fromIndex`: source index.', '`toChannel`: destination encoding.', '`toIndex`: insert position.', '`newVarKey`: fid for the cloned field.', '`limit`: optional destination length cap.'],
+        summary: 'Copy a field to another channel while keeping the original in place and optionally renaming the backing fid. This is the primary method for building charts: clone dimensions from `dimensions` to `rows`/`columns` and measures from `measures` to `rows`/`columns`/`color`/etc. to create visualizations.',
+        args: ['`fromChannel`: source encoding (typically `"dimensions"` or `"measures"`).', '`fromIndex`: source index (0-based position in the source channel).', '`toChannel`: destination encoding (e.g., `"rows"`, `"columns"`, `"color"`, `"size"`).', '`toIndex`: insert position (usually `0` to append).', '`newVarKey`: fid for the cloned field (usually same as source fid, e.g., `"region"` or `"sales"`).', '`limit`: optional destination length cap.'],
     },
     createBinlogField: {
         summary: 'Create a computed field derived from another field using binning (`bin`, `binCount`) or logarithmic transforms (`log`, `log2`, `log10`).',
@@ -62,7 +62,11 @@ const METHOD_DETAILS: Record<AgentMethodName, MethodDoc> = {
     },
     setFieldAggregator: {
         summary: 'Update the aggregation function (sum, avg, count, etc.) for a field at a specific position.',
-        args: ['`channel`: encoding that owns the field.', '`index`: index inside that encoding.', '`aggregator`: `IAggregator` definition.'],
+        args: [
+            '`channel`: encoding that owns the field.',
+            '`index`: index inside that encoding.',
+            '`aggregator`: `IAggregator` value. Must be one of: `"sum"`, `"count"`, `"max"`, `"min"`, `"mean"`, `"median"`, `"variance"`, `"stdev"`, `"distinctCount"`, or `"expr"`. Example: `"mean"`.',
+        ],
     },
     setGeoData: {
         summary: 'Attach inline GeoJSON data plus helper metadata for choropleth maps.',
@@ -121,6 +125,15 @@ function buildMethodReference(): string {
         '# GraphicWalker Agent Method Reference',
         '',
         'Each entry mirrors a call to `GWHandler.dispatchMethod`. Methods mutate a single visualization; use `targetVisId` in the dispatcher to address other tabs. Arguments are positional and must be supplied exactly as listed below.',
+        '',
+        '## Recommended Workflow',
+        '',
+        '1. Inspect the active chart via `IGWAgentState`. If every encoding channel other than the source buckets (`dimensions`, `measures`) is empty, treat the tab as blank and consider using `create-graphic-walker-viz` before editing the new `visId`; otherwise reuse the current chart.',
+        '2. Pick a geometry with `setConfig("geoms", [...])` to establish the expected visual form (bars, lines, points, etc.).',
+        '3. Populate encodings with `cloneField`: copy dimensions into `rows`/`columns` (and other channels as needed) and measures into `rows`/`columns`/`color`/`size`. This is the primary way to place data fields on the canvas.',
+        '4. Adjust aggregations using `setFieldAggregator` whenever a cloned measure needs to use `sum`, `avg`, `count`, etc.',
+        '5. Add filtering logic by pairing `appendFilter` (to insert a filter row sourced from an existing field) with `writeFilter` (to persist the rule definition, ranges, inclusion lists, and so on).',
+        '',
         '',
     ];
     for (const method of GW_METHOD_NAMES) {

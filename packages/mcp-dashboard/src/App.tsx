@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AgentMethodRequest, AgentMethodResult, IGWAgentState, IGWHandler, IMutField, IChart } from "@kanaries/graphic-walker";
+import type { AgentMethodRequest, AgentMethodResult, AgentVizEvent, IGWAgentState, IGWHandler, IMutField, IChart } from "@kanaries/graphic-walker";
 import { GraphicWalker, createChartFromFields } from "@kanaries/graphic-walker";
 import type { ClientToServerMessage, ServerToClientMessage } from "../shared/state.ts";
 import "./index.css";
@@ -26,7 +26,7 @@ export default function App() {
     const [wsStatus, setWsStatus] = useState<WebSocketState>("idle");
     const [activity, setActivity] = useState("Waiting for GraphicWalker to load...");
     const socketRef = useRef<WebSocket | null>(null);
-    const handlerRef = useRef<IGWHandler | null>(null);
+    const gwRef = useRef<IGWHandler | null>(null);
     const lastSnapshotRef = useRef<IGWAgentState | null>(null);
     const snapshotRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [handlerReadyTick, setHandlerReadyTick] = useState(0);
@@ -62,7 +62,6 @@ export default function App() {
             abortController.abort();
         };
     }, []);
-
     const sendMessage = useCallback((payload: ClientToServerMessage) => {
         const socket = socketRef.current;
         if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -73,7 +72,7 @@ export default function App() {
 
     const publishSnapshot = useCallback(
         function publishSnapshot(requestId?: string) {
-            const handler = handlerRef.current;
+            const handler = gwRef.current;
             if (!handler) {
                 return;
             }
@@ -127,7 +126,7 @@ export default function App() {
 
     const dispatchRemoteMethod = useCallback(
         async (requestId: string, request: AgentMethodRequest) => {
-            const handler = handlerRef.current;
+            const handler = gwRef.current;
             let result: AgentMethodResult;
             if (!handler) {
                 result = {
@@ -159,6 +158,49 @@ export default function App() {
         [publishSnapshot, sendMessage]
     );
 
+    const createVisualization = useCallback(
+        (requestId: string, payload?: { name?: string }) => {
+            const handler = gwRef.current;
+            if (!handler || typeof handler.applyVizEvent !== "function" || !dataSource?.fields?.length) {
+                sendMessage({
+                    type: "viz:create:result",
+                    requestId,
+                    success: false,
+                    message: "GraphicWalker handler is not ready to create a visualization.",
+                });
+                setActivity("Visualization request failed – handler not ready.");
+                return;
+            }
+            try {
+                const nextIndex = Math.max(handler.chartCount, 0);
+                const chartName = payload?.name?.trim()?.length ? payload.name : `Chart ${nextIndex + 1}`;
+                const chart = createChartFromFields(dataSource.fields, { name: chartName });
+                const eventPayload: AgentVizEvent = {
+                    type: "viz",
+                    action: "add",
+                    visId: chart.visId,
+                    index: nextIndex,
+                    name: chart.name,
+                    chart,
+                    source: "api",
+                };
+                handler.applyVizEvent(eventPayload);
+                sendMessage({ type: "viz:create:result", requestId, success: true, event: eventPayload });
+                publishSnapshot();
+                setActivity(`Created visualization ${chart.name ?? chart.visId}.`);
+            } catch (error) {
+                sendMessage({
+                    type: "viz:create:result",
+                    requestId,
+                    success: false,
+                    message: (error as Error).message ?? "Failed to create visualization",
+                });
+                setActivity("Visualization request failed – see logs for details.");
+            }
+        },
+        [dataSource?.fields, publishSnapshot, sendMessage]
+    );
+
     const handleServerMessage = useCallback(
         (event: MessageEvent<string>) => {
             let payload: ServerToClientMessage;
@@ -178,9 +220,14 @@ export default function App() {
             }
             if (payload.type === "method:dispatch") {
                 void dispatchRemoteMethod(payload.requestId, payload.payload);
+                return;
+            }
+            if (payload.type === "viz:create") {
+                createVisualization(payload.requestId, payload.payload);
+                return;
             }
         },
-        [dispatchRemoteMethod, publishSnapshot]
+        [createVisualization, dispatchRemoteMethod, publishSnapshot]
     );
 
     useEffect(() => {
@@ -227,7 +274,7 @@ export default function App() {
     useEffect(() => {
         if (!dataSource) return;
         if (wsStatus !== "open") return;
-        if (!handlerRef.current) return;
+        if (!gwRef.current) return;
         if (handshakeSentRef.current) return;
 
         sendMessage({
@@ -241,7 +288,7 @@ export default function App() {
     }, [dataSource, wsStatus, handlerReadyTick, publishSnapshot, sendMessage]);
 
     useEffect(() => {
-        const handler = handlerRef.current;
+        const handler = gwRef.current;
         if (!handler) return;
         return handler.onAgentEvent(event => {
             if (event.type === "method" && event.status === "success") {
@@ -256,12 +303,30 @@ export default function App() {
         });
     }, [handlerReadyTick, publishSnapshot]);
 
-    const registerHandler = useCallback((instance: IGWHandler | null) => {
-        handlerRef.current = instance;
-        if (instance) {
+    useEffect(() => {
+        let raf: number | null = null;
+        let cancelled = false;
+
+        const checkHandler = () => {
+            if (cancelled) return;
+            const handler = gwRef.current;
+            if (!handler) {
+                raf = requestAnimationFrame(checkHandler);
+                return;
+            }
             setHandlerReadyTick(tick => tick + 1);
             setActivity("GraphicWalker mounted.");
-        }
+            raf = null;
+        };
+
+        checkHandler();
+
+        return () => {
+            cancelled = true;
+            if (raf !== null) {
+                cancelAnimationFrame(raf);
+            }
+        };
     }, []);
 
     const initialCharts = useMemo<IChart[] | undefined>(() => {
@@ -312,7 +377,7 @@ export default function App() {
                         {!datasetError && !dataSource && <div className="gw-loading">Loading dataset…</div>}
                         {dataSource && (
                             <GraphicWalker
-                                ref={registerHandler}
+                                ref={gwRef}
                                 vizThemeConfig="g2"
                                 data={dataSource.data}
                                 fields={dataSource.fields}

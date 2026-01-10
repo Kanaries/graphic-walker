@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Server as HttpServer } from 'node:http';
 
-import type { AgentMethodRequest, AgentMethodResult } from '@kanaries/graphic-walker';
+import type { AgentMethodRequest, AgentMethodResult, AgentVizEvent } from '@kanaries/graphic-walker';
 import { WebSocketServer, type RawData, WebSocket } from 'ws';
 
 import type { ClientToServerMessage, GraphicWalkerSnapshot, ServerToClientMessage } from '../shared/state.ts';
@@ -33,6 +33,7 @@ export type GraphicWalkerBridge = {
         activeClient?: Omit<ActiveClient, 'socket'>;
         lastSnapshotAt?: string;
     };
+    createVisualization(options?: { name?: string }): Promise<AgentVizEvent>;
     onClientPresenceChange(listener: ClientPresenceListener): () => void;
     close(): Promise<void>;
 };
@@ -43,6 +44,7 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
     const presenceListeners = new Set<ClientPresenceListener>();
     const pendingSnapshots = new Map<string, PendingRequest<GraphicWalkerSnapshot>>();
     const pendingMethods = new Map<string, PendingRequest<AgentMethodResult>>();
+    const pendingVizCreations = new Map<string, PendingRequest<AgentVizEvent>>();
     let latestSnapshot: GraphicWalkerSnapshot | null = null;
     let activeClient: ActiveClient | null = null;
     let isClosed = false;
@@ -106,6 +108,7 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
         };
         dispose(pendingSnapshots, 'GraphicWalker client restarted. State request cancelled.');
         dispose(pendingMethods, 'GraphicWalker client restarted. Method dispatch cancelled.');
+        dispose(pendingVizCreations, 'GraphicWalker client restarted. Visualization request cancelled.');
         console.log(`[gw-bridge] client ready: ${message.clientName} (${message.version})`);
     };
 
@@ -127,6 +130,23 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
             return;
         }
         fulfill(pendingMethods, message.requestId, message.result);
+    };
+
+    const handleVizCreateResult = (socket: WebSocket, message: Extract<ClientToServerMessage, { type: 'viz:create:result' }>) => {
+        if (!activeClient || socket !== activeClient.socket) {
+            return;
+        }
+        const pending = pendingVizCreations.get(message.requestId);
+        if (!pending) {
+            return;
+        }
+        clearTimeout(pending.timer);
+        pendingVizCreations.delete(message.requestId);
+        if (!message.success || !message.event) {
+            pending.reject(new Error(message.message ?? 'Failed to create visualization.'));
+            return;
+        }
+        pending.resolve(message.event);
     };
 
     const handleLog = (_socket: WebSocket, message: Extract<ClientToServerMessage, { type: 'log' }>) => {
@@ -151,6 +171,10 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
         }
         if (message.type === 'method:result') {
             handleMethodResult(socket, message);
+            return;
+        }
+        if (message.type === 'viz:create:result') {
+            handleVizCreateResult(socket, message);
             return;
         }
         if (message.type === 'log') {
@@ -217,11 +241,32 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
         });
     };
 
+    const createVisualization: GraphicWalkerBridge['createVisualization'] = async (options = {}) => {
+        const requestId = randomUUID();
+        return await new Promise<AgentVizEvent>((resolve, reject) => {
+            try {
+                registerPending(
+                    pendingVizCreations,
+                    requestId,
+                    resolve,
+                    reject,
+                    METHOD_TIMEOUT_MS,
+                    'Visualization creation timed out waiting for browser.'
+                );
+                send({ type: 'viz:create', requestId, payload: { name: options.name?.trim() ? options.name : undefined } });
+            } catch (error) {
+                pendingVizCreations.delete(requestId);
+                reject(error as Error);
+            }
+        });
+    };
+
     const close = async () => {
         if (isClosed) return;
         isClosed = true;
         dispose(pendingSnapshots, 'GraphicWalker bridge closed.');
         dispose(pendingMethods, 'GraphicWalker bridge closed.');
+        dispose(pendingVizCreations, 'GraphicWalker bridge closed.');
         for (const socket of sockets) {
             try {
                 socket.close(1001, 'Server shutting down');
@@ -234,6 +279,7 @@ export function makeGraphicWalkerBridge(httpServer: HttpServer): GraphicWalkerBr
 
     return {
         dispatchMethod,
+        createVisualization,
         fetchSnapshot,
         getSnapshot: () => latestSnapshot,
         getStatus: () => ({
