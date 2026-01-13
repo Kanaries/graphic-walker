@@ -307,6 +307,7 @@ export class VizSpecStore {
                 break;
             }
             case 'select': {
+                // Don't follow the remote select event.
                 break;
             }
             default:
