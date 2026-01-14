@@ -8,6 +8,7 @@ import { GWGlobalConfig } from './vis/theme';
 import { VizSpecStore } from './store/visualSpecStore';
 import { CommonStore } from './store/commonStore';
 import type { XOR } from 'ts-xor';
+import { Methods, PropsMap } from './models/visSpecHistory';
 
 export type DeepReadonly<T extends Record<keyof any, any>> = {
     readonly [K in keyof T]: T[K] extends Record<keyof any, any> ? DeepReadonly<T[K]> : T[K];
@@ -538,6 +539,112 @@ interface IExportChartList {
  */
 export type IRenderStatus = 'computing' | 'rendering' | 'idle' | 'error';
 
+export type AgentEventSource = 'ui' | 'api';
+
+export type AgentTargetKind = 'dataset-field' | 'encoding-field' | 'encoding-channel' | 'filter-field' | 'filter-channel' | 'toolbar-action';
+
+export type AgentEncodingChannel = keyof Omit<DraggableFieldState, 'filters'>;
+
+export interface IAgentTargetDescriptor {
+    instanceId: string;
+    kind: AgentTargetKind;
+    channel?: AgentEncodingChannel;
+    index?: number;
+    fid?: string;
+    visId?: string;
+    actionKey?: string;
+    role?: IMutField['analyticType'];
+}
+
+export interface IGWAgentTargetSummary {
+    id: string;
+    kind: AgentTargetKind;
+    label: string;
+    channel?: AgentEncodingChannel;
+    index?: number;
+    fid?: string;
+    visId?: string;
+    actionKey?: string;
+    role?: IMutField['analyticType'];
+}
+
+export interface IGWAgentState {
+    instanceId: string;
+    visId: string;
+    visIndex: number;
+    visLength: number;
+    segmentKey: ISegmentKey;
+    spec: IChart;
+    meta: IMutField[];
+    targets: IGWAgentTargetSummary[];
+    timestamp: number;
+}
+
+export type AgentMethodName = Extract<keyof typeof Methods, string>;
+
+export type AgentMethodRequest<K extends AgentMethodName = AgentMethodName> = {
+    method: K;
+    args: PropsMap[(typeof Methods)[K]];
+    targetVisId?: string;
+};
+
+export type AgentMethodErrorCode = 'ERR_AGENT_NOT_READY' | 'ERR_UNKNOWN_METHOD' | 'ERR_EXECUTION_FAILED';
+
+export interface AgentMethodError {
+    code: AgentMethodErrorCode;
+    message: string;
+    details?: string;
+}
+
+export type AgentMethodResult =
+    | {
+          success: true;
+          state: IGWAgentState;
+      }
+    | {
+          success: false;
+          error: AgentMethodError;
+      };
+
+export type AgentEvent =
+    | {
+          type: 'hover';
+          action: 'enter' | 'leave';
+          targetId: string;
+          targetKind: AgentTargetKind;
+          meta?: Record<string, unknown>;
+      }
+    | {
+          type: 'method';
+          method: AgentMethodName;
+          args: unknown[];
+          source: AgentEventSource;
+          status: 'success' | 'error';
+          error?: AgentMethodError;
+          visId?: string;
+      }
+    | {
+          type: 'viz';
+          action: 'add' | 'remove' | 'duplicate' | 'select';
+          visId: string;
+          index: number;
+          name?: string;
+          chart?: IChart;
+          source: AgentEventSource;
+      };
+
+export type AgentVizEvent = Extract<AgentEvent, { type: 'viz' }>;
+
+export type AgentEventHandler = (event: AgentEvent) => void;
+
+export interface IGWPresenceDisplay {
+    userId: string;
+    displayName: string;
+    color?: string;
+    targetId: string;
+    visId?: string;
+}
+
 export interface IGWHandler {
     /** length of the "chart" tab list */
     chartCount: number;
@@ -563,6 +670,10 @@ export interface IGWHandler {
      */
     onRenderStatusChange: (cb: (renderStatus: IRenderStatus) => void) => () => void;
     /**
+     * Subscribe to agent-level events.
+     */
+    onAgentEvent: (cb: AgentEventHandler) => () => void;
+    /**
      * Exports the current chart.
      *
      * @param {IChartExportResult['mode']} [mode='svg'] - the export mode, either `svg` or `data-url`
@@ -581,10 +692,31 @@ export interface IGWHandler {
      * ```
      */
     exportChartList: IExportChartList;
+    /**
+     * Returns a snapshot of the current visualization state for agent usage.
+     */
+    getAgentState: () => IGWAgentState;
+    /**
+     * Dispatches a visualization mutation via the VisSpec methods.
+     */
+    dispatchMethod: <K extends AgentMethodName>(request: AgentMethodRequest<K>) => Promise<AgentMethodResult>;
+    /**
+     * Updates collaborative cursor positions.
+     */
+    updatePresence: (presence: IGWPresenceDisplay | IGWPresenceDisplay[]) => void;
+    /**
+     * Clears collaborative cursor highlight(s).
+     */
+    clearPresence: (userId?: string) => void;
+    /**
+     * Applies a visualization-level change (add/remove/select/duplicate) via an agent event payload.
+     */
+    applyVizEvent: (event: AgentVizEvent) => void;
 }
 
 export interface IGWHandlerInsider extends IGWHandler {
     updateRenderStatus: (renderStatus: IRenderStatus) => void;
+    emitAgentEvent: (event: AgentEvent) => void;
 }
 
 export interface IVisField {

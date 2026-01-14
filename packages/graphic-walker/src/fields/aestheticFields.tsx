@@ -7,6 +7,9 @@ import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../store';
 import MultiEncodeEditor from './encodeFields/multiEncodeEditor';
 import { GLOBAL_CONFIG } from '../config';
+import type { AgentEncodingChannel } from '../interfaces';
+import { buildEncodingChannelTargetId } from '../agent/targets';
+import { useHoverEmitter } from '../agent/useHoverEmitter';
 
 type aestheticFields = 'color' | 'opacity' | 'size' | 'shape' | 'details' | 'text';
 
@@ -19,6 +22,9 @@ const AestheticFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { config } = vizStore;
     const { geoms } = config;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
 
     const channels = useMemo(() => {
         switch (geoms[0]) {
@@ -45,9 +51,20 @@ const AestheticFields: React.FC = (props) => {
     return (
         <div>
             {channels.map((dkey, i, { length }) => {
+                const channelId = dkey.id as AgentEncodingChannel;
+                const targetId = buildEncodingChannelTargetId(instanceId, visId, channelId);
+                const channelMeta = { channel: dkey.id };
                 if (GLOBAL_CONFIG.CHANNEL_LIMIT[dkey.id] === 1) {
                     return (
-                        <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
+                        <AestheticFieldContainer
+                            name={dkey.id}
+                            key={dkey.id}
+                            style={{ position: 'relative' }}
+                            agentTargetId={targetId}
+                            channelName={dkey.id}
+                            onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
+                            onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
+                        >
                             <Droppable droppableId={dkey.id} direction="horizontal">
                                 {(provided, snapshot) => <SingleEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />}
                             </Droppable>
@@ -55,7 +72,15 @@ const AestheticFields: React.FC = (props) => {
                     );
                 } else {
                     return (
-                        <AestheticFieldContainer name={dkey.id} key={dkey.id} style={{ position: 'relative' }}>
+                        <AestheticFieldContainer
+                            name={dkey.id}
+                            key={dkey.id}
+                            style={{ position: 'relative' }}
+                            agentTargetId={targetId}
+                            channelName={dkey.id}
+                            onPointerEnter={() => emitHover('enter', targetId, 'encoding-channel', channelMeta)}
+                            onPointerLeave={() => emitHover('leave', targetId, 'encoding-channel', channelMeta)}
+                        >
                             <Droppable droppableId={dkey.id} direction="vertical">
                                 {(provided, snapshot) => <MultiEncodeEditor dkey={dkey} provided={provided} snapshot={snapshot} />}
                             </Droppable>

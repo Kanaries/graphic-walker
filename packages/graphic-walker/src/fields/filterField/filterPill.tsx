@@ -8,6 +8,8 @@ import { useVizStore } from '../../store';
 import { refMapper } from '../fieldsContext';
 import { formatDate } from '../../utils';
 import { parsedOffsetDate } from '../../lib/op/offset';
+import { buildFilterFieldTargetId } from '../../agent/targets';
+import { useHoverEmitter } from '../../agent/useHoverEmitter';
 
 interface FilterPillProps {
     provided: DraggableProvided;
@@ -61,17 +63,30 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { provided, fIndex } = props;
     const vizStore = useVizStore();
     const { viewFilters, config } = vizStore;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
 
     const { timezoneDisplayOffset } = config;
 
     const field = viewFilters[fIndex];
+    const targetId = buildFilterFieldTargetId(instanceId, visId, fIndex, field.fid);
+    const meta = { fid: field.fid, index: fIndex };
 
     const { t } = useTranslation('translation', { keyPrefix: 'filters' });
 
     const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
 
     return (
-        <Pill className="text-foreground touch-none" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <Pill
+            data-gw-target={targetId}
+            onPointerEnter={() => emitHover('enter', targetId, 'filter-field', meta)}
+            onPointerLeave={() => emitHover('leave', targetId, 'filter-field', meta)}
+            className="text-foreground touch-none"
+            ref={refMapper(provided.innerRef)}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+        >
             <header className="bg-secondary">{fieldName}</header>
             <div
                 className="bg-background  text-muted-foreground hover:bg-accent flex flex-row output"

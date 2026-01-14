@@ -599,6 +599,13 @@ export function newChart(fields: IMutField[], name: string, visId?: string, defa
             .concat(extraMeasures),
     }));
 }
+
+export function createChartFromFields(
+    fields: IMutField[],
+    options?: { name?: string; visId?: string; defaultConfig?: IDefaultConfig }
+): IChart {
+    return newChart(fields, options?.name ?? 'Chart 1', options?.visId, options?.defaultConfig);
+}
 export function fillChart(chart: PartialChart): IChart {
     const result = emptyChart(chart.visId || uniqueId(), chart.name || 'Chart');
     result.config = {

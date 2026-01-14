@@ -16,7 +16,10 @@ const VisNav: React.FC = (props) => {
     const tabs: ITabOption[] = vizList.map((v) => ({
         key: v.visId,
         label: v.name ?? 'vis',
-        editable: true
+        editable: true,
+        dataAttrs: {
+            'data-gw-visual-tab': v.visId
+        }
     }));
 
     tabs.push({

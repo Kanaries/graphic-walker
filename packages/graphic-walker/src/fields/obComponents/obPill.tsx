@@ -11,6 +11,8 @@ import { GLOBAL_CONFIG } from '../../config';
 import DropdownContext from '../../components/dropdownContext';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
+import { buildEncodingFieldTargetId } from '../../agent/targets';
+import { useHoverEmitter } from '../../agent/useHoverEmitter';
 
 interface PillProps {
     provided: DraggableProvided;
@@ -40,9 +42,17 @@ const OBPill: React.FC<PillProps> = (props) => {
     }, [allFields]);
 
     const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
+    const targetId = buildEncodingFieldTargetId(instanceId, visId, dkey.id, fIndex, field.fid);
+    const meta = { fid: field.fid, channel: dkey.id, index: fIndex, analyticType: field.analyticType };
 
     return (
         <Pill
+            data-gw-target={targetId}
+            onPointerEnter={() => emitHover('enter', targetId, 'encoding-field', meta)}
+            onPointerLeave={() => emitHover('leave', targetId, 'encoding-field', meta)}
             ref={refMapper(provided.innerRef)}
             colType={field.analyticType === 'dimension' ? 'discrete' : 'continuous'}
             className={`${field.aggName === 'expr' && !config.defaultAggregated ? '!opacity-50 touch-none' : 'touch-none'}`}

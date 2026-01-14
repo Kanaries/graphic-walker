@@ -13,6 +13,8 @@ import {
     performers,
     redo,
     undo,
+    Methods,
+    PropsMap,
 } from '../models/visSpecHistory';
 import { emptyEncodings, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { feature } from 'topojson-client';
@@ -40,6 +42,12 @@ import {
     IPaintMapV2,
     IDefaultConfig,
     FieldIdentifier,
+    AgentEvent,
+    AgentEventSource,
+    AgentMethodResult,
+    AgentMethodError,
+    IGWAgentState,
+    AgentVizEvent,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
 import { COUNT_FIELD_ID, DATE_TIME_DRILL_LEVELS, DATE_TIME_FEATURE_LEVELS, PAINT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
@@ -53,10 +61,15 @@ import { IPaintMapAdapter } from '../lib/paint';
 import { toChatMessage } from '@/models/chat';
 import { viewEncodingKeys } from '@/models/visSpec';
 import { getAllFields, getViewEncodingFields } from './storeStateLib';
+import { collectAgentTargets } from '../agent/targets';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
 
 const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(disposer => disposer())) as FinalizationRegistry<() => void> | null;
+const cloneChart = (chart: IChart): IChart => JSON.parse(JSON.stringify(chart));
+
+type MethodKey = Extract<keyof typeof Methods, string>;
+type MethodExecutionResult = { success: true } | { success: false; error: AgentMethodError; originalError: unknown };
 export class VizSpecStore {
     instanceID: string = uniqueId();
     visList: VisSpecWithHistory[];
@@ -88,6 +101,7 @@ export class VizSpecStore {
     lastSpec: string = '';
     editingComputedFieldFid: string | undefined = undefined;
     defaultConfig: IDefaultConfig | undefined;
+    private agentEventEmitter?: (event: AgentEvent) => void;
 
     onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -124,6 +138,185 @@ export class VizSpecStore {
             }
         );
         disposerRegister?.register(this, disposer);
+    }
+
+    setAgentEventEmitter(emitter?: (event: AgentEvent) => void) {
+        this.agentEventEmitter = emitter;
+    }
+
+    private emitAgentEvent(event: AgentEvent) {
+        this.agentEventEmitter?.(event);
+    }
+
+    private normalizeMethodError(error: unknown): AgentMethodError {
+        if (error instanceof Error) {
+            return {
+                code: 'ERR_EXECUTION_FAILED',
+                message: error.message,
+            };
+        }
+        if (typeof error === 'string') {
+            return {
+                code: 'ERR_EXECUTION_FAILED',
+                message: error,
+            };
+        }
+        return {
+            code: 'ERR_EXECUTION_FAILED',
+            message: 'Unknown method error',
+            details: JSON.stringify(error),
+        };
+    }
+
+    private runMethod<K extends MethodKey>(
+        method: K,
+        args: PropsMap[(typeof Methods)[K]],
+        source: AgentEventSource,
+        targetIndex = this.visIndex
+    ): MethodExecutionResult {
+        try {
+            this.visList[targetIndex] = (performers as any)[method](this.visList[targetIndex], ...(args as unknown[]));
+            const visId = this.visList[targetIndex]?.now.visId;
+            this.emitAgentEvent({
+                type: 'method',
+                method,
+                args,
+                source,
+                status: 'success',
+                visId,
+            });
+            return { success: true };
+        } catch (err) {
+            const normalized = this.normalizeMethodError(err);
+            this.emitAgentEvent({
+                type: 'method',
+                method,
+                args,
+                source,
+                status: 'error',
+                error: normalized,
+                visId: this.visList[targetIndex]?.now.visId,
+            });
+            return { success: false, error: normalized, originalError: err };
+        }
+    }
+
+    private applyUiMethod<K extends MethodKey>(method: K, args: PropsMap[(typeof Methods)[K]], targetIndex = this.visIndex) {
+        const result = this.runMethod(method, args, 'ui', targetIndex);
+        if (!result.success) {
+            const original = result.originalError;
+            if (original instanceof Error) {
+                throw original;
+            }
+            throw new Error(result.error.message);
+        }
+    }
+
+    getAgentStateSnapshot(): IGWAgentState {
+        return {
+            instanceId: this.instanceID,
+            visId: this.currentVis.visId,
+            visIndex: this.visIndex,
+            visLength: this.visLength,
+            segmentKey: this.segmentKey,
+            spec: this.currentVis,
+            meta: this.meta,
+            targets: collectAgentTargets({
+                instanceId: this.instanceID,
+                visId: this.currentVis.visId,
+                encodings: this.currentVis.encodings,
+                meta: this.meta,
+            }),
+            timestamp: Date.now(),
+        };
+    }
+
+    applyMethodFromAgent<K extends MethodKey>(method: K, args: PropsMap[(typeof Methods)[K]], targetVisId?: string): AgentMethodResult {
+        let targetIndex = this.visIndex;
+        if (targetVisId) {
+            const matchIndex = this.visList.findIndex((chart) => chart.now.visId === targetVisId);
+            if (matchIndex === -1) {
+                return {
+                    success: false,
+                    error: {
+                        code: 'ERR_EXECUTION_FAILED',
+                        message: `Visualization ${targetVisId} not found`,
+                    },
+                };
+            }
+            targetIndex = matchIndex;
+        }
+        const result = this.runMethod(method, args, 'api', targetIndex);
+        if (result.success) {
+            return {
+                success: true,
+                state: this.getAgentStateSnapshot(),
+            };
+        }
+        return {
+            success: false,
+            error: result.error,
+        };
+    }
+
+    applyVizEventFromAgent(event: AgentVizEvent) {
+        if (!this.visList.length) {
+            return;
+        }
+        const currentVisId = this.visList[this.visIndex]?.now.visId;
+        const restoreCurrentVisIndex = () => {
+            if (!currentVisId) {
+                return;
+            }
+            const idx = this.visList.findIndex((chart) => chart.now.visId === currentVisId);
+            if (idx >= 0) {
+                this.visIndex = idx;
+            }
+        };
+        switch (event.action) {
+            case 'add':
+            case 'duplicate': {
+                if (!event.chart) return;
+                const snapshot = fromSnapshot(event.chart);
+                const existingIndex = this.visList.findIndex((chart) => chart.now.visId === event.visId);
+                if (existingIndex >= 0) {
+                    this.visList = this.visList.map((chart, idx) => (idx === existingIndex ? snapshot : chart));
+                } else {
+                    const insertIndex = event.index !== undefined ? Math.max(0, Math.min(event.index, this.visList.length)) : this.visList.length;
+                    this.visList = [
+                        ...this.visList.slice(0, insertIndex),
+                        snapshot,
+                        ...this.visList.slice(insertIndex),
+                    ];
+                    if (insertIndex <= this.visIndex && event.visId !== currentVisId) {
+                        restoreCurrentVisIndex();
+                    }
+                }
+                this.createdVis = Math.max(this.createdVis, this.visList.length);
+                break;
+            }
+            case 'remove': {
+                const removeIndex = this.visList.findIndex((chart) => chart.now.visId === event.visId);
+                if (removeIndex === -1 || this.visList.length <= 1) {
+                    return;
+                }
+                this.visList = this.visList.filter((_, idx) => idx !== removeIndex);
+                if (event.visId === currentVisId) {
+                    this.visIndex = Math.min(removeIndex, this.visList.length - 1);
+                } else if (removeIndex < this.visIndex) {
+                    restoreCurrentVisIndex();
+                } else if (this.visIndex >= this.visList.length) {
+                    this.visIndex = Math.max(0, this.visList.length - 1);
+                }
+                break;
+            }
+            case 'select': {
+                // Don't follow the remote select event.
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     get visLength() {
@@ -365,7 +558,7 @@ export class VizSpecStore {
         if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID || oriF.fid === COUNT_FIELD_ID || oriF.aggName === 'expr') {
             return;
         }
-        this.visList[this.visIndex] = performers.appendFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex, null);
+        this.applyUiMethod('appendFilter', [index, sourceKey, sourceIndex, null]);
         this.editingFilterIdx = index;
     }
 
@@ -378,7 +571,7 @@ export class VizSpecStore {
     }
 
     setVisName(index: number, name: string) {
-        this.visList[index] = performers.setName(this.visList[index], name);
+        this.applyUiMethod('setName', [name], index);
     }
 
     setMeta(meta: IMutField[]) {
@@ -403,24 +596,55 @@ export class VizSpecStore {
         this.visList.push(fromFields(this.meta, name, this.defaultConfig));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        const chart = cloneChart(this.visList[this.visIndex].now);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'add',
+            visId: chart.visId,
+            name: chart.name,
+            index: this.visIndex,
+            chart,
+            source: 'ui',
+        });
     }
 
     removeVisualization(index: number) {
         if (this.visLength === 1) return;
-        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
-        this.visList.splice(index, 1);
+        const removed = this.visList[index]?.now;
+        if (!removed) return;
+        if (this.visIndex >= index && this.visIndex > 0) {
+            this.visIndex -= 1;
+        }
+        this.visList = this.visList.filter((_, idx) => idx !== index);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'remove',
+            visId: removed.visId,
+            index,
+            name: removed.name,
+            source: 'ui',
+        });
     }
 
     duplicateVisualization(index: number) {
-        this.visList.push(
-            fromSnapshot({
-                ...this.visList[index].now,
-                name: this.visList[index].now.name + ' Copy',
-                visId: uniqueId(),
-            })
-        );
+        const duplicate = {
+            ...this.visList[index].now,
+            name: (this.visList[index].now.name ?? 'Chart') + ' Copy',
+            visId: uniqueId(),
+        } as IChart;
+        this.visList.push(fromSnapshot(duplicate));
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
+        const chart = cloneChart(this.visList[this.visIndex].now);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'duplicate',
+            visId: chart.visId,
+            name: chart.name,
+            index: this.visIndex,
+            chart,
+            source: 'ui',
+        });
     }
 
     setFilterEditing(index: number) {
@@ -436,27 +660,27 @@ export class VizSpecStore {
     }
 
     setVisualConfig(...args: KVTuple<IVisualConfigNew>) {
-        this.visList[this.visIndex] = performers.setConfig(this.visList[this.visIndex], ...args);
+        this.applyUiMethod('setConfig', args);
     }
 
     setCoordSystem(mode: ICoordMode) {
-        this.visList[this.visIndex] = performers.setCoordSystem(this.visList[this.visIndex], mode);
+        this.applyUiMethod('setCoordSystem', [mode]);
     }
 
     setVisualLayout(...args: KVTuple<IVisualLayout>);
     setVisualLayout(...args: KVTuple<IVisualLayout>[]);
     setVisualLayout(...args: KVTuple<IVisualLayout> | KVTuple<IVisualLayout>[]) {
-        if (typeof args[0] === 'string') {
-            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], [args]);
-        } else {
-            this.visList[this.visIndex] = performers.setLayout(this.visList[this.visIndex], args);
-        }
+        const layoutArgs =
+            typeof args[0] === 'string'
+                ? ([args] as KVTuple<IVisualLayout>[])
+                : (args as KVTuple<IVisualLayout>[]);
+        this.applyUiMethod('setLayout', [layoutArgs]);
     }
 
     reorderField(stateKey: keyof DraggableFieldState, sourceIndex: number, destinationIndex: number) {
         if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(stateKey)) return;
         if (sourceIndex === destinationIndex) return;
-        this.visList[this.visIndex] = performers.reorderField(this.visList[this.visIndex], stateKey, sourceIndex, destinationIndex);
+        this.applyUiMethod('reorderField', [stateKey, sourceIndex, destinationIndex]);
     }
 
     moveField(sourceKey: keyof DraggableFieldState, sourceIndex: number, destinationKey: keyof DraggableFieldState, destinationIndex: number) {
@@ -473,50 +697,34 @@ export class VizSpecStore {
         }
         const limit = GLOBAL_CONFIG.CHANNEL_LIMIT[destinationKey] ?? Infinity;
         if (destMeta === sourceMeta) {
-            this.visList[this.visIndex] = performers.moveField(this.visList[this.visIndex], sourceKey, sourceIndex, destinationKey, destinationIndex, limit);
+            this.applyUiMethod('moveField', [sourceKey, sourceIndex, destinationKey, destinationIndex, limit]);
         } else if (destMeta) {
-            this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+            this.applyUiMethod('removeField', [sourceKey, sourceIndex]);
         } else {
             // add an encoding
             if (oriF.fid === MEA_KEY_ID || oriF.fid === MEA_VAL_ID) {
-                this.visList[this.visIndex] = performers.addFoldField(
-                    this.visList[this.visIndex],
-                    sourceKey,
-                    sourceIndex,
-                    destinationKey,
-                    destinationIndex,
-                    uniqueId(),
-                    limit
-                );
+                this.applyUiMethod('addFoldField', [sourceKey, sourceIndex, destinationKey, destinationIndex, uniqueId(), limit]);
                 return;
             }
-            this.visList[this.visIndex] = performers.cloneField(
-                this.visList[this.visIndex],
-                sourceKey,
-                sourceIndex,
-                destinationKey,
-                destinationIndex,
-                uniqueId(),
-                limit
-            );
+            this.applyUiMethod('cloneField', [sourceKey, sourceIndex, destinationKey, destinationIndex, uniqueId(), limit]);
         }
     }
 
     modFilter(index: number, sourceKey: keyof Omit<DraggableFieldState, 'filters'>, sourceIndex: number) {
-        this.visList[this.visIndex] = performers.modFilter(this.visList[this.visIndex], index, sourceKey, sourceIndex);
+        this.applyUiMethod('modFilter', [index, sourceKey, sourceIndex]);
     }
 
     removeField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
         if (GLOBAL_CONFIG.META_FIELD_KEYS.includes(sourceKey)) return;
-        this.visList[this.visIndex] = performers.removeField(this.visList[this.visIndex], sourceKey, sourceIndex);
+        this.applyUiMethod('removeField', [sourceKey, sourceIndex]);
     }
 
     writeFilter(index: number, rule: IFilterRule | null) {
-        this.visList[this.visIndex] = performers.writeFilter(this.visList[this.visIndex], index, rule);
+        this.applyUiMethod('writeFilter', [index, rule]);
     }
 
     transpose() {
-        this.visList[this.visIndex] = performers.transpose(this.visList[this.visIndex]);
+        this.applyUiMethod('transpose', []);
     }
 
     createBinField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, binType: 'bin' | 'binCount', binNumber = 10): string {
@@ -533,12 +741,12 @@ export class VizSpecStore {
         if (existedRelatedBinField) {
             return existedRelatedBinField.fid;
         }
-        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, binType, newVarKey, binNumber);
+        this.applyUiMethod('createBinlogField', [stateKey, index, binType, newVarKey, binNumber]);
         return newVarKey;
     }
 
     createLogField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, scaleType: 'log10' | 'log2' | 'log', logNumber = 10) {
-        this.visList[this.visIndex] = performers.createBinlogField(this.visList[this.visIndex], stateKey, index, scaleType, uniqueId(), logNumber);
+        this.applyUiMethod('createBinlogField', [stateKey, index, scaleType, uniqueId(), logNumber]);
     }
 
     renameFieldInChart(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, newName: string) {
@@ -546,7 +754,7 @@ export class VizSpecStore {
         if (!origianlField) {
             return;
         }
-        this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName });
+        this.applyUiMethod('editAllField', [origianlField.fid, { name: newName }]);
     }
 
     public createDateTimeDrilledField(
@@ -557,16 +765,7 @@ export class VizSpecStore {
         format: string,
         offset: number | undefined
     ) {
-        this.visList[this.visIndex] = performers.createDateDrillField(
-            this.visList[this.visIndex],
-            stateKey,
-            index,
-            drillLevel,
-            uniqueId(),
-            name,
-            format,
-            offset ?? new Date().getTimezoneOffset()
-        );
+        this.applyUiMethod('createDateDrillField', [stateKey, index, drillLevel, uniqueId(), name, format, offset ?? new Date().getTimezoneOffset()]);
     }
 
     public createDateFeatureField(
@@ -577,28 +776,19 @@ export class VizSpecStore {
         format: string,
         offset: number | undefined
     ) {
-        this.visList[this.visIndex] = performers.createDateFeatureField(
-            this.visList[this.visIndex],
-            stateKey,
-            index,
-            drillLevel,
-            uniqueId(),
-            name,
-            format,
-            offset ?? new Date().getTimezoneOffset()
-        );
+        this.applyUiMethod('createDateFeatureField', [stateKey, index, drillLevel, uniqueId(), name, format, offset ?? new Date().getTimezoneOffset()]);
     }
 
     setFieldAggregator(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, aggName: IAggregator) {
-        this.visList[this.visIndex] = performers.setFieldAggregator(this.visList[this.visIndex], stateKey, index, aggName);
+        this.applyUiMethod('setFieldAggregator', [stateKey, index, aggName]);
     }
 
     setFilterAggregator(index: number, aggName: IAggregator | '') {
-        this.visList[this.visIndex] = performers.setFilterAggregator(this.visList[this.visIndex], index, aggName);
+        this.applyUiMethod('setFilterAggregator', [index, aggName]);
     }
 
     applyDefaultSort(sortType: ISortMode = 'ascending') {
-        this.visList[this.visIndex] = performers.applySort(this.visList[this.visIndex], sortType);
+        this.applyUiMethod('applySort', [sortType]);
     }
 
     exportCurrentChart() {
@@ -655,6 +845,17 @@ export class VizSpecStore {
 
     selectVisualization(index: number) {
         this.visIndex = index;
+        const chart = this.visList[index]?.now;
+        if (chart) {
+            this.emitAgentEvent({
+                type: 'viz',
+                action: 'select',
+                visId: chart.visId,
+                name: chart.name,
+                index,
+                source: 'ui',
+            });
+        }
     }
 
     setShowDataConfig(show: boolean) {
@@ -710,22 +911,22 @@ export class VizSpecStore {
         }
         this.localGeoJSON = geoJSON;
         if (geoUrl) {
-            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, geoKey, geoUrl);
+            this.applyUiMethod('setGeoData', [undefined, geoKey, geoUrl]);
         } else {
-            this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
+            this.applyUiMethod('setGeoData', [geoJSON, geoKey, undefined]);
         }
     }
 
     clearGeographicData() {
-        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, undefined, undefined);
+        this.applyUiMethod('setGeoData', [undefined, undefined, undefined]);
     }
 
     changeSemanticType(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, semanticType: ISemanticType) {
-        this.visList[this.visIndex] = performers.changeSemanticType(this.visList[this.visIndex], stateKey, index, semanticType);
+        this.applyUiMethod('changeSemanticType', [stateKey, index, semanticType]);
     }
 
     updatePaint(paintMap: IPaintMapV2 | null, name: string) {
-        this.visList[this.visIndex] = performers.upsertPaintField(this.visList[this.visIndex], paintMap, name);
+        this.applyUiMethod('upsertPaintField', [paintMap, name]);
     }
 
     updateGeoKey(key: string) {
@@ -798,7 +999,7 @@ export class VizSpecStore {
 
     upsertComputedField(fid: string, name: string, sql: string) {
         if (fid === '') {
-            this.visList[this.visIndex] = performers.addSQLComputedField(this.visList[this.visIndex], uniqueId(), name, sql);
+            this.applyUiMethod('addSQLComputedField', [uniqueId(), name, sql]);
         } else {
             const originalField = this.allFields.find((x) => x.fid === fid);
             if (!originalField) return;
@@ -807,25 +1008,25 @@ export class VizSpecStore {
             const newAggName = isAgg ? 'expr' : analyticType === 'dimension' ? undefined : 'sum';
             const preAggName = originalField.aggName === 'expr' ? 'expr' : originalField.aggName === undefined ? undefined : 'sum';
 
-            this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], fid, {
+            this.applyUiMethod('editAllField', [fid, {
                 name,
                 analyticType,
                 semanticType,
                 ...(preAggName !== newAggName ? { aggName: newAggName } : {}),
                 expression: { as: fid, op: 'expr', params: [{ type: 'sql', value: sql }] },
-            });
+            }]);
         }
     }
 
     removeComputedField(sourceKey: keyof DraggableFieldState, sourceIndex: number) {
         const oriF = this.currentEncodings[sourceKey][sourceIndex];
         if (oriF.computed) {
-            this.visList[this.visIndex] = performers.removeAllField(this.visList[this.visIndex], oriF.fid);
+            this.applyUiMethod('removeAllField', [oriF.fid]);
         }
     }
 
     replaceWithNLPQuery(query: string, response: string) {
-        this.visList[this.visIndex] = performers.replaceWithNLPQuery(this.visList[this.visIndex], query, response);
+        this.applyUiMethod('replaceWithNLPQuery', [query, response]);
     }
 }
 

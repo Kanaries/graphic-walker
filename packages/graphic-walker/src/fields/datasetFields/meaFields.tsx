@@ -10,19 +10,26 @@ import { FieldPill } from './fieldPill';
 import { MEA_KEY_ID } from '../../constants';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
+import { buildDatasetFieldTargetId } from '../../agent/targets';
+import { useHoverEmitter } from '../../agent/useHoverEmitter';
 
 const MeaFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { measures } = vizStore;
+    const emitHover = useHoverEmitter();
+    const instanceId = vizStore.instanceID;
+    const visId = vizStore.currentVis.visId;
 
     const menuActions = useMenuActions('measures');
 
     return (
-        <div className='relative touch-none'>
-            {measures.map((f, index) => (
-                <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
-                    {(provided, snapshot) => {
-                        return (
+        <div className='relative touch-none' data-gw-channel-container='measures'>
+            {measures.map((f, index) => {
+                const targetId = buildDatasetFieldTargetId(instanceId, visId, f.fid, f.analyticType);
+                const meta = { fid: f.fid, name: f.name, channel: 'dataset:measures', index };
+                return (
+                    <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
+                        {(provided, snapshot) => (
                             <div className="block">
                                 <ActionMenu
                                     title={f.name || f.fid}
@@ -31,6 +38,9 @@ const MeaFields: React.FC = (props) => {
                                     disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}
                                 >
                                     <FieldPill
+                                        data-gw-target={targetId}
+                                        onPointerEnter={() => emitHover('enter', targetId, 'dataset-field', meta)}
+                                        onPointerLeave={() => emitHover('leave', targetId, 'dataset-field', meta)}
                                         className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
                                             snapshot.isDragging ? 'bg-measure/20' : ''
                                         }`}
@@ -65,10 +75,10 @@ const MeaFields: React.FC = (props) => {
                                     }
                                 </ActionMenu>
                             </div>
-                        );
-                    }}
-                </Draggable>
-            ))}
+                        )}
+                    </Draggable>
+                );
+            })}
         </div>
     );
 };

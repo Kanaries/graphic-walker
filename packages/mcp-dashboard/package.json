@@ -1,0 +1,36 @@
+{
+  "name": "@kanaries/mcp-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development tsx server/index.ts",
+    "start": "cross-env NODE_ENV=production tsx server/index.ts",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "@kanaries/graphic-walker": "0.5.0",
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "open": "^9.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@types/ws": "^8.5.12",
+    "@vitejs/plugin-react": "^5.1.0",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.11"
+  }
+}
