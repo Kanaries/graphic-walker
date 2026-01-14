@@ -280,10 +280,14 @@ export class VizSpecStore {
                 const snapshot = fromSnapshot(event.chart);
                 const existingIndex = this.visList.findIndex((chart) => chart.now.visId === event.visId);
                 if (existingIndex >= 0) {
-                    this.visList[existingIndex] = snapshot;
+                    this.visList = this.visList.map((chart, idx) => (idx === existingIndex ? snapshot : chart));
                 } else {
                     const insertIndex = event.index !== undefined ? Math.max(0, Math.min(event.index, this.visList.length)) : this.visList.length;
-                    this.visList.splice(insertIndex, 0, snapshot);
+                    this.visList = [
+                        ...this.visList.slice(0, insertIndex),
+                        snapshot,
+                        ...this.visList.slice(insertIndex),
+                    ];
                     if (insertIndex <= this.visIndex && event.visId !== currentVisId) {
                         restoreCurrentVisIndex();
                     }
@@ -296,7 +300,7 @@ export class VizSpecStore {
                 if (removeIndex === -1 || this.visList.length <= 1) {
                     return;
                 }
-                this.visList.splice(removeIndex, 1);
+                this.visList = this.visList.filter((_, idx) => idx !== removeIndex);
                 if (event.visId === currentVisId) {
                     this.visIndex = Math.min(removeIndex, this.visList.length - 1);
                 } else if (removeIndex < this.visIndex) {
@@ -607,18 +611,19 @@ export class VizSpecStore {
     removeVisualization(index: number) {
         if (this.visLength === 1) return;
         const removed = this.visList[index]?.now;
-        if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
-        this.visList.splice(index, 1);
-        if (removed) {
-            this.emitAgentEvent({
-                type: 'viz',
-                action: 'remove',
-                visId: removed.visId,
-                index,
-                name: removed.name,
-                source: 'ui',
-            });
+        if (!removed) return;
+        if (this.visIndex >= index && this.visIndex > 0) {
+            this.visIndex -= 1;
         }
+        this.visList = this.visList.filter((_, idx) => idx !== index);
+        this.emitAgentEvent({
+            type: 'viz',
+            action: 'remove',
+            visId: removed.visId,
+            index,
+            name: removed.name,
+            source: 'ui',
+        });
     }
 
     duplicateVisualization(index: number) {
