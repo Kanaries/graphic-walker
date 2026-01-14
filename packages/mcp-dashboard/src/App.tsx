@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgentMethodRequest, AgentMethodResult, AgentVizEvent, IGWAgentState, IGWHandler, IMutField, IChart } from "@kanaries/graphic-walker";
-import { GraphicWalker, createChartFromFields } from "@kanaries/graphic-walker";
+import { GraphicWalker, createChartFromFields, DataSourceSegmentComponent, IDataSourceEventType, createMemoryProvider } from "@kanaries/graphic-walker";
 import type { ClientToServerMessage, ServerToClientMessage } from "../shared/state.ts";
 import "./index.css";
 
@@ -10,19 +10,13 @@ const websocketUrl = (() => {
     return `${protocol}//${window.location.host}/ws`;
 })();
 
-type SampleDatasetResponse = {
-    name: string;
-    description: string;
-    data: Record<string, string | number>[];
-    fields: IMutField[];
-};
-
 type WebSocketState = "idle" | "connecting" | "open" | "closed";
+type DatasetStatus = "idle" | "loading" | "ready" | "error";
 
 export default function App() {
-    const [dataSource, setDataSource] = useState<SampleDatasetResponse | null>(null);
+    const providerRef = useRef(createMemoryProvider());
+    const [datasetStatus, setDatasetStatus] = useState<DatasetStatus>("loading");
     const [datasetError, setDatasetError] = useState<string | null>(null);
-    const [isFetchingDataset, setIsFetchingDataset] = useState(true);
     const [wsStatus, setWsStatus] = useState<WebSocketState>("idle");
     const [activity, setActivity] = useState("Waiting for GraphicWalker to load...");
     const socketRef = useRef<WebSocket | null>(null);
@@ -33,33 +27,38 @@ export default function App() {
     const handshakeSentRef = useRef(false);
 
     useEffect(() => {
-        const abortController = new AbortController();
-        setIsFetchingDataset(true);
-        fetch("/api/sample-dataset", { signal: abortController.signal })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`Failed to load dataset: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then((payload: SampleDatasetResponse) => {
-                setDataSource(payload);
+        const provider = providerRef.current;
+        let mounted = true;
+
+        const refreshDatasetStatus = async () => {
+            const list = await provider.getDataSourceList();
+            if (!mounted) {
+                return;
+            }
+            if (list.length) {
                 setDatasetError(null);
-                setActivity(`Loaded dataset: ${payload.name}`);
-            })
-            .catch(error => {
-                if (abortController.signal.aborted) return;
-                setDatasetError((error as Error).message);
-                setActivity("Dataset request failed.");
-            })
-            .finally(() => {
-                if (!abortController.signal.aborted) {
-                    setIsFetchingDataset(false);
-                }
-            });
+                setDatasetStatus("ready");
+            } else {
+                setDatasetStatus(current => {
+                    if (current === "loading" || current === "error") {
+                        return current;
+                    }
+                    return "idle";
+                });
+            }
+        };
+
+        void refreshDatasetStatus();
+
+        const dispose = provider.registerCallback?.(eventType => {
+            if (eventType & IDataSourceEventType.updateList) {
+                void refreshDatasetStatus();
+            }
+        });
 
         return () => {
-            abortController.abort();
+            mounted = false;
+            dispose?.();
         };
     }, []);
     const sendMessage = useCallback((payload: ClientToServerMessage) => {
@@ -161,7 +160,7 @@ export default function App() {
     const createVisualization = useCallback(
         (requestId: string, payload?: { name?: string }) => {
             const handler = gwRef.current;
-            if (!handler || typeof handler.applyVizEvent !== "function" || !dataSource?.fields?.length) {
+            if (!handler || typeof handler.applyVizEvent !== "function") {
                 sendMessage({
                     type: "viz:create:result",
                     requestId,
@@ -171,10 +170,32 @@ export default function App() {
                 setActivity("Visualization request failed – handler not ready.");
                 return;
             }
+
+            let availableFields: IMutField[] = [];
+            try {
+                const state = handler.getAgentState();
+                lastSnapshotRef.current = state;
+                availableFields = state.meta ?? [];
+            } catch (error) {
+                console.warn("Failed to read agent state for viz creation", error);
+                availableFields = lastSnapshotRef.current?.meta ?? [];
+            }
+
+            if (availableFields.length === 0) {
+                sendMessage({
+                    type: "viz:create:result",
+                    requestId,
+                    success: false,
+                    message: "No dataset fields are available. Import data before creating a visualization.",
+                });
+                setActivity("Visualization request failed – no dataset fields available.");
+                return;
+            }
+
             try {
                 const nextIndex = Math.max(handler.chartCount, 0);
                 const chartName = payload?.name?.trim()?.length ? payload.name : `Chart ${nextIndex + 1}`;
-                const chart = createChartFromFields(dataSource.fields, { name: chartName });
+                const chart = createChartFromFields(availableFields, { name: chartName });
                 const eventPayload: AgentVizEvent = {
                     type: "viz",
                     action: "add",
@@ -198,7 +219,7 @@ export default function App() {
                 setActivity("Visualization request failed – see logs for details.");
             }
         },
-        [dataSource?.fields, publishSnapshot, sendMessage]
+        [publishSnapshot, sendMessage]
     );
 
     const handleServerMessage = useCallback(
@@ -231,9 +252,6 @@ export default function App() {
     );
 
     useEffect(() => {
-        if (!dataSource) {
-            return;
-        }
         const socket = new WebSocket(websocketUrl);
         socketRef.current = socket;
         handshakeSentRef.current = false;
@@ -269,23 +287,22 @@ export default function App() {
             }
             setWsStatus("idle");
         };
-    }, [dataSource, handleServerMessage]);
+    }, [handleServerMessage]);
 
     useEffect(() => {
-        if (!dataSource) return;
         if (wsStatus !== "open") return;
         if (!gwRef.current) return;
         if (handshakeSentRef.current) return;
 
         sendMessage({
             type: "hello",
-            clientName: `${dataSource.name} Preview`,
+            clientName: "MCP Dashboard Bridge",
             version: `1.0`,
         });
         handshakeSentRef.current = true;
         publishSnapshot();
         setActivity("Handshake complete. Sharing GraphicWalker state.");
-    }, [dataSource, wsStatus, handlerReadyTick, publishSnapshot, sendMessage]);
+    }, [handlerReadyTick, publishSnapshot, sendMessage, wsStatus]);
 
     useEffect(() => {
         const handler = gwRef.current;
@@ -329,79 +346,73 @@ export default function App() {
         };
     }, []);
 
-    const initialCharts = useMemo<IChart[] | undefined>(() => {
-        if (!dataSource?.fields?.length) return undefined;
-        return [createChartFromFields(dataSource.fields, { name: "Agent Preview" })];
-    }, [dataSource?.fields]);
-
-    const statusLabel = useMemo(() => {
-        if (datasetError) return "Dataset error";
-        if (isFetchingDataset) return "Loading dataset...";
+    const connectionStatusLabel = useMemo(() => {
         if (wsStatus === "connecting") return "Connecting to MCP bridge...";
         if (wsStatus === "open") return "Live sync ready";
         if (wsStatus === "closed") return "Connection lost";
         return "Idle";
-    }, [datasetError, isFetchingDataset, wsStatus]);
+    }, [wsStatus]);
+
+    const datasetStatusLabel = useMemo(() => {
+        if (datasetError) return `Dataset error: ${datasetError}`;
+        if (datasetStatus === "ready") {
+            return "Dataset ready";
+        }
+        if (datasetStatus === "loading") {
+            return "Add or import a dataset";
+        }
+        if (datasetStatus === "error") {
+            return "Dataset unavailable";
+        }
+        return "Add or import a dataset";
+    }, [datasetError, datasetStatus]);
+
+    const datasetStatusVariant = useMemo(() => {
+        if (datasetStatus === "ready") return "open";
+        if (datasetStatus === "loading") return "connecting";
+        if (datasetStatus === "error") return "closed";
+        return "idle";
+    }, [datasetStatus]);
 
     return (
         <div className="gw-shell">
             <header className="gw-header">
-                <div>
+                <div className="gw-header-copy">
                     <p className="gw-kicker">GraphicWalker Preview</p>
                     <h1>MCP Dashboard Bridge</h1>
                     <p className="gw-subtitle">
                         The Vite client now renders a single GraphicWalker canvas. Every edit is streamed to Express/WebSocket so MCP tools mirror the live
                         state.
                     </p>
+                    <p className="gw-activity-line">{activity}</p>
                 </div>
-                <div className={`gw-status gw-status-${wsStatus}`}>
-                    <span className="gw-status-dot" />
-                    <span>{statusLabel}</span>
+                <div className="gw-status-group">
+                    <div className={`gw-status gw-status-${wsStatus}`}>
+                        <span className="gw-status-dot" />
+                        <span>{connectionStatusLabel}</span>
+                    </div>
+                    <div className={`gw-status gw-status-${datasetStatusVariant}`}>
+                        <span className="gw-status-dot" />
+                        <span>{datasetStatusLabel}</span>
+                    </div>
                 </div>
             </header>
-
-            <main className="gw-stage">
-                <section className="gw-panel">
-                    <div className="gw-panel-head">
-                        <div>
-                            <h2>{dataSource?.name ?? "Loading dataset..."}</h2>
-                            <p>{dataSource?.description ?? "Fetching sample dataset and booting GraphicWalker."}</p>
-                        </div>
-                        <div className="gw-meta">
-                            <span>{`Dashboard 1.0`}</span>
-                            <span>{wsStatus === "open" ? "WS linked" : "WS pending"}</span>
-                        </div>
-                    </div>
-                    <div className="gw-canvas">
-                        {datasetError && <div className="gw-error">{datasetError}</div>}
-                        {!datasetError && !dataSource && <div className="gw-loading">Loading dataset…</div>}
-                        {dataSource && (
+            <main className="gw-main">
+                <DataSourceSegmentComponent provider={providerRef.current} appearance="light">
+                    {({ computation, meta, onMetaChange, storeRef }) => (
+                        <div className="gw-workspace">
                             <GraphicWalker
                                 ref={gwRef}
+                                keepAlive
                                 vizThemeConfig="g2"
-                                data={dataSource.data}
-                                fields={dataSource.fields}
-                                chart={initialCharts}
+                                computation={computation}
+                                rawFields={meta}
+                                onMetaChange={onMetaChange}
+                                storeRef={storeRef}
                             />
-                        )}
-                    </div>
-                </section>
-
-                <aside className="gw-sidebar">
-                    <div className="gw-activity">
-                        <h3>Activity</h3>
-                        <p>{activity}</p>
-                    </div>
-                    <div className="gw-help">
-                        <h3>How it works</h3>
-                        <ol>
-                            <li>Load the bundled sample dataset.</li>
-                            <li>Mount a single GraphicWalker component.</li>
-                            <li>Handshake with the MCP bridge via WebSocket.</li>
-                            <li>Publish snapshots + dispatch results for every change.</li>
-                        </ol>
-                    </div>
-                </aside>
+                        </div>
+                    )}
+                </DataSourceSegmentComponent>
             </main>
         </div>
     );

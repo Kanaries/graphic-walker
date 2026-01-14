@@ -1,34 +1,33 @@
-import { readFile } from 'node:fs/promises';
-import { createServer } from 'node:http';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express';
-import cors from 'cors';
-import express, { type NextFunction, type Request, type Response } from 'express';
-import open from 'open';
-import { createServer as createViteServer } from 'vite';
-import { GRAPHIC_WALKER_DOCS, mountMcpServer } from './mcpServer.ts';
-import { makeGraphicWalkerBridge } from './graphicWalkerBridge.ts';
-import { SAMPLE_DATASET } from './sampleData.ts';
+import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express";
+import cors from "cors";
+import express, { type NextFunction, type Request, type Response } from "express";
+import open from "open";
+import { createServer as createViteServer } from "vite";
+import { GRAPHIC_WALKER_DOCS, mountMcpServer } from "./mcpServer.ts";
+import { makeGraphicWalkerBridge } from "./graphicWalkerBridge.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '..');
-const distDir = resolve(projectRoot, 'dist');
+const projectRoot = resolve(__dirname, "..");
+const distDir = resolve(projectRoot, "dist");
 
 const PORT = Number(process.env.MCP_DASHBOARD_PORT ?? 4399);
-const HOST = process.env.MCP_DASHBOARD_HOST ?? '127.0.0.1';
-const SHUTDOWN_DELAY_MS = 500;
+const HOST = process.env.MCP_DASHBOARD_HOST ?? "127.0.0.1";
+const SHUTDOWN_DELAY_MS = 30_000; // keep server alive for refresh/reconnect scenarios
 
 async function registerFrontend(app: express.Express) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
         app.use(express.static(distDir));
-        app.get('*', (req: Request, res: Response, next: NextFunction) => {
-            if (req.path.startsWith('/api') || req.path.startsWith('/mcp')) {
+        app.get("*", (req: Request, res: Response, next: NextFunction) => {
+            if (req.path.startsWith("/api") || req.path.startsWith("/mcp")) {
                 return next();
             }
-            res.sendFile(join(distDir, 'index.html'));
+            res.sendFile(join(distDir, "index.html"));
         });
         return;
     }
@@ -38,19 +37,19 @@ async function registerFrontend(app: express.Express) {
         server: {
             middlewareMode: true,
         },
-        appType: 'custom',
+        appType: "custom",
     });
     app.use(vite.middlewares);
 
-    const indexHtmlPath = join(projectRoot, 'index.html');
+    const indexHtmlPath = join(projectRoot, "index.html");
     app.use(async (req: Request, res: Response, next: NextFunction) => {
-        if (req.path.startsWith('/api') || req.path.startsWith('/mcp')) {
+        if (req.path.startsWith("/api") || req.path.startsWith("/mcp")) {
             return next();
         }
         try {
-            const template = await readFile(indexHtmlPath, 'utf-8');
+            const template = await readFile(indexHtmlPath, "utf-8");
             const html = await vite.transformIndexHtml(req.originalUrl, template);
-            res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+            res.status(200).set({ "Content-Type": "text/html" }).end(html);
         } catch (error) {
             vite.ssrFixStacktrace(error as Error);
             next(error);
@@ -61,14 +60,14 @@ async function registerFrontend(app: express.Express) {
 async function bootstrap() {
     const app = createMcpExpressApp({ host: HOST });
     app.use(cors());
-    app.use(express.json({ limit: '1mb' }));
+    app.use(express.json({ limit: "1mb" }));
 
-    app.get('/health', (_req: Request, res: Response) => {
-        res.json({ status: 'ok', updatedAt: new Date().toISOString() });
+    app.get("/health", (_req: Request, res: Response) => {
+        res.json({ status: "ok", updatedAt: new Date().toISOString() });
     });
 
-    app.get('/api/docs', (_req: Request, res: Response) => {
-        res.type('text/markdown').send(GRAPHIC_WALKER_DOCS);
+    app.get("/api/docs", (_req: Request, res: Response) => {
+        res.type("text/markdown").send(GRAPHIC_WALKER_DOCS);
     });
 
     await registerFrontend(app);
@@ -77,7 +76,7 @@ async function bootstrap() {
     const gwBridge = makeGraphicWalkerBridge(httpServer);
     const mcpBinding = await mountMcpServer(app, gwBridge);
 
-    app.get('/api/state', async (_req: Request, res: Response) => {
+    app.get("/api/state", async (_req: Request, res: Response) => {
         try {
             const snapshot = await gwBridge.fetchSnapshot({ fresh: true });
             res.json(snapshot);
@@ -86,17 +85,13 @@ async function bootstrap() {
         }
     });
 
-    app.get('/api/sample-dataset', (_req: Request, res: Response) => {
-        res.json(SAMPLE_DATASET);
-    });
-
     let shutdownTimer: NodeJS.Timeout | null = null;
     let shuttingDown = false;
     let hasSeenClient = false;
     const unsubscribePresence = gwBridge.onClientPresenceChange(({ clients }) => {
         if (clients === 0) {
             if (hasSeenClient) {
-                scheduleShutdown('all dashboard tabs closed');
+                scheduleShutdown("all dashboard tabs closed");
             }
             return;
         }
@@ -136,11 +131,11 @@ async function bootstrap() {
         }, 250);
     });
 
-    process.on('SIGINT', () => void shutdown('SIGINT'));
-    process.on('SIGTERM', () => void shutdown('SIGTERM'));
+    process.on("SIGINT", () => void shutdown("SIGINT"));
+    process.on("SIGTERM", () => void shutdown("SIGTERM"));
 }
 
-bootstrap().catch((error) => {
-    console.error('Failed to start MCP dashboard', error);
+bootstrap().catch(error => {
+    console.error("Failed to start MCP dashboard", error);
     process.exit(1);
 });
