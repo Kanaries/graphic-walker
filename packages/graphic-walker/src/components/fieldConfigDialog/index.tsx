@@ -14,8 +14,10 @@ import Tooltip from '@/components/tooltip';
 import { useCompututaion, useVizStore } from '@/store';
 import { fieldStat } from '@/computation';
 import { GLOBAL_CONFIG } from '@/config';
-import { IAnalyticType, IAggregator, ICustomSortType, IManualSortValue, ISemanticType, IViewField, ISortMode } from '@/interfaces';
+import { IAnalyticType, IAggregator, ICustomSortType, IManualSortValue, IPaintMap, IPaintMapV2, ISemanticType, IViewField, ISortMode } from '@/interfaces';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@kanaries/react-beautiful-dnd';
+import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '@/constants';
+import { getMeaAggName } from '@/utils';
 
 type ManualListItem = {
     value: IManualSortValue;
@@ -58,6 +60,14 @@ const FieldConfigDialog = observer(() => {
     const [manualSortDisabledReason, setManualSortDisabledReason] = useState('');
     const [manualValuesFetched, setManualValuesFetched] = useState(false);
     const manualSortRequestIdRef = useRef(0);
+    const [ready, setReady] = useState(false);
+
+    const isMeasureField = analyticTypeState === 'measure';
+    const isRowCountField = currentField?.fid === COUNT_FIELD_ID;
+    const isInnerField = [MEA_VAL_ID, MEA_KEY_ID, PAINT_FIELD_ID].includes(currentField?.fid || '');
+    const restrictToTitleAndFormatOnly = Boolean(isRowCountField);
+    const disableTypeSelectors = Boolean(isInnerField || restrictToTitleAndFormatOnly);
+    const isFetchingManualValues = loadingValues && sortType === 'manual';
 
     const allowSort = useMemo(() => {
         if (!target || !currentField) return false;
@@ -65,6 +75,51 @@ const FieldConfigDialog = observer(() => {
         if (semanticTypeState !== 'nominal' && semanticTypeState !== 'ordinal') return false;
         return target.channel === 'rows' || target.channel === 'columns';
     }, [target, analyticTypeState, semanticTypeState]);
+
+    const specialManualValues = useMemo<ManualListItem[] | null>(() => {
+        if (!currentField) return null;
+        if (currentField.fid === MEA_KEY_ID) {
+            const folds = vizStore.config.folds ?? [];
+            const defaultAggregated = vizStore.config.defaultAggregated;
+            const meaValField = vizStore.viewMeasures.find((field) => field.fid === MEA_VAL_ID);
+            if (!folds.length) return [];
+            return folds
+                .map((fid) => vizStore.allFields.find((field) => field.fid === fid))
+                .filter((field): field is IViewField => Boolean(field))
+                .filter((field) => defaultAggregated || field.aggName !== 'expr')
+                .map((field) => {
+                    if (!defaultAggregated) {
+                        return {
+                            value: field.name,
+                            id: `${MEA_KEY_ID}_${field.fid}`,
+                        } satisfies ManualListItem;
+                    }
+                    const aggName = meaValField?.aggName ?? field.aggName;
+                    return {
+                        value: getMeaAggName(field.name, aggName),
+                        id: `${MEA_KEY_ID}_${field.fid}`,
+                    } satisfies ManualListItem;
+                });
+        }
+        if (currentField.fid === PAINT_FIELD_ID) {
+            const mapParam = currentField.expression?.params?.find((param) => param.type === 'map' || param.type === 'newmap');
+            if (!mapParam) return [];
+            const paintMap = mapParam.value as IPaintMap | IPaintMapV2;
+            const orderSource = paintMap.usedColor && paintMap.usedColor.length ? paintMap.usedColor : Object.keys(paintMap.dict).map((key) => Number(key));
+            const colorOrder = orderSource.filter((key, index, arr) => !Number.isNaN(key) && arr.indexOf(key) === index);
+            return colorOrder
+                .map((key) => {
+                    const name = paintMap.dict[key]?.name;
+                    if (!name) return null;
+                    return {
+                        value: name,
+                        id: `${PAINT_FIELD_ID}_${key}`,
+                    } as ManualListItem;
+                })
+                .filter((item): item is ManualListItem => Boolean(item));
+        }
+        return null;
+    }, [currentField?.expression, currentField?.fid, vizStore.allFields, vizStore.config.defaultAggregated, vizStore.config.folds, vizStore.viewMeasures]);
 
     const aggregatorOptions = useMemo(() => GLOBAL_CONFIG.AGGREGATOR_LIST, []);
     const semanticTypeOptions: ISemanticType[] = ['nominal', 'ordinal', 'quantitative', 'temporal'];
@@ -85,12 +140,17 @@ const FieldConfigDialog = observer(() => {
             setManualSortDisabled(false);
             setManualSortDisabledReason('');
             setManualValuesFetched(false);
+            setReady(false);
             return;
         }
         setTitleOverride(currentField.titleOverride ?? '');
         setSortType(currentField.sortType ?? 'measure');
         setSortOrder(currentField.sort ?? 'none');
-        setManualValues((currentField.sortList ?? []).map((value, idx) => ({ value, id: `${currentField.fid}_${idx}` })));
+        if (currentField.fid === MEA_KEY_ID || currentField.fid === PAINT_FIELD_ID) {
+            setManualValues([]);
+        } else {
+            setManualValues((currentField.sortList ?? []).map((value, idx) => ({ value, id: `${currentField.fid}_${idx}` })));
+        }
         setFetchError(null);
         setAggValue((currentField.aggName as AggregatorSelectValue) ?? 'sum');
         setSemanticTypeState(currentField.semanticType);
@@ -99,6 +159,7 @@ const FieldConfigDialog = observer(() => {
         setManualSortDisabled(false);
         setManualSortDisabledReason('');
         setManualValuesFetched(false);
+        setReady(true);
     }, [currentField?.fid, target?.channel, target?.index]);
 
     const handleAnalyticTypeChange = useCallback(
@@ -114,11 +175,29 @@ const FieldConfigDialog = observer(() => {
     );
 
     const hydrateValues = useCallback(async () => {
-        if (!currentField || !allowSort) return;
+        if (!currentField || !allowSort || !ready || sortType !== 'manual') return;
+        setFetchError(null);
+        if (specialManualValues !== null) {
+            setManualValuesFetched(true);
+            setLoadingValues(false);
+            const distinctTotal = specialManualValues.length;
+            const limitExceeded = distinctTotal > 100;
+            setManualSortDisabled(limitExceeded);
+            setManualSortDisabledReason(limitExceeded ? `Manual sort supports up to 100 distinct values. ${distinctTotal} values detected.` : '');
+            if (limitExceeded) {
+                setManualValues([]);
+                setSortType((prev) => (prev === 'manual' ? 'measure' : prev));
+                return;
+            }
+            setManualValues((prev) => {
+                if (prev.length > 0) return prev;
+                return specialManualValues;
+            });
+            return;
+        }
         const requestId = ++manualSortRequestIdRef.current;
         setManualValuesFetched(true);
         setLoadingValues(true);
-        setFetchError(null);
         try {
             const stats = await fieldStat(
                 computation,
@@ -127,7 +206,7 @@ const FieldConfigDialog = observer(() => {
                     values: true,
                     range: false,
                     valuesMeta: true,
-                    valuesLimit: 100,
+                    valuesLimit: 101,
                 },
                 vizStore.meta
             );
@@ -161,13 +240,49 @@ const FieldConfigDialog = observer(() => {
                 setLoadingValues(false);
             }
         }
-    }, [allowSort, computation, currentField, vizStore.meta]);
+    }, [allowSort, ready, computation, currentField, sortType, vizStore.meta, specialManualValues]);
 
     useEffect(() => {
-        if (isOpen && allowSort && currentField && !manualValuesFetched && !loadingValues) {
+        if (isOpen && allowSort && currentField && sortType === 'manual' && !manualValuesFetched && !loadingValues) {
             hydrateValues();
         }
-    }, [allowSort, currentField?.fid, hydrateValues, isOpen, loadingValues, manualValuesFetched, target?.channel, target?.index]);
+    }, [allowSort, currentField?.fid, hydrateValues, isOpen, loadingValues, manualValuesFetched, sortType, target?.channel, target?.index]);
+
+    useEffect(() => {
+        if (!currentField || sortType !== 'manual' || specialManualValues === null) return;
+        const distinctTotal = specialManualValues.length;
+        const limitExceeded = distinctTotal > 100;
+        setManualSortDisabled(limitExceeded);
+        setManualSortDisabledReason(limitExceeded ? `Manual sort supports up to 100 distinct values. ${distinctTotal} values detected.` : '');
+        setManualValuesFetched(true);
+        setLoadingValues(false);
+        setFetchError(null);
+        if (limitExceeded) {
+            setManualValues([]);
+            setSortType((prev) => (prev === 'manual' ? 'measure' : prev));
+            return;
+        }
+        setManualValues((prev) => {
+            if (prev.length === 0) {
+                return specialManualValues;
+            }
+            const isSame =
+                prev.length === specialManualValues.length &&
+                prev.every((item, index) => item.id === specialManualValues[index].id && item.value === specialManualValues[index].value);
+            if (isSame) return prev;
+            const specialMap = new Map(specialManualValues.map((item) => [item.id, item]));
+            const ordered: ManualListItem[] = [];
+            prev.forEach((item) => {
+                const replacement = specialMap.get(item.id);
+                if (replacement) {
+                    ordered.push(replacement);
+                    specialMap.delete(item.id);
+                }
+            });
+            specialMap.forEach((item) => ordered.push(item));
+            return ordered;
+        });
+    }, [currentField, sortType, specialManualValues]);
 
     const handleRetryManualValues = useCallback(() => {
         if (loadingValues) return;
@@ -277,12 +392,6 @@ const FieldConfigDialog = observer(() => {
             <div className="rounded border p-2">
                 <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
                     <span>Drag to change order</span>
-                    {loadingValues && (
-                        <span className="flex items-center space-x-1 text-primary">
-                            <Spinner className="h-3 w-3" />
-                            <span>Loading…</span>
-                        </span>
-                    )}
                 </div>
                 {fetchError && (
                     <div className="flex items-center justify-between mb-2 text-xs text-destructive">
@@ -314,7 +423,12 @@ const FieldConfigDialog = observer(() => {
                                         </Draggable>
                                     ))}
                                     {provided.placeholder}
-                                    {manualValues.length === 0 && <p className="text-xs text-muted-foreground">No values captured yet.</p>}
+                                    {isFetchingManualValues && (
+                                        <span className="flex items-center space-x-1 text-primary">
+                                            <Spinner className="h-3 w-3" />
+                                            <span>Loading…</span>
+                                        </span>
+                                    )}
                                 </div>
                             )}
                         </Droppable>
@@ -348,6 +462,7 @@ const FieldConfigDialog = observer(() => {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="manual" id="sort-manual" />
                             <Label htmlFor="sort-manual">Manual order</Label>
+                            {isFetchingManualValues && <Spinner className="h-3 w-3 text-primary" />}
                         </div>
                     )}
                 </RadioGroup>
@@ -378,7 +493,11 @@ const FieldConfigDialog = observer(() => {
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
                                 <Label>Analytic Type</Label>
-                                <Select value={analyticTypeState} onValueChange={(value) => handleAnalyticTypeChange(value as IAnalyticType)}>
+                                <Select
+                                    value={analyticTypeState}
+                                    onValueChange={(value) => handleAnalyticTypeChange(value as IAnalyticType)}
+                                    disabled={disableTypeSelectors}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select analytic type" />
                                     </SelectTrigger>
@@ -393,7 +512,11 @@ const FieldConfigDialog = observer(() => {
                             </div>
                             <div className="space-y-2">
                                 <Label>Semantic Type</Label>
-                                <Select value={semanticTypeState} onValueChange={(value) => setSemanticTypeState(value as ISemanticType)}>
+                                <Select
+                                    value={semanticTypeState}
+                                    onValueChange={(value) => setSemanticTypeState(value as ISemanticType)}
+                                    disabled={disableTypeSelectors}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select semantic type" />
                                     </SelectTrigger>
@@ -411,7 +534,7 @@ const FieldConfigDialog = observer(() => {
                                 <Select
                                     value={aggValue}
                                     onValueChange={(value) => setAggValue(value as AggregatorSelectValue)}
-                                    disabled={analyticTypeState !== 'measure'}
+                                    disabled={(!isMeasureField && !isInnerField) || isRowCountField}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select aggregator" />
@@ -424,7 +547,11 @@ const FieldConfigDialog = observer(() => {
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {analyticTypeState !== 'measure' && <p className="text-xs text-muted-foreground">Aggregator only applies to measure fields.</p>}
+                                {isRowCountField ? (
+                                    <p className="text-xs text-muted-foreground">Row count uses a fixed aggregator.</p>
+                                ) : (
+                                    !isMeasureField && <p className="text-xs text-muted-foreground">Aggregator only applies to measure fields.</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="field-format">Custom Format</Label>
