@@ -8,7 +8,6 @@ export function channelAggregate(encoding: { [key: string]: any }, fields: IView
         if (c.aggregate === null) return;
         const targetField = fields.find((f) => encodeFid(f.fid) === c.field && (f.analyticType === 'measure' || f.fid === COUNT_FIELD_ID));
         if (targetField && targetField.fid === COUNT_FIELD_ID) {
-            c.title = 'Count';
             c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName))
         } else if (targetField) {
             c.title = getMeaAggName(targetField.name, targetField.aggName),
