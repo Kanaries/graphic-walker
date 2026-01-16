@@ -19,7 +19,7 @@ jobs:
       - name: Web app (playground) build
         run: yarn workspace playground build
       - name: Publish package
-        run: npm publish --tag ${{ github.event.release.prerelease && 'pre' || 'latest' }}
+        run: npm publish
         working-directory: ./packages/graphic-walker
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
