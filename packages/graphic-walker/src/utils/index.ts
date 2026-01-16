@@ -310,19 +310,31 @@ export function getFilterMeaAggKey(field: IFilterField) {
 }
 export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-        return rows[rows.length - 1].sort || 'none';
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-        return columns[columns.length - 1].sort || 'none';
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     return 'none';
 }
 
 export function getSortedEncoding({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'row';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'column';
     }
     return 'none';

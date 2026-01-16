@@ -61,6 +61,7 @@ export enum Methods {
     removeAllField,
     editAllField,
     replaceWithNLPQuery,
+    editField,
 }
 export type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -89,6 +90,7 @@ export type PropsMap = {
     [Methods.removeAllField]: [string];
     [Methods.editAllField]: [string, Partial<IField>];
     [Methods.replaceWithNLPQuery]: [string, string];
+    [Methods.editField]: [normalKeys, number, Partial<IViewField>];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -190,10 +192,24 @@ const actions: {
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;
         const xField = columns.length > 0 ? columns[columns.length - 1] : null;
         if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
-            return mutPath(data, 'encodings.columns', (cols) => replace(cols, cols.length - 1, (x) => ({ ...x, sort })));
+            return mutPath(data, 'encodings.columns', (cols) =>
+                replace(cols, cols.length - 1, (x) => ({
+                    ...x,
+                    sort,
+                    sortType: 'measure' as const,
+                    sortList: undefined,
+                }))
+            );
         }
         if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
-            return mutPath(data, 'encodings.rows', (rows) => replace(rows, rows.length - 1, (x) => ({ ...x, sort })));
+            return mutPath(data, 'encodings.rows', (rows) =>
+                replace(rows, rows.length - 1, (x) => ({
+                    ...x,
+                    sort,
+                    sortType: 'measure' as const,
+                    sortList: undefined,
+                }))
+            );
         }
         return data;
     },
@@ -439,6 +455,20 @@ const actions: {
                         return [fname, newFields];
                     })
                 ) as typeof e
+        );
+    },
+    [Methods.editField]: (data, channel, index, newData) => {
+        return mutPath(data, `encodings.${channel}`, (fields) =>
+            replace(fields, index, (field) => {
+                const nextField = { ...field, ...newData } as IViewField;
+                if ((nextField.sortType ?? 'measure') !== 'manual') {
+                    nextField.sortList = undefined;
+                }
+                if ((nextField.sortType ?? 'measure') === 'measure') {
+                    nextField.sort = nextField.sort ?? 'none';
+                }
+                return nextField;
+            })
         );
     },
     [Methods.editAllField]: (data, fid, newData) => {

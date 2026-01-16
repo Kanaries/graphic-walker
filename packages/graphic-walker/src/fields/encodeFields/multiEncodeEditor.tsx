@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { DraggableFieldState, IAggregator, IDraggableStateKey } from '../../interfaces';
 import { observer } from 'mobx-react-lite';
 import { useVizStore } from '../../store';
@@ -49,6 +49,13 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
         }));
     }, [allFields]);
 
+    const openFieldConfig = useCallback(
+        (idx: number) => {
+            vizStore.openFieldConfig(dkey.id, idx);
+        },
+        [vizStore, dkey.id]
+    );
+
     return (
         <div className="relative select-none flex flex-col py-0.5 px-1 touch-none" {...provided.droppableProps} ref={refMapper(provided.innerRef)}>
             {channelItems.map((channelItem, index) => {
@@ -74,7 +81,14 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                     >
                                         <TrashIcon className="w-4" />
                                     </div>
-                                    <PillActions className="flex-1 flex items-center border border-l-0 px-2 space-x-2 truncate">
+                                    <PillActions
+                                        className="flex-1 flex items-center border border-l-0 px-2 space-x-2 truncate"
+                                        onDoubleClick={() => openFieldConfig(index)}
+                                        onContextMenu={(event) => {
+                                            event.preventDefault();
+                                            openFieldConfig(index);
+                                        }}
+                                    >
                                         {channelItem.fid === MEA_KEY_ID && (
                                             <SelectContext
                                                 options={foldOptions}
