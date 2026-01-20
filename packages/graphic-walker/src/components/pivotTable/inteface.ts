@@ -1,9 +1,12 @@
-import { IAggregator } from "../../interfaces";
+export type NestSortToken = {
+    priority: number;
+    value: string | number;
+};
 
 export interface INestNode {
     key: string | number;
     value: string | number;
-    sort: string | number;
+    sort: NestSortToken;
     uniqueKey: string;
     fieldKey: string;
     children: INestNode[];

@@ -1,7 +1,79 @@
-import { IRow } from '../../interfaces';
-import { INestNode } from './inteface';
+import { IManualSortValue, IRow } from '../../interfaces';
+import { INestNode, NestSortToken } from './inteface';
 
 const key_prefix = 'nk_';
+
+export type ManualSortLookup = Record<string, Record<string, number>>;
+
+const MANUAL_NULL_KEY = '__gw_manual_null__';
+const MANUAL_UNDEFINED_KEY = '__gw_manual_undefined__';
+
+export function serializeManualKey(value: any): string {
+    if (value === null) return MANUAL_NULL_KEY;
+    if (value === undefined) return MANUAL_UNDEFINED_KEY;
+    const type = typeof value;
+    switch (type) {
+        case 'number':
+            return `n:${value}`;
+        case 'boolean':
+            return `b:${value}`;
+        default:
+            return `s:${String(value)}`;
+    }
+}
+
+export function createManualSortLookup(config?: Record<string, IManualSortValue[]>): ManualSortLookup | undefined {
+    if (!config) return undefined;
+    const lookup: ManualSortLookup = {};
+    Object.entries(config).forEach(([fid, values]) => {
+        if (!values || values.length === 0) return;
+        lookup[fid] = {};
+        values.forEach((value, index) => {
+            lookup[fid][serializeManualKey(value)] = index;
+        });
+    });
+    return Object.keys(lookup).length > 0 ? lookup : undefined;
+}
+
+const normalizeSortValue = (value: string | number | boolean | null | undefined): string | number => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    return String(value);
+};
+
+const createSortToken = (
+    fieldKey: string,
+    keyValue: any,
+    nodeData: IRow,
+    isLeaf: boolean,
+    sort: { fid: string; type: 'ascending' | 'descending' } | undefined,
+    manualSortLookup?: ManualSortLookup,
+    alphabeticalSort?: 'ascending' | 'descending'
+): NestSortToken => {
+    const manualLookup = manualSortLookup?.[fieldKey];
+    if (manualLookup) {
+        const manualIndex = manualLookup[serializeManualKey(keyValue)];
+        if (manualIndex !== undefined) {
+            return { priority: 0, value: manualIndex };
+        }
+        if (alphabeticalSort) {
+            return { priority: 2, value: normalizeSortValue(keyValue) };
+        }
+        return { priority: 3, value: normalizeSortValue(keyValue) };
+    }
+    if (isLeaf && sort) {
+        const measureValue = sort.fid ? nodeData[sort.fid] : undefined;
+        const fallback = measureValue !== undefined ? measureValue : `_${String(keyValue)}`;
+        return { priority: 1, value: normalizeSortValue(fallback as any) };
+    }
+    if (alphabeticalSort) {
+        return { priority: 2, value: normalizeSortValue(keyValue) };
+    }
+    return { priority: 3, value: normalizeSortValue(keyValue) };
+};
 
 function insertNode(
     tree: INestNode,
@@ -12,7 +84,9 @@ function insertNode(
     sort?: {
         fid: string;
         type: 'ascending' | 'descending';
-    }
+    },
+    manualSortLookup?: ManualSortLookup,
+    alphabeticalSortConfig?: Record<string, 'ascending' | 'descending'>
 ) {
     if (depth >= layerKeys.length) {
         // tree.key = nodeData[layerKeys[depth]];
@@ -23,44 +97,55 @@ function insertNode(
 
     let child = tree.children.find((c) => c.key === key);
     if (!child) {
+        const fieldKey = layerKeys[depth];
+        const isLeaf = depth === layerKeys.length - 1;
+        const alphabeticalSort = alphabeticalSortConfig?.[fieldKey];
         child = {
             key,
             value: key,
-            sort: depth === layerKeys.length - 1 && sort ? nodeData[sort.fid] ?? `_${key}` : key,
+            sort: createSortToken(fieldKey, key, nodeData, isLeaf, isLeaf ? sort : undefined, manualSortLookup, alphabeticalSort),
             uniqueKey: uniqueKey,
-            fieldKey: layerKeys[depth],
+            fieldKey,
             children: [],
-            path: [...tree.path, { key: layerKeys[depth], value: key }],
+            path: [...tree.path, { key: fieldKey, value: key }],
             height: layerKeys.length - depth - 1,
             isCollapsed: false,
         };
         if (collapsedKeyList.includes(tree.uniqueKey)) {
             tree.isCollapsed = true;
         }
-        const reverse = depth === layerKeys.length - 1 && sort?.type === 'descending';
+        const reverse = alphabeticalSort ? alphabeticalSort === 'descending' : depth === layerKeys.length - 1 && sort?.type === 'descending';
         tree.children.splice(binarySearchIndex(tree.children, child.sort, reverse), 0, child);
     }
-    insertNode(child, layerKeys, nodeData, depth + 1, collapsedKeyList, sort);
+    insertNode(child, layerKeys, nodeData, depth + 1, collapsedKeyList, sort, manualSortLookup, alphabeticalSortConfig);
 }
 
 // Custom binary search function to find appropriate index for insertion.
-function binarySearchIndex(arr: INestNode[], keyVal: string | number, reverse = false): number {
+function binarySearchIndex(arr: INestNode[], keyVal: NestSortToken, reverse = false): number {
     let start = 0,
         end = arr.length - 1;
 
     while (start <= end) {
         let middle = Math.floor((start + end) / 2);
-        let middleVal = arr[middle].sort;
-        if (typeof middleVal === 'number' && typeof keyVal === 'number') {
-            if (reverse !== middleVal < keyVal) start = middle + 1;
-            else end = middle - 1;
-        } else {
-            let cmp = String(middleVal).localeCompare(String(keyVal));
-            if (reverse !== cmp < 0) start = middle + 1;
-            else end = middle - 1;
-        }
+        const middleVal = arr[middle].sort;
+        const cmp = compareSortToken(keyVal, middleVal, reverse);
+        if (cmp > 0) start = middle + 1;
+        else end = middle - 1;
     }
     return start;
+}
+
+function compareSortToken(a: NestSortToken, b: NestSortToken, reverse = false): number {
+    if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+    }
+    let cmp: number;
+    if (typeof a.value === 'number' && typeof b.value === 'number') {
+        cmp = a.value - b.value;
+    } else {
+        cmp = String(a.value).localeCompare(String(b.value));
+    }
+    return reverse ? -cmp : cmp;
 }
 
 const ROOT_KEY = '__root';
@@ -71,7 +156,7 @@ function insertSummaryNode(node: INestNode): void {
         node.children.unshift({
             key: TOTAL_KEY,
             value: `${node.value}(total)`,
-            sort: '',
+            sort: { priority: 0, value: '' },
             fieldKey: TOTAL_KEY,
             uniqueKey: `${node.uniqueKey}${TOTAL_KEY}`,
             children: [],
@@ -94,13 +179,15 @@ export function buildNestTree(
         fid: string;
         type: 'ascending' | 'descending';
     },
-    dataWithoutSort?: IRow[]
+    dataWithoutSort?: IRow[],
+    manualSortLookup?: ManualSortLookup,
+    alphabeticalSortConfig?: Record<string, 'ascending' | 'descending'>
 ): INestNode {
     const tree: INestNode = {
         key: ROOT_KEY,
         value: 'root',
         fieldKey: 'root',
-        sort: '',
+        sort: { priority: 0, value: '' },
         uniqueKey: ROOT_KEY,
         children: [],
         path: [],
@@ -108,11 +195,11 @@ export function buildNestTree(
         isCollapsed: false,
     };
     for (let row of data) {
-        insertNode(tree, layerKeys, row, 0, collapsedKeyList, sort);
+        insertNode(tree, layerKeys, row, 0, collapsedKeyList, sort, manualSortLookup, alphabeticalSortConfig);
     }
     if (dataWithoutSort) {
         for (let row of dataWithoutSort) {
-            insertNode(tree, layerKeys, row, 0, collapsedKeyList, { fid: '', type: sort?.type ?? 'ascending' });
+            insertNode(tree, layerKeys, row, 0, collapsedKeyList, { fid: '', type: sort?.type ?? 'ascending' }, manualSortLookup, alphabeticalSortConfig);
         }
     }
     if (showSummary) {

@@ -5,7 +5,7 @@ import { dataQuery } from '../../computation';
 import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
-import { DeepReadonly, DraggableFieldState, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
+import { DeepReadonly, DraggableFieldState, IManualSortValue, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
 import { INestNode } from './inteface';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
@@ -77,6 +77,30 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         return columns.filter((f) => f.analyticType === 'measure');
     }, [columns]);
 
+    const manualSortConfig = useMemo<Record<string, IManualSortValue[]> | undefined>(() => {
+        const entries: Record<string, IManualSortValue[]> = {};
+        const collect = (field: IViewField) => {
+            if ((field.sortType ?? 'measure') !== 'manual') return;
+            if (!field.sortList || field.sortList.length === 0) return;
+            entries[field.fid] = field.sortList;
+        };
+        dimsInRow.forEach(collect);
+        dimsInColumn.forEach(collect);
+        return Object.keys(entries).length ? entries : undefined;
+    }, [dimsInRow, dimsInColumn]);
+
+    const alphabeticalSortConfig = useMemo<Record<string, 'ascending' | 'descending'> | undefined>(() => {
+        const entries: Record<string, 'ascending' | 'descending'> = {};
+        const collect = (field: IViewField) => {
+            if ((field.sortType ?? 'measure') !== 'alphabetical') return;
+            const order = field.sort && field.sort !== 'none' ? field.sort : 'ascending';
+            entries[field.fid] = order;
+        };
+        dimsInRow.forEach(collect);
+        dimsInColumn.forEach(collect);
+        return Object.keys(entries).length ? entries : undefined;
+    }, [dimsInRow, dimsInColumn]);
+
     useEffect(() => {
         if (!enableCollapse) {
             generateNewTable();
@@ -131,7 +155,9 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                       mode: sortedEncoding,
                       type: sort,
                   }
-                : undefined
+                : undefined,
+            manualSortConfig,
+            alphabeticalSortConfig
         )
             .then((data) => {
                 const { lt, tt, metric } = data;
