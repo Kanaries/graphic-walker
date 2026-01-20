@@ -1,4 +1,4 @@
-import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
+import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField, IManualSortValue } from './interfaces';
 import { INestNode } from './components/pivotTable/inteface';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
@@ -161,7 +161,9 @@ export const buildPivotTableService = async (
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    manualSortConfig?: Record<string, IManualSortValue[]>,
+    alphabeticalSortConfig?: Record<string, 'ascending' | 'descending'>
 ): Promise<{ lt: INestNode; tt: INestNode; metric: (IRow | null)[][] }> => {
     const worker = new BuildMetricTableWorker();
     try {
@@ -173,6 +175,8 @@ export const buildPivotTableService = async (
             collapsedKeyList,
             showTableSummary,
             sort,
+            manualSortConfig,
+            alphabeticalSortConfig,
         });
         return res;
     } catch (error) {

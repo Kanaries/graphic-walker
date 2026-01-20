@@ -1,6 +1,6 @@
 import { INestNode } from '../components/pivotTable/inteface';
-import { buildMetricTableFromNestTree, buildNestTree } from '../components/pivotTable/utils';
-import { IViewField, IRow } from '../interfaces';
+import { buildMetricTableFromNestTree, buildNestTree, createManualSortLookup } from '../components/pivotTable/utils';
+import { IViewField, IRow, IManualSortValue } from '../interfaces';
 
 const getFirsts = (item: INestNode): INestNode[] => {
     if (item.children.length > 0) {
@@ -20,8 +20,11 @@ export function buildPivotTable(
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    manualSortConfig?: Record<string, IManualSortValue[]>,
+    alphabeticalSortConfig?: Record<string, 'ascending' | 'descending'>
 ): { lt: INestNode; tt: INestNode; metric: (IRow | null)[][] } {
+    const manualSortLookup = createManualSortLookup(manualSortConfig);
     let lt: INestNode;
     let tt: INestNode;
     if (sort?.mode === 'row') {
@@ -29,7 +32,11 @@ export function buildPivotTable(
             dimsInColumn.map((d) => d.fid),
             allData,
             collapsedKeyList,
-            showTableSummary
+            showTableSummary,
+            undefined,
+            undefined,
+            manualSortLookup,
+            alphabeticalSortConfig
         );
         if (dimsInColumn.length > 0) {
             const ks = dimsInColumn.map((x) => x.fid);
@@ -44,7 +51,9 @@ export function buildPivotTable(
                 collapsedKeyList,
                 showTableSummary,
                 sort,
-                rest
+                rest,
+                manualSortLookup,
+                alphabeticalSortConfig
             );
         } else {
             lt = buildNestTree(
@@ -52,7 +61,10 @@ export function buildPivotTable(
                 allData,
                 collapsedKeyList,
                 showTableSummary,
-                sort
+                sort,
+                undefined,
+                manualSortLookup,
+                alphabeticalSortConfig
             );
         }
     } else {
@@ -60,7 +72,11 @@ export function buildPivotTable(
             dimsInRow.map((d) => d.fid),
             allData,
             collapsedKeyList,
-            showTableSummary
+            showTableSummary,
+            undefined,
+            undefined,
+            manualSortLookup,
+            alphabeticalSortConfig
         );
         if (sort && dimsInRow.length > 0) {
             const ks = dimsInRow.map((x) => x.fid);
@@ -75,7 +91,9 @@ export function buildPivotTable(
                 collapsedKeyList,
                 showTableSummary,
                 sort,
-                rest
+                rest,
+                manualSortLookup,
+                alphabeticalSortConfig
             );
         } else {
             tt = buildNestTree(
@@ -83,7 +101,10 @@ export function buildPivotTable(
                 allData,
                 collapsedKeyList,
                 showTableSummary,
-                sort
+                sort,
+                undefined,
+                manualSortLookup,
+                alphabeticalSortConfig
             );
         }
     }
