@@ -5,7 +5,17 @@ import { dataQuery } from '../../computation';
 import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
-import { DeepReadonly, DraggableFieldState, IManualSortValue, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
+import {
+    DeepReadonly,
+    DraggableFieldState,
+    IManualSortValue,
+    IRow,
+    IThemeKey,
+    IViewField,
+    IVisualConfigNew,
+    IVisualLayout,
+    IVisualConfig,
+} from '../../interfaces';
 import { INestNode } from './inteface';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
@@ -272,7 +282,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                             <tr className="">
                                 {dimsInRow.map((x) => (
                                     <td className="bg-secondary text-secondary-foreground p-2 m-1 text-xs border whitespace-nowrap" colSpan={1}>
-                                        {x.name}
+                                        {x.titleOverride || x.name}
                                     </td>
                                 ))}
                                 {measInRow.length > 0 && (
