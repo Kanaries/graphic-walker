@@ -103,10 +103,10 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
                             return {
                                 fid: getMeaAggKey(x.fid, x.aggName),
-                                name: getMeaAggName(x.name, x.aggName),
+                                name: x.titleOverride || getMeaAggName(x.name, x.aggName),
                             };
                         }
-                        return { fid: x.fid, name: x.name };
+                        return { fid: x.fid, name: x.titleOverride || x.name };
                     });
                     const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
                     download(result, `${chart.name}.csv`, 'text/plain');
