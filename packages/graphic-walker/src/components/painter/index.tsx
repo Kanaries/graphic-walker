@@ -159,7 +159,7 @@ const produceChannel = (
     if (domain.domain.value.every((x) => x instanceof Array)) {
         return {
             field: `${channel.fid}[0]`,
-            title: channel.name,
+            title: channel.titleOverride || channel.name,
             type: domain.domain.type,
             axis: { labelOverlap: true },
             scale: {
@@ -172,7 +172,7 @@ const produceChannel = (
     }
     return {
         field: channel.fid,
-        title: channel.name,
+        title: channel.titleOverride || channel.name,
         type: domain.domain.type,
         axis: { labelOverlap: true },
         scale: { domain: domain.domain.type === 'nominal' && options?.reverseNominalDomain ? domain.domain.value.toReversed() : domain.domain.value },
@@ -190,7 +190,7 @@ const produceAggChannel = (
     if (domain?.domain.value.every((x) => x instanceof Array)) {
         return {
             field: `${channel.fid}[0]`,
-            title: channel.name,
+            title: channel.titleOverride || channel.name,
             type: getDomainType(channel.semanticType),
             axis: { labelOverlap: true },
             scale: domain
@@ -206,7 +206,7 @@ const produceAggChannel = (
     }
     return {
         field: channel.fid,
-        title: channel.name,
+        title: channel.titleOverride || channel.name,
         type: getDomainType(channel.semanticType),
         axis: { labelOverlap: true },
         scale: domain
@@ -339,7 +339,7 @@ const AggPainterContent = (props: {
                 if (c.aggregate === null) return;
                 const targetField = viewMeasures.find((f) => f.fid === c.field);
                 if (targetField) {
-                    c.title = getMeaAggName(targetField.name, targetField.aggName);
+                    c.title = targetField.titleOverride || getMeaAggName(targetField.name, targetField.aggName);
                     c.field = getMeaAggKey(targetField.fid, targetField.aggName);
                 }
             });

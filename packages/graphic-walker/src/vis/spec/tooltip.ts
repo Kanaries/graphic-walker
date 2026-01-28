@@ -32,7 +32,7 @@ export function addTooltipEncode(encoding: { [key: string]: any }, details: Read
         .concat(
             details.map((f) => ({
                 field: defaultAggregated && f.analyticType === 'measure' ? getMeaAggKey(f.fid, f.aggName) : f.fid,
-                title: defaultAggregated && f.analyticType === 'measure' ? getMeaAggName(f.name, f.aggName) : f.name,
+                title: f.titleOverride || (defaultAggregated && f.analyticType === 'measure' ? getMeaAggName(f.name, f.aggName) : f.name),
                 type: f.semanticType,
             }))
         );
