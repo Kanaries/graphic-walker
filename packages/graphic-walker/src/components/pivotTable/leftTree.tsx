@@ -89,7 +89,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                         key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
-                        {measInRow[0].titleOverride || getMeaAggName(measInRow[0].name, measInRow[0].aggName)}
+                        {measInRow[0].titleOverride || getMeaAggName(measInRow[0].name, measInRow[0].aggName, measInRow[0].windowAgg)}
                     </td>,
                 ]);
                 for (let j = 1; j < measInRow.length; j++) {
@@ -98,7 +98,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                             key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
                             className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                         >
-                            {measInRow[j].titleOverride || getMeaAggName(measInRow[j].name, measInRow[j].aggName)}
+                            {measInRow[j].titleOverride || getMeaAggName(measInRow[j].name, measInRow[j].aggName, measInRow[j].windowAgg)}
                         </td>,
                     ]);
                 }

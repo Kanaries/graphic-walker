@@ -153,6 +153,7 @@ export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<I
 export const buildPivotTableService = async (
     dimsInRow: IViewField[],
     dimsInColumn: IViewField[],
+    measures: IViewField[],
     allData: IRow[],
     aggData: IRow[],
     collapsedKeyList: string[],
@@ -170,6 +171,7 @@ export const buildPivotTableService = async (
         const res: { lt: INestNode; tt: INestNode; metric: (IRow | null)[][] } = await workerService(worker, {
             dimsInRow,
             dimsInColumn,
+            measures,
             allData,
             aggData,
             collapsedKeyList,

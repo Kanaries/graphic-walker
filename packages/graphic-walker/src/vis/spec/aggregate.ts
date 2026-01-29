@@ -11,12 +11,12 @@ export function channelAggregate(encoding: { [key: string]: any }, fields: IView
             if (!targetField.titleOverride) {
                 c.title = 'Count';
             }
-            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName));
+            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName, targetField.windowAgg));
         } else if (targetField) {
             if (!targetField.titleOverride) {
-                c.title = getMeaAggName(targetField.name, targetField.aggName);
+                c.title = getMeaAggName(targetField.name, targetField.aggName, targetField.windowAgg);
             }
-            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName));
+            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName, targetField.windowAgg));
         }
     });
 }

@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier, IWindowAgg } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -292,18 +292,30 @@ export function classNames(...classes: (string | undefined)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export function getMeaAggName(meaName: string, agg?: string | undefined) {
-    if (!agg || agg === 'expr') {
-        return meaName;
+export function getMeaAggName(meaName: string, agg?: string | undefined, windowAgg?: IWindowAgg) {
+    const baseName = !agg || agg === 'expr' ? meaName : `${agg}(${meaName})`;
+    if (!windowAgg) {
+        return baseName;
     }
-    return `${agg}(${meaName})`;
+    const windowLabels: Record<IWindowAgg, string> = {
+        running_total: 'Running total',
+        difference: 'Difference',
+        moving_average: 'Moving average',
+        growth_rate: 'Compound growth rate',
+        rank: 'Rank',
+    };
+    return `${windowLabels[windowAgg]}(${baseName})`;
 }
 
-export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
+export function getMeaAggKey(meaKey: string, agg?: string | undefined, windowAgg?: IWindowAgg) {
     if (!agg || agg === 'expr') {
         return meaKey;
     }
-    return `${meaKey}_${agg}`;
+    const baseKey = `${meaKey}_${agg}`;
+    if (!windowAgg) {
+        return baseKey;
+    }
+    return `${baseKey}__window_${windowAgg}`;
 }
 export function getFilterMeaAggKey(field: IFilterField) {
     return field.enableAgg && field.aggName ? getMeaAggKey(field.fid, field.aggName) : field.fid;

@@ -39,7 +39,7 @@ const OBPill: React.FC<PillProps> = (props) => {
         }));
     }, [allFields]);
 
-    const folds = field.fid === MEA_KEY_ID ? config.folds ?? [] : null;
+    const folds = field.fid === MEA_KEY_ID ? (config.folds ?? []) : null;
 
     const handleOpenFieldConfig = useCallback(() => {
         vizStore.openFieldConfig(dkey.id, fIndex);
@@ -83,6 +83,16 @@ const OBPill: React.FC<PillProps> = (props) => {
                         <ChevronUpDownIcon className="w-3" />
                     </span>
                 </DropdownContext>
+            )}
+            {field.windowAgg && config.defaultAggregated && (
+                <span
+                    onClick={handleOpenFieldConfig}
+                    className="ml-1 text-[10px] text-muted-foreground cursor-pointer"
+                    title="Window aggregation enabled"
+                    aria-label="Window aggregation enabled"
+                >
+                    △
+                </span>
             )}
             {field.analyticType === 'dimension' && field.sortType !== 'manual' && field.sort === 'ascending' && (
                 <BarsArrowUpIcon className="float-right w-3" role="status" aria-label="Sorted in ascending order" />
