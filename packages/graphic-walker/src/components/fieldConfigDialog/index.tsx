@@ -14,7 +14,18 @@ import Tooltip from '@/components/tooltip';
 import { useCompututaion, useVizStore } from '@/store';
 import { fieldStat } from '@/computation';
 import { GLOBAL_CONFIG } from '@/config';
-import { IAnalyticType, IAggregator, ICustomSortType, IManualSortValue, IPaintMap, IPaintMapV2, ISemanticType, IViewField, ISortMode } from '@/interfaces';
+import {
+    IAnalyticType,
+    IAggregator,
+    ICustomSortType,
+    IManualSortValue,
+    IPaintMap,
+    IPaintMapV2,
+    ISemanticType,
+    IViewField,
+    ISortMode,
+    IWindowAgg,
+} from '@/interfaces';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@kanaries/react-beautiful-dnd';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '@/constants';
 import { getMeaAggName } from '@/utils';
@@ -56,6 +67,7 @@ const FieldConfigDialog = observer(() => {
     const [semanticTypeState, setSemanticTypeState] = useState<ISemanticType>('nominal');
     const [analyticTypeState, setAnalyticTypeState] = useState<IAnalyticType>('dimension');
     const [customFormat, setCustomFormat] = useState('');
+    const [windowAgg, setWindowAgg] = useState<IWindowAgg | 'none'>('none');
     const [manualSortDisabled, setManualSortDisabled] = useState(false);
     const [manualSortDisabledReason, setManualSortDisabledReason] = useState('');
     const [manualValuesFetched, setManualValuesFetched] = useState(false);
@@ -68,6 +80,13 @@ const FieldConfigDialog = observer(() => {
     const restrictToTitleAndFormatOnly = Boolean(isRowCountField);
     const disableTypeSelectors = Boolean(isInnerField || restrictToTitleAndFormatOnly);
     const isFetchingManualValues = loadingValues && sortType === 'manual';
+    const defaultAggregated = vizStore.config.defaultAggregated;
+    const allowWindowAgg =
+        defaultAggregated &&
+        isMeasureField &&
+        semanticTypeState === 'quantitative' &&
+        !isRowCountField &&
+        !isInnerField;
 
     const allowSort = useMemo(() => {
         if (!target || !currentField) return false;
@@ -96,7 +115,7 @@ const FieldConfigDialog = observer(() => {
                     }
                     const aggName = meaValField?.aggName ?? field.aggName;
                     return {
-                        value: getMeaAggName(field.name, aggName),
+                        value: getMeaAggName(field.name, aggName, field.windowAgg),
                         id: `${MEA_KEY_ID}_${field.fid}`,
                     } satisfies ManualListItem;
                 });
@@ -124,6 +143,14 @@ const FieldConfigDialog = observer(() => {
     const aggregatorOptions = useMemo(() => GLOBAL_CONFIG.AGGREGATOR_LIST, []);
     const semanticTypeOptions: ISemanticType[] = ['nominal', 'ordinal', 'quantitative', 'temporal'];
     const analyticTypeOptions: IAnalyticType[] = ['dimension', 'measure'];
+    const windowAggOptions: { value: IWindowAgg | 'none'; label: string }[] = [
+        { value: 'none', label: 'None' },
+        { value: 'running_total', label: 'Running total' },
+        { value: 'difference', label: 'Difference' },
+        { value: 'moving_average', label: 'Moving average' },
+        { value: 'growth_rate', label: 'Compound growth rate' },
+        { value: 'rank', label: 'Rank' },
+    ];
 
     useEffect(() => {
         manualSortRequestIdRef.current += 1;
@@ -156,6 +183,7 @@ const FieldConfigDialog = observer(() => {
         setSemanticTypeState(currentField.semanticType);
         setAnalyticTypeState(currentField.analyticType);
         setCustomFormat(currentField.customFormat ?? '');
+        setWindowAgg(currentField.windowAgg ?? 'none');
         setManualSortDisabled(false);
         setManualSortDisabledReason('');
         setManualValuesFetched(false);
@@ -167,12 +195,19 @@ const FieldConfigDialog = observer(() => {
             setAnalyticTypeState(value);
             if (value === 'dimension') {
                 setAggValue('sum');
+                setWindowAgg('none');
             } else if (value === 'measure') {
                 setAggValue((GLOBAL_CONFIG.AGGREGATOR_LIST[0] as AggregatorSelectValue) ?? 'sum');
             }
         },
         [aggValue]
     );
+
+    useEffect(() => {
+        if (!allowWindowAgg && windowAgg !== 'none') {
+            setWindowAgg('none');
+        }
+    }, [allowWindowAgg, windowAgg]);
 
     const hydrateValues = useCallback(async () => {
         if (!currentField || !allowSort || !ready || sortType !== 'manual') return;
@@ -324,10 +359,16 @@ const FieldConfigDialog = observer(() => {
                 patch.sortList = undefined;
             }
         }
+        if (allowWindowAgg && windowAgg !== 'none') {
+            patch.windowAgg = windowAgg as IWindowAgg;
+        } else if (currentField.windowAgg) {
+            patch.windowAgg = undefined;
+        }
         vizStore.editEncodingField(target.channel, target.index, patch);
         handleClose();
     }, [
         allowSort,
+        allowWindowAgg,
         currentField,
         handleClose,
         manualValues,
@@ -339,6 +380,7 @@ const FieldConfigDialog = observer(() => {
         target,
         titleOverride,
         customFormat,
+        windowAgg,
         vizStore,
     ]);
 
@@ -553,6 +595,23 @@ const FieldConfigDialog = observer(() => {
                                     !isMeasureField && <p className="text-xs text-muted-foreground">Aggregator only applies to measure fields.</p>
                                 )}
                             </div>
+                            {defaultAggregated && (
+                                <div className="space-y-2">
+                                    <Label>Window Aggregation</Label>
+                                    <Select value={windowAgg} onValueChange={(value) => setWindowAgg(value as IWindowAgg | 'none')} disabled={!allowWindowAgg}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select window aggregation" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {windowAggOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="field-format">Custom Format</Label>
                                 <Input
