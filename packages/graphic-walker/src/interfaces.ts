@@ -21,6 +21,7 @@ export interface IRow {
 }
 
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
+export type IWindowAgg = 'running_total' | 'difference' | 'moving_average' | 'growth_rate' | 'rank';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
 export interface Specification {
@@ -219,6 +220,7 @@ export interface IViewField extends IField {
     sortList?: IManualSortValue[];
     titleOverride?: string;
     customFormat?: string;
+    windowAgg?: IWindowAgg;
 }
 
 // shadow type of identifier of a Field, getting it using "getFieldIdentifier" in "@/utils"

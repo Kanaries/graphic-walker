@@ -22,7 +22,7 @@ import MetricTable from './metricTable';
 import LoadingLayer from '../loadingLayer';
 import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
-import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
+import { getFieldIdentifier, getMeaAggKey, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
 import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
 
@@ -155,13 +155,17 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         buildPivotTableService(
             dimsInRow,
             dimsInColumn,
+            [...measInRow, ...measInColumn],
             data,
             aggData.current,
             Object.keys(tableCollapsedHeaderMap),
             showTableSummary,
             sort !== 'none' && sortedEncoding !== 'none'
                 ? {
-                      fid: sortedEncoding === 'column' ? `${measInRow[0].fid}_${measInRow[0].aggName}` : `${measInColumn[0].fid}_${measInColumn[0].aggName}`,
+                      fid:
+                          sortedEncoding === 'column'
+                              ? getMeaAggKey(measInRow[0].fid, measInRow[0].aggName, measInRow[0].windowAgg)
+                              : getMeaAggKey(measInColumn[0].fid, measInColumn[0].aggName, measInColumn[0].windowAgg),
                       mode: sortedEncoding,
                       type: sort,
                   }

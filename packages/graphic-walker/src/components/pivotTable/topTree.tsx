@@ -98,7 +98,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                         key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}`}
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
-                        {m.titleOverride || getMeaAggName(m.name, m.aggName)}
+                        {m.titleOverride || getMeaAggName(m.name, m.aggName, m.windowAgg)}
                     </td>
                 ))
             )
