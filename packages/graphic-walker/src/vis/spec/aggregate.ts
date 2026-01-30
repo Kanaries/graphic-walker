@@ -8,11 +8,15 @@ export function channelAggregate(encoding: { [key: string]: any }, fields: IView
         if (c.aggregate === null) return;
         const targetField = fields.find((f) => encodeFid(f.fid) === c.field && (f.analyticType === 'measure' || f.fid === COUNT_FIELD_ID));
         if (targetField && targetField.fid === COUNT_FIELD_ID) {
-            c.title = 'Count';
-            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName))
+            if (!targetField.titleOverride) {
+                c.title = 'Count';
+            }
+            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName, targetField.windowAgg));
         } else if (targetField) {
-            c.title = getMeaAggName(targetField.name, targetField.aggName),
-            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName))
+            if (!targetField.titleOverride) {
+                c.title = getMeaAggName(targetField.name, targetField.aggName, targetField.windowAgg);
+            }
+            c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName, targetField.windowAgg));
         }
     });
 }

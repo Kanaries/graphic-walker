@@ -1,4 +1,4 @@
-import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField } from './interfaces';
+import { IRow, IMutField, Specification, IFilterFiledSimple, IExpression, IViewQuery, IViewField, IManualSortValue } from './interfaces';
 import { INestNode } from './components/pivotTable/inteface';
 /* eslint import/no-webpack-loader-syntax:0 */
 // @ts-ignore
@@ -153,6 +153,7 @@ export const applyViewQuery = async (data: IRow[], query: IViewQuery): Promise<I
 export const buildPivotTableService = async (
     dimsInRow: IViewField[],
     dimsInColumn: IViewField[],
+    measures: IViewField[],
     allData: IRow[],
     aggData: IRow[],
     collapsedKeyList: string[],
@@ -161,18 +162,23 @@ export const buildPivotTableService = async (
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    manualSortConfig?: Record<string, IManualSortValue[]>,
+    alphabeticalSortConfig?: Record<string, 'ascending' | 'descending'>
 ): Promise<{ lt: INestNode; tt: INestNode; metric: (IRow | null)[][] }> => {
     const worker = new BuildMetricTableWorker();
     try {
         const res: { lt: INestNode; tt: INestNode; metric: (IRow | null)[][] } = await workerService(worker, {
             dimsInRow,
             dimsInColumn,
+            measures,
             allData,
             aggData,
             collapsedKeyList,
             showTableSummary,
             sort,
+            manualSortConfig,
+            alphabeticalSortConfig,
         });
         return res;
     } catch (error) {

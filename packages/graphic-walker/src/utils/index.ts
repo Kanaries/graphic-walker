@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier, IWindowAgg } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -292,37 +292,61 @@ export function classNames(...classes: (string | undefined)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export function getMeaAggName(meaName: string, agg?: string | undefined) {
-    if (!agg || agg === 'expr') {
-        return meaName;
+export function getMeaAggName(meaName: string, agg?: string | undefined, windowAgg?: IWindowAgg) {
+    const baseName = !agg || agg === 'expr' ? meaName : `${agg}(${meaName})`;
+    if (!windowAgg) {
+        return baseName;
     }
-    return `${agg}(${meaName})`;
+    const windowLabels: Record<IWindowAgg, string> = {
+        running_total: 'Running total',
+        difference: 'Difference',
+        moving_average: 'Moving average',
+        growth_rate: 'Compound growth rate',
+        rank: 'Rank',
+    };
+    return `${windowLabels[windowAgg]}(${baseName})`;
 }
 
-export function getMeaAggKey(meaKey: string, agg?: string | undefined) {
+export function getMeaAggKey(meaKey: string, agg?: string | undefined, windowAgg?: IWindowAgg) {
     if (!agg || agg === 'expr') {
         return meaKey;
     }
-    return `${meaKey}_${agg}`;
+    const baseKey = `${meaKey}_${agg}`;
+    if (!windowAgg) {
+        return baseKey;
+    }
+    return `${baseKey}__window_${windowAgg}`;
 }
 export function getFilterMeaAggKey(field: IFilterField) {
     return field.enableAgg && field.aggName ? getMeaAggKey(field.fid, field.aggName) : field.fid;
 }
 export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-        return rows[rows.length - 1].sort || 'none';
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-        return columns[columns.length - 1].sort || 'none';
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     return 'none';
 }
 
 export function getSortedEncoding({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'row';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'column';
     }
     return 'none';

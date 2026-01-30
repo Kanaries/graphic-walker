@@ -1,18 +1,18 @@
 import React from 'react';
 import { useMemo } from 'react';
-import { IField, IRow, IVisualConfig } from '../../interfaces';
+import { IRow, IViewField } from '../../interfaces';
 import { getMeaAggKey } from '../../utils';
 import { format } from 'd3-format';
 
 interface MetricTableProps {
     matrix: any[][];
-    meaInRows: IField[];
-    meaInColumns: IField[];
+    meaInRows: IViewField[];
+    meaInColumns: IViewField[];
     numberFormat: string;
 }
 
-function getCellData(cell: IRow, measure: IField, formatter: (value: unknown) => string) {
-    const meaKey = getMeaAggKey(measure.fid, measure.aggName);
+function getCellData(cell: IRow, measure: IViewField, formatter: (value: unknown) => string) {
+    const meaKey = getMeaAggKey(measure.fid, measure.aggName, measure.windowAgg);
     if (cell[meaKey] === undefined) {
         return '--';
     }
@@ -23,7 +23,6 @@ function getCellData(cell: IRow, measure: IField, formatter: (value: unknown) =>
 const MetricTable: React.FC<MetricTableProps> = React.memo(
     (props) => {
         const { matrix, meaInRows, meaInColumns, numberFormat } = props;
-
         const numberFormatter = useMemo<(value: unknown) => string>(() => {
             const numberFormatter = numberFormat ? format(numberFormat) : (v: number) => v.toLocaleString();
             return (value: unknown) => {
@@ -106,7 +105,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo(
         }
 
         return false;
-    }
+    },
 );
 
 export default MetricTable;

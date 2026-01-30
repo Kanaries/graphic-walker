@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useMemo } from 'react';
 import { INestNode } from './inteface';
-import { IField } from '../../interfaces';
+import { IField, IViewField } from '../../interfaces';
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
-import { formatDate } from '@/utils';
+import { formatDate, getMeaAggName } from '@/utils';
 import { parsedOffsetDate } from '@/lib/op/offset';
 
 function getChildCount(node: INestNode): number {
@@ -64,8 +64,8 @@ function renderTree(
 
 export interface TreeProps {
     data: INestNode;
-    dimsInCol: IField[];
-    measInCol: IField[];
+    dimsInCol: IViewField[];
+    measInCol: IViewField[];
     onHeaderCollapse: (node: INestNode) => void;
     onTopTreeHeaderRowNumChange: (num: number) => void;
     enableCollapse: boolean;
@@ -98,7 +98,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                         key={`${cellRows.length}-${m.fid}-${m.aggName}-${idx}`}
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
-                        {m.aggName}({m.name})
+                        {m.titleOverride || getMeaAggName(m.name, m.aggName, m.windowAgg)}
                     </td>
                 ))
             )

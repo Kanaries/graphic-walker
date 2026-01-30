@@ -5,14 +5,24 @@ import { dataQuery } from '../../computation';
 import { useAppRootContext } from '../../components/appRoot';
 import LeftTree from './leftTree';
 import TopTree from './topTree';
-import { DeepReadonly, DraggableFieldState, IRow, IThemeKey, IViewField, IVisualConfigNew, IVisualLayout, IVisualConfig } from '../../interfaces';
+import {
+    DeepReadonly,
+    DraggableFieldState,
+    IManualSortValue,
+    IRow,
+    IThemeKey,
+    IViewField,
+    IVisualConfigNew,
+    IVisualLayout,
+    IVisualConfig,
+} from '../../interfaces';
 import { INestNode } from './inteface';
 import { unstable_batchedUpdates } from 'react-dom';
 import MetricTable from './metricTable';
 import LoadingLayer from '../loadingLayer';
 import { useCompututaion, useVizStore } from '../../store';
 import { fold2 } from '../../lib/op/fold';
-import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
+import { getFieldIdentifier, getMeaAggKey, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
 import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
 
@@ -77,6 +87,30 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         return columns.filter((f) => f.analyticType === 'measure');
     }, [columns]);
 
+    const manualSortConfig = useMemo<Record<string, IManualSortValue[]> | undefined>(() => {
+        const entries: Record<string, IManualSortValue[]> = {};
+        const collect = (field: IViewField) => {
+            if ((field.sortType ?? 'measure') !== 'manual') return;
+            if (!field.sortList || field.sortList.length === 0) return;
+            entries[field.fid] = field.sortList;
+        };
+        dimsInRow.forEach(collect);
+        dimsInColumn.forEach(collect);
+        return Object.keys(entries).length ? entries : undefined;
+    }, [dimsInRow, dimsInColumn]);
+
+    const alphabeticalSortConfig = useMemo<Record<string, 'ascending' | 'descending'> | undefined>(() => {
+        const entries: Record<string, 'ascending' | 'descending'> = {};
+        const collect = (field: IViewField) => {
+            if ((field.sortType ?? 'measure') !== 'alphabetical') return;
+            const order = field.sort && field.sort !== 'none' ? field.sort : 'ascending';
+            entries[field.fid] = order;
+        };
+        dimsInRow.forEach(collect);
+        dimsInColumn.forEach(collect);
+        return Object.keys(entries).length ? entries : undefined;
+    }, [dimsInRow, dimsInColumn]);
+
     useEffect(() => {
         if (!enableCollapse) {
             generateNewTable();
@@ -121,17 +155,23 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         buildPivotTableService(
             dimsInRow,
             dimsInColumn,
+            [...measInRow, ...measInColumn],
             data,
             aggData.current,
             Object.keys(tableCollapsedHeaderMap),
             showTableSummary,
             sort !== 'none' && sortedEncoding !== 'none'
                 ? {
-                      fid: sortedEncoding === 'column' ? `${measInRow[0].fid}_${measInRow[0].aggName}` : `${measInColumn[0].fid}_${measInColumn[0].aggName}`,
+                      fid:
+                          sortedEncoding === 'column'
+                              ? getMeaAggKey(measInRow[0].fid, measInRow[0].aggName, measInRow[0].windowAgg)
+                              : getMeaAggKey(measInColumn[0].fid, measInColumn[0].aggName, measInColumn[0].windowAgg),
                       mode: sortedEncoding,
                       type: sort,
                   }
-                : undefined
+                : undefined,
+            manualSortConfig,
+            alphabeticalSortConfig
         )
             .then((data) => {
                 const { lt, tt, metric } = data;
@@ -246,7 +286,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                             <tr className="">
                                 {dimsInRow.map((x) => (
                                     <td className="bg-secondary text-secondary-foreground p-2 m-1 text-xs border whitespace-nowrap" colSpan={1}>
-                                        {x.name}
+                                        {x.titleOverride || x.name}
                                     </td>
                                 ))}
                                 {measInRow.length > 0 && (

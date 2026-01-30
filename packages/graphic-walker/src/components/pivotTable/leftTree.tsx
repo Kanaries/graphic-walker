@@ -1,8 +1,8 @@
 import React, { ReactNode, useMemo } from 'react';
 import { INestNode } from './inteface';
-import { IField } from '../../interfaces';
+import { IField, IViewField } from '../../interfaces';
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
-import { formatDate } from '@/utils';
+import { formatDate, getMeaAggName } from '@/utils';
 import { parsedOffsetDate } from '@/lib/op/offset';
 
 function getChildCount(node: INestNode): number {
@@ -68,8 +68,8 @@ function renderTree(
 
 export interface TreeProps {
     data: INestNode;
-    dimsInRow: IField[];
-    measInRow: IField[];
+    dimsInRow: IViewField[];
+    measInRow: IViewField[];
     onHeaderCollapse: (node: INestNode) => void;
     enableCollapse: boolean;
     displayOffset?: number;
@@ -89,7 +89,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                         key={`0-${measInRow[0].fid}-${measInRow[0].aggName}`}
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                     >
-                        {measInRow[0].aggName}({measInRow[0].name})
+                        {measInRow[0].titleOverride || getMeaAggName(measInRow[0].name, measInRow[0].aggName, measInRow[0].windowAgg)}
                     </td>,
                 ]);
                 for (let j = 1; j < measInRow.length; j++) {
@@ -98,7 +98,7 @@ const LeftTree: React.FC<TreeProps> = (props) => {
                             key={`${j}-${measInRow[j].fid}-${measInRow[j].aggName}`}
                             className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border"
                         >
-                            {measInRow[j].aggName}({measInRow[j].name})
+                            {measInRow[j].titleOverride || getMeaAggName(measInRow[j].name, measInRow[j].aggName, measInRow[j].windowAgg)}
                         </td>,
                     ]);
                 }

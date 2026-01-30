@@ -4,6 +4,7 @@ import { buildPivotTable } from "./buildPivotTable"
 /**
  * @param {import('../interfaces').IViewField[]} dimsInRow
  * @param {import('../interfaces').IViewField[]} dimsInColumn
+ * @param {import('../interfaces').IViewField[]} measures
  * @param {import('../interfaces').IRow[]} allData
  * @param {import('../interfaces').IRow} aggData
  * @param {string[]} collapsedKeyList
@@ -12,12 +13,12 @@ import { buildPivotTable } from "./buildPivotTable"
  */
 
 /**
- * @param {MessageEvent<{ dimsInRow: import('../interfaces').IViewField[]; dimsInColumn: import('../interfaces').IViewField[]; allData: import('../interfaces').IRow[]; aggData: import('../interfaces').IRow[]; collapsedKeyList: string[]; showTableSummary: boolean }>} e
+ * @param {MessageEvent<{ dimsInRow: import('../interfaces').IViewField[]; dimsInColumn: import('../interfaces').IViewField[]; measures: import('../interfaces').IViewField[]; allData: import('../interfaces').IRow[]; aggData: import('../interfaces').IRow[]; collapsedKeyList: string[]; showTableSummary: boolean }>} e
  */
 const main = e => {
-    const { dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary, sort } = e.data;
+    const { dimsInRow, dimsInColumn, measures, allData, aggData, collapsedKeyList, showTableSummary, sort, manualSortConfig, alphabeticalSortConfig } = e.data;
     try {
-        const ans = buildPivotTable(dimsInRow, dimsInColumn, allData, aggData, collapsedKeyList, showTableSummary, sort);
+        const ans = buildPivotTable(dimsInRow, dimsInColumn, measures, allData, aggData, collapsedKeyList, showTableSummary, sort, manualSortConfig, alphabeticalSortConfig);
         self.postMessage(ans);
     } catch (error) {
         self.postMessage({ error: error.message });
