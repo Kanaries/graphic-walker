@@ -1,5 +1,8 @@
 {
     "config": {
+        "colors": "颜色",
+        "scale": "比例尺",
+        "select_scale": "选择比例尺",
         "scheme": "方案",
         "primary_color": "主要颜色",
         "color_palette": "调色板",
@@ -271,6 +274,17 @@
         "to_edit": "编辑这条规则",
         "empty_rule": "! (空的规则)",
         "editing": "筛选器规则设定",
+        "placeholder_search_value": "搜索值…",
+        "placeholder_regexp": "输入正则表达式…",
+        "match_case": "区分大小写",
+        "match_whole_word": "全字匹配",
+        "use_regexp": "使用正则表达式",
+        "select_values": "选择值…",
+        "select_values_exclude": "选择要排除的值…",
+        "exclude": "排除",
+        "rule_one_of": "oneOf",
+        "rule_not_in": "notIn",
+        "rule_range": "range",
         "form": {
             "name": "字段",
             "aggregation": "聚合",
@@ -308,14 +322,37 @@
             "children_outlier": "子节点异常"
         }
     },
+    "error_panel": {
+        "oops": "哎呀！",
+        "chart_too_large": "图表过大无法渲染。可以尝试以下选项：",
+        "option1": "1. 将图表设置为固定大小。",
+        "option2": "2. 切换到 SVG 渲染器。",
+        "option3": "3. 关闭此窗口并在编辑器中减小图表尺寸。",
+        "set_now": "立即设置",
+        "computation_error": "计算服务出现错误。错误信息：",
+        "askviz_error": "Askviz 服务出现错误。错误信息：",
+        "unknown_error": "未知错误（无详细信息）",
+        "close": "关闭"
+    },
     "actions": {
         "prev": "向前",
         "next": "向后",
         "drop_field": "拖拽字段至此",
         "confirm": "确认",
-        "cancel": "取消"
+        "cancel": "取消",
+        "copy_to_clipboard": "复制到剪贴板"
+    },
+    "code_export": {
+        "title": "代码导出"
+    },
+    "rename_field": {
+        "title": "重命名字段",
+        "description": "此操作将重命名图表中该字段的名称。",
+        "new_name": "新名称"
     },
     "field_menu": {
+        "rename_field": "重命名字段",
+        "remove_field": "删除字段",
         "to_dim": "移动到维度",
         "to_mea": "移动到度量",
         "new_calc": "新的计算字段",
@@ -350,6 +387,14 @@
                 "iso_week": "ISO周",
                 "iso_weekday": "ISO星期几"
             }
+        }
+    },
+    "dataTable": {
+        "pagination": {
+            "showing": "显示第",
+            "to": "至",
+            "of": "条，共",
+            "results": "条"
         }
     },
     "calc": {

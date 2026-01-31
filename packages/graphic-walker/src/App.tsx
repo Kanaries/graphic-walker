@@ -66,7 +66,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const {
         computation,
         darkMode = 'light',
-        i18nLang = 'en-US',
+        i18nLang = 'ru-RU',
         enhanceAPI,
         i18nResources,
         themeKey = 'vega',
@@ -99,6 +99,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+
+    // Localize the first chart name if it's still the default "Chart 1"
+    useEffect(() => {
+        if (vizStore.vizList.length > 0 && vizStore.vizList[0].name === 'Chart 1') {
+            vizStore.setVisName(0, t('main.tablist.auto_title', { idx: 1 }));
+        }
+    }, [vizStore, vizStore.vizList, t]);
 
     useEffect(() => {
         if (geographicData) {

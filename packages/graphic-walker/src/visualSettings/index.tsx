@@ -113,7 +113,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
         const builtInItems = [
             {
                 key: 'undo',
-                label: 'undo (Ctrl + Z)',
+                label: `${tGlobal('main.tabpanel.menubar.undo')} (Ctrl + Z)`,
                 icon: (props: Omit<React.SVGProps<SVGSVGElement>, 'ref'>) => {
                     useShortcut('Ctrl+Z', vizStore.undo.bind(vizStore));
                     return <ArrowUturnLeftIcon {...props} />;
@@ -123,7 +123,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
             },
             {
                 key: 'redo',
-                label: 'redo (Ctrl+Shift+Z)',
+                label: `${tGlobal('main.tabpanel.menubar.redo')} (Ctrl+Shift+Z)`,
                 icon: (props: Omit<React.SVGProps<SVGSVGElement>, 'ref'>) => {
                     useShortcut('Ctrl+Shift+Z', vizStore.redo.bind(vizStore));
                     return <ArrowUturnRightIcon {...props} />;

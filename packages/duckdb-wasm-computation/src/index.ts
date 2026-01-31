@@ -9,8 +9,8 @@ import initWasm, { parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
 import dslWasm from '@kanaries/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
 import type { IDataSourceProvider, IMutField, IDataSourceListener } from '@kanaries/graphic-walker';
-import { exportFullRaw, fromFields } from '@kanaries/graphic-walker/models/visSpecHistory';
-import { Table, Vector } from 'apache-arrow';
+import { exportFullRaw, fromFields } from '@kanaries/graphic-walker';
+import { Vector } from 'apache-arrow';
 import { bigNumToString } from 'apache-arrow/util/bn';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
@@ -61,7 +61,7 @@ const ArrowToJSON = (v: any): any => {
     return v;
 };
 
-const transformData = (table: Table) => {
+const transformData = (table: { toArray: () => any[] }) => {
     return table.toArray().map((r) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, ArrowToJSON(v)])));
 };
 
@@ -77,7 +77,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
         async getDataSourceList() {
             return datasets;
         },
-        async addDataSource(data, meta, name) {
+        async addDataSource(data: Record<string, unknown>[], meta: IMutField[], name: string) {
             const id = nanoid().replace('-', '');
             const filename = `${id}.json`;
             await db.registerFileText(filename, JSON.stringify(data));
@@ -87,29 +87,29 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             specDict.set(id, JSON.stringify([exportFullRaw(fromFields(meta, 'Chart 1'))]));
             return id;
         },
-        async getMeta(datasetId) {
+        async getMeta(datasetId: string) {
             const meta = metaDict.get(datasetId);
             if (!meta) {
                 throw new Error('cannot find meta');
             }
             return meta;
         },
-        async setMeta(datasetId, meta) {
+        async setMeta(datasetId: string, meta: IMutField[]) {
             metaDict.set(datasetId, meta);
             listeners.forEach((cb) => cb(2, datasetId));
         },
-        async getSpecs(datasetId) {
+        async getSpecs(datasetId: string) {
             const specs = specDict.get(datasetId);
             if (!specs) {
                 throw new Error('cannot find specs');
             }
             return specs;
         },
-        async saveSpecs(datasetId, value) {
+        async saveSpecs(datasetId: string, value: string) {
             specDict.set(datasetId, value);
             listeners.forEach((cb) => cb(4, datasetId));
         },
-        async queryData(query, datasetIds) {
+        async queryData(query: unknown, datasetIds: string[]) {
             const sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
@@ -117,7 +117,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             const res = await conn.query(sql).then(transformData);
             return res;
         },
-        registerCallback(cb) {
+        registerCallback(cb: IDataSourceListener) {
             listeners.push(cb);
             return () => {
                 listeners.filter((x) => x !== cb);
@@ -126,7 +126,7 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     };
 }
 
-export async function getComputation(data: Record<string, number>[]) {
+export async function getComputation(data: Record<string, unknown>[]) {
     if (data.length === 0) {
         return {
             close: async () => {},
@@ -143,7 +143,7 @@ export async function getComputation(data: Record<string, number>[]) {
             await conn.close();
             await db.dropFile(fileName);
         },
-        computation: async (query: any) => {
+        computation: async (query: unknown) => {
             const sql = parser_dsl_with_table(tableName, JSON.stringify(query));
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);

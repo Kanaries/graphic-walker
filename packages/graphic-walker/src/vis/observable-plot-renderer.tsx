@@ -158,7 +158,7 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
         width,
         height,
         details = [],
-        locale = 'en-US',
+        locale = 'ru-RU',
         useSvg,
         scales: channelScaleRaw,
         scale,

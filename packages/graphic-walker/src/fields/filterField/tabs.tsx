@@ -565,13 +565,13 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                         className="mb-2 pr-[88px]"
                         type="search"
                         value={keywordValue}
-                        placeholder="Search Value..."
+                        placeholder={t('filters.placeholder_search_value')}
                         onChange={(e) => {
                             setKeyword(e.target.value);
                         }}
                     />
                     <div className="absolute flex space-x-1 items-center inset-y-0 right-2">
-                        <Toggle label="Match Case" value={isCaseSenstive} onChange={setIsCaseSenstive}>
+                        <Toggle label={t('filters.match_case')} value={isCaseSenstive} onChange={setIsCaseSenstive}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path
                                     fill="currentColor"
@@ -579,7 +579,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                                 />
                             </svg>
                         </Toggle>
-                        <Toggle label="Match Whole Word" value={isWord} onChange={setIsWord}>
+                        <Toggle label={t('filters.match_whole_word')} value={isWord} onChange={setIsWord}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <g fill="currentColor">
                                     <path fillRule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clipRule="evenodd" />

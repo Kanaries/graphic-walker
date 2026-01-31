@@ -153,7 +153,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                     })),
                 },
                 {
-                    label: "Rename Field",
+                    label: t('rename_field'),
                     onPress() {
                         vizStore.setShowRenamePanel(true);
                         vizStore.setCreateField({ channel: channel, index: index });
@@ -169,7 +169,7 @@ export const useMenuActions = (channel: 'dimensions' | 'measures'): IActionMenuI
                     },
                 f.computed &&
                     !isInnerField && {
-                        label: 'Remove Field',
+                        label: t('remove_field'),
                         onPress() {
                             const originChannel = f.analyticType === 'dimension' ? 'dimensions' : 'measures';
                             vizStore.removeComputedField(originChannel, index);

@@ -26,7 +26,7 @@ const DimFields: React.FC = (props) => {
                                         snapshot.isDragging ? 'bg-dimension/20' : ''
                                     }`}
                                     ref={refMapper(provided.innerRef)}
-                                    isDragging={snapshot.isDragging}
+                                    $isDragging={snapshot.isDragging}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
                                 >
@@ -43,7 +43,7 @@ const DimFields: React.FC = (props) => {
                                         className={`pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 rounded-full border border-dimension truncate ${
                                             snapshot.isDragging ? 'bg-dimension/20 flex' : 'hidden'
                                         }`}
-                                        isDragging={snapshot.isDragging}
+                                        $isDragging={snapshot.isDragging}
                                     >
                                         <DataTypeIcon dataType={f.semanticType} analyticType={f.analyticType} />
                                         <span className="ml-0.5" title={f.name}>

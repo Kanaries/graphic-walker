@@ -1,5 +1,8 @@
 {
     "config": {
+        "colors": "Colors",
+        "scale": "Scale",
+        "select_scale": "Select Scale",
         "scheme": "Scheme",
         "primary_color": "Primary Color",
         "color_palette": "Color Palette",
@@ -276,6 +279,17 @@
         "to_edit": "Edit This Rule",
         "empty_rule": "! (empty rule)",
         "editing": "Filter Rule Settings",
+        "placeholder_search_value": "Search Value...",
+        "placeholder_regexp": "Input Regular Expression...",
+        "match_case": "Match Case",
+        "match_whole_word": "Match Whole Word",
+        "use_regexp": "Use Regular Expression",
+        "select_values": "Select Values...",
+        "select_values_exclude": "Select Values to Exclude...",
+        "exclude": "exclude",
+        "rule_one_of": "oneOf",
+        "rule_not_in": "notIn",
+        "rule_range": "range",
         "form": {
             "name": "Field",
             "aggregation": "Aggregation",
@@ -313,14 +327,37 @@
             "children_outlier": "outlier"
         }
     },
+    "error_panel": {
+        "oops": "Oops!",
+        "chart_too_large": "The chart is too large to render. You can try options above:",
+        "option1": "1. Set the chart to a fixed size.",
+        "option2": "2. Change to SVG renderer.",
+        "option3": "3. Close this modal and edit the chart to reduce chart size.",
+        "set_now": "Set Now",
+        "computation_error": "There is some error with Computation service. Here is the Error message:",
+        "askviz_error": "There is some error with Askviz service. Here is the Error message:",
+        "unknown_error": "Unknown error (no details available)",
+        "close": "Close"
+    },
     "actions": {
         "prev": "Previous",
         "next": "Next",
         "drop_field": "Drop Field Here",
         "confirm": "Confirm",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "copy_to_clipboard": "Copy to Clipboard"
+    },
+    "code_export": {
+        "title": "Code Export"
+    },
+    "rename_field": {
+        "title": "Rename Field",
+        "description": "This action will rename this field's name in the chart.",
+        "new_name": "New Name"
     },
     "field_menu": {
+        "rename_field": "Rename Field",
+        "remove_field": "Remove Field",
         "to_dim": "Move to dimensions",
         "to_mea": "Move to measures",
         "semantic_type": {
@@ -355,6 +392,14 @@
                 "iso_week": "ISO Week",
                 "iso_weekday": "ISO Weekday"
             }
+        }
+    },
+    "dataTable": {
+        "pagination": {
+            "showing": "Showing",
+            "to": "to",
+            "of": "of",
+            "results": "results"
         }
     },
     "calc": {

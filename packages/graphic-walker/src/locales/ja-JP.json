@@ -1,5 +1,8 @@
 {
     "config": {
+        "colors": "色",
+        "scale": "スケール",
+        "select_scale": "スケールを選択",
         "scheme": "スキーム",
         "primary_color": "プライマリカラー",
         "color_palette": "カラーパレット",
@@ -265,6 +268,17 @@
         "to_edit": "このルールを編集",
         "empty_rule": "! (未設定)",
         "editing": "フィルターの設定",
+        "placeholder_search_value": "値を検索…",
+        "placeholder_regexp": "正規表現を入力…",
+        "match_case": "大文字小文字を区別",
+        "match_whole_word": "単語全体に一致",
+        "use_regexp": "正規表現を使用",
+        "select_values": "値を選択…",
+        "select_values_exclude": "除外する値を選択…",
+        "exclude": "除外",
+        "rule_one_of": "oneOf",
+        "rule_not_in": "notIn",
+        "rule_range": "range",
         "form": {
             "name": "フィールド",
             "aggregation": "集計",
@@ -302,14 +316,37 @@
             "children_outlier": "外れ値"
         }
     },
+    "error_panel": {
+        "oops": "おっと！",
+        "chart_too_large": "チャートが大きすぎてレンダリングできません。以下の方法をお試しください：",
+        "option1": "1. チャートを固定サイズに設定する。",
+        "option2": "2. SVG レンダラーに切り替える。",
+        "option3": "3. このウィンドウを閉じて、エディターでチャートサイズを縮小する。",
+        "set_now": "今すぐ設定",
+        "computation_error": "計算サービスでエラーが発生しました。エラーメッセージ：",
+        "askviz_error": "Askviz サービスでエラーが発生しました。エラーメッセージ：",
+        "unknown_error": "不明なエラー（詳細なし）",
+        "close": "閉じる"
+    },
     "actions": {
         "prev": "前へ",
         "next": "次へ",
         "drop_field": "ここにフィールドをドロップ",
         "confirm": "確認",
-        "cancel": "キャンセル"
+        "cancel": "キャンセル",
+        "copy_to_clipboard": "クリップボードにコピー"
+    },
+    "code_export": {
+        "title": "コードエクスポート"
+    },
+    "rename_field": {
+        "title": "フィールド名の変更",
+        "description": "この操作でチャート内のフィールド名が変更されます。",
+        "new_name": "新しい名前"
     },
     "field_menu": {
+        "rename_field": "フィールド名の変更",
+        "remove_field": "フィールドを削除",
         "to_dim": "ディメンションに変更",
         "to_mea": "メジャーに変更",
         "new_calc": "計算フィールドを作成",
@@ -355,5 +392,13 @@
         "log_panel_title": "対数変換",
         "log_panel_desc": "フィールドの対数設定を設定する",
         "log_panel_number": "対数の底"
+    },
+    "dataTable": {
+        "pagination": {
+            "showing": "表示:",
+            "to": "〜",
+            "of": "/",
+            "results": "件"
+        }
     }
 }
