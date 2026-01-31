@@ -28,7 +28,7 @@ const FieldScalePanel: React.FC = (props) => {
                 setShowBinSettingPanel(false);
             }}
         >
-            <DialogContent className="!w-fit">
+            <DialogContent className="!w-fit" aria-describedby={undefined}>
                 <div className="flex flex-col justify-center items-start text-xs">
                     <h2 className="text-lg font-medium mb-2">{t('calc.bin_panel_title')}</h2>
                     <p className="font-normal text-muted-foreground">{t('calc.bin_panel_desc')}</p>

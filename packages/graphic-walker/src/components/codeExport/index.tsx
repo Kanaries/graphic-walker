@@ -83,7 +83,7 @@ const CodeExport: React.FC = observer((props) => {
                 vizStore.setShowCodeExportPanel(false);
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <h1>Code Export</h1>
                 <Tabs value={tabKey} onValueChange={setTabKey}>
                     <TabsList className="my-1">

@@ -1170,7 +1170,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                 vizStore.setShowPainter(false);
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 {loading && <LoadingLayer />}
                 {!loading && !aggInfo && (
                     <PainterContent

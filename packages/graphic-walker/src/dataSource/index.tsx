@@ -86,7 +86,7 @@ const DataSourceSegment: React.FC<DSSegmentProps> = observer((props) => {
                 }}
                 open={showDSPanel}
             >
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>{t('DataSource.dialog.create_data_source')}</DialogTitle>
                     </DialogHeader>

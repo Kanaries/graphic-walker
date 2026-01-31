@@ -191,7 +191,7 @@ const ExplainData: React.FC<{
                 setSelectedInfoIndex(0);
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 {explainDataInfoList.length === 0 && <LoadingLayer />}
                 <Container className="grid grid-cols-4">
                     <TabsList className="col-span-1">

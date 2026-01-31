@@ -11,7 +11,7 @@ const RemoveConfirm = observer(function RemoveConfirm() {
     const viz = useVizStore();
     return (
         <Dialog onOpenChange={() => viz.closeRemoveConfirmModal()} open={viz.removeConfirmIdx !== null}>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>{t('main.tablist.remove_confirm')}</DialogHeader>
                 <DialogFooter className="mt-4">
                     <Button

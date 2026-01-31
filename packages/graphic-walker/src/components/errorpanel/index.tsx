@@ -18,7 +18,7 @@ export default observer(function ErrorPanel() {
         case 500:
             return (
                 <Dialog open={true} onOpenChange={closeModal}>
-                    <DialogContent className="!w-fit">
+                    <DialogContent className="!w-fit" aria-describedby={undefined}>
                         <div className="flex flex-col justify-center items-start">
                             <h2 className="font-medium text-xl my-2">Oops!</h2>
                             <p className="font-normal my-2">The chart is too large to render. You can try options above:</p>
@@ -59,7 +59,7 @@ export default observer(function ErrorPanel() {
         case 501:
             return (
                 <Dialog open={true} onOpenChange={closeModal}>
-                    <DialogContent>
+                    <DialogContent aria-describedby={undefined}>
                         <div className="flex flex-col justify-center items-start">
                             <h2 className="font-medium text-xl my-2">Oops!</h2>
                             <p className="font-normal my-2">There is some error with Computation service. Here is the Error message:</p>
@@ -77,7 +77,7 @@ export default observer(function ErrorPanel() {
         case 502:
             return (
                 <Dialog open={true} onOpenChange={closeModal}>
-                    <DialogContent>
+                    <DialogContent aria-describedby={undefined}>
                         <div className="flex flex-col justify-center items-start">
                             <h2 className="font-medium text-xl my-2">Oops!</h2>
                             <p className="font-normal my-2">There is some error with Askviz service. Here is the Error message:</p>

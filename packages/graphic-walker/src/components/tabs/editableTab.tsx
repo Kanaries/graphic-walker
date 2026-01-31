@@ -125,7 +125,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                     setEditingIndex(-1);
                 }}
             >
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>{t('main.tablist.chart_name')}</DialogHeader>
                     <div className="py-4">
                         <Input

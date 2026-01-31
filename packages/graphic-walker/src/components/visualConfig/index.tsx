@@ -223,6 +223,7 @@ const VisualConfigPanel: React.FC = () => {
         >
             <DialogNormalContent
                 className="p-0"
+                aria-describedby={undefined}
                 onClick={() => {
                     setDisplayColorPicker(false);
                     setDisplayBackgroundPicker(false);
@@ -381,7 +382,12 @@ const VisualConfigPanel: React.FC = () => {
                                 <ConfigItemTitle>{t('config.format')}</ConfigItemTitle>
                                 <p className="text-xs">
                                     {t(`config.formatGuidesDocs`)}:{' '}
-                                    <a target="_blank" className="hover:underline text-primary" href="https://github.com/d3/d3-format#locale_format">
+                                    <a
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline text-primary"
+                                        href="https://github.com/d3/d3-format#locale_format"
+                                    >
                                         {t(`config.readHere`)}
                                     </a>
                                 </p>

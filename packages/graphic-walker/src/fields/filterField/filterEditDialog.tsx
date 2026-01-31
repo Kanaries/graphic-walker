@@ -90,7 +90,7 @@ export const PureFilterEditDialog = (props: {
 
     return uncontrolledField ? (
         <Dialog open={Boolean(uncontrolledField)} onOpenChange={onClose}>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>{t('editing')}</DialogTitle>
                 </DialogHeader>
