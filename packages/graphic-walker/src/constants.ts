@@ -19,5 +19,21 @@ export const MEA_KEY_ID = 'gw_mea_key_fid';
 export const MEA_VAL_ID = 'gw_mea_val_fid';
 export const PAINT_FIELD_ID = 'gw_paint_fid';
 
-/** Default row limit for pivot table to prevent performance issues with large datasets */
-export const PIVOT_TABLE_DEFAULT_LIMIT = 10000;
+const PIVOT_TABLE_DEFAULT_LIMIT_ENV = Number(
+    import.meta.env.VITE_PIVOT_TABLE_DEFAULT_LIMIT ?? import.meta.env.PIVOT_TABLE_DEFAULT_LIMIT
+);
+const PIVOT_TABLE_COLUMN_LIMIT_ENV = Number(
+    import.meta.env.VITE_PIVOT_TABLE_COLUMN_LIMIT ?? import.meta.env.PIVOT_TABLE_COLUMN_LIMIT
+);
+const PIVOT_TABLE_ROW_LIMIT_ENV = Number(
+    import.meta.env.VITE_PIVOT_TABLE_ROW_LIMIT ?? import.meta.env.PIVOT_TABLE_ROW_LIMIT
+);
+
+/** Default row limit for pivot table source data (-1 means unset) */
+export const PIVOT_TABLE_DEFAULT_LIMIT = PIVOT_TABLE_DEFAULT_LIMIT_ENV > 0 ? PIVOT_TABLE_DEFAULT_LIMIT_ENV : 20000;
+
+/** Column limit for pivot table rendering (-1 means unset) */
+export const PIVOT_TABLE_COLUMN_LIMIT = PIVOT_TABLE_COLUMN_LIMIT_ENV > 0 ? PIVOT_TABLE_COLUMN_LIMIT_ENV : 200;
+
+/** Row limit for pivot table rendering (-1 means unset) */
+export const PIVOT_TABLE_ROW_LIMIT = PIVOT_TABLE_ROW_LIMIT_ENV > 0 ? PIVOT_TABLE_ROW_LIMIT_ENV : 10000;

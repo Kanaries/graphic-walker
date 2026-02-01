@@ -402,4 +402,10 @@
             "results": "件"
         }
     }
+    ,
+    "pivotTable": {
+        "dataTruncated": "データは上限 {{limit}} 件に切り詰められました。",
+        "rowLimit": "先頭 {{limit}} 行を表示しています。",
+        "columnLimit": "最大列数は {{limit}} です。"
+    }
 }

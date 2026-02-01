@@ -408,4 +408,10 @@
         "log_panel_desc": "设置字段的对数配置",
         "log_panel_number": "对数底数"
     }
+    ,
+    "pivotTable": {
+        "dataTruncated": "数据已截断到 {{limit}} 条。",
+        "rowLimit": "仅显示前 {{limit}} 行。",
+        "columnLimit": "最大列数 {{limit}}。"
+    }
 }

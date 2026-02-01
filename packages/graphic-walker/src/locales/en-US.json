@@ -413,4 +413,10 @@
         "log_panel_desc": "Set log config for field",
         "log_panel_number": "Logarithmic base"
     }
+    ,
+    "pivotTable": {
+        "dataTruncated": "Data truncated to limit {{limit}}.",
+        "rowLimit": "Showing first {{limit}} rows.",
+        "columnLimit": "Maximum column count {{limit}}."
+    }
 }

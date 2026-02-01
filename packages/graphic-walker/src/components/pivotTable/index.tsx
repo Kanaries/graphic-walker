@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { buildPivotTableService } from '../../services';
 import { toWorkflow } from '../../utils/workflow';
 import { dataQuery } from '../../computation';
@@ -15,6 +16,9 @@ import { fold2 } from '../../lib/op/fold';
 import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
 import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
+import { PIVOT_TABLE_COLUMN_LIMIT, PIVOT_TABLE_DEFAULT_LIMIT, PIVOT_TABLE_ROW_LIMIT } from '../../constants';
+import { countLeafNodes, pruneTreeByLeafLimit } from './utils';
+import { useNotifications } from '../notifications';
 
 interface PivotTableProps {
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
@@ -60,6 +64,9 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
     const { showTableSummary } = layout;
     const aggData = useRef<IRow[]>([]);
     const [topTreeHeaderRowNum, setTopTreeHeaderRowNum] = useState<number>(0);
+    const { notify } = useNotifications();
+    const lastNoticeRef = useRef<Record<string, string>>({});
+    const { t } = useTranslation('translation', { keyPrefix: 'pivotTable' });
 
     const dimsInRow = useMemo(() => {
         return rows.filter((f) => f.analyticType === 'dimension');
@@ -133,12 +140,61 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                   }
                 : undefined
         )
-            .then((data) => {
-                const { lt, tt, metric } = data;
+            .then((result) => {
+                const { lt, tt, metric } = result;
+                const leafColumnCount = countLeafNodes(tt);
+                const measureColumnCount = measInColumn.length > 0 ? measInColumn.length : 1;
+                const totalColumnCount = leafColumnCount * measureColumnCount;
+                const leafRowCount = countLeafNodes(lt);
+                const measureRowCount = measInRow.length > 0 ? measInRow.length : 1;
+                const totalRowCount = leafRowCount * measureRowCount;
+
+                let nextLeftTree = lt;
+                let nextTopTree = tt;
+                let nextMetricTable = metric;
+
+                if (data.length >= PIVOT_TABLE_DEFAULT_LIMIT && PIVOT_TABLE_DEFAULT_LIMIT > 0) {
+                    const message = t('dataTruncated', { limit: PIVOT_TABLE_DEFAULT_LIMIT });
+                    if (lastNoticeRef.current.dataLimit !== message) {
+                        notify('warning', message);
+                        lastNoticeRef.current.dataLimit = message;
+                    }
+                }
+
+                if (totalColumnCount > PIVOT_TABLE_COLUMN_LIMIT) {
+                    const maxLeafColumns = Math.min(
+                        leafColumnCount,
+                        Math.max(1, Math.floor(PIVOT_TABLE_COLUMN_LIMIT / measureColumnCount))
+                    );
+                    const { tree: prunedTopTree } = pruneTreeByLeafLimit(tt, maxLeafColumns);
+                    nextTopTree = prunedTopTree;
+                    nextMetricTable = nextMetricTable.map((row) => row.slice(0, maxLeafColumns));
+                    const message = t('columnLimit', { limit: PIVOT_TABLE_COLUMN_LIMIT });
+                    if (lastNoticeRef.current.columnLimit !== message) {
+                        notify('warning', message);
+                        lastNoticeRef.current.columnLimit = message;
+                    }
+                }
+
+                if (totalRowCount > PIVOT_TABLE_ROW_LIMIT) {
+                    const maxLeafRows = Math.min(
+                        leafRowCount,
+                        Math.max(1, Math.floor(PIVOT_TABLE_ROW_LIMIT / measureRowCount))
+                    );
+                    const { tree: prunedLeftTree } = pruneTreeByLeafLimit(nextLeftTree, maxLeafRows);
+                    nextLeftTree = prunedLeftTree;
+                    nextMetricTable = nextMetricTable.slice(0, maxLeafRows);
+                    const message = t('rowLimit', { limit: PIVOT_TABLE_ROW_LIMIT });
+                    if (lastNoticeRef.current.rowLimit !== message) {
+                        notify('warning', message);
+                        lastNoticeRef.current.rowLimit = message;
+                    }
+                }
+
                 unstable_batchedUpdates(() => {
-                    setLeftTree(lt);
-                    setTopTree(tt);
-                    setMetricTable(metric);
+                    setLeftTree(nextLeftTree);
+                    setTopTree(nextTopTree);
+                    setMetricTable(nextMetricTable);
                 });
                 appRef.current?.updateRenderStatus('idle');
                 setIsLoading(false);

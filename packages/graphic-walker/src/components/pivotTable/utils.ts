@@ -185,6 +185,49 @@ class NodeIterator {
     }
 }
 
+export function countLeafNodes(tree: INestNode): number {
+    const iterator = new NodeIterator(tree);
+    let count = 0;
+    let node: INestNode | null = iterator.first();
+    while (node !== null) {
+        count += 1;
+        node = iterator.next();
+    }
+    return count;
+}
+
+export function pruneTreeByLeafLimit(tree: INestNode, maxLeaves: number): { tree: INestNode; leafCount: number; truncated: boolean } {
+    const leafCount = countLeafNodes(tree);
+    if (maxLeaves <= 0 || leafCount <= maxLeaves) {
+        return { tree, leafCount, truncated: false };
+    }
+
+    const iterator = new NodeIterator(tree);
+    const keepLeafKeys = new Set<string>();
+    let node: INestNode | null = iterator.first();
+    while (node !== null && keepLeafKeys.size < maxLeaves) {
+        keepLeafKeys.add(node.uniqueKey);
+        node = iterator.next();
+    }
+
+    const prune = (node: INestNode): INestNode | null => {
+        const isLeaf = node.isCollapsed || node.children.length === 0;
+        if (isLeaf) {
+            return keepLeafKeys.has(node.uniqueKey) ? { ...node, children: [] } : null;
+        }
+        const prunedChildren = node.children.map(prune).filter(Boolean) as INestNode[];
+        if (prunedChildren.length === 0) {
+            return null;
+        }
+        return { ...node, children: prunedChildren };
+    };
+
+    const prunedRoot = prune(tree);
+    const safeRoot = prunedRoot ?? { ...tree, children: [] };
+
+    return { tree: safeRoot, leafCount, truncated: true };
+}
+
 export function buildMetricTableFromNestTree(leftTree: INestNode, topTree: INestNode, data: IRow[]): (IRow | null)[][] {
     const mat: any[][] = [];
     const iteLeft = new NodeIterator(leftTree);

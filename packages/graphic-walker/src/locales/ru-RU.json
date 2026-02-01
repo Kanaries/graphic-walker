@@ -413,4 +413,10 @@
         "log_panel_desc": "Настройка логарифма для поля",
         "log_panel_number": "Основание логарифма"
     }
+    ,
+    "pivotTable": {
+        "dataTruncated": "Данные урезаны до лимита {{limit}}.",
+        "rowLimit": "Выведены первые {{limit}} строк.",
+        "columnLimit": "Максимальное количество колонок {{limit}}."
+    }
 }
