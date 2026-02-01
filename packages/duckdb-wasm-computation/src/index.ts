@@ -33,7 +33,7 @@ export async function init() {
     const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
 
     const worker_url = URL.createObjectURL(
-        new Blob([`importScripts("${bundle.mainWorker!}");`], {
+        new Blob([`importScripts("${new URL(bundle.mainWorker!, window.location.href).href}");`], {
             type: 'text/javascript',
         })
     );
@@ -42,7 +42,10 @@ export async function init() {
     const worker = new Worker(worker_url);
     const logger = new duckdb.ConsoleLogger();
     db = new duckdb.AsyncDuckDB(logger, worker);
-    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    await db.instantiate(
+        new URL(bundle.mainModule, window.location.href).href,
+        bundle.pthreadWorker ? new URL(bundle.pthreadWorker, window.location.href).href : undefined
+    );
     URL.revokeObjectURL(worker_url);
     await initWasm(dslWasm);
 }

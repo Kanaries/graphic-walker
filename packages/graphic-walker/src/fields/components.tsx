@@ -111,10 +111,10 @@ export const FilterFieldSegment = styled.div`
     }
 `;
 
-export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
-    background-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--background))' : 'hsl(var(--primary))')};
-    border-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))')};
-    color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))')};
+export const Pill = styled.div<{ $colType: 'discrete' | 'continuous' }>`
+    background-color: ${(props) => (props.$colType === 'continuous' ? 'hsl(var(--background))' : 'hsl(var(--primary))')};
+    border-color: ${(props) => (props.$colType === 'continuous' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))')};
+    color: ${(props) => (props.$colType === 'continuous' ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))')};
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-align-items: center;
