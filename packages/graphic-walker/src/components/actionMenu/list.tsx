@@ -145,7 +145,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
         >
             <div aria-hidden="true">{icon}</div>
             <div>
-                <span className="truncate self-start">{label}</span>
+                <span className="whitespace-nowrap self-start">{label}</span>
             </div>
             <div aria-hidden="true" className="relative">
                 {children.length > 0 && (
@@ -163,7 +163,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                                 leaveFrom="transform opacity-100 scale-100"
                                 leaveTo="transform opacity-0 scale-95"
                             >
-                                <div className="fixed rounded-md -translate-x-1 z-50 min-w-[8rem] max-w-[16rem] bg-popover shadow-lg border focus:outline-none">
+                                <div className="fixed rounded-md -translate-x-1 z-50 min-w-[10rem] w-max max-w-[90vw] bg-popover shadow-lg border focus:outline-none">
                                     <MenuItemList items={children} path={path} />
                                 </div>
                             </Transition>

@@ -61,10 +61,10 @@
             "measure": "мера"
         },
         "semantic_type": {
-            "nominal": "номинальная",
-            "ordinal": "порядковая",
-            "temporal": "временная",
-            "quantitative": "количественная"
+            "nominal": "категориальная",
+            "ordinal": "упорядоченная",
+            "temporal": "дата/время",
+            "quantitative": "числовая"
         },
         "mark_type": {
             "__enum__": "Тип диаграммы",
@@ -225,7 +225,7 @@
                     "descending": "По убыванию",
                     "transpose": "Транспонировать",
                     "config": "Настройки",
-                    "export_chart": "Экспорт",
+                    "export_chart": "Экспорт как картинку",
                     "export_chart_as": "Экспорт как {{type}}",
                     "export_code": "Экспорт кода",
                     "geojson": "Настройки географии",
@@ -363,10 +363,10 @@
         "semantic_type": {
             "name": "Изменить тип поля",
             "types": {
-                "nominal": "Номинальная",
-                "ordinal": "Порядковая",
-                "quantitative": "Количественная",
-                "temporal": "Временная"
+                "nominal": "Категориальная",
+                "ordinal": "Упорядоченная",
+                "quantitative": "Числовая",
+                "temporal": "Дата/время"
             }
         },
         "new_calc": "Новое вычисление",

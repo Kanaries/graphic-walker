@@ -123,7 +123,7 @@ type Dimension = {
     domain?: IPaintDimension;
 };
 
-const aggMarkWhitelist = ['circle', 'bar'];
+const aggMarkWhitelist = ['circle', 'bar', 'point'];
 
 const getDomainType = (type: ISemanticType) => (type === 'quantitative' ? 'quantitative' : 'nominal');
 
@@ -187,6 +187,8 @@ const produceAggChannel = (
         aggregate?: boolean;
     }
 ) => {
+    const aggregate =
+        options?.aggregate && channel.analyticType === 'measure' && channel.aggName && channel.aggName !== 'expr' ? channel.aggName : undefined;
     if (domain?.domain.value.every((x) => x instanceof Array)) {
         return {
             field: `${channel.fid}[0]`,
@@ -201,7 +203,7 @@ const produceAggChannel = (
                               : domain.domain.value.map((x) => x[0]),
                   }
                 : undefined,
-            aggregate: options?.aggregate && channel.analyticType === 'measure',
+            aggregate,
         };
     }
     return {
@@ -212,7 +214,7 @@ const produceAggChannel = (
         scale: domain
             ? { domain: domain.domain.type === 'nominal' && options?.reverseNominalDomain ? domain.domain.value.toReversed() : domain.domain.value }
             : undefined,
-        aggregate: options?.aggregate && channel.analyticType === 'measure',
+        aggregate,
     };
 };
 
@@ -304,6 +306,9 @@ const AggPainterContent = (props: {
 
     useEffect(() => {
         if (!loading && containerRef.current) {
+            if (!data || data.length === 0) {
+                return;
+            }
             const fallbackMark = getMarkForAgg([getDomainType(props.y.field.semanticType), getDomainType(props.x.field.semanticType)]);
             const mark = props.mark === 'auto' ? autoMark([props.x.field.semanticType, props.y.field.semanticType]) : props.mark;
             const colors = Object.entries(props.dict);
@@ -315,8 +320,14 @@ const AggPainterContent = (props: {
                 },
                 mark: { type: finalMark, fillOpacity: 0.66, strokeWidth: 4, strokeOpacity: 1, size: finalMark === 'circle' ? 600 : undefined },
                 encoding: {
-                    x: produceAggChannel(props.x.field, props.x.domain, { aggregate: true }),
-                    y: produceAggChannel(props.y.field, props.y.domain, { reverseNominalDomain: true, aggregate: true }),
+                    x: {
+                        ...produceAggChannel(props.x.field, props.x.domain),
+                        stack: null,
+                    },
+                    y: {
+                        ...produceAggChannel(props.y.field, props.y.domain, { reverseNominalDomain: true }),
+                        stack: null,
+                    },
                     fill: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
