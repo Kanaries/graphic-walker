@@ -306,7 +306,7 @@ const AggPainterContent = (props: {
 
     useEffect(() => {
         if (!loading && containerRef.current) {
-            if (!data || data.length === 0) {
+            if (!Array.isArray(data) || data.length === 0) {
                 return;
             }
             const fallbackMark = getMarkForAgg([getDomainType(props.y.field.semanticType), getDomainType(props.x.field.semanticType)]);
@@ -331,7 +331,7 @@ const AggPainterContent = (props: {
                     fill: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
-                        title: 'custom feature',
+                        title: t('main.tabpanel.settings.paint.custom_feature'),
                         scale: {
                             domain: colors.map(([_, x]) => x.name),
                             range: colors.map(([_, x]) => x.color),
@@ -662,7 +662,7 @@ const PainterContent = (props: {
                     color: {
                         field: PAINT_FIELD_ID,
                         type: 'nominal',
-                        title: 'custom feature',
+                        title: t('main.tabpanel.settings.paint.custom_feature'),
                         scale: {
                             domain: colors.map(([_, x]) => x.name),
                             range: colors.map(([_, x]) => x.color),

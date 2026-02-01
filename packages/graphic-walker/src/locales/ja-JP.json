@@ -230,6 +230,7 @@
                     "eraser": "消しゴム",
                     "color": "色",
                     "label": "ラベル",
+                    "custom_feature": "カスタム特徴量",
                     "brush_size": "ブラシサイズ",
                     "save_paint": "キャンバスを保存",
                     "reset_paint": "キャンバスをリセット",

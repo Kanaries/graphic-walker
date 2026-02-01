@@ -23,7 +23,7 @@ import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 import { getMeaAggKey, getMeaAggName } from '../utils';
-import { COUNT_FIELD_ID } from '../constants';
+import { COUNT_FIELD_ID, PIVOT_TABLE_DEFAULT_LIMIT } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
@@ -76,6 +76,14 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const [encodings, setEncodings] = useState<DraggableFieldState>(emptyEncodings);
     const [viewData, setViewData] = useState<IRow[]>([]);
 
+    // Apply default limit for pivot table if no limit is explicitly set
+    const isPivotTable = visualConfig.geoms[0] === 'table';
+    const effectiveLimit = useMemo(() => {
+        if (limit > 0) return limit;
+        if (isPivotTable) return PIVOT_TABLE_DEFAULT_LIMIT;
+        return limit;
+    }, [limit, isPivotTable]);
+
     const { viewData: data, loading: waiting } = useRenderer({
         allFields,
         viewDimensions,
@@ -83,7 +91,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         filters: viewFilters,
         defaultAggregated: visualConfig.defaultAggregated,
         sort,
-        limit: limit,
+        limit: effectiveLimit,
         folds: visualConfig.folds,
         computationFunction,
         timezoneDisplayOffset: visualConfig.timezoneDisplayOffset,

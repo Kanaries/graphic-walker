@@ -236,6 +236,7 @@
                     "eraser": "橡皮",
                     "color": "颜色",
                     "label": "标签",
+                    "custom_feature": "自定义特征",
                     "brush_size": "笔刷大小",
                     "save_paint": "保存画板",
                     "reset_paint": "重置画板",

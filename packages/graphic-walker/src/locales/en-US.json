@@ -241,6 +241,7 @@
                     "eraser": "Eraser",
                     "color": "Brush Color",
                     "label": "Brush Label",
+                    "custom_feature": "Custom feature",
                     "brush_size": "Brush Size",
                     "save_paint": "Save Painting",
                     "reset_paint": "Reset Painting",
