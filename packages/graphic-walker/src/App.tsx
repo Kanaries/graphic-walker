@@ -33,6 +33,8 @@ import { renderSpec } from './store/visualSpecStore';
 import FieldsContextWrapper from './fields/fieldsContext';
 import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
+import { useDuckDBComputation } from './computation/useDuckDBComputation';
+import { USE_DUCKDB } from './constants';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
 import RenamePanel from './components/renameField';
@@ -312,45 +314,112 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 });
 
+/**
+ * Internal component that handles DuckDB computation with loading state
+ */
+function VizAppWithDuckDB(props: {
+    data: any[];
+    fields: any[];
+    fieldKeyGuard?: boolean;
+    onMetaChange?: (fid: string, meta: any) => void;
+    keepAlive?: boolean | string;
+    storeRef?: any;
+    defaultConfig?: any;
+    defaultRenderer?: any;
+    darkMode: 'light' | 'dark';
+    rest: any;
+}) {
+    const { data, fields, fieldKeyGuard, onMetaChange, keepAlive, storeRef, defaultConfig, defaultRenderer, darkMode, rest } = props;
+    
+    // Prepare data (with optional key guarding)
+    const { safeData, safeMetas, safeOnMetaChange } = useMemo(() => {
+        if (fieldKeyGuard) {
+            const { safeData, safeMetas } = guardDataKeys(data, fields);
+            return {
+                safeData,
+                safeMetas,
+                safeOnMetaChange: (safeFID: string, meta: any) => {
+                    const index = safeMetas.findIndex((x) => x.fid === safeFID);
+                    if (index >= 0) {
+                        onMetaChange?.(fields[index].fid, meta);
+                    }
+                },
+            };
+        }
+        return {
+            safeData: data,
+            safeMetas: fields,
+            safeOnMetaChange: onMetaChange,
+        };
+    }, [data, fields, fieldKeyGuard, onMetaChange]);
+    
+    // Use DuckDB computation hook
+    const { computation, isLoading, isDuckDB } = useDuckDBComputation(safeData);
+    
+    // Show loading indicator while DuckDB initializes
+    useEffect(() => {
+        if (USE_DUCKDB) {
+            if (isLoading) {
+                console.log('%c[GraphicWalker] Initializing DuckDB...', 'color: #f08c00');
+            } else if (isDuckDB) {
+                console.log('%c[GraphicWalker] DuckDB mode active', 'color: #40c057; font-weight: bold');
+            }
+        }
+    }, [isLoading, isDuckDB]);
+    
+    return (
+        <VizStoreWrapper
+            onMetaChange={safeOnMetaChange}
+            meta={safeMetas}
+            keepAlive={keepAlive}
+            storeRef={storeRef}
+            defaultConfig={defaultConfig}
+            defaultRenderer={defaultRenderer}
+        >
+            <VizApp darkMode={darkMode} computation={computation} {...rest} />
+        </VizStoreWrapper>
+    );
+}
+
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
     const fields = props.fields ?? props.rawFields ?? [];
+    
+    const darkMode = useCurrentMediaTheme(appearance);
+    
+    // If data is provided, use DuckDB-aware component
+    if (data) {
+        return (
+            <VizAppWithDuckDB
+                data={data}
+                fields={fields}
+                fieldKeyGuard={fieldKeyGuard}
+                onMetaChange={onMetaChange}
+                keepAlive={keepAlive}
+                storeRef={storeRef}
+                defaultConfig={defaultConfig}
+                defaultRenderer={defaultRenderer}
+                darkMode={darkMode}
+                rest={rest}
+            />
+        );
+    }
+    
+    // If computation is provided directly (e.g., from external DuckDB provider), use it as-is
     const {
         computation: safeComputation,
         safeMetas,
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
-        if (data) {
-            if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(data, fields);
-                return {
-                    safeMetas,
-                    computation: getComputation(safeData),
-                    onMetaChange: (safeFID, meta) => {
-                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                        if (index >= 0) {
-                            props.onMetaChange?.(fields[index].fid, meta);
-                        }
-                    },
-                };
-            }
-            return {
-                safeMetas: fields,
-                computation: getComputation(data),
-                onMetaChange: props.onMetaChange,
-            };
-        }
         return {
             safeMetas: fields,
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
-
-    const darkMode = useCurrentMediaTheme(appearance);
+    }, [fields, props.computation, props.onMetaChange]);
 
     return (
         <VizStoreWrapper

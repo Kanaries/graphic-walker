@@ -16,7 +16,7 @@ import { fold2 } from '../../lib/op/fold';
 import { getFieldIdentifier, getSort, getSortedEncoding } from '../../utils';
 import { GWGlobalConfig } from '@/vis/theme';
 import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
-import { PIVOT_TABLE_COLUMN_LIMIT, PIVOT_TABLE_DEFAULT_LIMIT, PIVOT_TABLE_ROW_LIMIT } from '../../constants';
+import { PIVOT_TABLE_COLUMN_LIMIT, PIVOT_TABLE_DEBUG, PIVOT_TABLE_DEFAULT_LIMIT, PIVOT_TABLE_ROW_LIMIT } from '../../constants';
 import { countLeafNodes, pruneTreeByLeafLimit } from './utils';
 import { useNotifications } from '../notifications';
 
@@ -67,6 +67,12 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
     const { notify } = useNotifications();
     const lastNoticeRef = useRef<Record<string, string>>({});
     const { t } = useTranslation('translation', { keyPrefix: 'pivotTable' });
+    
+    // Track pending table generation to prevent parallel calls
+    const pendingGenerationRef = useRef<{ cancel: boolean; id: number }>({ cancel: false, id: 0 });
+    
+    // Debounce timer for generateNewTable
+    const generateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const dimsInRow = useMemo(() => {
         return rows.filter((f) => f.analyticType === 'dimension');
@@ -120,11 +126,25 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         generateNewTable();
     };
 
-    const generateNewTable = () => {
+    const generateNewTableImmediate = () => {
+        // Cancel any pending generation and create new generation ID
+        pendingGenerationRef.current.cancel = true;
+        const generationId = ++pendingGenerationRef.current.id;
+        pendingGenerationRef.current = { cancel: false, id: generationId };
+        
+        const totalStartTime = performance.now();
+        
         appRef.current?.updateRenderStatus('rendering');
         setIsLoading(true);
         const sort = getSort(draggableFieldState);
         const sortedEncoding = getSortedEncoding(draggableFieldState);
+        
+        if (PIVOT_TABLE_DEBUG) {
+            console.log(`%c[PivotTable] generateNewTable executing (id: ${generationId})`, 'color: #e599f7');
+        }
+        
+        const serviceCallStart = performance.now();
+        
         buildPivotTableService(
             dimsInRow,
             dimsInColumn,
@@ -141,17 +161,36 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                 : undefined
         )
             .then((result) => {
+                const serviceCallTime = performance.now() - serviceCallStart;
+                
+                // Check if this generation was cancelled
+                if (pendingGenerationRef.current.id !== generationId) {
+                    if (PIVOT_TABLE_DEBUG) {
+                        console.log(`%c[PivotTable] Result discarded (id: ${generationId}, current: ${pendingGenerationRef.current.id})`, 'color: #868e96');
+                    }
+                    return;
+                }
+                
+                const postProcessStart = performance.now();
+                
                 const { lt, tt, metric } = result;
+                
+                // Count leaf nodes
+                const countStart = performance.now();
                 const leafColumnCount = countLeafNodes(tt);
                 const measureColumnCount = measInColumn.length > 0 ? measInColumn.length : 1;
                 const totalColumnCount = leafColumnCount * measureColumnCount;
                 const leafRowCount = countLeafNodes(lt);
                 const measureRowCount = measInRow.length > 0 ? measInRow.length : 1;
                 const totalRowCount = leafRowCount * measureRowCount;
+                const countTime = performance.now() - countStart;
 
                 let nextLeftTree = lt;
                 let nextTopTree = tt;
                 let nextMetricTable = metric;
+                
+                let pruneColTime = 0;
+                let pruneRowTime = 0;
 
                 if (data.length >= PIVOT_TABLE_DEFAULT_LIMIT && PIVOT_TABLE_DEFAULT_LIMIT > 0) {
                     const message = t('dataTruncated', { limit: PIVOT_TABLE_DEFAULT_LIMIT });
@@ -162,6 +201,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                 }
 
                 if (totalColumnCount > PIVOT_TABLE_COLUMN_LIMIT) {
+                    const pruneColStart = performance.now();
                     const maxLeafColumns = Math.min(
                         leafColumnCount,
                         Math.max(1, Math.floor(PIVOT_TABLE_COLUMN_LIMIT / measureColumnCount))
@@ -169,6 +209,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                     const { tree: prunedTopTree } = pruneTreeByLeafLimit(tt, maxLeafColumns);
                     nextTopTree = prunedTopTree;
                     nextMetricTable = nextMetricTable.map((row) => row.slice(0, maxLeafColumns));
+                    pruneColTime = performance.now() - pruneColStart;
                     const message = t('columnLimit', { limit: PIVOT_TABLE_COLUMN_LIMIT });
                     if (lastNoticeRef.current.columnLimit !== message) {
                         notify('warning', message);
@@ -177,6 +218,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                 }
 
                 if (totalRowCount > PIVOT_TABLE_ROW_LIMIT) {
+                    const pruneRowStart = performance.now();
                     const maxLeafRows = Math.min(
                         leafRowCount,
                         Math.max(1, Math.floor(PIVOT_TABLE_ROW_LIMIT / measureRowCount))
@@ -184,6 +226,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                     const { tree: prunedLeftTree } = pruneTreeByLeafLimit(nextLeftTree, maxLeafRows);
                     nextLeftTree = prunedLeftTree;
                     nextMetricTable = nextMetricTable.slice(0, maxLeafRows);
+                    pruneRowTime = performance.now() - pruneRowStart;
                     const message = t('rowLimit', { limit: PIVOT_TABLE_ROW_LIMIT });
                     if (lastNoticeRef.current.rowLimit !== message) {
                         notify('warning', message);
@@ -191,13 +234,50 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                     }
                 }
 
+                const postProcessTime = performance.now() - postProcessStart;
+                
+                if (PIVOT_TABLE_DEBUG) {
+                    console.log('%c[PivotTable] Post-process details:', 'color: #ff922b');
+                    console.log(`  countLeafNodes: ${countTime.toFixed(2)}ms (rows: ${leafRowCount.toLocaleString()}, cols: ${leafColumnCount.toLocaleString()})`);
+                    if (pruneColTime > 0) {
+                        console.log(`  pruneColumns: ${pruneColTime.toFixed(2)}ms`);
+                    }
+                    if (pruneRowTime > 0) {
+                        console.log(`  pruneRows: ${pruneRowTime.toFixed(2)}ms`);
+                    }
+                    console.log(`  Total post-process: ${postProcessTime.toFixed(2)}ms`);
+                }
+                const stateUpdateStart = performance.now();
+
                 unstable_batchedUpdates(() => {
                     setLeftTree(nextLeftTree);
                     setTopTree(nextTopTree);
                     setMetricTable(nextMetricTable);
                 });
+                
+                const stateUpdateTime = performance.now() - stateUpdateStart;
+                
                 appRef.current?.updateRenderStatus('idle');
                 setIsLoading(false);
+                
+                const totalTime = performance.now() - totalStartTime;
+                
+                if (PIVOT_TABLE_DEBUG) {
+                    console.log('%c[PivotTable] Full cycle complete', 'color: #20c997; font-weight: bold');
+                    console.log(`  ─────────────────────────────────`);
+                    console.log(`  Service call: ${serviceCallTime.toFixed(2)}ms`);
+                    console.log(`  Post-process (prune/count): ${postProcessTime.toFixed(2)}ms`);
+                    console.log(`  State update (setState): ${stateUpdateTime.toFixed(2)}ms`);
+                    console.log(`  ─────────────────────────────────`);
+                    console.log(`  TOTAL (generateNewTable → state ready): ${totalTime.toFixed(2)}ms`);
+                    console.log(`  Matrix: ${nextMetricTable.length} × ${nextMetricTable[0]?.length || 0}`);
+                    
+                    // Schedule a check after React render
+                    requestAnimationFrame(() => {
+                        const renderCompleteTime = performance.now() - totalStartTime;
+                        console.log(`%c[PivotTable] First paint: ${renderCompleteTime.toFixed(2)}ms`, 'color: #20c997');
+                    });
+                }
             })
             .catch((err) => {
                 appRef.current?.updateRenderStatus('error');
@@ -205,6 +285,23 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                 setIsLoading(false);
             });
     };
+    
+    // Debounced version to prevent multiple rapid calls
+    const generateNewTable = useCallback(() => {
+        if (generateDebounceRef.current) {
+            clearTimeout(generateDebounceRef.current);
+        }
+        
+        if (PIVOT_TABLE_DEBUG) {
+            console.log('%c[PivotTable] generateNewTable scheduled', 'color: #fab005');
+        }
+        
+        // Use microtask-level debounce (0ms) to batch multiple calls in same tick
+        generateDebounceRef.current = setTimeout(() => {
+            generateDebounceRef.current = null;
+            generateNewTableImmediate();
+        }, 0);
+    }, [generateNewTableImmediate]);
 
     const groupbyCombListRef = useRef<IViewField[][]>([]);
 

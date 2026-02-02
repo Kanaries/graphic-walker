@@ -13,6 +13,9 @@ export default defineConfig({
   server: {
     port: 2002,
   },
+  optimizeDeps: {
+    include: ['@kanaries/duckdb-computation'],
+  },
   plugins: [
     react(),
     // @ts-ignore

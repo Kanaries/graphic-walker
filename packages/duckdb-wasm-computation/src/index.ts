@@ -13,6 +13,46 @@ import { exportFullRaw, fromFields } from '@kanaries/graphic-walker';
 import { Vector } from 'apache-arrow';
 import { bigNumToString } from 'apache-arrow/util/bn';
 
+// Debug logging configuration
+// Can be enabled via:
+// 1. window.__DUCKDB_DEBUG__ = true (runtime, can be toggled anytime)
+// 2. VITE_DUCKDB_DEBUG=true in .env (compile time for Vite apps)
+// 3. Automatically enabled in development mode
+
+// Check if Vite env variable is set (evaluated once at load)
+let envDebugEnabled = false;
+try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DUCKDB_DEBUG) {
+        const val = import.meta.env.VITE_DUCKDB_DEBUG;
+        envDebugEnabled = val === 'true' || val === '1';
+    }
+} catch {}
+
+// Dynamic check function - called for each log statement
+function isDebugEnabled(): boolean {
+    // Check runtime global flag first (allows toggling in console)
+    if (typeof window !== 'undefined' && (window as any).__DUCKDB_DEBUG__ !== undefined) {
+        return !!(window as any).__DUCKDB_DEBUG__;
+    }
+    // Check env variable (only enabled when explicitly set)
+    return envDebugEnabled;
+}
+
+// Export for external access
+export { isDebugEnabled as DUCKDB_DEBUG_CHECK };
+
+// Allow runtime toggle: window.__DUCKDB_DEBUG__ = true/false
+export function setDuckDBDebug(enabled: boolean): void {
+    if (typeof window !== 'undefined') {
+        (window as any).__DUCKDB_DEBUG__ = enabled;
+        console.log(`%c[DuckDB] Debug logging ${enabled ? 'ENABLED' : 'DISABLED'}`, 
+            `color: ${enabled ? '#40c057' : '#868e96'}; font-weight: bold`);
+    }
+}
+
+// Query counter for tracking
+let queryCounter = 0;
+
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
     mvp: {
         mainModule: duckdb_wasm,
@@ -29,8 +69,19 @@ let db: duckdb.AsyncDuckDB;
 export async function init() {
     if (inited) return;
     inited = true;
+    
+    const initStart = performance.now();
+    
+    if (isDebugEnabled()) {
+        console.log('%c[DuckDB] Initializing DuckDB-WASM...', 'color: #f08c00; font-weight: bold');
+    }
+    
     // Select a bundle based on browser checks
     const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
+    
+    if (isDebugEnabled()) {
+        console.log(`  Bundle selected: ${bundle.mainModule.includes('eh') ? 'EH (Exception Handling)' : 'MVP'}`);
+    }
 
     const worker_url = URL.createObjectURL(
         new Blob([`importScripts("${new URL(bundle.mainWorker!, window.location.href).href}");`], {
@@ -48,6 +99,13 @@ export async function init() {
     );
     URL.revokeObjectURL(worker_url);
     await initWasm(dslWasm);
+    
+    const initTime = performance.now() - initStart;
+    
+    if (isDebugEnabled()) {
+        console.log(`%c[DuckDB] ✓ Initialized in ${initTime.toFixed(2)}ms`, 'color: #40c057; font-weight: bold');
+        console.log(`  DSL Parser: @kanaries/gw-dsl-parser loaded`);
+    }
 }
 
 const ArrowToJSON = (v: any): any => {
@@ -75,12 +133,19 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     const metaDict = new Map<string, IMutField[]>();
     const specDict = new Map<string, string>();
     const listeners: IDataSourceListener[] = [];
+    
+    if (isDebugEnabled()) {
+        console.log('%c[DuckDB] getMemoryProvider() — Provider created', 'color: #f08c00; font-weight: bold');
+        console.log('  Mode: In-memory DuckDB storage');
+        console.log('  Data flow: DSL → SQL (gw-dsl-parser) → DuckDB → Results');
+    }
 
     return {
         async getDataSourceList() {
             return datasets;
         },
         async addDataSource(data: Record<string, unknown>[], meta: IMutField[], name: string) {
+            const startTime = performance.now();
             const id = nanoid().replace('-', '');
             const filename = `${id}.json`;
             await db.registerFileText(filename, JSON.stringify(data));
@@ -88,6 +153,18 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             datasets.push({ id, name });
             metaDict.set(id, meta);
             specDict.set(id, JSON.stringify([exportFullRaw(fromFields(meta, 'Chart 1'))]));
+            
+            const loadTime = performance.now() - startTime;
+            
+            if (isDebugEnabled()) {
+                console.log('%c[DuckDB] addDataSource() — Data loaded into DuckDB', 'color: #40c057; font-weight: bold');
+                console.log(`  Dataset: "${name}" (id: ${id})`);
+                console.log(`  Rows: ${data.length.toLocaleString()}`);
+                console.log(`  Fields: ${meta.length} (${meta.map(m => m.fid).join(', ')})`);
+                console.log(`  Load time: ${loadTime.toFixed(2)}ms`);
+                console.log(`  Table created: ${id}`);
+            }
+            
             return id;
         },
         async getMeta(datasetId: string) {
@@ -113,11 +190,27 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
             listeners.forEach((cb) => cb(4, datasetId));
         },
         async queryData(query: unknown, datasetIds: string[]) {
+            const queryId = ++queryCounter;
+            const startTime = performance.now();
+            
             const sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
-            if (process.env.NODE_ENV !== 'production') {
-                console.log(query, sql);
+            
+            if (isDebugEnabled()) {
+                console.log(`%c[DuckDB] queryData() #${queryId} — Executing SQL`, 'color: #339af0; font-weight: bold');
+                console.log('  DSL Query:', query);
+                console.log('  Generated SQL:', sql);
             }
+            
             const res = await conn.query(sql).then(transformData);
+            
+            const queryTime = performance.now() - startTime;
+            
+            if (isDebugEnabled()) {
+                console.log(`%c[DuckDB] queryData() #${queryId} — Complete`, 'color: #40c057');
+                console.log(`  Result rows: ${res.length.toLocaleString()}`);
+                console.log(`  Query time: ${queryTime.toFixed(2)}ms`);
+            }
+            
             return res;
         },
         registerCallback(cb: IDataSourceListener) {
@@ -131,27 +224,66 @@ export async function getMemoryProvider(): Promise<IDataSourceProvider> {
 
 export async function getComputation(data: Record<string, unknown>[]) {
     if (data.length === 0) {
+        if (isDebugEnabled()) {
+            console.log('%c[DuckDB] getComputation() — Empty dataset, returning no-op', 'color: #868e96');
+        }
         return {
             close: async () => {},
             computation: async () => [],
         };
     }
+    
+    await init();
+    
+    const setupStart = performance.now();
     const tableName = nanoid().replace('-', '');
     const fileName = `${tableName}.json`;
     const conn = await db.connect();
     await db.registerFileText(fileName, JSON.stringify(data));
     await conn.insertJSONFromPath(fileName, { name: tableName });
+    const setupTime = performance.now() - setupStart;
+    
+    if (isDebugEnabled()) {
+        console.log('%c[DuckDB] getComputation() — Computation context created', 'color: #f08c00; font-weight: bold');
+        console.log(`  Table: ${tableName}`);
+        console.log(`  Rows: ${data.length.toLocaleString()}`);
+        console.log(`  Setup time: ${setupTime.toFixed(2)}ms`);
+        console.log('  Data flow: DSL → SQL (gw-dsl-parser) → DuckDB → Results');
+    }
+    
+    // Local query counter for this computation instance
+    let localQueryCounter = 0;
+    
     return {
         close: async () => {
+            if (isDebugEnabled()) {
+                console.log(`%c[DuckDB] Computation closed (table: ${tableName})`, 'color: #868e96');
+            }
             await conn.close();
             await db.dropFile(fileName);
         },
         computation: async (query: unknown) => {
+            const queryId = ++localQueryCounter;
+            const startTime = performance.now();
+            
             const sql = parser_dsl_with_table(tableName, JSON.stringify(query));
-            if (process.env.NODE_ENV !== 'production') {
-                console.log(query, sql);
+            
+            if (isDebugEnabled()) {
+                console.log(`%c[DuckDB] computation() #${queryId} — Executing SQL`, 'color: #339af0; font-weight: bold');
+                console.log('  DSL Query:', query);
+                console.log('  Generated SQL:', sql);
             }
+            
             const res = await conn.query(sql).then(transformData);
+            
+            const queryTime = performance.now() - startTime;
+            
+            if (isDebugEnabled()) {
+                console.log(`%c[DuckDB] computation() #${queryId} — Complete`, 'color: #40c057');
+                console.log(`  Result rows: ${res.length.toLocaleString()}`);
+                console.log(`  Query time: ${queryTime.toFixed(2)}ms`);
+            }
+            
             return res;
         },
     };
