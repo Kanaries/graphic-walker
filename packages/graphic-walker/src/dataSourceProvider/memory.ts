@@ -76,7 +76,7 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
         },
         async onExportFile() {
             const data = store.exportData();
-            const result = new Blob([JSON.stringify(data)], { type: 'text/plain' });
+            const result = new Blob([JSON.stringify(data)], { type: 'application/json;charset=utf-8' });
             return result;
         },
         async onImportFile(file) {
