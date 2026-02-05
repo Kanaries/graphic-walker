@@ -604,7 +604,13 @@ export function replaceFid(sql: string, fields: IMutField[]): string {
     fields.forEach((f) => {
         const name = f.name ?? f.fid;
         exactDict.set(name, f);
-        lowerDict.set(name.toLowerCase(), f);
+        // For case-insensitive lookup, only store if not already present
+        // This ensures the first occurrence wins if multiple fields differ only by case
+        // e.g., if fields contain both "Name" and "name", the first occurrence "Name" will be used for case-insensitive lookups
+        const lowerName = name.toLowerCase();
+        if (!lowerDict.has(lowerName)) {
+            lowerDict.set(lowerName, f);
+        }
     });
     
     const item = parseSQLExpr(sql);

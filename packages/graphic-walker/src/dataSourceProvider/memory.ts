@@ -6,7 +6,15 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
     const store = new DataStore();
     const listeners: IDataSourceListener[] = [];
 
-    initData && store.importData(JSON.parse(initData));
+    // Safely parse initial data with UTF-8 error handling
+    if (initData) {
+        try {
+            store.importData(JSON.parse(initData));
+        } catch (error) {
+            console.error('Failed to parse stored data, possibly corrupted or invalid UTF-8:', error);
+            // Continue with empty store rather than crashing
+        }
+    }
 
     return {
         async getDataSourceList() {

@@ -108,8 +108,14 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         }
                         return { fid: x.fid, name: x.name };
                     });
-                    // Helper function to escape CSV values that contain special characters
-                    const escapeCSV = (value: any): string => {
+                    /**
+                     * Escapes CSV values to handle special characters.
+                     * - Wraps values containing comma, quote, newline, or carriage return in double quotes
+                     * - Escapes internal quotes by doubling them (RFC 4180 standard)
+                     * @param value - The value to escape (string, number, boolean, null, or undefined)
+                     * @returns Escaped CSV value as a string
+                     */
+                    const escapeCSV = (value: string | number | boolean | null | undefined): string => {
                         if (value === null || value === undefined) return '';
                         const str = String(value);
                         // Escape values that contain comma, quote, or newline
