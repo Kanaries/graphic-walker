@@ -124,9 +124,9 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         }
                         return str;
                     };
-                    // Add BOM (Byte Order Mark) for UTF-8 to help Excel and other programs recognize encoding
-                    const BOM = '\ufeff';
-                    const result = BOM + `${headers.map((x) => escapeCSV(x.name)).join(',')}\n${data.map((x) => headers.map((f) => escapeCSV(x[f.fid])).join(',')).join('\n')}`;
+                    // Add UTF-8 BOM (Byte Order Mark) to help Excel and other programs recognize encoding
+                    const UTF8_BOM = '\ufeff';
+                    const result = UTF8_BOM + `${headers.map((x) => escapeCSV(x.name)).join(',')}\n${data.map((x) => headers.map((f) => escapeCSV(x[f.fid])).join(',')).join('\n')}`;
                     download(result, `${chart.name}.csv`, 'text/csv;charset=utf-8');
                 },
             };
