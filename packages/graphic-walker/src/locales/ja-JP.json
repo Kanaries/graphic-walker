@@ -191,6 +191,9 @@
             "new": "+ 新規作成",
             "auto_title": "グラフ {{idx}}",
             "chart_name": "グラフ名",
+            "edit": "編集",
+            "duplicate": "複製",
+            "remove": "削除",
             "remove_confirm": "このグラフを削除してもよろしいですか？"
         },
         "askviz": {

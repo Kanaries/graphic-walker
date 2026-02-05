@@ -197,6 +197,9 @@
             "new": "+ 新建",
             "auto_title": "图表 {{idx}}",
             "chart_name": "图表名称",
+            "edit": "编辑",
+            "duplicate": "复制",
+            "remove": "删除",
             "remove_confirm": "你确定要删除这个图表吗？"
         },
         "askviz": {

@@ -31,12 +31,17 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
+import { exportSpreadsheet } from '../services/spreadsheetExport';
 
 interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
     scales?: IChannelScales;
-    csvRef?: React.RefObject<{ download: () => void }>;
+    csvRef?: React.RefObject<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>;
     overrideSize?: IVisualLayout['size'];
 }
 /**
@@ -98,30 +103,59 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     useEffect(() => {
-        if (csvRef) {
-            csvRef.current = {
-                download() {
-                    const headers = viewDimensions.concat(viewMeasures).map((x) => {
-                        if (x.fid === COUNT_FIELD_ID) {
-                            return {
-                                name: 'Count',
-                                fid: COUNT_FIELD_ID,
-                            };
-                        }
-                        if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
-                            return {
-                                fid: getMeaAggKey(x.fid, x.aggName),
-                                name: getMeaAggName(x.name, x.aggName),
-                            };
-                        }
-                        return { fid: x.fid, name: x.name };
-                    });
-                    const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
-                    download(result, `${chart.name}.csv`, 'text/plain');
-                },
-            };
+        if (!csvRef || isPivotTable) {
+            return;
         }
-    }, [chart.name, csvRef, data, viewDimensions, viewMeasures, viewConfig.defaultAggregated]);
+        const getHeaders = () =>
+            viewDimensions.concat(viewMeasures).map((x) => {
+                if (x.fid === COUNT_FIELD_ID) {
+                    return {
+                        name: 'Count',
+                        fid: COUNT_FIELD_ID,
+                    };
+                }
+                if (viewConfig.defaultAggregated && x.analyticType === 'measure') {
+                    return {
+                        fid: getMeaAggKey(x.fid, x.aggName),
+                        name: getMeaAggName(x.name, x.aggName),
+                    };
+                }
+                return { fid: x.fid, name: x.name };
+            });
+
+        const downloadTable = (type: 'xlsx' | 'ods') => {
+            const headers = getHeaders();
+            const rows = [
+                headers.map((x) => x.name),
+                ...data.map((row) =>
+                    headers.map((header) => (row[header.fid] === undefined ? null : (row[header.fid] as string | number | boolean)))
+                ),
+            ];
+            const fileName = `${chart.name || 'chart'}.${type}`;
+            void exportSpreadsheet(
+                {
+                    name: chart.name || 'Sheet1',
+                    data: rows,
+                },
+                fileName,
+                type
+            );
+        };
+
+        csvRef.current = {
+            download() {
+                const headers = getHeaders();
+                const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
+                download(result, `${chart.name || 'chart'}.csv`, 'text/plain');
+            },
+            downloadXLSX() {
+                downloadTable('xlsx');
+            },
+            downloadODS() {
+                downloadTable('ods');
+            },
+        };
+    }, [chart.name, csvRef, data, isPivotTable, viewDimensions, viewMeasures, viewConfig.defaultAggregated]);
 
     // Dependencies that should not trigger effect individually
     const latestFromRef = useRef({
@@ -249,6 +283,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                     onReportSpec={(spec) => {
                         vizStore.updateLastSpec(spec);
                     }}
+                    exportHandlerRef={csvRef}
                 />
             </div>
         </div>

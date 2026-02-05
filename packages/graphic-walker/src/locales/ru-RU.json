@@ -202,6 +202,9 @@
             "new": "+ Новый",
             "auto_title": "График {{idx}}",
             "chart_name": "Имя графика",
+            "edit": "Редактировать",
+            "duplicate": "Дублировать",
+            "remove": "Удалить",
             "remove_confirm": "Удалить этот график?"
         },
         "tabpanel": {

@@ -43,7 +43,11 @@ import { classNames } from '@/utils';
 interface IVisualSettings {
     darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler | null>;
-    csvHandler?: React.RefObject<{ download: () => void }>;
+    csvHandler?: React.RefObject<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>;
     exclude?: string[];
     extra?: ToolbarItemProps[];
     experimentalFeatures?: IExperimentalFeatures;
@@ -105,6 +109,20 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
     const downloadCSV = useCallback(
         throttle(() => {
             csvHandler?.current?.download();
+        }, 200),
+        []
+    );
+
+    const downloadXLSX = useCallback(
+        throttle(() => {
+            csvHandler?.current?.downloadXLSX?.();
+        }, 200),
+        []
+    );
+
+    const downloadODS = useCallback(
+        throttle(() => {
+            csvHandler?.current?.downloadODS?.();
         }, 200),
         []
     );
@@ -579,7 +597,27 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
                 key: 'csv',
                 label: t('button.export_chart_as', { type: 'csv' }),
                 icon: TableCellsIcon,
-                onClick: downloadCSV,
+                form: (
+                    <div className="flex flex-col">
+                        <Button variant="ghost" aria-label={t('button.export_chart_as', { type: 'csv' })} onClick={() => downloadCSV()}>
+                            {t('button.export_chart_as', { type: 'csv' })}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            aria-label={t('button.export_chart_as', { type: 'xlsx' })}
+                            onClick={() => downloadXLSX()}
+                        >
+                            {t('button.export_chart_as', { type: 'xlsx' })}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            aria-label={t('button.export_chart_as', { type: 'ods' })}
+                            onClick={() => downloadODS()}
+                        >
+                            {t('button.export_chart_as', { type: 'ods' })}
+                        </Button>
+                    </div>
+                ),
             },
             {
                 key: 'config',

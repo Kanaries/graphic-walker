@@ -19,18 +19,27 @@ import { getAllFields, getViewEncodingFields } from '../../store/storeStateLib';
 import { PIVOT_TABLE_COLUMN_LIMIT, PIVOT_TABLE_DEBUG, PIVOT_TABLE_DEFAULT_LIMIT, PIVOT_TABLE_ROW_LIMIT } from '../../constants';
 import { countLeafNodes, pruneTreeByLeafLimit } from './utils';
 import { useNotifications } from '../notifications';
+import { buildPivotSheet } from '../../services/pivotExport';
+import { buildCsvContent, exportSpreadsheet } from '../../services/spreadsheetExport';
+import { download } from '../../utils/save';
 
 interface PivotTableProps {
+    name?: string;
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
     data: IRow[];
     draggableFieldState: DraggableFieldState;
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
     disableCollapse?: boolean;
+    exportHandlerRef?: React.RefObject<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>;
 }
 
 const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props) {
-    const { data, visualConfig, layout, draggableFieldState } = props;
+    const { data, visualConfig, layout, draggableFieldState, exportHandlerRef, name } = props;
     const computation = useCompututaion();
     const appRef = useAppRootContext();
     const [leftTree, setLeftTree] = useState<INestNode | null>(null);
@@ -125,6 +134,49 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
         await aggregateGroupbyData();
         generateNewTable();
     };
+
+    const downloadPivot = useCallback(
+        (type: 'csv' | 'xlsx' | 'ods') => {
+            if (!leftTree || !topTree || metricTable.length === 0) {
+                return;
+            }
+            const sheet = buildPivotSheet({
+                leftTree,
+                topTree,
+                metricTable: metricTable as Array<Array<IRow | null>>,
+                dimsInRow,
+                dimsInColumn,
+                measInRow,
+                measInColumn,
+                displayOffset: visualConfig.timezoneDisplayOffset,
+            });
+            const fileName = `${name || 'pivot-table'}.${type}`;
+            if (type === 'csv') {
+                const csvContent = buildCsvContent(sheet.data);
+                download(csvContent, fileName, 'text/plain');
+                return;
+            }
+            void exportSpreadsheet(
+                {
+                    name: name || 'Pivot',
+                    data: sheet.data,
+                    merges: sheet.merges,
+                },
+                fileName,
+                type
+            );
+        },
+        [dimsInColumn, dimsInRow, leftTree, measInColumn, measInRow, metricTable, name, topTree, visualConfig.timezoneDisplayOffset]
+    );
+
+    useEffect(() => {
+        if (!exportHandlerRef) return;
+        exportHandlerRef.current = {
+            download: () => downloadPivot('csv'),
+            downloadXLSX: () => downloadPivot('xlsx'),
+            downloadODS: () => downloadPivot('ods'),
+        };
+    }, [downloadPivot, exportHandlerRef]);
 
     const generateNewTableImmediate = () => {
         // Cancel any pending generation and create new generation ID

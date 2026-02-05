@@ -143,7 +143,11 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
-    const downloadCSVRef = useRef<{ download: () => void }>({ download() {} });
+    const downloadCSVRef = useRef<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>({ download() {} });
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
