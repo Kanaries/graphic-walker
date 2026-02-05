@@ -596,14 +596,25 @@ export function walkFid(sql: string): string[] {
 }
 
 export function replaceFid(sql: string, fields: IMutField[]): string {
-    const dict = new Map<string, IMutField>();
+    // Create two dictionaries: one for exact (case-sensitive) matching,
+    // and one for case-insensitive matching
+    const exactDict = new Map<string, IMutField>();
+    const lowerDict = new Map<string, IMutField>();
+    
     fields.forEach((f) => {
-        dict.set((f.name ?? f.fid).toLowerCase(), f);
+        const name = f.name ?? f.fid;
+        exactDict.set(name, f);
+        lowerDict.set(name.toLowerCase(), f);
     });
+    
     const item = parseSQLExpr(sql);
     const mapper = parser.astMapper(() => ({
         ref: (r) => {
-            return parser.assignChanged(r, { name: dict.get(r.name.toLowerCase())?.fid || r.name });
+            // First try exact match (case-sensitive), which is important for non-ASCII characters
+            // like Korean, Chinese, Japanese, etc.
+            // Fall back to case-insensitive match for ASCII characters
+            const field = exactDict.get(r.name) ?? lowerDict.get(r.name.toLowerCase());
+            return parser.assignChanged(r, { name: field?.fid || r.name });
         },
     }));
     return parser.toSql.expr(mapper.expr(item)!);
