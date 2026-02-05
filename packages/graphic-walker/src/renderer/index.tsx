@@ -108,8 +108,26 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         }
                         return { fid: x.fid, name: x.name };
                     });
-                    const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
-                    download(result, `${chart.name}.csv`, 'text/plain');
+                    /**
+                     * Escapes CSV values to handle special characters.
+                     * - Wraps values containing comma, quote, newline, or carriage return in double quotes
+                     * - Escapes internal quotes by doubling them (RFC 4180 standard)
+                     * @param value - The value to escape (string, number, boolean, null, or undefined)
+                     * @returns Escaped CSV value as a string
+                     */
+                    const escapeCSV = (value: string | number | boolean | null | undefined): string => {
+                        if (value === null || value === undefined) return '';
+                        const str = String(value);
+                        // Escape values that contain comma, quote, or newline
+                        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                            return `"${str.replace(/"/g, '""')}"`;
+                        }
+                        return str;
+                    };
+                    // Add UTF-8 BOM (Byte Order Mark) to help Excel and other programs recognize encoding
+                    const UTF8_BOM = '\ufeff';
+                    const result = UTF8_BOM + `${headers.map((x) => escapeCSV(x.name)).join(',')}\n${data.map((x) => headers.map((f) => escapeCSV(x[f.fid])).join(',')).join('\n')}`;
+                    download(result, `${chart.name}.csv`, 'text/csv;charset=utf-8');
                 },
             };
         }

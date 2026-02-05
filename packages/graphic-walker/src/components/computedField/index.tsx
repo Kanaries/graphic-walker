@@ -29,7 +29,9 @@ const ComputedFieldDialog: React.FC = observer(() => {
             .filter((x) => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID].includes(x.fid))
             .map((x) => x.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
             .join('|');
-        const fieldRegex = fields.length > 0 ? new RegExp(`\\b(${fields})\\b`, 'gi') : null;
+        // Use negative lookahead/lookbehind instead of \b to support non-ASCII characters (Korean, Chinese, Japanese)
+        // \b doesn't work with Unicode characters, so we match fields that are not preceded/followed by word characters
+        const fieldRegex = fields.length > 0 ? new RegExp(`(?<!\\w)(${fields})(?!\\w)`, 'gi') : null;
         return highlightField((sql: string) => {
             // highlight field
             if (fieldRegex) {

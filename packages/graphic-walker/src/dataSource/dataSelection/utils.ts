@@ -14,6 +14,7 @@ export function jsonReader (file: File): Promise<IRow[]> {
                 reject(e);
             }
         };
-        reader.readAsText(file);
+        // Explicitly specify UTF-8 encoding to ensure proper handling of Korean and other non-ASCII characters
+        reader.readAsText(file, 'utf-8');
     });
 }
