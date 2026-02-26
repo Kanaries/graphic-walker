@@ -21,6 +21,18 @@ function vegaLiteToPlot(spec: any): any {
     // 1) Extract data
     const data = spec?.data?.values || [];
 
+    // If the spec uses layers (e.g., main mark + text overlay), flatten to the
+    // primary layer for Observable Plot which doesn't support Vega-Lite layers.
+    if (spec.layer && !spec.mark) {
+        const primaryLayer = spec.layer[0];
+        spec = {
+            ...spec,
+            mark: primaryLayer.mark,
+            encoding: { ...spec.encoding, ...(primaryLayer.encoding || {}) },
+        };
+        delete spec.layer;
+    }
+
     // 2) Identify mark type
     let markType = spec.mark;
     // Vega-Lite can have "mark" as an object: e.g. {type: "bar", tooltip: true}

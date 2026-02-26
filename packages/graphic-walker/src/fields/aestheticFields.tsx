@@ -28,6 +28,9 @@ const AestheticFields: React.FC = (props) => {
             case 'line':
             case 'area':
             case 'boxplot':
+            case 'point':
+            case 'circle':
+            case 'rect':
                 return aestheticFields.filter((f) => f.id !== 'shape');
             case 'text':
                 return aestheticFields.filter((f) => f.id === 'text' || f.id === 'color' || f.id === 'size' || f.id === 'opacity');

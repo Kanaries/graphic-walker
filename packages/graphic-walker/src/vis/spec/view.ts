@@ -134,6 +134,46 @@ export function getSingleView(props: SingleViewProps) {
         opacity: 0.96,
         tooltip: { content: 'data' },
     };
+
+    // When a text field is present on a non-text mark type, produce a layered spec
+    // with the main mark in one layer and a text overlay in a second layer.
+    const TEXT_LAYER_ELIGIBLE_MARKS = new Set(['bar', 'point', 'circle', 'rect', 'line', 'area', 'tick', 'trail']);
+    const SHARED_ENCODING_KEYS = new Set(['x', 'y', 'x2', 'y2', 'row', 'column', 'xOffset', 'yOffset', 'tooltip']);
+
+    if (TEXT_LAYER_ELIGIBLE_MARKS.has(markType as string) && text !== NULL_FIELD && encoding.text) {
+        const sharedEncoding: Record<string, any> = {};
+        const mainLayerEncoding: Record<string, any> = {};
+        const textLayerEncoding: Record<string, any> = {};
+        for (const [key, value] of Object.entries(encoding)) {
+            if (key === 'text') {
+                textLayerEncoding.text = value;
+            } else if (SHARED_ENCODING_KEYS.has(key)) {
+                sharedEncoding[key] = value;
+            } else {
+                mainLayerEncoding[key] = value;
+            }
+        }
+
+        // Build text mark with dx/dy offsets for non-rect marks
+        const textMark: any = { type: 'text' };
+        if (markType !== 'rect') {
+            if (encoding.x?.type === 'quantitative') textMark.dx = 2;
+            if (encoding.y?.type === 'quantitative') textMark.dy = -5;
+        } else {
+            textMark.color = 'white';
+        }
+
+        return {
+            config,
+            transform,
+            encoding: sharedEncoding,
+            layer: [
+                { mark, encoding: mainLayerEncoding },
+                { mark: textMark, encoding: textLayerEncoding },
+            ],
+        };
+    }
+
     return {
         config,
         transform,
