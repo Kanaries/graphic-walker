@@ -248,7 +248,18 @@ export function toVegaSpec({
         const viewWithWindow = windowTransforms.length ? { ...v, transform: [...(v.transform ?? []), ...windowTransforms] } : v;
         const singleView = scales ? resolveScales(scales, viewWithWindow, dataSource, mediaTheme) : viewWithWindow;
 
-        spec.mark = singleView.mark;
+        if ('layer' in singleView && singleView.layer) {
+            // Move params into the first layer to avoid "Duplicate signal name" errors
+            // when Vega-Lite compiles a layered spec with top-level params.
+            if (spec.params) {
+                spec.layer = singleView.layer.map((l: any, i: number) => (i === 0 ? { ...l, params: spec.params } : l));
+                delete spec.params;
+            } else {
+                spec.layer = singleView.layer;
+            }
+        } else {
+            spec.mark = singleView.mark;
+        }
         if ('encoding' in singleView) {
             spec.encoding = singleView.encoding;
         }
