@@ -129,7 +129,7 @@ export function getSingleView(props: SingleViewProps) {
     addBinStep(encoding, dataSource);
     addTooltipEncode(encoding, details, defaultAggregated);
     channelStack(encoding, stack);
-    const mark = {
+    const mark: Record<string, any> = {
         type: markType,
         opacity: 0.96,
         tooltip: { content: 'data' },
@@ -137,9 +137,8 @@ export function getSingleView(props: SingleViewProps) {
 
     // When a text field is present on a non-text mark type, produce a layered spec
     // with the main mark in one layer and a text overlay in a second layer.
-    const TEXT_LAYER_ELIGIBLE_MARKS = new Set(['bar', 'point', 'circle', 'rect', 'line', 'area', 'tick', 'trail']);
-    const SHARED_ENCODING_KEYS = new Set(['x', 'y', 'x2', 'y2', 'row', 'column', 'xOffset', 'yOffset', 'tooltip']);
-
+    const TEXT_LAYER_ELIGIBLE_MARKS = new Set(['bar', 'point', 'circle', 'rect', 'line', 'area', 'tick', 'trail', 'arc']);
+    const SHARED_ENCODING_KEYS = new Set(['x', 'y', 'x2', 'y2', 'row', 'column', 'xOffset', 'yOffset', 'tooltip', 'theta', 'radius', 'color']);
     if (TEXT_LAYER_ELIGIBLE_MARKS.has(markType as string) && text !== NULL_FIELD && encoding.text) {
         const sharedEncoding: Record<string, any> = {};
         const mainLayerEncoding: Record<string, any> = {};
@@ -156,9 +155,16 @@ export function getSingleView(props: SingleViewProps) {
 
         // Build text mark with dx/dy offsets for non-rect marks
         const textMark: any = { type: 'text' };
-        if (markType !== 'rect') {
+        if (markType !== 'rect' && markType !== 'arc') {
             if (encoding.x?.type === 'quantitative') textMark.dx = 2;
             if (encoding.y?.type === 'quantitative') textMark.dy = -5;
+        } else if (markType === 'arc') {
+            if (encoding.radius) {
+                textMark.radiusOffset = 10;
+            } else {
+                textMark.radius = 90;
+                mark.outerRadius = 80;
+            }
         } else {
             textMark.color = 'white';
         }
@@ -186,7 +192,7 @@ export function resolveScale<T extends Object>(
     scale: T | ((info: IFieldInfos) => T),
     field: IField | null | undefined,
     data: readonly IRow[],
-    theme: 'dark' | 'light'
+    theme: 'dark' | 'light',
 ) {
     if (typeof scale === 'function') {
         if (!field) return undefined;
