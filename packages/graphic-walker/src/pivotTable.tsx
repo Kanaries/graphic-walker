@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import PivotTableImpl from './components/pivotTable';
 import { IRow, IViewField, IVisualConfigNew } from './interfaces';
 import { emptyVisualLayout, initEncoding } from './utils/save';
+import { useRenderer } from './renderer/hooks';
+import { getComputation } from './computation/clientComputation';
+import { getSort } from './utils';
 
 export interface IPivotTableValueField extends IViewField {
     placement?: 'row' | 'column';
@@ -20,6 +23,12 @@ export interface IPivotTableProps {
 
 function toViewField(field: IPivotTableValueField): IViewField {
     const { placement: _placement, ...viewField } = field;
+    if (viewField.analyticType === 'measure' && !viewField.aggName) {
+        return {
+            ...viewField,
+            aggName: 'sum',
+        };
+    }
     return viewField;
 }
 
@@ -67,6 +76,29 @@ const PivotTable: React.FC<IPivotTableProps> = ({
         [dimensions, measures, rows, columns]
     );
 
+    const allFields = useMemo(() => {
+        const map = new Map<string, IViewField>();
+        [...dimensions, ...measures].forEach((field) => {
+            map.set(getPivotFieldKey(field), field);
+        });
+        return [...map.values()];
+    }, [dimensions, measures]);
+
+    const computation = useMemo(() => getComputation(data), [data]);
+    const sort = useMemo(() => getSort({ rows, columns }), [rows, columns]);
+
+    const { viewData } = useRenderer({
+        allFields,
+        viewDimensions: dimensions,
+        viewMeasures: measures,
+        filters: [],
+        defaultAggregated: true,
+        sort,
+        limit: -1,
+        computationFunction: computation,
+        timezoneDisplayOffset,
+    });
+
     const visualConfig = useMemo<IVisualConfigNew>(
         () => ({
             defaultAggregated: true,
@@ -99,7 +131,7 @@ const PivotTable: React.FC<IPivotTableProps> = ({
         <div className={className} style={style}>
             <PivotTableImpl
                 key={pivotTableKey}
-                data={data}
+                data={viewData}
                 draggableFieldState={draggableFieldState}
                 visualConfig={visualConfig}
                 layout={layout}
