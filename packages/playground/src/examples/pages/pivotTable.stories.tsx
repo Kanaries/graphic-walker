@@ -20,12 +20,24 @@ const rowDimensions: IViewField[] = [
         analyticType: 'dimension',
         semanticType: 'nominal',
     },
+    {
+        fid: 'parental level of education',
+        name: 'parental level of education',
+        analyticType: 'dimension',
+        semanticType: 'nominal',
+    },
 ];
 
 const columnDimensions: IViewField[] = [
     {
         fid: 'test preparation course',
         name: 'test preparation course',
+        analyticType: 'dimension',
+        semanticType: 'nominal',
+    },
+    {
+        fid: 'lunch',
+        name: 'lunch',
         analyticType: 'dimension',
         semanticType: 'nominal',
     },
@@ -73,6 +85,9 @@ export default function PivotTableComponent() {
                 <input type="checkbox" checked={enableCollapse} onChange={(e) => setEnableCollapse(e.target.checked)} />
                 Enable collapse / expand
             </label>
+            <div className="text-xs text-zinc-600 dark:text-zinc-300">
+                Try clicking the +/- icon beside row and column headers (for example: gender, race/ethnicity, test preparation course).
+            </div>
             <PivotTable
                 data={dataSource}
                 rowDimensions={rowDimensions}
