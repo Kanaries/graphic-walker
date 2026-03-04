@@ -9,6 +9,7 @@ import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { parseColorToHex } from '@/utils/colors';
+import ObservablePlotRenderer from '@/vis/observable-plot-renderer';
 
 interface SpecRendererProps {
     name?: string;
@@ -176,11 +177,45 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {isSpatial || (
+            {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (
                 <ReactVega
                     name={name}
                     vegaConfig={vegaConfig}
                     // format={format}
+                    layoutMode={size.mode}
+                    interactiveScale={interactiveScale}
+                    geomType={geoms[0]}
+                    defaultAggregate={defaultAggregated}
+                    stack={stack}
+                    dataSource={data}
+                    rows={rows}
+                    columns={columns}
+                    color={color[0]}
+                    theta={theta[0]}
+                    radius={radius[0]}
+                    shape={shape[0]}
+                    opacity={opacity[0]}
+                    size={sizeChannel[0]}
+                    details={details}
+                    text={text[0]}
+                    showActions={showActions}
+                    width={size.width - 12 * 4}
+                    height={size.height - 12 * 4}
+                    ref={ref}
+                    onGeomClick={onGeomClick}
+                    locale={locale}
+                    useSvg={useSvg}
+                    scales={scales}
+                    scale={scale}
+                    onReportSpec={onReportSpec}
+                    displayOffset={timezoneDisplayOffset}
+                />
+            )}
+            {!isSpatial && layout.renderer === 'observable-plot' && (
+                <ObservablePlotRenderer
+                    name={name}
+                    vegaConfig={vegaConfig}
+                    // format={format
                     layoutMode={size.mode}
                     interactiveScale={interactiveScale}
                     geomType={geoms[0]}

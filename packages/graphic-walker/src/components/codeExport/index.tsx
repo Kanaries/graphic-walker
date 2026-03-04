@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
+import { toVegaSimplifiedWithAggergation } from '@/models/chat';
 
 const syntaxHighlight = (json: any) => {
     if (typeof json != 'string') {
@@ -39,7 +40,7 @@ const CodeExport: React.FC = observer((props) => {
     const { showCodeExportPanel } = vizStore;
     const { t } = useTranslation();
     const [tabKey, setTabKey] = useState<string>('graphic-walker');
-    const [code, setCode] = useState<any>('');
+    const [code, setCode] = useState('');
 
     const specTabs: { key: string; label: string }[] = [
         {
@@ -50,15 +51,28 @@ const CodeExport: React.FC = observer((props) => {
             key: 'vega-lite',
             label: 'Vega-Lite',
         },
+        ...(vizStore.layout.showActions
+            ? [
+                  {
+                      key: 'workflow',
+                      label: 'Workflow',
+                  },
+              ]
+            : []),
     ];
 
     useEffect(() => {
         if (showCodeExportPanel) {
             if (tabKey === 'graphic-walker') {
                 const res = vizStore.exportCode();
-                setCode(res);
+                setCode(JSON.stringify(res, null, 4));
+            } else if (tabKey === 'vega-lite') {
+                setCode(JSON.stringify(vizStore.exportCode().map(toVegaSimplifiedWithAggergation), null, 4));
+            } else if (tabKey === 'workflow') {
+                const workflow = vizStore.workflow;
+                setCode(JSON.stringify(workflow, null, 4));
             } else {
-                setCode(vizStore.lastSpec);
+                console.error('unknown tabKey');
             }
         }
     }, [tabKey, showCodeExportPanel, vizStore]);
@@ -74,7 +88,9 @@ const CodeExport: React.FC = observer((props) => {
                 <Tabs value={tabKey} onValueChange={setTabKey}>
                     <TabsList className="my-1">
                         {specTabs.map((tab) => (
-                            <TabsTrigger key={tab.key} value={tab.key}>{tab.label}</TabsTrigger>
+                            <TabsTrigger key={tab.key} value={tab.key}>
+                                {tab.label}
+                            </TabsTrigger>
                         ))}
                     </TabsList>
                     <div className="border rounded-md overflow-hidden">
@@ -87,7 +103,7 @@ const CodeExport: React.FC = observer((props) => {
                     <Button
                         children="Copy to Clipboard"
                         onClick={() => {
-                            navigator.clipboard.writeText(JSON.stringify(code));
+                            navigator.clipboard.writeText(code);
                             vizStore.setShowCodeExportPanel(false);
                         }}
                     />

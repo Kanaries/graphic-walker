@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface GWFileProps {
-    fileRef: React.RefObject<HTMLInputElement>;
+    fileRef: React.RefObject<HTMLInputElement | null>;
     onImport: (file: File) => void;
 }
 const GWFile: React.FC<GWFileProps> = (props) => {

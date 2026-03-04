@@ -216,6 +216,8 @@ export interface IField {
     foreign?: { dataset: string; fid: string };
 }
 export type ISortMode = 'none' | 'ascending' | 'descending';
+export type ICustomSortType = 'measure' | 'alphabetical' | 'manual';
+export type IManualSortValue = string | number | boolean | null;
 
 export interface IJoinPath {
     from: string;
@@ -225,6 +227,10 @@ export interface IJoinPath {
 }
 export interface IViewField extends IField {
     sort?: ISortMode;
+    sortType?: ICustomSortType;
+    sortList?: IManualSortValue[];
+    titleOverride?: string;
+    customFormat?: string;
     // used For field Identifier of transformed fields
     originalFid?: string;
     joinPath?: IJoinPath[];
@@ -366,6 +372,7 @@ export type IConfigScale = {
     rangeMin?: number;
     domainMin?: number;
     domainMax?: number;
+    type?: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog';
 };
 
 export interface IVisualConfig {
@@ -390,10 +397,7 @@ export interface IVisualConfig {
     };
     primaryColor?: string;
     colorPalette?: string;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     resolve: {
         x?: boolean;
         y?: boolean;
@@ -414,6 +418,16 @@ export interface IVisualConfig {
     folds?: FieldIdentifier[];
 }
 
+export interface IConfigScaleSet {
+    row?: IConfigScale;
+    column?: IConfigScale;
+    color?: IConfigScale;
+    opacity?: IConfigScale;
+    size?: IConfigScale;
+    radius?: IConfigScale;
+    theta?: IConfigScale;
+}
+
 export interface IVisualLayout {
     showTableSummary: boolean;
     format: {
@@ -423,10 +437,7 @@ export interface IVisualLayout {
     };
     primaryColor?: string;
     colorPalette?: string;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     resolve: {
         x?: boolean;
         y?: boolean;
@@ -454,6 +465,8 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     baseDataset?: string;
     showAllGeoshapeInChoropleth?: boolean;
+    /** @default "vega-lite" */
+    renderer?: 'vega-lite' | 'observable-plot';
 }
 
 export interface IVisualConfigNew {
@@ -499,8 +512,8 @@ export interface IVegaChartRef {
     h: number;
     innerWidth: number;
     innerHeight: number;
-    view: View;
-    canvas: HTMLCanvasElement | SVGSVGElement | null;
+    view: View | null;
+    canvas: HTMLElement | SVGSVGElement | HTMLCanvasElement | null;
 }
 
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
@@ -882,6 +895,8 @@ export type IFieldInfos = {
 };
 
 export interface IChannelScales {
+    row?: IScale | ((info: IFieldInfos) => IScale);
+    column?: IScale | ((info: IFieldInfos) => IScale);
     color?: IColorScale | ((info: IFieldInfos) => IColorScale);
     opacity?: IScale | ((info: IFieldInfos) => IScale);
     size?: IScale | ((info: IFieldInfos) => IScale);
@@ -933,6 +948,8 @@ export interface IVizProps {
     };
     /** hide the chart navigation so make user can only edit on the only chart. */
     hideChartNav?: boolean;
+    /** hide the segment navigation so make user can only edit on the only segment. */
+    hideSegmentNav?: boolean;
     geographicData?: IGeographicData & {
         key: string;
     };
@@ -949,6 +966,7 @@ export interface IVizProps {
     channelScales?: IChannelScales;
     scales?: IChannelScales;
     experimentalFeatures?: IExperimentalFeatures;
+    hideProfiling?: boolean;
 }
 
 export interface IExperimentalFeatures {
@@ -961,13 +979,14 @@ export interface IDefaultConfig {
 }
 
 export interface IVizStoreProps {
-    storeRef?: React.MutableRefObject<VizSpecStore | null>;
+    storeRef?: React.RefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
     /** @deprecated renamed to fields */
     rawFields?: IMutField[];
     fields?: IMutField[];
     onMetaChange?: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
 export interface ILocalComputationProps {
@@ -983,6 +1002,7 @@ export interface ILocalComputationProps {
 
 export interface IRemoteComputationProps {
     computation: IComputationFunction;
+    computationTimeout?: number;
 }
 
 export interface IComputationContextProps {
@@ -996,7 +1016,7 @@ export type IGWProps = IAppI18nProps &
     IVizProps &
     IThemeProps &
     IErrorHandlerProps & {
-        storeRef?: React.MutableRefObject<CommonStore | null>;
+        storeRef?: React.RefObject<CommonStore | null>;
         keepAlive?: boolean | string;
     };
 
@@ -1011,13 +1031,16 @@ export interface ITableSpecProps {
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
+    disableFilter?: boolean;
+    disableSorting?: boolean;
+    hideSemanticType?: boolean;
     /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
     /** @deprecated use vizThemeConfig instead */
     themeConfig?: GWGlobalConfig;
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
     tableFilterRef?: React.Ref<{
-        getFilters: () => IFilterField[];
+        getFilters: () => IVisFilter[];
     }>;
     profilingComputation?: IComputationFunction | IComputationFunction[];
     cellStyle?: (value: string | number, field: IMutField, row: IRow, dark: boolean) => React.CSSProperties;

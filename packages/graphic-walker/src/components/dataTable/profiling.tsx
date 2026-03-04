@@ -237,7 +237,7 @@ function BinRenderer({
 function LazyLoaded<T>(Component: ComponentType<T>) {
     return function (props: T & { key?: React.Key }) {
         const [loaded, setLoaded] = useState(false);
-        const obRef = useRef<IntersectionObserver>();
+        const obRef = useRef<IntersectionObserver>(null);
         const ref = useCallback((node: HTMLDivElement) => {
             obRef.current?.disconnect();
             if (node) {

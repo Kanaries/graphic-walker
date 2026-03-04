@@ -89,4 +89,10 @@ describe('getOffsetDate', () => {
         const W = Math.floor((date.getTime() - SundayOfFirstWeek.getTime()) / (7 * 24 * 60 * 60 * 1_000)) + 1;
         expect(W).toBe(48);
     });
+
+    test('timestamp zero', () => {
+        const date = utcOffsetDate(0);
+        expect(date).not.toBeNull();
+        expect(date!.getTime()).toBe(0);
+    });
 });

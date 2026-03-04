@@ -165,6 +165,9 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
     const darkMode = useCurrentMediaTheme(appearance ?? dark);
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     const encoding = useMemo(() => {
@@ -189,7 +192,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
             <VizAppContext
                 ComputationContext={computation}
                 themeContext={darkMode}
-                vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                 portalContainerContext={portal}
                 DatasetNamesContext={undefined}
             >
@@ -210,7 +213,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}
                             scales={scales ?? channelScales}
-                            vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                            vizThemeConfig={currentTheme}
                             disableCollapse={disableCollapse}
                         />
                     )}
@@ -222,6 +225,6 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
 });
 
 export default observer(withAppRoot<IPureRendererProps>(PureRenderer)) as {
-    (p: ILocalPureRendererProps): JSX.Element;
-    (p: IRemotePureRendererProps): JSX.Element;
+    (p: ILocalPureRendererProps): React.ReactNode;
+    (p: IRemotePureRendererProps): React.ReactNode;
 };

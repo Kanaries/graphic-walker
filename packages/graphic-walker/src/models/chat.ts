@@ -1,6 +1,6 @@
 import { toVegaSpec } from '@/lib/vega';
 import { Methods, PropsMap, VisActionOf, VisSpecWithHistory, reducer } from './visSpecHistory';
-import type { IChart, IChatMessage, IFilterField, IViewField } from '@/interfaces';
+import type { IAggregator, IChart, IChatMessage, IFilterField, IViewField } from '@/interfaces';
 import { GLOBAL_CONFIG } from '@/config';
 import { autoMark } from '@/vis/spec/mark';
 import { viewEncodingKeys } from './visSpec';
@@ -119,6 +119,118 @@ export function toVegaSimplified(chart: IChart) {
     };
 }
 
+const aggNameMap: Record<IAggregator, string> = {
+    count: 'count',
+    sum: 'sum',
+    max: 'max',
+    min: 'min',
+    mean: 'mean',
+    median: 'median',
+    variance: 'variance',
+    stdev: 'stdev',
+    distinctCount: 'distinct',
+    expr: '', // computed expression aggregations already encode their logic
+};
+
+export function toVegaSimplifiedWithAggergation(chart: IChart) {
+    const simplifiedSpec = toVegaSimplified(chart);
+    const shouldAnnotateAggregate = Boolean(chart.config.defaultAggregated);
+    const ROW_COUNT_FID = 'gw_count_fid';
+
+    type FieldMeta = {
+        title: string;
+        field: string;
+        aggregate?: string;
+    };
+
+    const fieldMetaMap = new Map<string, FieldMeta>();
+
+    const getFieldTitle = (field: IViewField): string => {
+        const fieldLabel = field.name ?? field.fid;
+        if (field.fid === ROW_COUNT_FID) {
+            return 'Count';
+        }
+        if (field.analyticType === 'measure' && field.aggName && field.aggName !== 'expr') {
+            return `${field.aggName}(${fieldLabel})`;
+        }
+        return fieldLabel;
+    };
+
+    const registerField = (field?: IViewField) => {
+        if (!field) return;
+        const title = getFieldTitle(field);
+        if (!title) {
+            return;
+        }
+        const aggName = shouldAnnotateAggregate ? (field.aggName as IAggregator | undefined) : undefined;
+        const aggregate = aggName ? aggNameMap[aggName] : undefined;
+        const normalizedAggregate = aggregate && aggregate.length > 0 ? aggregate : undefined;
+        const nextMeta: FieldMeta = {
+            title,
+            field: field.basename ?? field.name ?? field.fid,
+            aggregate: normalizedAggregate,
+        };
+        const existingMeta = fieldMetaMap.get(title);
+        if (!existingMeta || (!existingMeta.aggregate && normalizedAggregate)) {
+            fieldMetaMap.set(title, nextMeta);
+        }
+    };
+
+    Object.values(chart.encodings).forEach((fields) => {
+        if (Array.isArray(fields)) {
+            fields.forEach((field) => registerField(field as IViewField));
+        }
+    });
+
+    const enhanceFieldDef = (fieldDef: any) => {
+        if (!fieldDef || typeof fieldDef !== 'object') {
+            return fieldDef;
+        }
+        const labelKey = typeof fieldDef.field === 'string' ? fieldDef.field : undefined;
+        if (!labelKey) {
+            return fieldDef;
+        }
+        const meta = fieldMetaMap.get(labelKey);
+        if (!meta) {
+            return fieldDef;
+        }
+        const next: Record<string, any> = { ...fieldDef, field: meta.field, title: meta.title };
+        if (meta.aggregate) {
+            next.aggregate = meta.aggregate;
+        } else if ('aggregate' in next) {
+            delete next.aggregate;
+        }
+        return next;
+    };
+
+    const visitSpec = (spec: any) => {
+        if (!spec || typeof spec !== 'object') {
+            return;
+        }
+        if (spec.encoding) {
+            spec.encoding = Object.fromEntries(
+                Object.entries(spec.encoding).map(([channel, value]) => {
+                    if (Array.isArray(value)) {
+                        return [channel, value.map((definition) => enhanceFieldDef(definition))];
+                    }
+                    return [channel, enhanceFieldDef(value)];
+                })
+            );
+        }
+        ['layer', 'concat', 'hconcat', 'vconcat'].forEach((key) => {
+            if (Array.isArray(spec[key])) {
+                spec[key].forEach(visitSpec);
+            }
+        });
+        if (spec.spec) {
+            visitSpec(spec.spec);
+        }
+    };
+
+    visitSpec(simplifiedSpec);
+    return simplifiedSpec;
+}
+
 const actionMessageMapper: {
     [a in Methods]?: (data: IChart, ...a: PropsMap[a]) => string;
 } = {
@@ -170,6 +282,17 @@ const actionMessageMapper: {
         return `Change the aggregator of ${originalField.name} field to ${aggName}.`;
     },
     [Methods.setCoordSystem]: (_data, system) => `Change the mark to ${GLOBAL_CONFIG.GEOM_TYPES[system][0]}.`,
+    [Methods.createDateDrillField]: () => ``,
+    [Methods.createDateFeatureField]: () => ``,
+    [Methods.changeSemanticType]: () => ``,
+    [Methods.setFilterAggregator]: () => ``,
+    [Methods.addFoldField]: () => '',
+    [Methods.upsertPaintField]: () => '',
+    [Methods.addSQLComputedField]: () => '',
+    [Methods.removeAllField]: () => '',
+    [Methods.editAllField]: () => '',
+    [Methods.replaceWithNLPQuery]: () => '',
+    [Methods.editField]: () => '',
 };
 
 function toMessage<T>(data: IChart, action: VisActionOf<T>) {

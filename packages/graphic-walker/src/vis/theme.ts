@@ -39,6 +39,9 @@ const DARK_COMMON_DESIGN: GWGlobalConfig['dark'] = {
         labelColor: '#d1d5db', // change legend label color to white
         titleColor: '#d1d5db', // change legend title color to white
     },
+    text: {
+        color: '#d1d5db',
+    },
     view: {
         stroke: '#666',
     },

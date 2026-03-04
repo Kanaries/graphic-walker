@@ -5,7 +5,7 @@ import * as op from 'rxjs/operators';
 import { expressionFunction, type ScenegraphEvent } from 'vega';
 import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
-import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScale } from '../interfaces';
+import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScaleSet } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
@@ -91,10 +91,7 @@ interface ReactVegaProps {
     useSvg?: boolean;
     dark?: IDarkMode;
     scales?: IChannelScales;
-    scale?: {
-        opacity: IConfigScale;
-        size: IConfigScale;
-    };
+    scale?: IConfigScaleSet;
     onReportSpec?: (spec: string) => void;
     displayOffset?: number;
 }
@@ -155,21 +152,17 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         scale,
         displayOffset,
     } = props;
-    const [viewPlaceholders, setViewPlaceholders] = useState<React.MutableRefObject<HTMLDivElement>[]>([]);
+    const [viewPlaceholders, setViewPlaceholders] = useState<React.RefObject<HTMLDivElement>[]>([]);
     const mediaTheme = useContext(themeContext);
     const scales = useMemo(() => {
         const cs = channelScaleRaw ?? {};
-        if (scale?.opacity) {
-            cs.opacity = {
-                ...(cs.opacity ?? {}),
-                ...scale.opacity,
-            };
-        }
-        if (scale?.size) {
-            cs.size = {
-                ...(cs.size ?? {}),
-                ...scale.size,
-            };
+        if (scale) {
+            for (const key of Object.keys(scale)) {
+                cs[key] = {
+                    ...(cs[key] ?? {}),
+                    ...scale[key],
+                };
+            }
         }
         return cs;
     }, [channelScaleRaw, scale]);
@@ -228,8 +221,26 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     const renderTaskRefs = useRef<Promise<unknown>[]>([]);
     const { width: areaWidth, height: areaHeight, ref: areaRef } = useResizeDetector();
 
-    const vegaWidth = layoutMode === 'auto' ? 0 : layoutMode === 'full' ? areaWidth || width : width;
-    const vegaHeight = layoutMode === 'auto' ? 0 : layoutMode === 'full' ? areaHeight || height : height;
+    const getSize = () => {
+        if (layoutMode === 'auto') {
+            return {
+                width: 0,
+                height: 0,
+            };
+        }
+        if (layoutMode === 'full' && areaWidth && areaHeight) {
+            return {
+                width: areaWidth,
+                height: areaHeight,
+            };
+        }
+        return {
+            width,
+            height,
+        };
+    };
+
+    const { width: vegaWidth, height: vegaHeight } = getSize();
 
     const specs = useMemo(
         () =>
@@ -358,9 +369,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         res.view.addEventListener('click', (e) => {
                             click$.next(e);
                         });
-                        res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                            selection$.next(values);
-                        });
+                        // boxplot don't support selection
+                        if (geomType !== 'boxplot') {
+                            res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
+                                selection$.next(values);
+                            });
+                        }
                     } catch (error) {
                         console.warn(error);
                     }
@@ -497,9 +511,12 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                 res.view.addEventListener('click', (e) => {
                                     click$.next(e);
                                 });
-                                res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                    selection$.next(values);
-                                });
+                                // boxplot don't support selection
+                                if (geomType !== 'boxplot') {
+                                    res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
+                                        selection$.next(values);
+                                    });
+                                }
                             } catch (error) {
                                 console.warn(error);
                             }

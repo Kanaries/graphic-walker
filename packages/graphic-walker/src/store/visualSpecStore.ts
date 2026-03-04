@@ -1,4 +1,4 @@
-import { computed, makeAutoObservable, observable, toJS } from 'mobx';
+import { autorun, computed, makeAutoObservable, observable, reaction, toJS } from 'mobx';
 import {
     VisSpecWithHistory,
     convertChart,
@@ -54,9 +54,13 @@ import { IPaintMapAdapter } from '../lib/paint';
 import { toChatMessage } from '@/models/chat';
 import { viewEncodingKeys } from '@/models/visSpec';
 import { encodePath, getMap, getReachedDatasets, getRoute, transformMultiDatasetFields } from '@/utils/route';
+import { getAllFields, getViewEncodingFields } from './storeStateLib';
 
 const encodingKeys = (Object.keys(emptyEncodings) as (keyof DraggableFieldState)[]).filter((dkey) => !GLOBAL_CONFIG.META_FIELD_KEYS.includes(dkey));
+
+const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(disposer => disposer())) as FinalizationRegistry<() => void> | null;
 export class VizSpecStore {
+    instanceID: string = uniqueId();
     visList: VisSpecWithHistory[];
     visIndex: number = 0;
     createdVis: number = 0;
@@ -84,6 +88,8 @@ export class VizSpecStore {
     showAskvizFeedbackIndex: number | undefined = 0;
     lastSpec: string = '';
     editingComputedFieldFid: FieldIdentifier | undefined = undefined;
+    showFieldConfigPanel: boolean = false;
+    fieldConfigTarget: { channel: keyof Omit<DraggableFieldState, 'filters'>; index: number } | null = null;
     defaultConfig: IDefaultConfig | undefined;
     linkingDataset: string | undefined = undefined;
 
@@ -107,6 +113,20 @@ export class VizSpecStore {
             allEncodings: computed.struct,
             tableCollapsedHeaderMap: observable.ref,
         });
+        const disposer = reaction(
+            () => this.currentVis,
+            () => {
+                document.dispatchEvent(
+                    new CustomEvent('edit-graphic-walker', {
+                        detail: {
+                            spec: this.currentVis,
+                            instanceID: this.instanceID,
+                        },
+                    })
+                );
+            }
+        );
+        disposerRegister?.register(this, disposer);
     }
 
     get visLength() {
@@ -154,7 +174,7 @@ export class VizSpecStore {
     }
 
     get allFields() {
-        return [...this.dimensions, ...this.measures];
+        return getAllFields(this);
     }
 
     get config() {
@@ -209,8 +229,8 @@ export class VizSpecStore {
         return this.datasets.filter((x) => !reached.has(x));
     }
 
-    get viewEncodings() {
-        const result: Partial<Record<keyof DraggableFieldState, IViewField[]>> = {};
+    get viewEncodings(): Partial<Omit<DraggableFieldState, 'filters'>> {
+        const result: Record<string, IViewField[]> = {};
         viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
             result[k] = this.currentEncodings[k];
         });
@@ -218,7 +238,7 @@ export class VizSpecStore {
     }
 
     get viewEncodingFields() {
-        return viewEncodingKeys(this.config.geoms[0]).flatMap((k) => this.viewEncodings[k]);
+        return getViewEncodingFields(this.viewEncodings, this.config.geoms[0]);
     }
 
     get viewDimensions() {
@@ -345,8 +365,29 @@ export class VizSpecStore {
 
     get paintInfo() {
         const existPaintField = this.currentEncodings.dimensions.find((x) => x.fid === PAINT_FIELD_ID);
+        const { columns, rows } = this.currentEncodings;
+        if (columns.length !== 1 || rows.length !== 1) {
+            return { type: 'error', key: 'count' } as const;
+        }
+        const col = columns[0];
+        const row = rows[0];
+        if (col.semanticType === 'temporal' || row.semanticType === 'temporal') {
+            return { type: 'error', key: 'temporal' } as const;
+        }
+        if (
+            col.aggName === 'expr' ||
+            row.aggName === 'expr' ||
+            col.fid === MEA_KEY_ID ||
+            col.fid === MEA_VAL_ID ||
+            row.fid === MEA_KEY_ID ||
+            row.fid === MEA_VAL_ID ||
+            col.fid === PAINT_FIELD_ID ||
+            row.fid === PAINT_FIELD_ID
+        ) {
+            return { type: 'error', key: 'count' } as const;
+        }
         if (existPaintField) {
-            const param: IPaintMap = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
+            const param = existPaintField.expression?.params.find((x) => x.type === 'map')?.value;
             if (param) {
                 return {
                     type: 'exist',
@@ -354,7 +395,7 @@ export class VizSpecStore {
                     new: this.paintFields,
                 } as const;
             }
-            const paramV2: IPaintMapV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
+            const paramV2 = existPaintField.expression?.params.find((x) => x.type === 'newmap')?.value;
             if (paramV2) {
                 return {
                     type: 'exist',
@@ -621,6 +662,10 @@ export class VizSpecStore {
         this.visList[this.visIndex] = performers.editAllField(this.visList[this.visIndex], origianlField.fid, { name: newName }, getFieldIdentifier(origianlField));
     }
 
+    editEncodingField(stateKey: keyof Omit<DraggableFieldState, 'filters'>, index: number, patch: Partial<IViewField>) {
+        this.visList[this.visIndex] = performers.editField(this.visList[this.visIndex], stateKey, index, patch);
+    }
+
     public createDateTimeDrilledField(
         stateKey: keyof Omit<DraggableFieldState, 'filters'>,
         index: number,
@@ -838,6 +883,18 @@ export class VizSpecStore {
 
     setShowRenamePanel(show: boolean) {
         this.showRenamePanel = show;
+    }
+
+    setShowFieldConfigPanel(show: boolean) {
+        this.showFieldConfigPanel = show;
+        if (!show) {
+            this.fieldConfigTarget = null;
+        }
+    }
+
+    openFieldConfig(channel: keyof Omit<DraggableFieldState, 'filters'>, index: number) {
+        this.fieldConfigTarget = { channel, index };
+        this.showFieldConfigPanel = true;
     }
 
     setCreateField(field: ICreateField) {

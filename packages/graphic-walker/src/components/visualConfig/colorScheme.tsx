@@ -91,9 +91,9 @@ export const getPalette = (name: PaletteName) => {
     return colors(palettes[name] ?? palettes.tableau10);
 };
 
-export const extractRGBA = (rgba?: string) => {
+export const extractRGBA = (defaultValue: { r: number; g: number; b: number; a: number }, rgba?: string) => {
     if (!rgba) {
-        return { r: 91, g: 143, b: 249, a: 1 };
+        return defaultValue;
     }
 
     const arr = rgba.match(/\d+/g) || [];

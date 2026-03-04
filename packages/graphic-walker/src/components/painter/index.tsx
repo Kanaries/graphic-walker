@@ -233,7 +233,7 @@ const AggPainterContent = (props: {
     vegaConfig: VegaGlobalConfig;
     dict: typeof defaultScheme;
     onChangeDict: (d: typeof defaultScheme) => void;
-    paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
+    paintMapRef: React.RefObject<Uint8Array | null>;
     allFields: IViewField[];
     displayOffset?: number;
     onReset: () => void;
@@ -570,7 +570,7 @@ const PainterContent = (props: {
     facets: IPaintMapFacet[];
     vegaConfig: VegaGlobalConfig;
     onChangeDict: (d: typeof defaultScheme) => void;
-    paintMapRef: React.MutableRefObject<Uint8Array | undefined>;
+    paintMapRef: React.RefObject<Uint8Array | null>;
     allFields: IViewField[];
     displayOffset?: number;
     onReset: () => void;
@@ -930,7 +930,7 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
     const compuation = useCompututaion();
 
     const [loading, setLoading] = useState(true);
-    const paintMapRef = useRef<Uint8Array>();
+    const paintMapRef = useRef<Uint8Array>(null);
     const [dict, setDict] = useState(defaultScheme);
     const [aggInfo, setAggInfo] = useState<{
         x: Dimension;
@@ -1043,6 +1043,8 @@ const Painter = ({ themeConfig, themeKey }: { themeConfig?: GWGlobalConfig; them
                                 });
                             } else {
                                 // editing the existing paint map
+                                paintMapRef.current = await decompressBitMap(lastFacet.map);
+
                                 const x = lastFacet.dimensions.at(-1);
                                 const y = lastFacet.dimensions.at(-2);
                                 const xf = allFields.find(isSameField(x));

@@ -12,7 +12,7 @@ export interface ToolbarSelectButtonItem<T extends string = string> extends IToo
                 title?: string | undefined;
                 titleId?: string | undefined;
             }
-        ) => JSX.Element;
+        ) => React.ReactNode;
         label: string;
         /** @default false */
         disabled?: boolean;

@@ -66,7 +66,7 @@ const ValueInput: React.FC<ValueInputProps> = (props) => {
             onChange={(e) => setInnerValue(e.target.value)}
             onBlur={handleSubmitValue}
             onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     handleSubmitValue();
                 }
             }}

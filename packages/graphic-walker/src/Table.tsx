@@ -2,7 +2,8 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField } from './interfaces';
+import { IAppI18nProps, IErrorHandlerProps, IComputationContextProps, ITableProps, ITableSpecProps, IComputationProps, IMutField, IThemeKey } from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { useVizStore, withErrorReport, withTimeout, VizStoreWrapper } from './store';
 import { getFieldIdentifier, parseErrorMessage } from './utils';
@@ -53,6 +54,9 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
@@ -85,7 +89,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                     DatasetNamesContext={props.datasetNames}
                 >
@@ -117,6 +121,9 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
                                 hideProfiling={props.hideProfiling}
                                 profilingComputation={props.profilingComputation}
                                 cellStyle={props.cellStyle}
+                                disableFilter={props.disableFilter}
+                                disableSorting={props.disableSorting}
+                                hideSemanticType={props.hideSemanticType}
                             />
                         </div>
                         <div ref={setPortal} />
@@ -129,7 +136,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
 });
 
 export function TableAppWithContext(props: ITableProps & IComputationProps) {
-    const { dark, dataSource, computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -157,7 +164,7 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig} defaultRenderer={defaultRenderer}>
             <TableApp darkMode={darkMode} computation={safeComputation} {...rest} />
         </VizStoreWrapper>
     );

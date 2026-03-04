@@ -30,6 +30,13 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 
 https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
+> [!TIP]
+> If you want more AI features, we also build [runcell](https://runcell.dev), an AI Code Agent in Jupyter that understands your code/data/cells and generate code, execute cells and take actions for you. It can be used in jupyter lab with `pip install runcell`
+
+
+
+https://github.com/user-attachments/assets/9ec64252-864d-4bd1-8755-83f9b0396d38
+
 
 ## Usage for End Users
 
@@ -256,7 +263,7 @@ export interface IGWProps {
 	keepAlive?: boolean | string;
     vizThemeConfig?: IThemeKey;
     apperence?: IDarkMode;
-    storeRef?: React.MutableRefObject<IGlobalStore | null>;
+    storeRef?: React.RefObject<IGlobalStore | null>;
     computation?: IComputationConfig;
     toolbar?: {
         extra?: ToolbarItemProps[];
@@ -302,9 +309,9 @@ Specify the dark mode preference. There're three valid values:
 + `"dark"`: Always use dark mode.
 + `"light"`: Always use light mode.
 
-#### `storeRef`: optional _{ `React.MutableRefObject<IGlobalStore | null>` }_
+#### `storeRef`: optional _{ `React.RefObject<IGlobalStore | null>` }_
 
-If you want to control the visualization specification, you can provide a `React.MutableRefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
+If you want to control the visualization specification, you can provide a `React.RefObject<IGlobalStore | null>` to this prop. The `IGlobalStore` is the combined store context of Graphic Walker, you can use it to control the visualization specification.
 
 #### `computation`: optional _{ [`IComputationFunction`](./packages/graphic-walker/src/interfaces.ts) }_
 

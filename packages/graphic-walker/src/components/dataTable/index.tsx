@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef, useContext } from 'react';
 import styled from 'styled-components';
-import type { IMutField, IRow, IComputationFunction, IFilterRule, IFilterField, IFilterWorkflowStep, FieldIdentifier } from '../../interfaces';
+import type { IMutField, IRow, IComputationFunction, IFilterRule, IFilterField, IFilterWorkflowStep, FieldIdentifier, IVisFilter } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
 import { dataReadRaw } from '../../computation';
@@ -30,6 +30,8 @@ interface DataTableProps {
     onMetaChange?: (fid: string, fIndex: number, meta: Partial<IMutField>) => void;
     cellStyle?: (value: string | number, field: IMutField, row: IRow, dark: boolean) => React.CSSProperties;
     disableFilter?: boolean;
+    disableSorting?: boolean;
+    hideSemanticType?: boolean;
     hideProfiling?: boolean;
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
@@ -241,10 +243,59 @@ const DataTable = forwardRef(
     (
         props: DataTableProps,
         ref: ForwardedRef<{
-            getFilters: () => IFilterField[];
+            getFilters: () => IVisFilter[];
         }>
     ) => {
-        const { size = 10, onMetaChange, metas, computation, disableFilter, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
+    const {
+        size = 10,
+        onMetaChange,
+        metas,
+        computation,
+        disableFilter,
+        disableSorting,
+        hideSemanticType,
+        displayOffset,
+        hidePaginationAtOnepage,
+        hideProfiling,
+    } = props;
+    const [pageIndex, setPageIndex] = useState(0);
+    const { t } = useTranslation();
+    const computationFunction = computation;
+
+    const semanticTypeList = useMemo<{ value: string; label: string }[]>(() => {
+        return SEMANTIC_TYPE_LIST.map((st) => ({
+            value: st,
+            label: t(`constant.semantic_type.${st}`),
+        }));
+    }, []);
+
+    const [rows, setRows] = useState<IRow[]>([]);
+    const [dataLoading, setDataLoading] = useState(false);
+    const taskIdRef = useRef(0);
+
+    const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
+
+    const { filters, editingFilterIdx, onClose, onDeleteFilter, onSelectFilter, onWriteFilter, options } = useFilters(metas);
+
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+
+    useImperativeHandle(ref, () => ({
+        getFilters: () => filtersRef.current.filter(x => x.rule) as IVisFilter[],
+    }));
+
+    const [total, setTotal] = useState(0);
+    const [statLoading, setStatLoading] = useState(false);
+
+    // Get count when filter changed
+const DataTable = forwardRef(
+    (
+        props: DataTableProps,
+        ref: ForwardedRef<{
+            getFilters: () => IVisFilter[];
+        }>
+    ) => {
+        const { size = 10, onMetaChange, metas, computation, disableFilter, disableSorting, hideSemanticType, displayOffset, hidePaginationAtOnepage, hideProfiling } = props;
         const [pageIndex, setPageIndex] = useState(0);
         const { t } = useTranslation();
         const computationFunction = computation;
@@ -268,7 +319,7 @@ const DataTable = forwardRef(
         filtersRef.current = filters;
 
         useImperativeHandle(ref, () => ({
-            getFilters: () => filtersRef.current,
+            getFilters: () => filtersRef.current.filter(x => x.rule) as IVisFilter[],
         }));
 
         const [total, setTotal] = useState(0);
@@ -475,12 +526,12 @@ const DataTable = forwardRef(
                                                     }
                                                 >
                                                     <div className="font-normal block">
-                                                        {!onMetaChange && (
+                                                        {!hideSemanticType && !onMetaChange && (
                                                             <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
                                                                 <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
                                                             </span>
                                                         )}
-                                                        {onMetaChange && (
+                                                        {!hideSemanticType && onMetaChange && (
                                                             <DropdownContext
                                                                 options={semanticTypeList}
                                                                 onSelect={(value) => {
@@ -499,24 +550,6 @@ const DataTable = forwardRef(
                                                                 </span>
                                                             </DropdownContext>
                                                         )}
-                                                    </div>
-                                                    <b
-                                                        className="inline-block"
-                                                        onClick={() =>
-                                                            setSorting((s) => {
-                                                                if (s?.fid === getFieldIdentifier(f.value) && s.sort === 'descending') {
-                                                                    return {
-                                                                        fid: getFieldIdentifier(f.value),
-                                                                        sort: 'ascending',
-                                                                    };
-                                                                }
-                                                                return {
-                                                                    fid: getFieldIdentifier(f.value),
-                                                                    sort: 'descending',
-                                                                };
-                                                            })
-                                                        }
-                                                    >
                                                         {f.value.basename || f.value.name || f.value.fid}
                                                     </b>
                                                     {sorting?.fid === getFieldIdentifier(f.value) && (
@@ -605,6 +638,7 @@ const DataTable = forwardRef(
         );
     }
 );
+
 
 export default DataTable;
 

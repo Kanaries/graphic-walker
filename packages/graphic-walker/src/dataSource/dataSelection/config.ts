@@ -6,24 +6,40 @@ export const charsetOptions: IDropdownSelectOption[] = [
         value: 'utf-8',
     },
     {
-        label: 'GB2312',
-        value: 'gb2312',
+        label: 'UTF-16 LE',
+        value: 'utf-16',
     },
     {
-        label: 'US-ASCII',
-        value: 'us-ascii',
+        label: 'UTF-16 BE',
+        value: 'utf-16be',
+    },
+    {
+        label: 'GBK/GB2312',
+        value: 'gbk',
     },
     {
         label: 'Big5',
         value: 'big5',
     },
     {
-        label: 'Big5-HKSCS',
-        value: 'Big5-HKSCS',
+        label: 'GB18030',
+        value: 'gb18030',
     },
     {
-        label: 'GB18030',
-        value: 'GB18030',
+        label: 'EUC-JP',
+        value: 'euc-jp',
+    },
+    {
+        label: 'ISO-2022-JP',
+        value: 'iso-2022-jp',
+    },
+    {
+        label: 'Shift JIS',
+        value: 'shift-jis',
+    },
+    {
+        label: 'EUC-KR',
+        value: 'euc-kr',
     },
 ]
 

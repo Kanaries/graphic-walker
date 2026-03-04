@@ -129,10 +129,10 @@ export function DataSourceSegmentComponent(props: {
         fields: IMutField[];
         onMetaChange: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
         computation: IComputationFunction;
-        storeRef: React.RefObject<VizSpecStore>;
+        storeRef: React.RefObject<VizSpecStore | null>;
         datasetNames: Record<string, string>;
         syncSpecs: () => void;
-    }) => JSX.Element;
+    }) => React.ReactNode;
 }) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [datasetList, setDatasetList] = useState<{ name: string; id: string }[]>([]);
@@ -257,6 +257,9 @@ export function DataSourceSegmentComponent(props: {
     }, [selectedIds, props.provider]);
 
     const darkMode = useCurrentMediaTheme(props.appearance ?? props.dark);
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (props.vizThemeConfig ?? props.themeConfig ?? props.themeKey) as IThemeKey | GWGlobalConfig
+    );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
@@ -264,7 +267,7 @@ export function DataSourceSegmentComponent(props: {
             <ShadowDom uiTheme={props.uiTheme ?? props.colorConfig}>
                 <DataSourceThemeContext
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey}}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App`}>

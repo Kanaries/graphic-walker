@@ -42,9 +42,9 @@ function Combobox<T extends string>({
                                     value={opt.value}
                                     onSelect={() => {
                                         if (opt.value === '_none') {
-                                            onSelect?.('' as T);
+                                            onSelect?.('');
                                         } else {
-                                            onSelect?.(opt.value === selectedKey ? '' as T : opt.value);
+                                            onSelect?.(opt.value === selectedKey ? '' : opt.value);
                                         }
                                         setOpen(false);
                                     }}

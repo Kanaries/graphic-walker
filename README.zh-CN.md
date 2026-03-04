@@ -86,6 +86,8 @@ yarn workspace @kanaries/graphic-walker build:app
 
 ###  方法二：作为嵌入模块使用
 
+#### 在React中使用
+
 `graphic-walker`提供了非常简单易用的集成方式，你只需要像引入react组件一样，将其引入，即可立即开始使用。
 
 ```bash
@@ -96,7 +98,7 @@ yarn add @kanaries/graphic-walker
 npm i --save @kanaries/graphic-walker
 ```
 
-In your app:
+在你的React App中：
 ```typescript
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
@@ -113,8 +115,7 @@ const YourEmbeddingApp: React.FC = props => {
 export default YourEmbeddingApp;
 ```
 
-If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` component to make a single chart without controls UI.
-
+如果你已经有了一个GraphicWalker图表的配置，那么你可以使用`PureRenderer`来渲染它，从而可以只显示图表而不包含控制和工具的UI
 ```typescript
 import { PureRenderer } from '@kanaries/graphic-walker';
 
@@ -129,6 +130,38 @@ const YourChart: React.FC = props => {
 
 export default YourChart;
 ```
+
+#### 在Vue3中使用
+
+虽然`graphic-walker`是一个React组件，但我们还是可以通过一些技巧在Vue3中使用它，比如利用`veaury`。
+
+首先安装`graphic-walker`：
+```bash
+yarn add @kanaries/graphic-walker
+
+# or
+
+npm i --save @kanaries/graphic-walker
+```
+然后安装必须的支持：
+```bash
+npm i veaury -S
+```
+
+在你的Vue3 App中创建组件：
+```vue
+<script setup lang="ts">
+    import { applyPureReactInVue } from 'veaury'
+    import { GraphicWalker } from '@kanaries/graphic-walker'
+
+    const VueGraphicWalker = applyPureReactInVue(GraphicWalker)
+</script>
+<template>
+    <VueGraphicWalker i18nLang="zh-CN" />
+</template>
+```
+
+完成。
 
 ### 本地测试
 ```bash

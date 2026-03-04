@@ -1,4 +1,4 @@
-import { useImperativeHandle, type ForwardedRef, type MutableRefObject, useEffect, RefObject } from "react";
+import { useImperativeHandle, type ForwardedRef, useEffect, RefObject } from "react";
 import { useAppRootContext } from "../components/appRoot";
 import type { IReactVegaHandler } from "../vis/react-vega";
 import type { IChartExportResult, IVegaChartRef } from "../interfaces";
@@ -6,21 +6,36 @@ import type { IChartExportResult, IVegaChartRef } from "../interfaces";
 
 export const useVegaExportApi = (
     name: string | undefined,
-    viewsRef: MutableRefObject<IVegaChartRef[]>,
+    viewsRef: RefObject<IVegaChartRef[]>,
     ref: ForwardedRef<IReactVegaHandler>,
-    renderTaskRefs: MutableRefObject<Promise<unknown>[]>,
-    containerRef: RefObject<HTMLDivElement>,
+    renderTaskRefs: RefObject<Promise<unknown>[]>,
+    containerRef: RefObject<HTMLDivElement | null>,
 ) => {
     const renderHandle = {
         getSVGData() {
-            return Promise.all(viewsRef.current.map(item => item.view.toSVG()));
+            return Promise.all(viewsRef.current.map(item => {
+                if (!item.view) {
+                    throw new Error('View is not available');
+                }
+                return item.view.toSVG();
+            }));
         },
         async getCanvasData() {
-            const canvases = await Promise.all(viewsRef.current.map(item => item.view.toCanvas(2)));
+            const canvases = await Promise.all(viewsRef.current.map(item => {
+                if (!item.view) {
+                    throw new Error('View is not available');
+                }
+                return item.view.toCanvas(2);
+            }));
             return canvases.map(canvas => canvas.toDataURL('image/png', 1));
         },
         async downloadSVG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
-            const data = await Promise.all(viewsRef.current.map(item => item.view.toSVG()));
+            const data = await Promise.all(viewsRef.current.map(item => {
+                if (!item.view) {
+                    throw new Error('View is not available');
+                }
+                return item.view.toSVG();
+            }));
             const files: string[] = [];
             for (let i = 0; i < data.length; i += 1) {
                 const d = data[i];
@@ -37,7 +52,12 @@ export const useVegaExportApi = (
             return files;
         },
         async downloadPNG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
-            const canvases = await Promise.all(viewsRef.current.map(item => item.view.toCanvas(2)));
+            const canvases = await Promise.all(viewsRef.current.map(item => {
+                if (!item.view) {
+                    throw new Error('View is not available');
+                }
+                return item.view.toCanvas(2);
+            }));
             const data = canvases.map(canvas => canvas.toDataURL('image/png', 1));
             const files: string[] = [];
             for (let i = 0; i < data.length; i += 1) {
@@ -90,6 +110,9 @@ export const useVegaExportApi = (
                         nRows: 0,
                         charts: [],
                         chartType: 'vega',
+                        container() {
+                            return null;
+                        },
                     };
                 }
                 if (ctx.renderStatus !== 'idle') {
@@ -116,6 +139,9 @@ export const useVegaExportApi = (
                             nRows: 0,
                             charts: [],
                             chartType: 'vega',
+                            container() {
+                                return null;
+                            },
                         };
                     } finally {
                         dispose?.();
@@ -135,7 +161,12 @@ export const useVegaExportApi = (
                         canvasHeight: item.innerHeight,
                         data: '',
                         canvas() {
-                            return item.canvas;
+                            // Filter out HTMLElement to match the expected return type
+                            const canvas = item.canvas;
+                            if (canvas instanceof HTMLCanvasElement || canvas instanceof SVGSVGElement) {
+                                return canvas;
+                            }
+                            return null;
                         },
                     })),
                     container() {
@@ -193,6 +224,7 @@ export const useVegaExportApi = (
                     nCols: 0,
                     nRows: 0,
                     charts: [],
+                    chartType: 'vega',
                     container() {
                         return null;
                     },
@@ -209,6 +241,7 @@ export const useVegaExportApi = (
                             nCols: 0,
                             nRows: 0,
                             charts: [],
+                            chartType: 'vega',
                             container() {
                                 return null;
                             },

@@ -1,6 +1,6 @@
 import { BarsArrowDownIcon, BarsArrowUpIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useContext } from 'react';
+import React, { useCallback, useMemo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
 import { COUNT_FIELD_ID, DEFAULT_DATASET, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
@@ -39,6 +39,10 @@ const OBPill: React.FC<PillProps> = (props) => {
     const datasetNames = useContext(DatasetNamesContext);
     const hasMultiJoins = datasetJoinPaths[field.dataset ?? DEFAULT_DATASET]?.length > 1;
 
+    const handleOpenFieldConfig = useCallback(() => {
+        vizStore.openFieldConfig(dkey.id, fIndex);
+    }, [vizStore, dkey.id, fIndex]);
+
     return (
         <Pill
             ref={refMapper(provided.innerRef)}
@@ -46,6 +50,11 @@ const OBPill: React.FC<PillProps> = (props) => {
             className={`${field.aggName === 'expr' && !config.defaultAggregated ? '!opacity-50 touch-none' : 'touch-none'}`}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onDoubleClick={handleOpenFieldConfig}
+            onContextMenu={(event) => {
+                event.preventDefault();
+                handleOpenFieldConfig();
+            }}
         >
             {folds && (
                 <SelectContext
@@ -92,12 +101,15 @@ const OBPill: React.FC<PillProps> = (props) => {
                     </span>
                 </DropdownContext>
             )}
-            {field.analyticType === 'dimension' && field.sort === 'ascending' && (
+            {field.analyticType === 'dimension' && field.sortType !== 'manual' && field.sort === 'ascending' && (
                 <BarsArrowUpIcon className="float-right w-3" role="status" aria-label="Sorted in ascending order" />
             )}
-            {field.analyticType === 'dimension' && field.sort === 'descending' && (
+            {field.analyticType === 'dimension' && field.sortType !== 'manual' && field.sort === 'descending' && (
                 <BarsArrowDownIcon className="float-right w-3" role="status" aria-label="Sorted in descending order" />
             )}
+            {field.analyticType === 'dimension' && field.sortType === 'manual' && field.sortList?.length ? (
+                <span className="ml-1 text-[10px] uppercase tracking-wide text-muted-foreground">Manual</span>
+            ) : null}
         </Pill>
     );
 };

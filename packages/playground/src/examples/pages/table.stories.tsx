@@ -1,72 +1,62 @@
-import { useContext } from 'react';
-import { IDataQueryPayload, IDataQueryWorkflowStep, TableWalker, getComputation } from '@kanaries/graphic-walker';
+import { useContext, useRef } from 'react';
+import { IDataQueryPayload, IDataQueryWorkflowStep, TableWalker, getComputation, IVisFilter } from '@kanaries/graphic-walker';
 import { themeContext } from '../context';
 import { useFetch, IDataSource } from '../util';
 
 export default function GraphicWalkerComponent() {
     const { theme } = useContext(themeContext);
     const { dataSource, fields } = useFetch<IDataSource>('https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-students-service.json');
+    const tableRef = useRef<{ getFilters: () => IVisFilter[] }>(null);
 
-    const computation = getComputation(dataSource);
+    const downloadCSV = async () => {
+        const filters = tableRef.current?.getFilters() ?? [];
 
-    const cleaned = dataSource.map((x) => ({ ...x, gender_cleaned: Math.random() > 0.9 ? 'cleaned' : Math.random() > 0.9 ? 'erased' : x.gender }));
+        // or use a remote computation service
+        // const computation = async (workflow) => fetch(endPoint, { body: JSON.stringify(workflow) }).then(resp => resp.json())
+        const computation = getComputation(dataSource);
 
-    const cleanedComputation = getComputation(cleaned);
-    const dropped = cleaned.filter((x) => x.gender_cleaned !== 'cleaned');
-
-    const wrappedComputation = (payload: IDataQueryPayload) => {
-        return computation({
-            ...payload,
-            workflow: ([] as IDataQueryWorkflowStep[])
-                .concat([
-                    {
-                        type: 'transform',
-                        transform: [
-                            {
-                                key: 'gender_cleaned',
-                                expression: {
-                                    op: 'expr',
-                                    as: 'gender_cleaned',
-                                    params: [{ type: 'sql', value: 'gender' }],
-                                },
-                            },
-                        ],
-                    },
-                ])
-                .concat(payload.workflow),
+        const result = await computation({
+            workflow: [
+                { type: 'filter', filters },
+                {
+                    type: 'view',
+                    query: [
+                        {
+                            op: 'raw',
+                            fields: fields.map((x) => x.fid),
+                        },
+                    ],
+                },
+            ],
         });
+
+        const header = fields.map((x) => x.name).join(',');
+        const data = result
+            .map((row) =>
+                fields
+                    .map((x) => row[x.fid] ?? '')
+                    .map((x) => (typeof x === 'string' ? `"${x}"` : `${x}`))
+                    .join(',')
+            )
+            .join('\n');
+        const blob = new Blob([header + '\n' + data], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Student.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
-    const cleanedDroppedComputation = getComputation(dropped);
-
     return (
-        <TableWalker
-            fields={fields.flatMap((x) =>
-                x.fid === 'gender'
-                    ? [
-                          { ...x, disable: true },
-                          {
-                              ...x,
-                              fid: `${x.fid}_cleaned`,
-                              name: x.name ?? x.fid,
-                          },
-                      ]
-                    : [x]
-            )}
-            computation={cleanedComputation}
-            cellStyle={(v, field, row, darkMode) => {
-                if (row['gender_cleaned'] === 'cleaned') {
-                    return { backgroundColor: darkMode ? '#991b1b' : '#fecaca' };
-                }
-                if (field.fid.endsWith('_cleaned') && `${v}` !== `${row[field.fid.replace('_cleaned', '')]}`) {
-                    return { backgroundColor: darkMode ? '#a16207' : '#fef9c3' };
-                }
-                if (v === 'none') return { backgroundColor: darkMode ? '#a16207' : '#fef9c3' };
-                return {};
-            }}
-            profilingComputation={[wrappedComputation, cleanedDroppedComputation]}
-            appearance={theme}
-            pageSize={50}
-        />
+        <div className="flex flex-col gap-2">
+            <button
+                onClick={downloadCSV}
+                className="h-9 px-4 py-2 w-fit m-2 bg-zinc-950 text-white shadow hover:bg-primary/90 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            >
+                Export CSV
+            </button>
+            <TableWalker tableFilterRef={tableRef} fields={fields} data={dataSource} appearance={theme} pageSize={50} vizThemeConfig="g2" />
+        </div>
     );
 }

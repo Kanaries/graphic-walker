@@ -44,8 +44,8 @@ import { EMPTY_FIELD_ID } from '@/constants';
 
 interface IVisualSettings {
     darkModePreference: IDarkMode;
-    rendererHandler?: React.RefObject<IReactVegaHandler>;
-    csvHandler?: React.MutableRefObject<{ download: () => void }>;
+    rendererHandler?: React.RefObject<IReactVegaHandler | null>;
+    csvHandler?: React.RefObject<{ download: () => void }>;
     exclude?: string[];
     extra?: ToolbarItemProps[];
     experimentalFeatures?: IExperimentalFeatures;

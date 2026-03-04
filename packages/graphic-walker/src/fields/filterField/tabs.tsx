@@ -21,6 +21,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Tooltip from '@/components/tooltip';
+import Spinner from '@/components/spinner';
+import { SparseArray } from './array';
 
 export type RuleFormProps = {
     allFields: IMutField[];
@@ -110,7 +112,7 @@ const TabPanel = styled.div``;
 
 const TabItem = styled.div``;
 
-const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean }> = (props) => {
+const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange: () => void; disabled?: boolean; loading?: boolean }> = (props) => {
     const { currentNum, totalNum, onChange } = props;
 
     let checked: boolean | 'indeterminate';
@@ -122,6 +124,9 @@ const StatusCheckbox: React.FC<{ currentNum: number; totalNum: number; onChange:
         checked = false;
     }
 
+    if (props.loading) {
+        return <Spinner className="h-4 w-4 text-muted-foreground" />;
+    }
     return <Checkbox checked={checked} disabled={props.disabled} onCheckedChange={() => onChange()} />;
 };
 
@@ -174,29 +179,11 @@ export const useFieldStats = (
 };
 
 const PAGE_SIZE = 20;
-const emptyArray = [];
+const emptyArray = SparseArray.create<RowCount>();
 type RowCount = {
     value: string | number;
     count: number;
 };
-
-function putDataInArray<T>(arr: T[], dataToPut: T[], fromIndex: number, emptyFill: T) {
-    const putin = (array: T[]) =>
-        array.map((x, i) => {
-            const targetIndex = i - fromIndex;
-            if (targetIndex >= 0 && targetIndex < dataToPut.length) {
-                return dataToPut[targetIndex];
-            }
-            return x;
-        });
-
-    const requiredLength = dataToPut.length + fromIndex;
-    if (arr.length >= requiredLength) {
-        return putin(arr);
-    }
-    const filledArray = arr.concat(new Array<T>(requiredLength - arr.length).fill(emptyFill));
-    return putin(filledArray);
-}
 
 export const useVisualCount = (
     field: IFilterField,
@@ -234,9 +221,9 @@ export const useVisualCount = (
     }, [metaData]);
 
     // unfetched RowCount will be null
-    const [loadedPageData, setLoadedPageDataRaw] = useState<(RowCount | null)[]>(emptyArray);
+    const [loadedPageData, setLoadedPageDataRaw] = useState<SparseArray<RowCount>>(emptyArray);
     const loadedRef = useRef(loadedPageData);
-    const setLoadedPageData = useCallback((data: (RowCount | null)[] | ((prev: (RowCount | null)[]) => (RowCount | null)[])) => {
+    const setLoadedPageData = useCallback((data: SparseArray<RowCount> | ((prev: SparseArray<RowCount>) => SparseArray<RowCount>)) => {
         if (typeof data === 'function') {
             loadedRef.current = data(loadedRef.current);
         } else {
@@ -250,7 +237,7 @@ export const useVisualCount = (
     const loadData = useCallback(
         (index: number) => {
             const page = Math.floor(index / PAGE_SIZE);
-            if (loadedRef.current.length <= index || loadedRef.current[index] === null) {
+            if (loadedRef.current.get(index) === null) {
                 if (loadingRef.current[page] === undefined) {
                     const promise = fieldStat(
                         computation,
@@ -272,7 +259,9 @@ export const useVisualCount = (
                         // check that the list is not cleared
                         if (loadingRef.current[page] === promise) {
                             const { values } = stats;
-                            setLoadedPageData((data) => putDataInArray(data, values, page * PAGE_SIZE, null));
+                            setLoadedPageData((data) => {
+                                return data.putIn(page * PAGE_SIZE, values);
+                            });
                         }
                     });
                 }
@@ -284,15 +273,15 @@ export const useVisualCount = (
     // clear data when field or sort changes
     useEffect(() => {
         loadingRef.current = {};
-        setLoadedPageData(emptyArray);
+        setLoadedPageData(SparseArray.create<RowCount>());
         loadData(0);
     }, [loadData]);
 
     const loadingPageData = loadedPageData === emptyArray || !currentMeta;
 
     const data = useMemo(() => {
-        if (!currentMeta?.valuesMeta.distinctTotal) return [];
-        return loadedPageData.concat(new Array<null>(Math.max(currentMeta.valuesMeta.distinctTotal - loadedPageData.length, 0)).fill(null));
+        if (!currentMeta?.valuesMeta.distinctTotal) return emptyArray;
+        return loadedPageData;
     }, [loadedPageData, currentMeta?.valuesMeta.distinctTotal]);
 
     const currentCount =
@@ -312,7 +301,68 @@ export const useVisualCount = (
             type: currentCount === metaData.valuesMeta.distinctTotal ? 'one of' : 'not in',
             value: [],
         });
-    }, [field.rule, onChange, metaData]);
+    }, [field.rule, onChange, metaData, currentCount]);
+
+    // Add new state for loading select all button
+    const [loadingSelectAll, setLoadingSelectAll] = useState(false);
+
+    // New function to handle selecting all filtered results
+    const handleToggleCurrentFullSet = useCallback(async () => {
+        if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !currentMeta) return;
+        if (!options.keyword) {
+            // If no keyword is set, just toggle the full set
+            handleToggleFullOrEmptySet();
+            return;
+        }
+
+        try {
+            setLoadingSelectAll(true);
+
+            // Fetch all values that match the current search keyword
+            const result = await fieldStat(
+                computation,
+                field,
+                {
+                    range: false,
+                    values: true,
+                    valuesMeta: false,
+                    sortBy,
+                    keyword: options.keyword,
+                    timezoneDisplayOffset: options.displayOffset,
+                },
+                allFields
+            );
+
+            const { values } = result;
+            if (!values || values.length === 0) return;
+            const existingValues = new Set(field.rule.value.map((v) => _unstable_encodeRuleValue(v)));
+            let totalCount = 0;
+            values.forEach((item) => {
+                if (existingValues.has(_unstable_encodeRuleValue(item.value))) return; // Skip if already selected
+                existingValues.add(_unstable_encodeRuleValue(item.value));
+                totalCount += item.count;
+            });
+            if (totalCount === 0) {
+                // all values are already selected
+                // deselect all values
+                values.forEach((item) => {
+                    existingValues.delete(_unstable_encodeRuleValue(item.value));
+                    totalCount += item.count;
+                });
+                setSelectedValueSum((x) => x - totalCount);
+            } else {
+                setSelectedValueSum((x) => x + totalCount);
+            }
+
+            onChange({
+                type: field.rule.type,
+                value: Array.from(existingValues),
+            });
+        } finally {
+            setLoadingSelectAll(false);
+        }
+    }, [field.rule, onChange, currentMeta, currentCount, computation, sortBy, options.keyword, options.displayOffset, allFields, loadedPageData]);
+
     const handleToggleReverseSet = useCallback(() => {
         if (!field.rule || (field.rule.type !== 'one of' && field.rule.type !== 'not in') || !metaData) return;
         onChange({
@@ -347,11 +397,13 @@ export const useVisualCount = (
         currentSum,
         handleToggleFullOrEmptySet,
         handleToggleReverseSet,
+        handleToggleCurrentFullSet,
         handleSelect,
         data,
         loadData,
         loading: !metaData,
         loadingPageData,
+        loadingSelectAll,
     };
 };
 
@@ -465,10 +517,12 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
         currentRows,
         handleSelect,
         handleToggleFullOrEmptySet,
+        handleToggleCurrentFullSet,
         handleToggleReverseSet,
         loadData,
         loading,
         loadingPageData,
+        loadingSelectAll,
     } = useVisualCount(field, `${sortConfig.key}${sortConfig.ascending ? '' : '_dsc'}`, computation, onChange, allFields, {
         displayOffset,
         keyword: searchKeyword,
@@ -551,10 +605,10 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                     <TableRow>
                         <div className="flex justify-center items-center">
                             <StatusCheckbox
-                                disabled={!!searchKeyword}
                                 currentNum={currentCount}
                                 totalNum={distinctTotal ?? 0}
-                                onChange={handleToggleFullOrEmptySet}
+                                onChange={handleToggleCurrentFullSet}
+                                loading={loadingSelectAll}
                             />
                         </div>
                         <div className="header text-muted-foreground flex items-center">
@@ -620,7 +674,7 @@ export const FilterOneOfRule: React.FC<RuleFormProps & { active: boolean }> = ({
                             >
                                 {rowVirtualizer.getVirtualItems().map((vItem) => {
                                     const idx = vItem.index;
-                                    const item = data?.[idx];
+                                    const item = data?.get(idx);
                                     if (!item) {
                                         return (
                                             <TableRow

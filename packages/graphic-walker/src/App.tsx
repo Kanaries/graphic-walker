@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ISegmentKey, IAppI18nProps, IVizProps, IErrorHandlerProps, IVizAppProps, ISpecProps, IComputationContextProps, IComputationProps } from './interfaces';
+import {
+    ISegmentKey,
+    IAppI18nProps,
+    IVizProps,
+    IErrorHandlerProps,
+    IVizAppProps,
+    ISpecProps,
+    IComputationContextProps,
+    IComputationProps,
+    IThemeKey,
+} from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
 import VisualSettings from './visualSettings';
 import PosFields from './fields/posFields';
@@ -24,6 +35,7 @@ import { getComputation } from './computation/clientComputation';
 import LogPanel from './fields/datasetFields/logPanel';
 import BinPanel from './fields/datasetFields/binPanel';
 import RenamePanel from './components/renameField';
+import FieldConfigDialog from './components/fieldConfigDialog';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
@@ -70,6 +82,8 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         vlSpec,
         onError,
         datasetNames,
+        hideSegmentNav,
+        hideProfiling,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -112,10 +126,10 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
             const emptyChart = newChart(vizStore.meta, '');
             vizStore.replaceNow(
                 VegaliteMapper(
-                    spec,
+                    vlSpec,
                     [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
-                    vizStore.currentVis.name ?? 'Chart 1',
-                    vizStore.currentVis.visId
+                    vizStore.currentVis.visId,
+                    vizStore.currentVis.name ?? 'Chart 1'
                 )
             );
         }
@@ -138,6 +152,9 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     );
 
     const { segmentKey, vizEmbededMenu } = vizStore;
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>((vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig);
+    const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey;
+    const appliedThemeConfig = typeof currentTheme === 'object' ? currentTheme : themeConfig;
 
     const wrappedComputation = useMemo(
         () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
@@ -151,34 +168,40 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: props.vizThemeConfig ?? props.themeConfig ?? props.themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                     DatasetNamesContext={props.datasetNames}
                 >
-                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0`, darkMode === 'dark' ? 'dark' : '')}>
+                    <div className={classNames(`App font-sans bg-background text-foreground m-0 p-0 w-full h-full`, darkMode === 'dark' ? 'dark' : '')}>
                         <FieldsContextWrapper>
-                            <div className="bg-background text-foreground">
+                            <div className="bg-background text-foreground w-full h-full">
                                 <Errorpanel />
-                                <Tabs value={segmentKey} onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)}>
-                                    <TabsList className="mx-4">
-                                        <TabsTrigger value={ISegmentKey.data}>
-                                            <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
-                                        </TabsTrigger>
-                                        <TabsTrigger value={ISegmentKey.vis}>
-                                            <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
-                                        </TabsTrigger>
-                                        {enhanceAPI?.features?.vlChat && (
-                                            <TabsTrigger value={ISegmentKey.chat}>
-                                                <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                <Tabs
+                                    value={segmentKey}
+                                    onValueChange={(v) => vizStore.setSegmentKey(v as ISegmentKey)}
+                                    className="w-full h-full flex flex-col"
+                                >
+                                    {!hideSegmentNav && (
+                                        <TabsList className="mx-4">
+                                            <TabsTrigger value={ISegmentKey.data}>
+                                                <CircleStackIcon className="w-4 mr-2" /> {t('App.segments.data')}
                                             </TabsTrigger>
-                                        )}
-                                    </TabsList>
+                                            <TabsTrigger value={ISegmentKey.vis}>
+                                                <ChartPieIcon className="w-4 mr-2" /> {t('App.segments.vis')}
+                                            </TabsTrigger>
+                                            {enhanceAPI?.features?.vlChat && (
+                                                <TabsTrigger value={ISegmentKey.chat}>
+                                                    <ChatBubbleLeftRightIcon className="w-4 mr-2" /> {t('App.segments.chat')}
+                                                </TabsTrigger>
+                                            )}
+                                        </TabsList>
+                                    )}
                                     <TabsContent value={ISegmentKey.data}>
                                         <div className="mx-4 -mt-px p-4 border rounded-md rounded-t-none">
-                                            <DatasetConfig />
+                                            <DatasetConfig hideProfiling={hideProfiling} />
                                         </div>
                                     </TabsContent>
-                                    <TabsContent value={ISegmentKey.vis}>
+                                    <TabsContent value={ISegmentKey.vis} className="flex-1 min-h-0 flex flex-col">
                                         {!props.hideChartNav && (
                                             <div className="px-2 mx-2 mt-2">
                                                 <VisNav />
@@ -187,7 +210,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                         <div
                                             style={{ marginTop: '0em' }}
                                             className={cn(
-                                                'm-4 p-4 border border-border rounded-md rounded-tl-none',
+                                                'm-4 p-4 border border-border rounded-md rounded-tl-none flex-1 min-h-0 flex flex-col',
                                                 props.hideChartNav ? 'border-t-0 rounded-t-none' : ''
                                             )}
                                         >
@@ -209,21 +232,22 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 extra={toolbar?.extra}
                                             />
                                             <CodeExport />
-                                            <ExplainData themeKey={themeKey} />
-                                            {vizStore.showDataBoard && <DataBoard />}
+                                            <ExplainData themeKey={appliedThemeKey} />
+                                            {vizStore.showDataBoard && <DataBoard hideProfiling={hideProfiling} />}
                                             <VisualConfig />
                                             <LogPanel />
                                             <BinPanel />
                                             <RenamePanel />
+                                            <FieldConfigDialog />
                                             <ComputedFieldDialog />
-                                            <Painter themeConfig={themeConfig} themeKey={themeKey} />
+                                            <Painter themeConfig={appliedThemeConfig} themeKey={appliedThemeKey} />
                                             <LinkDataset />
                                             {vizStore.showGeoJSONConfigPanel && <GeoConfigPanel geoList={props.geoList} />}
-                                            <div className="sm:flex">
+                                            <div className="sm:flex flex-1 min-h-0">
                                                 <SideResize
                                                     defaultWidth={240}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[96px] sm:max-w-[35%] flex-shrink-0 sm:min-h-full flex flex-col"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     {!vizStore.isMultiDataset && <DatasetFields />}
@@ -232,18 +256,18 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                 <SideResize
                                                     defaultWidth={180}
                                                     handleWidth={4}
-                                                    className="min-w-[100%] max-w-full sm:min-w-[120px] sm:max-w-[30%] flex-shrink-0"
+                                                    className="min-w-[100%] max-w-full sm:min-w-[164px] sm:max-w-[314px] flex-shrink-0 flex flex-col"
                                                     handlerClassName="hidden sm:block"
                                                 >
                                                     <FilterField />
                                                     <AestheticFields />
                                                 </SideResize>
-                                                <div className="flex-1 min-w-[0px]">
+                                                <div className="flex-1 min-w-[0px] flex flex-col">
                                                     <div>
                                                         <PosFields />
                                                     </div>
                                                     <div
-                                                        className="my-0.5 sm:ml-0.5 p-1 border relative h-[600px]"
+                                                        className="my-0.5 sm:ml-0.5 p-1 border relative flex-1 min-h-0"
                                                         onMouseLeave={() => {
                                                             vizEmbededMenu.show && vizStore.closeEmbededMenu();
                                                         }}
@@ -255,7 +279,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                             <ReactiveRenderer
                                                                 csvRef={downloadCSVRef}
                                                                 ref={rendererRef}
-                                                                vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                                                vizThemeConfig={currentTheme}
                                                                 computationFunction={wrappedComputation}
                                                                 // @TODO remove channelScales
                                                                 scales={props.scales ?? props.channelScales}
@@ -289,7 +313,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -316,7 +340,14 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+        <VizStoreWrapper
+            onMetaChange={safeOnMetaChange}
+            meta={safeMetas}
+            keepAlive={keepAlive}
+            storeRef={storeRef}
+            defaultConfig={defaultConfig}
+            defaultRenderer={defaultRenderer}
+        >
             <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
         </VizStoreWrapper>
     );

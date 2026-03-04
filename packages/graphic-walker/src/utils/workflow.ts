@@ -396,7 +396,7 @@ export const changeDatasetForQuery = (query: IDataQueryPayload, datasets: string
     };
 };
 
-export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
+export function specToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     const parsedChart = parseChart(chart);
     const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
     const rows = parsedChart.encodings?.rows ?? [];
@@ -417,6 +417,11 @@ export function chartToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
         limit: limit > 0 ? limit : undefined,
     };
 }
+
+/**
+ * @deprecated use specToWorkflow instead
+ */
+export const chartToWorkflow = specToWorkflow;
 
 export const processExpression = (
     exp: IExpression,

@@ -36,7 +36,7 @@ interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
     scales?: IChannelScales;
-    csvRef?: React.MutableRefObject<{ download: () => void }>;
+    csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
 }
 /**
@@ -150,13 +150,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 runInAction(() => {
                     vizStore.showEmbededMenu([e.clientX, e.clientY]);
                 });
-                const viewKeys = new Set(
-                    viewEncodingKeys(visualConfig.geoms[0])
-                        .flatMap((k) => encodings[k] as IViewField[])
-                        .map((x) => x.fid)
-                );
-                // getting fields from event, because vega cannot pass selection including dot in key.
-                const selectedMarkObject = Object.fromEntries(Object.entries<string | number | undefined>(e.item.datum).filter(([k]) => viewKeys.has(k)));
+                const { vlPoint, ...datums } = values;
+                const selectedMarkObject = Object.fromEntries(Object.entries(datums).map(([k, vs]) => [k, vs instanceof Array ? vs[0] : undefined]));
                 // check selected fields include temporal, and return temporal timestamp to original data
                 const allFields = viewEncodingKeys(visualConfig.geoms[0]).flatMap((k) => encodings[k] as IViewField[]);
                 const selectedTemporalFields = Object.keys(selectedMarkObject)

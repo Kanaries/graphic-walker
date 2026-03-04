@@ -172,7 +172,7 @@ export const ClickInput = (props: { value: string; onChange: (v: string) => void
             defaultValue={props.value}
             onBlur={doChange}
             onKeyUp={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     doChange(e as unknown as { target: HTMLInputElement });
                     return false;
                 } else {

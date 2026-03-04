@@ -31,16 +31,26 @@ const noop = () => {};
 
 interface VizStoreWrapperProps {
     keepAlive?: boolean | string;
-    storeRef?: React.MutableRefObject<VizSpecStore | null>;
+    storeRef?: React.RefObject<VizSpecStore | null>;
     children?: React.ReactNode;
     meta: IMutField[];
     onMetaChange?: (fid: FieldIdentifier, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
-    const store = useMemo(() => getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig: props.defaultConfig }), [storeKey]);
+    const store = useMemo(() => {
+        const defaultConfig = props.defaultRenderer
+            ? {
+                  ...props.defaultConfig,
+                  layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) },
+              }
+            : props.defaultConfig;
+        return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig });
+    // IMPORTANT the store is only associated with the storeKey
+    }, [storeKey]);
     const lastMeta = useRef(props.meta);
     useEffect(() => {
         if (lastMeta.current !== props.meta) {
@@ -57,12 +67,17 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     }, [props.meta, store]);
 
     const lastDefaultConfig = useRef(props.defaultConfig);
+    const lastDefaultRenderer = useRef(props.defaultRenderer);
     useEffect(() => {
-        if (lastDefaultConfig.current !== props.defaultConfig) {
-            store.setDefaultConfig(props.defaultConfig);
+        if (lastDefaultConfig.current !== props.defaultConfig || lastDefaultRenderer.current !== props.defaultRenderer) {
+            const defaultConfig = props.defaultRenderer
+                ? { ...props.defaultConfig, layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) } }
+                : props.defaultConfig;
+            store.setDefaultConfig(defaultConfig);
             lastDefaultConfig.current = props.defaultConfig;
+            lastDefaultRenderer.current = props.defaultRenderer;
         }
-    }, [props.defaultConfig, store]);
+    }, [props.defaultConfig, props.defaultRenderer, store]);
 
     useEffect(() => {
         if (props.storeRef) {

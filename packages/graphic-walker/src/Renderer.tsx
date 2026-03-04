@@ -10,10 +10,12 @@ import {
     IComputationContextProps,
     IComputationProps,
     IComputationFunction,
+    IThemeKey,
     IFilterRule,
     IFilterField,
     IVisualLayout,
 } from './interfaces';
+import { GWGlobalConfig } from './vis/theme';
 import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
@@ -78,6 +80,9 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
+        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
+    );
 
     useEffect(() => {
         if (geographicData) {
@@ -135,7 +140,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                 <VizAppContext
                     ComputationContext={wrappedComputation}
                     themeContext={darkMode}
-                    vegaThemeContext={{ vizThemeConfig: vizThemeConfig ?? themeConfig ?? themeKey }}
+                    vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
                     DatasetNamesContext={props.datasetNames}
                 >
@@ -146,7 +151,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                             <div className={props.containerClassName} style={props.containerStyle}>
                                 {computation && (
                                     <ReactiveRenderer
-                                        vizThemeConfig={vizThemeConfig ?? themeConfig ?? themeKey}
+                                        vizThemeConfig={currentTheme}
                                         computationFunction={wrappedComputation}
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}
@@ -275,7 +280,7 @@ const FilterSection = observer(function FilterSection() {
 export function RendererAppWithContext(
     props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
 ) {
-    const { dark, dataSource, computation, onMetaChange, keepAlive, storeRef, defaultConfig, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -303,7 +308,7 @@ export function RendererAppWithContext(
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig}>
+        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig} defaultRenderer={defaultRenderer}>
             <RendererApp {...rest} darkMode={darkMode} computation={safeComputation} />
         </VizStoreWrapper>
     );

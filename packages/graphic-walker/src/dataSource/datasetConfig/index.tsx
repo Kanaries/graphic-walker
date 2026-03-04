@@ -6,7 +6,7 @@ import { DEFAULT_DATASET } from '@/constants';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getFieldIdentifier } from '@/utils';
 
-const DatasetConfig: React.FC = () => {
+const DatasetConfig = ({ hideProfiling }: { hideProfiling?: boolean }) => {
     const vizStore = useVizStore();
     const computation = useCompututaion();
     const metas = vizStore.meta;
@@ -35,6 +35,7 @@ const DatasetConfig: React.FC = () => {
                 onMetaChange={(fid, fIndex, diffMeta) => {
                     vizStore.updateCurrentDatasetMetas(getFieldIdentifier(tableMeta[fIndex]), diffMeta);
                 }}
+                hideProfiling={hideProfiling}
             />
         </div>
     );
