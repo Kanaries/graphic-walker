@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import PivotTableImpl from './components/pivotTable';
-import { IRow, IViewField, IVisualConfigNew } from './interfaces';
+import { IFilterField, IRow, IViewField, IVisualConfigNew } from './interfaces';
 import { emptyVisualLayout, initEncoding } from './utils/save';
 import { useRenderer } from './renderer/hooks';
 import { getComputation } from './computation/clientComputation';
@@ -86,12 +86,13 @@ const PivotTable: React.FC<IPivotTableProps> = ({
 
     const computation = useMemo(() => getComputation(data), [data]);
     const sort = useMemo(() => getSort({ rows, columns }), [rows, columns]);
+    const filters = useMemo<IFilterField[]>(() => [], []);
 
     const { viewData } = useRenderer({
         allFields,
         viewDimensions: dimensions,
         viewMeasures: measures,
-        filters: [],
+        filters,
         defaultAggregated: true,
         sort,
         limit: -1,
