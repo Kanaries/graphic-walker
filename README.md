@@ -180,6 +180,41 @@ const YourChart: React.FC<IYourChartProps> = props => {
 export default YourChart;
 ```
 
+You can also use `PivotTable` as a standalone API when you only need a pivot table without field drag-and-drop UI.
+
+```typescript
+import { PivotTable, type IViewField } from '@kanaries/graphic-walker';
+
+const rowDimensions: IViewField[] = [
+    { fid: 'region', name: 'Region', analyticType: 'dimension', semanticType: 'nominal' },
+];
+
+const columnDimensions: IViewField[] = [
+    { fid: 'year', name: 'Year', analyticType: 'dimension', semanticType: 'ordinal' },
+];
+
+const values = [
+    {
+        fid: 'sales',
+        name: 'Sales',
+        analyticType: 'measure',
+        semanticType: 'quantitative',
+        aggName: 'sum',
+        placement: 'column' as const,
+    },
+];
+
+const YourPivotTable = ({ data }) => (
+    <PivotTable
+        data={data}
+        rowDimensions={rowDimensions}
+        columnDimensions={columnDimensions}
+        values={values}
+        numberFormat=".2s"
+    />
+);
+```
+
 ### try local (dev mode)
 ```bash
 # packages/graphic-walker
