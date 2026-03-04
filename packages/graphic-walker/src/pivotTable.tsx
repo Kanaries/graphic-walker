@@ -15,6 +15,7 @@ export interface IPivotTableProps {
     rowDimensions?: IViewField[];
     columnDimensions?: IViewField[];
     values?: IPivotTableValueField[];
+    enableCollapse?: boolean;
     numberFormat?: string;
     timezoneDisplayOffset?: number;
     className?: string;
@@ -41,6 +42,7 @@ const PivotTable: React.FC<IPivotTableProps> = ({
     rowDimensions = [],
     columnDimensions = [],
     values = [],
+    enableCollapse = false,
     numberFormat,
     timezoneDisplayOffset,
     className,
@@ -124,8 +126,8 @@ const PivotTable: React.FC<IPivotTableProps> = ({
 
     const pivotTableKey = useMemo(
         () =>
-            `${rows.map(getPivotFieldKey).join('|')}::${columns.map(getPivotFieldKey).join('|')}::${timezoneDisplayOffset ?? ''}::${numberFormat ?? ''}`,
-        [rows, columns, timezoneDisplayOffset, numberFormat]
+            `${rows.map(getPivotFieldKey).join('|')}::${columns.map(getPivotFieldKey).join('|')}::${timezoneDisplayOffset ?? ''}::${numberFormat ?? ''}::${enableCollapse}`,
+        [rows, columns, timezoneDisplayOffset, numberFormat, enableCollapse]
     );
 
     return (
@@ -136,7 +138,7 @@ const PivotTable: React.FC<IPivotTableProps> = ({
                 draggableFieldState={draggableFieldState}
                 visualConfig={visualConfig}
                 layout={layout}
-                disableCollapse={true}
+                disableCollapse={!enableCollapse}
             />
         </div>
     );
