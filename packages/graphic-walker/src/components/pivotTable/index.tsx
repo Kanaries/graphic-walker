@@ -202,7 +202,7 @@ const PivotTable: React.FC<PivotTableProps> = function PivotTableComponent(props
                 limit > 0 ? limit : undefined,
                 timezoneDisplayOffset
             );
-            return dataQuery(computation, workflow, limit > 0 ? limit : undefined)
+            return dataQuery(computation, workflow.workflow, workflow.datasets, limit > 0 ? limit : undefined)
                 .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, dimComb, folds))
                 .catch((err) => {
                     appRef.current?.updateRenderStatus('error');

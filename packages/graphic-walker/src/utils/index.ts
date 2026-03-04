@@ -1,6 +1,7 @@
 import i18next from 'i18next';
+import "../locales/i18n";
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../constants';
-import { IRow, Filters, IViewField, IFilterField, IKeyWord, IField, FieldIdentifier } from '../interfaces';
+import { IRow, Filters, IViewField, IFilterField, IKeyWord, FieldIdentifier, IField } from '../interfaces';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -265,8 +266,8 @@ export function createVirtualFields(): IViewField[] {
     ];
 }
 
-export function getFieldIdentifier(field: IField): FieldIdentifier {
-    return field.fid as FieldIdentifier;
+export function getFieldIdentifier(field: { fid: string; dataset?: string; originalFid?: string }): FieldIdentifier {
+    return JSON.stringify([field.originalFid ?? field.fid, field.dataset]) as FieldIdentifier;
 }
 
 export function getRange(nums: number[]): [number, number] {
@@ -310,19 +311,31 @@ export function getFilterMeaAggKey(field: IFilterField) {
 }
 export function getSort({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
-        return rows[rows.length - 1].sort || 'none';
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
-        return columns[columns.length - 1].sort || 'none';
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure') return 'none';
+        return field.sort || 'none';
     }
     return 'none';
 }
 
 export function getSortedEncoding({ rows, columns }: { rows: readonly IViewField[]; columns: readonly IViewField[] }) {
     if (rows.length && !rows.find((x) => x.analyticType === 'measure')) {
+        const field = rows[rows.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'row';
     }
     if (columns.length && !columns.find((x) => x.analyticType === 'measure')) {
+        const field = columns[columns.length - 1];
+        if ((field.sortType ?? 'measure') !== 'measure' || !field.sort || field.sort === 'none') {
+            return 'none';
+        }
         return 'column';
     }
     return 'none';
@@ -431,3 +444,15 @@ export function arrayEqual(list1: any[], list2: any[]): boolean {
     }
     return true;
 }
+
+export const deduper = <T>(items: T[], keyF: (k: T) => string) => {
+    const map = new Map<string, T>();
+    items.forEach((x) => map.set(keyF(x), x));
+    return [...map.values()];
+};
+
+export const isSameField = (x?: { fid: string; dataset?: string }) => {
+    if (!x) return () => false;
+    const myid = getFieldIdentifier(x);
+    return (y: { fid: string; dataset?: string }) => getFieldIdentifier(y) === myid;
+};

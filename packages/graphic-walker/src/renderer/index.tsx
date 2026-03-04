@@ -54,6 +54,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         config: visualConfig,
         layout,
         currentVis: chart,
+        multiViewInfo,
         visIndex,
         visLength,
         sort,
@@ -67,8 +68,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         }),
         [layout, overrideSize]
     );
-
-    const draggableFieldState = chart.encodings;
+    const draggableFieldState = { ...emptyEncodings, ...multiViewInfo.views, filters: multiViewInfo.filters };
 
     const { i18n } = useTranslation();
 
@@ -144,12 +144,11 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (_values: any, e: MouseEvent & { item: Item }) => {
             e.stopPropagation();
             if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
                     vizStore.showEmbededMenu([e.clientX, e.clientY]);
-                    vizStore.setFilters(values);
                 });
                 const { vlPoint, ...datums } = values;
                 const selectedMarkObject = Object.fromEntries(Object.entries(datums).map(([k, vs]) => [k, vs instanceof Array ? vs[0] : undefined]));
@@ -181,7 +180,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 if (e.item.mark.marktype === 'line') {
                     // use the filter in mark group
                     const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}));
-                    vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries<string | number>(selectedMarkObject).filter(([k]) => keys.has(k))));
+                    vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries(selectedMarkObject).filter(([k]) => keys.has(k))));
                 } else {
                     vizStore.updateSelectedMarkObject(selectedMarkObject);
                 }

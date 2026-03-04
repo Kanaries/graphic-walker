@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
+import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction, FieldIdentifier } from '../interfaces';
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQuery } from '../computation';
@@ -15,7 +15,7 @@ interface UseRendererProps {
     sort: 'none' | 'ascending' | 'descending';
     limit: number;
     computationFunction: IComputationFunction;
-    folds?: string[];
+    folds?: FieldIdentifier[];
     timezoneDisplayOffset?: number;
 }
 
@@ -32,8 +32,18 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const [computing, setComputing] = useState(false);
     const taskIdRef = useRef(0);
 
-    const workflow = useMemo(() => {
-        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined, timezoneDisplayOffset);
+    const { workflow, datasets } = useMemo(() => {
+        return toWorkflow(
+            filters,
+            allFields,
+            viewDimensions,
+            viewMeasures,
+            defaultAggregated,
+            sort,
+            folds,
+            limit > 0 ? limit : undefined,
+            timezoneDisplayOffset
+        );
     }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
@@ -45,7 +55,7 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
         const taskId = ++taskIdRef.current;
         appRef.current?.updateRenderStatus('computing');
         setComputing(true);
-        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined)
+        dataQuery(computationFunction, workflow, datasets, limit > 0 ? limit : undefined)
             .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, viewDimensions, folds))
             .then((data) => {
                 if (taskId !== taskIdRef.current) {

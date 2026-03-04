@@ -196,7 +196,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                 });
                                             }}
                                         >
-                                            Edit
+                                            Rename
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="text-xs"

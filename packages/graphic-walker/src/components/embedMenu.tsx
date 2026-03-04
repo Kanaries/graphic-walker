@@ -10,7 +10,7 @@ import { Transition } from '@headlessui/react';
 export const VizEmbedMenu = observer(function VizEmbedMenu() {
     const vizStore = useVizStore();
     const { t } = useTranslation();
-    const { vizEmbededMenu } = vizStore;
+    const { vizEmbededMenu, isMultiDataset } = vizStore;
     return (
         <Transition
             appear
@@ -27,6 +27,10 @@ export const VizEmbedMenu = observer(function VizEmbedMenu() {
                 {GLOBAL_CONFIG.EMBEDED_MENU_LIST.map((key) => {
                     switch (key) {
                         case 'data_interpretation':
+                            if (isMultiDataset) {
+                                // @TODO make data insight work with multi dataset
+                                return null;
+                            }
                             return (
                                 <div
                                     key={key}

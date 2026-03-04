@@ -57,10 +57,11 @@ export class CommonStore {
         this.tmpDSName = name;
     }
 
-    public updateTempDS(rawData: IRow[]) {
+    public updateTempDS(rawData: IRow[], name = 'New Dataset') {
         const result = transData(rawData);
         this.tmpDataSource = result.dataSource;
         this.tmpDSRawFields = result.fields;
+        this.tmpDSName = name;
     }
     /**
      * update temp dataset (standard) with dataset info

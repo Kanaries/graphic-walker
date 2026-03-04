@@ -1,5 +1,5 @@
 import { useContext, useRef } from 'react';
-import { getComputation, IVisFilter, TableWalker } from '@kanaries/graphic-walker';
+import { IDataQueryPayload, IDataQueryWorkflowStep, TableWalker, getComputation, IVisFilter } from '@kanaries/graphic-walker';
 import { themeContext } from '../context';
 import { useFetch, IDataSource } from '../util';
 

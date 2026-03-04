@@ -21,6 +21,7 @@ import {
     GlobeAmericasIcon,
     DocumentPlusIcon,
     PaintBrushIcon,
+    KeyIcon,
 } from '@heroicons/react/24/outline';
 import { observer } from 'mobx-react-lite';
 import React, { SVGProps, useCallback, useMemo } from 'react';
@@ -39,6 +40,7 @@ import LimitSetting from '../components/limitSetting';
 import { omitRedundantSeparator } from './utils';
 import { Button } from '@/components/ui/button';
 import { classNames } from '@/utils';
+import { EMPTY_FIELD_ID } from '@/constants';
 
 interface IVisualSettings {
     darkModePreference: IDarkMode;
@@ -384,8 +386,12 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
                     vizStore.setVisualLayout('showTableSummary', checked);
                 },
             },
+
+            ...(vizStore.isMultiDataset
+                ? [{ key: 'foreign:add', label: 'Add a foreign Key', icon: KeyIcon, onClick: () => vizStore.setLinkingDataset(vizStore.baseDataset) }]
+                : []),
             ...(experimentalFeatures?.computedField
-                ? [{ key: 'field:add', label: 'Add Computed Field', icon: DocumentPlusIcon, onClick: () => vizStore.setComputedFieldFid('') }]
+                ? [{ key: 'field:add', label: 'Add Computed Field', icon: DocumentPlusIcon, onClick: () => vizStore.setComputedFieldFid(EMPTY_FIELD_ID) }]
                 : []),
             '-',
             {

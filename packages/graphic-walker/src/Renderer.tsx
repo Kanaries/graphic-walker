@@ -20,13 +20,12 @@ import ReactiveRenderer from './renderer/index';
 import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { renderSpec } from './store/visualSpecStore';
-import { guardDataKeys } from './utils/dataPrep';
 import { getComputation } from './computation/clientComputation';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
 import { useCurrentMediaTheme } from './utils/media';
-import { classNames, getFilterMeaAggKey, parseErrorMessage } from './utils';
+import { classNames, getFieldIdentifier, getFilterMeaAggKey, isSameField, parseErrorMessage } from './utils';
 import { VegaliteMapper } from './lib/vl2gw';
 import { newChart } from './models/visSpecHistory';
 import { SimpleOneOfSelector, SimpleRange, SimpleSearcher, SimpleTemporalRange } from './fields/filterField/simple';
@@ -143,6 +142,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                     themeContext={darkMode}
                     vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                     portalContainerContext={portal}
+                    DatasetNamesContext={props.datasetNames}
                 >
                     <div className={`${darkMode === 'dark' ? 'dark' : ''} App font-sans bg-background text-foreground m-0 p-0`}>
                         <div className="flex flex-col space-y-2 bg-background text-foreground">
@@ -175,12 +175,12 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
 
     const computation = useCompututaion();
 
-    const originalField = filter.enableAgg ? allFields.find((x) => x.fid === filter.fid) : undefined;
+    const originalField = filter.enableAgg ? allFields.find(isSameField(filter)) : undefined;
     const filterAggName = filter?.enableAgg ? filter.aggName : undefined;
 
     const transformedComputation = useMemo((): IComputationFunction => {
         if (originalField && viewDimensions.length > 0) {
-            const preWorkflow = toWorkflow(
+            const { workflow, datasets } = toWorkflow(
                 [],
                 allFields,
                 viewDimensions,
@@ -190,24 +190,26 @@ const FilterItem = observer(function FilterItem({ filter, onChange }: { filter: 
                 [],
                 undefined,
                 timezoneDisplayOffset
-            ).map((x) => {
-                if (x.type === 'view') {
-                    return {
-                        ...x,
-                        query: x.query.map((q) => {
-                            if (q.op === 'aggregate') {
-                                return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
-                            }
-                            return q;
-                        }),
-                    };
-                }
-                return x;
-            });
+            );
             return (query) =>
                 computation({
                     ...query,
-                    workflow: preWorkflow.concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    workflow: workflow
+                        .map((x) => {
+                            if (x.type === 'view') {
+                                return {
+                                    ...x,
+                                    query: x.query.map((q) => {
+                                        if (q.op === 'aggregate') {
+                                            return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
+                                        }
+                                        return q;
+                                    }),
+                                };
+                            }
+                            return x;
+                        })
+                        .concat(query.workflow.filter((x) => x.type !== 'transform')),
                 });
         } else {
             return computation;
@@ -269,7 +271,7 @@ const FilterSection = observer(function FilterSection() {
     return (
         <div className={classNames('grid gap-2 px-2', cols)} ref={ref}>
             {vizStore.viewFilters.map((filter, idx) => (
-                <FilterItem key={filter.fid} filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
+                <FilterItem key={getFieldIdentifier(filter)} filter={filter} onChange={(rule) => handleWriteFilter(idx, rule)} />
             ))}
         </div>
     );
@@ -290,19 +292,6 @@ export function RendererAppWithContext(
         onMetaChange: safeOnMetaChange,
     } = useMemo(() => {
         if (data) {
-            if (props.fieldKeyGuard) {
-                const { safeData, safeMetas } = guardDataKeys(data, fields);
-                return {
-                    safeMetas,
-                    computation: getComputation(safeData),
-                    onMetaChange: (safeFID, meta) => {
-                        const index = safeMetas.findIndex((x) => x.fid === safeFID);
-                        if (index >= 0) {
-                            props.onMetaChange?.(fields[index].fid, meta);
-                        }
-                    },
-                };
-            }
             return {
                 safeMetas: fields,
                 computation: getComputation(data),
@@ -314,7 +303,7 @@ export function RendererAppWithContext(
             computation: props.computation,
             onMetaChange: props.onMetaChange,
         };
-    }, [fields, data ? data : props.computation, props.fieldKeyGuard, props.onMetaChange]);
+    }, [fields, data ? data : props.computation, props.onMetaChange]);
 
     const darkMode = useCurrentMediaTheme(appearance);
 

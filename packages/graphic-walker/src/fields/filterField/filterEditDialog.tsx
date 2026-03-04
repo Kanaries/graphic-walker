@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
+import type { FieldIdentifier, IAggregator, IComputationFunction, IFilterField, IFilterRule, IMutField } from '../../interfaces';
 import { ComputationContext, useCompututaion, useVizStore } from '../../store';
 import Tabs, { RuleFormProps } from './tabs';
 import DropdownSelect, { IDropdownSelectOption } from '../../components/dropdownSelect';
@@ -9,7 +9,7 @@ import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { GLOBAL_CONFIG } from '../../config';
 import { toWorkflow } from '../../utils/workflow';
 import { useRefControledState } from '../../hooks';
-import { getFilterMeaAggKey, getMeaAggKey } from '../../utils';
+import { getFieldIdentifier, getFilterMeaAggKey, getMeaAggKey } from '../../utils';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -40,11 +40,11 @@ const EmptyForm: React.FC<RuleFormProps> = () => <React.Fragment />;
 
 export const PureFilterEditDialog = (props: {
     viewFilters: IFilterField[];
-    options: { label: string; value: string }[];
+    options: { label: string; value: FieldIdentifier }[];
     meta: IMutField[];
     editingFilterIdx: number | null;
     displayOffset?: number;
-    onSelectFilter: (field: string) => void;
+    onSelectFilter: (field: FieldIdentifier) => void;
     onWriteFilter: (index: number, rule: IFilterRule | null) => void;
     onSelectAgg?: (index: number, aggName: IAggregator | null) => void;
     onClose: () => void;
@@ -102,7 +102,7 @@ export const PureFilterEditDialog = (props: {
                                 buttonClassName="w-96"
                                 className="mb-2"
                                 options={options}
-                                selectedKey={uncontrolledField.fid}
+                                selectedKey={getFieldIdentifier(uncontrolledField)}
                                 onSelect={onSelectFilter}
                             />
                         </div>
@@ -138,55 +138,55 @@ export const PureFilterEditDialog = (props: {
 
 const FilterEditDialog: React.FC = observer(() => {
     const vizStore = useVizStore();
-    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions, config } = vizStore;
+    const { editingFilterIdx, viewFilters, dimensions, measures, meta, allFields, viewDimensions, viewMeasures, config, multiViewInfo } = vizStore;
     const { timezoneDisplayOffset } = config;
 
     const computation = useCompututaion();
 
-    const originalField =
-        editingFilterIdx !== null
-            ? viewFilters[editingFilterIdx]?.enableAgg
-                ? allFields.find((x) => x.fid === viewFilters[editingFilterIdx].fid)
-                : undefined
-            : undefined;
+    const originalField = editingFilterIdx !== null ? viewFilters[editingFilterIdx] : undefined;
     const filterAggName =
         editingFilterIdx !== null ? (viewFilters[editingFilterIdx]?.enableAgg ? viewFilters[editingFilterIdx].aggName : undefined) : undefined;
 
     const transformedComputation = useMemo((): IComputationFunction => {
-        if (originalField && viewDimensions.length > 0) {
-            const preWorkflow = toWorkflow(
-                [],
+        const useTransformedComputation = multiViewInfo.datasets.length > 1 || filterAggName;
+        if (useTransformedComputation) {
+            const { workflow, datasets } = toWorkflow(
+                viewFilters,
                 allFields,
                 viewDimensions,
-                [{ ...originalField, aggName: filterAggName }],
-                true,
+                viewMeasures.concat(filterAggName ? [{ ...originalField, aggName: filterAggName }] : []),
+                !!filterAggName,
                 'none',
                 [],
                 undefined,
                 timezoneDisplayOffset
-            ).map((x) => {
-                if (x.type === 'view') {
-                    return {
-                        ...x,
-                        query: x.query.map((q) => {
-                            if (q.op === 'aggregate') {
-                                return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
-                            }
-                            return q;
-                        }),
-                    };
-                }
-                return x;
-            });
+            );
             return (query) =>
                 computation({
                     ...query,
-                    workflow: preWorkflow.concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    workflow: workflow
+                        .filter((x) => (filterAggName ? true : x.type !== 'view'))
+                        .map((x) => {
+                            if (x.type === 'view') {
+                                return {
+                                    ...x,
+                                    query: x.query.map((q) => {
+                                        if (q.op === 'aggregate') {
+                                            return { ...q, measures: q.measures.map((m) => ({ ...m, asFieldKey: m.field })) };
+                                        }
+                                        return q;
+                                    }),
+                                };
+                            }
+                            return x;
+                        })
+                        .concat(query.workflow.filter((x) => x.type !== 'transform')),
+                    datasets: Array.from(new Set(query.datasets.concat(datasets))),
                 });
         } else {
             return computation;
         }
-    }, [computation, viewDimensions, originalField, filterAggName]);
+    }, [computation, viewDimensions, viewMeasures, originalField, viewFilters, multiViewInfo.datasets.length, filterAggName]);
 
     const handelClose = React.useCallback(() => vizStore.closeFilterEditing(), [vizStore]);
 
@@ -199,14 +199,16 @@ const FilterEditDialog: React.FC = observer(() => {
         [vizStore]
     );
 
-    const handleSelectFilterField = (fieldKey) => {
-        const existingFilterIdx = viewFilters.findIndex((field) => field.fid === fieldKey);
+    const handleSelectFilterField = (fieldKey: FieldIdentifier) => {
+        const existingFilterIdx = viewFilters.findIndex((field) => getFieldIdentifier(field) === fieldKey);
         if (existingFilterIdx >= 0) {
             vizStore.setFilterEditing(existingFilterIdx);
         } else {
-            const sourceKey = dimensions.find((field) => field.fid === fieldKey) ? 'dimensions' : 'measures';
+            const sourceKey = dimensions.find((field) => getFieldIdentifier(field) === fieldKey) ? 'dimensions' : 'measures';
             const sourceIndex =
-                sourceKey === 'dimensions' ? dimensions.findIndex((field) => field.fid === fieldKey) : measures.findIndex((field) => field.fid === fieldKey);
+                sourceKey === 'dimensions'
+                    ? dimensions.findIndex((field) => getFieldIdentifier(field) === fieldKey)
+                    : measures.findIndex((field) => getFieldIdentifier(field) === fieldKey);
             if (editingFilterIdx !== null) {
                 vizStore.modFilter(editingFilterIdx, sourceKey, sourceIndex);
             }
@@ -215,12 +217,13 @@ const FilterEditDialog: React.FC = observer(() => {
 
     const allFieldOptions = React.useMemo(() => {
         return allFields
+            .filter((x) => x.dataset === viewFilters[editingFilterIdx || 0]?.dataset)
             .filter((x) => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID].includes(x.fid))
             .map((d) => ({
                 label: d.name,
-                value: d.fid,
+                value: getFieldIdentifier(d),
             }));
-    }, [allFields]);
+    }, [allFields, viewFilters[editingFilterIdx || 0]?.dataset]);
 
     const handleChangeAgg = (index: number, agg: IAggregator | null) => {
         vizStore.setFilterAggregator(index, agg ?? '');
@@ -236,7 +239,7 @@ const FilterEditDialog: React.FC = observer(() => {
                 onClose={handelClose}
                 onSelectFilter={handleSelectFilterField}
                 onWriteFilter={handleWriteFilter}
-                viewFilters={viewFilters}
+                viewFilters={multiViewInfo.filters}
                 onSelectAgg={handleChangeAgg}
             />
         </ComputationContext.Provider>

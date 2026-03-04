@@ -44,7 +44,7 @@ export function useNominalFilter(fid: string, initValue?: string[] | (() => stri
     useEffect(() => {
         (async () => {
             setLoading(true);
-            const domain = await getFieldDistinctCounts(computation, fid, { sortBy: 'count_dsc' });
+            const domain = await getFieldDistinctCounts(computation, fid, undefined, { sortBy: 'count_dsc' });
             setDomain(domain.map((x) => x.value));
             setLoading(false);
         })();
@@ -326,6 +326,7 @@ export function useAggergateValue(fid: string, aggName: IAggregator): number | u
                     ],
                 },
             ],
+            datasets: [],
         };
     }, [fid, aggName]);
     const result = useComputedValue(payload);

@@ -19,7 +19,6 @@ import { themeContext } from '@/store/theme';
 export interface IChoroplethRendererProps {
     name?: string;
     data: IRow[];
-    allFields: DeepReadonly<IViewField[]>;
     features: FeatureCollection | undefined;
     featuresUrl?: IGeoUrl;
     geoKey: string;
@@ -101,7 +100,6 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     const {
         name,
         data,
-        allFields,
         features: localFeatures,
         featuresUrl,
         geoKey,
@@ -318,7 +316,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                         <Tooltip>
                                             <header>{data[i][geoId.fid]}</header>
                                             {tooltipFields.map((f, j) => (
-                                                <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                                <TooltipContent key={j} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
                                             ))}
                                         </Tooltip>
                                     )}
@@ -342,7 +340,7 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                                     <Tooltip>
                                         <header>{data[i][geoId.fid]}</header>
                                         {tooltipFields.map((f, j) => (
-                                            <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                            <TooltipContent key={j} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
                                         ))}
                                     </Tooltip>
                                 </Polygon>

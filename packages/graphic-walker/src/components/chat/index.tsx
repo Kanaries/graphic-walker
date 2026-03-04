@@ -14,6 +14,9 @@ import { useReporter } from '@/utils/reportError';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Textarea } from '../ui/textarea';
 import LoadingLayer from '../loadingLayer';
+import { transformMultiDatasetFields } from '@/utils/route';
+import { viewEncodingKeys } from '@/models/visSpec';
+import { emptyEncodings } from '@/utils/save';
 
 async function fetchQueryChat(api: string, metas: IViewField[], messages: IChatMessage[], headers: Record<string, string>) {
     const res = await fetch(api, {
@@ -116,6 +119,23 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [encodings]);
 
+    const multiViewInfo = useMemo(() => {
+        const viewsEncodings: Partial<Record<keyof DraggableFieldState, IViewField[]>> = {};
+        viewEncodingKeys(config.geoms[0]).forEach((k) => {
+            viewsEncodings[k] = encodings[k];
+        });
+
+        const { filters, views } = transformMultiDatasetFields({
+            filters: encodings.filters,
+            views: viewsEncodings,
+        });
+        return {
+            ...emptyEncodings,
+            ...views,
+            filters,
+        };
+    }, [encodings, config.geoms]);
+
     const { viewData: data, loading: waiting } = useRenderer({
         allFields,
         viewDimensions,
@@ -149,7 +169,7 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
                     vizThemeConfig={vizThemeConfig}
                     name={name}
                     data={data}
-                    draggableFieldState={encodings}
+                    draggableFieldState={multiViewInfo}
                     visualConfig={config}
                     layout={{
                         ...layout,

@@ -261,7 +261,6 @@ export interface IGWProps {
 	i18nLang?: string;
 	i18nResources?: { [lang: string]: Record<string, string | any> };
 	keepAlive?: boolean | string;
-    fieldKeyGuard?: boolean;
     vizThemeConfig?: IThemeKey;
     apperence?: IDarkMode;
     storeRef?: React.RefObject<IGlobalStore | null>;

@@ -26,6 +26,9 @@ import { GWGlobalConfig } from '../vis/theme';
 import { VizAppContext } from '../store/context';
 import { useCurrentMediaTheme } from '../utils/media';
 import LoadingLayer from '@/components/loadingLayer';
+import { transformMultiDatasetFields } from '@/utils/route';
+import { viewEncodingKeys } from '@/models/visSpec';
+import { emptyEncodings } from '@/utils/save';
 
 type IPureRendererProps = {
     className?: string;
@@ -167,6 +170,23 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
+    const encoding = useMemo(() => {
+        const viewsEncodings: Partial<Record<keyof DraggableFieldState, IViewField[]>> = {};
+        viewEncodingKeys(visualConfig.geoms[0]).forEach((k) => {
+            viewsEncodings[k] = visualState[k];
+        });
+
+        const { filters, views } = transformMultiDatasetFields({
+            filters: visualState.filters,
+            views: viewsEncodings,
+        });
+        return {
+            ...emptyEncodings,
+            ...views,
+            filters,
+        };
+    }, [visualState, visualConfig.geoms]);
+
     return (
         <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} uiTheme={uiTheme ?? colorConfig}>
             <VizAppContext
@@ -174,6 +194,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 themeContext={darkMode}
                 vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}
                 portalContainerContext={portal}
+                DatasetNamesContext={undefined}
             >
                 {waiting && <LoadingLayer />}
                 <div className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
@@ -187,7 +208,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             name={name}
                             data={viewData}
                             ref={ref}
-                            draggableFieldState={visualState}
+                            draggableFieldState={encoding}
                             visualConfig={visualConfig}
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}

@@ -12,7 +12,6 @@ import ColorPanel from './color';
 export interface IPOIRendererProps {
     name?: string;
     data: IRow[];
-    allFields: DeepReadonly<IViewField[]>;
     defaultAggregated: boolean;
     latitude: DeepReadonly<IViewField> | undefined;
     longitude: DeepReadonly<IViewField> | undefined;
@@ -40,7 +39,7 @@ const formatCoerceLatLng = (latRaw: unknown, lngRaw: unknown) => {
 const debugMaxLen = 20;
 
 const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIRenderer(props, ref) {
-    const { name, data, allFields, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, scales, tileUrl } = props;
+    const { name, data, latitude, longitude, color, opacity, size, details, defaultAggregated, vegaConfig, scales, tileUrl } = props;
 
     const lngLat = useMemo<[lat: number, lng: number][]>(() => {
         if (longitude && latitude) {
@@ -207,7 +206,7 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
                         {tooltipFields.length > 0 && (
                             <Tooltip>
                                 {tooltipFields.map((f, j) => (
-                                    <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                    <TooltipContent key={j} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
                                 ))}
                             </Tooltip>
                         )}

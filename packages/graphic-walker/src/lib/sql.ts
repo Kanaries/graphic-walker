@@ -595,7 +595,7 @@ export function walkFid(sql: string): string[] {
     return Array.from(set);
 }
 
-export function replaceFid(sql: string, fields: IMutField[]): string {
+export function replaceFid(sql: string, fields: IMutField[], transformFid = (x: string) => x): string {
     const dict = new Map<string, IMutField>();
     fields.forEach((f) => {
         dict.set((f.name ?? f.fid).toLowerCase(), f);
@@ -603,7 +603,7 @@ export function replaceFid(sql: string, fields: IMutField[]): string {
     const item = parseSQLExpr(sql);
     const mapper = parser.astMapper(() => ({
         ref: (r) => {
-            return parser.assignChanged(r, { name: dict.get(r.name.toLowerCase())?.fid || r.name });
+            return parser.assignChanged(r, { name: transformFid(dict.get(r.name.toLowerCase())?.fid || r.name) });
         },
     }));
     return parser.toSql.expr(mapper.expr(item)!);

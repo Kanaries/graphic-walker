@@ -123,6 +123,17 @@ function useScale(minRange: number, maxRange: number, defaultMinRange?: number, 
     };
 }
 
+function fallbackRender({ error, resetErrorBoundary }) {
+    // Call resetErrorBoundary() to reset the error boundary and retry the render.
+
+    return (
+        <div role="alert">
+            <p>Something went wrong:</p>
+            <pre style={{ color: 'red' }}>{error.message}</pre>
+        </div>
+    );
+}
+
 const VisualConfigPanel: React.FC = () => {
     const vizStore = useVizStore();
     const { layout, showVisualConfigPanel, config } = vizStore;

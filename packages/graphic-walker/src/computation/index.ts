@@ -3,6 +3,7 @@ import type {
     IDataQueryPayload,
     IDataQueryWorkflowStep,
     IDatasetStats,
+    IExpression,
     IField,
     IFieldStats,
     IFilterWorkflowStep,
@@ -16,40 +17,16 @@ import type {
 } from '../interfaces';
 import { getTimeFormat } from '../lib/inferMeta';
 import { newOffsetDate } from '../lib/op/offset';
-import { processExpression } from '../utils/workflow';
+import { addTransformForQuery, processExpression } from '../utils/workflow';
 import { binarySearchClosest, isNotEmpty, parseKeyword } from '../utils';
-import { COUNT_FIELD_ID } from '../constants';
+import { COUNT_FIELD_ID, DEFAULT_DATASET } from '../constants';
 import { range } from 'lodash-es';
-
-export const datasetStats = async (service: IComputationFunction): Promise<IDatasetStats> => {
-    const res = (await service({
-        workflow: [
-            {
-                type: 'view',
-                query: [
-                    {
-                        op: 'aggregate',
-                        groupBy: [],
-                        measures: [
-                            {
-                                field: '*',
-                                agg: 'count',
-                                asFieldKey: 'count',
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    })) as [{ count: number }];
-    return {
-        rowCount: res[0]?.count ?? 0,
-    };
-};
 
 export const dataReadRaw = async (
     service: IComputationFunction,
+    fields: string[],
     pageSize: number,
+    datasets: string[],
     pageOffset = 0,
     option?: {
         sorting?: { fid: string; sort: 'ascending' | 'descending' };
@@ -71,7 +48,7 @@ export const dataReadRaw = async (
                 query: [
                     {
                         op: 'raw',
-                        fields: ['*'],
+                        fields,
                     },
                 ],
             },
@@ -87,18 +64,23 @@ export const dataReadRaw = async (
         ],
         limit: pageSize,
         offset: pageOffset * pageSize,
+        datasets,
     });
     return res;
 };
 
-export const dataQuery = async (service: IComputationFunction, workflow: IDataQueryWorkflowStep[], limit?: number): Promise<IRow[]> => {
+export const dataQuery = async (service: IComputationFunction, workflow: IDataQueryWorkflowStep[], datasets: string[], limit?: number): Promise<IRow[]> => {
     const viewWorkflow = workflow.find((x) => x.type === 'view') as IViewWorkflowStep | undefined;
-    if (viewWorkflow && viewWorkflow.query.length === 1 && viewWorkflow.query[0].op === 'raw' && viewWorkflow.query[0].fields.length === 0) {
+    if (
+        (viewWorkflow && viewWorkflow.query.length === 1 && viewWorkflow.query[0].op === 'raw' && viewWorkflow.query[0].fields.length === 0) ||
+        datasets.length === 0
+    ) {
         return [];
     }
     const res = await service({
         workflow,
         limit,
+        datasets,
     });
     return res;
 };
@@ -121,10 +103,11 @@ export const fieldStat = async (
     allFields: IMutField[]
 ): Promise<IFieldStats> => {
     const { values = true, range = true, valuesMeta = true, sortBy = 'none', timezoneDisplayOffset, keyword } = options;
-    const COUNT_ID = `count_${field.fid}`;
-    const TOTAL_DISTINCT_ID = `total_distinct_${field.fid}`;
-    const MIN_ID = `min_${field.fid}`;
-    const MAX_ID = `max_${field.fid}`;
+    const COUNT_ID = `${field.fid}_count`;
+    const TOTAL_DISTINCT_ID = `${field.fid}_total_distinct`;
+    const MIN_ID = `${field.fid}_min`;
+    const MAX_ID = `${field.fid}_max`;
+    const datasets = [field.dataset ?? DEFAULT_DATASET];
     const k = isNotEmpty(keyword) ? parseKeyword(keyword) : undefined;
     const filterWork: IFilterWorkflowStep[] = k
         ? [
@@ -189,6 +172,7 @@ export const fieldStat = async (
                 ],
             },
         ],
+        datasets,
     };
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
@@ -222,6 +206,7 @@ export const fieldStat = async (
         ],
         limit: options.valuesLimit,
         offset: options.valuesOffset,
+        datasets,
     };
     const [valuesMetaRes = { [TOTAL_DISTINCT_ID]: 0, count: 0 }] = valuesMeta ? await service(valuesMetaQueryPayload) : [{ [TOTAL_DISTINCT_ID]: 0, count: 0 }];
     const valuesRes = values ? await service(valuesQueryPayload) : [];
@@ -251,6 +236,7 @@ export const fieldStat = async (
                 ],
             },
         ],
+        datasets,
     };
     const [
         rangeRes = {
@@ -300,6 +286,7 @@ export const fieldStat = async (
                       ],
                   },
               ],
+              datasets,
           }
         : null;
     const [selectedCountRes = { count: 0 }] = selectedCountWork ? await service(selectedCountWork) : [];
@@ -318,9 +305,9 @@ export const fieldStat = async (
     };
 };
 
-export async function getRange(service: IComputationFunction, field: string) {
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+export async function getRange(service: IComputationFunction, field: string, dataset?: string) {
+    const MIN_ID = `${field}_min`;
+    const MAX_ID = `${field}_max`;
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -345,6 +332,7 @@ export async function getRange(service: IComputationFunction, field: string) {
                 ],
             },
         ],
+        datasets: [dataset ?? DEFAULT_DATASET],
     };
     const [
         rangeRes = {
@@ -380,7 +368,7 @@ export function withComputedField(field: IField, allFields: IMutField[], service
     };
 }
 
-export async function getSample(service: IComputationFunction, field: string) {
+export async function getSample(service: IComputationFunction, field: string, dataset?: string) {
     const res = await service({
         workflow: [
             {
@@ -395,17 +383,18 @@ export async function getSample(service: IComputationFunction, field: string) {
         ],
         limit: 1,
         offset: 0,
+        datasets: [dataset ?? DEFAULT_DATASET],
     });
     return res?.[0]?.[field];
 }
 
-export async function getTemporalRange(service: IComputationFunction, field: string, offset?: number) {
+export async function getTemporalRange(service: IComputationFunction, field: string, dataset?: string, offset?: number) {
     const sample = await getSample(service, field);
     const format = getTimeFormat(sample);
     const usedOffset = offset ?? new Date().getTimezoneOffset();
     const newDate = newOffsetDate(usedOffset);
-    const MIN_ID = `min_${field}`;
-    const MAX_ID = `max_${field}`;
+    const MIN_ID = `${field}_min`;
+    const MAX_ID = `${field}_max`;
     const rangeQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -434,6 +423,7 @@ export async function getTemporalRange(service: IComputationFunction, field: str
                 ],
             },
         ],
+        datasets: [dataset ?? DEFAULT_DATASET],
     };
     const [
         rangeRes = {
@@ -444,9 +434,9 @@ export async function getTemporalRange(service: IComputationFunction, field: str
     return [newDate(rangeRes[MIN_ID]).getTime(), newDate(rangeRes[MAX_ID]).getTime(), format] as [number, number, string];
 }
 
-export async function getFieldDistinctMeta(service: IComputationFunction, field: string) {
-    const COUNT_ID = `count_${field}`;
-    const TOTAL_DISTINCT_ID = `total_distinct_${field}`;
+export async function getFieldDistinctMeta(service: IComputationFunction, field: string, dataset?: string) {
+    const COUNT_ID = `${field}_count`;
+    const TOTAL_DISTINCT_ID = `${field}_distinct_total`;
     const workflow: IDataQueryWorkflowStep[] = [
         {
             type: 'view',
@@ -486,7 +476,7 @@ export async function getFieldDistinctMeta(service: IComputationFunction, field:
             ],
         },
     ];
-    const [valuesMetaRes = { [TOTAL_DISTINCT_ID]: 0, count: 0 }] = await service({ workflow });
+    const [valuesMetaRes = { [TOTAL_DISTINCT_ID]: 0, count: 0 }] = await service({ workflow, datasets: [dataset ?? DEFAULT_DATASET] });
     return {
         total: valuesMetaRes.count as number,
         distinctTotal: valuesMetaRes[TOTAL_DISTINCT_ID] as number,
@@ -496,6 +486,7 @@ export async function getFieldDistinctMeta(service: IComputationFunction, field:
 export async function getFieldDistinctCounts(
     service: IComputationFunction,
     field: string,
+    dataset?: string,
     options: {
         sortBy?: 'value' | 'count' | 'value_dsc' | 'count_dsc' | 'none';
         valuesLimit?: number;
@@ -503,7 +494,7 @@ export async function getFieldDistinctCounts(
     } = {}
 ) {
     const { sortBy = 'none', valuesLimit, valuesOffset } = options;
-    const COUNT_ID = `count_${field}`;
+    const COUNT_ID = `${field}_count`;
     const valuesQueryPayload: IDataQueryPayload = {
         workflow: [
             {
@@ -534,6 +525,7 @@ export async function getFieldDistinctCounts(
         ],
         limit: valuesLimit,
         offset: valuesOffset,
+        datasets: [dataset ?? DEFAULT_DATASET],
     };
     const valuesRes = await service(valuesQueryPayload);
     return valuesRes.map((row) => ({
@@ -542,15 +534,27 @@ export async function getFieldDistinctCounts(
     }));
 }
 
-export async function profileNonmialField(service: IComputationFunction, field: string) {
+export function withTransform(
+    service: IComputationFunction,
+    transforms: {
+        key: string;
+        expression: IExpression;
+    }[]
+) {
+    return (payload: IDataQueryPayload) => {
+        return service(addTransformForQuery(payload, transforms));
+    };
+}
+
+export async function profileNonmialField(service: IComputationFunction, field: string, dataset?: string) {
     const TOPS_NUM = 2;
-    const meta = getFieldDistinctMeta(service, field);
-    const tops = getFieldDistinctCounts(service, field, { sortBy: 'count_dsc', valuesLimit: TOPS_NUM });
+    const meta = getFieldDistinctMeta(service, field, dataset);
+    const tops = getFieldDistinctCounts(service, field, dataset, { sortBy: 'count_dsc', valuesLimit: TOPS_NUM });
     return Promise.all([meta, tops] as const);
 }
 
-export async function profileQuantitativeField(service: IComputationFunction, field: string) {
-    const BIN_FIELD = `bin_${field}`;
+export async function profileQuantitativeField(service: IComputationFunction, field: string, dataset?: string) {
+    const BIN_FIELD = `${field}_bin`;
     const ROW_NUM_FIELD = `${COUNT_FIELD_ID}_sum`;
     const BIN_SIZE = 10;
 
@@ -600,7 +604,7 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
         },
     ];
 
-    const valuesRes = service({ workflow });
+    const valuesRes = service({ workflow, datasets: [dataset ?? DEFAULT_DATASET] });
     const values = (await valuesRes).sort((x, y) => x[BIN_FIELD][0] - y[BIN_FIELD][0]);
     if (values.length === 0) {
         return {

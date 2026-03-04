@@ -11,13 +11,10 @@ export default function DataSourceSegment() {
     const provider = getProvider();
     return (
         <DataSourceSegmentComponent dark={theme} provider={provider}>
-            {(p) => {
+            {(props) => {
                 return (
                     <GraphicWalker
-                        storeRef={p.storeRef}
-                        computation={p.computation}
-                        fields={p.meta}
-                        onMetaChange={p.onMetaChange}
+                        {...props}
                         appearance={theme}
                         experimentalFeatures={{ computedField: true }}
                     />

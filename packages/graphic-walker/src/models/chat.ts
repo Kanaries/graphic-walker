@@ -232,7 +232,7 @@ export function toVegaSimplifiedWithAggergation(chart: IChart) {
 }
 
 const actionMessageMapper: {
-    [a in Methods]: (data: IChart, ...a: PropsMap[a]) => string;
+    [a in Methods]?: (data: IChart, ...a: PropsMap[a]) => string;
 } = {
     [Methods.setConfig]: (_data, key, value) => `Set the ${key} config to ${JSON.stringify(value)}.`,
     [Methods.removeField]: (data, encoding, index) => {
@@ -281,7 +281,6 @@ const actionMessageMapper: {
         const originalField = data.encodings[encoding][index];
         return `Change the aggregator of ${originalField.name} field to ${aggName}.`;
     },
-    [Methods.setGeoData]: () => ``,
     [Methods.setCoordSystem]: (_data, system) => `Change the mark to ${GLOBAL_CONFIG.GEOM_TYPES[system][0]}.`,
     [Methods.createDateDrillField]: () => ``,
     [Methods.createDateFeatureField]: () => ``,
@@ -293,11 +292,12 @@ const actionMessageMapper: {
     [Methods.removeAllField]: () => '',
     [Methods.editAllField]: () => '',
     [Methods.replaceWithNLPQuery]: () => '',
+    [Methods.editField]: () => '',
 };
 
 function toMessage<T>(data: IChart, action: VisActionOf<T>) {
     const [type, ...props] = action;
-    return actionMessageMapper[type](data, ...props);
+    return actionMessageMapper[type]?.(data, ...props) ?? '';
 }
 
 export function toChatMessage(history: VisSpecWithHistory): IChatMessage[] {
