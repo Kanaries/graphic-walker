@@ -278,6 +278,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                                 computationFunction={wrappedComputation}
                                                                 // @TODO remove channelScales
                                                                 scales={props.scales ?? props.channelScales}
+                                                                rendererPlugins={props.rendererPlugins}
                                                             />
                                                         )}
                                                         <VizEmbedMenu />

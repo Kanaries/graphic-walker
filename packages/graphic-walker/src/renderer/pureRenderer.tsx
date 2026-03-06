@@ -16,6 +16,7 @@ import type {
     IVisualLayout,
     IChannelScales,
     IUIThemeConfig,
+    IRendererPlugin,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -48,6 +49,7 @@ type IPureRendererProps = {
     /** @deprecated renamed to scales */
     channelScales?: IChannelScales;
     scales?: IChannelScales;
+    rendererPlugins?: IRendererPlugin[];
     overrideSize?: IVisualLayout['size'];
     disableCollapse?: boolean;
 };
@@ -192,6 +194,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                             layout={visualLayout}
                             locale={locale ?? 'en-US'}
                             scales={scales ?? channelScales}
+                            rendererPlugins={props.rendererPlugins}
                             vizThemeConfig={currentTheme}
                             disableCollapse={disableCollapse}
                         />

@@ -15,6 +15,10 @@ jobs:
         run: yarn install
       - name: npm package build
         run: yarn workspace @kanaries/graphic-walker build
+      - name: Observable Plot renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-observable-plot build
+      - name: ECharts renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-echarts build
       - name: Duckdb build
         run: yarn workspace @kanaries/duckdb-computation build
       - run: npm publish

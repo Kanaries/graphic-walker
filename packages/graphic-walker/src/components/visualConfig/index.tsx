@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useVizStore } from '../../store';
 import { GLOBAL_CONFIG } from '../../config';
-import { IConfigScale, IVisualConfig, IVisualLayout, IThemeKey } from '../../interfaces';
+import { IConfigScale, IVisualConfig, IVisualLayout, IThemeKey, RendererId } from '../../interfaces';
 import Toggle from '../toggle';
 import { ColorSchemes, extractRGBA } from './colorScheme';
 import { DomainScale, RangeScale } from './range-scale';
@@ -145,7 +145,7 @@ const VisualConfigPanel: React.FC = () => {
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
-    const [renderer, setRenderer] = useState<'vega-lite' | 'observable-plot'>(layout.renderer ?? 'vega-lite');
+    const [renderer, setRenderer] = useState<RendererId>(layout.renderer ?? 'vega-lite');
     const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
@@ -582,18 +582,23 @@ const VisualConfigPanel: React.FC = () => {
                                                 <div className="flex justify-between items-center">
                                                     <div>
                                                         <label className="text-xs font-medium leading-6">Renderer</label>
-                                                        <p className="text-xs text-gray-500">
-                                                            Choose between VegaLite and Observable Plot renderers
-                                                        </p>
+                                                        <p className="text-xs text-gray-500">Choose chart renderer plugin</p>
                                                     </div>
                                                     <Combobox
                                                         className="w-40 h-fit"
                                                         popClassName="w-40"
                                                         selectedKey={renderer}
-                                                        onSelect={(value) => setRenderer(value as 'vega-lite' | 'observable-plot')}
+                                                        onSelect={(value) => setRenderer(value as RendererId)}
                                                         options={GLOBAL_CONFIG.RENDERER_TYPES.map((type) => ({
                                                             value: type,
-                                                            label: type === 'vega-lite' ? 'VegaLite' : 'Observable Plot',
+                                                            label:
+                                                                type === 'vega-lite'
+                                                                    ? 'VegaLite'
+                                                                    : type === 'observable-plot'
+                                                                    ? 'Observable Plot'
+                                                                    : type === 'plugin:echarts'
+                                                                    ? 'ECharts'
+                                                                    : type,
                                                         }))}
                                                     />
                                                 </div>

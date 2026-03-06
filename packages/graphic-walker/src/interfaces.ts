@@ -23,6 +23,15 @@ export interface IRow {
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
+export type LegacyRendererId = 'vega-lite' | 'observable-plot';
+export type RendererId = LegacyRendererId | string;
+export interface IRendererPlugin {
+    id: string;
+    displayName: string;
+    priority?: number;
+    canRender?: (...args: any[]) => boolean;
+    render: (...args: any[]) => React.ReactNode;
+}
 export interface Specification {
     position?: string[];
     color?: string[];
@@ -450,7 +459,7 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
     /** @default "vega-lite" */
-    renderer?: 'vega-lite' | 'observable-plot';
+    renderer?: RendererId;
 }
 
 export interface IVisualConfigNew {
@@ -936,6 +945,7 @@ export interface IVizProps {
     /** @deprecated renamed to scales */
     channelScales?: IChannelScales;
     scales?: IChannelScales;
+    rendererPlugins?: IRendererPlugin[];
     experimentalFeatures?: IExperimentalFeatures;
     hideProfiling?: boolean;
 }
@@ -957,7 +967,7 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: RendererId;
 }
 
 export interface ILocalComputationProps {

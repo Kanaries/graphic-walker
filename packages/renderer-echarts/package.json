@@ -1,0 +1,25 @@
+{
+  "name": "@kanaries/graphic-walker-renderer-echarts",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/graphic-walker-renderer-echarts.umd.cjs",
+  "module": "dist/graphic-walker-renderer-echarts.js",
+  "types": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "vite build"
+  },
+  "peerDependencies": {
+    "echarts": ">=5.0.0",
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@kanaries/graphic-walker": "0.5.0",
+    "@rollup/plugin-typescript": "^8.2.5",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "typescript": "^5.2.2",
+    "vite": "^4.1.1"
+  }
+}
