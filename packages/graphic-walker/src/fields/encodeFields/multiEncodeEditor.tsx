@@ -9,15 +9,9 @@ import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import DropdownContext from '../../components/dropdownContext';
 import { GLOBAL_CONFIG } from '../../config';
 import { Draggable, DroppableStateSnapshot } from '@kanaries/react-beautiful-dnd';
-import styled from 'styled-components';
 import SelectContext, { type ISelectContextOption } from '../../components/selectContext';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
-
-const PillActions = styled.div`
-    overflow: visible !important;
-    width: calc(100% - 1.875rem);
-`;
 
 interface MultiEncodeEditorProps {
     dkey: {
@@ -81,8 +75,9 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                     >
                                         <TrashIcon className="w-4" />
                                     </div>
-                                    <PillActions
+                                    <div
                                         className="flex-1 flex items-center border border-l-0 px-2 space-x-2 truncate"
+                                        style={{ width: 'calc(100% - 1.875rem)', overflow: 'visible' }}
                                         onDoubleClick={() => openFieldConfig(index)}
                                         onContextMenu={(event) => {
                                             event.preventDefault();
@@ -120,7 +115,7 @@ const SingleEncodeEditor: React.FC<MultiEncodeEditorProps> = (props) => {
                                                     </span>
                                                 </DropdownContext>
                                             )}
-                                    </PillActions>
+                                    </div>
                                 </div>
                             );
                         }}

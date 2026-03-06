@@ -1,14 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Transition } from '@headlessui/react';
-
-const MenuContainer = styled.div`
-    min-width: 100px;
-    position: absolute;
-    z-index: 99;
-    cursor: pointer;
-    padding: 4px;
-`;
+import React, { useCallback, useState } from 'react';
 interface ClickMenuProps {
     x: number;
     y: number;
@@ -27,9 +17,9 @@ const ClickMenu: React.FC<ClickMenuProps> = (props) => {
     const top = y - (rect?.top ?? 0);
     return (
         <div ref={containerCb}>
-            <MenuContainer className="shadow-lg text-sm border rounded-md bg-popover text-popover-foreground border-border" style={{ left, top }}>
+            <div className="min-w-[100px] absolute z-[99] cursor-pointer p-1 shadow-lg text-sm border rounded-md bg-popover text-popover-foreground border-border" style={{ left, top }}>
                 {children}
-            </MenuContainer>
+            </div>
         </div>
     );
 };

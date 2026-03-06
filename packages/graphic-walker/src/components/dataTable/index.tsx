@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef } from 'react';
-import styled from 'styled-components';
 import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField, IVisFilter } from '../../interfaces';
 import { useTranslation } from 'react-i18next';
 import LoadingLayer from '../loadingLayer';
@@ -31,27 +30,6 @@ interface DataTableProps {
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
 }
-const Container = styled.div`
-    overflow-x: auto;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    table {
-        box-sizing: content-box;
-        border-collapse: collapse;
-        font-size: 12px;
-        tbody {
-            td {
-            }
-            td.number {
-                text-align: right;
-            }
-            td.text {
-                text-align: left;
-            }
-        }
-    }
-`;
 // const ANALYTIC_TYPE_LIST = ['dimension', 'measure'];
 const SEMANTIC_TYPE_LIST = ['nominal', 'ordinal', 'quantitative', 'temporal'];
 // function getCellType(field: IMutField): 'number' | 'text' {
@@ -378,7 +356,7 @@ const DataTable = forwardRef(
         }
     }, []);
     return (
-        <Container className="relative">
+        <div className="relative overflow-x-auto h-full flex flex-col [&_table]:box-content [&_table]:border-collapse [&_table]:text-xs [&_tbody_td.number]:text-right [&_tbody_td.text]:text-left">
             {!disableFilter && filters.length > 0 && (
                 <div className="flex items-center p-2 space-x-2">
                     <span>Filters: </span>
@@ -566,7 +544,7 @@ const DataTable = forwardRef(
                     </div>
                 </ComputationContext.Provider>
             )}
-        </Container>
+        </div>
     );
 });
 

@@ -1,5 +1,4 @@
 import React, { HTMLAttributes, createContext, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheetManager } from 'styled-components';
 import root from 'react-shadow';
 
 import tailwindStyle from 'tailwindcss/tailwind.css?inline';
@@ -52,9 +51,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
                     crossOrigin=""
                 />
                 {shadowRoot && (
-                    <StyleSheetManager target={shadowRoot}>
-                        <ShadowDomContext.Provider value={{ root: shadowRoot }}>{children}</ShadowDomContext.Provider>
-                    </StyleSheetManager>
+                    <ShadowDomContext.Provider value={{ root: shadowRoot }}>{children}</ShadowDomContext.Provider>
                 )}
             </uiThemeContext.Provider>
         </root.div>

@@ -1,6 +1,5 @@
 import React, { Fragment, memo, type ComponentProps, type ReactElement, createContext, useState, useContext, useMemo, useEffect } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
-import styled from 'styled-components';
 import { Transition } from '@headlessui/react';
 import { Separator } from '../ui/separator';
 
@@ -15,41 +14,6 @@ export interface IActionMenuItem {
     children?: IActionMenuItem[];
     onPress?: () => void;
 }
-
-const List = styled.div`
-    display: grid;
-    grid-template-columns: max-content 1fr max-content;
-    & > div {
-        /* row */
-        display: contents;
-        > * {
-            background: inherit;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            padding-block: 0.2rem;
-            padding-inline: 0.2rem;
-            &:first-child {
-                padding-left: 0.4rem;
-            }
-        }
-        > *:first-child {
-            border-top-left-radius: calc(var(--radius) - 4px);
-            border-bottom-left-radius: calc(var(--radius) - 4px);
-        }
-        > *:last-child {
-            border-top-right-radius: calc(var(--radius) - 4px);
-            border-bottom-right-radius: calc(var(--radius) - 4px);
-        }
-        &[aria-disabled='true'] > * {
-            opacity: 0.5;
-            cursor: default;
-        }
-    }
-`;
 
 interface IActionMenuRootContext {
     path: number[];
@@ -186,11 +150,11 @@ const MenuItemList = memo<IActionMenuItemListProps>(function ActionMenuItemList(
         <div className="p-1 -mx-px">
             {title && <header className="px-3 py-1 mb-1.5 text-xs font-medium truncate">{title}</header>}
             {title && <Separator orientation="horizontal" className="-mx-1 my-1" />}
-            <List>
+            <div className="grid grid-cols-[max-content_1fr_max-content] [&>div]:contents [&>div>*]:bg-inherit [&>div>*]:cursor-pointer [&>div>*]:w-full [&>div>*]:h-full [&>div>*]:flex [&>div>*]:items-center [&>div>*]:overflow-hidden [&>div>*]:py-[0.2rem] [&>div>*]:px-[0.2rem] [&>div>*:first-child]:pl-[0.4rem] [&>div>*:first-child]:rounded-l-sm [&>div>*:last-child]:rounded-r-sm [&>div[aria-disabled='true']>*]:opacity-50 [&>div[aria-disabled='true']>*]:cursor-default">
                 {items.map((item, index) => (
                     <ActionMenuItem key={index} item={item} path={[...path, index]} />
                 ))}
-            </List>
+            </div>
         </div>
     );
 });

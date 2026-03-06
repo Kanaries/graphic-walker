@@ -2,7 +2,6 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { DraggableProvided } from '@kanaries/react-beautiful-dnd';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useVizStore } from '../../store';
 import { refMapper } from '../fieldsContext';
@@ -13,49 +12,6 @@ interface FilterPillProps {
     provided: DraggableProvided;
     fIndex: number;
 }
-
-const Pill = styled.div`
-    user-select: none;
-    align-items: stretch;
-    border-style: solid;
-    border-width: 1px;
-    box-sizing: border-box;
-    cursor: default;
-    display: flex;
-    flex-direction: column;
-    font-size: 12px;
-    min-width: 150px;
-    overflow-y: hidden;
-    padding: 0;
-
-    > * {
-        flex-grow: 1;
-        padding-block: 0.2em;
-        padding-inline: 0.5em;
-    }
-
-    > header {
-        height: 20px;
-        border-bottom-width: 1px;
-    }
-
-    > div.output {
-        min-height: 20px;
-
-        > span {
-            overflow-y: hidden;
-            max-height: 4em;
-        }
-
-        .icon {
-            display: none;
-
-            &:hover {
-                display: unset;
-            }
-        }
-    }
-`;
 
 const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const { provided, fIndex } = props;
@@ -71,7 +27,12 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
     const fieldName = field.enableAgg ? `${field.aggName}(${field.name})` : field.name;
 
     return (
-        <Pill className="text-foreground touch-none" ref={refMapper(provided.innerRef)} {...provided.draggableProps} {...provided.dragHandleProps}>
+        <div
+            className="text-foreground touch-none select-none items-stretch border box-border cursor-default flex flex-col text-xs min-w-[150px] overflow-y-hidden p-0 [&>*]:grow [&>*]:py-[0.2em] [&>*]:px-[0.5em] [&>header]:h-5 [&>header]:border-b [&>div.output]:min-h-5 [&>div.output>span]:overflow-y-hidden [&>div.output>span]:max-h-[4em]"
+            ref={refMapper(provided.innerRef)}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+        >
             <header className="bg-secondary">{fieldName}</header>
             <div
                 className="bg-background  text-muted-foreground hover:bg-accent flex flex-row output"
@@ -99,14 +60,14 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
                     <span className="text-muted-foreground flex-1">{t('empty_rule')}</span>
                 )}
                 <PencilSquareIcon
-                    className="icon flex-grow-0 flex-shrink-0 pointer-events-none text-muted-foreground"
+                    className="icon hidden flex-grow-0 flex-shrink-0 pointer-events-none text-muted-foreground"
                     role="presentation"
                     aria-hidden
                     width="1.4em"
                     height="1.4em"
                 />
             </div>
-        </Pill>
+        </div>
     );
 });
 

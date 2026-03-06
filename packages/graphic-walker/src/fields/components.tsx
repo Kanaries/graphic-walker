@@ -1,7 +1,9 @@
 import React, { CSSProperties } from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { GLOBAL_CONFIG } from '../config';
+
+function cx(...classes: Array<string | undefined>) {
+    return classes.filter(Boolean).join(' ');
+}
 
 export const FieldListContainer: React.FC<{
     name: string;
@@ -46,100 +48,50 @@ export const FilterFieldContainer: React.FC<{ children?: React.ReactNode | Itera
     );
 };
 
-export const FieldsContainer = styled.div`
-    display: flex;
-    padding: 0.2em;
-    min-height: 2.4em;
-    flex-wrap: wrap;
-    > div {
-        margin: 1px;
-    }
-    touch-action: none;
-`;
-
-export const FilterFieldsContainer = styled.div({
-    display: 'flex',
-    flexDirection: 'column',
-    paddingBlock: '0.5em 0.8em',
-    paddingInline: '0.2em',
-    minHeight: '4em',
-    '> div': {
-        marginBlock: '0.3em',
-        marginInline: '1px',
-    },
+export const FieldsContainer = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(function FieldsContainer({ className, ...props }, ref) {
+    return <div ref={ref} className={cx('flex p-[0.2em] min-h-[2.4em] flex-wrap touch-none [&>div]:m-px', className)} {...props} />;
 });
 
-export const FieldListSegment = styled.div`
-    display: flex;
-    font-size: 12px;
-    div.fl-header {
-        /* flex-basis: 100px; */
-        width: 100px;
-        flex-shrink: 0;
-        h4 {
-            margin: 0.6em;
-            font-weight: 400;
-        }
-    }
-    div.fl-container {
-        flex-grow: 10;
-        position: relative;
-    }
-`;
+export const FilterFieldsContainer = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(function FilterFieldsContainer({ className, ...props }, ref) {
+    return <div ref={ref} className={cx('flex flex-col py-[0.5em] pb-[0.8em] px-[0.2em] min-h-[4em] [&>div]:my-[0.3em] [&>div]:mx-px', className)} {...props} />;
+});
 
-export const FilterFieldSegment = styled.div`
-    border: 1px solid #e5e7eb;
-    @media (prefers-color-scheme: dark) {
-        border: 1px solid #2d3748;
-    }
-    font-size: 12px;
-    margin: 0.2em;
+export const FieldListSegment = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(function FieldListSegment({ className, ...props }, ref) {
+    return (
+        <div
+            ref={ref}
+            className={cx('flex text-xs [&_.fl-header]:w-[100px] [&_.fl-header]:shrink-0 [&_.fl-header_h4]:m-[0.6em] [&_.fl-header_h4]:font-normal [&_.fl-container]:grow-[10] [&_.fl-container]:relative', className)}
+            {...props}
+        />
+    );
+});
 
-    .flt-header {
-        border-bottom: 1px solid #e5e7eb;
-        @media (prefers-color-scheme: dark) {
-            border-bottom: 1px solid #2d3748;
-        }
-        padding: 0.6em;
+export const FilterFieldSegment = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(function FilterFieldSegment({ className, ...props }, ref) {
+    return (
+        <div
+            ref={ref}
+            className={cx(
+                'border border-[#e5e7eb] dark:border-[#2d3748] text-xs m-[0.2em] [&_.flt-header]:border-b [&_.flt-header]:border-[#e5e7eb] dark:[&_.flt-header]:border-[#2d3748] [&_.flt-header]:p-[0.6em] [&_.flt-header_h4]:font-normal',
+                className
+            )}
+            {...props}
+        />
+    );
+});
 
-        > h4 {
-            font-weight: 400;
-        }
-    }
-
-    .flt-container {
-    }
-`;
-
-export const Pill = styled.div<{ colType: 'discrete' | 'continuous' }>`
-    background-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--background))' : 'hsl(var(--primary))')};
-    border-color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))')};
-    color: ${(props) => (props.colType === 'continuous' ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))')};
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-align-items: center;
-    -webkit-user-select: none;
-    align-items: center;
-    border-radius: calc(var(--radius) - 2px);
-    border-style: solid;
-    border-width: 1px;
-    box-sizing: border-box;
-    cursor: default;
-    display: -webkit-flex;
-    display: flex;
-    font-size: 12px;
-    height: 20px;
-    min-width: 150px;
-    max-width: 300px;
-    /* overflow-y: hidden; */
-    padding: 0 10px;
-    user-select: none;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    /* --tw-ring-offset-shadow: 0 0 #0000;
-    --tw-ring-shadow: 0 0 #0000;
-    --tw-shadow-color: rgb(6 182 212/0.5);
-    --tw-shadow: var(--tw-shadow-colored);
-    --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);
-    box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
-`;
+export const Pill = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'> & { colType: 'discrete' | 'continuous' }>(function Pill(
+    { colType, className, ...props },
+    ref
+) {
+    return (
+        <div
+            ref={ref}
+            className={cx(
+                'items-center rounded-md border box-border cursor-default flex text-xs h-5 min-w-[150px] max-w-[300px] px-[10px] select-none text-ellipsis whitespace-nowrap',
+                colType === 'continuous' ? 'bg-background border-muted-foreground text-foreground' : 'bg-primary border-background text-primary-foreground',
+                className
+            )}
+            {...props}
+        />
+    );
+});
