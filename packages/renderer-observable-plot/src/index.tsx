@@ -2,6 +2,7 @@ import * as Plot from '@observablehq/plot';
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { RendererPlugin, RendererPluginProps } from '@kanaries/graphic-walker';
 import { toObservablePlotSpec } from './observablePlot';
+export { toObservablePlotSpec, __test__fieldBinding, __test__vegaLiteToPlot, renderObservablePlot } from './observablePlot';
 
 function normalizeBackground(background: unknown): string | undefined {
     return typeof background === 'string' ? background : undefined;

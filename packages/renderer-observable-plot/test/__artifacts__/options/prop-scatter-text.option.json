@@ -1,0 +1,15 @@
+[
+  {
+    "x": {
+      "label": "math score"
+    },
+    "y": {
+      "label": "reading score"
+    },
+    "marginTop": 20,
+    "marginRight": 40,
+    "marginBottom": 48,
+    "marginLeft": 56,
+    "markCount": 1
+  }
+]
