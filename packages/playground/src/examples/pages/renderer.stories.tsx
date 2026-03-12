@@ -1,5 +1,5 @@
 import { useContext, useMemo, useState } from 'react';
-import spec from '../specs/student-chart-filter.json';
+import spec from '../specs/student-chart.json';
 import { createEChartsPlugin } from '@kanaries/graphic-walker-renderer-echarts';
 import { createObservablePlotPlugin } from '@kanaries/graphic-walker-renderer-observable-plot';
 import { GraphicRenderer, IChart, RendererId } from '@kanaries/graphic-walker';

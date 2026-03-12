@@ -1,0 +1,234 @@
+{
+    "name": "Chart 1",
+    "data": [
+        {
+            "race/ethnicity": "group B",
+            "reading score_sum": 12797
+        },
+        {
+            "race/ethnicity": "group C",
+            "reading score_sum": 22044
+        },
+        {
+            "race/ethnicity": "group A",
+            "reading score_sum": 5756
+        },
+        {
+            "race/ethnicity": "group D",
+            "reading score_sum": 18348
+        },
+        {
+            "race/ethnicity": "group E",
+            "reading score_sum": 10224
+        }
+    ],
+    "draggableFieldState": {
+        "dimensions": [
+            {
+                "fid": "gender",
+                "name": "gender",
+                "basename": "gender",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "race/ethnicity",
+                "name": "race/ethnicity",
+                "basename": "race/ethnicity",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "parental level of education",
+                "name": "parental level of education",
+                "basename": "parental level of education",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "lunch",
+                "name": "lunch",
+                "basename": "lunch",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "test preparation course",
+                "name": "test preparation course",
+                "basename": "test preparation course",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "gw_mea_key_fid",
+                "name": "Measure names",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+            }
+        ],
+        "measures": [
+            {
+                "fid": "math score",
+                "name": "math score",
+                "basename": "math score",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            },
+            {
+                "fid": "reading score",
+                "name": "reading score",
+                "basename": "reading score",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            },
+            {
+                "fid": "writing score",
+                "name": "writing score",
+                "basename": "writing score",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            },
+            {
+                "fid": "gw_count_fid",
+                "name": "Row count",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum",
+                "computed": true,
+                "expression": {
+                    "op": "one",
+                    "params": [],
+                    "as": "gw_count_fid"
+                }
+            },
+            {
+                "fid": "gw_mea_val_fid",
+                "name": "Measure values",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            }
+        ],
+        "rows": [
+            {
+                "fid": "reading score",
+                "name": "reading score",
+                "basename": "reading score",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            }
+        ],
+        "columns": [
+            {
+                "fid": "race/ethnicity",
+                "name": "race/ethnicity",
+                "basename": "race/ethnicity",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            }
+        ],
+        "color": [],
+        "opacity": [],
+        "size": [],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [],
+        "details": [],
+        "filters": [],
+        "text": []
+    },
+    "visualConfig": {
+        "defaultAggregated": true,
+        "geoms": ["auto"],
+        "coordSystem": "generic",
+        "limit": -1
+    },
+    "layout": {
+        "showActions": false,
+        "showTableSummary": false,
+        "stack": "stack",
+        "interactiveScale": false,
+        "zeroScale": true,
+        "size": {
+            "mode": "auto",
+            "width": 320,
+            "height": 200
+        },
+        "format": {},
+        "geoKey": "name",
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        },
+        "renderer": "plugin:echarts"
+    },
+    "locale": "en-US",
+    "vizThemeConfig": "g2",
+    "vegaConfig": {
+        "area": {
+            "fill": "#5B8FF9"
+        },
+        "bar": {
+            "fill": "#5B8FF9"
+        },
+        "circle": {
+            "fill": "#5B8FF9"
+        },
+        "line": {
+            "stroke": "#5B8FF9"
+        },
+        "point": {
+            "stroke": "#5B8FF9"
+        },
+        "rect": {
+            "fill": "#5B8FF9"
+        },
+        "tick": {
+            "fill": "#5B8FF9"
+        },
+        "arc": {
+            "fill": "#5B8FF9"
+        },
+        "boxplot": {
+            "ticks": true
+        },
+        "background": "#FFFFFF",
+        "range": {
+            "category": ["#5B8FF9", "#61DDAA", "#65789B", "#F6BD16", "#7262FD", "#78D3F8", "#9661BC", "#F6903D", "#008685", "#F08BB4"],
+            "diverging": ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"],
+            "heatmap": ["#0d0887", "#46039f", "#7201a8", "#9c179e", "#bd3786", "#d8576b", "#ed7953", "#fb9f3a", "#fdca26", "#f0f921"],
+            "ramp": ["#EBCCFF", "#CCB0FF", "#AE95FF", "#907BFF", "#7262FD", "#5349E0", "#2F32C3", "#001BA7", "#00068C"]
+        },
+        "scale": {
+            "continuous": {
+                "range": ["#d4d4e8", "#3b196f"]
+            },
+            "zero": true
+        },
+        "customFormatTypes": true,
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        }
+    },
+    "rendererRef": {
+        "current": null
+    },
+    "chartWidth": 272,
+    "chartHeight": 152
+}

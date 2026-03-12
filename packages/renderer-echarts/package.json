@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "test:render": "yarn build && node ./test/render-images.mjs"
   },
   "peerDependencies": {
     "echarts": ">=5.0.0",
@@ -19,6 +20,7 @@
     "@rollup/plugin-typescript": "^8.2.5",
     "@types/react": "*",
     "@types/react-dom": "*",
+    "playwright": "^1.52.0",
     "typescript": "^5.2.2",
     "vite": "^4.1.1"
   }

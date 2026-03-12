@@ -1,9 +1,6 @@
 import * as Plot from '@observablehq/plot';
-import { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
-import { NULL_FIELD } from '../vis/spec/field';
-import { getSingleView, SingleViewProps } from '@/vis/spec/view';
-import { toVegaSpec } from './vega';
-import { t } from 'i18next';
+import type { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '@kanaries/graphic-walker';
+import { toVegaSpec } from '@kanaries/graphic-walker/lib/vega';
 
 function vegaLiteToPlot(spec: any): any {
     /**
@@ -53,7 +50,7 @@ function vegaLiteToPlot(spec: any): any {
         const yIsTemporal = enc.y?.type === 'temporal';
         
         // For marks that have directional variants, determine the appropriate direction
-        const directionalMarks = {
+        const directionalMarks: Record<string, { X: (data: any, options: any) => Plot.Mark; Y: (data: any, options: any) => Plot.Mark }> = {
             bar: { X: Plot.barX, Y: Plot.barY },
             area: { X: Plot.areaX, Y: Plot.areaY },
             line: { X: Plot.lineX, Y: Plot.lineY },
@@ -85,7 +82,7 @@ function vegaLiteToPlot(spec: any): any {
         }
         
         // For non-directional marks, return the base mark
-        const nonDirectionalMarks = {
+        const nonDirectionalMarks: Record<string, (data: any, options: any) => Plot.Mark> = {
             point: Plot.dot,
             circle: Plot.dot,
             dot: Plot.dot,
@@ -223,7 +220,7 @@ function vegaLiteToPlot(spec: any): any {
 
     // 4) Check for stacking in encoding channels (not just transforms)
     let stacked = false;
-    let stackMode = null; // Can be "normalize", "center", etc.
+    let stackMode: string | null = null; // Can be "normalize", "center", etc.
     
     // Check if any quantitative encoding has stack property that's not null/false
     if (enc.x?.stack !== null && enc.x?.stack !== false && enc.x?.type === 'quantitative') {

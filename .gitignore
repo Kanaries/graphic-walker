@@ -16,3 +16,4 @@ app-dist
 .vercel
 chartinfo.json
 stoinfo_v2.json
+packages/renderer-echarts/test/__artifacts__
