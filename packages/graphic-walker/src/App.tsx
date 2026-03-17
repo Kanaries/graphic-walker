@@ -105,7 +105,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     useEffect(() => {
         ensureBuiltinRendererPlugins();
         props.rendererPlugins?.forEach((plugin) => {
-            registerRendererPlugin(plugin as any);
+            registerRendererPlugin(plugin);
         });
     }, [props.rendererPlugins]);
 

@@ -134,7 +134,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
             return;
         }
         rendererPlugins.forEach((plugin) => {
-            registerRendererPlugin(plugin as any);
+            registerRendererPlugin(plugin);
         });
     }, [rendererPlugins]);
 

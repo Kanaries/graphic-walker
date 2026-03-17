@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { IChart, IFilterFiledSimple, IViewField, IVisualConfig } from '../interfaces';
+import { IChart, IFilterFiledSimple, IFilterRule, IViewField, IVisualConfig } from '../interfaces';
 import { fillChart } from '../models/visSpecHistory';
 
 type markType =
@@ -331,12 +331,19 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
         });
     }
     const filterFields = Array.from(rules.values()).map(({ field, rule, value }): IFilterFiledSimple => {
+        const nextRule: IFilterRule =
+            rule === 'range'
+                ? {
+                      type: 'range',
+                      value: [value[0] as number | null, value[1] as number | null],
+                  }
+                : {
+                      type: rule,
+                      value,
+                  };
         return {
             fid: field,
-            rule: {
-                type: rule,
-                value: value as any,
-            },
+            rule: nextRule,
         };
     });
     const results = encodings.flatMap(({ name, value }) => (isSupportedChannel(name) ? [encodingToDimension(name, value, dict)] : []));

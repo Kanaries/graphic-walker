@@ -44,6 +44,14 @@ function getFieldType(field: IField): 'quantitative' | 'nominal' | 'ordinal' | '
     return 'nominal';
 }
 
+const SUPPORTED_AGGS = new Set(['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev']);
+function getAggregateOp(field: IField, defaultAggregated: boolean): string | undefined {
+    if (field.analyticType !== 'measure' || !defaultAggregated) {
+        return undefined;
+    }
+    return field.aggName && SUPPORTED_AGGS.has(field.aggName) ? field.aggName : undefined;
+}
+
 function getSingleView(xField: IField, yField: IField, color: IField, opacity: IField, size: IField, row: IField, col: IField, defaultAggregated: boolean, geomType: string) {
     return {
         mark: geomType,
@@ -51,18 +59,12 @@ function getSingleView(xField: IField, yField: IField, color: IField, opacity: I
             x: {
                 field: xField.fid,
                 type: getFieldType(xField),
-                aggregate:
-                    xField.analyticType === 'measure' &&
-                    defaultAggregated &&
-                    (xField.aggName as any),
+                aggregate: getAggregateOp(xField, defaultAggregated),
             },
             y: {
                 field: yField.fid,
                 type: getFieldType(yField),
-                aggregate:
-                    yField.analyticType === 'measure' &&
-                    defaultAggregated &&
-                    (yField.aggName as any),
+                aggregate: getAggregateOp(yField, defaultAggregated),
             },
             row: row !== NULL_FIELD ? {
                 field: row.fid,

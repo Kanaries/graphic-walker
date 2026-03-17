@@ -579,7 +579,10 @@ export const at: (data: VisSpecWithHistory, cursor: number) => IChart = atWith(r
 export { freeze };
 
 export const performers = Object.fromEntries(
-    (Object.keys(Methods) as (keyof typeof Methods)[]).map((k) => [k, (data: any, ...args: any[]) => perform(data, [Methods[k], ...args] as any)])
+    (Object.keys(Methods) as (keyof typeof Methods)[]).map((k) => [
+        k,
+        (data: VisSpecWithHistory, ...args: PropsMap[(typeof Methods)[typeof k]]) => perform(data, [Methods[k], ...args] as VisAction),
+    ])
 ) as unknown as {
     [K in keyof typeof Methods]: (data: VisSpecWithHistory, ...args: PropsMap[(typeof Methods)[K]]) => VisSpecWithHistory;
 };
