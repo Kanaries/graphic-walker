@@ -51,8 +51,6 @@
     "@headlessui/react": "1.7.12",
     "@heroicons/react": "^2.2.0",
     "@kanaries/react-beautiful-dnd": "^0.1.1",
-    "@kanaries/graphic-walker-renderer-echarts": "0.1.0",
-    "@kanaries/graphic-walker-renderer-observable-plot": "0.1.0",
     "@kanaries/web-data-loader": "^0.1.7",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",

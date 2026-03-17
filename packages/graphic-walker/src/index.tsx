@@ -1,9 +1,6 @@
-import { autoRegisterRendererPlugins, ensureBuiltinRendererPlugins } from './renderer/plugins';
-
-declare const require: (id: string) => any;
+import { ensureBuiltinRendererPlugins } from './renderer/plugins';
 
 ensureBuiltinRendererPlugins();
-autoRegisterRendererPlugins();
 
 export * from './root';
 export { default as PureRenderer } from './renderer/pureRenderer';
@@ -29,13 +26,3 @@ export {
     registerRendererAlias,
     resolveRendererId,
 } from './renderer/plugins';
-
-export function createObservablePlotPlugin() {
-    const mod = require('@kanaries/graphic-walker-renderer-observable-plot');
-    return mod.createObservablePlotPlugin();
-}
-
-export function createEChartsPlugin() {
-    const mod = require('@kanaries/graphic-walker-renderer-echarts');
-    return mod.createEChartsPlugin();
-}

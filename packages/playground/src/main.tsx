@@ -1,5 +1,7 @@
 import { inject } from '@vercel/analytics';
 import { embedGraphicWalker } from '@kanaries/graphic-walker';
+import { createObservablePlotPlugin } from '@kanaries/graphic-walker-renderer-observable-plot';
+import { createEChartsPlugin } from '@kanaries/graphic-walker-renderer-echarts';
 import './index.css';
 
 if (!import.meta.env.DEV) {
@@ -17,6 +19,7 @@ embedGraphicWalker(document.getElementById('root') as HTMLElement, {
     ],
     style: {
         flex: 1,
-        minHeight: 0
-    }
+        minHeight: 0,
+    },
+    rendererPlugins: [createObservablePlotPlugin(), createEChartsPlugin()],
 });

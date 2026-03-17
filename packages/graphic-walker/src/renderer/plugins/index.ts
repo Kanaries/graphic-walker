@@ -9,4 +9,3 @@ export {
     listRendererAliases,
 } from './registry';
 export { ensureBuiltinRendererPlugins } from './builtin';
-export { autoRegisterRendererPlugins } from './autoRegister';

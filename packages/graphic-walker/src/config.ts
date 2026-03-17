@@ -1,4 +1,4 @@
-import { DraggableFieldState, IAggregator, ICoordMode, IEmbedMenuItem, IStackMode, IVisualConfig, RendererId } from './interfaces';
+import { DraggableFieldState, IAggregator, ICoordMode, IEmbedMenuItem, IStackMode, IVisualConfig } from './interfaces';
 
 const GEOM_TYPES: Record<ICoordMode, string[]> = {
     generic: ['auto', 'bar', 'line', 'area', 'trail', 'point', 'circle', 'tick', 'rect', 'arc', 'text', 'boxplot', 'table'],
@@ -34,8 +34,6 @@ const AGGREGATOR_LIST: IAggregator[] = ['sum', 'mean', 'median', 'count', 'min',
 
 const EMBEDED_MENU_LIST: IEmbedMenuItem[] = ['data_interpretation', 'data_view'];
 
-const RENDERER_TYPES: RendererId[] = ['vega-lite', 'observable-plot', 'plugin:echarts'];
-
 export const GLOBAL_CONFIG = {
     AGGREGATOR_LIST,
     CHART_LAYOUT_TYPE,
@@ -48,7 +46,6 @@ export const GLOBAL_CONFIG = {
     POSITION_CHANNEL_CONFIG_LIST,
     NON_POSITION_CHANNEL_CONFIG_LIST,
     EMBEDED_MENU_LIST,
-    RENDERER_TYPES,
     PAINT_MAP_SIZE: 128,
     PAINT_SIZE_FACTOR: 4,
     PAINT_MIN_BRUSH_SIZE: 1,

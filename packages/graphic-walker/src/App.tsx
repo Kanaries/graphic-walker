@@ -54,6 +54,7 @@ import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
+import { ensureBuiltinRendererPlugins, registerRendererPlugin } from './renderer/plugins';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -100,6 +101,13 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+
+    useEffect(() => {
+        ensureBuiltinRendererPlugins();
+        props.rendererPlugins?.forEach((plugin) => {
+            registerRendererPlugin(plugin as any);
+        });
+    }, [props.rendererPlugins]);
 
     useEffect(() => {
         if (geographicData) {

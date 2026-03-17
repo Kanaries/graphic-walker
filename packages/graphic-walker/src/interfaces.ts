@@ -23,7 +23,7 @@ export interface IRow {
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
-export type LegacyRendererId = 'vega-lite' | 'observable-plot';
+export type LegacyRendererId = 'vega-lite';
 export type RendererId = LegacyRendererId | string;
 export interface IRendererPlugin {
     id: string;

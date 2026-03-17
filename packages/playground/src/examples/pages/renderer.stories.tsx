@@ -26,7 +26,7 @@ export default function GraphicWalkerComponent() {
         <div className="space-y-2">
             <select value={renderer} onChange={(e) => setRenderer(e.target.value as RendererId)}>
                 <option value="vega-lite">VegaLite</option>
-                <option value="observable-plot">Observable Plot</option>
+                <option value="plugin:observable-plot">Observable Plot</option>
                 <option value="plugin:echarts">ECharts</option>
             </select>
             <GraphicRenderer

@@ -20,6 +20,7 @@ import Combobox from '../dropdownSelect/combobox';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { vegaThemeContext } from '../../store/theme';
 import { ColorPickerComponent } from './color-picker';
+import { ensureBuiltinRendererPlugins, listRendererPlugins, resolveRendererId } from '../../renderer/plugins';
 
 function useDomainScale() {
     const [enableMinDomain, setEnableMinDomain] = useState(false);
@@ -145,7 +146,8 @@ const VisualConfigPanel: React.FC = () => {
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
-    const [renderer, setRenderer] = useState<RendererId>(layout.renderer ?? 'vega-lite');
+    const [renderer, setRenderer] = useState<RendererId>(resolveRendererId(layout.renderer ?? 'vega-lite'));
+    const [rendererOptions, setRendererOptions] = useState<Array<{ value: string; label: string }>>([]);
     const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
@@ -172,9 +174,16 @@ const VisualConfigPanel: React.FC = () => {
     const scalesSet = new Set(enabledScales);
 
     useEffect(() => {
+        ensureBuiltinRendererPlugins();
+        const options = listRendererPlugins().map((plugin) => ({
+            value: plugin.id,
+            label: plugin.displayName,
+        }));
+        const resolvedRenderer = resolveRendererId(layout.renderer ?? 'vega-lite');
+        setRendererOptions(options);
         setZeroScale(layout.zeroScale);
         setSvg(layout.useSvg ?? false);
-        setRenderer(layout.renderer ?? 'vega-lite');
+        setRenderer(resolvedRenderer);
         setBackground(
             extractRGBA(
                 {
@@ -212,7 +221,7 @@ const VisualConfigPanel: React.FC = () => {
         setGeoMapTileUrl(layout.geoMapTileUrl);
         setDisplayOffset(config.timezoneDisplayOffset);
         setDisplayOffsetEdited(false);
-    }, [showVisualConfigPanel, vizThemeConfig]);
+    }, [showVisualConfigPanel, vizThemeConfig, layout.renderer]);
 
     return (
         <Dialog
@@ -576,33 +585,27 @@ const VisualConfigPanel: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <hr />
-                                            
-                                            <div className='p-4'>
-                                                <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <label className="text-xs font-medium leading-6">Renderer</label>
-                                                        <p className="text-xs text-gray-500">Choose chart renderer plugin</p>
+                                            {rendererOptions.length > 1 && (
+                                                <>
+                                                    <hr />
+                                                    
+                                                    <div className='p-4'>
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <label className="text-xs font-medium leading-6">Renderer</label>
+                                                                <p className="text-xs text-gray-500">Choose chart renderer plugin</p>
+                                                            </div>
+                                                            <Combobox
+                                                                className="w-40 h-fit"
+                                                                popClassName="w-40"
+                                                                selectedKey={renderer}
+                                                                onSelect={(value) => setRenderer(value as RendererId)}
+                                                                options={rendererOptions}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <Combobox
-                                                        className="w-40 h-fit"
-                                                        popClassName="w-40"
-                                                        selectedKey={renderer}
-                                                        onSelect={(value) => setRenderer(value as RendererId)}
-                                                        options={GLOBAL_CONFIG.RENDERER_TYPES.map((type) => ({
-                                                            value: type,
-                                                            label:
-                                                                type === 'vega-lite'
-                                                                    ? 'VegaLite'
-                                                                    : type === 'observable-plot'
-                                                                    ? 'Observable Plot'
-                                                                    : type === 'plugin:echarts'
-                                                                    ? 'ECharts'
-                                                                    : type,
-                                                        }))}
-                                                    />
-                                                </div>
-                                            </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 

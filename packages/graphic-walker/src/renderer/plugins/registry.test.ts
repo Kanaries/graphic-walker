@@ -24,9 +24,9 @@ describe('renderer plugin registry', () => {
         expect(getRendererPlugin(plugin.id)).toBeUndefined();
     });
 
-    test('legacy renderer alias resolution', () => {
+    test('renderer alias resolution', () => {
         expect(resolveRendererId('vega-lite')).toBe('builtin:vega');
-        expect(resolveRendererId('observable-plot')).toBe('plugin:observable-plot');
-        expect(resolveRendererId('plugin:echarts')).toBe('plugin:echarts');
+        expect(resolveRendererId('plugin:test')).toBe('plugin:test');
+        expect(resolveRendererId('observable-plot')).toBe('observable-plot');
     });
 });

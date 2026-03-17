@@ -4,8 +4,6 @@ const plugins = new Map<string, RendererPlugin>();
 
 const rendererAliases = new Map<string, string>([
     ['vega-lite', 'builtin:vega'],
-    ['observable-plot', 'plugin:observable-plot'],
-    ['echarts', 'plugin:echarts'],
 ]);
 
 export function resolveRendererId(rendererId?: string): string {
