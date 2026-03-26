@@ -9,13 +9,17 @@ const ACTION_BUTTON_STYLE: React.CSSProperties = {
     borderRadius: 999,
     background: "rgba(255, 255, 255, 0.78)",
     color: "#0f172a",
-    padding: "8px 12px",
-    fontSize: 12,
-    fontWeight: 600,
-    letterSpacing: "0.02em",
+    width: 38,
+    height: 38,
+    padding: 0,
     backdropFilter: "blur(12px)",
     boxShadow: "0 14px 32px rgba(15, 23, 42, 0.14)",
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0.08,
+    transition: "opacity 160ms ease, transform 160ms ease, background-color 160ms ease",
 };
 
 const ACTION_MENU_STYLE: React.CSSProperties = {
@@ -117,6 +121,7 @@ type EChartsActionMenuProps = {
 export function EChartsActionMenu(props: EChartsActionMenuProps) {
     const actionsRef = useRef<HTMLDivElement | null>(null);
     const [actionsOpen, setActionsOpen] = useState(false);
+    const [buttonHovered, setButtonHovered] = useState(false);
     const editorUrl = useMemo(() => {
         try {
             return buildEditorUrl(props.optionText);
@@ -131,8 +136,11 @@ export function EChartsActionMenu(props: EChartsActionMenuProps) {
             return;
         }
 
-        function handlePointerDown(event: MouseEvent) {
-            if (!actionsRef.current?.contains(event.target as Node)) {
+        function handleDocumentClick(event: MouseEvent) {
+            const container = actionsRef.current;
+            const eventPath = typeof event.composedPath === "function" ? event.composedPath() : [];
+            const clickedInside = container ? eventPath.includes(container) || container.contains(event.target as Node | null) : false;
+            if (!clickedInside) {
                 setActionsOpen(false);
             }
         }
@@ -143,10 +151,10 @@ export function EChartsActionMenu(props: EChartsActionMenuProps) {
             }
         }
 
-        window.addEventListener("mousedown", handlePointerDown);
+        window.addEventListener("click", handleDocumentClick);
         window.addEventListener("keydown", handleKeyDown);
         return () => {
-            window.removeEventListener("mousedown", handlePointerDown);
+            window.removeEventListener("click", handleDocumentClick);
             window.removeEventListener("keydown", handleKeyDown);
         };
     }, [actionsOpen]);
@@ -163,10 +171,42 @@ export function EChartsActionMenu(props: EChartsActionMenuProps) {
         setActionsOpen(false);
     }
 
+    const actionButtonStyle = {
+        ...ACTION_BUTTON_STYLE,
+        opacity: actionsOpen || buttonHovered ? 1 : ACTION_BUTTON_STYLE.opacity,
+        background: actionsOpen || buttonHovered ? "rgba(255, 255, 255, 0.94)" : ACTION_BUTTON_STYLE.background,
+        transform: actionsOpen || buttonHovered ? "translateY(-1px)" : "none",
+    } satisfies React.CSSProperties;
+
     return (
         <div ref={actionsRef}>
-            <button type="button" aria-haspopup="menu" aria-expanded={actionsOpen} style={ACTION_BUTTON_STYLE} onClick={() => setActionsOpen(value => !value)}>
-                Actions
+            <button
+                type="button"
+                aria-label="Actions"
+                aria-haspopup="menu"
+                aria-expanded={actionsOpen}
+                style={actionButtonStyle}
+                onClick={() => setActionsOpen(value => !value)}
+                onMouseEnter={() => setButtonHovered(true)}
+                onMouseLeave={() => setButtonHovered(false)}
+                onFocus={() => setButtonHovered(true)}
+                onBlur={() => setButtonHovered(false)}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    style={{ width: 16, height: 16 }}
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z"
+                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.867 19.125h.008v.008h-.008v-.008Z" />
+                </svg>
             </button>
             {actionsOpen ? (
                 <div role="menu" aria-label="ECharts actions" style={ACTION_MENU_STYLE}>

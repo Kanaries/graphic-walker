@@ -161,8 +161,8 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                     yAxisIndex: cellIndex,
                     encode: { x: xField.key, y: yField.key },
                     renderItem(_params: any, api: any) {
-                        const x = Number(api.value(0));
-                        const y = Number(api.value(1));
+                        const x = Number(api.value(xField.key));
+                        const y = Number(api.value(yField.key));
                         if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
                         const bottom = api.coord([x, 0]);
                         const top = api.coord([x, y]);
