@@ -10,23 +10,22 @@ export function createSeriesByGeom(params: {
     yAxisIndex?: number;
     symbol?: string;
     stack?: string;
-    data?: any[];
 }) {
-    const { geomType, xField, yField, valueField, textField, datasetIndex, name, xAxisIndex = 0, yAxisIndex = 0, symbol, stack, data } = params;
+    const { geomType, xField, yField, valueField, textField, datasetIndex, name, xAxisIndex = 0, yAxisIndex = 0, symbol, stack } = params;
     const shared = { name, xAxisIndex, yAxisIndex };
-    const datasetBinding = data ? {} : { datasetIndex };
+    const datasetBinding = { datasetIndex };
 
     if (geomType === "line") {
-        return { ...shared, ...datasetBinding, type: "line", showSymbol: false, data, encode: { x: xField, y: yField } };
+        return { ...shared, ...datasetBinding, type: "line", showSymbol: false, encode: { x: xField, y: yField } };
     }
     if (geomType === "area") {
-        return { ...shared, ...datasetBinding, type: "line", areaStyle: {}, stack, showSymbol: false, data, encode: { x: xField, y: yField } };
+        return { ...shared, ...datasetBinding, type: "line", areaStyle: {}, stack, showSymbol: false, encode: { x: xField, y: yField } };
     }
     if (geomType === "point" || geomType === "circle") {
-        return { ...shared, ...datasetBinding, type: "scatter", symbol: symbol ?? (geomType === "circle" ? "circle" : "emptyCircle"), data, encode: { x: xField, y: yField } };
+        return { ...shared, ...datasetBinding, type: "scatter", symbol: symbol ?? (geomType === "circle" ? "circle" : "emptyCircle"), encode: { x: xField, y: yField } };
     }
     if (geomType === "tick") {
-        return { ...shared, ...datasetBinding, type: "scatter", symbol: symbol ?? "rect", symbolSize: 10, data, encode: { x: xField, y: yField } };
+        return { ...shared, ...datasetBinding, type: "scatter", symbol: symbol ?? "rect", symbolSize: 10, encode: { x: xField, y: yField } };
     }
     if (geomType === "text") {
         return {
@@ -35,7 +34,6 @@ export function createSeriesByGeom(params: {
             type: "scatter",
             symbol: symbol ?? "circle",
             symbolSize: 8,
-            data,
             label: {
                 show: true,
                 position: "top",
@@ -53,13 +51,14 @@ export function createSeriesByGeom(params: {
     if (geomType === "rect") {
         return {
             ...shared,
+            ...datasetBinding,
             type: "heatmap",
             coordinateSystem: "cartesian2d",
-            data,
             itemStyle: {
                 borderColor: "rgba(255,255,255,0)",
                 borderWidth: 0,
             },
+            encode: { x: xField, y: yField, value: valueField },
         };
     }
     if (geomType === "boxplot") {
@@ -74,7 +73,6 @@ export function createSeriesByGeom(params: {
         ...shared,
         ...datasetBinding,
         type: "bar",
-        data,
         stack,
         barGap: stack ? "0%" : "-100%",
         barCategoryGap: stack ? undefined : "18%",

@@ -1,7 +1,10 @@
 import { buildDiscreteColorLegendGraphic, buildDiscreteShapeLegendGraphic, buildOpacityLegendGraphic, buildSizeLegendGraphic, createXAxisOptions, createYAxisOptions, getDiscreteLegendBlockHeight, getQuantitativeLegendBlockHeight, gridCell } from "./legends";
 import { createSeriesByGeom } from "./series";
 import type { EChartsSeries, FacetCell } from "./types";
-import { axisTypeForField, createDatasetTransforms, createTooltip, isScatterLikeGeom, isSyntheticMeasureFacetField, niceCeil, parsePercent, scaleRange, symbolForOrderedShape } from "./utils";
+import { axisTypeForField, createTooltip, isScatterLikeGeom, isSyntheticMeasureFacetField, niceCeil, parsePercent, symbolForOrderedShape } from "./utils";
+
+const RECT_X_INDEX_FIELD = "__gw_rect_x_index__";
+const RECT_Y_INDEX_FIELD = "__gw_rect_y_index__";
 
 function aboveGridTop(grid: Record<string, any>, offsetPercent = 2.8) {
     return `${Math.max(0.8, parsePercent(grid.top) - offsetPercent)}%`;
@@ -115,7 +118,7 @@ function appendSingleFacetLabel(params: { facetLabels: Array<Record<string, any>
 
 function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionContext").createOptionContext>; datasets: Array<Record<string, any>>; series: EChartsSeries[]; cell: FacetCell; cellIndex: number; xIndexMap: Map<string, number>; yIndexMap: Map<string, number>; }) {
     const { state, datasets, series, cell, cellIndex, xIndexMap, yIndexMap } = params;
-    const { props, sortedSource, rowFacetBinding, colFacetBinding, useDiscreteColor, useDiscreteShape, colorField, shapeField, colorValues, shapeValues, geomType, categoryPalette, defaultColor, xField, yField, sizeField, opacityField, textField, xValues, yValues, sizeMin, sizeMax, opacityMin, opacityMax } = state;
+    const { props, sortedSource, rowFacetBinding, colFacetBinding, useDiscreteColor, useDiscreteShape, colorField, shapeField, colorValues, shapeValues, geomType, categoryPalette, defaultColor, xField, yField, sizeField, opacityField, textField } = state;
 
     colorValues.forEach((colorValue) => {
         shapeValues.forEach((shapeValue) => {
@@ -125,12 +128,7 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
             if (useDiscreteColor && colorField.key && colorValue !== null) filters.push({ field: colorField.key, value: colorValue });
             if (useDiscreteShape && shapeField.key && shapeValue !== null) filters.push({ field: shapeField.key, value: shapeValue });
 
-            const datasetIndex = filters.length > 0 ? datasets.length : 0;
             const filteredRows = filters.length > 0 ? sortedSource.filter((row) => filters.every((filter) => row[filter.field] === filter.value)) : sortedSource;
-            if (filters.length > 0) {
-                datasets.push({ fromDatasetIndex: 0, transform: createDatasetTransforms(filters) });
-            }
-
             const resolvedMeasureForRect = colorField.key || sizeField.key || opacityField.key || yField.key;
             const seriesNameParts = [];
             if (useDiscreteColor && colorValue !== null) seriesNameParts.push(`${colorValue}`);
@@ -139,45 +137,29 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
             const seriesColor = useDiscreteColor && colorValue !== null ? categoryPalette[Math.max(0, colorValues.findIndex((item) => item === colorValue)) % Math.max(1, categoryPalette.length)] : defaultColor;
             const xAxisType = axisTypeForField(xField.field);
             const yAxisType = axisTypeForField(yField.field);
-            const continuousScatterColor = Boolean(colorField.key && !useDiscreteColor && isScatterLikeGeom(geomType) && geomType !== "rect");
+            const needsDerivedDataset = geomType === "rect";
+            const datasetIndex = !needsDerivedDataset && filters.length === 0 ? 0 : datasets.length;
 
-            const scatterData = isScatterLikeGeom(geomType) && geomType !== "rect" && xField.key && yField.key ? filteredRows.map((row) => {
-                const datum: Record<string, any> = {
-                    value: [
-                        row[xField.key as string],
-                        row[yField.key as string],
-                        continuousScatterColor ? Number(row[colorField.key as string]) : undefined,
-                        sizeField.key ? Number(row[sizeField.key as string]) : undefined,
-                        opacityField.key ? Number(row[opacityField.key as string]) : undefined,
-                    ],
-                };
-                if ((geomType === "point" || geomType === "circle") && sizeField.key) {
-                    datum.symbolSize = geomType === "point" ? scaleRange(Number(row[sizeField.key as string]), sizeMin, sizeMax, 6, 20) : scaleRange(Number(row[sizeField.key as string]), sizeMin, sizeMax, 5, 18);
-                }
-                if ((geomType === "point" || geomType === "circle") && opacityField.key) {
-                    datum.itemStyle = { opacity: scaleRange(Number(row[opacityField.key as string]), opacityMin, opacityMax, 0.18, 1) };
-                }
-                return datum;
-            }) : undefined;
-
-            const barCategoryData = geomType === "bar" && !useDiscreteColor && !useDiscreteShape && xAxisType === "category" && yAxisType === "value" && xField.key && yField.key ? xValues.map((value) => {
-                const row = filteredRows.find((item) => item[xField.key as string] === value);
-                return row ? Number(row[yField.key as string]) : "-";
-            }) : undefined;
-            const barHorizontalData = geomType === "bar" && !useDiscreteColor && !useDiscreteShape && xAxisType === "value" && yAxisType === "category" && xField.key && yField.key ? yValues.map((value) => {
-                const row = filteredRows.find((item) => item[yField.key as string] === value);
-                return row ? Number(row[xField.key as string]) : "-";
-            }) : undefined;
-            const lineLikeData = (geomType === "line" || geomType === "area") && xField.key && yField.key ? filteredRows.map((row) => [row[xField.key as string], Number(row[yField.key as string])]) : undefined;
-            const explicitCartesianData = !scatterData && !barCategoryData && !barHorizontalData && !lineLikeData && geomType !== "rect" && xField.key && yField.key ? filteredRows.map((row) => ({ ...row })) : undefined;
+            if (datasetIndex !== 0) {
+                datasets.push({
+                    source: geomType === "rect"
+                        ? filteredRows.map((row) => ({
+                              ...row,
+                              [RECT_X_INDEX_FIELD]: xIndexMap.get(String(row[xField.key as string])) ?? 0,
+                              [RECT_Y_INDEX_FIELD]: yIndexMap.get(String(row[yField.key as string])) ?? 0,
+                          }))
+                        : filteredRows.map((row) => ({ ...row })),
+                });
+            }
 
             if (geomType === "bar" && !useDiscreteColor && !useDiscreteShape && xAxisType === "value" && yAxisType === "value" && xField.key && yField.key) {
                 series.push({
                     name: "default",
                     type: "custom",
+                    datasetIndex,
                     xAxisIndex: cellIndex,
                     yAxisIndex: cellIndex,
-                    data: filteredRows.map((row) => [Number(row[xField.key as string]), Number(row[yField.key as string])]),
+                    encode: { x: xField.key, y: yField.key },
                     renderItem(_params: any, api: any) {
                         const x = Number(api.value(0));
                         const y = Number(api.value(1));
@@ -195,8 +177,8 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
             const preferFilledPointSymbol = geomType === "point" && !useDiscreteShape && !useHollowDiscretePoint && !useHollowSizedPoint && Boolean(opacityField.key);
             const nextSeries: Record<string, any> = createSeriesByGeom({
                 geomType,
-                xField: xField.key,
-                yField: yField.key,
+                xField: geomType === "rect" ? RECT_X_INDEX_FIELD : xField.key,
+                yField: geomType === "rect" ? RECT_Y_INDEX_FIELD : yField.key,
                 valueField: resolvedMeasureForRect,
                 textField: textField.key,
                 datasetIndex,
@@ -205,10 +187,8 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                 yAxisIndex: cellIndex,
                 symbol: useDiscreteShape && shapeValue !== null ? symbolForOrderedShape(shapeValue, shapeValues) : useHollowDiscretePoint || useHollowSizedPoint ? "circle" : preferFilledPointSymbol ? "circle" : undefined,
                 stack,
-                data: scatterData ? scatterData : barCategoryData ? barCategoryData : barHorizontalData ? barHorizontalData : lineLikeData ? lineLikeData : explicitCartesianData ? explicitCartesianData : geomType === "rect" ? filteredRows.map((row) => [xIndexMap.get(String(row[xField.key as string])) ?? 0, yIndexMap.get(String(row[yField.key as string])) ?? 0, row[resolvedMeasureForRect as string]]) : undefined,
             });
             if ((geomType === "point" || geomType === "circle") && seriesColor) {
-                if (scatterData) delete nextSeries.encode;
                 nextSeries.symbolSize = sizeField.key ? undefined : 8;
                 nextSeries.itemStyle = {
                     ...(nextSeries.itemStyle ?? {}),
@@ -217,7 +197,6 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                 };
                 nextSeries.emphasis = { disabled: true };
             }
-            if (barCategoryData || barHorizontalData || lineLikeData) delete nextSeries.encode;
             series.push(nextSeries);
         });
     });
@@ -275,7 +254,7 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
         const continuousColorRange = geomType === "rect" ? vegaConfig.range?.heatmap || vegaConfig.range?.ramp || continuousScale?.range || vegaConfig.range?.category : continuousScale?.range || vegaConfig.range?.ramp || vegaConfig.range?.heatmap || vegaConfig.range?.category;
         visualMap.push({
             type: "continuous",
-            dimension: geomType === "rect" ? 2 : isScatterLikeGeom(geomType) ? 2 : colorField.key,
+            dimension: colorField.key,
             seriesIndex: seriesIndexes,
             min: numericValues.length ? Math.min(...numericValues) : undefined,
             max: numericValues.length ? Math.max(...numericValues) : undefined,
@@ -293,10 +272,14 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
             formatter: (value: number) => Math.round(value).toLocaleString(),
         });
     }
-    if (opacityField.key && !isScatterLikeGeom(geomType)) {
+    if (opacityField.key && (geomType === "point" || geomType === "circle")) {
+        visualMap.push({ type: "continuous", dimension: opacityField.key, seriesIndex: seriesIndexes, inRange: { opacity: [0.18, 1] }, calculable: false, show: false });
+    } else if (opacityField.key && !isScatterLikeGeom(geomType)) {
         visualMap.push({ type: "continuous", dimension: opacityField.key, seriesIndex: seriesIndexes, inRange: { opacity: [0.2, 1] }, calculable: false, show: false });
     }
-    if (sizeField.key && isScatterLikeGeom(geomType) && !(xField.key && yField.key)) {
+    if (sizeField.key && (geomType === "point" || geomType === "circle")) {
+        visualMap.push({ type: "continuous", dimension: sizeField.key, seriesIndex: seriesIndexes, inRange: { symbolSize: [geomType === "point" ? 6 : 5, geomType === "point" ? 20 : 18] }, calculable: false, show: false });
+    } else if (sizeField.key && isScatterLikeGeom(geomType) && !(xField.key && yField.key)) {
         visualMap.push({ type: "continuous", dimension: sizeField.key, seriesIndex: seriesIndexes, inRange: { symbolSize: [6, 28] }, calculable: false, show: false });
     }
     return visualMap;

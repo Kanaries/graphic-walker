@@ -2,12 +2,17 @@ import React, { useEffect, useMemo, useRef } from "react";
 import * as echarts from "echarts";
 import type { RendererPlugin, RendererPluginProps } from "@kanaries/graphic-walker";
 
+import { EChartsActionMenu } from "./actionMenu";
 import { buildEChartsOption } from "./option";
 import { SUPPORTED_GEOMS } from "./utils";
 
 function EChartsView(props: RendererPluginProps) {
     const ref = useRef<HTMLDivElement | null>(null);
     const option = useMemo(() => buildEChartsOption(props), [props]);
+    const optionText = useMemo(
+        () => JSON.stringify(option ?? { renderer: "plugin:echarts", unsupported: true }, null, 2),
+        [option]
+    );
 
     useEffect(() => {
         props.onReportSpec?.(JSON.stringify(option ?? { renderer: "plugin:echarts", unsupported: true }, null, 2));
@@ -30,7 +35,12 @@ function EChartsView(props: RendererPluginProps) {
         };
     }, [option, props]);
 
-    return <div ref={ref} style={{ width: `${props.chartWidth}px`, height: `${props.chartHeight}px`, minHeight: 160 }} />;
+    return (
+        <div style={{ position: "relative", width: `${props.chartWidth}px`, height: `${props.chartHeight}px`, minHeight: 160 }}>
+            {props.layout.showActions && option ? <EChartsActionMenu optionText={optionText} /> : null}
+            <div ref={ref} style={{ width: `${props.chartWidth}px`, height: `${props.chartHeight}px`, minHeight: 160 }} />
+        </div>
+    );
 }
 
 export function createEChartsPlugin(): RendererPlugin {
