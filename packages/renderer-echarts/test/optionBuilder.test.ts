@@ -1,6 +1,40 @@
 import { buildEChartsOption } from '../src/index';
 
 describe('buildEChartsOption', () => {
+    function createBarProps(overrides: Partial<any> = {}) {
+        return {
+            name: 'test',
+            data: [
+                { category: 'A', value: 10 },
+                { category: 'B', value: 20 },
+            ],
+            draggableFieldState: {
+                dimensions: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                measures: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                columns: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                color: [],
+                opacity: [],
+                size: [],
+                shape: [],
+                radius: [],
+                theta: [],
+                longitude: [],
+                latitude: [],
+                geoId: [],
+                details: [],
+                filters: [],
+                text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['bar'], coordSystem: 'generic', limit: -1 },
+            layout: { showTableSummary: false, format: {}, resolve: {}, size: { mode: 'fixed', width: 320, height: 200 }, interactiveScale: false, stack: 'stack', showActions: false, zeroScale: true } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+            ...overrides,
+        } as any;
+    }
+
     test('returns option for bar chart', () => {
         const option = buildEChartsOption({
             name: 'test',
@@ -179,6 +213,176 @@ describe('buildEChartsOption', () => {
 
         expect(option).toBeTruthy();
         expect((option as any).visualMap.some((v: any) => v.dimension === 's' && v.inRange?.symbolSize)).toBe(true);
+        expect(typeof (option as any).series[0].symbolSize).toBe('function');
+    });
+
+    test('stacks bar series when details creates multiple rows per category', () => {
+        const option = buildEChartsOption(createBarProps({
+            data: [
+                { category: 'A', value: 10, prep: 'done' },
+                { category: 'A', value: 6, prep: 'none' },
+                { category: 'B', value: 14, prep: 'done' },
+                { category: 'B', value: 9, prep: 'none' },
+            ],
+            draggableFieldState: {
+                ...createBarProps().draggableFieldState,
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'prep', name: 'prep', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                details: [{ fid: 'prep', name: 'prep', semanticType: 'nominal', analyticType: 'dimension' } as any],
+            },
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(2);
+        expect((option as any).series.every((item: any) => item.stack === '0:stack')).toBe(true);
+    });
+
+    test('stacks bar series when opacity is mapped to a dimension', () => {
+        const option = buildEChartsOption(createBarProps({
+            data: [
+                { category: 'A', value: 10, opacityBand: 'low' },
+                { category: 'A', value: 6, opacityBand: 'high' },
+                { category: 'B', value: 14, opacityBand: 'low' },
+                { category: 'B', value: 9, opacityBand: 'high' },
+            ],
+            draggableFieldState: {
+                ...createBarProps().draggableFieldState,
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'opacityBand', name: 'opacityBand', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                opacity: [{ fid: 'opacityBand', name: 'opacityBand', semanticType: 'nominal', analyticType: 'dimension' } as any],
+            },
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(2);
+        expect((option as any).series.every((item: any) => item.stack === '0:stack')).toBe(true);
+        expect((option as any).series[0].itemStyle.opacity).not.toBe((option as any).series[1].itemStyle.opacity);
+    });
+
+    test('maps bar size to series width and keeps stacked series', () => {
+        const option = buildEChartsOption(createBarProps({
+            data: [
+                { category: 'A', value: 10, widthValue: 8 },
+                { category: 'A', value: 6, widthValue: 20 },
+                { category: 'B', value: 14, widthValue: 12 },
+                { category: 'B', value: 9, widthValue: 28 },
+            ],
+            draggableFieldState: {
+                ...createBarProps().draggableFieldState,
+                measures: [
+                    { fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any,
+                    { fid: 'widthValue', name: 'widthValue', semanticType: 'quantitative', analyticType: 'measure' } as any,
+                ],
+                size: [{ fid: 'widthValue', name: 'widthValue', semanticType: 'quantitative', analyticType: 'measure' } as any],
+            },
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(1);
+        expect((option as any).series[0].type).toBe('custom');
+        expect(Object.prototype.hasOwnProperty.call((option as any).series[0], 'data')).toBe(false);
+        const source = (option as any).dataset[(option as any).series[0].datasetIndex].source;
+        expect(source.every((row: any) => typeof row.__stack_start__ === 'number')).toBe(true);
+        expect(source.every((row: any) => typeof row.__stack_end__ === 'number')).toBe(true);
+        const ratios = source.map((row: any) => row.__bar_width_ratio__);
+        expect(new Set(ratios).size).toBeGreaterThan(1);
+    });
+
+    test('uses custom series dataset layout for discrete bar size groups', () => {
+        const option = buildEChartsOption(createBarProps({
+            data: [
+                { category: 'A', value: 10, sizeBand: 'small' },
+                { category: 'A', value: 6, sizeBand: 'large' },
+                { category: 'B', value: 14, sizeBand: 'small' },
+                { category: 'B', value: 9, sizeBand: 'large' },
+            ],
+            draggableFieldState: {
+                ...createBarProps().draggableFieldState,
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'sizeBand', name: 'sizeBand', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                size: [{ fid: 'sizeBand', name: 'sizeBand', semanticType: 'nominal', analyticType: 'dimension' } as any],
+            },
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(2);
+        expect((option as any).series.every((item: any) => item.type === 'custom')).toBe(true);
+        const datasetSources = (option as any).series.map((item: any) => (option as any).dataset[item.datasetIndex].source);
+        const ratios = datasetSources.flatMap((source: any[]) => source.map((row: any) => row.__bar_width_ratio__));
+        expect(new Set(ratios).size).toBeGreaterThan(1);
+        expect(datasetSources.flat().every((row: any) => typeof row.__stack_start__ === 'number' && typeof row.__stack_end__ === 'number')).toBe(true);
+    });
+
+    test('uses custom series dataset layout for transposed quantitative bar size', () => {
+        const option = buildEChartsOption({
+            data: [
+                { category: 'A', value: 10, widthValue: 8 },
+                { category: 'B', value: 14, widthValue: 20 },
+            ],
+            draggableFieldState: {
+                dimensions: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                measures: [
+                    { fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any,
+                    { fid: 'widthValue', name: 'widthValue', semanticType: 'quantitative', analyticType: 'measure' } as any,
+                ],
+                rows: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                columns: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                color: [], opacity: [],
+                size: [{ fid: 'widthValue', name: 'widthValue', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['bar'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {} } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(1);
+        expect((option as any).series[0].type).toBe('custom');
+        expect((option as any).series[0].encode).toEqual({ x: '__stack_end__', y: '__category_value__' });
+        const source = (option as any).dataset[(option as any).series[0].datasetIndex].source;
+        const ratios = source.map((row: any) => row.__bar_width_ratio__);
+        expect(new Set(ratios).size).toBeGreaterThan(1);
+    });
+
+    test('uses custom series dataset layout for transposed discrete bar size groups', () => {
+        const option = buildEChartsOption({
+            data: [
+                { category: 'A', series: 'small', value: 10 },
+                { category: 'A', series: 'large', value: 6 },
+                { category: 'B', series: 'small', value: 14 },
+                { category: 'B', series: 'large', value: 9 },
+            ],
+            draggableFieldState: {
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'series', name: 'series', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                measures: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                columns: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                color: [], opacity: [],
+                size: [{ fid: 'series', name: 'series', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['bar'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {} } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        expect((option as any).series.every((item: any) => item.type === 'custom')).toBe(true);
+        expect((option as any).series.every((item: any) => JSON.stringify(item.encode) === JSON.stringify({ x: '__stack_end__', y: '__category_value__' }))).toBe(true);
     });
 
     test('supports shape channel with different symbols', () => {
@@ -209,5 +413,92 @@ describe('buildEChartsOption', () => {
         expect(option).toBeTruthy();
         expect((option as any).series.length).toBe(2);
         expect((option as any).series[0].symbol).not.toBe((option as any).series[1].symbol);
+    });
+
+    test('uses horizontal categorical stack builder for transposed normalize bar charts', () => {
+        const option = buildEChartsOption({
+            data: [
+                { category: 'A', series: 'female', value: 10 },
+                { category: 'A', series: 'male', value: 30 },
+                { category: 'B', series: 'female', value: 20 },
+                { category: 'B', series: 'male', value: 20 },
+            ],
+            draggableFieldState: {
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'series', name: 'series', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                measures: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                columns: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                color: [{ fid: 'series', name: 'series', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                opacity: [], size: [], shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['bar'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {}, stack: 'normalize' } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        expect((option as any).xAxis.max).toBe(1);
+        expect((option as any).yAxis.inverse).toBe(true);
+        expect((option as any).series.every((item: any) => item.stack === 'stack')).toBe(true);
+    });
+
+    test('orders transposed line series by category axis', () => {
+        const option = buildEChartsOption({
+            data: [
+                { category: 'B', value: 20 },
+                { category: 'A', value: 10 },
+                { category: 'C', value: 30 },
+            ],
+            draggableFieldState: {
+                dimensions: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                measures: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                columns: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                color: [], opacity: [], size: [], shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['line'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {} } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        const source = (option as any).dataset[0].source;
+        expect(source.map((row: any) => row.category)).toEqual(['A', 'B', 'C']);
+        expect((option as any).yAxis[0].inverse).toBe(true);
+    });
+
+    test('renders transposed boxplot with value x-axis and category y-axis', () => {
+        const option = buildEChartsOption({
+            data: [
+                { gender: 'female', score: 70 },
+                { gender: 'female', score: 80 },
+                { gender: 'male', score: 60 },
+                { gender: 'male', score: 90 },
+            ],
+            draggableFieldState: {
+                dimensions: [{ fid: 'gender', name: 'gender', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                measures: [{ fid: 'score', name: 'score', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'gender', name: 'gender', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                columns: [{ fid: 'score', name: 'score', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                color: [], opacity: [], size: [], shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: false, geoms: ['boxplot'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {} } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        expect((option as any).xAxis.type).toBe('value');
+        expect((option as any).yAxis.type).toBe('category');
+        expect((option as any).series[0].encode).toEqual({ x: [1, 2, 3, 4, 5], y: 0 });
     });
 });

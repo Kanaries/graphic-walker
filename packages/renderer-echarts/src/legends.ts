@@ -64,8 +64,22 @@ export function formatLegendNumber(value: number) {
     return Number.isFinite(value) ? Math.round(value).toLocaleString() : "";
 }
 
+export function formatValueLabel(value: number, format?: string) {
+    if (!Number.isFinite(value)) {
+        return "";
+    }
+    if (format === ".2s") {
+        const abs = Math.abs(value);
+        if (abs >= 1000) {
+            const scaled = value / 1000;
+            return abs >= 10000 ? `${Math.round(scaled)}k` : `${scaled.toFixed(1)}k`;
+        }
+    }
+    return Math.round(value).toLocaleString();
+}
+
 export function getRightLegendLayout(chartWidth: number) {
-    const panelLeft = Math.max(chartWidth - 168, chartWidth * 0.8);
+    const panelLeft = Math.max(chartWidth - 152, chartWidth * 0.82);
     return {
         panelLeft,
         titleX: panelLeft,
@@ -149,11 +163,12 @@ export function buildOpacityLegendGraphic(params: {
     }
     values.forEach((value, index) => {
         const opacity = scaleRange(value, min, max, 0.18, 1);
+        const centerY = startY + index * 28;
         children.push({
             type: "circle",
             shape: {
                 cx: layout.markerX,
-                cy: startY + index * 28,
+                cy: centerY,
                 r: 5,
             },
             style: {
@@ -166,10 +181,11 @@ export function buildOpacityLegendGraphic(params: {
             type: "text",
             style: {
                 x: layout.labelX,
-                y: startY + index * 28 + 4,
+                y: centerY,
                 text: formatLegendNumber(value),
                 fill: "#333",
                 font: "12px sans-serif",
+                textVerticalAlign: "middle",
             },
         });
     });
@@ -186,8 +202,9 @@ export function buildSizeLegendGraphic(params: {
     outMax: number;
     startY?: number;
     filled?: boolean;
+    marker?: "circle" | "rect";
 }) {
-    const { title, min, max, chartWidth, chartHeight, outMin, outMax, startY: startYOverride, filled = false } = params;
+    const { title, min, max, chartWidth, chartHeight, outMin, outMax, startY: startYOverride, filled = false, marker = "circle" } = params;
     const layout = getRightLegendLayout(chartWidth);
     const startY = startYOverride ?? Math.max(68, chartHeight * 0.14);
     const values = buildLegendValues(min, max, 5);
@@ -205,27 +222,46 @@ export function buildSizeLegendGraphic(params: {
         });
     }
     values.forEach((value, index) => {
-        children.push({
-            type: "circle",
-            shape: {
-                cx: layout.markerX,
-                cy: startY + index * 30,
-                r: scaleRange(value, min, max, outMin / 2, outMax / 2),
-            },
-            style: {
-                stroke: filled ? "rgba(0,0,0,0)" : "#666",
-                fill: filled ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.75)",
-                lineWidth: 1.5,
-            },
-        });
+        const centerY = startY + index * 30;
+        const scaled = scaleRange(value, min, max, outMin, outMax);
+        children.push(marker === "rect"
+            ? {
+                  type: "rect",
+                  shape: {
+                      x: layout.markerX - scaled / 2,
+                      y: centerY - 8,
+                      width: scaled,
+                      height: 16,
+                      r: 1,
+                  },
+                  style: {
+                      stroke: filled ? "rgba(0,0,0,0)" : "#666",
+                      fill: filled ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.75)",
+                      lineWidth: 1.5,
+                  },
+              }
+            : {
+                  type: "circle",
+                  shape: {
+                      cx: layout.markerX,
+                      cy: centerY,
+                      r: scaled / 2,
+                  },
+                  style: {
+                      stroke: filled ? "rgba(0,0,0,0)" : "#666",
+                      fill: filled ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.75)",
+                      lineWidth: 1.5,
+                  },
+              });
         children.push({
             type: "text",
             style: {
                 x: layout.labelX,
-                y: startY + index * 30 + 4,
+                y: centerY,
                 text: formatLegendNumber(value),
                 fill: "#333",
                 font: "12px sans-serif",
+                textVerticalAlign: "middle",
             },
         });
     });
@@ -256,10 +292,10 @@ export function buildDiscreteColorLegendGraphic(params: {
         });
     }
     values.forEach((value, index) => {
-        const y = startY + 24 + index * 22;
+        const centerY = startY + 20 + index * 22;
         children.push({
             type: "circle",
-            shape: { cx: layout.markerX, cy: y - 4, r: 6 },
+            shape: { cx: layout.markerX, cy: centerY, r: 6 },
             style: {
                 fill: hollow ? "rgba(255,255,255,0)" : palette[index % Math.max(1, palette.length)],
                 stroke: hollow ? palette[index % Math.max(1, palette.length)] : undefined,
@@ -270,10 +306,11 @@ export function buildDiscreteColorLegendGraphic(params: {
             type: "text",
             style: {
                 x: layout.labelX,
-                y,
+                y: centerY,
                 text: String(value),
                 fill: "#333",
                 font: "12px sans-serif",
+                textVerticalAlign: "middle",
             },
         });
     });
@@ -303,30 +340,30 @@ export function buildDiscreteShapeLegendGraphic(params: {
         });
     }
     values.forEach((value, index) => {
-        const y = startY + 24 + index * 22;
+        const centerY = startY + 20 + index * 22;
         const symbol = symbolForOrderedShape(value, values);
         if (symbol === "rect" || symbol === "roundRect") {
             children.push({
                 type: "rect",
-                shape: { x: layout.markerX - 6, y: y - 10, width: 12, height: 12, r: symbol === "roundRect" ? 2 : 0 },
+                shape: { x: layout.markerX - 6, y: centerY - 6, width: 12, height: 12, r: symbol === "roundRect" ? 2 : 0 },
                 style: hollow ? { fill: "rgba(255,255,255,0)", stroke: "#666", lineWidth: 1.5 } : { fill: "#666" },
             });
         } else if (symbol === "triangle") {
             children.push({
                 type: "polygon",
-                shape: { points: [[layout.markerX, y - 12], [layout.markerX + 6, y - 2], [layout.markerX - 6, y - 2]] },
+                shape: { points: [[layout.markerX, centerY - 7], [layout.markerX + 6, centerY + 3], [layout.markerX - 6, centerY + 3]] },
                 style: hollow ? { fill: "rgba(255,255,255,0)", stroke: "#666", lineWidth: 1.5 } : { fill: "#666" },
             });
         } else if (symbol === "diamond") {
             children.push({
                 type: "polygon",
-                shape: { points: [[layout.markerX, y - 12], [layout.markerX + 6, y - 6], [layout.markerX, y], [layout.markerX - 6, y - 6]] },
+                shape: { points: [[layout.markerX, centerY - 6], [layout.markerX + 6, centerY], [layout.markerX, centerY + 6], [layout.markerX - 6, centerY]] },
                 style: hollow ? { fill: "rgba(255,255,255,0)", stroke: "#666", lineWidth: 1.5 } : { fill: "#666" },
             });
         } else {
             children.push({
                 type: "circle",
-                shape: { cx: layout.markerX, cy: y - 6, r: 6 },
+                shape: { cx: layout.markerX, cy: centerY, r: 6 },
                 style: hollow ? { fill: "rgba(255,255,255,0)", stroke: "#666", lineWidth: 1.5 } : { fill: "#666" },
             });
         }
@@ -334,11 +371,97 @@ export function buildDiscreteShapeLegendGraphic(params: {
             type: "text",
             style: {
                 x: layout.labelX,
-                y,
+                y: centerY,
                 text: String(value),
                 fill: "#333",
                 font: "12px sans-serif",
+                textVerticalAlign: "middle",
             },
+        });
+    });
+    return [{ type: "group", silent: true, children }];
+}
+
+export function buildDiscreteOpacityLegendGraphic(params: {
+    title?: string;
+    values: any[];
+    chartWidth: number;
+    startY: number;
+    filled?: boolean;
+    marker?: "circle" | "rect";
+}) {
+    const { title, values, chartWidth, startY, filled = false, marker = "circle" } = params;
+    const layout = getRightLegendLayout(chartWidth);
+    const children: Record<string, any>[] = [];
+    if (title) {
+        children.push({
+            type: "text",
+            style: { x: layout.titleX, y: startY, text: title, fill: "#222", font: "600 12px sans-serif" },
+        });
+    }
+    values.forEach((value, index) => {
+        const centerY = startY + 20 + index * 22;
+        const opacity = scaleRange(index, 0, Math.max(1, values.length - 1), 0.25, 1);
+        children.push(marker === "rect"
+            ? {
+                  type: "rect",
+                  shape: { x: layout.markerX - 6, y: centerY - 6, width: 12, height: 12, r: 1.5 },
+                  style: {
+                      fill: filled ? `rgba(0, 0, 0, ${opacity})` : "rgba(255,255,255,0)",
+                      stroke: `rgba(0, 0, 0, ${opacity})`,
+                      lineWidth: 1.5,
+                  },
+              }
+            : {
+                  type: "circle",
+                  shape: { cx: layout.markerX, cy: centerY, r: 6 },
+                  style: {
+                      fill: filled ? `rgba(0, 0, 0, ${opacity})` : "rgba(255,255,255,0)",
+                      stroke: `rgba(0, 0, 0, ${opacity})`,
+                      lineWidth: 1.5,
+                  },
+              });
+        children.push({
+            type: "text",
+            style: { x: layout.labelX, y: centerY, text: String(value), fill: "#333", font: "12px sans-serif", textVerticalAlign: "middle" },
+        });
+    });
+    return [{ type: "group", silent: true, children }];
+}
+
+export function buildDiscreteSizeLegendGraphic(params: {
+    title?: string;
+    values: any[];
+    chartWidth: number;
+    startY: number;
+    outMin: number;
+    outMax: number;
+    filled?: boolean;
+}) {
+    const { title, values, chartWidth, startY, outMin, outMax, filled = false } = params;
+    const layout = getRightLegendLayout(chartWidth);
+    const children: Record<string, any>[] = [];
+    if (title) {
+        children.push({
+            type: "text",
+            style: { x: layout.titleX, y: startY, text: title, fill: "#222", font: "600 12px sans-serif" },
+        });
+    }
+    values.forEach((value, index) => {
+        const centerY = startY + 20 + index * 22;
+        const radius = scaleRange(index, 0, Math.max(1, values.length - 1), outMin / 2, outMax / 2);
+        children.push({
+            type: "circle",
+            shape: { cx: layout.markerX, cy: centerY, r: radius },
+            style: {
+                stroke: filled ? "rgba(0,0,0,0)" : "#666",
+                fill: filled ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.75)",
+                lineWidth: 1.5,
+            },
+        });
+        children.push({
+            type: "text",
+            style: { x: layout.labelX, y: centerY, text: String(value), fill: "#333", font: "12px sans-serif", textVerticalAlign: "middle" },
         });
     });
     return [{ type: "group", silent: true, children }];

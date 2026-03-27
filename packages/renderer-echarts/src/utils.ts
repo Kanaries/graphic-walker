@@ -92,6 +92,8 @@ export function sortSourceData(
         rowFacet?: FieldBinding;
         colFacet?: FieldBinding;
         color?: FieldBinding;
+        opacity?: FieldBinding;
+        size?: FieldBinding;
         shape?: FieldBinding;
         x?: FieldBinding;
         y?: FieldBinding;
@@ -100,6 +102,8 @@ export function sortSourceData(
         rowFacet?: ValueOrder;
         colFacet?: ValueOrder;
         color?: ValueOrder;
+        opacity?: ValueOrder;
+        size?: ValueOrder;
         shape?: ValueOrder;
         x?: ValueOrder;
         y?: ValueOrder;
@@ -110,6 +114,8 @@ export function sortSourceData(
             [bindings.rowFacet, orders.rowFacet],
             [bindings.colFacet, orders.colFacet],
             [bindings.color, orders.color],
+            [bindings.opacity, orders.opacity],
+            [bindings.size, orders.size],
             [bindings.shape, orders.shape],
             [bindings.x, orders.x],
             [bindings.y, orders.y],
@@ -266,13 +272,26 @@ export function prepareCartesianState(props: RendererPluginProps): PreparedCarte
     };
 }
 
-export function createTooltip(fields: Array<{ key: string; title: string }>) {
+export function tooltipTriggerForGeom(geomType: string) {
+    return geomType === "line" || geomType === "area" ? "axis" : "item";
+}
+
+export function createTooltip(fields: Array<{ key: string; title: string }>, geomType?: string) {
     return {
-        trigger: "axis",
+        trigger: geomType ? tooltipTriggerForGeom(geomType) : "item",
+        axisPointer: geomType ? (tooltipTriggerForGeom(geomType) === "axis" ? { type: "line" } : undefined) : undefined,
         formatter(params: any) {
             const rows = Array.isArray(params) ? params : [params];
-            const data = rows[0]?.data ?? {};
-            return fields.map((field) => `${field.title}: ${data[field.key]}`).join("<br/>");
+            const sections = rows
+                .map((row) => {
+                    const data = row?.data ?? {};
+                    const lines = fields
+                        .map((field) => `${field.title}: ${data[field.key]}`)
+                        .filter((line) => !line.endsWith(": undefined"));
+                    return lines.join("<br/>");
+                })
+                .filter(Boolean);
+            return Array.from(new Set(sections)).join("<br/><br/>");
         },
     };
 }

@@ -4,6 +4,16 @@ import { buildDiscreteColorLegendGraphic } from "./legends";
 import type { FieldBinding } from "./types";
 import { orderedUniqueValues } from "./utils";
 
+function createDatasetSeries(params: {
+    rows: Array<Record<string, any>>;
+    series: Record<string, any>;
+}) {
+    return {
+        dataset: [{ source: params.rows }],
+        series: [{ datasetIndex: 0, ...params.series }],
+    };
+}
+
 export function buildMissingAxisOption(params: {
     props: RendererPluginProps;
     geomType: string;
@@ -21,6 +31,9 @@ export function buildMissingAxisOption(params: {
 
     if ((geomType === "point" || geomType === "circle") && !xField.key && !yField.key && colorField.key) {
         const colorDomain = orderedUniqueValues(props.data, colorField).filter((value) => value !== null);
+        const datasets = colorDomain.map((value) => ({
+            source: [{ __x: 0.5, __y: 0.5, __series_name: String(value) }],
+        }));
         return {
             animation: false,
             backgroundColor: props.vegaConfig.background,
@@ -36,10 +49,12 @@ export function buildMissingAxisOption(params: {
                 chartWidth: props.chartWidth,
                 startY: 36,
             }),
+            dataset: datasets,
             series: colorDomain.map((value, index) => ({
                 type: "scatter",
+                datasetIndex: index,
                 name: String(value),
-                data: [[0.5, 0.5]],
+                encode: { x: "__x", y: "__y" },
                 symbol: "circle",
                 symbolSize: 8,
                 itemStyle: { color: categoryPalette[index % Math.max(1, categoryPalette.length)] ?? defaultColor },
@@ -48,6 +63,7 @@ export function buildMissingAxisOption(params: {
     }
 
     if (xField.key) {
+        const xKey = xField.key as string;
         const xAxis = {
             type: geomType === "point" || geomType === "circle" ? "value" : "category",
             data: geomType === "point" || geomType === "circle" ? undefined : orderedUniqueValues(sourceData, xField),
@@ -65,6 +81,10 @@ export function buildMissingAxisOption(params: {
         };
 
         if (geomType === "bar") {
+            const rows = orderedUniqueValues(sourceData, xField).map((value) => ({
+                [xKey]: value,
+                __value: 1,
+            }));
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -72,10 +92,20 @@ export function buildMissingAxisOption(params: {
                 xAxis,
                 yAxis: { type: "value", min: 0, max: 1, show: false },
                 grid: { top: 24, right: 24, bottom: 64, left: 24, containLabel: true },
-                series: [{ type: "bar", data: orderedUniqueValues(sourceData, xField).map(() => 1) }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "bar",
+                        encode: { x: xKey, y: "__value" },
+                    },
+                }),
             };
         }
         if (geomType === "line") {
+            const rows = orderedUniqueValues(sourceData, xField).map((value) => ({
+                [xKey]: value,
+                __value: 0.5,
+            }));
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -83,10 +113,21 @@ export function buildMissingAxisOption(params: {
                 xAxis,
                 yAxis: { type: "value", min: 0, max: 1, show: false },
                 grid: { top: 24, right: 24, bottom: 72, left: 24, containLabel: true },
-                series: [{ type: "line", showSymbol: false, data: orderedUniqueValues(sourceData, xField).map(() => 0.5) }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "line",
+                        showSymbol: false,
+                        encode: { x: xKey, y: "__value" },
+                    },
+                }),
             };
         }
         if (geomType === "point" || geomType === "circle") {
+            const rows = sourceData.map((row) => ({
+                ...row,
+                __y: 0.5,
+            }));
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -100,18 +141,23 @@ export function buildMissingAxisOption(params: {
                 },
                 yAxis: { type: "value", min: 0, max: 1, show: false },
                 grid: { top: 24, right: 24, bottom: 98, left: 48, containLabel: true },
-                series: [{
-                    type: "scatter",
-                    symbol: geomType === "circle" ? "circle" : "emptyCircle",
-                    symbolSize: 6,
-                    data: sourceData.map((row) => [Number(row[xField.key as string]), 0.5]),
-                }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "scatter",
+                        symbol: geomType === "circle" ? "circle" : "emptyCircle",
+                        symbolSize: 6,
+                        encode: { x: xKey, y: "__y" },
+                    },
+                }),
             };
         }
     }
 
     if (yField.key) {
+        const yKey = yField.key as string;
         if (geomType === "bar") {
+            const rows = [{ __category: "", [yKey]: Number(props.data[0]?.[yKey] ?? 0) }];
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -125,11 +171,18 @@ export function buildMissingAxisOption(params: {
                     nameTextStyle: { padding: [0, 0, 8, 0], fontWeight: 600 },
                 },
                 grid: { top: 24, right: 24, bottom: 24, left: 56, containLabel: true },
-                series: [{ type: "bar", data: [Number(props.data[0]?.[yField.key] ?? 0)] }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "bar",
+                        encode: { x: "__category", y: yKey },
+                    },
+                }),
             };
         }
         if (geomType === "line") {
-            const value = Number(props.data[0]?.[yField.key] ?? 0);
+            const value = Number(props.data[0]?.[yKey] ?? 0);
+            const rows = [{ __x: 0, [yKey]: value }, { __x: 1, [yKey]: value }];
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -150,10 +203,22 @@ export function buildMissingAxisOption(params: {
                     },
                 },
                 grid: { top: 24, right: 24, bottom: 24, left: 84, containLabel: true },
-                series: [{ type: "line", showSymbol: false, lineStyle: { opacity: 0.08, width: 1 }, data: [[0, value], [1, value]] }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "line",
+                        showSymbol: false,
+                        lineStyle: { opacity: 0.08, width: 1 },
+                        encode: { x: "__x", y: yKey },
+                    },
+                }),
             };
         }
         if (geomType === "point" || geomType === "circle") {
+            const rows = sourceData.map((row) => ({
+                ...row,
+                __x: 0.5,
+            }));
             return {
                 animation: false,
                 backgroundColor: props.vegaConfig.background,
@@ -169,12 +234,15 @@ export function buildMissingAxisOption(params: {
                     splitNumber: 10,
                 },
                 grid: { top: 24, right: 24, bottom: 24, left: 56, containLabel: true },
-                series: [{
-                    type: "scatter",
-                    symbol: geomType === "circle" ? "circle" : "emptyCircle",
-                    symbolSize: 6,
-                    data: sourceData.map((row) => [0.5, Number(row[yField.key as string])]),
-                }],
+                ...createDatasetSeries({
+                    rows,
+                    series: {
+                        type: "scatter",
+                        symbol: geomType === "circle" ? "circle" : "emptyCircle",
+                        symbolSize: 6,
+                        encode: { x: "__x", y: yKey },
+                    },
+                }),
             };
         }
     }

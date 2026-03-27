@@ -1,6 +1,10 @@
 import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
-import { niceCeil } from "./utils";
+import { createTooltip, niceCeil } from "./utils";
+
+function createDatasetEntry(rows: Array<Record<string, any>>) {
+    return { source: rows };
+}
 
 export function buildCategoricalStackSeries(params: {
     rows: RendererPluginProps["data"];
@@ -16,11 +20,14 @@ export function buildCategoricalStackSeries(params: {
     background?: string;
     palette?: string[];
     zeroScale?: boolean;
+    orientation?: "vertical" | "horizontal";
 }) {
-    const { rows, xKey, yKey, xValues, colorKey, colorValues, geomType, stackMode, xTitle, yTitle, background, palette = ["#5B8FF9", "#61DDAA"], zeroScale = true } = params;
-    const orderedColors = stackMode === "none" ? [...colorValues] : [...colorValues].reverse();
+    const { rows, xKey, yKey, xValues, colorKey, colorValues, geomType, stackMode, xTitle, yTitle, background, palette = ["#5B8FF9", "#61DDAA"], zeroScale = true, orientation = "vertical" } = params;
+    const orderedColors = stackMode === "none" || orientation === "horizontal" ? [...colorValues] : [...colorValues].reverse();
     const colorIndex = new Map(colorValues.map((value, index) => [String(value), index]));
     const grouped = new Map<string, number>();
+    const categoryField = "__category";
+    const valueField = "__value";
 
     for (const row of rows) {
         const x = row[xKey];
@@ -40,7 +47,10 @@ export function buildCategoricalStackSeries(params: {
         animation: false,
         backgroundColor: background,
         color: palette,
-        tooltip: { trigger: "axis" },
+        tooltip: createTooltip([
+            { key: "__x", title: xTitle ?? "x" },
+            { key: "__value", title: yTitle ?? "y" },
+        ], geomType),
         legend: {
             show: true,
             orient: "vertical",
@@ -56,39 +66,67 @@ export function buildCategoricalStackSeries(params: {
             left: 72,
             containLabel: true,
         },
-        xAxis: {
-            type: "category",
-            data: xValues,
-            name: xTitle,
-            nameLocation: "middle",
-            nameGap: 72,
-            nameTextStyle: { padding: [34, 0, 0, 0] },
-            axisLabel: { interval: 0, rotate: 90, margin: 10 },
-        },
+        xAxis: orientation === "vertical"
+            ? {
+                  type: "category",
+                  data: xValues,
+                  name: xTitle,
+                  nameLocation: "middle",
+                  nameGap: 72,
+                  nameTextStyle: { padding: [34, 0, 0, 0] },
+                  axisLabel: { interval: 0, rotate: 90, margin: 10 },
+              }
+            : {
+                  type: "value",
+                  name: yTitle,
+                  nameLocation: "middle",
+                  nameGap: 34,
+              },
+        yAxis: orientation === "vertical"
+            ? {
+                  type: "value",
+                  name: yTitle,
+                  nameLocation: "middle",
+                  nameGap: 52,
+                  nameTextStyle: { padding: [0, 0, 8, 0] },
+              }
+            : {
+                  type: "category",
+                  data: xValues,
+                  name: xTitle,
+                  nameLocation: "middle",
+                  nameGap: 52,
+                  nameTextStyle: { padding: [0, 0, 8, 0] },
+                  axisLabel: { interval: 0, rotate: 0, margin: 12 },
+                  inverse: true,
+              },
     };
+    const encode = orientation === "vertical" ? { x: categoryField, y: valueField } : { x: valueField, y: categoryField };
 
     if (stackMode === "none" && geomType === "bar") {
+        const datasets = rows.map((row) => ({
+            source: xValues.map((value) => ({
+                [categoryField]: value,
+                [valueField]: value === row[xKey] ? Number(row[yKey] ?? 0) : null,
+            })),
+        }));
         return {
             ...baseOption,
-            yAxis: {
-                type: "value",
-                name: yTitle,
-                nameLocation: "middle",
-                nameGap: 52,
-                nameTextStyle: { padding: [0, 0, 8, 0] },
+            dataset: datasets,
+            [orientation === "vertical" ? "yAxis" : "xAxis"]: {
+                ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
                 min: 0,
             },
             series: rows.map((row, rowIndex) => {
-                const xValue = row[xKey];
                 const colorValue = row[colorKey];
-                const data = xValues.map((value) => (value === xValue ? Number(row[yKey] ?? 0) : "-"));
                 const colorPos = colorIndex.get(String(colorValue)) ?? 0;
                 return {
                     name: String(colorValue),
                     type: "bar",
-                    data,
-                    barGap: "-100%",
-                    barCategoryGap: "18%",
+                    datasetIndex: rowIndex,
+                    encode,
+                    barGap: "30%",
+                    barCategoryGap: "22%",
                     itemStyle: { color: palette[colorPos % Math.max(1, palette.length)] },
                     z: rowIndex + 1,
                 };
@@ -98,14 +136,17 @@ export function buildCategoricalStackSeries(params: {
 
     if (stackMode === "center") {
         const baseOffsets = totals.map((total) => Math.max(0, (maxTotal - total) / 2));
+        const datasets = [
+            createDatasetEntry(xValues.map((value, index) => ({ [categoryField]: value, [valueField]: baseOffsets[index] ?? 0 }))),
+            ...rawSeries.map((entry) =>
+                createDatasetEntry(xValues.map((value, index) => ({ [categoryField]: value, [valueField]: entry.values[index] ?? 0 }))),
+            ),
+        ];
         return {
             ...baseOption,
-            yAxis: {
-                type: "value",
-                name: yTitle,
-                nameLocation: "middle",
-                nameGap: 52,
-                nameTextStyle: { padding: [0, 0, 8, 0] },
+            dataset: datasets,
+            [orientation === "vertical" ? "yAxis" : "xAxis"]: {
+                ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
                 min: 0,
                 max: maxTotal,
             },
@@ -113,8 +154,9 @@ export function buildCategoricalStackSeries(params: {
                 {
                     name: "__base__",
                     type: geomType === "area" ? "line" : "bar",
+                    datasetIndex: 0,
                     stack: "stack",
-                    data: baseOffsets,
+                    encode,
                     silent: true,
                     tooltip: { show: false },
                     symbol: "none",
@@ -125,8 +167,9 @@ export function buildCategoricalStackSeries(params: {
                 ...rawSeries.map((entry, index) => ({
                     name: String(entry.colorValue),
                     type: geomType === "area" ? "line" : "bar",
+                    datasetIndex: index + 1,
                     stack: "stack",
-                    data: entry.values,
+                    encode,
                     areaStyle: geomType === "area" ? {} : undefined,
                     showSymbol: geomType === "area" ? false : undefined,
                     symbol: "none",
@@ -137,7 +180,7 @@ export function buildCategoricalStackSeries(params: {
         };
     }
 
-    const series = rawSeries.map((entry, index) => {
+    const normalizedSeries = rawSeries.map((entry, index) => {
         const values = stackMode === "normalize"
             ? entry.values.map((value, idx) => {
                   const total = totals[idx] ?? 0;
@@ -146,9 +189,10 @@ export function buildCategoricalStackSeries(params: {
             : entry.values;
         return {
             name: String(entry.colorValue),
+            values,
+            dataset: createDatasetEntry(xValues.map((value, valueIndex) => ({ [categoryField]: value, [valueField]: values[valueIndex] ?? 0 }))),
             type: geomType === "area" ? "line" : "bar",
             stack: stackMode === "none" ? undefined : "stack",
-            data: values,
             areaStyle: geomType === "area" ? { opacity: 0.88 } : undefined,
             showSymbol: geomType === "area" ? false : undefined,
             smooth: false,
@@ -158,14 +202,20 @@ export function buildCategoricalStackSeries(params: {
             barGap: stackMode === "none" ? "-100%" : "0%",
         };
     });
+    const datasets = normalizedSeries.map((entry) => entry.dataset);
+    const series = normalizedSeries.map((entry, index) => ({
+        ...entry,
+        datasetIndex: index,
+        encode,
+        values: undefined,
+        dataset: undefined,
+    }));
 
-    const maxSeriesValue = Math.max(...series.flatMap((entry) => entry.data as number[]));
+    const normalizedValues = normalizedSeries.flatMap((entry) => entry.values as number[]);
+    const maxSeriesValue = Math.max(...normalizedValues);
     const maxStackValue = Math.max(...totals, maxSeriesValue);
-    const yAxis: Record<string, any> = {
-        type: "value",
-        name: yTitle,
-        nameLocation: "middle",
-        nameGap: 52,
+    const valueAxis: Record<string, any> = {
+        ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
         nameTextStyle: {
             padding: [0, 0, 8, 0],
             fontWeight: 600,
@@ -173,24 +223,29 @@ export function buildCategoricalStackSeries(params: {
     };
 
     if (stackMode === "normalize") {
-        yAxis.min = 0;
-        yAxis.max = 1;
-        yAxis.splitNumber = 10;
-        yAxis.axisLabel = { formatter: (value: number) => `${Math.round(value * 100)}%` };
+        valueAxis.min = 0;
+        valueAxis.max = 1;
+        valueAxis.splitNumber = 10;
+        valueAxis.axisLabel = { formatter: (value: number) => `${Math.round(value * 100)}%` };
     } else if (geomType === "area") {
-        yAxis.min = 0;
-        yAxis.max = niceCeil(maxStackValue);
-        yAxis.splitNumber = 8;
+        valueAxis.min = 0;
+        valueAxis.max = niceCeil(stackMode === "none" ? maxSeriesValue : maxStackValue);
+        valueAxis.splitNumber = 8;
     } else if (!zeroScale) {
-        const allValues = series.flatMap((entry) => entry.data as number[]);
-        yAxis.min = Math.min(...allValues);
-        yAxis.max = niceCeil(Math.max(...totals, ...allValues));
-        yAxis.splitNumber = 8;
+        const allValues = normalizedValues;
+        valueAxis.min = Math.min(...allValues);
+        valueAxis.max = niceCeil(Math.max(...totals, ...allValues));
+        valueAxis.splitNumber = 8;
     } else {
-        yAxis.min = 0;
-        yAxis.max = niceCeil(maxStackValue);
-        yAxis.splitNumber = 8;
+        valueAxis.min = 0;
+        valueAxis.max = niceCeil(maxStackValue);
+        valueAxis.splitNumber = 8;
     }
 
-    return { ...baseOption, yAxis, series };
+    return {
+        ...baseOption,
+        dataset: datasets,
+        [orientation === "vertical" ? "yAxis" : "xAxis"]: valueAxis,
+        series,
+    };
 }

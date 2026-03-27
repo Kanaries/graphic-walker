@@ -46,7 +46,7 @@ export function buildArcOption(params: {
                       data: pieData.map((entry) => String(entry.name)),
                   }
                 : { show: false },
-            dataset: [],
+            dataset: [{ source: pieData }],
             graphic: categoryField && colorField.title
                 ? [{
                       type: "text",
@@ -62,9 +62,13 @@ export function buildArcOption(params: {
                 : undefined,
             series: [{
                 type: "pie",
+                datasetIndex: 0,
                 radius: "72%",
                 center: ["50%", "50%"],
-                data: pieData,
+                encode: {
+                    itemName: "name",
+                    value: "value",
+                },
                 label: { show: false },
             }],
         };

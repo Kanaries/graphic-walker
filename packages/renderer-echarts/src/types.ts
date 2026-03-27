@@ -24,3 +24,17 @@ export type PreparedCartesianState = {
 };
 
 export type ValueOrder = Map<string, number>;
+
+export type SeriesVisualEncoding = {
+    color?: string;
+    opacity?: number;
+    symbolSize?: number;
+};
+
+export type VariableWidthBarRow = Record<string, any> & {
+    __category_value__: any;
+    __value_raw__: number;
+    __stack_start__: number;
+    __stack_end__: number;
+    __bar_width_ratio__: number;
+};

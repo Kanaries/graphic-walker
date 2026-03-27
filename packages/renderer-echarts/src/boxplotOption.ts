@@ -1,7 +1,7 @@
 import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
 import type { FieldBinding } from "./types";
-import { colorWithAlpha, quantile } from "./utils";
+import { axisTypeForField, colorWithAlpha, compareValue, quantile } from "./utils";
 
 function buildBoxplotSeriesData(params: {
     rows: RendererPluginProps["data"];
@@ -37,7 +37,7 @@ function buildBoxplotSeriesData(params: {
             const inliers = values.filter((value) => value >= lowerFence && value <= upperFence);
             const lowerWhisker = inliers.length ? inliers[0] : values[0];
             const upperWhisker = inliers.length ? inliers[inliers.length - 1] : values[values.length - 1];
-            return [lowerWhisker, q1, median, q3, upperWhisker];
+            return [xValue, lowerWhisker, q1, median, q3, upperWhisker];
         });
         const outliers = xValues.flatMap((xValue) => {
             const values = [...(grouped.get(`${String(colorValue)}__${String(xValue)}`) ?? [])].sort((a, b) => a - b);
@@ -75,7 +75,7 @@ function buildCustomBoxplotSeriesData(params: {
     }
 
     return colorValues.map((colorValue) => {
-        const boxData = xValues.flatMap((xValue, xIndex) => {
+        const boxData = xValues.flatMap((xValue) => {
             const values = [...(grouped.get(`${String(colorValue)}__${String(xValue)}`) ?? [])].sort((a, b) => a - b);
             if (values.length === 0) return [];
             const q1 = quantile(values, 0.25);
@@ -87,9 +87,9 @@ function buildCustomBoxplotSeriesData(params: {
             const inliers = values.filter((value) => value >= lowerFence && value <= upperFence);
             const lowerWhisker = inliers.length ? inliers[0] : values[0];
             const upperWhisker = inliers.length ? inliers[inliers.length - 1] : values[values.length - 1];
-            return [[xIndex, lowerWhisker, q1, median, q3, upperWhisker]];
+            return [[xValue, lowerWhisker, q1, median, q3, upperWhisker]];
         });
-        const outliers = xValues.flatMap((xValue, xIndex) => {
+        const outliers = xValues.flatMap((xValue) => {
             const values = [...(grouped.get(`${String(colorValue)}__${String(xValue)}`) ?? [])].sort((a, b) => a - b);
             if (values.length === 0) return [];
             const q1 = quantile(values, 0.25);
@@ -97,7 +97,7 @@ function buildCustomBoxplotSeriesData(params: {
             const iqr = q3 - q1;
             const lowerFence = q1 - 1.5 * iqr;
             const upperFence = q3 + 1.5 * iqr;
-            return values.filter((value) => value < lowerFence || value > upperFence).map((value) => [xIndex, value]);
+            return values.filter((value) => value < lowerFence || value > upperFence).map((value) => [xValue, value]);
         });
         return { boxData, outliers };
     });
@@ -118,16 +118,63 @@ export function buildBoxplotOption(params: {
     if (!(xField.key && yField.key)) {
         return undefined;
     }
+    const horizontal = axisTypeForField(xField.field) === "value" && axisTypeForField(yField.field) === "category";
+    const categoryField = horizontal ? yField : xField;
+    const valueField = horizontal ? xField : yField;
+    const categoryValues = horizontal
+        ? Array.from(new Set(sourceData.map((row) => row[categoryField.key as string]))).sort(compareValue)
+        : xValues;
+
+    const createBoxplotAxes = () => horizontal
+        ? {
+              xAxis: {
+                  type: "value",
+                  name: valueField.title,
+                  nameLocation: "middle",
+                  nameGap: 34,
+                  nameTextStyle: { fontWeight: 600 },
+              },
+              yAxis: {
+                  type: "category",
+                  name: categoryField.title,
+                  nameLocation: "middle",
+                  nameGap: 52,
+                  nameTextStyle: { fontWeight: 600 },
+                  data: categoryValues,
+                  axisLabel: { interval: 0, rotate: 0, margin: 10 },
+                  inverse: true,
+              },
+          }
+        : {
+              xAxis: {
+                  type: "category",
+                  name: categoryField.title,
+                  nameLocation: "middle",
+                  nameGap: 34,
+                  data: categoryValues,
+                  nameTextStyle: { fontWeight: 600 },
+                  axisLabel: { interval: 0, rotate: 90, margin: 10 },
+              },
+              yAxis: {
+                  type: "value",
+                  name: valueField.title,
+                  nameLocation: "middle",
+                  nameGap: 52,
+                  nameTextStyle: { fontWeight: 600 },
+              },
+          };
 
     if (useDiscreteColor && colorField.key) {
         const customBoxplotData = buildCustomBoxplotSeriesData({
             rows: props.data,
-            xValues,
-            xKey: xField.key,
-            yKey: yField.key,
+            xValues: categoryValues,
+            xKey: categoryField.key,
+            yKey: valueField.key,
             colorKey: colorField.key,
             colorValues,
         });
+        const datasets: Array<Record<string, any>> = [];
+        const axes = createBoxplotAxes();
 
         return {
             animation: false,
@@ -149,70 +196,80 @@ export function buildBoxplotOption(params: {
                 left: 64,
                 containLabel: true,
             },
-            xAxis: {
-                type: "category",
-                name: xField.title,
-                nameLocation: "middle",
-                nameGap: 34,
-                data: xValues,
-                nameTextStyle: { fontWeight: 600 },
-                axisLabel: { interval: 0, rotate: 90, margin: 10 },
-            },
-            yAxis: {
-                type: "value",
-                name: yField.title,
-                nameLocation: "middle",
-                nameGap: 52,
-                nameTextStyle: { fontWeight: 600 },
-            },
+            ...axes,
+            dataset: datasets,
             series: customBoxplotData.flatMap((entry, index) => {
                 const name = String(colorValues[index]);
                 const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9";
+                const boxDatasetIndex = datasets.push({ source: entry.boxData }) - 1;
+                const outlierDatasetIndex = datasets.push({ source: entry.outliers }) - 1;
                 return [
                     {
                         type: "custom",
                         name,
-                        data: entry.boxData,
+                        datasetIndex: boxDatasetIndex,
+                        encode: horizontal ? { x: [1, 2, 3, 4, 5], y: 0 } : { x: 0, y: [1, 2, 3, 4, 5] },
                         renderItem(_params: any, api: any) {
-                            const categoryIndex = Number(api.value(0));
-                            const categoryValue = xValues[categoryIndex];
+                            const categoryValue = api.value(0);
                             const low = Number(api.value(1));
                             const q1 = Number(api.value(2));
                             const median = Number(api.value(3));
                             const q3 = Number(api.value(4));
                             const high = Number(api.value(5));
-                            const centerX = api.coord([categoryValue, median])[0];
-                            const lowPoint = api.coord([categoryValue, low]);
-                            const q1Point = api.coord([categoryValue, q1]);
-                            const medianPoint = api.coord([categoryValue, median]);
-                            const q3Point = api.coord([categoryValue, q3]);
-                            const highPoint = api.coord([categoryValue, high]);
-                            const bandWidth = Math.abs(api.size([1, 0])[0] ?? 36);
+                            const centerCoord = horizontal ? api.coord([median, categoryValue]) : api.coord([categoryValue, median]);
+                            const lowPoint = horizontal ? api.coord([low, categoryValue]) : api.coord([categoryValue, low]);
+                            const q1Point = horizontal ? api.coord([q1, categoryValue]) : api.coord([categoryValue, q1]);
+                            const medianPoint = horizontal ? api.coord([median, categoryValue]) : api.coord([categoryValue, median]);
+                            const q3Point = horizontal ? api.coord([q3, categoryValue]) : api.coord([categoryValue, q3]);
+                            const highPoint = horizontal ? api.coord([high, categoryValue]) : api.coord([categoryValue, high]);
+                            const bandWidth = Math.abs(horizontal ? (api.size([0, 1])[1] ?? 36) : (api.size([1, 0])[0] ?? 36));
                             const boxWidth = Math.max(18, Math.min(36, bandWidth * 0.34));
                             const whiskerWidth = boxWidth * 0.7;
                             return {
                                 type: "group",
-                                children: [
-                                    { type: "line", shape: { x1: centerX, y1: lowPoint[1], x2: centerX, y2: q1Point[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
-                                    { type: "line", shape: { x1: centerX, y1: q3Point[1], x2: centerX, y2: highPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
-                                    { type: "line", shape: { x1: centerX - whiskerWidth / 2, y1: lowPoint[1], x2: centerX + whiskerWidth / 2, y2: lowPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
-                                    { type: "line", shape: { x1: centerX - whiskerWidth / 2, y1: highPoint[1], x2: centerX + whiskerWidth / 2, y2: highPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
-                                    {
-                                        type: "rect",
-                                        shape: {
-                                            x: centerX - boxWidth / 2,
-                                            y: q3Point[1],
-                                            width: boxWidth,
-                                            height: Math.max(1, q1Point[1] - q3Point[1]),
-                                        },
-                                        style: {
-                                            fill: colorWithAlpha(seriesColor, 0.45),
-                                            stroke: seriesColor,
-                                            lineWidth: 1.5,
-                                        },
-                                    },
-                                    { type: "line", shape: { x1: centerX - boxWidth / 2, y1: medianPoint[1], x2: centerX + boxWidth / 2, y2: medianPoint[1] }, style: { stroke: seriesColor, lineWidth: 2 } },
-                                ],
+                                children: horizontal
+                                    ? [
+                                          { type: "line", shape: { x1: lowPoint[0], y1: centerCoord[1], x2: q1Point[0], y2: centerCoord[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: q3Point[0], y1: centerCoord[1], x2: highPoint[0], y2: centerCoord[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: lowPoint[0], y1: centerCoord[1] - whiskerWidth / 2, x2: lowPoint[0], y2: centerCoord[1] + whiskerWidth / 2 }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: highPoint[0], y1: centerCoord[1] - whiskerWidth / 2, x2: highPoint[0], y2: centerCoord[1] + whiskerWidth / 2 }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          {
+                                              type: "rect",
+                                              shape: {
+                                                  x: q1Point[0],
+                                                  y: centerCoord[1] - boxWidth / 2,
+                                                  width: Math.max(1, q3Point[0] - q1Point[0]),
+                                                  height: boxWidth,
+                                              },
+                                              style: {
+                                                  fill: colorWithAlpha(seriesColor, 0.45),
+                                                  stroke: seriesColor,
+                                                  lineWidth: 1.5,
+                                              },
+                                          },
+                                          { type: "line", shape: { x1: medianPoint[0], y1: centerCoord[1] - boxWidth / 2, x2: medianPoint[0], y2: centerCoord[1] + boxWidth / 2 }, style: { stroke: seriesColor, lineWidth: 2 } },
+                                      ]
+                                    : [
+                                          { type: "line", shape: { x1: centerCoord[0], y1: lowPoint[1], x2: centerCoord[0], y2: q1Point[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: centerCoord[0], y1: q3Point[1], x2: centerCoord[0], y2: highPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: centerCoord[0] - whiskerWidth / 2, y1: lowPoint[1], x2: centerCoord[0] + whiskerWidth / 2, y2: lowPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          { type: "line", shape: { x1: centerCoord[0] - whiskerWidth / 2, y1: highPoint[1], x2: centerCoord[0] + whiskerWidth / 2, y2: highPoint[1] }, style: { stroke: seriesColor, lineWidth: 1.5 } },
+                                          {
+                                              type: "rect",
+                                              shape: {
+                                                  x: centerCoord[0] - boxWidth / 2,
+                                                  y: q3Point[1],
+                                                  width: boxWidth,
+                                                  height: Math.max(1, q1Point[1] - q3Point[1]),
+                                              },
+                                              style: {
+                                                  fill: colorWithAlpha(seriesColor, 0.45),
+                                                  stroke: seriesColor,
+                                                  lineWidth: 1.5,
+                                              },
+                                          },
+                                          { type: "line", shape: { x1: centerCoord[0] - boxWidth / 2, y1: medianPoint[1], x2: centerCoord[0] + boxWidth / 2, y2: medianPoint[1] }, style: { stroke: seriesColor, lineWidth: 2 } },
+                                      ],
                             };
                         },
                         z: index + 1,
@@ -220,7 +277,8 @@ export function buildBoxplotOption(params: {
                     {
                         type: "scatter",
                         name: `${name}-outlier`,
-                        data: entry.outliers,
+                        datasetIndex: outlierDatasetIndex,
+                        encode: horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 },
                         symbolSize: 7,
                         itemStyle: {
                             color: "rgba(255,255,255,0)",
@@ -237,12 +295,14 @@ export function buildBoxplotOption(params: {
 
     const boxplotData = buildBoxplotSeriesData({
         rows: sourceData,
-        xValues,
-        xKey: xField.key,
-        yKey: yField.key,
+        xValues: categoryValues,
+        xKey: categoryField.key,
+        yKey: valueField.key,
         colorKey: useDiscreteColor ? colorField.key : undefined,
         colorValues: useDiscreteColor ? colorValues : [null],
     });
+    const datasets: Array<Record<string, any>> = [];
+    const axes = createBoxplotAxes();
 
     return {
         animation: false,
@@ -266,30 +326,19 @@ export function buildBoxplotOption(params: {
             left: 56,
             containLabel: true,
         },
-        xAxis: {
-            type: "category",
-            name: xField.title,
-            nameLocation: "middle",
-            nameGap: 34,
-            nameTextStyle: { fontWeight: 600 },
-            data: xValues,
-            axisLabel: { interval: 0, rotate: 90, margin: 10 },
-        },
-        yAxis: {
-            type: "value",
-            name: yField.title,
-            nameLocation: "middle",
-            nameGap: 52,
-            nameTextStyle: { fontWeight: 600 },
-        },
+        ...axes,
+        dataset: datasets,
         series: boxplotData.flatMap((entry, index) => {
             const name = useDiscreteColor ? String(colorValues[index]) : "default";
             const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9";
+            const boxDatasetIndex = datasets.push({ source: entry.boxData }) - 1;
+            const outlierDatasetIndex = datasets.push({ source: entry.outliers }) - 1;
             return [
                 {
                     type: "boxplot",
                     name,
-                    data: entry.boxData,
+                    datasetIndex: boxDatasetIndex,
+                    encode: horizontal ? { x: [1, 2, 3, 4, 5], y: 0 } : { x: 0, y: [1, 2, 3, 4, 5] },
                     boxWidth: useDiscreteColor ? [18, 36] : [28, 54],
                     itemStyle: {
                         color: useDiscreteColor ? colorWithAlpha(seriesColor, 0.45) : seriesColor,
@@ -301,7 +350,8 @@ export function buildBoxplotOption(params: {
                 {
                     type: "scatter",
                     name: `${name}-outlier`,
-                    data: entry.outliers,
+                    datasetIndex: outlierDatasetIndex,
+                    encode: horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 },
                     symbolSize: 7,
                     itemStyle: {
                         color: "rgba(255,255,255,0)",
