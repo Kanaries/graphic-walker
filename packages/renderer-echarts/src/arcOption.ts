@@ -2,7 +2,7 @@ import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
 import { buildDiscreteColorLegendGraphic } from "./legends";
 import type { FieldBinding } from "./types";
-import { getFieldBinding, orderedUniqueValues, resolveColorRange } from "./utils";
+import { getFieldBinding, orderedUniqueValues, resolveColorRange, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
 
 export function buildArcOption(params: {
     props: RendererPluginProps;
@@ -27,7 +27,7 @@ export function buildArcOption(params: {
                   .filter((value): value is string | number => value !== null && value !== undefined)
                   .map((value) => String(value))
             : [];
-        const legendColorMap = new Map(legendValues.map((name, index) => [name, categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9"]));
+        const legendColorMap = new Map(legendValues.map((name, index) => [name, categoryPalette[index % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR]));
         const pieData = categoryField
             ? sourceData
                   .map((row) => ({
@@ -77,7 +77,7 @@ export function buildArcOption(params: {
                 },
                 itemStyle: categoryField
                     ? {
-                          color: (params: { name?: string | number }) => legendColorMap.get(String(params?.name ?? "")) ?? categoryPalette[0] ?? "#5B8FF9",
+                          color: (params: { name?: string | number }) => legendColorMap.get(String(params?.name ?? "")) ?? categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR,
                       }
                     : undefined,
                 label: { show: false },
@@ -107,7 +107,7 @@ export function buildArcOption(params: {
               return [{
                   type: "sector",
                   shape: { cx, cy, r: baseRadius, r0: 0, startAngle: 0, endAngle: Math.PI * 2, clockwise: true },
-                  style: { fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? "#5B8FF9" },
+                  style: { fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR },
               }];
           })()
         : slices.map((slice, index) => {
@@ -125,7 +125,7 @@ export function buildArcOption(params: {
                       endAngle: -Math.PI / 2 + (slice.theta / thetaMax) * Math.PI * 2 * sweepMultiplier,
                       clockwise: true,
                   },
-                  style: { fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? "#5B8FF9" },
+                  style: { fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR },
               };
           });
 

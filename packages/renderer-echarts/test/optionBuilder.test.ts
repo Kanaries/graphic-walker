@@ -58,6 +58,15 @@ describe('buildEChartsOption', () => {
         expect((option as any).series[0].type).toBe('bar');
     });
 
+    test('falls back to vega-lite default primary color when vegaConfig has no color config', () => {
+        const option = buildEChartsOption(createBarProps({
+            vegaConfig: {},
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).color).toEqual(['#4C78A8']);
+    });
+
     test('auto uses scatter for quantitative x and y', () => {
         const option = buildEChartsOption({
             data: [

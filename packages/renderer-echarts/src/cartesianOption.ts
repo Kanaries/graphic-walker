@@ -2,7 +2,7 @@ import { buildDiscreteColorLegendGraphic, buildDiscreteOpacityLegendGraphic, bui
 import { createSeriesByGeom } from "./series";
 import { appendVariableWidthBarSeries } from "./variableWidthBarOption";
 import type { EChartsSeries, FacetCell, SeriesVisualEncoding } from "./types";
-import { axisTypeForField, createTooltip, isScatterLikeGeom, isSyntheticMeasureFacetField, niceCeil, parsePercent, scaleRange, symbolForOrderedShape } from "./utils";
+import { axisTypeForField, createTooltip, isScatterLikeGeom, isSyntheticMeasureFacetField, niceCeil, parsePercent, scaleRange, symbolForOrderedShape, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
 
 const RECT_X_INDEX_FIELD = "__gw_rect_x_index__";
 const RECT_Y_INDEX_FIELD = "__gw_rect_y_index__";
@@ -383,7 +383,7 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                                     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
                                     const bottom = api.coord([x, 0]);
                                     const top = api.coord([x, y]);
-                                    return { type: "rect", shape: { x: top[0] - 2, y: Math.min(top[1], bottom[1]), width: 4, height: Math.max(1, Math.abs(bottom[1] - top[1])) }, style: { fill: seriesColor ?? "#5B8FF9" } };
+                                    return { type: "rect", shape: { x: top[0] - 2, y: Math.min(top[1], bottom[1]), width: 4, height: Math.max(1, Math.abs(bottom[1] - top[1])) }, style: { fill: seriesColor ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR } };
                                 },
                             });
                             return;

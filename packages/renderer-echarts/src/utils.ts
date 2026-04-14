@@ -15,6 +15,8 @@ export const DISCRETE_COLOR_SCHEMES: Record<string, string[]> = {
     set3: ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f"],
     tableau10: ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ab"],
 };
+export const VEGA_LITE_DEFAULT_CATEGORY_RANGE = ["#4C78A8", "#F58518", "#E45756", "#72B7B2", "#54A24B", "#EECA3B", "#B279A2", "#FF9DA6", "#9D755D", "#BAB0AC"];
+export const VEGA_LITE_DEFAULT_PRIMARY_COLOR = VEGA_LITE_DEFAULT_CATEGORY_RANGE[0];
 
 export const SHAPE_SYMBOLS = ["circle", "rect", "roundRect", "triangle", "diamond", "pin", "arrow"];
 
@@ -358,7 +360,7 @@ export function colorWithAlpha(color: string, alpha: number) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export function resolveColorRange(range: any, fallback: string[] = ["#5B8FF9", "#61DDAA", "#65789B", "#F6BD16", "#7262FD"]) {
+export function resolveColorRange(range: any, fallback: string[] = VEGA_LITE_DEFAULT_CATEGORY_RANGE) {
     if (Array.isArray(range)) {
         return range;
     }

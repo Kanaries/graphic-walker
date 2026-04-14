@@ -1,5 +1,5 @@
 import type { FieldBinding } from "./types";
-import { axisTypeForField, isScatterLikeGeom, scaleRange, symbolForOrderedShape } from "./utils";
+import { axisTypeForField, isScatterLikeGeom, scaleRange, symbolForOrderedShape, VEGA_LITE_DEFAULT_CATEGORY_RANGE } from "./utils";
 
 export function gridCell(rowIndex: number, colIndex: number, rowCount: number, colCount: number, rightReservePercent = 0, topReservePercent = 0, bottomReservePercent = 0, leftReservePercent = 0) {
     const rowGap = 8;
@@ -276,7 +276,7 @@ export function buildDiscreteColorLegendGraphic(params: {
     startY: number;
     hollow?: boolean;
 }) {
-    const { title, values, palette = ["#5B8FF9", "#61DDAA"], chartWidth, startY, hollow = false } = params;
+    const { title, values, palette = VEGA_LITE_DEFAULT_CATEGORY_RANGE, chartWidth, startY, hollow = false } = params;
     const layout = getRightLegendLayout(chartWidth);
     const children: Record<string, any>[] = [];
     if (title) {

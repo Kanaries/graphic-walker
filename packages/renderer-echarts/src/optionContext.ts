@@ -17,6 +17,7 @@ import {
     resolveColorRange,
     resolveGeomDefaultColor,
     sortSourceData,
+    VEGA_LITE_DEFAULT_PRIMARY_COLOR,
 } from "./utils";
 
 function reservePercentFromPixels(pixels: number, chartHeight: number, minPercent: number, maxPercent: number) {
@@ -46,7 +47,7 @@ export function createOptionContext(props: RendererPluginProps) {
     const rawGeom = props.visualConfig.geoms[0] ?? "auto";
     const geomType = normalizeGeom(rawGeom, xField.field, yField.field);
     const categoryPalette = resolveColorRange(props.vegaConfig.range?.category);
-    const defaultColor = resolveGeomDefaultColor(geomType, props.vegaConfig, categoryPalette[0] ?? "#5B8FF9");
+    const defaultColor = resolveGeomDefaultColor(geomType, props.vegaConfig, categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR);
     const cartesianGeom = geomType !== "arc";
 
     const detailFields = details

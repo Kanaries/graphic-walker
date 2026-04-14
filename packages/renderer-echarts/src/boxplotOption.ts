@@ -1,7 +1,7 @@
 import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
 import type { FieldBinding } from "./types";
-import { axisTypeForField, colorWithAlpha, compareValue, quantile } from "./utils";
+import { axisTypeForField, colorWithAlpha, compareValue, quantile, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
 
 function buildBoxplotSeriesData(params: {
     rows: RendererPluginProps["data"];
@@ -227,7 +227,7 @@ export function buildBoxplotOption(params: {
 
             facetData.forEach((entry, colorIndexValue) => {
                 const name = String(colorValues[colorIndexValue]);
-                const seriesColor = categoryPalette[colorIndexValue % Math.max(1, categoryPalette.length)] ?? "#5B8FF9";
+                const seriesColor = categoryPalette[colorIndexValue % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR;
                 const boxDatasetIndex = datasets.push({ source: entry.boxData }) - 1;
                 const outlierDatasetIndex = datasets.push({ source: entry.outliers }) - 1;
                 series.push({
@@ -356,7 +356,7 @@ export function buildBoxplotOption(params: {
             dataset: datasets,
             series: customBoxplotData.flatMap((entry, index) => {
                 const name = String(colorValues[index]);
-                const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9";
+                const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR;
                 const boxDatasetIndex = datasets.push({ source: entry.boxData }) - 1;
                 const outlierDatasetIndex = datasets.push({ source: entry.outliers }) - 1;
                 return [
@@ -486,7 +486,7 @@ export function buildBoxplotOption(params: {
         dataset: datasets,
         series: boxplotData.flatMap((entry, index) => {
             const name = useDiscreteColor ? String(colorValues[index]) : "default";
-            const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9";
+            const seriesColor = categoryPalette[index % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR;
             const boxDatasetIndex = datasets.push({ source: entry.boxData }) - 1;
             const outlierDatasetIndex = datasets.push({ source: entry.outliers }) - 1;
             return [

@@ -1,6 +1,6 @@
 import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
-import { createTooltip, niceCeil } from "./utils";
+import { createTooltip, niceCeil, VEGA_LITE_DEFAULT_CATEGORY_RANGE } from "./utils";
 
 function createDatasetEntry(rows: Array<Record<string, any>>) {
     return { source: rows };
@@ -22,7 +22,7 @@ export function buildCategoricalStackSeries(params: {
     zeroScale?: boolean;
     orientation?: "vertical" | "horizontal";
 }) {
-    const { rows, xKey, yKey, xValues, colorKey, colorValues, geomType, stackMode, xTitle, yTitle, background, palette = ["#5B8FF9", "#61DDAA"], zeroScale = true, orientation = "vertical" } = params;
+    const { rows, xKey, yKey, xValues, colorKey, colorValues, geomType, stackMode, xTitle, yTitle, background, palette = VEGA_LITE_DEFAULT_CATEGORY_RANGE, zeroScale = true, orientation = "vertical" } = params;
     const orderedColors = stackMode === "none" || orientation === "horizontal" ? [...colorValues] : [...colorValues].reverse();
     const colorIndex = new Map(colorValues.map((value, index) => [String(value), index]));
     const grouped = new Map<string, number>();
