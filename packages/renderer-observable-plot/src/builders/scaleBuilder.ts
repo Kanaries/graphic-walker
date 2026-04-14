@@ -1,6 +1,7 @@
 import type { IRow } from '@kanaries/graphic-walker';
 import type { ChannelModel } from '../model/channelModel';
 import { isScatterLikeGeom } from '../model/geomModel';
+import { getContinuousPalette, getDiscretePalette } from '../colorDefaults';
 
 type VCfg = Record<string, any>;
 
@@ -59,24 +60,8 @@ export function buildScaleOptions(
 ): Record<string, unknown> {
     const hasColor = Boolean(model.color.key);
     const colorLegend = hasColor && !hideLegend;
-    const discreteRange = Array.isArray(vegaConfig?.range?.category) ? vegaConfig?.range?.category : undefined;
-    const continuousRange =
-        geom === 'rect'
-            ? Array.isArray(vegaConfig?.range?.heatmap)
-                ? vegaConfig?.range?.heatmap
-                : Array.isArray(vegaConfig?.scale?.continuous?.range)
-                  ? vegaConfig?.scale?.continuous?.range
-                  : Array.isArray(vegaConfig?.range?.ramp)
-                    ? vegaConfig?.range?.ramp
-                    : undefined
-            : Array.isArray(vegaConfig?.scale?.continuous?.range)
-              ? vegaConfig?.scale?.continuous?.range
-              : Array.isArray(vegaConfig?.range?.ramp)
-                ? vegaConfig?.range?.ramp
-                : Array.isArray(vegaConfig?.range?.heatmap)
-                  ? vegaConfig?.range?.heatmap
-                  : undefined;
-    const fallbackContinuousRange = ['#f5f3ff', '#7c3aed'];
+    const discreteRange = getDiscretePalette(vegaConfig);
+    const continuousRange = getContinuousPalette(vegaConfig, geom);
     const options: Record<string, unknown> = {
         x: {
             label: model.x.title,
@@ -118,7 +103,7 @@ export function buildScaleOptions(
             legend: colorLegend,
             type: treatColorAsContinuous ? 'linear' : undefined,
             domain: treatColorAsContinuous ? undefined : orderedDomain(data, model.color.key, model.color.sort),
-            range: treatColorAsContinuous ? continuousRange ?? fallbackContinuousRange : discreteRange,
+            range: treatColorAsContinuous ? continuousRange : discreteRange,
         };
     }
 

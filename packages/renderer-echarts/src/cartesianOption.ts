@@ -111,11 +111,13 @@ function sortRowsForSeries(params: {
     }
     const xAxisType = axisTypeForField(xField.field);
     const yAxisType = axisTypeForField(yField.field);
-    if (xAxisType === "category" && xField.key) {
-        return [...rows].sort((left, right) => (xOrder.get(String(left[xField.key])) ?? Number.MAX_SAFE_INTEGER) - (xOrder.get(String(right[xField.key])) ?? Number.MAX_SAFE_INTEGER));
+    const xKey = xField.key;
+    const yKey = yField.key;
+    if (xAxisType === "category" && xKey) {
+        return [...rows].sort((left, right) => (xOrder.get(String(left[xKey])) ?? Number.MAX_SAFE_INTEGER) - (xOrder.get(String(right[xKey])) ?? Number.MAX_SAFE_INTEGER));
     }
-    if (yAxisType === "category" && yField.key) {
-        return [...rows].sort((left, right) => (yOrder.get(String(left[yField.key])) ?? Number.MAX_SAFE_INTEGER) - (yOrder.get(String(right[yField.key])) ?? Number.MAX_SAFE_INTEGER));
+    if (yAxisType === "category" && yKey) {
+        return [...rows].sort((left, right) => (yOrder.get(String(left[yKey])) ?? Number.MAX_SAFE_INTEGER) - (yOrder.get(String(right[yKey])) ?? Number.MAX_SAFE_INTEGER));
     }
     return rows;
 }
@@ -501,11 +503,10 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
     const seriesIndexes = series.map((_, index) => index);
     if (colorField.key && !useDiscreteColor) {
         const numericValues = sortedSource.map((row) => Number(row[colorField.key as string])).filter((value) => Number.isFinite(value));
-        const continuousScale = vegaConfig.scale?.continuous;
         const resolvedRanges = resolveVegaAlignedRanges(vegaConfig);
         const continuousColorRange = geomType === "rect"
-            ? vegaConfig.range?.heatmap || vegaConfig.range?.ramp || continuousScale?.range || resolvedRanges.heatmap || resolvedRanges.ramp || resolvedRanges.category
-            : continuousScale?.range || vegaConfig.range?.ramp || vegaConfig.range?.heatmap || resolvedRanges.ramp || resolvedRanges.heatmap || resolvedRanges.category;
+            ? vegaConfig.range?.heatmap || vegaConfig.range?.ramp || resolvedRanges.heatmap || resolvedRanges.ramp || resolvedRanges.category
+            : vegaConfig.range?.ramp || vegaConfig.range?.heatmap || resolvedRanges.ramp || resolvedRanges.heatmap || resolvedRanges.category;
         visualMap.push({
             type: "continuous",
             dimension: colorField.key,

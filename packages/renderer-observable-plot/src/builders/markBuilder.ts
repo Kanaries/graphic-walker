@@ -3,8 +3,9 @@ import type { ChannelModel } from '../model/channelModel';
 import { resolveDataKey } from '../model/fieldBinding';
 import { isScatterLikeGeom } from '../model/geomModel';
 import type { VLChannelDef } from '../model/fieldBinding';
+import { getDiscretePalette, getPrimaryColor } from '../colorDefaults';
 
-type MarkFactory = (data: any[], options: Record<string, unknown>) => Plot.Mark;
+type MarkFactory = (data: any[], options: Record<string, unknown>) => Plot.Markish;
 
 type VegaLiteLikeSpec = {
     transform?: Array<Record<string, unknown>>;
@@ -101,7 +102,7 @@ function buildBaseOptions(model: ChannelModel, geom: string, title?: (d: Record<
 }
 
 function resolveDefaultColor(geom: string, vegaConfig?: VCfg): string | undefined {
-    const fallback = Array.isArray(vegaConfig?.range?.category) ? vegaConfig?.range?.category?.[0] : undefined;
+    const fallback = getPrimaryColor(vegaConfig);
     const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
     if (geom === 'line') return str(vegaConfig?.line?.stroke) ?? fallback;
     if (geom === 'point') return str(vegaConfig?.point?.stroke) ?? fallback;
@@ -180,6 +181,14 @@ function asChannelArray(value: unknown): VLChannelDef[] {
     return [value as VLChannelDef];
 }
 
+function hasField(def: VLChannelDef | undefined): def is VLChannelDef & { field: string } {
+    return Boolean(def && typeof def.field === 'string' && def.field.length > 0);
+}
+
+function hasAggregateField(def: VLChannelDef | undefined): def is VLChannelDef & { field: string; aggregate: string } {
+    return hasField(def) && typeof def.aggregate === 'string' && def.aggregate.length > 0;
+}
+
 function aggregateWithOp(values: number[], op: string): number {
     if (op === 'count') return values.length;
     if (values.length === 0) return 0;
@@ -195,7 +204,7 @@ function aggregateScatterData(data: any[], spec: VegaLiteLikeSpec, geom: string,
     const encoding = spec.encoding ?? {};
     const defs = Object.values(encoding).flatMap((entry) => asChannelArray(entry));
     const aggDefs = defs
-        .filter((def) => def && typeof def.field === 'string' && typeof def.aggregate === 'string')
+        .filter(hasAggregateField)
         .map((def) => ({
             op: String(def.aggregate ?? 'sum').toLowerCase(),
             sourceKey: resolveDataKey(data, { field: def.field, type: def.type }) ?? def.field,
@@ -207,8 +216,9 @@ function aggregateScatterData(data: any[], spec: VegaLiteLikeSpec, geom: string,
     const groupKeys = Array.from(
         new Set(
             defs
-                .filter((def) => def && typeof def.field === 'string' && !def.aggregate)
-                .map((def) => resolveDataKey(data, { field: def.field, type: def.type }) ?? def.field),
+                .filter((def) => hasField(def) && !def.aggregate)
+                .map((def) => resolveDataKey(data, { field: def.field, type: def.type }) ?? def.field)
+                .filter((key): key is string => typeof key === 'string' && key.length > 0),
         ),
     );
 
@@ -249,12 +259,12 @@ function buildNonStackedColorMarks(
     geom: string,
     model: ChannelModel,
     vegaConfig?: VCfg,
-): Plot.Mark {
+): Plot.Markish {
     const colorKey = model.color.key;
     if (!colorKey) return markFn(data, baseOptions);
 
     const colorDomain = orderedDomain(data, colorKey, model.color.sort);
-    const range = Array.isArray(vegaConfig?.range?.category) ? vegaConfig.range.category : [];
+    const range = getDiscretePalette(vegaConfig);
     const opacity = geom === 'area' ? 0.55 : geom === 'bar' ? 1 : 0.72;
 
     const orderedColors = geom === 'bar' ? [...colorDomain].reverse() : colorDomain;
@@ -283,7 +293,7 @@ function buildNonStackedColorMarks(
     );
 }
 
-function buildCenterDot(data: any[], model: ChannelModel, geom: string, title?: (d: Record<string, unknown>) => string): Plot.Mark {
+function buildCenterDot(data: any[], model: ChannelModel, geom: string, title?: (d: Record<string, unknown>) => string): Plot.Markish {
     const colorKey = model.color.key;
     const centerData = colorKey
         ? Array.from(new Map(data.map((row) => [String(row[colorKey]), row])).values()).map((row) => ({
@@ -386,7 +396,7 @@ function reverseStackSeriesOrder(data: any[], model: ChannelModel, stackAxis: 'x
     return Array.from(groups.values()).flatMap((rows) => [...rows].reverse());
 }
 
-function applyStacking(markFn: MarkFactory, data: any[], baseOptions: Record<string, unknown>, stackAxis: 'x' | 'y', stackMode: string): Plot.Mark {
+function applyStacking(markFn: MarkFactory, data: any[], baseOptions: Record<string, unknown>, stackAxis: 'x' | 'y', stackMode: string): Plot.Markish {
     const stackOptions: Record<string, unknown> = {};
     if (stackMode === 'normalize') {
         stackOptions.offset = 'normalize';
@@ -407,7 +417,7 @@ export function buildMark(
     geom: string,
     title?: (d: Record<string, unknown>) => string,
     vegaConfig?: VCfg
-): Plot.Mark {
+): Plot.Markish {
     if (!model.x.key && !model.y.key && (geom === 'point' || geom === 'circle')) {
         return buildCenterDot(data, model, geom, title);
     }
@@ -503,7 +513,7 @@ export function buildMark(
             } else {
             const aggRows = Array.from(aggregated.values());
             const colorDomain = orderedDomain(aggRows, colorKey, model.color.sort);
-            const range = Array.isArray(vegaConfig?.range?.category) ? vegaConfig.range.category : [];
+            const range = getDiscretePalette(vegaConfig);
             const marks = colorDomain.map((value, index) => {
                 const seriesData = aggRows.filter((row) => row[colorKey] === value);
                 const stroke = range[index % Math.max(1, range.length)] ?? undefined;

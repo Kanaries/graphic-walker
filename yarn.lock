@@ -1674,12 +1674,24 @@
   resolved "https://registry.npmjs.org/@types/d3-format/-/d3-format-3.0.4.tgz#b1e4465644ddb3fdf3a263febb240a6cd616de90"
   integrity sha512-fALi2aI6shfg7vM5KiR1wNJnZ7r6UuggVqtDA+xiEdPZQwy/trcQaHnwShLuLdta2rTymCNpxYTiMZX/e09F4g==
 
+"@types/d3-path@*":
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-path/-/d3-path-3.1.1.tgz#f632b380c3aca1dba8e34aa049bcd6a4af23df8a"
+  integrity sha512-VMZBYyQvbGmWyWVea0EHs/BwLgxc+MKi1zLDCONksozI4YJMcTt8ZEuIR4Sb1MMTE8MMW49v0IwI5+b7RmfWlg==
+
 "@types/d3-scale@^4.0.3":
   version "4.0.8"
   resolved "https://registry.npmjs.org/@types/d3-scale/-/d3-scale-4.0.8.tgz#d409b5f9dcf63074464bf8ddfb8ee5a1f95945bb"
   integrity sha512-gkK1VVTr5iNiYJ7vWDI+yUFFlszhNMtVeneJ6lUTKPjprsvLLI9/tgEGiXJOnlINJA8FyA88gfnQsHbybVZrYQ==
   dependencies:
     "@types/d3-time" "*"
+
+"@types/d3-shape@^3.1.8":
+  version "3.1.8"
+  resolved "https://registry.yarnpkg.com/@types/d3-shape/-/d3-shape-3.1.8.tgz#d1516cc508753be06852cd06758e3bb54a22b0e3"
+  integrity sha512-lae0iWfcDeR7qt7rA88BNiqdvPS5pFVPpo5OfjElwNaT2yyekbM0C9vK+yqBqEmHr6lDkRnYNoTBYlAgJa7a4w==
+  dependencies:
+    "@types/d3-path" "*"
 
 "@types/d3-time-format@^4.0.0":
   version "4.0.3"

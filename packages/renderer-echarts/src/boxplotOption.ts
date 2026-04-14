@@ -125,8 +125,13 @@ export function buildBoxplotOption(params: {
     const horizontal = axisTypeForField(xField.field) === "value" && axisTypeForField(yField.field) === "category";
     const categoryField = horizontal ? yField : xField;
     const valueField = horizontal ? xField : yField;
+    const categoryKey = categoryField.key;
+    const valueKey = valueField.key;
+    if (!categoryKey || !valueKey) {
+        return undefined;
+    }
     const categoryValues = horizontal
-        ? Array.from(new Set(sourceData.map((row) => row[categoryField.key as string]))).sort(compareValue)
+        ? Array.from(new Set(sourceData.map((row) => row[categoryKey]))).sort(compareValue)
         : xValues;
 
     const createBoxplotAxes = () => horizontal
@@ -192,8 +197,8 @@ export function buildBoxplotOption(params: {
             const facetData = buildCustomBoxplotSeriesData({
                 rows: facetRows,
                 xValues: categoryValues,
-                xKey: categoryField.key,
-                yKey: valueField.key,
+                xKey: categoryKey,
+                yKey: valueKey,
                 colorKey: colorField.key as string,
                 colorValues,
             });
@@ -324,8 +329,8 @@ export function buildBoxplotOption(params: {
         const customBoxplotData = buildCustomBoxplotSeriesData({
             rows: sourceData,
             xValues: categoryValues,
-            xKey: categoryField.key,
-            yKey: valueField.key,
+            xKey: categoryKey,
+            yKey: valueKey,
             colorKey: colorField.key,
             colorValues,
         });
@@ -452,8 +457,8 @@ export function buildBoxplotOption(params: {
     const boxplotData = buildBoxplotSeriesData({
         rows: sourceData,
         xValues: categoryValues,
-        xKey: categoryField.key,
-        yKey: valueField.key,
+        xKey: categoryKey,
+        yKey: valueKey,
         colorKey: useDiscreteColor ? colorField.key : undefined,
         colorValues: useDiscreteColor ? colorValues : [null],
     });

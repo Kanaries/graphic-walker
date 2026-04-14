@@ -14,11 +14,14 @@ export const DISCRETE_COLOR_SCHEMES: Record<string, string[]> = {
     set2: ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3"],
     set3: ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f"],
     tableau10: ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ab"],
+    blues: ["#cfe1f2", "#bed8ec", "#a8cee5", "#8fc1de", "#74b2d7", "#5ba3cf", "#4592c6", "#3181bd", "#206fb2", "#125ca4", "#0a4a90"],
+    yellowgreenblue: ["#eff9bd", "#dbf1b4", "#bde5b5", "#94d5b9", "#69c5be", "#45b4c2", "#2c9ec0", "#2182b8", "#2163aa", "#23479c", "#1c3185"],
+    blueorange: ["#134b85", "#2f78b3", "#5da2cb", "#9dcae1", "#d2e5ef", "#f2f0eb", "#fce0ba", "#fbbf74", "#e8932f", "#c5690d", "#994a07"],
 };
-export const VEGA_LITE_DEFAULT_CATEGORY_RANGE = ["#4C78A8", "#F58518", "#E45756", "#72B7B2", "#54A24B", "#EECA3B", "#B279A2", "#FF9DA6", "#9D755D", "#BAB0AC"];
-export const VEGA_LITE_DEFAULT_DIVERGING_RANGE = ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"];
-export const VEGA_LITE_DEFAULT_HEATMAP_RANGE = ["#0d0887", "#46039f", "#7201a8", "#9c179e", "#bd3786", "#d8576b", "#ed7953", "#fb9f3a", "#fdca26", "#f0f921"];
-export const VEGA_LITE_DEFAULT_RAMP_RANGE = ["#EBCCFF", "#CCB0FF", "#AE95FF", "#907BFF", "#7262FD", "#5349E0", "#2F32C3", "#001BA7", "#00068C"];
+export const VEGA_LITE_DEFAULT_CATEGORY_RANGE = DISCRETE_COLOR_SCHEMES.tableau10;
+export const VEGA_LITE_DEFAULT_DIVERGING_RANGE = [...DISCRETE_COLOR_SCHEMES.blueorange].reverse();
+export const VEGA_LITE_DEFAULT_HEATMAP_RANGE = DISCRETE_COLOR_SCHEMES.yellowgreenblue;
+export const VEGA_LITE_DEFAULT_RAMP_RANGE = DISCRETE_COLOR_SCHEMES.blues;
 export const VEGA_LITE_DEFAULT_PRIMARY_COLOR = VEGA_LITE_DEFAULT_CATEGORY_RANGE[0];
 
 export const SHAPE_SYMBOLS = ["circle", "rect", "roundRect", "triangle", "diamond", "pin", "arrow"];
@@ -368,12 +371,18 @@ export function resolveColorRange(range: any, fallback: string[] = VEGA_LITE_DEF
         return range;
     }
     if (range && typeof range === "object" && "scheme" in range) {
+        let palette: string[] | undefined;
         if (Array.isArray(range.scheme)) {
-            return range.scheme;
+            palette = range.scheme;
         }
-        if (typeof range.scheme === "string") {
-            return DISCRETE_COLOR_SCHEMES[range.scheme] ?? fallback;
+        if (!palette && typeof range.scheme === "string") {
+            palette = DISCRETE_COLOR_SCHEMES[range.scheme.toLowerCase()];
         }
+        if (!palette) return fallback;
+        if (Array.isArray(range.extent) && range.extent[0] === 1 && range.extent[1] === 0) {
+            return [...palette].reverse();
+        }
+        return palette;
     }
     return fallback;
 }

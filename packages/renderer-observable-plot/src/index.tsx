@@ -4,7 +4,10 @@ import type { RendererPlugin, RendererPluginProps } from '@kanaries/graphic-walk
 import { arc as d3Arc } from 'd3-shape';
 import { toObservablePlotSpec } from './observablePlot';
 import { resolveDataKey } from './model/fieldBinding';
+import { getContinuousPalette, getDiscretePalette } from './colorDefaults';
 export { toObservablePlotSpec, __test__fieldBinding, __test__vegaLiteToPlot, renderObservablePlot } from './observablePlot';
+
+type ResolveEncodingMap = Partial<Record<'color' | 'shape' | 'size' | 'opacity', boolean>>;
 
 function normalizeBackground(background: unknown): string | undefined {
     return typeof background === 'string' ? background : undefined;
@@ -123,7 +126,7 @@ function ObservablePlotView(props: RendererPluginProps) {
     const hasFacet =
         props.draggableFieldState.rows.some((field) => field.analyticType === 'dimension') ||
         props.draggableFieldState.columns.some((field) => field.analyticType === 'dimension');
-    const resolve = props.layout.resolve as Partial<Record<'shape' | 'size' | 'opacity', boolean>> | undefined;
+    const resolve = props.layout.resolve as ResolveEncodingMap | undefined;
     const hasIndependentAll =
         (props.visualConfig.geoms[0] === 'point' || props.visualConfig.geoms[0] === 'circle') &&
         hasFacet &&
@@ -332,11 +335,11 @@ function ObservablePlotView(props: RendererPluginProps) {
 }
 
 function valueToRampColor(value: number, min: number, max: number, ramp: string[]) {
-    if (ramp.length === 0) return '#ddd';
+    if (ramp.length === 0) return '#5B8FF9';
     if (max <= min) return ramp[ramp.length - 1] ?? ramp[0];
     const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
     const index = Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1)));
-    return ramp[index] ?? ramp[ramp.length - 1] ?? '#ddd';
+    return ramp[index] ?? ramp[ramp.length - 1] ?? '#5B8FF9';
 }
 
 function ObservableHeatmapView(props: RendererPluginProps) {
@@ -351,7 +354,7 @@ function ObservableHeatmapView(props: RendererPluginProps) {
     const values = props.data.map((row) => Number(row[colorKey ?? ''] ?? 0)).filter((value) => Number.isFinite(value));
     const min = values.length > 0 ? Math.min(...values) : 0;
     const max = values.length > 0 ? Math.max(...values) : 1;
-    const ramp = Array.isArray(props.vegaConfig.range?.heatmap) ? props.vegaConfig.range.heatmap : ['#ffe4e6', '#e11d48'];
+    const ramp = getContinuousPalette(props.vegaConfig, 'rect');
     const lookup = new Map(props.data.map((row) => [`${String(row[xKey ?? ''])}__${String(row[yKey ?? ''])}`, Number(row[colorKey ?? ''] ?? 0)]));
     const plotWidth = props.chartWidth - 180;
     const plotHeight = props.chartHeight - 110;
@@ -451,7 +454,7 @@ function ObservableColorBoxplotView(props: RendererPluginProps) {
     if (horizontal && xKey && yKey) {
         const ys = Array.from(new Set(props.data.map((row) => String(row[yKey])))).sort();
         const series = colorKey ? Array.from(new Set(props.data.map((row) => String(row[colorKey])))).sort() : [];
-        const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+        const palette = getDiscretePalette(props.vegaConfig);
         const allValues = props.data.map((row) => Number(row[xKey] ?? 0)).filter((value) => Number.isFinite(value));
         const minValue = allValues.length > 0 ? Math.min(...allValues) : 0;
         const maxValue = allValues.length > 0 ? Math.max(...allValues) : 1;
@@ -549,7 +552,7 @@ function ObservableColorBoxplotView(props: RendererPluginProps) {
 
     const xs = xKey ? Array.from(new Set(props.data.map((row) => String(row[xKey])))).sort() : [];
     const series = colorKey ? Array.from(new Set(props.data.map((row) => String(row[colorKey])))).sort() : [];
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+    const palette = getDiscretePalette(props.vegaConfig);
     const allValues = props.data.map((row) => Number(row[yKey ?? ''] ?? 0)).filter((value) => Number.isFinite(value));
     const minValue = allValues.length > 0 ? Math.min(...allValues) : 0;
     const maxValue = allValues.length > 0 ? Math.max(...allValues) : 1;
@@ -645,7 +648,7 @@ function ObservableOverlayBarView(props: RendererPluginProps) {
     const xKey = resolveDataKey(props.data, xField ? { field: xField.fid, aggregate: xField.aggName, type: xField.semanticType } : undefined);
     const yKey = resolveDataKey(props.data, yField ? { field: yField.fid, aggregate: yField.aggName, type: yField.semanticType } : undefined);
     const colorKey = resolveDataKey(props.data, colorField ? { field: colorField.fid, aggregate: colorField.aggName, type: colorField.semanticType } : undefined);
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+    const palette = getDiscretePalette(props.vegaConfig);
 
     const xIsDim = xField?.analyticType === 'dimension';
     const yIsDim = yField?.analyticType === 'dimension';
@@ -755,7 +758,7 @@ function ObservableBarSizeView(props: RendererPluginProps) {
     const xKey = resolveDataKey(props.data, xField ? { field: xField.fid, aggregate: xField.aggName, type: xField.semanticType } : undefined);
     const yKey = resolveDataKey(props.data, yField ? { field: yField.fid, aggregate: yField.aggName, type: yField.semanticType } : undefined);
     const sizeKey = resolveDataKey(props.data, sizeField ? { field: sizeField.fid, aggregate: sizeField.aggName, type: sizeField.semanticType } : undefined);
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+    const palette = getDiscretePalette(props.vegaConfig);
 
     if (!xKey || !yKey || !sizeKey) {
         return <ObservablePlotView {...props} />;
@@ -795,7 +798,22 @@ function ObservableBarSizeView(props: RendererPluginProps) {
         ? Math.max(1, ...categories.map((category) => groupedTotalMap?.get(category) ?? 0))
         : maxValue;
 
-    const bars = props.data
+    type SizeBar = {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        color: string;
+        opacity?: number;
+        legend: string | null;
+        category: string;
+        series?: string;
+        value: number;
+        ratio?: number;
+    };
+    type RenderBar = Pick<SizeBar, 'x' | 'y' | 'width' | 'height' | 'color' | 'opacity'>;
+
+    const bars: SizeBar[] = props.data
         .map((row) => {
             const category = String(row[categoryKey]);
             const value = Number(row[valueKey] ?? 0);
@@ -838,7 +856,7 @@ function ObservableBarSizeView(props: RendererPluginProps) {
             };
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item));
-    const discreteMainBars = isSizeDiscrete
+    const discreteMainBars: RenderBar[] = isSizeDiscrete
         ? categories.flatMap((category) => {
               const items = bars.filter((bar) => bar.category === category);
               if (items.length === 0) return [];
@@ -849,7 +867,7 @@ function ObservableBarSizeView(props: RendererPluginProps) {
               const secondaryExtent = Number(secondary?.value ?? 0) / quantitativeMax * (horizontal ? plotWidth : plotHeight);
               const total = preferredExtent + secondaryExtent;
               const center = horizontal ? Number(preferred.y) + Number(preferred.height) / 2 : Number(preferred.x) + Number(preferred.width) / 2;
-              const out: Array<Record<string, unknown>> = horizontal
+              const out: RenderBar[] = horizontal
                   ? [
                         {
                             x: left,
@@ -958,7 +976,7 @@ function ObservableBarSizeView(props: RendererPluginProps) {
                 <line x1={left} y1={top + plotHeight} x2={left + plotWidth} y2={top + plotHeight} stroke="#333" strokeWidth="1" />
                 <line x1={left} y1={top} x2={left} y2={top + plotHeight} stroke="#333" strokeWidth="1" />
                 {displayBars.map((bar, index) => (
-                    <rect key={index} x={bar.x} y={bar.y} width={bar.width} height={bar.height} fill={bar.color} opacity={(bar as { opacity?: number }).opacity ?? 0.96} />
+                    <rect key={index} x={bar.x} y={bar.y} width={bar.width} height={bar.height} fill={bar.color} opacity={bar.opacity ?? 0.96} />
                 ))}
                 {horizontal
                     ? categories.map((category, index) => (
@@ -1199,7 +1217,7 @@ function buildSupplementalLegend(props: RendererPluginProps) {
     const sizeActive = Boolean(sizeField);
             const opacityActive = Boolean(opacityField);
     if (!shapeActive && !sizeActive && !opacityActive) return null;
-    const resolve = props.layout.resolve as Partial<Record<'shape' | 'size' | 'opacity', boolean>> | undefined;
+    const resolve = props.layout.resolve as ResolveEncodingMap | undefined;
     const hasIndependentEncoding = Boolean(resolve?.shape || resolve?.size || resolve?.opacity);
     const hasFacetForPoints =
         (geom === 'point' || geom === 'circle') &&
@@ -1222,7 +1240,7 @@ function buildSupplementalLegend(props: RendererPluginProps) {
     const opacityValues = opacityField
         ? props.data.map((row) => Number(row[opacityKey ?? ''])).filter((value) => Number.isFinite(value)).sort((a, b) => a - b)
         : [];
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+    const palette = getDiscretePalette(props.vegaConfig);
 
     const pick = (values: number[]) => {
         if (values.length === 0) return [];
@@ -1269,22 +1287,7 @@ function buildSupplementalLegend(props: RendererPluginProps) {
                     const localOpacityValues = opacityKey
                         ? rows.map((row) => Number(row[opacityKey])).filter((value) => Number.isFinite(value)).sort((a, b) => a - b)
                         : [];
-                    const continuousRamp =
-                        geom === 'rect'
-                            ? Array.isArray(props.vegaConfig.range?.heatmap)
-                                ? props.vegaConfig.range.heatmap
-                                : Array.isArray(props.vegaConfig.scale?.continuous?.range)
-                                  ? props.vegaConfig.scale.continuous.range
-                                  : Array.isArray(props.vegaConfig.range?.ramp)
-                                    ? props.vegaConfig.range.ramp
-                                    : ['#f5f3ff', '#7c3aed']
-                            : Array.isArray(props.vegaConfig.scale?.continuous?.range)
-                              ? props.vegaConfig.scale.continuous.range
-                              : Array.isArray(props.vegaConfig.range?.ramp)
-                                ? props.vegaConfig.range.ramp
-                                : Array.isArray(props.vegaConfig.range?.heatmap)
-                                  ? props.vegaConfig.range.heatmap
-                                  : ['#f5f3ff', '#7c3aed'];
+                    const continuousRamp = getContinuousPalette(props.vegaConfig, geom);
                     const colorMin = localColorNums.length > 0 ? localColorNums[0] : 0;
                     const colorMax = localColorNums.length > 0 ? localColorNums[localColorNums.length - 1] : 1;
                     return (
@@ -1456,7 +1459,7 @@ function buildSupplementalLegend(props: RendererPluginProps) {
 function ObservableCenterPointView(props: RendererPluginProps) {
     const colorField = props.draggableFieldState.color[0];
     const colorKey = resolveDataKey(props.data, colorField ? { field: colorField.fid, aggregate: colorField.aggName, type: colorField.semanticType } : undefined);
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA'];
+    const palette = getDiscretePalette(props.vegaConfig);
     const values = colorKey ? Array.from(new Set(props.data.map((row) => String(row[colorKey])))).sort() : [];
     const pointColor = values.length > 1 ? palette[1] ?? palette[0] : palette[0];
 
@@ -1497,7 +1500,7 @@ function ObservableArcView(props: RendererPluginProps) {
     }, [colorKey, thetaKey, radiusKey, props.data, thetaField?.name]);
     const legendDomain = useMemo(() => Array.from(new Set(slices.map((slice) => slice.label))).sort((a, b) => a.localeCompare(b)), [slices]);
 
-    const palette = Array.isArray(props.vegaConfig.range?.category) ? props.vegaConfig.range.category : ['#5B8FF9', '#61DDAA', '#65789B', '#F6BD16'];
+    const palette = getDiscretePalette(props.vegaConfig);
     const width = props.chartWidth;
     const height = props.chartHeight;
     const legendWidth = 180;
@@ -1566,7 +1569,12 @@ function ObservableArcView(props: RendererPluginProps) {
                         .innerRadius(0)
                         .outerRadius(outerRadius)
                         .startAngle(startAngle)
-                        .endAngle(endAngle)();
+                        .endAngle(endAngle)({
+                            innerRadius: 0,
+                            outerRadius,
+                            startAngle,
+                            endAngle,
+                        });
                     if (!path) return null;
                     const colorIndex = legendDomain.indexOf(slice.label);
                     return (
