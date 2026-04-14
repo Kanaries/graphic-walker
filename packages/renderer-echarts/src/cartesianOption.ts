@@ -124,7 +124,7 @@ function sortRowsForSeries(params: {
 }
 
 export function buildCartesianOption(state: ReturnType<typeof import("./optionContext").createOptionContext>) {
-    const { props, vegaConfig, xField, yField, colorField, opacityField, sizeField, shapeField, textField, geomType, categoryPalette, defaultColor, tooltipFields, rowFacetBinding, colFacetBinding, rowFacetValues, colFacetValues, useDiscreteColor, useDiscreteOpacity, useDiscreteSize, useDiscreteShape, colorValues, opacityValues, sizeValues, shapeValues, xValues, yValues, sortedSource, scatterOpacityLegendGraphic, scatterSizeLegendGraphic, quantitativeBarSizeLegendGraphic, continuousColorLegend, useCustomDiscreteLegends, showNativeLegend, nativeLegendTitle, useNativeLegendForDiscreteBarSize, numberFormat, legendRightReserve, gridTopReserve, gridBottomReserve, facetLeftReserve, sizeExtent, sizeMin, sizeMax, xMin, xMax, yMin, yMax, opacityExtent, opacityMin, opacityMax, useZeroBaselineScatter } = state;
+    const { props, vegaConfig, channelScales, xField, yField, colorField, opacityField, sizeField, shapeField, textField, geomType, categoryPalette, defaultColor, tooltipFields, rowFacetBinding, colFacetBinding, rowFacetValues, colFacetValues, useDiscreteColor, useDiscreteOpacity, useDiscreteSize, useDiscreteShape, colorValues, opacityValues, sizeValues, shapeValues, xValues, yValues, sortedSource, scatterOpacityLegendGraphic, scatterSizeLegendGraphic, quantitativeBarSizeLegendGraphic, continuousColorLegend, useCustomDiscreteLegends, showNativeLegend, nativeLegendTitle, useNativeLegendForDiscreteBarSize, numberFormat, legendRightReserve, gridTopReserve, gridBottomReserve, facetLeftReserve, sizeExtent, sizeMin, sizeMax, xMin, xMax, yMin, yMax, opacityExtent, opacityMin, opacityMax, useZeroBaselineScatter } = state;
     const datasets: Array<Record<string, any>> = [];
     const series: EChartsSeries[] = [];
     const facetCells: FacetCell[] = [];
@@ -165,6 +165,22 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
         const independentYMin = props.layout.resolve?.y && localYExtent?.min !== undefined
             ? ((geomType === "bar" || geomType === "area" || ((geomType === "point" || geomType === "circle") && (isYMeasureFacetOnRows || isXMeasureFacetOnColumns || useZeroBaselineScatter))) ? 0 : localYExtent.min)
             : undefined;
+        const resolvedXMin = props.layout.resolve?.x
+            ? independentXMin
+            : (cellStackedXExtent?.min !== undefined ? Math.min(xMin ?? 0, cellStackedXExtent.min) : xMin);
+        const resolvedYMin = props.layout.resolve?.y
+            ? independentYMin
+            : (cellStackedYExtent?.min !== undefined ? Math.min(yMin ?? 0, cellStackedYExtent.min) : yMin);
+        const xZeroScale = axisTypeForField(xField.field) === "value"
+            ? (typeof channelScales?.x?.zeroScale === "boolean" ? channelScales.x.zeroScale : Boolean(props.layout.zeroScale))
+            : false;
+        const yZeroScale = axisTypeForField(yField.field) === "value"
+            ? (typeof channelScales?.y?.zeroScale === "boolean" ? channelScales.y.zeroScale : Boolean(props.layout.zeroScale))
+            : false;
+        const shouldUseZeroBaselineX = isFacetedHorizontalBar || ((geomType === "point" || geomType === "circle") && (isXMeasureFacetOnColumns || useZeroBaselineScatter)) || xZeroScale;
+        const shouldUseZeroBaselineY = geomType === "bar" || geomType === "area" || ((geomType === "point" || geomType === "circle") && (isYMeasureFacetOnRows || isXMeasureFacetOnColumns || useZeroBaselineScatter)) || yZeroScale;
+        const zeroAnchoredXMin = resolvedXMin !== undefined ? Math.min(0, resolvedXMin) : (cellStackedXExtent?.min !== undefined ? Math.min(0, cellStackedXExtent.min) : 0);
+        const zeroAnchoredYMin = resolvedYMin !== undefined ? Math.min(0, resolvedYMin) : (cellStackedYExtent?.min !== undefined ? Math.min(0, cellStackedYExtent.min) : 0);
         const resolvedXMax = props.layout.resolve?.x
             ? (localXExtent?.max !== undefined ? niceCeil(localXExtent.max) : undefined)
             : cellStackedXExtent?.max !== undefined
@@ -185,11 +201,7 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
             nameGap: geomType === "rect" ? 72 : axisTypeForField(xField.field) === "category" ? 62 : 34,
             nameTextStyle: geomType === "rect" ? { padding: [28, 0, 0, 0] } : axisTypeForField(xField.field) === "category" ? { padding: [30, 0, 0, 0] } : undefined,
             min: axisTypeForField(xField.field) === "value"
-                ? (isFacetedHorizontalBar || ((geomType === "point" || geomType === "circle") && (isXMeasureFacetOnColumns || useZeroBaselineScatter)))
-                    ? (cellStackedXExtent?.min !== undefined ? Math.min(0, cellStackedXExtent.min) : 0)
-                    : props.layout.resolve?.x
-                      ? independentXMin
-                      : (cellStackedXExtent?.min !== undefined ? Math.min(xMin ?? 0, cellStackedXExtent.min) : xMin)
+                ? (shouldUseZeroBaselineX ? zeroAnchoredXMin : resolvedXMin)
                 : undefined,
             max: axisTypeForField(xField.field) === "value" ? resolvedXMax : undefined,
             splitNumber: axisTypeForField(xField.field) === "value"
@@ -207,11 +219,7 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
             name: cell.colIndex === 0 ? cellYAxisTitle : undefined,
             inverse: ((axisTypeForField(yField.field) === "category" && axisTypeForField(xField.field) === "value") || (((geomType === "point" || geomType === "circle" || geomType === "rect") && axisTypeForField(yField.field) === "category") || isFacetedHorizontalBar)) ? true : undefined,
             min: axisTypeForField(yField.field) === "value"
-                ? (geomType === "bar" || geomType === "area" || ((geomType === "point" || geomType === "circle") && (isYMeasureFacetOnRows || isXMeasureFacetOnColumns || useZeroBaselineScatter)))
-                    ? (cellStackedYExtent?.min !== undefined ? Math.min(0, cellStackedYExtent.min) : 0)
-                    : props.layout.resolve?.y
-                      ? independentYMin
-                      : (cellStackedYExtent?.min !== undefined ? Math.min(yMin ?? 0, cellStackedYExtent.min) : yMin)
+                ? (shouldUseZeroBaselineY ? zeroAnchoredYMin : resolvedYMin)
                 : undefined,
             max: axisTypeForField(yField.field) === "value" ? (geomType === "line" && resolvedYMax !== undefined && !props.layout.resolve?.y ? niceCeil(resolvedYMax * 1.05) : resolvedYMax) : undefined,
             splitNumber: axisTypeForField(yField.field) === "value"

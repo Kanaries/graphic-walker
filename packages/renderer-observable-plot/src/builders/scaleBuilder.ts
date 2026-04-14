@@ -66,6 +66,7 @@ export function buildScaleOptions(
         x: {
             label: model.x.title,
             type: temporalAxisType(model.x.type),
+            zero: model.x.type === 'quantitative' ? model.x.zero : undefined,
             domain:
                 model.x.isDiscrete
                     ? orderedDomain(data, model.x.key, model.x.sort)
@@ -76,6 +77,7 @@ export function buildScaleOptions(
         y: {
             label: model.y.title,
             type: temporalAxisType(model.y.type),
+            zero: model.y.type === 'quantitative' ? model.y.zero : undefined,
             domain:
                 model.y.isDiscrete
                     ? orderedDomain(data, model.y.key, model.y.sort)

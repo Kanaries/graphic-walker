@@ -66,6 +66,19 @@ test('legend disabled in vl config is respected', () => {
     assert.equal(plotSpec.marginRight, 40);
 });
 
+test('quantitative scale.zero is forwarded to plot scales', () => {
+    const vlSpec = {
+        data: { values: [{ category: 'A', value: 12 }] },
+        mark: 'line',
+        encoding: {
+            x: { field: 'category', type: 'nominal', title: 'Category' },
+            y: { field: 'value', type: 'quantitative', title: 'Value', scale: { zero: true } },
+        },
+    };
+    const plotSpec = __test__vegaLiteToPlot(vlSpec);
+    assert.equal(plotSpec.y.zero, true);
+});
+
 test('uses vegaConfig color for marks without color channel', () => {
     const vlSpec = baseSpec();
     delete vlSpec.encoding.color;

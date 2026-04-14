@@ -514,6 +514,31 @@ describe('buildEChartsOption', () => {
         expect((option as any).yAxis[0].inverse).toBe(true);
     });
 
+    test('uses zero baseline for line value axis when zeroScale is enabled', () => {
+        const option = buildEChartsOption({
+            data: [
+                { category: 'A', value: 12 },
+                { category: 'B', value: 24 },
+            ],
+            draggableFieldState: {
+                dimensions: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                measures: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                rows: [{ fid: 'value', name: 'value', semanticType: 'quantitative', analyticType: 'measure' } as any],
+                columns: [{ fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any],
+                color: [], opacity: [], size: [], shape: [], radius: [], theta: [], longitude: [], latitude: [], geoId: [], details: [], filters: [], text: []
+            },
+            visualConfig: { defaultAggregated: true, geoms: ['line'], coordSystem: 'generic', limit: -1 },
+            layout: { size: { mode: 'fixed', width: 320, height: 200 }, resolve: {}, zeroScale: true } as any,
+            scales: { y: { zeroScale: true } } as any,
+            vegaConfig: {},
+            chartWidth: 320,
+            chartHeight: 200,
+        } as any);
+
+        expect(option).toBeTruthy();
+        expect((option as any).yAxis[0].min).toBe(0);
+    });
+
     test('renders transposed boxplot with value x-axis and category y-axis', () => {
         const option = buildEChartsOption({
             data: [
