@@ -415,6 +415,37 @@ describe('buildEChartsOption', () => {
         expect((option as any).series[0].symbol).not.toBe((option as any).series[1].symbol);
     });
 
+    test('uses grouped color series for non-stacked bar charts', () => {
+        const option = buildEChartsOption(createBarProps({
+            data: [
+                { category: 'A', value: 10, lunch: 'standard' },
+                { category: 'A', value: 6, lunch: 'free/reduced' },
+                { category: 'B', value: 14, lunch: 'standard' },
+                { category: 'B', value: 9, lunch: 'free/reduced' },
+            ],
+            draggableFieldState: {
+                ...createBarProps().draggableFieldState,
+                dimensions: [
+                    { fid: 'category', name: 'category', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                    { fid: 'lunch', name: 'lunch', semanticType: 'nominal', analyticType: 'dimension' } as any,
+                ],
+                color: [{ fid: 'lunch', name: 'lunch', semanticType: 'nominal', analyticType: 'dimension' } as any],
+            },
+            layout: {
+                ...createBarProps().layout,
+                stack: 'none',
+            },
+        }));
+
+        expect(option).toBeTruthy();
+        expect((option as any).series).toHaveLength(4);
+        expect((option as any).series.every((item: any) => item.stack === undefined)).toBe(true);
+        expect((option as any).series.every((item: any) => item.barGap === '-100%')).toBe(true);
+        const sources = (option as any).dataset.map((entry: any) => entry.source);
+        expect(sources).toHaveLength(4);
+        expect(sources.every((rows: any[]) => rows).toBeTruthy());
+    });
+
     test('uses horizontal categorical stack builder for transposed normalize bar charts', () => {
         const option = buildEChartsOption({
             data: [

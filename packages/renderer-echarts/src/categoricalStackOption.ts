@@ -125,13 +125,13 @@ export function buildCategoricalStackSeries(params: {
             },
             series: rows.map((row, rowIndex) => {
                 const colorValue = row[colorKey];
-                const colorPos = colorIndex.get(String(colorValue)) ?? 0;
+                const colorPos = colorIndex.get(String(colorValue)) ?? rowIndex;
                 return {
                     name: String(colorValue),
                     type: "bar",
                     datasetIndex: rowIndex,
                     encode,
-                    barGap: "30%",
+                    barGap: "-100%",
                     barCategoryGap: "22%",
                     itemStyle: { color: palette[colorPos % Math.max(1, palette.length)] },
                     z: rowIndex + 1,
