@@ -410,6 +410,96 @@ function applyStacking(markFn: MarkFactory, data: any[], baseOptions: Record<str
     return markFn(data, Plot.stackY(stackOptions, baseOptions));
 }
 
+function buildNonStackedAreaMarks(
+    markFn: MarkFactory,
+    data: any[],
+    markOptions: Record<string, unknown>,
+    model: ChannelModel,
+): Plot.Markish | null {
+    const seriesKeys = [model.color.key, model.opacity.isDiscrete ? model.opacity.key : undefined].filter(
+        (key): key is string => Boolean(key),
+    );
+    if (seriesKeys.length === 0) return null;
+
+    const grouped = new Map<string, any[]>();
+    for (const row of data) {
+        const groupId = seriesKeys.map((key) => String(row[key] ?? '')).join('\u0001');
+        const rows = grouped.get(groupId) ?? [];
+        rows.push(row);
+        grouped.set(groupId, rows);
+    }
+    if (grouped.size <= 1) return null;
+
+    return Plot.marks(
+        ...Array.from(grouped.values()).map((rows) =>
+            markFn(rows, {
+                ...markOptions,
+                z: undefined,
+            }),
+        ),
+    );
+}
+
+function buildStackedAreaByColorAndOpacity(
+    markFn: MarkFactory,
+    data: any[],
+    markOptions: Record<string, unknown>,
+    model: ChannelModel,
+    stackAxis: 'x' | 'y',
+    stackMode: string,
+): Plot.Markish | null {
+    if (!model.color.key || !model.opacity.key || !model.opacity.isDiscrete) return null;
+    const colorKey = model.color.key;
+    const opacityKey = model.opacity.key;
+    const colorSort = model.color.sort ?? 'descending';
+    const opacitySort = model.opacity.sort ?? 'descending';
+    const colorDomain = orderedDomain(data, colorKey, colorSort);
+    const opacityDomain = orderedDomain(data, opacityKey, opacitySort);
+    if (colorDomain.length <= 1 || opacityDomain.length <= 1) return null;
+    const colorOrder = new Map(colorDomain.map((value, index) => [String(value), index]));
+    const opacityOrder = new Map(opacityDomain.map((value, index) => [String(value), index]));
+    const primaryKey = stackAxis === 'x' ? model.y.key : model.x.key;
+    const primaryDomain = orderedDomain(
+        data,
+        primaryKey,
+        stackAxis === 'x' ? model.y.sort : model.x.sort,
+    );
+    const primaryOrder = new Map(primaryDomain.map((value, index) => [String(value), index]));
+
+    const seriesKey = '__gw_color_opacity_series__';
+    const prepared = data
+        .map((row) => ({
+            ...row,
+            [seriesKey]: `${String(row[colorKey] ?? '')}\u0001${String(row[opacityKey] ?? '')}`,
+        }))
+        .sort((a, b) => {
+            const colorComp = compareDiscreteValue(a[colorKey], b[colorKey], colorOrder);
+            if (colorComp !== 0) return colorComp;
+            const opacityComp =
+                (opacityOrder.get(String(a[opacityKey])) ?? Number.MAX_SAFE_INTEGER) -
+                (opacityOrder.get(String(b[opacityKey])) ?? Number.MAX_SAFE_INTEGER);
+            if (opacityComp !== 0) return opacityComp;
+            if (primaryKey) {
+                return (
+                    (primaryOrder.get(String(a[primaryKey])) ?? Number.MAX_SAFE_INTEGER) -
+                    (primaryOrder.get(String(b[primaryKey])) ?? Number.MAX_SAFE_INTEGER)
+                );
+            }
+            return 0;
+        });
+
+    return applyStacking(
+        markFn,
+        prepared,
+        {
+            ...markOptions,
+            z: seriesKey,
+        },
+        stackAxis,
+        stackMode,
+    );
+}
+
 export function buildMark(
     spec: VegaLiteLikeSpec,
     data: any[],
@@ -570,6 +660,12 @@ export function buildMark(
     }
 
     if (shouldStack && stackMode) {
+        if (lineGeom === 'area') {
+            const stackedByColorAndOpacity = buildStackedAreaByColorAndOpacity(markFn, markData, markOptions, model, stackAxis, stackMode);
+            if (stackedByColorAndOpacity) {
+                return stackedByColorAndOpacity;
+            }
+        }
         const stackedOptions: Record<string, unknown> = {
             ...markOptions,
             z: model.color.key,
@@ -580,6 +676,13 @@ export function buildMark(
         const stackData =
             reverseHorizontalBars || shouldReverseCenterStack || shouldReverseAreaStack ? reverseStackSeriesOrder(markData, model, stackAxis) : markData;
         return applyStacking(markFn, stackData, stackedOptions, stackAxis, stackMode);
+    }
+
+    if (lineGeom === 'area') {
+        const nonStackedAreaMarks = buildNonStackedAreaMarks(markFn, markData, markOptions, model);
+        if (nonStackedAreaMarks) {
+            return nonStackedAreaMarks;
+        }
     }
 
     const seriesGroupKey = model.color.key ?? (model.opacity.isDiscrete ? model.opacity.key : undefined);

@@ -14,6 +14,7 @@ type LayoutGroup = {
     fill?: string;
     opacity?: number;
     order: number;
+    stackOrder?: number;
 };
 
 type StackMode = "none" | "stack" | "normalize" | "center" | "zero";
@@ -115,12 +116,18 @@ export function layoutVariableWidthBarGroups(params: {
         return { group, source };
     });
 
+    const stackingDatasets = [...datasets].sort((left, right) => {
+        const leftOrder = left.group.stackOrder ?? left.group.order;
+        const rightOrder = right.group.stackOrder ?? right.group.order;
+        return leftOrder - rightOrder;
+    });
+
     for (const category of xValues) {
         const key = String(category);
         const total = totalsByCategory.get(key) ?? 0;
         const centerBase = normalizedStackMode === "center" ? Math.max(0, (maxTotal - total) / 2) : 0;
         let cursor = 0;
-        for (const dataset of datasets) {
+        for (const dataset of stackingDatasets) {
             const row = dataset.source.find((item) => String(item[BAR_CATEGORY_FIELD]) === key);
             if (!row) continue;
             if (normalizedStackMode === "none") {

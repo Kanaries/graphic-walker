@@ -81,7 +81,7 @@ export function appendVariableWidthBarSeries(params: {
         ? Array.from(new Set(cellRows.map((row) => row[sizeField.key as string]).filter((value) => value !== null && value !== undefined)))
         : [null];
 
-    const groups: Array<{ name: string; rows: Array<Record<string, any>>; fill?: string; opacity?: number; order: number }> = [];
+    const groups: Array<{ name: string; rows: Array<Record<string, any>>; fill?: string; opacity?: number; order: number; stackOrder?: number }> = [];
     let order = 0;
     colorValues.forEach((colorValue) => {
         shapeValues.forEach((shapeValue) => {
@@ -122,6 +122,9 @@ export function appendVariableWidthBarSeries(params: {
                             fill,
                             opacity,
                             order: order++,
+                            stackOrder: overlayDiscreteSizeBars && useDiscreteSize && sizeValue !== null
+                                ? -Math.max(0, sizeValues.findIndex((item) => item === sizeValue))
+                                : undefined,
                         });
                     });
                 });
@@ -173,7 +176,9 @@ export function appendVariableWidthBarSeries(params: {
                 const endPoint = isVerticalBar ? api.coord([category, rectEnd]) : api.coord([rectEnd, category]);
                 const startPoint = isVerticalBar ? api.coord([category, rectStart]) : api.coord([rectStart, category]);
                 const bandWidth = Math.abs(isVerticalBar ? (api.size([1, 0])[0] ?? 28) : (api.size([0, 1])[1] ?? 28));
-                const widthRatio = overlayDiscreteSizeBars ? Math.min(0.18, Number.isFinite(ratio) ? ratio : 0.18) : Number.isFinite(ratio) ? ratio : 0.9;
+                const widthRatio = overlayDiscreteSizeBars
+                    ? scaleRange(Number.isFinite(ratio) ? ratio : 0.35, 0.35, 0.9, 0.06, 0.22)
+                    : Number.isFinite(ratio) ? ratio : 0.9;
                 const width = Math.max(2, bandWidth * widthRatio);
                 const x = isVerticalBar ? endPoint[0] - width / 2 : Math.min(endPoint[0], startPoint[0]);
                 const y = isVerticalBar ? Math.min(endPoint[1], startPoint[1]) : endPoint[1] - width / 2;
