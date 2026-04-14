@@ -16,6 +16,9 @@ export const DISCRETE_COLOR_SCHEMES: Record<string, string[]> = {
     tableau10: ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ab"],
 };
 export const VEGA_LITE_DEFAULT_CATEGORY_RANGE = ["#4C78A8", "#F58518", "#E45756", "#72B7B2", "#54A24B", "#EECA3B", "#B279A2", "#FF9DA6", "#9D755D", "#BAB0AC"];
+export const VEGA_LITE_DEFAULT_DIVERGING_RANGE = ["#7b3294", "#c2a5cf", "#f7f7f7", "#a6dba0", "#008837"];
+export const VEGA_LITE_DEFAULT_HEATMAP_RANGE = ["#0d0887", "#46039f", "#7201a8", "#9c179e", "#bd3786", "#d8576b", "#ed7953", "#fb9f3a", "#fdca26", "#f0f921"];
+export const VEGA_LITE_DEFAULT_RAMP_RANGE = ["#EBCCFF", "#CCB0FF", "#AE95FF", "#907BFF", "#7262FD", "#5349E0", "#2F32C3", "#001BA7", "#00068C"];
 export const VEGA_LITE_DEFAULT_PRIMARY_COLOR = VEGA_LITE_DEFAULT_CATEGORY_RANGE[0];
 
 export const SHAPE_SYMBOLS = ["circle", "rect", "roundRect", "triangle", "diamond", "pin", "arrow"];
@@ -373,6 +376,18 @@ export function resolveColorRange(range: any, fallback: string[] = VEGA_LITE_DEF
         }
     }
     return fallback;
+}
+
+export function resolveVegaAlignedRanges(vegaConfig: RendererPluginProps["vegaConfig"] | undefined) {
+    const range = (vegaConfig as Record<string, any> | undefined)?.range as Record<string, any> | undefined;
+    const category = resolveColorRange(range?.category ?? range?.ordinal, VEGA_LITE_DEFAULT_CATEGORY_RANGE);
+    return {
+        category,
+        ordinal: resolveColorRange(range?.ordinal ?? range?.category, category),
+        diverging: resolveColorRange(range?.diverging, VEGA_LITE_DEFAULT_DIVERGING_RANGE),
+        heatmap: resolveColorRange(range?.heatmap, VEGA_LITE_DEFAULT_HEATMAP_RANGE),
+        ramp: resolveColorRange(range?.ramp, VEGA_LITE_DEFAULT_RAMP_RANGE),
+    };
 }
 
 export function resolveGeomDefaultColor(geomType: string, vegaConfig: RendererPluginProps["vegaConfig"], fallback: string) {

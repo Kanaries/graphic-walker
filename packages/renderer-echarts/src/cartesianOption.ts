@@ -2,7 +2,18 @@ import { buildDiscreteColorLegendGraphic, buildDiscreteOpacityLegendGraphic, bui
 import { createSeriesByGeom } from "./series";
 import { appendVariableWidthBarSeries } from "./variableWidthBarOption";
 import type { EChartsSeries, FacetCell, SeriesVisualEncoding } from "./types";
-import { axisTypeForField, createTooltip, isScatterLikeGeom, isSyntheticMeasureFacetField, niceCeil, parsePercent, scaleRange, symbolForOrderedShape, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
+import {
+    axisTypeForField,
+    createTooltip,
+    isScatterLikeGeom,
+    isSyntheticMeasureFacetField,
+    niceCeil,
+    parsePercent,
+    resolveVegaAlignedRanges,
+    scaleRange,
+    symbolForOrderedShape,
+    VEGA_LITE_DEFAULT_PRIMARY_COLOR,
+} from "./utils";
 
 const RECT_X_INDEX_FIELD = "__gw_rect_x_index__";
 const RECT_Y_INDEX_FIELD = "__gw_rect_y_index__";
@@ -491,7 +502,10 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
     if (colorField.key && !useDiscreteColor) {
         const numericValues = sortedSource.map((row) => Number(row[colorField.key as string])).filter((value) => Number.isFinite(value));
         const continuousScale = vegaConfig.scale?.continuous;
-        const continuousColorRange = geomType === "rect" ? vegaConfig.range?.heatmap || vegaConfig.range?.ramp || continuousScale?.range || vegaConfig.range?.category : continuousScale?.range || vegaConfig.range?.ramp || vegaConfig.range?.heatmap || vegaConfig.range?.category;
+        const resolvedRanges = resolveVegaAlignedRanges(vegaConfig);
+        const continuousColorRange = geomType === "rect"
+            ? vegaConfig.range?.heatmap || vegaConfig.range?.ramp || continuousScale?.range || resolvedRanges.heatmap || resolvedRanges.ramp || resolvedRanges.category
+            : continuousScale?.range || vegaConfig.range?.ramp || vegaConfig.range?.heatmap || resolvedRanges.ramp || resolvedRanges.heatmap || resolvedRanges.category;
         visualMap.push({
             type: "continuous",
             dimension: colorField.key,

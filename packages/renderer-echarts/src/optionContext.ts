@@ -15,6 +15,7 @@ import {
     orderedUniqueValues,
     prepareCartesianState,
     resolveColorRange,
+    resolveVegaAlignedRanges,
     resolveGeomDefaultColor,
     sortSourceData,
     VEGA_LITE_DEFAULT_PRIMARY_COLOR,
@@ -29,7 +30,7 @@ function reservePercentFromPixels(pixels: number, chartHeight: number, minPercen
 }
 
 export function createOptionContext(props: RendererPluginProps) {
-    const vegaConfig = props.vegaConfig as Record<string, any>;
+    const vegaConfig = (props.vegaConfig ?? {}) as Record<string, any>;
     const channelScales = props.scales as Record<string, any> | undefined;
     const preparedState = prepareCartesianState(props);
     const rows = preparedState.rows;
@@ -46,8 +47,9 @@ export function createOptionContext(props: RendererPluginProps) {
     const textField = getFieldBinding(sourceData, text[0] as any);
     const rawGeom = props.visualConfig.geoms[0] ?? "auto";
     const geomType = normalizeGeom(rawGeom, xField.field, yField.field);
-    const categoryPalette = resolveColorRange(props.vegaConfig.range?.category);
-    const defaultColor = resolveGeomDefaultColor(geomType, props.vegaConfig, categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR);
+    const resolvedRanges = resolveVegaAlignedRanges(vegaConfig);
+    const categoryPalette = resolveColorRange(resolvedRanges.category);
+    const defaultColor = resolveGeomDefaultColor(geomType, vegaConfig, categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR);
     const cartesianGeom = geomType !== "arc";
 
     const detailFields = details
