@@ -142,10 +142,27 @@ export function layoutVariableWidthBarGroups(params: {
         }
     }
 
+    let layoutMin = 0;
+    let layoutMax = 0;
+    for (const dataset of datasets) {
+        for (const row of dataset.source) {
+            const start = Number(row[BAR_STACK_START_FIELD]);
+            const end = Number(row[BAR_STACK_END_FIELD]);
+            if (Number.isFinite(start)) {
+                layoutMin = Math.min(layoutMin, start);
+                layoutMax = Math.max(layoutMax, start);
+            }
+            if (Number.isFinite(end)) {
+                layoutMin = Math.min(layoutMin, end);
+                layoutMax = Math.max(layoutMax, end);
+            }
+        }
+    }
+
     return {
         datasets,
-        yAxisMin: 0,
-        yAxisMax: normalizedStackMode === "normalize" ? 1 : maxTotal,
+        yAxisMin: normalizedStackMode === "normalize" ? 0 : layoutMin,
+        yAxisMax: normalizedStackMode === "normalize" ? 1 : Math.max(maxTotal, layoutMax),
         usePercentageAxis: normalizedStackMode === "normalize",
     };
 }

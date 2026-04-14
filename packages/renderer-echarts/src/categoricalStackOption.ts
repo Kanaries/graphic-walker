@@ -34,7 +34,8 @@ export function buildCategoricalStackSeries(params: {
         const color = row[colorKey];
         const value = Number(row[yKey]);
         if (!Number.isFinite(value)) continue;
-        grouped.set(`${String(color)}__${String(x)}`, value);
+        const key = `${String(color)}__${String(x)}`;
+        grouped.set(key, (grouped.get(key) ?? 0) + value);
     }
 
     const rawSeries = orderedColors.map((colorValue) => ({
@@ -42,7 +43,10 @@ export function buildCategoricalStackSeries(params: {
         values: xValues.map((xValue) => grouped.get(`${String(colorValue)}__${String(xValue)}`) ?? 0),
     }));
     const totals = xValues.map((_, idx) => rawSeries.reduce((sum, series) => sum + (series.values[idx] ?? 0), 0));
-    const maxTotal = Math.max(0, ...totals);
+    const positiveTotals = xValues.map((_, idx) => rawSeries.reduce((sum, series) => sum + Math.max(0, series.values[idx] ?? 0), 0));
+    const negativeTotals = xValues.map((_, idx) => rawSeries.reduce((sum, series) => sum + Math.min(0, series.values[idx] ?? 0), 0));
+    const maxStackExtent = Math.max(0, ...positiveTotals);
+    const minStackExtent = Math.min(0, ...negativeTotals);
     const baseOption = {
         animation: false,
         backgroundColor: background,
@@ -104,6 +108,8 @@ export function buildCategoricalStackSeries(params: {
     const encode = orientation === "vertical" ? { x: categoryField, y: valueField } : { x: valueField, y: categoryField };
 
     if (stackMode === "none" && geomType === "bar") {
+        const finiteValues = rows.map((row) => Number(row[yKey])).filter((value) => Number.isFinite(value));
+        const minValue = finiteValues.length > 0 ? Math.min(...finiteValues) : 0;
         const datasets = rows.map((row) => ({
             source: xValues.map((value) => ({
                 [categoryField]: value,
@@ -115,7 +121,7 @@ export function buildCategoricalStackSeries(params: {
             dataset: datasets,
             [orientation === "vertical" ? "yAxis" : "xAxis"]: {
                 ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
-                min: 0,
+                min: Math.min(0, minValue),
             },
             series: rows.map((row, rowIndex) => {
                 const colorValue = row[colorKey];
@@ -135,7 +141,7 @@ export function buildCategoricalStackSeries(params: {
     }
 
     if (stackMode === "center") {
-        const baseOffsets = totals.map((total) => Math.max(0, (maxTotal - total) / 2));
+        const baseOffsets = totals.map((total) => Math.max(0, (maxStackExtent - total) / 2));
         const datasets = [
             createDatasetEntry(xValues.map((value, index) => ({ [categoryField]: value, [valueField]: baseOffsets[index] ?? 0 }))),
             ...rawSeries.map((entry) =>
@@ -148,7 +154,7 @@ export function buildCategoricalStackSeries(params: {
             [orientation === "vertical" ? "yAxis" : "xAxis"]: {
                 ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
                 min: 0,
-                max: maxTotal,
+                max: maxStackExtent,
             },
             series: [
                 {
@@ -213,7 +219,7 @@ export function buildCategoricalStackSeries(params: {
 
     const normalizedValues = normalizedSeries.flatMap((entry) => entry.values as number[]);
     const maxSeriesValue = Math.max(...normalizedValues);
-    const maxStackValue = Math.max(...totals, maxSeriesValue);
+    const maxStackValue = Math.max(...totals, maxSeriesValue, maxStackExtent);
     const valueAxis: Record<string, any> = {
         ...(orientation === "vertical" ? baseOption.yAxis : baseOption.xAxis),
         nameTextStyle: {
@@ -228,7 +234,7 @@ export function buildCategoricalStackSeries(params: {
         valueAxis.splitNumber = 10;
         valueAxis.axisLabel = { formatter: (value: number) => `${Math.round(value * 100)}%` };
     } else if (geomType === "area") {
-        valueAxis.min = 0;
+        valueAxis.min = minStackExtent < 0 ? minStackExtent : 0;
         valueAxis.max = niceCeil(stackMode === "none" ? maxSeriesValue : maxStackValue);
         valueAxis.splitNumber = 8;
     } else if (!zeroScale) {
@@ -237,7 +243,7 @@ export function buildCategoricalStackSeries(params: {
         valueAxis.max = niceCeil(Math.max(...totals, ...allValues));
         valueAxis.splitNumber = 8;
     } else {
-        valueAxis.min = 0;
+        valueAxis.min = minStackExtent < 0 ? minStackExtent : 0;
         valueAxis.max = niceCeil(maxStackValue);
         valueAxis.splitNumber = 8;
     }

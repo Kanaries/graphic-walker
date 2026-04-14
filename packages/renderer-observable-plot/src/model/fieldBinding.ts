@@ -7,6 +7,7 @@ export type VLChannelDef = {
     aggregate?: string | null;
     value?: unknown;
     stack?: string | null | boolean;
+    sort?: unknown;
 };
 
 export type FieldBinding = {
@@ -15,6 +16,7 @@ export type FieldBinding = {
     type?: string;
     value?: unknown;
     aggregate?: string | null;
+    sort?: unknown;
     isDiscrete: boolean;
     isContinuous: boolean;
 };
@@ -68,6 +70,7 @@ export function getFieldBinding(data: readonly IRow[], channel?: VLChannelDef): 
         type,
         value: channel?.value,
         aggregate: channel?.aggregate,
+        sort: channel?.sort,
         isDiscrete: type === 'nominal' || type === 'ordinal',
         isContinuous: type === 'quantitative' || type === 'temporal',
     };

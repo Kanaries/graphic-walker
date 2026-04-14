@@ -22,13 +22,19 @@ export function buildArcOption(params: {
     }
 
     if (!radiusField) {
-        const pieData = categoryField
+        const legendValues = categoryField
             ? orderedUniqueValues(sourceData, colorField.key ? colorField : xField)
                   .filter((value): value is string | number => value !== null && value !== undefined)
-                  .map((name) => {
-                      const datum = sourceData.find((row) => row[categoryField] === name);
-                      return { name, value: datum?.[valueField] };
-                  })
+                  .map((value) => String(value))
+            : [];
+        const legendColorMap = new Map(legendValues.map((name, index) => [name, categoryPalette[index % Math.max(1, categoryPalette.length)] ?? "#5B8FF9"]));
+        const pieData = categoryField
+            ? sourceData
+                  .map((row) => ({
+                      name: row[categoryField],
+                      value: Number(row[valueField]),
+                  }))
+                  .filter((entry): entry is { name: string | number; value: number } => entry.name !== null && entry.name !== undefined && Number.isFinite(entry.value))
             : [{ name: thetaField.title ?? "value", value: Number(sourceData[0]?.[valueField] ?? 0) }];
 
         return {
@@ -43,7 +49,7 @@ export function buildArcOption(params: {
                       top: 34,
                       right: 12,
                       type: "scroll",
-                      data: pieData.map((entry) => String(entry.name)),
+                      data: legendValues,
                   }
                 : { show: false },
             dataset: [{ source: pieData }],
@@ -69,6 +75,11 @@ export function buildArcOption(params: {
                     itemName: "name",
                     value: "value",
                 },
+                itemStyle: categoryField
+                    ? {
+                          color: (params: { name?: string | number }) => legendColorMap.get(String(params?.name ?? "")) ?? categoryPalette[0] ?? "#5B8FF9",
+                      }
+                    : undefined,
                 label: { show: false },
             }],
         };

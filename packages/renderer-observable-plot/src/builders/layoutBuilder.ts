@@ -6,6 +6,7 @@ export function buildLayoutOptions(model: ChannelModel, hideLegend: boolean): Re
         // Let Plot manage legend footprint; fixed large reserve causes blank area.
         marginRight: 40,
         marginBottom: 48,
-        marginLeft: 56,
+        // Reserve extra space for transposed categorical labels to avoid left clipping.
+        marginLeft: 120,
     };
 }

@@ -41,7 +41,7 @@ function vegaLiteToPlot(spec: VegaLiteLikeSpec, vegaConfig?: VegaGlobalConfig): 
 
     return {
         marks: [mark],
-        ...buildScaleOptions(channels, geom, hideLegend, vegaConfig),
+        ...buildScaleOptions(data, channels, geom, hideLegend, vegaConfig),
         ...buildLayoutOptions(channels, hideLegend),
     };
 }

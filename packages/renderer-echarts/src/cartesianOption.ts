@@ -34,21 +34,30 @@ function computeStackExtent(params: {
         return undefined;
     }
 
-    const totals = new Map<string, number>();
+    const totals = new Map<string, { positive: number; negative: number }>();
     for (const row of rows) {
         const stackValue = row[stackKey];
         const value = Number(row[valueKey]);
         if (!Number.isFinite(value)) {
             continue;
         }
-        totals.set(String(stackValue), (totals.get(String(stackValue)) ?? 0) + value);
+        const key = String(stackValue);
+        const entry = totals.get(key) ?? { positive: 0, negative: 0 };
+        if (value >= 0) {
+            entry.positive += value;
+        } else {
+            entry.negative += value;
+        }
+        totals.set(key, entry);
     }
 
     if (totals.size === 0) {
         return undefined;
     }
 
-    return Math.max(...totals.values());
+    const max = Math.max(...Array.from(totals.values(), (entry) => entry.positive));
+    const min = Math.min(...Array.from(totals.values(), (entry) => entry.negative));
+    return { min, max };
 }
 
 function numericExtent(rows: Array<Record<string, any>>, key?: string) {
@@ -128,10 +137,10 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
         const facetedValueAxisSplitNumber = facetCells.length >= 8 ? 3 : facetCells.length >= 4 ? 4 : 5;
         const cellRows = rowsForFacetCell(sortedSource, cell, rowFacetBinding, colFacetBinding);
         const shouldUseStackExtent = (geomType === "bar" || geomType === "area") && props.layout.stack !== "none";
-        const cellStackedYMax = shouldUseStackExtent && axisTypeForField(xField.field) === "category" && axisTypeForField(yField.field) === "value"
+        const cellStackedYExtent = shouldUseStackExtent && axisTypeForField(xField.field) === "category" && axisTypeForField(yField.field) === "value"
             ? computeStackExtent({ rows: cellRows, stackKey: xField.key, valueKey: yField.key })
             : undefined;
-        const cellStackedXMax = shouldUseStackExtent && axisTypeForField(xField.field) === "value" && axisTypeForField(yField.field) === "category"
+        const cellStackedXExtent = shouldUseStackExtent && axisTypeForField(xField.field) === "value" && axisTypeForField(yField.field) === "category"
             ? computeStackExtent({ rows: cellRows, stackKey: yField.key, valueKey: xField.key })
             : undefined;
         const localXExtent = axisTypeForField(xField.field) === "value" ? numericExtent(cellRows, xField.key) : undefined;
@@ -144,13 +153,13 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
             : undefined;
         const resolvedXMax = props.layout.resolve?.x
             ? (localXExtent?.max !== undefined ? niceCeil(localXExtent.max) : undefined)
-            : cellStackedXMax !== undefined
-              ? Math.max(xMax ?? 0, niceCeil(cellStackedXMax))
+            : cellStackedXExtent?.max !== undefined
+              ? Math.max(xMax ?? 0, niceCeil(cellStackedXExtent.max))
               : xMax;
         const resolvedYMax = props.layout.resolve?.y
             ? (localYExtent?.max !== undefined ? niceCeil(localYExtent.max) : undefined)
-            : cellStackedYMax !== undefined
-              ? Math.max(yMax ?? 0, niceCeil(cellStackedYMax))
+            : cellStackedYExtent?.max !== undefined
+              ? Math.max(yMax ?? 0, niceCeil(cellStackedYExtent.max))
               : yMax;
         const valueXAxisLabel = { ...createXAxisOptions(xField, undefined, cellIndex).axisLabel, formatter: (value: number) => formatValueLabel(value, numberFormat) };
         const valueYAxisLabel = { ...createYAxisOptions(yField, undefined, cellIndex).axisLabel, formatter: (value: number) => formatValueLabel(value, numberFormat) };
@@ -162,7 +171,11 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
             nameGap: geomType === "rect" ? 72 : axisTypeForField(xField.field) === "category" ? 62 : 34,
             nameTextStyle: geomType === "rect" ? { padding: [28, 0, 0, 0] } : axisTypeForField(xField.field) === "category" ? { padding: [30, 0, 0, 0] } : undefined,
             min: axisTypeForField(xField.field) === "value"
-                ? (isFacetedHorizontalBar || ((geomType === "point" || geomType === "circle") && (isXMeasureFacetOnColumns || useZeroBaselineScatter))) ? 0 : props.layout.resolve?.x ? independentXMin : xMin
+                ? (isFacetedHorizontalBar || ((geomType === "point" || geomType === "circle") && (isXMeasureFacetOnColumns || useZeroBaselineScatter)))
+                    ? (cellStackedXExtent?.min !== undefined ? Math.min(0, cellStackedXExtent.min) : 0)
+                    : props.layout.resolve?.x
+                      ? independentXMin
+                      : (cellStackedXExtent?.min !== undefined ? Math.min(xMin ?? 0, cellStackedXExtent.min) : xMin)
                 : undefined,
             max: axisTypeForField(xField.field) === "value" ? resolvedXMax : undefined,
             splitNumber: axisTypeForField(xField.field) === "value"
@@ -180,7 +193,11 @@ export function buildCartesianOption(state: ReturnType<typeof import("./optionCo
             name: cell.colIndex === 0 ? cellYAxisTitle : undefined,
             inverse: ((axisTypeForField(yField.field) === "category" && axisTypeForField(xField.field) === "value") || (((geomType === "point" || geomType === "circle" || geomType === "rect") && axisTypeForField(yField.field) === "category") || isFacetedHorizontalBar)) ? true : undefined,
             min: axisTypeForField(yField.field) === "value"
-                ? (geomType === "bar" || geomType === "area" || ((geomType === "point" || geomType === "circle") && (isYMeasureFacetOnRows || isXMeasureFacetOnColumns || useZeroBaselineScatter))) ? 0 : props.layout.resolve?.y ? independentYMin : yMin
+                ? (geomType === "bar" || geomType === "area" || ((geomType === "point" || geomType === "circle") && (isYMeasureFacetOnRows || isXMeasureFacetOnColumns || useZeroBaselineScatter)))
+                    ? (cellStackedYExtent?.min !== undefined ? Math.min(0, cellStackedYExtent.min) : 0)
+                    : props.layout.resolve?.y
+                      ? independentYMin
+                      : (cellStackedYExtent?.min !== undefined ? Math.min(yMin ?? 0, cellStackedYExtent.min) : yMin)
                 : undefined,
             max: axisTypeForField(yField.field) === "value" ? (geomType === "line" && resolvedYMax !== undefined && !props.layout.resolve?.y ? niceCeil(resolvedYMax * 1.05) : resolvedYMax) : undefined,
             splitNumber: axisTypeForField(yField.field) === "value"
