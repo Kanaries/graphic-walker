@@ -28,6 +28,14 @@ export function createAxisLabelOptions(axis: "x" | "y", isCategory: boolean) {
     };
 }
 
+function estimateCategoryLabelWidth(data?: any[]) {
+    if (!data || data.length === 0) {
+        return 72;
+    }
+    const maxChars = Math.max(...data.map((value) => String(value ?? "").length), 0);
+    return Math.max(72, Math.min(240, maxChars * 7));
+}
+
 export function createXAxisOptions(field: FieldBinding, data: any[] | undefined, gridIndex: number) {
     const isCategory = axisTypeForField(field.field) === "category";
     return {
@@ -46,11 +54,12 @@ export function createXAxisOptions(field: FieldBinding, data: any[] | undefined,
 
 export function createYAxisOptions(field: FieldBinding, data: any[] | undefined, gridIndex: number) {
     const isCategory = axisTypeForField(field.field) === "category";
+    const categoryNameGap = estimateCategoryLabelWidth(data) + 24;
     return {
         type: axisTypeForField(field.field),
         name: field.title,
         nameLocation: "middle",
-        nameGap: 52,
+        nameGap: isCategory ? categoryNameGap : 52,
         nameTextStyle: {
             padding: [0, 0, 8, 0],
         },
@@ -79,7 +88,7 @@ export function formatValueLabel(value: number, format?: string) {
 }
 
 export function getRightLegendLayout(chartWidth: number) {
-    const panelLeft = Math.max(chartWidth - 152, chartWidth * 0.82);
+    const panelLeft = Math.max(chartWidth - 182, chartWidth * 0.8);
     return {
         panelLeft,
         titleX: panelLeft,
@@ -164,6 +173,7 @@ export function buildOpacityLegendGraphic(params: {
     values.forEach((value, index) => {
         const opacity = scaleRange(value, min, max, 0.18, 1);
         const centerY = startY + index * 28;
+        const legendColor = `rgba(107, 114, 128, ${opacity})`;
         children.push({
             type: "circle",
             shape: {
@@ -172,8 +182,8 @@ export function buildOpacityLegendGraphic(params: {
                 r: 5,
             },
             style: {
-                fill: filled ? `rgba(0, 0, 0, ${opacity})` : "rgba(255,255,255,0)",
-                stroke: `rgba(0, 0, 0, ${opacity})`,
+                fill: filled ? legendColor : "rgba(255,255,255,0)",
+                stroke: legendColor,
                 lineWidth: 1.5,
             },
         });
@@ -388,7 +398,7 @@ export function buildDiscreteOpacityLegendGraphic(params: {
     chartWidth: number;
     startY: number;
     filled?: boolean;
-    marker?: "circle" | "rect";
+    marker?: "circle" | "rect" | "line";
 }) {
     const { title, values, chartWidth, startY, filled = false, marker = "circle" } = params;
     const layout = getRightLegendLayout(chartWidth);
@@ -402,25 +412,36 @@ export function buildDiscreteOpacityLegendGraphic(params: {
     values.forEach((value, index) => {
         const centerY = startY + 20 + index * 22;
         const opacity = scaleRange(index, 0, Math.max(1, values.length - 1), 0.25, 1);
-        children.push(marker === "rect"
+        const legendColor = `rgba(107, 114, 128, ${opacity})`;
+        children.push(marker === "line"
             ? {
-                  type: "rect",
-                  shape: { x: layout.markerX - 6, y: centerY - 6, width: 12, height: 12, r: 1.5 },
+                  type: "line",
+                  shape: { x1: layout.markerX - 7, y1: centerY, x2: layout.markerX + 7, y2: centerY },
                   style: {
-                      fill: filled ? `rgba(0, 0, 0, ${opacity})` : "rgba(255,255,255,0)",
-                      stroke: `rgba(0, 0, 0, ${opacity})`,
-                      lineWidth: 1.5,
+                      stroke: legendColor,
+                      lineWidth: 2.2,
+                      lineCap: "round",
                   },
               }
-            : {
-                  type: "circle",
-                  shape: { cx: layout.markerX, cy: centerY, r: 6 },
-                  style: {
-                      fill: filled ? `rgba(0, 0, 0, ${opacity})` : "rgba(255,255,255,0)",
-                      stroke: `rgba(0, 0, 0, ${opacity})`,
-                      lineWidth: 1.5,
-                  },
-              });
+            : marker === "rect"
+              ? {
+                    type: "rect",
+                    shape: { x: layout.markerX - 6, y: centerY - 6, width: 12, height: 12, r: 1.5 },
+                    style: {
+                        fill: filled ? legendColor : "rgba(255,255,255,0)",
+                        stroke: legendColor,
+                        lineWidth: 1.5,
+                    },
+                }
+              : {
+                    type: "circle",
+                    shape: { cx: layout.markerX, cy: centerY, r: 6 },
+                    style: {
+                        fill: filled ? legendColor : "rgba(255,255,255,0)",
+                        stroke: legendColor,
+                        lineWidth: 1.5,
+                    },
+                });
         children.push({
             type: "text",
             style: { x: layout.labelX, y: centerY, text: String(value), fill: "#333", font: "12px sans-serif", textVerticalAlign: "middle" },

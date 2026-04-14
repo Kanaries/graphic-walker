@@ -74,8 +74,8 @@ export function createSeriesByGeom(params: {
         ...datasetBinding,
         type: "bar",
         stack,
-        barGap: stack ? "0%" : "-100%",
-        barCategoryGap: stack ? undefined : "18%",
+        barGap: stack ? "0%" : "18%",
+        barCategoryGap: stack ? undefined : "34%",
         itemStyle: stack ? undefined : { opacity: 0.92 },
         encode: { x: xField, y: yField },
     };

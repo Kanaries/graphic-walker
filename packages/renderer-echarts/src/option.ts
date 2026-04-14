@@ -6,7 +6,7 @@ import { axisTypeForField } from "./utils";
 
 export function buildEChartsOption(props: RendererPluginProps) {
     const state = createOptionContext(props);
-    const { vegaConfig, channelScales, sourceData, xField, yField, colorField, thetaField, geomType, categoryPalette, defaultColor, cartesianGeom, rowFacetBinding, colFacetBinding, useDiscreteColor, xValues, yValues, colorValues } = state;
+    const { vegaConfig, channelScales, sourceData, xField, yField, colorField, opacityField, thetaField, geomType, categoryPalette, defaultColor, cartesianGeom, rowFacetBinding, colFacetBinding, useDiscreteColor, xValues, yValues, colorValues } = state;
 
     if (state.geomType === "arc") {
         return buildArcOption({ props, sourceData, colorField, thetaField, xField, yField });
@@ -17,6 +17,7 @@ export function buildEChartsOption(props: RendererPluginProps) {
         !rowFacetBinding.key &&
         !colFacetBinding.key &&
         useDiscreteColor &&
+        !opacityField.key &&
         xField.key &&
         yField.key &&
         axisTypeForField(xField.field) === "category" &&
@@ -44,6 +45,7 @@ export function buildEChartsOption(props: RendererPluginProps) {
         !rowFacetBinding.key &&
         !colFacetBinding.key &&
         !useDiscreteColor &&
+        !opacityField.key &&
         xField.key &&
         yField.key &&
         axisTypeForField(xField.field) === "value" &&
@@ -72,6 +74,7 @@ export function buildEChartsOption(props: RendererPluginProps) {
         !rowFacetBinding.key &&
         !colFacetBinding.key &&
         useDiscreteColor &&
+        !opacityField.key &&
         xField.key &&
         yField.key &&
         axisTypeForField(xField.field) === "value" &&

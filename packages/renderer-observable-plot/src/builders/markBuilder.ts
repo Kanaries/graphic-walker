@@ -557,10 +557,11 @@ export function buildMark(
         return applyStacking(markFn, stackData, stackedOptions, stackAxis, stackMode);
     }
 
-    if (model.color.key && (lineGeom === 'line' || lineGeom === 'area' || lineGeom === 'rule')) {
+    const seriesGroupKey = model.color.key ?? (model.opacity.isDiscrete ? model.opacity.key : undefined);
+    if (seriesGroupKey && (lineGeom === 'line' || lineGeom === 'area' || lineGeom === 'rule')) {
         const main = markFn(markData, {
             ...markOptions,
-            z: model.color.key,
+            z: seriesGroupKey,
         });
         if ((geom === 'point' || geom === 'circle') && (model.column.key || model.row.key)) {
             return Plot.marks(Plot.frame(), main);

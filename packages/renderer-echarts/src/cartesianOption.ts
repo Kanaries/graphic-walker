@@ -1,4 +1,4 @@
-import { buildDiscreteColorLegendGraphic, buildDiscreteOpacityLegendGraphic, buildDiscreteShapeLegendGraphic, buildDiscreteSizeLegendGraphic, buildOpacityLegendGraphic, buildSizeLegendGraphic, createXAxisOptions, createYAxisOptions, formatValueLabel, getDiscreteLegendBlockHeight, getQuantitativeLegendBlockHeight, gridCell } from "./legends";
+import { buildDiscreteColorLegendGraphic, buildDiscreteOpacityLegendGraphic, buildDiscreteShapeLegendGraphic, buildDiscreteSizeLegendGraphic, buildOpacityLegendGraphic, buildSizeLegendGraphic, createXAxisOptions, createYAxisOptions, formatValueLabel, getDiscreteLegendBlockHeight, getQuantitativeLegendBlockHeight, getRightLegendLayout, gridCell } from "./legends";
 import { createSeriesByGeom } from "./series";
 import { appendVariableWidthBarSeries } from "./variableWidthBarOption";
 import type { EChartsSeries, FacetCell, SeriesVisualEncoding } from "./types";
@@ -9,6 +9,7 @@ import {
     isSyntheticMeasureFacetField,
     niceCeil,
     parsePercent,
+    colorWithAlpha,
     resolveVegaAlignedRanges,
     scaleRange,
     symbolForOrderedShape,
@@ -283,9 +284,9 @@ function appendSingleFacetLabel(params: { facetLabels: Array<Record<string, any>
 
 function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionContext").createOptionContext>; datasets: Array<Record<string, any>>; series: EChartsSeries[]; cell: FacetCell; cellIndex: number; xIndexMap: Map<string, number>; yIndexMap: Map<string, number>; }) {
     const { state, datasets, series, cell, cellIndex, xIndexMap, yIndexMap } = params;
-    const { props, sortedSource, rowFacetBinding, colFacetBinding, useDiscreteColor, useDiscreteOpacity, useDiscreteSize, useDiscreteShape, colorField, opacityField, sizeField, shapeField, colorValues, opacityValues, sizeValues, shapeValues, geomType, categoryPalette, defaultColor, xField, yField, textField, detailFields, opacityMin, opacityMax, sizeMin, sizeMax } = state;
+    const { props, sortedSource, rowFacetBinding, colFacetBinding, useDiscreteColor, useDiscreteOpacity, useDiscreteSize, useDiscreteShape, colorField, opacityField, opacityVisualKey, sizeField, shapeField, colorValues, opacityValues, sizeValues, shapeValues, geomType, categoryPalette, defaultColor, xField, yField, textField, detailFields, opacityMin, opacityMax, sizeMin, sizeMax } = state;
     const isStackableGeom = geomType === "bar" || geomType === "area";
-    const splitBarOpacity = geomType === "bar" && Boolean(opacityField.key);
+    const splitBarOpacity = geomType === "bar" && useDiscreteOpacity;
     const splitBarSize = false;
     const cellRows = sortedSource.filter((row) => {
         if (rowFacetBinding.key && row[rowFacetBinding.key] !== cell.rowValue) return false;
@@ -305,7 +306,7 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
     const opacitySeriesValues = (useDiscreteOpacity || splitBarOpacity)
         ? Array.from(new Set(cellRows.map((row) => row[opacityField.key as string]).filter((value) => value !== null && value !== undefined)))
         : [null];
-    const orderedOpacitySeriesValues = geomType === "bar" ? [...opacitySeriesValues].reverse() : opacitySeriesValues;
+    const orderedOpacitySeriesValues = geomType === "bar" || (geomType === "area" && useDiscreteOpacity) || geomType === "rect" ? [...opacitySeriesValues].reverse() : opacitySeriesValues;
     const sizeSeriesValues = (useDiscreteSize || splitBarSize)
         ? Array.from(new Set(cellRows.map((row) => row[sizeField.key as string]).filter((value) => value !== null && value !== undefined)))
         : [null];
@@ -366,7 +367,11 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                         const discreteOpacityIndex = opacityValues.findIndex((item) => item === opacityValue);
                         const discreteSizeIndex = sizeValues.findIndex((item) => item === sizeValue);
                         const seriesVisual: SeriesVisualEncoding = {
-                            opacity: useDiscreteOpacity && opacityValue !== null ? scaleRange(discreteOpacityIndex, 0, Math.max(1, opacityValues.length - 1), 0.25, 1) : splitBarOpacity && opacityValue !== null ? scaleRange(Number(opacityValue), opacityMin, opacityMax, 0.2, 1) : undefined,
+                            opacity: useDiscreteOpacity && opacityValue !== null
+                                ? scaleRange(discreteOpacityIndex, 0, Math.max(1, opacityValues.length - 1), geomType === "rect" ? 0.08 : geomType === "area" ? 0.2 : 0.25, geomType === "rect" ? 0.92 : geomType === "area" ? 0.75 : 1)
+                                : splitBarOpacity && opacityValue !== null
+                                  ? scaleRange(Number(opacityValue), opacityMin, opacityMax, 0.2, 1)
+                                  : undefined,
                             symbolSize: useDiscreteSize && sizeValue !== null ? scaleRange(discreteSizeIndex, 0, Math.max(1, sizeValues.length - 1), geomType === "point" ? 6 : 5, geomType === "point" ? 20 : 18) : undefined,
                         };
 
@@ -418,6 +423,51 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                             symbol: useDiscreteShape && shapeValue !== null ? symbolForOrderedShape(shapeValue, shapeValues) : useHollowDiscretePoint || useHollowSizedPoint ? "circle" : preferFilledPointSymbol ? "circle" : undefined,
                             stack,
                         });
+                        if (geomType === "rect" && opacityField.key) {
+                            nextSeries.type = "custom";
+                            nextSeries.coordinateSystem = "cartesian2d";
+                            nextSeries.encode = {
+                                x: RECT_X_INDEX_FIELD,
+                                y: RECT_Y_INDEX_FIELD,
+                                value: resolvedMeasureForRect,
+                            };
+                            nextSeries.renderItem = (_params: any, api: any) => {
+                                const xIndex = Number(api.value(RECT_X_INDEX_FIELD));
+                                const yIndex = Number(api.value(RECT_Y_INDEX_FIELD));
+                                if (!Number.isFinite(xIndex) || !Number.isFinite(yIndex)) {
+                                    return null;
+                                }
+                                const center = api.coord([xIndex, yIndex]);
+                                const size = api.size([1, 1]);
+                                const width = Math.max(1, Math.abs(Number(size?.[0] ?? 0)));
+                                const height = Math.max(1, Math.abs(Number(size?.[1] ?? 0)));
+                                const alpha = useDiscreteOpacity
+                                    ? (seriesVisual.opacity ?? 0.9)
+                                    : (() => {
+                                          const numeric = Number(api.value(opacityVisualKey as string));
+                                          if (!Number.isFinite(numeric)) {
+                                              return 0.9;
+                                          }
+                                          return scaleRange(numeric, opacityMin, opacityMax, 0.08, 0.95);
+                                      })();
+                                const visualColor = api.visual("color");
+                                const baseColor = typeof visualColor === "string" ? visualColor : (seriesColor ?? defaultColor);
+                                return {
+                                    type: "rect",
+                                    shape: {
+                                        x: center[0] - width / 2,
+                                        y: center[1] - height / 2,
+                                        width,
+                                        height,
+                                    },
+                                    style: {
+                                        fill: applyAlphaToColor(baseColor, alpha),
+                                        stroke: "rgba(255,255,255,0)",
+                                        lineWidth: 0,
+                                    },
+                                };
+                            };
+                        }
                         if ((geomType === "point" || geomType === "circle") && seriesColor) {
                             nextSeries.symbolSize = sizeField.key && !useDiscreteSize
                                 ? ((datum: Record<string, any>) => scaleRange(Number(datum?.[sizeField.key as string]), sizeMin, sizeMax, geomType === "point" ? 6 : 5, geomType === "point" ? 20 : 18))
@@ -429,11 +479,63 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                             };
                             nextSeries.emphasis = { disabled: true };
                         } else {
-                            if (seriesVisual.opacity !== undefined) {
-                                nextSeries.itemStyle = {
-                                    ...(nextSeries.itemStyle ?? {}),
-                                    opacity: seriesVisual.opacity,
+                            if (geomType === "bar" && seriesColor) {
+                                if (opacityField.key && !useDiscreteOpacity && !splitBarOpacity) {
+                                    nextSeries.itemStyle = {
+                                        ...(nextSeries.itemStyle ?? {}),
+                                        color: (params: { data?: Record<string, any> }) => {
+                                            const numeric = extractContinuousValue(params as any, opacityVisualKey as string);
+                                            if (!Number.isFinite(numeric)) {
+                                                return colorWithAlpha(seriesColor, 0.92);
+                                            }
+                                            return colorWithAlpha(seriesColor, scaleRange(numeric, opacityMin, opacityMax, 0.2, 1));
+                                        },
+                                    };
+                                } else {
+                                    nextSeries.itemStyle = {
+                                        ...(nextSeries.itemStyle ?? {}),
+                                        color: seriesColor,
+                                    };
+                                }
+                            }
+                            if ((geomType === "line" || geomType === "area") && seriesColor) {
+                                nextSeries.lineStyle = {
+                                    ...(nextSeries.lineStyle ?? {}),
+                                    color: seriesColor,
                                 };
+                                if (geomType === "line") {
+                                    nextSeries.itemStyle = {
+                                        ...(nextSeries.itemStyle ?? {}),
+                                        color: seriesColor,
+                                    };
+                                } else {
+                                    nextSeries.areaStyle = {
+                                        ...(nextSeries.areaStyle ?? {}),
+                                        color: seriesColor,
+                                    };
+                                }
+                            }
+                            if (seriesVisual.opacity !== undefined) {
+                                if (geomType === "line") {
+                                    nextSeries.lineStyle = {
+                                        ...(nextSeries.lineStyle ?? {}),
+                                        opacity: seriesVisual.opacity,
+                                    };
+                                } else if (geomType === "area") {
+                                    nextSeries.areaStyle = {
+                                        ...(nextSeries.areaStyle ?? {}),
+                                        opacity: seriesVisual.opacity,
+                                    };
+                                    nextSeries.lineStyle = {
+                                        ...(nextSeries.lineStyle ?? {}),
+                                        opacity: Math.max(0.4, seriesVisual.opacity),
+                                    };
+                                } else {
+                                    nextSeries.itemStyle = {
+                                        ...(nextSeries.itemStyle ?? {}),
+                                        opacity: seriesVisual.opacity,
+                                    };
+                                }
                             }
                         }
                         series.push(nextSeries);
@@ -453,6 +555,43 @@ function ensureSharedDataset(
         return existingIndex;
     }
     return datasets.push({ source: sortedSource }) - 1;
+}
+
+function extractContinuousValue(params: { data?: Record<string, any>; value?: any; dimensionNames?: string[] }, fieldKey: string) {
+    if (!fieldKey) return Number.NaN;
+    const directValue = params?.data?.[fieldKey];
+    if (Number.isFinite(Number(directValue))) {
+        return Number(directValue);
+    }
+    const dimensionNames = Array.isArray(params?.dimensionNames) ? params.dimensionNames : [];
+    const dimIndex = dimensionNames.findIndex((name) => name === fieldKey);
+    if (dimIndex >= 0) {
+        if (Array.isArray(params?.value) && Number.isFinite(Number(params.value[dimIndex]))) {
+            return Number(params.value[dimIndex]);
+        }
+        if (params?.value && typeof params.value === "object" && Number.isFinite(Number((params.value as Record<string, any>)[fieldKey]))) {
+            return Number((params.value as Record<string, any>)[fieldKey]);
+        }
+    }
+    return Number.NaN;
+}
+
+function applyAlphaToColor(color: string, alpha: number) {
+    if (typeof color !== "string") {
+        return color;
+    }
+    if (color.startsWith("#")) {
+        return colorWithAlpha(color, alpha);
+    }
+    const rgbMatch = color.match(/^rgba?\(([^)]+)\)$/i);
+    if (!rgbMatch) {
+        return color;
+    }
+    const [r, g, b] = rgbMatch[1].split(",").slice(0, 3).map((part) => Number(part.trim()));
+    if (![r, g, b].every((value) => Number.isFinite(value))) {
+        return color;
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function appendFacetHeaderLabels(params: { facetLabels: Array<Record<string, any>>; grids: Array<Record<string, any>>; rowFacetBinding: any; colFacetBinding: any; rowFacetValues: any[]; colFacetValues: any[]; }) {
@@ -498,9 +637,10 @@ function appendFacetHeaderLabels(params: { facetLabels: Array<Record<string, any
 }
 
 function buildVisualMap(state: ReturnType<typeof import("./optionContext").createOptionContext>, series: EChartsSeries[]) {
-    const { vegaConfig, geomType, colorField, useDiscreteColor, sortedSource, opacityField, sizeField, xField, yField } = state;
+    const { props, vegaConfig, geomType, colorField, useDiscreteColor, sortedSource, opacityField, opacityVisualKey, opacityMin, opacityMax, sizeField, xField, yField } = state;
     const visualMap: Array<Record<string, any>> = [];
     const seriesIndexes = series.map((_, index) => index);
+    const rightLegendLayout = getRightLegendLayout(props.chartWidth);
     if (colorField.key && !useDiscreteColor) {
         const numericValues = sortedSource.map((row) => Number(row[colorField.key as string])).filter((value) => Number.isFinite(value));
         const resolvedRanges = resolveVegaAlignedRanges(vegaConfig);
@@ -516,21 +656,31 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
             inRange: { color: continuousColorRange },
             calculable: true,
             orient: "vertical",
-            right: 16,
+            left: rightLegendLayout.titleX - 12,
             top: 44,
             bottom: 44,
             splitNumber: 5,
             itemWidth: 18,
             itemHeight: geomType === "rect" ? 180 : 150,
             textGap: 8,
+            align: "left",
             precision: 0,
             formatter: (value: number) => Math.round(value).toLocaleString(),
         });
     }
     if (opacityField.key && !state.useDiscreteOpacity && (geomType === "point" || geomType === "circle")) {
-        visualMap.push({ type: "continuous", dimension: opacityField.key, seriesIndex: seriesIndexes, inRange: { opacity: [0.18, 1] }, calculable: false, show: false });
+        visualMap.push({ type: "continuous", dimension: opacityVisualKey, seriesIndex: seriesIndexes, min: opacityMin, max: opacityMax, inRange: { opacity: [0.18, 1] }, calculable: false, show: false });
     } else if (opacityField.key && !state.useDiscreteOpacity && !isScatterLikeGeom(geomType)) {
-        visualMap.push({ type: "continuous", dimension: opacityField.key, seriesIndex: seriesIndexes, inRange: { opacity: [0.2, 1] }, calculable: false, show: false });
+        visualMap.push({
+            type: "continuous",
+            dimension: opacityVisualKey,
+            seriesIndex: seriesIndexes,
+            min: opacityMin,
+            max: opacityMax,
+            inRange: geomType === "rect" ? { colorAlpha: [0.08, 0.95] } : { opacity: [0.2, 1] },
+            calculable: false,
+            show: false,
+        });
     }
     if (sizeField.key && !state.useDiscreteSize && (geomType === "point" || geomType === "circle")) {
         visualMap.push({ type: "continuous", dimension: sizeField.key, seriesIndex: seriesIndexes, inRange: { symbolSize: [geomType === "point" ? 6 : 5, geomType === "point" ? 20 : 18] }, calculable: false, show: false });
@@ -542,6 +692,7 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
 
 function buildGraphics(state: ReturnType<typeof import("./optionContext").createOptionContext>, facetLabels: Array<Record<string, any>>) {
     const { props, geomType, colorField, shapeField, colorValues, opacityValues, sizeValues, shapeValues, categoryPalette, useCustomDiscreteLegends, continuousColorLegend, showNativeLegend, nativeLegendTitle, sizeField, sizeExtent, sizeMin, sizeMax, scatterSizeLegendGraphic, quantitativeBarSizeLegendGraphic, opacityField, opacityExtent, opacityMin, opacityMax, scatterOpacityLegendGraphic, useDiscreteOpacity, useDiscreteSize } = state;
+    const rightLegendLayout = getRightLegendLayout(props.chartWidth);
     const discreteColorCount = colorValues.filter((value) => value !== null).length;
     const discreteOpacityCount = opacityValues.filter((value) => value !== null).length;
     const discreteSizeCount = sizeValues.filter((value) => value !== null).length;
@@ -556,7 +707,9 @@ function buildGraphics(state: ReturnType<typeof import("./optionContext").create
             discreteLegendRows += height + (discreteLegendRows > 0 ? 8 : 0);
         }
     }
-    let nextLegendStartY = 36;
+    const hasContinuousColorScale = continuousColorLegend;
+    const continuousColorLegendBottomY = hasContinuousColorScale ? (44 + (geomType === "rect" ? 180 : 150) + 72) : 0;
+    let nextLegendStartY = Math.max(hasContinuousColorScale ? 118 : 36, continuousColorLegendBottomY);
     const colorLegendStartY = nextLegendStartY;
     if (colorLegendHeight > 0) nextLegendStartY += colorLegendHeight + 8;
     const shapeLegendStartY = nextLegendStartY;
@@ -565,8 +718,14 @@ function buildGraphics(state: ReturnType<typeof import("./optionContext").create
     if (opacityLegendHeight > 0) nextLegendStartY += opacityLegendHeight + 8;
     const sizeLegendStartY = nextLegendStartY;
     if (discreteSizeLegendHeight > 0) nextLegendStartY += discreteSizeLegendHeight + 8;
-    const quantitativeLegendStartY = 36 + discreteLegendRows + (discreteLegendRows > 0 ? 12 : 0);
+    const nativeLegendOffset = showNativeLegend ? (nativeLegendTitle ? 74 : 58) : 0;
+    const quantitativeLegendStartY = Math.max(
+        hasContinuousColorScale ? 118 : 56,
+        36 + discreteLegendRows + (discreteLegendRows > 0 ? 12 : 0) + nativeLegendOffset,
+        continuousColorLegendBottomY,
+    );
     const sizeLegendHeight = (scatterSizeLegendGraphic || quantitativeBarSizeLegendGraphic) && sizeExtent.length > 0 ? getQuantitativeLegendBlockHeight(5, Boolean(sizeField.title), 30) : 0;
+    const nonScatterOpacityLegendGraphic = Boolean(opacityField.key && !useDiscreteOpacity && !scatterOpacityLegendGraphic && opacityExtent.length > 0);
 
     return [
         ...facetLabels,
@@ -579,12 +738,21 @@ function buildGraphics(state: ReturnType<typeof import("./optionContext").create
                   silent: true,
               }]
             : []),
-        ...(continuousColorLegend && colorField.title ? [{ type: "text", right: 72, top: 16, style: { text: colorField.title, fill: "#222", font: "600 12px sans-serif" }, silent: true }] : []),
+        ...(continuousColorLegend && colorField.title
+            ? [{
+                  type: "text",
+                  left: rightLegendLayout.titleX,
+                  top: 16,
+                  style: { text: colorField.title, fill: "#222", font: "600 12px sans-serif" },
+                  silent: true,
+              }]
+            : []),
         ...(useCustomDiscreteLegends && discreteColorCount > 0 ? buildDiscreteColorLegendGraphic({ title: colorField.title, values: colorValues.filter((value) => value !== null), palette: categoryPalette, chartWidth: props.chartWidth, startY: colorLegendStartY, hollow: geomType === "point" }) : []),
         ...(useCustomDiscreteLegends && discreteShapeCount > 0 ? buildDiscreteShapeLegendGraphic({ title: shapeField.title, values: shapeValues.filter((value) => value !== null), chartWidth: props.chartWidth, startY: shapeLegendStartY, hollow: geomType === "point" }) : []),
-        ...(useCustomDiscreteLegends && useDiscreteOpacity && discreteOpacityCount > 0 ? buildDiscreteOpacityLegendGraphic({ title: opacityField.title, values: opacityValues.filter((value) => value !== null), chartWidth: props.chartWidth, startY: opacityLegendStartY, filled: geomType === "circle", marker: geomType === "bar" ? "rect" : "circle" }) : []),
+        ...(useCustomDiscreteLegends && useDiscreteOpacity && discreteOpacityCount > 0 ? buildDiscreteOpacityLegendGraphic({ title: opacityField.title, values: opacityValues.filter((value) => value !== null), chartWidth: props.chartWidth, startY: opacityLegendStartY, filled: geomType === "circle" || geomType === "area" || geomType === "rect", marker: geomType === "bar" || geomType === "area" || geomType === "rect" ? "rect" : geomType === "line" ? "line" : "circle" }) : []),
         ...(useCustomDiscreteLegends && useDiscreteSize && discreteSizeCount > 0 ? buildDiscreteSizeLegendGraphic({ title: sizeField.title, values: sizeValues.filter((value) => value !== null), chartWidth: props.chartWidth, startY: sizeLegendStartY, outMin: geomType === "point" ? 6 : 5, outMax: geomType === "point" ? 20 : 18, filled: geomType === "circle" }) : []),
         ...((scatterSizeLegendGraphic || quantitativeBarSizeLegendGraphic) && sizeExtent.length > 0 ? buildSizeLegendGraphic({ title: sizeField.title, min: sizeMin, max: sizeMax, chartWidth: props.chartWidth, chartHeight: props.chartHeight, outMin: quantitativeBarSizeLegendGraphic ? 4 : geomType === "point" ? 6 : 5, outMax: quantitativeBarSizeLegendGraphic ? 18 : geomType === "point" ? 20 : 18, startY: quantitativeLegendStartY, filled: geomType === "circle" || quantitativeBarSizeLegendGraphic, marker: quantitativeBarSizeLegendGraphic ? "rect" : "circle" }) : []),
         ...(scatterOpacityLegendGraphic && opacityExtent.length > 0 ? buildOpacityLegendGraphic({ title: opacityField.title, min: opacityMin, max: opacityMax, chartWidth: props.chartWidth, chartHeight: props.chartHeight, startY: quantitativeLegendStartY + sizeLegendHeight, filled: geomType === "circle" }) : []),
+        ...(nonScatterOpacityLegendGraphic ? buildOpacityLegendGraphic({ title: opacityField.title, min: opacityMin, max: opacityMax, chartWidth: props.chartWidth, chartHeight: props.chartHeight, startY: quantitativeLegendStartY + sizeLegendHeight, filled: geomType === "circle" || geomType === "bar" || geomType === "area" || geomType === "rect" }) : []),
     ];
 }

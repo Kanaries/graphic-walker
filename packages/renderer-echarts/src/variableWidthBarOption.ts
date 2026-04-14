@@ -64,7 +64,7 @@ export function appendVariableWidthBarSeries(params: {
         return false;
     }
 
-    const splitBarOpacity = Boolean(opacityField.key);
+    const splitBarOpacity = useDiscreteOpacity;
     const overlayDiscreteSizeBars = useDiscreteSize && !useDiscreteColor && !useDiscreteOpacity && !splitBarOpacity && !useDiscreteShape && detailFields.length === 0;
     const cellRows = sortedSource.filter((row) => {
         if (rowFacetBinding.key && row[rowFacetBinding.key] !== cell.rowValue) return false;
@@ -141,7 +141,6 @@ export function appendVariableWidthBarSeries(params: {
         stackMode: (props.layout.stack ?? "stack") as "none" | "stack" | "normalize" | "center" | "zero",
         xValues: isVerticalBar ? xValues : state.yValues,
     });
-    const visibleDiscreteSizeOrder = overlayDiscreteSizeBars ? Math.max(...groups.map((group) => group.order)) : -1;
 
     const valueAxis = isVerticalBar ? yAxis : xAxis;
     valueAxis.min = layout.yAxisMin;
@@ -162,17 +161,14 @@ export function appendVariableWidthBarSeries(params: {
                 y: isVerticalBar ? BAR_STACK_END_FIELD : BAR_CATEGORY_FIELD,
             },
             renderItem(_params: any, api: any) {
-                if (overlayDiscreteSizeBars && group.order !== visibleDiscreteSizeOrder) {
-                    return null;
-                }
                 const category = api.value(BAR_CATEGORY_FIELD);
                 const rawValue = Number(api.value(BAR_VALUE_FIELD));
                 const start = Number(api.value(BAR_STACK_START_FIELD));
                 const end = Number(api.value(BAR_STACK_END_FIELD));
                 const ratio = Number(api.value(BAR_WIDTH_RATIO_FIELD));
                 if (!Number.isFinite(end) || (!overlayDiscreteSizeBars && !Number.isFinite(start))) return null;
-                const rectStart = overlayDiscreteSizeBars ? 0 : start;
-                const rectEnd = overlayDiscreteSizeBars ? rawValue : end;
+                const rectStart = start;
+                const rectEnd = end;
                 if (!Number.isFinite(rectEnd)) return null;
                 const endPoint = isVerticalBar ? api.coord([category, rectEnd]) : api.coord([rectEnd, category]);
                 const startPoint = isVerticalBar ? api.coord([category, rectStart]) : api.coord([rectStart, category]);
@@ -182,45 +178,13 @@ export function appendVariableWidthBarSeries(params: {
                 const x = isVerticalBar ? endPoint[0] - width / 2 : Math.min(endPoint[0], startPoint[0]);
                 const y = isVerticalBar ? Math.min(endPoint[1], startPoint[1]) : endPoint[1] - width / 2;
                 const widthOrHeight = Math.max(1, isVerticalBar ? Math.abs(startPoint[1] - endPoint[1]) : Math.abs(startPoint[0] - endPoint[0]));
-                const lineTop = isVerticalBar ? api.coord([category, end]) : api.coord([end, category]);
-                const lineBottom = isVerticalBar ? api.coord([category, rectEnd]) : api.coord([rectEnd, category]);
-                const strokeWidth = Math.max(1, Math.min(2, width * 0.12));
                 return {
-                    type: overlayDiscreteSizeBars && end > rectEnd ? "group" : "rect",
-                    ...(overlayDiscreteSizeBars && end > rectEnd
-                        ? {
-                              children: [
-                                  {
-                                      type: "rect",
-                                      shape: isVerticalBar ? { x, y, width, height: widthOrHeight } : { x, y, width: widthOrHeight, height: width },
-                                      style: api.style({
-                                          fill: group.fill ?? api.visual("color") ?? defaultColor,
-                                          opacity: group.opacity ?? api.visual("opacity") ?? 0.92,
-                                      }),
-                                  },
-                                  {
-                                      type: "line",
-                                      shape: {
-                                          x1: isVerticalBar ? endPoint[0] : lineBottom[0],
-                                          y1: isVerticalBar ? lineBottom[1] : endPoint[1],
-                                          x2: lineTop[0],
-                                          y2: lineTop[1],
-                                      },
-                                      style: {
-                                          stroke: group.fill ?? api.visual("color") ?? defaultColor,
-                                          lineWidth: strokeWidth,
-                                          opacity: group.opacity ?? api.visual("opacity") ?? 0.92,
-                                      },
-                                  },
-                              ],
-                          }
-                        : {
-                              shape: isVerticalBar ? { x, y, width, height: widthOrHeight } : { x, y, width: widthOrHeight, height: width },
-                              style: api.style({
-                                  fill: group.fill ?? api.visual("color") ?? defaultColor,
-                                  opacity: group.opacity ?? api.visual("opacity") ?? 0.92,
-                              }),
-                          }),
+                    type: "rect",
+                    shape: isVerticalBar ? { x, y, width, height: widthOrHeight } : { x, y, width: widthOrHeight, height: width },
+                    style: api.style({
+                        fill: group.fill ?? api.visual("color") ?? defaultColor,
+                        opacity: group.opacity ?? api.visual("opacity") ?? 0.92,
+                    }),
                 };
             },
         });

@@ -1,8 +1,8 @@
 import type { RendererPluginProps } from "@kanaries/graphic-walker";
 
-import { buildDiscreteColorLegendGraphic } from "./legends";
+import { buildDiscreteColorLegendGraphic, buildDiscreteOpacityLegendGraphic, buildOpacityLegendGraphic } from "./legends";
 import type { FieldBinding } from "./types";
-import { getFieldBinding, orderedUniqueValues, resolveColorRange, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
+import { getFieldBinding, isDiscreteField, orderedUniqueValues, resolveColorRange, scaleRange, VEGA_LITE_DEFAULT_PRIMARY_COLOR } from "./utils";
 
 export function buildArcOption(params: {
     props: RendererPluginProps;
@@ -17,6 +17,15 @@ export function buildArcOption(params: {
     const categoryField = colorField.key || xField.key || getFieldBinding(sourceData, (props.draggableFieldState.columns as any[])[0]).key;
     const valueField = thetaField.key || yField.key || getFieldBinding(sourceData, (props.draggableFieldState.rows as any[])[0]).key;
     const radiusField = getFieldBinding(sourceData, props.draggableFieldState.radius[0] as any).key;
+    const opacityBinding = getFieldBinding(sourceData, props.draggableFieldState.opacity[0] as any);
+    const opacityField = opacityBinding.key;
+    const useDiscreteOpacity = Boolean(opacityField && isDiscreteField(opacityBinding.field));
+    const opacityValues = useDiscreteOpacity ? orderedUniqueValues(sourceData, opacityBinding) : [];
+    const opacityExtent = opacityField && !useDiscreteOpacity
+        ? sourceData.map((row) => Number(row[opacityField])).filter((value) => Number.isFinite(value))
+        : [];
+    const opacityMin = opacityExtent.length > 0 ? Math.min(...opacityExtent) : 0;
+    const opacityMax = opacityExtent.length > 0 ? Math.max(...opacityExtent) : 1;
     if (!valueField) {
         return null;
     }
@@ -33,27 +42,48 @@ export function buildArcOption(params: {
                   .map((row) => ({
                       name: row[categoryField],
                       value: Number(row[valueField]),
+                      opacityValue: opacityField ? row[opacityField] : undefined,
+                      opacityNumeric: opacityField
+                          ? (useDiscreteOpacity
+                              ? opacityValues.findIndex((item) => item === row[opacityField])
+                              : Number(row[opacityField]))
+                          : undefined,
                   }))
-                  .filter((entry): entry is { name: string | number; value: number } => entry.name !== null && entry.name !== undefined && Number.isFinite(entry.value))
+                  .filter((entry): entry is { name: string | number; value: number; opacityValue: unknown; opacityNumeric: number | undefined } => entry.name !== null && entry.name !== undefined && Number.isFinite(entry.value))
             : [{ name: thetaField.title ?? "value", value: Number(sourceData[0]?.[valueField] ?? 0) }];
 
-        return {
-            animation: false,
-            backgroundColor: props.vegaConfig.background,
-            color: categoryPalette,
-            tooltip: { trigger: "item" },
-            legend: categoryField
-                ? {
-                      show: true,
-                      orient: "vertical",
-                      top: 34,
-                      right: 12,
-                      type: "scroll",
-                      data: legendValues,
-                  }
-                : { show: false },
-            dataset: [{ source: pieData }],
-            graphic: categoryField && colorField.title
+        const useCustomOpacityLegends = Boolean(opacityField);
+        const graphics = [
+            ...(useCustomOpacityLegends && categoryField
+                ? buildDiscreteColorLegendGraphic({
+                      title: colorField.title,
+                      values: legendValues,
+                      palette: categoryPalette,
+                      chartWidth: props.chartWidth,
+                      startY: 36,
+                  })
+                : []),
+            ...(useCustomOpacityLegends && useDiscreteOpacity
+                ? buildDiscreteOpacityLegendGraphic({
+                      title: opacityBinding.title,
+                      values: opacityValues.filter((value) => value !== null && value !== undefined),
+                      chartWidth: props.chartWidth,
+                      startY: 36 + (legendValues.length > 0 ? 22 * legendValues.length + 32 : 0),
+                      filled: true,
+                  })
+                : []),
+            ...(useCustomOpacityLegends && !useDiscreteOpacity && opacityExtent.length > 0
+                ? buildOpacityLegendGraphic({
+                      title: opacityBinding.title,
+                      min: opacityMin,
+                      max: opacityMax,
+                      chartWidth: props.chartWidth,
+                      chartHeight: props.chartHeight,
+                      startY: 36 + (legendValues.length > 0 ? 22 * legendValues.length + 32 : 0),
+                      filled: true,
+                  })
+                : []),
+            ...(!useCustomOpacityLegends && categoryField && colorField.title
                 ? [{
                       type: "text",
                       right: 72,
@@ -65,7 +95,40 @@ export function buildArcOption(params: {
                       },
                       silent: true,
                   }]
+                : []),
+        ];
+
+        return {
+            animation: false,
+            backgroundColor: props.vegaConfig.background,
+            color: categoryPalette,
+            tooltip: { trigger: "item" },
+            legend: useCustomOpacityLegends
+                ? { show: false }
+                : categoryField
+                ? {
+                      show: true,
+                      orient: "vertical",
+                      top: 34,
+                      right: 12,
+                      type: "scroll",
+                      data: legendValues,
+                  }
+                : { show: false },
+            dataset: [{ source: pieData }],
+            visualMap: opacityField
+                ? [{
+                      type: "continuous",
+                      dimension: "opacityNumeric",
+                      seriesIndex: [0],
+                      min: useDiscreteOpacity ? 0 : opacityMin,
+                      max: useDiscreteOpacity ? Math.max(1, opacityValues.length - 1) : opacityMax,
+                      inRange: { opacity: [0.25, 1] },
+                      calculable: false,
+                      show: false,
+                  }]
                 : undefined,
+            graphic: graphics.length > 0 ? graphics : undefined,
             series: [{
                 type: "pie",
                 datasetIndex: 0,
@@ -76,9 +139,11 @@ export function buildArcOption(params: {
                     value: "value",
                 },
                 itemStyle: categoryField
-                    ? {
-                          color: (params: { name?: string | number }) => legendColorMap.get(String(params?.name ?? "")) ?? categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR,
-                      }
+                    ? (() => {
+                          return {
+                              color: (params: { name?: string | number }) => legendColorMap.get(String(params?.name ?? "")) ?? categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR,
+                          };
+                      })()
                     : undefined,
                 label: { show: false },
             }],
@@ -90,8 +155,9 @@ export function buildArcOption(params: {
               label: String(row[categoryField]),
               theta: Math.max(0, Number(row[valueField] ?? 0)),
               radius: Math.max(0, Number(row[radiusField] ?? 0)),
+              opacityValue: opacityField ? row[opacityField] : undefined,
           }))
-        : [{ label: thetaField.title ?? "value", theta: Math.max(0, Number(sourceData[0]?.[valueField] ?? 0)), radius: 1 }];
+        : [{ label: thetaField.title ?? "value", theta: Math.max(0, Number(sourceData[0]?.[valueField] ?? 0)), radius: 1, opacityValue: undefined }];
     const legendLabels = Array.from(new Set(slices.map((slice) => slice.label))).sort((a, b) => a.localeCompare(b));
     const cx = props.chartWidth * 0.44;
     const cy = props.chartHeight * 0.52;
@@ -125,7 +191,14 @@ export function buildArcOption(params: {
                       endAngle: -Math.PI / 2 + (slice.theta / thetaMax) * Math.PI * 2 * sweepMultiplier,
                       clockwise: true,
                   },
-                  style: { fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR },
+                  style: {
+                      fill: categoryPalette[Math.max(0, colorIndex) % Math.max(1, categoryPalette.length)] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR,
+                      opacity: opacityField
+                          ? (useDiscreteOpacity
+                              ? scaleRange(opacityValues.findIndex((item) => item === slice.opacityValue), 0, Math.max(1, opacityValues.length - 1), 0.25, 1)
+                              : scaleRange(Number(slice.opacityValue), opacityMin, opacityMax, 0.2, 1))
+                          : 1,
+                  },
               };
           });
 
@@ -142,6 +215,26 @@ export function buildArcOption(params: {
                       palette: categoryPalette,
                       chartWidth: props.chartWidth,
                       startY: 36,
+                  })
+                : []),
+            ...(opacityField && useDiscreteOpacity
+                ? buildDiscreteOpacityLegendGraphic({
+                      title: opacityBinding.title,
+                      values: opacityValues.filter((value) => value !== null && value !== undefined),
+                      chartWidth: props.chartWidth,
+                      startY: 36 + (legendLabels.length > 0 ? 22 * legendLabels.length + 32 : 0),
+                      filled: true,
+                  })
+                : []),
+            ...(opacityField && !useDiscreteOpacity && opacityExtent.length > 0
+                ? buildOpacityLegendGraphic({
+                      title: opacityBinding.title,
+                      min: opacityMin,
+                      max: opacityMax,
+                      chartWidth: props.chartWidth,
+                      chartHeight: props.chartHeight,
+                      startY: 36 + (legendLabels.length > 0 ? 22 * legendLabels.length + 32 : 0),
+                      filled: true,
                   })
                 : []),
             ...graphics,
