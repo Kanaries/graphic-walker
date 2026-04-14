@@ -442,8 +442,33 @@ export function buildMark(
     }
 
     if (geom === 'rect' && model.x.key && model.y.key && model.color.key) {
-        const cellOpacity = model.opacity.key ?? (typeof model.opacity.value === 'number' ? model.opacity.value : undefined);
-        return Plot.cell(preparedData, {
+        let cellData = preparedData;
+        let cellOpacity: string | number | undefined = model.opacity.key ?? (typeof model.opacity.value === 'number' ? model.opacity.value : undefined);
+        if (model.opacity.key && model.opacity.isDiscrete) {
+            const opacityDomain = orderedDomain(cellData, model.opacity.key, model.opacity.sort).map((value) => String(value));
+            const opacityMap = new Map(opacityDomain.map((value, index) => [value, 0.28 + (index / Math.max(1, opacityDomain.length - 1)) * 0.64]));
+            const opacityKey = '__gw_discrete_opacity__';
+            cellData = cellData.map((row) => ({ ...row, [opacityKey]: opacityMap.get(String(row[model.opacity.key!])) ?? 0.72 }));
+            cellOpacity = opacityKey;
+        } else if (model.opacity.key) {
+            const values = cellData.map((row) => Number(row[model.opacity.key!])).filter((value) => Number.isFinite(value));
+            if (values.length > 0) {
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const opacityKey = '__gw_continuous_opacity__';
+                if (max > min) {
+                    cellData = cellData.map((row) => {
+                        const raw = Number(row[model.opacity.key!]);
+                        const t = Number.isFinite(raw) ? (raw - min) / (max - min) : 0.5;
+                        return { ...row, [opacityKey]: 0.2 + t * 0.8 };
+                    });
+                } else {
+                    cellData = cellData.map((row) => ({ ...row, [opacityKey]: 0.72 }));
+                }
+                cellOpacity = opacityKey;
+            }
+        }
+        return Plot.cell(cellData, {
             x: model.x.key,
             y: model.y.key,
             fill: model.color.key,

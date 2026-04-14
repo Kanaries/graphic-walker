@@ -346,22 +346,65 @@ function ObservableHeatmapView(props: RendererPluginProps) {
     const xField = props.draggableFieldState.columns[props.draggableFieldState.columns.length - 1];
     const yField = props.draggableFieldState.rows[props.draggableFieldState.rows.length - 1];
     const colorField = props.draggableFieldState.color[0];
+    const opacityField = props.draggableFieldState.opacity[0];
     const xKey = resolveDataKey(props.data, xField ? { field: xField.fid, aggregate: xField.aggName, type: xField.semanticType } : undefined);
     const yKey = resolveDataKey(props.data, yField ? { field: yField.fid, aggregate: yField.aggName, type: yField.semanticType } : undefined);
     const colorKey = resolveDataKey(props.data, colorField ? { field: colorField.fid, aggregate: colorField.aggName, type: colorField.semanticType } : undefined);
+    const opacityKey = resolveDataKey(props.data, opacityField ? { field: opacityField.fid, aggregate: opacityField.aggName, type: opacityField.semanticType } : undefined);
     const xs = xKey ? Array.from(new Set(props.data.map((row) => String(row[xKey])))).sort() : [];
     const ys = yKey ? Array.from(new Set(props.data.map((row) => String(row[yKey])))) : [];
     const values = props.data.map((row) => Number(row[colorKey ?? ''] ?? 0)).filter((value) => Number.isFinite(value));
     const min = values.length > 0 ? Math.min(...values) : 0;
     const max = values.length > 0 ? Math.max(...values) : 1;
     const ramp = getContinuousPalette(props.vegaConfig, 'rect');
-    const lookup = new Map(props.data.map((row) => [`${String(row[xKey ?? ''])}__${String(row[yKey ?? ''])}`, Number(row[colorKey ?? ''] ?? 0)]));
+    const opacityIsDiscrete = opacityField?.analyticType === 'dimension';
+    const opacityDiscreteValues =
+        opacityField && opacityIsDiscrete && opacityKey
+            ? Array.from(new Set(props.data.map((row) => String(row[opacityKey])))).sort()
+            : [];
+    const opacityContinuousValues = opacityField && !opacityIsDiscrete && opacityKey
+        ? props.data.map((row) => Number(row[opacityKey])).filter((value) => Number.isFinite(value))
+        : [];
+    const opacityMin = opacityContinuousValues.length > 0 ? Math.min(...opacityContinuousValues) : 0;
+    const opacityMax = opacityContinuousValues.length > 0 ? Math.max(...opacityContinuousValues) : 1;
+    const opacityForRow = (row: Record<string, unknown>) => {
+        if (!opacityField || !opacityKey) return 0.96;
+        if (opacityIsDiscrete) {
+            const value = String(row[opacityKey] ?? '');
+            const index = Math.max(0, opacityDiscreteValues.indexOf(value));
+            return 0.28 + (index / Math.max(1, opacityDiscreteValues.length - 1)) * 0.64;
+        }
+        const raw = Number(row[opacityKey]);
+        if (!Number.isFinite(raw)) return 0.72;
+        if (opacityMax <= opacityMin) return 0.72;
+        return 0.2 + ((raw - opacityMin) / (opacityMax - opacityMin)) * 0.8;
+    };
+    const cellRows = new Map<string, Array<{ colorValue: number; opacity: number }>>();
+    props.data.forEach((row) => {
+        if (!xKey || !yKey || !colorKey) return;
+        const xValue = String(row[xKey]);
+        const yValue = String(row[yKey]);
+        const colorValue = Number(row[colorKey]);
+        if (!Number.isFinite(colorValue)) return;
+        const key = `${xValue}__${yValue}`;
+        const list = cellRows.get(key) ?? [];
+        list.push({ colorValue, opacity: opacityForRow(row as Record<string, unknown>) });
+        cellRows.set(key, list);
+    });
     const plotWidth = props.chartWidth - 180;
     const plotHeight = props.chartHeight - 110;
     const left = 76;
     const top = 28;
     const cellWidth = plotWidth / Math.max(1, xs.length);
     const cellHeight = plotHeight / Math.max(1, ys.length);
+    const colorLegendHeight = opacityField ? Math.max(150, plotHeight * 0.58) : plotHeight;
+    const colorLegendTop = top + 6;
+    const opacityLegendTop = colorLegendTop + colorLegendHeight + 24;
+    const formatLegendValue = (value: number) => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${Math.round(value)}`);
+    const opacityContinuousTicks =
+        opacityField && !opacityIsDiscrete && Number.isFinite(opacityMin) && Number.isFinite(opacityMax)
+            ? [0, 1, 2, 3].map((step) => opacityMin + (step / 3) * (opacityMax - opacityMin))
+            : [];
 
     return (
         <div style={{ width: '100%', height: '100%', padding: '8px 12px' }}>
@@ -372,16 +415,22 @@ function ObservableHeatmapView(props: RendererPluginProps) {
                     return (
                         <g key={yValue}>
                             {xs.map((xValue, xIndex) => {
-                                const value = lookup.get(`${xValue}__${yValue}`) ?? min;
+                                const rows = [...(cellRows.get(`${xValue}__${yValue}`) ?? [])].sort((a, b) => a.opacity - b.opacity);
+                                const entryRows = rows.length > 0 ? rows : [{ colorValue: min, opacity: 0.96 }];
                                 return (
-                                    <rect
-                                        key={xValue}
-                                        x={left + xIndex * cellWidth}
-                                        y={y}
-                                        width={cellWidth}
-                                        height={cellHeight}
-                                        fill={valueToRampColor(value, min, max, ramp)}
-                                    />
+                                    <g key={xValue}>
+                                        {entryRows.map((entry, layerIndex) => (
+                                            <rect
+                                                key={`${xValue}-${layerIndex}`}
+                                                x={left + xIndex * cellWidth}
+                                                y={y}
+                                                width={cellWidth}
+                                                height={cellHeight}
+                                                fill={valueToRampColor(entry.colorValue, min, max, ramp)}
+                                                opacity={entry.opacity}
+                                            />
+                                        ))}
+                                    </g>
                                 );
                             })}
                             <text x={left - 8} y={y + cellHeight / 2} textAnchor="end" dominantBaseline="middle" fontSize="12">
@@ -408,23 +457,54 @@ function ObservableHeatmapView(props: RendererPluginProps) {
                 <text x={18} y={top + plotHeight / 2} transform={`rotate(-90 18 ${top + plotHeight / 2})`} textAnchor="middle" fontSize="12" fontWeight="600">
                     {yField?.name}
                 </text>
-                <g transform={`translate(${left + plotWidth + 18}, ${top + 6})`}>
+                <g transform={`translate(${left + plotWidth + 18}, ${colorLegendTop})`}>
                     <text x={0} y={-10} fontSize="12" fontWeight="600">
                         {colorField?.aggName && colorField.aggName !== 'expr' ? `${colorField.aggName}(${colorField.name})` : colorField?.name}
                     </text>
                     {ramp.map((color, index) => {
-                        const itemHeight = plotHeight / Math.max(1, ramp.length);
+                        const itemHeight = colorLegendHeight / Math.max(1, ramp.length);
                         const value = max - (index / Math.max(1, ramp.length - 1)) * (max - min);
                         return (
                             <g key={color} transform={`translate(0, ${index * itemHeight})`}>
                                 <rect width={16} height={itemHeight} fill={color} />
                                 <text x={22} y={itemHeight / 2} dominantBaseline="middle" fontSize="11">
-                                    {value >= 1000 ? `${(value / 1000).toFixed(1)}k` : Math.round(value)}
+                                    {formatLegendValue(value)}
                                 </text>
                             </g>
                         );
                     })}
                 </g>
+                {opacityField ? (
+                    <g transform={`translate(${left + plotWidth + 18}, ${opacityLegendTop})`}>
+                        <text x={0} y={0} fontSize="12" fontWeight="600">
+                            {opacityField?.aggName && opacityField.aggName !== 'expr' ? `${opacityField.aggName}(${opacityField.name})` : opacityField?.name}
+                        </text>
+                        {opacityIsDiscrete
+                            ? opacityDiscreteValues.map((value, index) => {
+                                  const alpha = 0.28 + (index / Math.max(1, opacityDiscreteValues.length - 1)) * 0.64;
+                                  return (
+                                      <g key={value} transform={`translate(0, ${14 + index * 18})`}>
+                                          <rect width={12} height={12} fill="#6b7280" opacity={alpha} />
+                                          <text x={18} y={6} dominantBaseline="middle" fontSize="11">
+                                              {value}
+                                          </text>
+                                      </g>
+                                  );
+                              })
+                            : opacityContinuousTicks.map((value, index) => {
+                                  const alpha =
+                                      opacityMax > opacityMin ? 0.2 + ((value - opacityMin) / (opacityMax - opacityMin)) * 0.8 : 0.72;
+                                  return (
+                                      <g key={`${value}-${index}`} transform={`translate(0, ${14 + index * 18})`}>
+                                          <rect width={12} height={12} fill="#6b7280" opacity={alpha} />
+                                          <text x={18} y={6} dominantBaseline="middle" fontSize="11">
+                                              {Math.round(value)}
+                                          </text>
+                                      </g>
+                                  );
+                              })}
+                    </g>
+                ) : null}
             </svg>
         </div>
     );
