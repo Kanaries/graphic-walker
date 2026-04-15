@@ -773,6 +773,28 @@ export function buildMark(
         });
     }
 
+    if (geom === 'bar' && model.x.key && model.y.key && model.x.type === 'quantitative' && model.y.type === 'quantitative') {
+        const stroke = model.color.key
+            ? model.color.key
+            : (resolveDefaultColor('bar', vegaConfig) ?? (typeof vegaConfig?.bar?.fill === 'string' ? vegaConfig.bar.fill : undefined));
+        const strokeOpacity = model.opacity.key
+            ? model.opacity.key
+            : typeof model.opacity.value === 'number'
+              ? model.opacity.value
+              : undefined;
+        return Plot.ruleX(data, {
+            x: model.x.key,
+            y1: 0,
+            y2: model.y.key,
+            fx: model.column.key,
+            fy: model.row.key,
+            title,
+            stroke,
+            strokeOpacity,
+            strokeWidth: 4,
+        });
+    }
+
     if (geom === 'bar' && model.x.key && !model.y.key) {
         return Plot.barY(
             data,
