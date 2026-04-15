@@ -14,6 +14,7 @@ import type {
     IMutField,
     IPaintMapV2,
     IVisSpec,
+    IAggregator,
 } from '../interfaces';
 import type { VizSpecStore } from '../store/visualSpecStore';
 import { getFilterMeaAggKey, getMeaAggKey, getSort } from '.';
@@ -237,10 +238,11 @@ export const toWorkflow = (
                     measures: deduper(
                         viewMeasures
                             .concat(aggergatedFilter)
+                            .filter((f): f is IViewField & { aggName: IAggregator } => Boolean(f.aggName))
                             .map((f) => ({
                                 field: f.fid,
-                                agg: f.aggName as any,
-                                asFieldKey: getMeaAggKey(f.fid, f.aggName!),
+                                agg: f.aggName,
+                                asFieldKey: getMeaAggKey(f.fid, f.aggName),
                             }))
                             .concat(
                                 aggergatedComputed.map((f) => ({

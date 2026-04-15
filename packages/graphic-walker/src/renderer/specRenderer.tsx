@@ -1,15 +1,15 @@
 import { Resizable } from 're-resizable';
-import React, { forwardRef, useMemo, useContext } from 'react';
+import React, { forwardRef, useMemo, useContext, useEffect } from 'react';
 
 import PivotTable from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
-import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
+import { IReactVegaHandler } from '../vis/react-vega';
+import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales, IRendererPlugin } from '../interfaces';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
 import { uiThemeContext, themeContext } from '@/store/theme';
 import { parseColorToHex } from '@/utils/colors';
-import ObservablePlotRenderer from '@/vis/observable-plot-renderer';
+import { ensureBuiltinRendererPlugins, getRendererPlugin, registerRendererPlugin, resolveRendererId } from './plugins';
 
 interface SpecRendererProps {
     name?: string;
@@ -24,13 +24,14 @@ interface SpecRendererProps {
     scales?: IChannelScales;
     onReportSpec?: (spec: string) => void;
     disableCollapse?: boolean;
+    rendererPlugins?: IRendererPlugin[];
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse },
+    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse, rendererPlugins },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -124,6 +125,56 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
 
     const isSpatial = coordSystem === 'geographic';
 
+    useEffect(() => {
+        ensureBuiltinRendererPlugins();
+    }, []);
+
+    useEffect(() => {
+        if (!rendererPlugins?.length) {
+            return;
+        }
+        rendererPlugins.forEach((plugin) => {
+            registerRendererPlugin(plugin);
+        });
+    }, [rendererPlugins]);
+
+    const chartWidth = size.width - 12 * 4;
+    const chartHeight = size.height - 12 * 4;
+
+    const requestedRenderer = layout.renderer ?? 'vega-lite';
+    const resolvedRenderer = resolveRendererId(requestedRenderer);
+    const rawPlugin = getRendererPlugin(resolvedRenderer) ?? getRendererPlugin('builtin:vega');
+    const plugin = rawPlugin?.canRender
+        ? rawPlugin.canRender({
+              name,
+              data,
+              draggableFieldState,
+              visualConfig,
+              layout,
+              locale,
+              onGeomClick,
+              onChartResize,
+              scales,
+              onReportSpec,
+              disableCollapse,
+              vizThemeConfig,
+              vegaConfig,
+              rendererRef: ref,
+              chartWidth,
+              chartHeight,
+          })
+            ? rawPlugin
+            : getRendererPlugin('builtin:vega')
+        : rawPlugin;
+
+    if (!isSpatial && !plugin) {
+        console.warn('[graphic-walker] No renderer plugin is available. This should never happen.');
+    }
+
+    if (!isSpatial && !getRendererPlugin(resolvedRenderer)) {
+        console.warn(`[graphic-walker] Renderer plugin "${requestedRenderer}" is not registered. Falling back to Vega-Lite.`);
+    }
+
     return (
         <Resizable
             className={enableResize ? 'border-primary border-2 max-h-screen max-w-[100vw]' : 'max-h-screen max-w-[100vw]'}
@@ -177,74 +228,50 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (
-                <ReactVega
-                    name={name}
-                    vegaConfig={vegaConfig}
-                    // format={format}
-                    layoutMode={size.mode}
-                    interactiveScale={interactiveScale}
-                    geomType={geoms[0]}
-                    defaultAggregate={defaultAggregated}
-                    stack={stack}
-                    dataSource={data}
-                    rows={rows}
-                    columns={columns}
-                    color={color[0]}
-                    theta={theta[0]}
-                    radius={radius[0]}
-                    shape={shape[0]}
-                    opacity={opacity[0]}
-                    size={sizeChannel[0]}
-                    details={details}
-                    text={text[0]}
-                    showActions={showActions}
-                    width={size.width - 12 * 4}
-                    height={size.height - 12 * 4}
-                    ref={ref}
-                    onGeomClick={onGeomClick}
-                    locale={locale}
-                    useSvg={useSvg}
-                    scales={scales}
-                    scale={scale}
-                    onReportSpec={onReportSpec}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
-            {!isSpatial && layout.renderer === 'observable-plot' && (
-                <ObservablePlotRenderer
-                    name={name}
-                    vegaConfig={vegaConfig}
-                    // format={format
-                    layoutMode={size.mode}
-                    interactiveScale={interactiveScale}
-                    geomType={geoms[0]}
-                    defaultAggregate={defaultAggregated}
-                    stack={stack}
-                    dataSource={data}
-                    rows={rows}
-                    columns={columns}
-                    color={color[0]}
-                    theta={theta[0]}
-                    radius={radius[0]}
-                    shape={shape[0]}
-                    opacity={opacity[0]}
-                    size={sizeChannel[0]}
-                    details={details}
-                    text={text[0]}
-                    showActions={showActions}
-                    width={size.width - 12 * 4}
-                    height={size.height - 12 * 4}
-                    ref={ref}
-                    onGeomClick={onGeomClick}
-                    locale={locale}
-                    useSvg={useSvg}
-                    scales={scales}
-                    scale={scale}
-                    onReportSpec={onReportSpec}
-                    displayOffset={timezoneDisplayOffset}
-                />
-            )}
+            {!isSpatial &&
+                plugin?.render({
+                    name,
+                    data,
+                    draggableFieldState: {
+                        ...draggableFieldState,
+                        rows,
+                        columns,
+                        color,
+                        opacity,
+                        shape,
+                        theta,
+                        radius,
+                        size: sizeChannel,
+                        details,
+                        text,
+                    },
+                    visualConfig: {
+                        ...visualConfig,
+                        defaultAggregated,
+                        geoms,
+                        coordSystem,
+                        timezoneDisplayOffset,
+                    },
+                    layout: {
+                        ...layout,
+                        interactiveScale,
+                        stack,
+                        showActions,
+                        useSvg,
+                        scale,
+                    },
+                    locale,
+                    onGeomClick,
+                    onChartResize,
+                    scales,
+                    onReportSpec,
+                    disableCollapse,
+                    vizThemeConfig,
+                    vegaConfig,
+                    rendererRef: ref,
+                    chartWidth,
+                    chartHeight,
+                })}
         </Resizable>
     );
 });

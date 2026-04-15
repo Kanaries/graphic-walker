@@ -10,6 +10,7 @@ import {
     IChannelScales,
     IViewField,
     IVisualLayout,
+    IRendererPlugin,
 } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
@@ -36,6 +37,7 @@ interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
     scales?: IChannelScales;
+    rendererPlugins?: IRendererPlugin[];
     csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
 }
@@ -238,6 +240,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                     onChartResize={handleChartResize}
                     layout={visualLayout}
                     scales={props.scales}
+                    rendererPlugins={props.rendererPlugins}
                     onReportSpec={(spec) => {
                         vizStore.updateLastSpec(spec);
                     }}

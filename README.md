@@ -146,6 +146,26 @@ const YourChart: React.FC<IYourChartProps> = props => {
 export default YourChart;
 ```
 
+### Renderer Plugins
+
+Graphic Walker now supports renderer plugins.
+
+```typescript
+import {
+    GraphicRenderer,
+    registerRendererPlugin,
+} from '@kanaries/graphic-walker';
+import { createObservablePlotPlugin } from '@kanaries/graphic-walker-renderer-observable-plot';
+import { createEChartsPlugin } from '@kanaries/graphic-walker-renderer-echarts';
+
+registerRendererPlugin(createObservablePlotPlugin());
+registerRendererPlugin(createEChartsPlugin());
+
+// legacy IDs are still supported:
+// - "vega-lite" => builtin:vega
+// - "observable-plot" => plugin:observable-plot
+```
+
 The `GraphicRenderer` component accepts same props as `GraphicWalker`, and would display the chart and the filters of the chart to change.
 
 ```typescript

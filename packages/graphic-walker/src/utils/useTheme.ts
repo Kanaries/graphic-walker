@@ -11,7 +11,7 @@ const isPlainObject = (obj: any): obj is PlainObject => {
 
 const clone = <T>(a: T): T => {
     if (Array.isArray(a)) {
-        return a.map(clone) as any;
+        return a.map((item) => clone(item)) as unknown as T;
     } else if (isPlainObject(a)) {
         return { ...a };
     }

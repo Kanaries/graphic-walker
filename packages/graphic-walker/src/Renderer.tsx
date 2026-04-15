@@ -156,6 +156,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}
                                         overrideSize={props.overrideSize}
+                                        rendererPlugins={props.rendererPlugins}
                                     />
                                 )}
                             </div>

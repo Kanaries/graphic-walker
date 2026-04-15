@@ -1,0 +1,223 @@
+import type { RendererPluginProps } from "@kanaries/graphic-walker";
+
+import type { FieldBinding } from "./types";
+import {
+    axisTypeForField,
+    createValueOrder,
+    getFacetField,
+    getFieldBinding,
+    isDiscreteField,
+    isScatterLikeGeom,
+    isSyntheticMeasureFacetField,
+    niceCeil,
+    niceFloor,
+    normalizeGeom,
+    orderedUniqueValues,
+    prepareCartesianState,
+    resolveColorRange,
+    resolveVegaAlignedRanges,
+    resolveGeomDefaultColor,
+    sortSourceData,
+    VEGA_LITE_DEFAULT_PRIMARY_COLOR,
+} from "./utils";
+
+function reservePercentFromPixels(pixels: number, chartHeight: number, minPercent: number, maxPercent: number) {
+    if (!Number.isFinite(chartHeight) || chartHeight <= 0) {
+        return maxPercent;
+    }
+    const percent = (pixels / chartHeight) * 100;
+    return Math.max(minPercent, Math.min(maxPercent, percent));
+}
+
+export function createOptionContext(props: RendererPluginProps) {
+    const vegaConfig = (props.vegaConfig ?? {}) as Record<string, any>;
+    const channelScales = props.scales as Record<string, any> | undefined;
+    const preparedState = prepareCartesianState(props);
+    const rows = preparedState.rows;
+    const columns = preparedState.columns;
+    const sourceData = preparedState.data;
+    const { color, opacity, size, shape, details, text, theta } = props.draggableFieldState;
+    const xField = getFieldBinding(sourceData, columns[columns.length - 1]);
+    const yField = getFieldBinding(sourceData, rows[rows.length - 1]);
+    const colorField = getFieldBinding(sourceData, color[0] as any);
+    const opacityField = getFieldBinding(sourceData, opacity[0] as any);
+    const sizeField = getFieldBinding(sourceData, size[0] as any);
+    const shapeField = getFieldBinding(sourceData, shape[0] as any);
+    const thetaField = getFieldBinding(sourceData, theta[0] as any);
+    const textField = getFieldBinding(sourceData, text[0] as any);
+    const rawGeom = props.visualConfig.geoms[0] ?? "auto";
+    const geomType = normalizeGeom(rawGeom, xField.field, yField.field);
+    const resolvedRanges = resolveVegaAlignedRanges(vegaConfig);
+    const categoryPalette = resolveColorRange(resolvedRanges.category);
+    const defaultColor = resolveGeomDefaultColor(geomType, vegaConfig, categoryPalette[0] ?? VEGA_LITE_DEFAULT_PRIMARY_COLOR);
+    const cartesianGeom = geomType !== "arc";
+
+    const detailFields = details
+        .map((field) => getFieldBinding(sourceData, field as any))
+        .filter((value): value is Required<Pick<FieldBinding, "key" | "title">> & FieldBinding => Boolean(value.key && value.title))
+        .map((value) => ({ key: value.key as string, title: value.title as string }));
+    const tooltipFields = [xField, yField, colorField, opacityField, sizeField, shapeField]
+        .filter((value): value is Required<Pick<FieldBinding, "key" | "title">> & FieldBinding => Boolean(value.key && value.title))
+        .map((value) => ({ key: value.key as string, title: value.title as string }))
+        .concat(detailFields);
+
+    const rowFacetField = getFacetField(rows);
+    const colFacetField = getFacetField(columns);
+    const rowFacetBinding = getFieldBinding(sourceData, rowFacetField);
+    const colFacetBinding = getFieldBinding(sourceData, colFacetField);
+    const rowFacetValues = orderedUniqueValues(sourceData, rowFacetBinding);
+    const colFacetValues = orderedUniqueValues(sourceData, colFacetBinding);
+    const useDiscreteColor = Boolean(colorField.key && isDiscreteField(colorField.field));
+    const useDiscreteOpacity = Boolean(opacityField.key && isDiscreteField(opacityField.field));
+    const useDiscreteSize = Boolean(sizeField.key && isDiscreteField(sizeField.field));
+    const useDiscreteShape = Boolean(shapeField.key && geomType !== "circle" && isScatterLikeGeom(geomType) && isDiscreteField(shapeField.field));
+    const separateDiscreteLegends = Boolean(useDiscreteColor && useDiscreteShape);
+    const useNativeLegendForDiscreteBarSize = Boolean(useDiscreteSize && geomType === "bar");
+    const showLegend = Boolean(useDiscreteColor || useDiscreteShape || useNativeLegendForDiscreteBarSize) && !separateDiscreteLegends;
+    const colorValues = useDiscreteColor ? orderedUniqueValues(sourceData, colorField) : [null];
+    const opacityValues = useDiscreteOpacity ? orderedUniqueValues(sourceData, opacityField) : [null];
+    const sizeValues = useDiscreteSize ? orderedUniqueValues(sourceData, sizeField) : [null];
+    const shapeValues = useDiscreteShape ? orderedUniqueValues(sourceData, shapeField) : [null];
+    const xValues = orderedUniqueValues(sourceData, xField);
+    const yValues = orderedUniqueValues(sourceData, yField);
+    const continuousOpacityKey = opacityField.key && !useDiscreteOpacity ? "__gw_opacity_value__" : undefined;
+    let sortedSource = sortSourceData(
+        sourceData,
+        {
+            rowFacet: rowFacetBinding,
+            colFacet: colFacetBinding,
+            color: useDiscreteColor ? colorField : undefined,
+            opacity: useDiscreteOpacity ? opacityField : undefined,
+            size: useDiscreteSize ? sizeField : undefined,
+            shape: useDiscreteShape ? shapeField : undefined,
+            x: xField,
+            y: yField,
+        },
+        {
+            rowFacet: createValueOrder(rowFacetValues),
+            colFacet: createValueOrder(colFacetValues),
+            color: createValueOrder(colorValues),
+            opacity: createValueOrder(opacityValues),
+            size: createValueOrder(sizeValues),
+            shape: createValueOrder(shapeValues),
+            x: createValueOrder(xValues),
+            y: createValueOrder(yValues),
+        },
+    );
+    if (continuousOpacityKey && opacityField.key) {
+        sortedSource = sortedSource.map((row) => ({
+            ...row,
+            [continuousOpacityKey]: Number(row[opacityField.key as string]),
+        }));
+    }
+
+    const scatterOpacityLegendGraphic = Boolean(opacityField.key && !useDiscreteOpacity && (geomType === "point" || geomType === "circle") && xField.key && yField.key);
+    const quantitativeBarSizeLegendGraphic = Boolean(sizeField.key && !useDiscreteSize && geomType === "bar" && xField.key && yField.key);
+    const scatterSizeLegendGraphic = Boolean(sizeField.key && !useDiscreteSize && (geomType === "point" || geomType === "circle") && xField.key && yField.key);
+    const continuousOpacityLegendWithDiscreteChannels = Boolean(
+        opacityField.key &&
+        !useDiscreteOpacity &&
+        !isScatterLikeGeom(geomType) &&
+        (useDiscreteColor || useDiscreteShape),
+    );
+    const preferCustomDiscreteLegends = Boolean(
+        (scatterOpacityLegendGraphic || scatterSizeLegendGraphic || quantitativeBarSizeLegendGraphic || continuousOpacityLegendWithDiscreteChannels) &&
+        (useDiscreteColor || useDiscreteShape),
+    );
+    const facetTitleReserve = rowFacetBinding.key && colFacetBinding.key ? 10 : rowFacetBinding.key || colFacetBinding.key ? 6 : 0;
+    const legendTopReserve = 0;
+    const visualMapBottomReserve = Boolean(opacityField.key || (sizeField.key && isScatterLikeGeom(geomType))) ? 12 : 0;
+    const categoryBottomReserve =
+        axisTypeForField(xField.field) === "category"
+            ? geomType === "rect"
+                ? reservePercentFromPixels(68, props.chartHeight, 8, 14)
+                : geomType === "line" || geomType === "area"
+                  ? reservePercentFromPixels(76, props.chartHeight, 9, 15)
+                  : reservePercentFromPixels(72, props.chartHeight, 8.5, 14)
+            : 0;
+    const measureFacetBottomReserve = isSyntheticMeasureFacetField(colFacetBinding.field) ? 8 : 0;
+    const gridTopReserve = legendTopReserve + facetTitleReserve;
+    const gridBottomReserve = Math.max(visualMapBottomReserve, categoryBottomReserve, measureFacetBottomReserve);
+    const continuousColorLegend = Boolean(colorField.key && !useDiscreteColor);
+    const discreteVisualLegends = Boolean(useDiscreteOpacity || (useDiscreteSize && !useNativeLegendForDiscreteBarSize));
+    const useCustomDiscreteLegends = separateDiscreteLegends || preferCustomDiscreteLegends || discreteVisualLegends;
+    const showNativeLegend = showLegend && !preferCustomDiscreteLegends && !discreteVisualLegends;
+    const nativeLegendTitle = showNativeLegend ? (useDiscreteColor ? colorField.title : useDiscreteShape ? shapeField.title : useNativeLegendForDiscreteBarSize ? sizeField.title : undefined) : undefined;
+    const hasContinuousOpacityLegend = Boolean(opacityField.key && !useDiscreteOpacity);
+    const legendRightReserve = showNativeLegend || useCustomDiscreteLegends || continuousColorLegend || scatterOpacityLegendGraphic || scatterSizeLegendGraphic || quantitativeBarSizeLegendGraphic || hasContinuousOpacityLegend ? 18 : 0;
+    const yAxisTitleLeftReserve = cartesianGeom && yField.title ? 8 : 0;
+    const facetLeftReserve = (rowFacetBinding.key ? 12 : 0) + yAxisTitleLeftReserve;
+    const sizeExtent = sizeField.key && !useDiscreteSize ? sortedSource.map((row) => Number(row[sizeField.key as string])).filter((value) => Number.isFinite(value)) : [];
+    const sizeMin = sizeExtent.length > 0 ? Math.min(...sizeExtent) : 0;
+    const sizeMax = sizeExtent.length > 0 ? Math.max(...sizeExtent) : 1;
+    const xExtent = xField.key && axisTypeForField(xField.field) === "value" ? sortedSource.map((row) => Number(row[xField.key as string])).filter((value) => Number.isFinite(value)) : [];
+    const yExtent = yField.key && axisTypeForField(yField.field) === "value" ? sortedSource.map((row) => Number(row[yField.key as string])).filter((value) => Number.isFinite(value)) : [];
+    const opacityExtent = opacityField.key && !useDiscreteOpacity
+        ? sortedSource.map((row) => Number(row[(continuousOpacityKey ?? opacityField.key) as string])).filter((value) => Number.isFinite(value))
+        : [];
+
+    return {
+        props,
+        vegaConfig,
+        channelScales,
+        rows,
+        columns,
+        sourceData,
+        xField,
+        yField,
+        colorField,
+        opacityField,
+        sizeField,
+        shapeField,
+        thetaField,
+        textField,
+        geomType,
+        categoryPalette,
+        defaultColor,
+        cartesianGeom,
+        detailFields,
+        tooltipFields,
+        rowFacetBinding,
+        colFacetBinding,
+        rowFacetValues,
+        colFacetValues,
+        useDiscreteColor,
+        useDiscreteOpacity,
+        useDiscreteSize,
+        useDiscreteShape,
+        showLegend,
+        colorValues,
+        opacityValues,
+        sizeValues,
+        shapeValues,
+        xValues,
+        yValues,
+        sortedSource,
+        scatterOpacityLegendGraphic,
+        scatterSizeLegendGraphic,
+        quantitativeBarSizeLegendGraphic,
+        preferCustomDiscreteLegends,
+        continuousColorLegend,
+        useCustomDiscreteLegends,
+        showNativeLegend,
+        nativeLegendTitle,
+        useNativeLegendForDiscreteBarSize,
+        numberFormat: props.layout.format?.numberFormat ?? vegaConfig.numberFormat,
+        legendRightReserve,
+        gridTopReserve,
+        gridBottomReserve,
+        facetLeftReserve,
+        sizeExtent,
+        sizeMin,
+        sizeMax,
+        xMin: xExtent.length > 0 ? (geomType === "line" ? Math.min(...xExtent) : niceFloor(Math.min(...xExtent))) : undefined,
+        xMax: xExtent.length > 0 ? niceCeil(Math.max(...xExtent)) : undefined,
+        yMin: yExtent.length > 0 ? (geomType === "line" ? Math.min(...yExtent) : niceFloor(Math.min(...yExtent))) : undefined,
+        yMax: yExtent.length > 0 ? niceCeil(Math.max(...yExtent)) : undefined,
+        opacityExtent,
+        opacityMin: opacityExtent.length > 0 ? Math.min(...opacityExtent) : 0,
+        opacityMax: opacityExtent.length > 0 ? Math.max(...opacityExtent) : 1,
+        opacityVisualKey: continuousOpacityKey ?? opacityField.key,
+        useZeroBaselineScatter: (geomType === "point" || geomType === "circle") && Boolean(props.layout.zeroScale),
+    };
+}

@@ -1,0 +1,46 @@
+name: Publish Renderer Plugins to npmjs
+
+on:
+  workflow_dispatch:
+    inputs:
+      npmTag:
+        description: 'npm dist-tag'
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - pre
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install deps
+        run: yarn install
+
+      - name: Observable Plot renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-observable-plot build
+
+      - name: ECharts renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-echarts build
+
+      - name: Publish observable plugin
+        run: npm publish --tag ${{ github.event.inputs.npmTag }}
+        working-directory: ./packages/renderer-observable-plot
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish echarts plugin
+        run: npm publish --tag ${{ github.event.inputs.npmTag }}
+        working-directory: ./packages/renderer-echarts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

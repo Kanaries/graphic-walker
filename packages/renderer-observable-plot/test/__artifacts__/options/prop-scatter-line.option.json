@@ -1,0 +1,15 @@
+[
+  {
+    "x": {
+      "label": "race/ethnicity"
+    },
+    "y": {
+      "label": "sum(reading score)"
+    },
+    "marginTop": 20,
+    "marginRight": 40,
+    "marginBottom": 48,
+    "marginLeft": 56,
+    "markCount": 1
+  }
+]

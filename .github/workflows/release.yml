@@ -16,10 +16,24 @@ jobs:
         run: yarn install
       - name: npm package build
         run: yarn workspace @kanaries/graphic-walker build
+      - name: Observable Plot renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-observable-plot build
+      - name: ECharts renderer plugin build
+        run: yarn workspace @kanaries/graphic-walker-renderer-echarts build
       - name: Web app (playground) build
         run: yarn workspace playground build
       - name: Publish package
         run: npm publish --tag ${{ github.event.release.prerelease && 'pre' || 'latest' }}
         working-directory: ./packages/graphic-walker
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish observable plugin
+        run: npm publish --tag ${{ github.event.release.prerelease && 'pre' || 'latest' }}
+        working-directory: ./packages/renderer-observable-plot
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish echarts plugin
+        run: npm publish --tag ${{ github.event.release.prerelease && 'pre' || 'latest' }}
+        working-directory: ./packages/renderer-echarts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -7,6 +7,8 @@
   "devDependencies": {},
   "scripts": {
     "build": "yarn workspace @kanaries/graphic-walker build",
+    "build:plugins": "yarn workspace @kanaries/graphic-walker-renderer-observable-plot build && yarn workspace @kanaries/graphic-walker-renderer-echarts build",
+    "build:all": "yarn build && yarn build:plugins",
     "deploy": "yarn workspace playground deploy"
   },
   "workspaces": {
@@ -35,5 +37,6 @@
   "homepage": "https://github.com/Kanaries/graphic-walker#readme",
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "yarn@1.22.19+sha256.732620bac8b1690d507274f025f3c6cfdc3627a84d9642e38a07452cc00e0f2e"
 }

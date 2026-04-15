@@ -293,6 +293,7 @@ const actionMessageMapper: {
     [Methods.removeAllField]: () => '',
     [Methods.editAllField]: () => '',
     [Methods.replaceWithNLPQuery]: () => '',
+    [Methods.editField]: () => '',
 };
 
 function toMessage<T>(data: IChart, action: VisActionOf<T>) {

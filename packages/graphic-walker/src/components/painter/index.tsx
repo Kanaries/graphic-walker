@@ -345,7 +345,8 @@ const AggPainterContent = (props: {
             });
 
             embed(containerRef.current, spec, {
-                renderer: 'webgl' as any,
+                // @ts-expect-error vega-embed typings don't include "webgl", but runtime supports it via vega-webgl-renderer.
+                renderer: 'webgl',
                 config: props.vegaConfig,
                 actions: false,
                 tooltip: {
@@ -662,7 +663,8 @@ const PainterContent = (props: {
                 height: GLOBAL_CONFIG.PAINT_MAP_SIZE * GLOBAL_CONFIG.PAINT_SIZE_FACTOR,
             };
             embed(containerRef.current, spec, {
-                renderer: 'webgl' as any,
+                // @ts-expect-error vega-embed typings don't include "webgl", but runtime supports it via vega-webgl-renderer.
+                renderer: 'webgl',
                 config: props.vegaConfig,
                 actions: false,
                 tooltip: {
