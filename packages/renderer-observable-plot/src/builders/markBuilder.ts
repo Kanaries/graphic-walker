@@ -94,7 +94,7 @@ function buildBaseOptions(model: ChannelModel, geom: string, title?: (d: Record<
             options.fill = 'none';
         }
     } else {
-        options.fill = model.color.key ?? (geom === 'bar' && model.size.isDiscrete ? model.size.key : undefined);
+        options.fill = model.color.key;
     }
 
     if (isScatterLikeGeom(geom)) {
@@ -331,7 +331,11 @@ function buildNonStackedColorMarks(
                 geom === 'line' || geom === 'rule' || geom === 'tick' || geom === 'point'
                     ? { stroke: color, fill: geom === 'point' ? 'none' : undefined }
                     : geom === 'boxplot'
-                      ? { stroke: color, fill: 'none' }
+                      ? {
+                            stroke: color,
+                            fill: color,
+                            fillOpacity: 1,
+                        }
                     : geom === 'bar'
                       ? model.x.type === 'quantitative' && model.y.type !== 'quantitative'
                           ? { fill: color, x1: 0 }
@@ -404,6 +408,11 @@ function sortSeriesData(data: any[], model: ChannelModel, geom: string): any[] {
     const opacityOrder = model.opacity.isDiscrete
         ? new Map(opacityDomain.map((value, index) => [String(value), index]))
         : new Map<string, number>();
+    const sizeKey = model.size.key;
+    const sizeDomain = model.size.isDiscrete ? orderedDomain(data, sizeKey, model.size.sort) : [];
+    const sizeOrder = model.size.isDiscrete
+        ? new Map(sizeDomain.map((value, index) => [String(value), index]))
+        : new Map<string, number>();
 
     return [...data].sort((a, b) => {
         if (isStackedGeom && primary) {
@@ -423,6 +432,10 @@ function sortSeriesData(data: any[], model: ChannelModel, geom: string): any[] {
         if (isStackedGeom && !colorKey && opacityKey && model.opacity.isDiscrete) {
             const opacityComp = compareDiscreteValue(a[opacityKey], b[opacityKey], opacityOrder);
             if (opacityComp !== 0) return opacityComp;
+        }
+        if (isStackedGeom && sizeKey && model.size.isDiscrete) {
+            const sizeComp = compareDiscreteValue(a[sizeKey], b[sizeKey], sizeOrder);
+            if (sizeComp !== 0) return sizeComp;
         }
 
         if (!isStackedGeom && primary) {
@@ -582,6 +595,7 @@ function buildVariableSizeBarMarks(
     });
     const strokeColor = (markOptions.fill as string | undefined) ?? (markOptions.stroke as string | undefined);
     const strokeOpacity = (markOptions.fillOpacity as string | number | undefined) ?? (markOptions.opacity as string | number | undefined);
+    const title = markOptions.title as string | ((d: Record<string, unknown>) => string) | undefined;
 
     if (stackAxis === 'x') {
         return Plot.ruleY(markData, {
@@ -590,7 +604,7 @@ function buildVariableSizeBarMarks(
             x2: model.x.key,
             fx: model.column.key,
             fy: model.row.key,
-            title: markOptions.title,
+            title,
             stroke: strokeColor,
             strokeWidth: widthKey,
             strokeOpacity,
@@ -603,11 +617,79 @@ function buildVariableSizeBarMarks(
         y2: model.y.key,
         fx: model.column.key,
         fy: model.row.key,
-        title: markOptions.title,
+        title,
         stroke: strokeColor,
         strokeWidth: widthKey,
         strokeOpacity,
     });
+}
+
+function buildDiscreteSizeBarMarks(
+    data: any[],
+    markOptions: Record<string, unknown>,
+    model: ChannelModel,
+    stackAxis: 'x' | 'y',
+    stackMode: string | null,
+    vegaConfig?: VCfg,
+): Plot.Markish | null {
+    if (!model.size.key || !model.size.isDiscrete) return null;
+    const sizeDomain = orderedDomain(data, model.size.key, model.size.sort).map((value) => String(value));
+    if (sizeDomain.length === 0) return null;
+    const widthKey = '__gw_discrete_bar_size_width__';
+    const minWidth = 2;
+    const maxWidth = 20;
+    const widthMap = new Map(
+        sizeDomain.map((value, index) => [
+            value,
+            minWidth + (index / Math.max(1, sizeDomain.length - 1)) * (maxWidth - minWidth),
+        ]),
+    );
+    const markData = data.map((row) => ({
+        ...row,
+        [widthKey]: widthMap.get(String(row[model.size.key!])) ?? minWidth,
+    }));
+    const strokeColor =
+        (typeof markOptions.fill === 'string' ? (markOptions.fill as string) : undefined) ?? resolveDefaultColor('bar', vegaConfig);
+    const strokeOpacity = (markOptions.fillOpacity as string | number | undefined) ?? (markOptions.opacity as string | number | undefined);
+    const baseRuleOptions: Record<string, unknown> =
+        stackAxis === 'x'
+            ? {
+                  y: model.y.key,
+                  x: model.x.key,
+                  fx: model.column.key,
+                  fy: model.row.key,
+                  title: markOptions.title,
+                  stroke: strokeColor,
+                  strokeWidth: widthKey,
+                  strokeOpacity,
+              }
+            : {
+                  x: model.x.key,
+                  y: model.y.key,
+                  fx: model.column.key,
+                  fy: model.row.key,
+                  title: markOptions.title,
+                  stroke: strokeColor,
+                  strokeWidth: widthKey,
+                  strokeOpacity,
+              };
+
+    const barStackSeriesKeys = getDiscreteSeriesKeys(model, { includeOpacity: false, includeSize: true });
+    const { data: stackedBarData, key: barStackSeriesKey } = materializeSeriesKey(markData, barStackSeriesKeys, '__gw_bar_stack_series__');
+    const ruleMarkFn: MarkFactory = stackAxis === 'x' ? Plot.ruleY : Plot.ruleX;
+    if (stackMode && barStackSeriesKey) {
+        return applyStacking(
+            ruleMarkFn,
+            stackedBarData,
+            {
+                ...baseRuleOptions,
+                z: barStackSeriesKey,
+            },
+            stackAxis,
+            stackMode,
+        );
+    }
+    return ruleMarkFn(markData, baseRuleOptions);
 }
 
 function buildStackedAreaByColorAndOpacity(
@@ -864,6 +946,15 @@ export function buildMark(
         markOptions.r = radiusKey;
     }
 
+    const stackMode = stackModeFromEncoding(spec);
+
+    if (lineGeom === 'bar' && model.size.key && model.size.isDiscrete && !model.color.key) {
+        const discreteSizeBars = buildDiscreteSizeBarMarks(markData, markOptions, model, stackAxis, stackMode, vegaConfig);
+        if (discreteSizeBars) {
+            return discreteSizeBars;
+        }
+    }
+
     if (lineGeom === 'bar' && model.size.key && !model.size.isDiscrete && !model.color.key) {
         const variableSizeBars = buildVariableSizeBarMarks(markData, markOptions, model, stackAxis);
         if (variableSizeBars) {
@@ -871,7 +962,6 @@ export function buildMark(
         }
     }
 
-    const stackMode = stackModeFromEncoding(spec);
     const areaIsQuantScatter = lineGeom === 'area' && model.x.type === 'quantitative' && model.y.type === 'quantitative';
     const barStackSeriesKeys = getDiscreteSeriesKeys(model, { includeOpacity: false, includeSize: true });
     const areaStackSeriesKeys = getDiscreteSeriesKeys(model, { includeSize: false });

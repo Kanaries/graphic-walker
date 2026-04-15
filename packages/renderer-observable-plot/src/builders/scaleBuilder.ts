@@ -79,6 +79,65 @@ function zeroBasedQuantDomain(data: readonly IRow[], key?: string, zero?: boolea
     return [Math.min(0, min), Math.max(0, max)];
 }
 
+function getStackSeriesKeys(model: ChannelModel): string[] {
+    const keys = new Set<string>();
+    if (model.color.key) keys.add(model.color.key);
+    if (model.opacity.isDiscrete && model.opacity.key) keys.add(model.opacity.key);
+    if (model.size.isDiscrete && model.size.key) keys.add(model.size.key);
+    const reservedKeys = new Set(
+        [
+            model.x.key,
+            model.y.key,
+            model.row.key,
+            model.column.key,
+            model.color.key,
+            model.opacity.key,
+            model.size.key,
+            model.shape.key,
+            model.text.key,
+            model.theta.key,
+            model.radius.key,
+        ].filter((key): key is string => Boolean(key)),
+    );
+    for (const detail of model.details) {
+        if (detail.key && detail.isDiscrete && !reservedKeys.has(detail.key)) {
+            keys.add(detail.key);
+        }
+    }
+    return [...keys];
+}
+
+function stackedZeroBasedQuantDomain(
+    data: readonly IRow[],
+    model: ChannelModel,
+    quantitativeAxis: 'x' | 'y',
+    zero?: boolean,
+): [number, number] | undefined {
+    if (!zero) return undefined;
+    const valueKey = quantitativeAxis === 'x' ? model.x.key : model.y.key;
+    if (!valueKey) return undefined;
+    const categoryKey = quantitativeAxis === 'x' ? model.y.key : model.x.key;
+    if (!categoryKey) return undefined;
+    const seriesKeys = getStackSeriesKeys(model);
+    if (seriesKeys.length === 0) return undefined;
+    const groupKeys = [categoryKey, model.row.key, model.column.key].filter((key): key is string => Boolean(key));
+    if (groupKeys.length === 0) return undefined;
+    const grouped = new Map<string, { pos: number; neg: number }>();
+    for (const row of data) {
+        const value = Number(row[valueKey]);
+        if (!Number.isFinite(value)) continue;
+        const key = groupKeys.map((k) => String(row[k] ?? '')).join('\u0001');
+        const current = grouped.get(key) ?? { pos: 0, neg: 0 };
+        if (value >= 0) current.pos += value;
+        else current.neg += value;
+        grouped.set(key, current);
+    }
+    if (grouped.size === 0) return undefined;
+    const min = Math.min(0, ...Array.from(grouped.values()).map((entry) => entry.neg));
+    const max = Math.max(0, ...Array.from(grouped.values()).map((entry) => entry.pos));
+    return [min, max];
+}
+
 function looksQuantitative(field: AxisFieldModel, data: readonly IRow[]): boolean {
     if (field.type === 'quantitative') return true;
     if (field.type === 'temporal') return false;
@@ -96,8 +155,7 @@ export function buildScaleOptions(
     vegaConfig?: VCfg,
 ): Record<string, unknown> {
     const hasColor = Boolean(model.color.key);
-    const useSizeAsColorForBar = geom === 'bar' && !hasColor && Boolean(model.size.key) && model.size.isDiscrete;
-    const colorLegend = (hasColor || useSizeAsColorForBar) && !hideLegend;
+    const colorLegend = hasColor && !hideLegend;
     const discreteRange = getDiscretePalette(vegaConfig);
     const continuousRange = getContinuousPalette(vegaConfig, geom);
     const xIsQuantitative = looksQuantitative(model.x, data);
@@ -105,14 +163,19 @@ export function buildScaleOptions(
     const globalZero = typeof vegaConfig?.scale?.zero === 'boolean' ? vegaConfig.scale.zero : undefined;
     const xZero = typeof model.x.zero === 'boolean' ? model.x.zero : xIsQuantitative ? globalZero : undefined;
     const yZero = typeof model.y.zero === 'boolean' ? model.y.zero : yIsQuantitative ? globalZero : undefined;
+    const stackedXDomain = geom === 'bar' && xIsQuantitative ? stackedZeroBasedQuantDomain(data, model, 'x', xZero) : undefined;
+    const stackedYDomain = geom === 'bar' && yIsQuantitative ? stackedZeroBasedQuantDomain(data, model, 'y', yZero) : undefined;
     const options: Record<string, unknown> = {
         x: {
             label: model.x.title,
             type: temporalAxisType(model.x.type),
             zero: xIsQuantitative ? xZero : undefined,
+            padding: geom === 'boxplot' && model.x.isDiscrete ? (hasColor ? 0.82 : 0.9) : undefined,
             domain:
                 model.x.isDiscrete
                     ? orderedDomain(data, model.x.key, model.x.sort)
+                    : stackedXDomain
+                      ? stackedXDomain
                     : xIsQuantitative && xZero
                       ? zeroBasedQuantDomain(data, model.x.key, xZero)
                     : geom === 'boxplot' && xIsQuantitative
@@ -123,9 +186,12 @@ export function buildScaleOptions(
             label: model.y.title,
             type: temporalAxisType(model.y.type),
             zero: yIsQuantitative ? yZero : undefined,
+            padding: geom === 'boxplot' && model.y.isDiscrete ? (hasColor ? 0.82 : 0.9) : undefined,
             domain:
                 model.y.isDiscrete
                     ? orderedDomain(data, model.y.key, model.y.sort)
+                    : stackedYDomain
+                      ? stackedYDomain
                     : yIsQuantitative && yZero
                       ? zeroBasedQuantDomain(data, model.y.key, yZero)
                     : geom === 'boxplot' && yIsQuantitative
@@ -153,20 +219,6 @@ export function buildScaleOptions(
             type: treatColorAsContinuous ? 'linear' : undefined,
             domain: treatColorAsContinuous ? undefined : orderedDomain(data, model.color.key, model.color.sort),
             range: treatColorAsContinuous ? continuousRange : discreteRange,
-        };
-    } else if (useSizeAsColorForBar) {
-        const sizeDomain = orderedDomain(data, model.size.key, model.size.sort) ?? [];
-        const base = typeof vegaConfig?.bar?.fill === 'string' ? (vegaConfig.bar.fill as string) : '#5B8FF9';
-        const steps = sizeDomain.length;
-        const range =
-            steps <= 1
-                ? [base]
-                : sizeDomain.map((_, index) => mixWithWhite(base, 0.45 - (index / Math.max(1, steps - 1)) * 0.3));
-        options.color = {
-            label: model.size.title,
-            legend: colorLegend,
-            domain: sizeDomain,
-            range,
         };
     }
 
