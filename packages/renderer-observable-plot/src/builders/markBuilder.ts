@@ -8,6 +8,8 @@ import { getDiscretePalette, getPrimaryColor } from '../colorDefaults';
 type MarkFactory = (data: any[], options: Record<string, unknown>) => Plot.Markish;
 
 type VegaLiteLikeSpec = {
+    width?: number;
+    height?: number;
     transform?: Array<Record<string, unknown>>;
     encoding?: Record<string, VLChannelDef>;
 };
@@ -18,10 +20,13 @@ function getDirectionalMark(geom: string, xType?: string, yType?: string): { mar
     const xIsQ = xType === 'quantitative';
     const yIsQ = yType === 'quantitative';
 
+    if (geom === 'line') {
+        return { mark: Plot.line, stackAxis: 'y' };
+    }
+
     const directional: Record<string, { x: MarkFactory; y: MarkFactory }> = {
         bar: { x: Plot.barX, y: Plot.barY },
         area: { x: Plot.areaX, y: Plot.areaY },
-        line: { x: Plot.lineX, y: Plot.lineY },
         tick: { x: Plot.tickX, y: Plot.tickY },
         rect: { x: Plot.rectX, y: Plot.rectY },
         rule: { x: Plot.ruleX, y: Plot.ruleY },
@@ -64,9 +69,17 @@ function buildBaseOptions(model: ChannelModel, geom: string, title?: (d: Record<
     };
 
     if (model.opacity.key) {
-        options.opacity = model.opacity.key;
+        if (geom === 'line' || geom === 'rule' || geom === 'tick') {
+            options.strokeOpacity = model.opacity.key;
+        } else {
+            options.opacity = model.opacity.key;
+        }
     } else if (typeof model.opacity.value === 'number') {
-        options.opacity = model.opacity.value as number;
+        if (geom === 'line' || geom === 'rule' || geom === 'tick') {
+            options.strokeOpacity = model.opacity.value as number;
+        } else {
+            options.opacity = model.opacity.value as number;
+        }
     }
 
     const hasColor = Boolean(model.color.key);
@@ -81,7 +94,7 @@ function buildBaseOptions(model: ChannelModel, geom: string, title?: (d: Record<
             options.fill = 'none';
         }
     } else {
-        options.fill = model.color.key;
+        options.fill = model.color.key ?? (geom === 'bar' && model.size.isDiscrete ? model.size.key : undefined);
     }
 
     if (isScatterLikeGeom(geom)) {
@@ -173,6 +186,46 @@ function orderedDomain(data: any[], key?: string, sort?: unknown): unknown[] {
         return [...domain].sort((a, b) => compareValue(b, a));
     }
     return [...domain].sort(compareValue);
+}
+
+function getDiscreteSeriesKeys(model: ChannelModel, options?: { includeOpacity?: boolean; includeSize?: boolean }): string[] {
+    const keys = new Set<string>();
+    const reservedKeys = new Set(
+        [
+            model.x.key,
+            model.y.key,
+            model.row.key,
+            model.column.key,
+            model.color.key,
+            model.opacity.key,
+            model.size.key,
+            model.shape.key,
+            model.text.key,
+            model.theta.key,
+            model.radius.key,
+        ].filter((key): key is string => Boolean(key)),
+    );
+    if (model.color.key) keys.add(model.color.key);
+    if (options?.includeOpacity !== false && model.opacity.isDiscrete && model.opacity.key) keys.add(model.opacity.key);
+    if (options?.includeSize && model.size.isDiscrete && model.size.key) keys.add(model.size.key);
+    for (const detail of model.details) {
+        if (detail.key && detail.isDiscrete && !reservedKeys.has(detail.key)) {
+            keys.add(detail.key);
+        }
+    }
+    return [...keys];
+}
+
+function materializeSeriesKey(data: any[], keys: string[], name: string): { data: any[]; key?: string } {
+    if (keys.length === 0) return { data };
+    if (keys.length === 1) return { data, key: keys[0] };
+    return {
+        data: data.map((row) => ({
+            ...row,
+            [name]: keys.map((key) => String(row[key] ?? '')).join('\u0001'),
+        })),
+        key: name,
+    };
 }
 
 function asChannelArray(value: unknown): VLChannelDef[] {
@@ -382,8 +435,8 @@ function sortSeriesData(data: any[], model: ChannelModel, geom: string): any[] {
     });
 }
 
-function reverseStackSeriesOrder(data: any[], model: ChannelModel, stackAxis: 'x' | 'y'): any[] {
-    const colorKey = model.color.key;
+function reverseStackSeriesOrder(data: any[], model: ChannelModel, stackAxis: 'x' | 'y', seriesKey?: string): any[] {
+    const colorKey = seriesKey ?? model.color.key;
     const primary = stackAxis === 'x' ? model.y.key ?? model.row.key ?? model.column.key : model.x.key ?? model.column.key ?? model.row.key;
     if (!colorKey || !primary) return data;
     const groups = new Map<string, any[]>();
@@ -416,9 +469,7 @@ function buildNonStackedAreaMarks(
     markOptions: Record<string, unknown>,
     model: ChannelModel,
 ): Plot.Markish | null {
-    const seriesKeys = [model.color.key, model.opacity.isDiscrete ? model.opacity.key : undefined].filter(
-        (key): key is string => Boolean(key),
-    );
+    const seriesKeys = getDiscreteSeriesKeys(model);
     if (seriesKeys.length === 0) return null;
 
     const grouped = new Map<string, any[]>();
@@ -438,6 +489,125 @@ function buildNonStackedAreaMarks(
             }),
         ),
     );
+}
+
+function buildGroupedSeriesMarks(markFn: MarkFactory, data: any[], markOptions: Record<string, unknown>, keys: string[]): Plot.Markish | null {
+    if (keys.length === 0) return null;
+    const grouped = new Map<string, any[]>();
+    for (const row of data) {
+        const groupId = keys.map((key) => String(row[key] ?? '')).join('\u0001');
+        const rows = grouped.get(groupId) ?? [];
+        rows.push(row);
+        grouped.set(groupId, rows);
+    }
+    if (grouped.size <= 1) return null;
+    return Plot.marks(
+        ...Array.from(grouped.values()).map((rows) =>
+            markFn(rows, {
+                ...markOptions,
+                title: undefined,
+                z: undefined,
+            }),
+        ),
+    );
+}
+
+function buildGroupedLineMarks(
+    markFn: MarkFactory,
+    data: any[],
+    markOptions: Record<string, unknown>,
+    model: ChannelModel,
+    vegaConfig?: VCfg,
+): Plot.Markish | null {
+    const keys = getDiscreteSeriesKeys(model);
+    if (keys.length === 0) return null;
+    const grouped = new Map<string, any[]>();
+    for (const row of data) {
+        const groupId = keys.map((key) => String(row[key] ?? '')).join('\u0001');
+        const rows = grouped.get(groupId) ?? [];
+        rows.push(row);
+        grouped.set(groupId, rows);
+    }
+    if (grouped.size <= 1) return null;
+
+    const colorDomain = orderedDomain(data, model.color.key, model.color.sort);
+    const palette = getDiscretePalette(vegaConfig);
+    const strokeOpacityChannel = typeof markOptions.strokeOpacity === 'string' ? (markOptions.strokeOpacity as string) : undefined;
+    const strokeChannel = typeof markOptions.stroke === 'string' ? (markOptions.stroke as string) : undefined;
+
+    return Plot.marks(
+        ...Array.from(grouped.values()).map((rows) => {
+            const first = rows[0] ?? {};
+            const strokeValue =
+                model.color.key && colorDomain.length > 0
+                    ? palette[Math.max(0, colorDomain.findIndex((value) => value === first[model.color.key!])) % Math.max(1, palette.length)] ??
+                      resolveDefaultColor('line', vegaConfig)
+                    : strokeChannel
+                      ? first[strokeChannel]
+                      : markOptions.stroke;
+            const strokeOpacityValue = strokeOpacityChannel ? first[strokeOpacityChannel] : markOptions.strokeOpacity;
+            return markFn(rows, {
+                ...markOptions,
+                title: undefined,
+                z: undefined,
+                stroke: strokeValue,
+                strokeOpacity: strokeOpacityValue,
+                opacity: undefined,
+            });
+        }),
+    );
+}
+
+function buildVariableSizeBarMarks(
+    data: any[],
+    markOptions: Record<string, unknown>,
+    model: ChannelModel,
+    stackAxis: 'x' | 'y',
+): Plot.Markish | null {
+    if (!model.size.key || model.size.isDiscrete) return null;
+    const values = data.map((row) => Number(row[model.size.key!])).filter((value) => Number.isFinite(value));
+    if (values.length === 0) return null;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const widthKey = '__gw_continuous_bar_size_width__';
+    const minWidth = 4;
+    const maxWidth = 12;
+    const markData = data.map((row) => {
+        const raw = Number(row[model.size.key!]);
+        const t = max > min && Number.isFinite(raw) ? (raw - min) / (max - min) : 0.5;
+        return {
+            ...row,
+            [widthKey]: minWidth + t * (maxWidth - minWidth),
+        };
+    });
+    const strokeColor = (markOptions.fill as string | undefined) ?? (markOptions.stroke as string | undefined);
+    const strokeOpacity = (markOptions.fillOpacity as string | number | undefined) ?? (markOptions.opacity as string | number | undefined);
+
+    if (stackAxis === 'x') {
+        return Plot.ruleY(markData, {
+            y: model.y.key,
+            x1: 0,
+            x2: model.x.key,
+            fx: model.column.key,
+            fy: model.row.key,
+            title: markOptions.title,
+            stroke: strokeColor,
+            strokeWidth: widthKey,
+            strokeOpacity,
+        });
+    }
+
+    return Plot.ruleX(markData, {
+        x: model.x.key,
+        y1: 0,
+        y2: model.y.key,
+        fx: model.column.key,
+        fy: model.row.key,
+        title: markOptions.title,
+        stroke: strokeColor,
+        strokeWidth: widthKey,
+        strokeOpacity,
+    });
 }
 
 function buildStackedAreaByColorAndOpacity(
@@ -521,6 +691,48 @@ export function buildMark(
         });
     }
 
+    if (geom === 'bar' && model.x.key && !model.y.key) {
+        return Plot.barY(
+            data,
+            Plot.groupX(
+                { y: 'count' },
+                withDefaultColor(
+                    {
+                        x: model.x.key,
+                        fx: model.column.key,
+                        fy: model.row.key,
+                        fill: model.color.key,
+                        title,
+                    },
+                    'bar',
+                    model,
+                    vegaConfig,
+                ),
+            ),
+        );
+    }
+
+    if (geom === 'bar' && model.y.key && !model.x.key) {
+        return Plot.barX(
+            data,
+            Plot.groupY(
+                { x: 'count' },
+                withDefaultColor(
+                    {
+                        y: model.y.key,
+                        fx: model.column.key,
+                        fy: model.row.key,
+                        fill: model.color.key,
+                        title,
+                    },
+                    'bar',
+                    model,
+                    vegaConfig,
+                ),
+            ),
+        );
+    }
+
     const singleAxisLine = geom === 'line' && Boolean(model.x.key) !== Boolean(model.y.key);
     const lineGeom = singleAxisLine ? 'rule' : geom;
     const { mark: markFn, stackAxis } = getDirectionalMark(lineGeom, model.x.type, model.y.type);
@@ -536,9 +748,9 @@ export function buildMark(
         let cellOpacity: string | number | undefined = model.opacity.key ?? (typeof model.opacity.value === 'number' ? model.opacity.value : undefined);
         if (model.opacity.key && model.opacity.isDiscrete) {
             const opacityDomain = orderedDomain(cellData, model.opacity.key, model.opacity.sort).map((value) => String(value));
-            const opacityMap = new Map(opacityDomain.map((value, index) => [value, 0.28 + (index / Math.max(1, opacityDomain.length - 1)) * 0.64]));
+            const opacityMap = new Map(opacityDomain.map((value, index) => [value, 0.18 + (index / Math.max(1, opacityDomain.length - 1)) * 0.42]));
             const opacityKey = '__gw_discrete_opacity__';
-            cellData = cellData.map((row) => ({ ...row, [opacityKey]: opacityMap.get(String(row[model.opacity.key!])) ?? 0.72 }));
+            cellData = cellData.map((row) => ({ ...row, [opacityKey]: opacityMap.get(String(row[model.opacity.key!])) ?? 0.5 }));
             cellOpacity = opacityKey;
         } else if (model.opacity.key) {
             const values = cellData.map((row) => Number(row[model.opacity.key!])).filter((value) => Number.isFinite(value));
@@ -550,10 +762,10 @@ export function buildMark(
                     cellData = cellData.map((row) => {
                         const raw = Number(row[model.opacity.key!]);
                         const t = Number.isFinite(raw) ? (raw - min) / (max - min) : 0.5;
-                        return { ...row, [opacityKey]: 0.2 + t * 0.8 };
+                        return { ...row, [opacityKey]: 0.18 + t * 0.52 };
                     });
                 } else {
-                    cellData = cellData.map((row) => ({ ...row, [opacityKey]: 0.72 }));
+                    cellData = cellData.map((row) => ({ ...row, [opacityKey]: 0.5 }));
                 }
                 cellOpacity = opacityKey;
             }
@@ -565,12 +777,15 @@ export function buildMark(
             fx: model.column.key,
             fy: model.row.key,
             title,
-            opacity: cellOpacity,
+            fillOpacity: cellOpacity,
         });
     }
 
     let markData = sortSeriesData(aggregateScatterData(data, spec, geom, model), model, lineGeom);
     let markOptions: Record<string, unknown> = { ...baseOptions };
+    if (lineGeom === 'line' || lineGeom === 'area' || lineGeom === 'rule') {
+        markOptions.title = undefined;
+    }
     const treatColorAsContinuous = Boolean(model.color.key) && isNumericColorFromData(markData, model.color.key, model.color.isContinuous);
     if (treatColorAsContinuous && geom === 'point') {
         markOptions.fill = model.color.key;
@@ -582,7 +797,62 @@ export function buildMark(
         const opacityMap = new Map(opacityDomain.map((value, index) => [value, 0.28 + (index / Math.max(1, opacityDomain.length - 1)) * 0.64]));
         const opacityKey = '__gw_discrete_opacity__';
         markData = markData.map((row) => ({ ...row, [opacityKey]: opacityMap.get(String(row[model.opacity.key!])) ?? 0.72 }));
-        markOptions.opacity = opacityKey;
+        if (lineGeom === 'line' || lineGeom === 'rule' || lineGeom === 'tick') {
+            markOptions.strokeOpacity = opacityKey;
+            markOptions.opacity = undefined;
+        } else if (lineGeom === 'area') {
+            markOptions.fillOpacity = opacityKey;
+            markOptions.opacity = undefined;
+        } else {
+            markOptions.opacity = opacityKey;
+        }
+    }
+
+    if (lineGeom === 'area' && model.opacity.key && !model.opacity.isDiscrete) {
+        const values = markData.map((row) => Number(row[model.opacity.key!])).filter((value) => Number.isFinite(value));
+        if (values.length > 0) {
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const fillOpacityKey = '__gw_continuous_area_opacity__';
+            if (max > min) {
+                markData = markData.map((row) => {
+                    const raw = Number(row[model.opacity.key!]);
+                    const t = Number.isFinite(raw) ? (raw - min) / (max - min) : 0.5;
+                    return { ...row, [fillOpacityKey]: 0.18 + t * 0.52 };
+                });
+            } else {
+                markData = markData.map((row) => ({ ...row, [fillOpacityKey]: 0.5 }));
+            }
+            markOptions.fillOpacity = fillOpacityKey;
+            markOptions.opacity = undefined;
+        }
+    }
+
+    if (lineGeom === 'bar' && model.opacity.key) {
+        let fillOpacityKey: string | undefined;
+        if (model.opacity.isDiscrete) {
+            fillOpacityKey = typeof markOptions.opacity === 'string' ? (markOptions.opacity as string) : undefined;
+        } else {
+            const values = markData.map((row) => Number(row[model.opacity.key!])).filter((value) => Number.isFinite(value));
+            if (values.length > 0) {
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                fillOpacityKey = '__gw_continuous_bar_opacity__';
+                if (max > min) {
+                    markData = markData.map((row) => {
+                        const raw = Number(row[model.opacity.key!]);
+                        const t = Number.isFinite(raw) ? (raw - min) / (max - min) : 0.5;
+                        return { ...row, [fillOpacityKey!]: 0.22 + t * 0.78 };
+                    });
+                } else {
+                    markData = markData.map((row) => ({ ...row, [fillOpacityKey!]: 0.72 }));
+                }
+            }
+        }
+        if (fillOpacityKey) {
+            markOptions.fillOpacity = fillOpacityKey;
+            markOptions.opacity = undefined;
+        }
     }
 
     if (isScatterLikeGeom(geom) && model.size.key && model.size.isDiscrete) {
@@ -594,9 +864,23 @@ export function buildMark(
         markOptions.r = radiusKey;
     }
 
+    if (lineGeom === 'bar' && model.size.key && !model.size.isDiscrete && !model.color.key) {
+        const variableSizeBars = buildVariableSizeBarMarks(markData, markOptions, model, stackAxis);
+        if (variableSizeBars) {
+            return variableSizeBars;
+        }
+    }
+
     const stackMode = stackModeFromEncoding(spec);
     const areaIsQuantScatter = lineGeom === 'area' && model.x.type === 'quantitative' && model.y.type === 'quantitative';
-    const shouldStack = Boolean(stackMode && model.color.key && (lineGeom === 'bar' || (lineGeom === 'area' && !areaIsQuantScatter)));
+    const barStackSeriesKeys = getDiscreteSeriesKeys(model, { includeOpacity: false, includeSize: true });
+    const areaStackSeriesKeys = getDiscreteSeriesKeys(model, { includeSize: false });
+    const { data: stackedBarData, key: barStackSeriesKey } = materializeSeriesKey(markData, barStackSeriesKeys, '__gw_bar_stack_series__');
+    const { data: stackedAreaData, key: areaStackSeriesKey } = materializeSeriesKey(markData, areaStackSeriesKeys, '__gw_area_stack_series__');
+    const shouldStack = Boolean(
+        stackMode &&
+            ((lineGeom === 'bar' && barStackSeriesKey) || (lineGeom === 'area' && !areaIsQuantScatter && areaStackSeriesKey)),
+    );
 
     if (lineGeom === 'boxplot' && model.color.key) {
         const categoryKey = model.x.isDiscrete ? model.x.key : model.y.isDiscrete ? model.y.key : undefined;
@@ -653,6 +937,7 @@ export function buildMark(
             return Plot.marks(...marks);
             }
         }
+        return buildNonStackedColorMarks(markFn, markData, markOptions, lineGeom, model, vegaConfig);
     }
 
     if (!stackMode && model.color.key && (lineGeom === 'bar' || lineGeom === 'area' || lineGeom === 'boxplot')) {
@@ -666,15 +951,22 @@ export function buildMark(
                 return stackedByColorAndOpacity;
             }
         }
+        const needsStackBoundary =
+            lineGeom === 'bar' && !model.color.key && !model.size.key && model.details.some((detail) => detail.key && detail.isDiscrete);
         const stackedOptions: Record<string, unknown> = {
             ...markOptions,
-            z: model.color.key,
+            z: lineGeom === 'area' ? areaStackSeriesKey : barStackSeriesKey,
+            stroke: needsStackBoundary ? '#ffffff' : markOptions.stroke,
+            strokeWidth: needsStackBoundary ? 0.8 : markOptions.strokeWidth,
         };
         const reverseHorizontalBars = lineGeom === 'bar' && stackAxis === 'x' && stackMode === 'normalize';
         const shouldReverseCenterStack = stackMode === 'center' && !(lineGeom === 'bar' && stackAxis === 'x');
         const shouldReverseAreaStack = lineGeom === 'area' && stackAxis === 'y';
+        const baseStackData = lineGeom === 'area' ? stackedAreaData : stackedBarData;
         const stackData =
-            reverseHorizontalBars || shouldReverseCenterStack || shouldReverseAreaStack ? reverseStackSeriesOrder(markData, model, stackAxis) : markData;
+            reverseHorizontalBars || shouldReverseCenterStack || shouldReverseAreaStack
+                ? reverseStackSeriesOrder(baseStackData, model, stackAxis, lineGeom === 'area' ? areaStackSeriesKey : barStackSeriesKey)
+                : baseStackData;
         return applyStacking(markFn, stackData, stackedOptions, stackAxis, stackMode);
     }
 
@@ -685,9 +977,16 @@ export function buildMark(
         }
     }
 
-    const seriesGroupKey = model.color.key ?? (model.opacity.isDiscrete ? model.opacity.key : undefined);
+    const seriesGroupKeys = getDiscreteSeriesKeys(model);
+    const { data: groupedMarkData, key: seriesGroupKey } = materializeSeriesKey(markData, seriesGroupKeys, '__gw_series_group__');
+    if ((lineGeom === 'line' || lineGeom === 'rule') && seriesGroupKeys.length > 0) {
+        const groupedMarks = buildGroupedLineMarks(markFn, markData, markOptions, model, vegaConfig);
+        if (groupedMarks) {
+            return groupedMarks;
+        }
+    }
     if (seriesGroupKey && (lineGeom === 'line' || lineGeom === 'area' || lineGeom === 'rule')) {
-        const main = markFn(markData, {
+        const main = markFn(groupedMarkData, {
             ...markOptions,
             z: seriesGroupKey,
         });

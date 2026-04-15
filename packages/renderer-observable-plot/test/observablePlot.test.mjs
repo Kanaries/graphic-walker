@@ -79,6 +79,21 @@ test('quantitative scale.zero is forwarded to plot scales', () => {
     assert.equal(plotSpec.y.zero, true);
 });
 
+test('scale.zero is preserved for numeric axis even when type is missing', () => {
+    const vlSpec = {
+        data: { values: [{ category: 'A', value: 17 }, { category: 'B', value: 42 }] },
+        mark: 'circle',
+        encoding: {
+            x: { field: 'category', type: 'nominal', title: 'Category' },
+            y: { field: 'value', title: 'Value', scale: { zero: true } },
+            color: { field: 'category', type: 'nominal', title: 'Category' },
+        },
+    };
+    const plotSpec = __test__vegaLiteToPlot(vlSpec);
+    assert.equal(plotSpec.y.zero, true);
+    assert.deepEqual(plotSpec.y.domain, [0, 42]);
+});
+
 test('uses vegaConfig color for marks without color channel', () => {
     const vlSpec = baseSpec();
     delete vlSpec.encoding.color;

@@ -456,7 +456,7 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                                           if (!Number.isFinite(numeric)) {
                                               return 0.9;
                                           }
-                                          return scaleRange(numeric, opacityMin, opacityMax, 0.08, 0.95);
+                                          return scaleRange(numeric, opacityMin, opacityMax, 0.3, 0.8);
                                       })();
                                 const visualColor = api.visual("color");
                                 const baseColor = typeof visualColor === "string" ? visualColor : (seriesColor ?? defaultColor);
@@ -496,7 +496,7 @@ function buildSeriesForCell(params: { state: ReturnType<typeof import("./optionC
                                             if (!Number.isFinite(numeric)) {
                                                 return colorWithAlpha(seriesColor, 0.92);
                                             }
-                                            return colorWithAlpha(seriesColor, scaleRange(numeric, opacityMin, opacityMax, 0.2, 1));
+                                            return colorWithAlpha(seriesColor, scaleRange(numeric, opacityMin, opacityMax, 0.3, 0.8));
                                         },
                                     };
                                 } else {
@@ -677,7 +677,7 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
         });
     }
     if (opacityField.key && !state.useDiscreteOpacity && (geomType === "point" || geomType === "circle")) {
-        visualMap.push({ type: "continuous", dimension: opacityVisualKey, seriesIndex: seriesIndexes, min: opacityMin, max: opacityMax, inRange: { opacity: [0.18, 1] }, calculable: false, show: false });
+        visualMap.push({ type: "continuous", dimension: opacityVisualKey, seriesIndex: seriesIndexes, min: opacityMin, max: opacityMax, inRange: { opacity: [0.3, 0.8] }, calculable: false, show: false });
     } else if (opacityField.key && !state.useDiscreteOpacity && !isScatterLikeGeom(geomType)) {
         visualMap.push({
             type: "continuous",
@@ -685,7 +685,7 @@ function buildVisualMap(state: ReturnType<typeof import("./optionContext").creat
             seriesIndex: seriesIndexes,
             min: opacityMin,
             max: opacityMax,
-            inRange: geomType === "rect" ? { colorAlpha: [0.08, 0.95] } : { opacity: [0.2, 1] },
+            inRange: geomType === "rect" ? { colorAlpha: [0.3, 0.8] } : { opacity: [0.3, 0.8] },
             calculable: false,
             show: false,
         });

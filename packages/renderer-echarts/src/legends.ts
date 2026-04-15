@@ -171,7 +171,7 @@ export function buildOpacityLegendGraphic(params: {
         });
     }
     values.forEach((value, index) => {
-        const opacity = scaleRange(value, min, max, 0.18, 1);
+        const opacity = scaleRange(value, min, max, 0.3, 0.8);
         const centerY = startY + index * 28;
         const legendColor = `rgba(107, 114, 128, ${opacity})`;
         children.push({

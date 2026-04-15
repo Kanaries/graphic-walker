@@ -123,7 +123,7 @@ export function buildArcOption(params: {
                       seriesIndex: [0],
                       min: useDiscreteOpacity ? 0 : opacityMin,
                       max: useDiscreteOpacity ? Math.max(1, opacityValues.length - 1) : opacityMax,
-                      inRange: { opacity: [0.25, 1] },
+                      inRange: { opacity: useDiscreteOpacity ? [0.25, 1] : [0.3, 0.8] },
                       calculable: false,
                       show: false,
                   }]
@@ -196,7 +196,7 @@ export function buildArcOption(params: {
                       opacity: opacityField
                           ? (useDiscreteOpacity
                               ? scaleRange(opacityValues.findIndex((item) => item === slice.opacityValue), 0, Math.max(1, opacityValues.length - 1), 0.25, 1)
-                              : scaleRange(Number(slice.opacityValue), opacityMin, opacityMax, 0.2, 1))
+                              : scaleRange(Number(slice.opacityValue), opacityMin, opacityMax, 0.3, 0.8))
                           : 1,
                   },
               };

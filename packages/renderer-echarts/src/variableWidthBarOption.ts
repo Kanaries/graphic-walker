@@ -114,7 +114,7 @@ export function appendVariableWidthBarSeries(params: {
                         const opacity = useDiscreteOpacity && opacityValue !== null
                             ? scaleRange(discreteOpacityIndex, 0, Math.max(1, opacityValues.length - 1), 0.25, 1)
                             : splitBarOpacity && opacityValue !== null
-                              ? scaleRange(Number(opacityValue), opacityMin, opacityMax, 0.2, 1)
+                              ? scaleRange(Number(opacityValue), opacityMin, opacityMax, 0.3, 0.8)
                               : undefined;
                         groups.push({
                             name: nameParts.length > 0 ? nameParts.join(" / ") : "default",
