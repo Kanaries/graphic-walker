@@ -75,6 +75,7 @@ export type IRendererProps = {
     containerClassName?: string;
     containerStyle?: React.CSSProperties;
     overrideSize?: IVisualLayout['size'];
+    enableVizEmbedMenu?: boolean;
 };
 
 export const GraphicRenderer = observer(
