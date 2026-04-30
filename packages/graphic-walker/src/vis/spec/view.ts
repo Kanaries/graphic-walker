@@ -22,6 +22,28 @@ function formatOffset(offset: number) {
     return `${offset > 0 ? '+' : '-'}${Math.abs(offset)}`;
 }
 
+function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode) {
+    if (stack === 'none') return {};
+    const positionChannel = ['x', 'y', 'theta', 'radius'].find((channel) => encoding[channel]?.type === 'quantitative');
+    if (!positionChannel) return {};
+    const stackValue = encoding[positionChannel].stack ?? (stack === 'zero' || stack === 'stack' ? true : undefined);
+    if (stackValue === undefined || stackValue === null) return {};
+    const stackEncoding: Record<string, any> = {
+        [positionChannel]: {
+            ...encoding[positionChannel],
+            stack: stackValue,
+        },
+    };
+    if (encoding.color?.field) {
+        stackEncoding.order = {
+            field: encoding.color.field,
+            type: encoding.color.type,
+            sort: positionChannel === 'y' ? 'descending' : 'ascending',
+        };
+    }
+    return stackEncoding;
+}
+
 export function getSingleView(props: SingleViewProps) {
     const {
         x,
@@ -152,6 +174,7 @@ export function getSingleView(props: SingleViewProps) {
                 mainLayerEncoding[key] = value;
             }
         }
+        Object.assign(textLayerEncoding, withTextStackEncoding(sharedEncoding, stack));
 
         // Build text mark with dx/dy offsets for non-rect marks
         const textMark: any = { type: 'text' };
