@@ -38,13 +38,14 @@ interface RendererProps {
     scales?: IChannelScales;
     csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
+    enableVizEmbedMenu?: boolean;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { computationFunction, vizThemeConfig, csvRef, overrideSize } = props;
+    const { computationFunction, vizThemeConfig, csvRef, overrideSize, enableVizEmbedMenu = false } = props;
     const vizStore = useVizStore();
     const {
         allFields,
@@ -146,7 +147,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     const handleGeomClick = useCallback(
         (values: any, e: MouseEvent & { item: Item }) => {
             e.stopPropagation();
-            if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
+            if (enableVizEmbedMenu && GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
                     vizStore.showEmbededMenu([e.clientX, e.clientY]);
                     vizStore.setFilters(values);
@@ -187,7 +188,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 }
             }
         },
-        [vizStore, viewData, encodings, visualConfig]
+        [enableVizEmbedMenu, vizStore, viewData, encodings, visualConfig]
     );
 
     const handleChartResize = useCallback(

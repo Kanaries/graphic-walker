@@ -25,6 +25,9 @@ import { getComputation } from './computation/clientComputation';
 import { ErrorContext } from './utils/reportError';
 import { ErrorBoundary } from 'react-error-boundary';
 import Errorpanel from './components/errorpanel';
+import DataBoard from './components/dataBoard';
+import { VizEmbedMenu } from './components/embedMenu';
+import ExplainData from './components/explainData';
 import { useCurrentMediaTheme } from './utils/media';
 import { classNames, getFilterMeaAggKey, parseErrorMessage } from './utils';
 import { VegaliteMapper } from './lib/vl2gw';
@@ -43,6 +46,7 @@ type BaseVizProps = IAppI18nProps &
         overrideSize?: IVisualLayout['size'];
         containerClassName?: string;
         containerStyle?: React.CSSProperties;
+        enableVizEmbedMenu?: boolean;
     };
 
 const XL = 1280;
@@ -63,6 +67,8 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
         vlSpec,
         chart,
         onError,
+        enableVizEmbedMenu = false,
+        hideProfiling,
     } = props;
 
     const { i18n } = useTranslation();
@@ -84,6 +90,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
     const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
         (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
     );
+    const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey;
 
     useEffect(() => {
         if (geographicData) {
@@ -148,7 +155,18 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                         <div className="flex flex-col space-y-2 bg-background text-foreground">
                             <Errorpanel />
                             <FilterSection />
-                            <div className={props.containerClassName} style={props.containerStyle}>
+                            {enableVizEmbedMenu && <ExplainData themeKey={appliedThemeKey} />}
+                            {enableVizEmbedMenu && vizStore.showDataBoard && <DataBoard hideProfiling={hideProfiling} />}
+                            <div
+                                className={classNames('relative', props.containerClassName)}
+                                style={props.containerStyle}
+                                onMouseLeave={() => {
+                                    enableVizEmbedMenu && vizStore.vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                }}
+                                onClick={() => {
+                                    enableVizEmbedMenu && vizStore.vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                }}
+                            >
                                 {computation && (
                                     <ReactiveRenderer
                                         vizThemeConfig={currentTheme}
@@ -156,8 +174,10 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}
                                         overrideSize={props.overrideSize}
+                                        enableVizEmbedMenu={enableVizEmbedMenu}
                                     />
                                 )}
+                                {enableVizEmbedMenu && <VizEmbedMenu />}
                             </div>
                         </div>
                         <div ref={setPortal} />
@@ -276,7 +296,8 @@ const FilterSection = observer(function FilterSection() {
 });
 
 export function RendererAppWithContext(
-    props: IVizAppProps & IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties }
+    props: IVizAppProps &
+        IComputationProps & { overrideSize?: IVisualLayout['size']; containerClassName?: string; containerStyle?: React.CSSProperties; enableVizEmbedMenu?: boolean }
 ) {
     const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
