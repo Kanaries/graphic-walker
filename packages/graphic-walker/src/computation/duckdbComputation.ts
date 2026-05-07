@@ -19,7 +19,7 @@ const logStyled = (message: string, style: string, ...args: unknown[]) => {
 
 // Lazy-loaded DuckDB module
 let duckdbModule: typeof import('@kanaries/duckdb-computation') | null = null;
-let duckdbLoadPromise: Promise<typeof import('@kanaries/duckdb-computation')> | null = null;
+let duckdbLoadPromise: Promise<typeof import('@kanaries/duckdb-computation') | null> | null = null;
 
 /**
  * Dynamically import DuckDB computation module.
