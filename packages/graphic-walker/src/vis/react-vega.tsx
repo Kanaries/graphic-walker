@@ -146,7 +146,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         // themeKey = 'vega',
         vegaConfig,
         // format
-        locale = 'ru-RU',
+        locale = 'en-US',
         useSvg,
         scales: channelScaleRaw,
         scale,

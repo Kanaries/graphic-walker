@@ -35,7 +35,7 @@ const locales: Resource & { 'en-US': any } = {
 } as const;
 
 i18n.use(initReactI18next).use(LanguageDetector).init({
-    fallbackLng: 'ru-RU',
+    fallbackLng: 'en-US',
     interpolation: {
         escapeValue: false, // not needed for react as it escapes by default
     },

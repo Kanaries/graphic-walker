@@ -27,7 +27,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     const {
         computation,
         darkMode = 'light',
-        i18nLang = 'ru-RU',
+        i18nLang = 'en-US',
         i18nResources,
         computationTimeout = 60000,
         onError,

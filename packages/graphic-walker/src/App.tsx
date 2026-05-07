@@ -68,7 +68,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const {
         computation,
         darkMode = 'light',
-        i18nLang = 'ru-RU',
+        i18nLang = 'en-US',
         enhanceAPI,
         i18nResources,
         themeKey = 'vega',
