@@ -12,6 +12,9 @@ export default defineConfig({
     },
   ],
   build: {
+    rollupOptions: {
+      external: ["@kanaries/graphic-walker"]
+    },
     lib: {
       entry: path.resolve(__dirname, "./src/index.ts"),
       name: "DuckdbComputation",

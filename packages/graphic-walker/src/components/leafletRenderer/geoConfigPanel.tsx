@@ -127,7 +127,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                 vizStore.setShowGeoJSONConfigPanel(false);
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <h2 className="text-lg mb-4">{t('geography')}</h2>
                 <div>
                     <div className="my-2">

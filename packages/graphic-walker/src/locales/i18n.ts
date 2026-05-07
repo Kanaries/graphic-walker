@@ -5,6 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import localeEnUs from './en-US.json';
 import localeJaJp from './ja-JP.json';
 import localeZhCn from './zh-CN.json';
+import localeRuRu from './ru-RU.json';
 
 const locales: Resource & { 'en-US': any } = {
     'en': {
@@ -24,6 +25,12 @@ const locales: Resource & { 'en-US': any } = {
     },
     'ja-JP': {
         translation: localeJaJp,
+    },
+    'ru': {
+        translation: localeRuRu,
+    },
+    'ru-RU': {
+        translation: localeRuRu,
     }
 } as const;
 

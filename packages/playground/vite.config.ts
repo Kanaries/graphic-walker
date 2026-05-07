@@ -1,5 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { fileURLToPath } from "url";
+
+const graphicWalkerSrc = fileURLToPath(new URL("../graphic-walker/src", import.meta.url));
+const duckdbComputationSrc = fileURLToPath(new URL("../duckdb-wasm-computation/src", import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -23,6 +27,13 @@ export default defineConfig({
       },
     },
   ],
+  resolve: {
+    alias: {
+      "@kanaries/graphic-walker": graphicWalkerSrc,
+      "@kanaries/duckdb-computation": duckdbComputationSrc,
+      "@": graphicWalkerSrc
+    }
+  },
   build: {
     rollupOptions: {
       input: {

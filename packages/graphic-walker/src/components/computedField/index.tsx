@@ -95,7 +95,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                 vizStore.setComputedFieldFid();
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <div className="flex flex-col space-y-2">
                     <div>
                         <div className="text-xl font-bold">{editingComputedFieldFid === '' ? 'Add Computed Field' : 'Edit Computed Field'}</div>
@@ -103,6 +103,7 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             Computed fields guide:{' '}
                             <a
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 className="underline text-primary"
                                 href="https://github.com/Kanaries/graphic-walker/wiki/How-to-Create-Computed-field-in-Graphic-Walker"
                             >

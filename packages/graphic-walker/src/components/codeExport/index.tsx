@@ -83,8 +83,8 @@ const CodeExport: React.FC = observer((props) => {
                 vizStore.setShowCodeExportPanel(false);
             }}
         >
-            <DialogContent>
-                <h1>Code Export</h1>
+            <DialogContent aria-describedby={undefined}>
+                <h1>{t('code_export.title')}</h1>
                 <Tabs value={tabKey} onValueChange={setTabKey}>
                     <TabsList className="my-1">
                         {specTabs.map((tab) => (
@@ -101,7 +101,7 @@ const CodeExport: React.FC = observer((props) => {
                 </Tabs>
                 <DialogFooter className="mt-2">
                     <Button
-                        children="Copy to Clipboard"
+                        children={t('actions.copy_to_clipboard')}
                         onClick={() => {
                             navigator.clipboard.writeText(code);
                             vizStore.setShowCodeExportPanel(false);

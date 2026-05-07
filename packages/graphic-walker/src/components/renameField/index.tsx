@@ -21,12 +21,12 @@ const RenamePanel: React.FC = (props) => {
 
     return (
         <Dialog open={showRenamePanel} onOpenChange={() => vizStore.setShowRenamePanel(false)}>
-            <DialogContent className="!w-fit">
+            <DialogContent className="!w-fit" aria-describedby={undefined}>
                 <div className="flex flex-col justify-center items-start text-xs">
-                    <h2 className="text-lg font-medium mb-2">Rename Field</h2>
-                    <p className="font-normal text-muted-foreground">This action will rename this field's name in the chart.</p>
+                    <h2 className="text-lg font-medium mb-2">{t('rename_field.title')}</h2>
+                    <p className="font-normal text-muted-foreground">{t('rename_field.description')}</p>
                     <div className="flex items-center space-x-2 mt-2">
-                        <label className="text-ml whitespace-nowrap">New Name</label>
+                        <label className="text-ml whitespace-nowrap">{t('rename_field.new_name')}</label>
                         <Input
                             type="text"
                             value={value}

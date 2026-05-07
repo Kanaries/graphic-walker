@@ -22,7 +22,7 @@ const FieldScalePanel: React.FC = (props) => {
                 vizStore.setShowLogSettingPanel(false);
             }}
         >
-            <DialogContent className="!w-fit">
+            <DialogContent className="!w-fit" aria-describedby={undefined}>
                 <div className="flex flex-col justify-center items-start text-xs ">
                     <h2 className="text-lg font-medium mb-2">{t(`calc.log_panel_title`)}</h2>
                     <p className="font-normal text-muted-foreground">{t(`calc.log_panel_desc`)}</p>

@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { VizAppWithContext } from './App';
 import { ShadowDom } from './shadow-dom';
 import AppRoot from './components/appRoot';
+import { NotificationsProvider } from './components/notifications';
 import type {
     IGWHandler,
     IGWHandlerInsider,
@@ -59,9 +60,11 @@ export const GraphicWalker = observer(
                     onUnmount={handleUnmount}
                     uiTheme={props.uiTheme ?? props.colorConfig}
                 >
-                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
-                        <VizAppWithContext {...props} />
-                    </DOMProvider>
+                    <NotificationsProvider>
+                        <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                            <VizAppWithContext {...props} />
+                        </DOMProvider>
+                    </NotificationsProvider>
                 </ShadowDom>
             </AppRoot>
         );
@@ -91,9 +94,11 @@ export const GraphicRenderer = observer(
         return (
             <AppRoot ref={ref as ForwardedRef<IGWHandlerInsider>}>
                 <ShadowDom onMount={handleMount} onUnmount={handleUnmount} uiTheme={props.uiTheme ?? props.colorConfig}>
-                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
-                        <RendererAppWithContext {...props} />
-                    </DOMProvider>
+                    <NotificationsProvider>
+                        <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                            <RendererAppWithContext {...props} />
+                        </DOMProvider>
+                    </NotificationsProvider>
                 </ShadowDom>
             </AppRoot>
         );
@@ -148,9 +153,11 @@ export const TableWalker = observer(
                     onUnmount={handleUnmount}
                     uiTheme={props.uiTheme ?? props.colorConfig}
                 >
-                    <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
-                        <TableAppWithContext {...props} />
-                    </DOMProvider>
+                    <NotificationsProvider>
+                        <DOMProvider value={{ head: shadowRoot ?? document.head, body: shadowRoot ?? document.body }}>
+                            <TableAppWithContext {...props} />
+                        </DOMProvider>
+                    </NotificationsProvider>
                 </ShadowDom>
             </AppRoot>
         );

@@ -391,8 +391,8 @@ const DataTable = forwardRef(
                 <nav className="flex items-center justify-end space-x-2 p-2" aria-label="Pagination">
                     <div className="hidden sm:block flex-1">
                         <p className="text-sm text-muted-foreground">
-                            Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
-                            <span className="font-medium">{total}</span> results
+                            {t('dataTable.pagination.showing')} <span className="font-medium">{from + 1}</span> {t('dataTable.pagination.to')} <span className="font-medium">{to + 1}</span> {t('dataTable.pagination.of')}{' '}
+                            <span className="font-medium">{total}</span> {t('dataTable.pagination.results')}
                         </p>
                     </div>
                     <div className="space-x-2">

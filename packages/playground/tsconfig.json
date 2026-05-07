@@ -8,6 +8,12 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@kanaries/graphic-walker": ["../graphic-walker/src"],
+      "@kanaries/duckdb-computation": ["../duckdb-wasm-computation/src"],
+      "@/*": ["../graphic-walker/src/*"]
+    },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

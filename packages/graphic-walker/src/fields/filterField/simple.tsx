@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { CalendarInput, RuleFormProps, useFieldStats, useVisualCount } from './tabs';
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useCompututaion } from '../../store';
@@ -23,6 +24,7 @@ const sortConfig = {
 } as const;
 
 export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange }: RuleFormProps) {
+    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
     if (field.rule?.type !== 'regexp') return null;
     const { value, caseSensitive } = field.rule;
     return (
@@ -33,7 +35,7 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
                     type="search"
                     className="pr-8"
                     value={value}
-                    placeholder="Input Regular Expression..."
+                    placeholder={t('placeholder_regexp')}
                     onChange={(e) => {
                         onChange({
                             type: 'regexp',
@@ -44,7 +46,7 @@ export const SimpleSearcher = observer(function SimpleSearcher({ field, onChange
                 />
                 <div className="absolute flex space-x-1 items-center inset-y-0 right-2">
                     <Toggle
-                        label="Match Case"
+                        label={t('match_case')}
                         value={!!caseSensitive}
                         onChange={(v) => {
                             onChange({
@@ -85,6 +87,7 @@ function Toggle(props: { children?: React.ReactNode; value: boolean; onChange?: 
 }
 
 export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field, onChange, allFields, displayOffset }: RuleFormProps) {
+    const { t } = useTranslation('translation', { keyPrefix: 'filters' });
     const computation = useCompututaion();
 
     const [keywordValue, setKeyword] = useState('');
@@ -138,7 +141,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     {field.rule.value.length > 0 && (
                         <div className="flex flex-1 space-x-2 min-w-[0px]">
                             <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                {field.rule.type === 'not in' ? 'exclude: ' : ''}
+                                {field.rule.type === 'not in' ? `${t('exclude')}: ` : ''}
                                 {Array.from(field.rule.value).slice(0, 3).join(', ')}
                             </div>
                             {field.rule.value.length > 3 && <div className="flex-shrink-0">+{field.rule.value.length - 3}</div>}
@@ -146,7 +149,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                     )}
                     {field.rule.value.length === 0 && (
                         <div className="flex-1 text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
-                            {field.rule.type === 'one of' ? 'Select Values...' : 'Select Values to Exclude...'}
+                            {field.rule.type === 'one of' ? t('select_values') : t('select_values_exclude')}
                         </div>
                     )}
                     <span>
@@ -172,13 +175,13 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                         autoFocus
                                         className="block focus:ring-0 focus:outline-none py-0 pl-0  w-full border-0 shadow-none bg-transparent text-gray-700 text-sm h-4 dark:text-gray-200 placeholder:text-gray-400"
                                         value={keywordValue}
-                                        placeholder="Search Value..."
+                                        placeholder={t('placeholder_search_value')}
                                         onChange={(e) => {
                                             setKeyword(e.target.value);
                                         }}
                                     />
                                     <div className="absolute flex space-x-1 items-center inset-y-0 right-3">
-                                        <Toggle label="Match Case" value={isCaseSenstive} onChange={setIsCaseSenstive}>
+                                        <Toggle label={t('match_case')} value={isCaseSenstive} onChange={setIsCaseSenstive}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <path
                                                     fill="currentColor"
@@ -186,7 +189,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                                 />
                                             </svg>
                                         </Toggle>
-                                        <Toggle label="Match Whole Word" value={isWord} onChange={setIsWord}>
+                                        <Toggle label={t('match_whole_word')} value={isWord} onChange={setIsWord}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <g fill="currentColor">
                                                     <path fillRule="evenodd" d="M0 11h1v2h14v-2h1v3H0z" clipRule="evenodd" />
@@ -194,7 +197,7 @@ export const SimpleOneOfSelector = observer(function SimpleOneOfSelector({ field
                                                 </g>
                                             </svg>
                                         </Toggle>
-                                        <Toggle label="Use Regular Expression" value={isRegexp} onChange={setIsRegexp}>
+                                        <Toggle label={t('use_regexp')} value={isRegexp} onChange={setIsRegexp}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <path
                                                     fill="currentColor"

@@ -1,0 +1,425 @@
+{
+    "config": {
+        "colors": "Цвета",
+        "scale": "Шкала",
+        "select_scale": "Выбрать шкалу",
+        "scheme": "Схема",
+        "primary_color": "Основной цвет",
+        "color_palette": "Палитра",
+        "theme": "Тема",
+        "row": "Строки",
+        "column": "Столбцы",
+        "radius": "Радиус",
+        "theta": "Угол θ",
+        "opacity": "Прозрачность",
+        "default_color_palette": "По умолч.",
+        "size": "Размер",
+        "type": "Тип шкалы",
+        "min_domain": "Мин. домена",
+        "max_domain": "Макс. домена",
+        "range": "Диапазон",
+        "format": "Формат",
+        "numberFormat": "Формат числа",
+        "timeFormat": "Формат времени",
+        "normalizedNumberFormat": "Норм. формат числа",
+        "background": "Фон",
+        "color": "Цвет",
+        "independence": "Независимость",
+        "x": "Ось X",
+        "y": "Ось Y",
+        "zeroScale": "Нулевая шкала",
+        "misc": "Прочее",
+        "formatGuidesDocs": "Документация форматов",
+        "readHere": "читать здесь",
+        "svg": "Использовать SVG",
+        "customTile": "Своя плитка карты",
+        "customOffset": "Свой часовой пояс",
+        "map_settings": "Настройки карты",
+        "map_settings_desc": "Настройка отображения карты и тайлов.",
+        "customTile_desc": "URL своей плитки для карты.",
+        "choropleth_settings": "Настройки хороплета",
+        "choropleth_settings_desc": "Отображение регионов и данных на карте.",
+        "include_unmatched": "Включить без данных в шкалу",
+        "include_unmatched_desc": "Учитывать регионы без данных при шкале цвета.",
+        "include_shapes": "Показывать все регионы",
+        "include_shapes_desc": "Показывать все регионы, даже без данных.",
+        "visualization_settings": "Настройки визуализации",
+        "visualization_settings_desc": "Общие настройки для всех графиков.",
+        "zeroScale_desc": "Начинать числовые оси с нуля.",
+        "svg_desc": "SVG вместо Canvas: выше качество, ниже скорость.",
+        "timezone_settings": "Часовой пояс",
+        "timezone_settings_desc": "Отображение времени по выбранному поясу.",
+        "customOffset_desc": "Задать часовой пояс для времени."
+    },
+    "constant": {
+        "row_count": "Число строк",
+        "mea_key": "Меры",
+        "mea_val": "Значения мер",
+        "paint_key": "Пользовательский признак",
+        "analytic_type": {
+            "dimension": "измерение",
+            "measure": "мера"
+        },
+        "semantic_type": {
+            "nominal": "категориальная",
+            "ordinal": "упорядоченная",
+            "temporal": "дата/время",
+            "quantitative": "числовая"
+        },
+        "mark_type": {
+            "__enum__": "Тип диаграммы",
+            "auto": "Авто",
+            "bar": "Столбчатая диаграмма",
+            "line": "Линейный график",
+            "area": "Диаграмма с областями (Area)",
+            "trail": "Траектория (Trail)",
+            "point": "Диаграмма рассеяния",
+            "circle": "Точечная (кружки)",
+            "tick": "Strip plot (tick)",
+            "rect": "Тепловая карта",
+            "arc": "Круговая диаграмма",
+            "boxplot": "Диаграмма размаха (Boxplot)",
+            "table": "Таблица",
+            "text": "Текст",
+            "poi": "Точка интереса (POI)",
+            "choropleth": "Картограмма"
+        },
+        "coord_system": {
+            "__enum__": "Система координат",
+            "generic": "Декартова",
+            "geographic": "Географическая"
+        },
+        "stack_mode": {
+            "__enum__": "Режим стека",
+            "none": "Нет",
+            "stack": "Стек",
+            "normalize": "Нормировать",
+            "center": "По центру"
+        },
+        "layout_type": {
+            "__enum__": "Режим раскладки",
+            "auto": "Авто",
+            "fixed": "Фикс.",
+            "full": "Контейнер"
+        },
+        "exploration_mode": {
+            "__enum__": "Режим исследования",
+            "none": "Выкл.",
+            "brush": "Выделение",
+            "point": "Точка"
+        },
+        "brush_mode": {
+            "__enum__": "Направление кисти",
+            "default": "Оба",
+            "x": "Только X",
+            "y": "Только Y"
+        },
+        "draggable_key": {
+            "fields": "Поля",
+            "columns": "Ось X",
+            "rows": "Ось Y",
+            "color": "Цвет",
+            "opacity": "Прозрачность",
+            "size": "Размер",
+            "shape": "Форма",
+            "theta": "Угол",
+            "radius": "Радиус",
+            "filters": "Фильтры",
+            "details": "Детали",
+            "text": "Текст",
+            "longitude": "Долгота",
+            "latitude": "Широта",
+            "geoId": "ID геометрии"
+        },
+        "aggregator": {
+            "sum": "Сумма",
+            "mean": "Среднее",
+            "count": "Количество",
+            "median": "Медиана",
+            "min": "Мин.",
+            "max": "Макс.",
+            "q1": "Q1",
+            "q3": "Q3",
+            "stdev": "Ст. откл.",
+            "variance": "Дисперсия"
+        },
+        "filter_type": {
+            "one_of": "Набор значений",
+            "one_of_desc": "Выбрать указанные значения",
+            "range": "Диапазон",
+            "range_desc": "Значения в диапазоне [нач., кон.]",
+            "temporal_range": "Период",
+            "temporal_range_desc": "Значения в периоде [нач., кон.]"
+        }
+    },
+    "App": {
+        "labels": {
+            "data_interpretation": "Интерпретация",
+            "data_view": "Просмотр данных"
+        },
+        "segments": {
+            "vis": "Визуализация",
+            "data": "Данные",
+            "chat": "Чат"
+        },
+        "feedback": {
+            "vote": "Результат Askviz устраивает?",
+            "voteup": "Да",
+            "votedown": "Нет",
+            "report": "Помогите улучшить Askviz корректным графиком",
+            "report_button": "Сообщить о графике"
+        }
+    },
+    "DataSource": {
+        "labels": {
+            "cur_dataset": "Текущий набор данных"
+        },
+        "buttons": {
+            "create_dataset": "Создать набор",
+            "export_as_file": "Сохранить в файл",
+            "import_file": "Импорт файла Graphic Walker"
+        },
+        "dialog": {
+            "create_data_source": "Новый источник",
+            "data_types": "Тип источника",
+            "text_file_data": "Локальные файлы",
+            "public_data": "Публичные наборы",
+            "data_source_type": "Тип источника: {{sourceType}}",
+            "file": {
+                "open": "Открыть…",
+                "submit": "Применить",
+                "dataset_name": "Имя набора",
+                "choose_file": "Выберите файл данных",
+                "get_start_desc": "Создайте набор данных для начала."
+            },
+            "public": {
+                "submit": "Применить"
+            }
+        }
+    },
+    "main": {
+        "tablist": {
+            "new": "+ Новый",
+            "auto_title": "График {{idx}}",
+            "chart_name": "Имя графика",
+            "edit": "Редактировать",
+            "duplicate": "Дублировать",
+            "remove": "Удалить",
+            "remove_confirm": "Удалить этот график?"
+        },
+        "tabpanel": {
+            "menubar": {
+                "undo": "Отменить",
+                "redo": "Повторить"
+            },
+            "askviz": {
+                "placeholder": "Какую визуализацию построить по данным"
+            },
+            "settings": {
+                "toggle": {
+                    "aggregation": "Агрегация",
+                    "stack": "Стек",
+                    "axes_resize": "Размер осей",
+                    "debug": "отладка"
+                },
+                "sort": "Порядок сортировки",
+                "button": {
+                    "ascending": "По возрастанию",
+                    "descending": "По убыванию",
+                    "transpose": "Транспонировать",
+                    "config": "Настройки",
+                    "export_chart": "Экспорт как картинку",
+                    "export_chart_as": "Экспорт как {{type}}",
+                    "export_code": "Экспорт кода",
+                    "geojson": "Настройки географии",
+                    "painter": "Открыть холст",
+                    "disabled_painter": {
+                        "aggergation": "отключите агрегацию для холста",
+                        "temporal": "холст пока не поддерживает время",
+                        "count": "перетащите одно поле на X и Y для холста"
+                    }
+                },
+                "paint": {
+                    "palette": "Палитра",
+                    "eraser": "Ластик",
+                    "color": "Цвет кисти",
+                    "label": "Подпись кисти",
+                    "custom_feature": "Пользовательский признак",
+                    "brush_size": "Размер кисти",
+                    "save_paint": "Сохранить рисунок",
+                    "reset_paint": "Сбросить рисунок",
+                    "cancel": "Отмена",
+                    "delete_paint": "Удалить рисунок"
+                },
+                "limit": "лимит запроса (строк)",
+                "size": "Размер",
+                "size_setting": {
+                    "width": "Ширина",
+                    "height": "Высота"
+                },
+                "table": {
+                    "summary": "Показать итоги"
+                },
+                "geography": "Настройки географии",
+                "geography_settings": {
+                    "geoKey": "ID объекта",
+                    "format": "Формат",
+                    "geojson": "GeoJSON",
+                    "topojson": "TopoJSON",
+                    "objectKey": "Ключ объекта",
+                    "jsonInputPlaceholder": "Перетащите {{format}} сюда",
+                    "href": "URL {{format}}",
+                    "hrefPlaceholder": "Введите URL {{format}}",
+                    "load": "Загрузить",
+                    "loading": "Загрузка геоданных…"
+                }
+            },
+            "DatasetFields": {
+                "field_list": "Список полей"
+            }
+        }
+    },
+    "filters": {
+        "to_edit": "Изменить правило",
+        "empty_rule": "! (правило пусто)",
+        "editing": "Настройки фильтра",
+        "placeholder_search_value": "Поиск значения…",
+        "placeholder_regexp": "Регулярное выражение…",
+        "match_case": "Учитывать регистр",
+        "match_whole_word": "Целое слово",
+        "use_regexp": "Регулярное выражение",
+        "select_values": "Выберите значения…",
+        "select_values_exclude": "Выберите значения для исключения…",
+        "exclude": "исключить",
+        "rule_one_of": "один из",
+        "rule_not_in": "исключить",
+        "rule_range": "диапазон",
+        "form": {
+            "name": "Поле",
+            "aggregation": "Агрегация",
+            "rule": "Правило"
+        },
+        "header": {
+            "visibility": "Видимость",
+            "value": "Подпись",
+            "count": "Кол-во"
+        },
+        "selected_keys": "Выбрано: {{ count }}",
+        "btn": {
+            "select_all": "Выбрать все",
+            "unselect_all": "Снять выбор",
+            "reverse": "Инвертировать",
+            "confirm": "Подтвердить",
+            "cancel": "Отмена"
+        },
+        "range": {
+            "start_value": "Начало",
+            "end_value": "Конец"
+        }
+    },
+    "explain": {
+        "lg_than": "больше чем",
+        "sm_than": "меньше чем",
+        "expection": "ожидание",
+        "unrecognized": "Не распознано",
+        "score": "оценка",
+        "contains": "содержит",
+        "reason": {
+            "selection_dim_distribution": "подсказки по измерениям",
+            "selection_mea_distribution": "подсказки по мерам",
+            "children_major_factor": "основной фактор",
+            "children_outlier": "выброс"
+        }
+    },
+    "error_panel": {
+        "oops": "Упс!",
+        "chart_too_large": "График слишком большой для отрисовки. Попробуйте:",
+        "option1": "1. Задать фиксированный размер графика.",
+        "option2": "2. Переключиться на рендер SVG.",
+        "option3": "3. Закрыть окно и уменьшить размер графика в редакторе.",
+        "set_now": "Применить",
+        "computation_error": "Ошибка сервиса вычислений. Сообщение:",
+        "askviz_error": "Ошибка сервиса Askviz. Сообщение:",
+        "unknown_error": "Неизвестная ошибка (подробности недоступны)",
+        "close": "Закрыть"
+    },
+    "actions": {
+        "prev": "Назад",
+        "next": "Далее",
+        "drop_field": "Перетащите поле сюда",
+        "confirm": "Подтвердить",
+        "cancel": "Отмена",
+        "copy_to_clipboard": "Копировать"
+    },
+    "code_export": {
+        "title": "Экспорт кода"
+    },
+    "rename_field": {
+        "title": "Переименовать поле",
+        "description": "Имя поля будет изменено в диаграмме.",
+        "new_name": "Новое имя"
+    },
+    "field_menu": {
+        "rename_field": "Переименовать поле",
+        "remove_field": "Удалить поле",
+        "to_dim": "В измерения",
+        "to_mea": "В меры",
+        "semantic_type": {
+            "name": "Изменить тип поля",
+            "types": {
+                "nominal": "Категориальная",
+                "ordinal": "Упорядоченная",
+                "quantitative": "Числовая",
+                "temporal": "Дата/время"
+            }
+        },
+        "new_calc": "Новое вычисление",
+        "bin": "Интервалы",
+        "binCount": "Число интервалов",
+        "log": "Log{{ base }}",
+        "binCustom": "Интервалы (свои границы)",
+        "logCustom": "Log (своё основание)",
+        "drill": {
+            "name": "Единица времени",
+            "feature_name": "Временная характеристика",
+            "levels": {
+                "year": "Год",
+                "quarter": "Квартал",
+                "month": "Месяц",
+                "week": "Неделя",
+                "weekday": "День недели",
+                "day": "День",
+                "hour": "Час",
+                "minute": "Минута",
+                "second": "Секунда",
+                "iso_year": "ISO год",
+                "iso_week": "ISO неделя",
+                "iso_weekday": "ISO день недели"
+            }
+        }
+    },
+    "dataTable": {
+        "pagination": {
+            "showing": "Показано с",
+            "to": "по",
+            "of": "из",
+            "results": "записей"
+        }
+    },
+    "calc": {
+        "bin_panel_title": "Интервалы",
+        "bin_panel_desc": "Настройка интервалов для поля",
+        "bin_panel_option_widths": "Равная ширина интервалов",
+        "bin_panel_option_counts": "Равное число в интервалах",
+        "bin_panel_number": "Число интервалов",
+        "log_panel_title": "Логарифм",
+        "log_panel_desc": "Настройка логарифма для поля",
+        "log_panel_number": "Основание логарифма"
+    }
+    ,
+    "pivotTable": {
+        "dataTruncated": "Данные урезаны до лимита {{limit}}.",
+        "rowLimit": "Выведены первые {{limit}} строк.",
+        "columnLimit": "Максимальное количество колонок {{limit}}."
+    }
+}

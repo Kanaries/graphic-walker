@@ -23,6 +23,7 @@ import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
+import { PIVOT_TABLE_DEFAULT_LIMIT } from '../constants';
 import { VizAppContext } from '../store/context';
 import { useCurrentMediaTheme } from '../utils/media';
 import LoadingLayer from '@/components/loadingLayer';
@@ -110,8 +111,16 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const sizeMode = visualLayout.size.mode;
 
     const sort = getSort(visualState);
-    const limit = visualConfig.limit ?? -1;
+    const configLimit = visualConfig.limit ?? -1;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
+
+    // Apply default limit for pivot table if no limit is explicitly set
+    const isPivotTable = visualConfig.geoms?.[0] === 'table';
+    const limit = useMemo(() => {
+        if (configLimit > 0) return configLimit;
+        if (isPivotTable) return PIVOT_TABLE_DEFAULT_LIMIT;
+        return configLimit;
+    }, [configLimit, isPivotTable]);
 
     const [viewData, setViewData] = useState<IRow[]>([]);
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {

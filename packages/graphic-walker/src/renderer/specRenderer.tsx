@@ -24,13 +24,18 @@ interface SpecRendererProps {
     scales?: IChannelScales;
     onReportSpec?: (spec: string) => void;
     disableCollapse?: boolean;
+    exportHandlerRef?: React.RefObject<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>;
 }
 /**
  * Sans-store renderer of GraphicWalker.
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse },
+    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse, exportHandlerRef },
     ref
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
@@ -112,12 +117,14 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     if (isPivotTable) {
         return (
             <PivotTable
+                name={name}
                 data={data}
                 draggableFieldState={draggableFieldState}
                 visualConfig={visualConfig}
                 layout={layout}
                 vizThemeConfig={vizThemeConfig}
                 disableCollapse={disableCollapse}
+                exportHandlerRef={exportHandlerRef}
             />
         );
     }

@@ -81,16 +81,16 @@ const FilterPill: React.FC<FilterPillProps> = observer((props) => {
             >
                 {field.rule ? (
                     <span className="flex-1">
-                        {field.rule.type === 'one of' && <>oneOf: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'one of' && <>{t('rule_one_of')}: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
                         {field.rule.type === 'range' && (
                             <>
-                                range: [{field.rule.value[0]}, {field.rule.value[1]}]
+                                {t('rule_range')}: [{field.rule.value[0]}, {field.rule.value[1]}]
                             </>
                         )}
-                        {field.rule.type === 'not in' && <>notIn: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
+                        {field.rule.type === 'not in' && <>{t('rule_not_in')}: [{[...field.rule.value].map((d) => JSON.stringify(d)).join(', ')}]</>}
                         {field.rule.type === 'temporal range' && (
                             <>
-                                range: [{field.rule.value[0] ? formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0])) : ''}
+                                {t('rule_range')}: [{field.rule.value[0] ? formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[0])) : ''}
                                 , {field.rule.value[1] ? formatDate(parsedOffsetDate(timezoneDisplayOffset, field.rule.offset)(field.rule.value[1])) : ''}]
                             </>
                         )}

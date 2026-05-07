@@ -23,10 +23,10 @@ import { startTask } from '../utils';
 import { toObservablePlotSpec } from '@/lib/observablePlot';
 
 // Example container styled similarly to your Vega-Lite container:
-const CanvasContainer = styled.div<{ rowSize: number; colSize: number }>`
+const CanvasContainer = styled.div<{ $rowSize: number; $colSize: number }>`
     display: grid;
-    grid-template-columns: repeat(${(props) => props.colSize}, auto);
-    grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
+    grid-template-columns: repeat(${(props) => props.$colSize}, auto);
+    grid-template-rows: repeat(${(props) => props.$rowSize}, 1fr);
 `;
 
 // For referencing selection events:
@@ -411,8 +411,8 @@ const ObservablePlotRenderer = forwardRef<IReactPlotHandler, ObservablePlotProps
                 style={{
                     ...(layoutMode === 'auto' ? {} : { width: '100%', height: '100%' }),
                 }}
-                rowSize={Math.max(rowRepeatFields.length, 1)}
-                colSize={Math.max(colRepeatFields.length, 1)}
+                $rowSize={Math.max(rowRepeatFields.length, 1)}
+                $colSize={Math.max(colRepeatFields.length, 1)}
                 ref={containerRef}
             >
                 {plotPlaceholders.map((plotRef, i) => (

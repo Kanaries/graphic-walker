@@ -125,7 +125,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                     setEditingIndex(-1);
                 }}
             >
-                <DialogContent>
+                <DialogContent aria-describedby={undefined}>
                     <DialogHeader>{t('main.tablist.chart_name')}</DialogHeader>
                     <div className="py-4">
                         <Input
@@ -196,7 +196,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                 });
                                             }}
                                         >
-                                            Edit
+                                            {t('main.tablist.edit')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             className="text-xs"
@@ -205,7 +205,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                 onDuplicate?.(tabIndex);
                                             }}
                                         >
-                                            Duplicate
+                                            {t('main.tablist.duplicate')}
                                         </DropdownMenuItem>
                                         {showRemove && (
                                             <DropdownMenuItem
@@ -215,7 +215,7 @@ export default function EditableTabs(props: EditableTabsProps) {
                                                     onRemove?.(tabIndex);
                                                 }}
                                             >
-                                                Remove
+                                                {t('main.tablist.remove')}
                                             </DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>

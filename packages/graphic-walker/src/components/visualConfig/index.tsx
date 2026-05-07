@@ -223,6 +223,7 @@ const VisualConfigPanel: React.FC = () => {
         >
             <DialogNormalContent
                 className="p-0"
+                aria-describedby={undefined}
                 onClick={() => {
                     setDisplayColorPicker(false);
                     setDisplayBackgroundPicker(false);
@@ -232,7 +233,7 @@ const VisualConfigPanel: React.FC = () => {
                     <div className="overflow-y-auto flex-shrink-1 min-h-0 px-6">
                         <ConfigItemContainer>
                             <ConfigItemHeader>
-                                <ConfigItemTitle>Colors</ConfigItemTitle>
+                                <ConfigItemTitle>{t('config.colors')}</ConfigItemTitle>
                             </ConfigItemHeader>
                             <ConfigItemContent>
                                 <div className="flex gap-6 flex-col md:flex-row">
@@ -306,10 +307,10 @@ const VisualConfigPanel: React.FC = () => {
                         <ConfigItemContainer>
                             <ConfigItemHeader>
                                 <div className="flex justify-between items-center">
-                                    <ConfigItemTitle>Scale</ConfigItemTitle>
+                                    <ConfigItemTitle>{t('config.scale')}</ConfigItemTitle>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">Select Scale</Button>
+                                            <Button variant="outline">{t('config.select_scale')}</Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             {['row', 'column', 'color', 'theta', 'radius', 'opacity', 'size'].map((scale) => (
@@ -381,7 +382,12 @@ const VisualConfigPanel: React.FC = () => {
                                 <ConfigItemTitle>{t('config.format')}</ConfigItemTitle>
                                 <p className="text-xs">
                                     {t(`config.formatGuidesDocs`)}:{' '}
-                                    <a target="_blank" className="hover:underline text-primary" href="https://github.com/d3/d3-format#locale_format">
+                                    <a
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:underline text-primary"
+                                        href="https://github.com/d3/d3-format#locale_format"
+                                    >
                                         {t(`config.readHere`)}
                                     </a>
                                 </p>

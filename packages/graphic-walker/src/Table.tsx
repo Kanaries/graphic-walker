@@ -37,7 +37,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
         vizThemeConfig,
     } = props;
 
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const curLang = i18n.language;
 
     useEffect(() => {
@@ -53,6 +53,14 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
     }, [i18nLang, curLang]);
 
     const vizStore = useVizStore();
+
+    // Localize the first chart name if it's still the default "Chart 1"
+    useEffect(() => {
+        if (vizStore.vizList.length > 0 && vizStore.vizList[0].name === 'Chart 1') {
+            vizStore.setVisName(0, t('main.tablist.auto_title', { idx: 1 }));
+        }
+    }, [vizStore, vizStore.vizList, t]);
+
     const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
         (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
     );

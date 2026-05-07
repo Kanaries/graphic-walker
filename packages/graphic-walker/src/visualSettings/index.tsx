@@ -43,7 +43,11 @@ import { classNames } from '@/utils';
 interface IVisualSettings {
     darkModePreference: IDarkMode;
     rendererHandler?: React.RefObject<IReactVegaHandler | null>;
-    csvHandler?: React.RefObject<{ download: () => void }>;
+    csvHandler?: React.RefObject<{
+        download: () => void;
+        downloadXLSX?: () => void;
+        downloadODS?: () => void;
+    }>;
     exclude?: string[];
     extra?: ToolbarItemProps[];
     experimentalFeatures?: IExperimentalFeatures;
@@ -109,11 +113,25 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
         []
     );
 
+    const downloadXLSX = useCallback(
+        throttle(() => {
+            csvHandler?.current?.downloadXLSX?.();
+        }, 200),
+        []
+    );
+
+    const downloadODS = useCallback(
+        throttle(() => {
+            csvHandler?.current?.downloadODS?.();
+        }, 200),
+        []
+    );
+
     const items = useMemo<ToolbarItemProps[]>(() => {
         const builtInItems = [
             {
                 key: 'undo',
-                label: 'undo (Ctrl + Z)',
+                label: `${tGlobal('main.tabpanel.menubar.undo')} (Ctrl + Z)`,
                 icon: (props: Omit<React.SVGProps<SVGSVGElement>, 'ref'>) => {
                     useShortcut('Ctrl+Z', vizStore.undo.bind(vizStore));
                     return <ArrowUturnLeftIcon {...props} />;
@@ -123,7 +141,7 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
             },
             {
                 key: 'redo',
-                label: 'redo (Ctrl+Shift+Z)',
+                label: `${tGlobal('main.tabpanel.menubar.redo')} (Ctrl+Shift+Z)`,
                 icon: (props: Omit<React.SVGProps<SVGSVGElement>, 'ref'>) => {
                     useShortcut('Ctrl+Shift+Z', vizStore.redo.bind(vizStore));
                     return <ArrowUturnRightIcon {...props} />;
@@ -579,7 +597,27 @@ const VisualSettings: React.FC<IVisualSettings> = ({ rendererHandler, csvHandler
                 key: 'csv',
                 label: t('button.export_chart_as', { type: 'csv' }),
                 icon: TableCellsIcon,
-                onClick: downloadCSV,
+                form: (
+                    <div className="flex flex-col">
+                        <Button variant="ghost" aria-label={t('button.export_chart_as', { type: 'csv' })} onClick={() => downloadCSV()}>
+                            {t('button.export_chart_as', { type: 'csv' })}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            aria-label={t('button.export_chart_as', { type: 'xlsx' })}
+                            onClick={() => downloadXLSX()}
+                        >
+                            {t('button.export_chart_as', { type: 'xlsx' })}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            aria-label={t('button.export_chart_as', { type: 'ods' })}
+                            onClick={() => downloadODS()}
+                        >
+                            {t('button.export_chart_as', { type: 'ods' })}
+                        </Button>
+                    </div>
+                ),
             },
             {
                 key: 'config',

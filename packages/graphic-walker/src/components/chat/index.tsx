@@ -11,6 +11,7 @@ import { vegaThemeContext } from '@/store/theme';
 import { useRenderer } from '@/renderer/hooks';
 import { getSort, parseErrorMessage } from '@/utils';
 import { useReporter } from '@/utils/reportError';
+import { PIVOT_TABLE_DEFAULT_LIMIT } from '@/constants';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { Textarea } from '../ui/textarea';
 import LoadingLayer from '../loadingLayer';
@@ -116,6 +117,15 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [encodings]);
 
+    // Apply default limit for pivot table if no limit is explicitly set
+    const configLimit = config.limit ?? -1;
+    const isPivotTable = config.geoms?.[0] === 'table';
+    const effectiveLimit = useMemo(() => {
+        if (configLimit > 0) return configLimit;
+        if (isPivotTable) return PIVOT_TABLE_DEFAULT_LIMIT;
+        return configLimit;
+    }, [configLimit, isPivotTable]);
+
     const { viewData: data, loading: waiting } = useRenderer({
         allFields,
         viewDimensions,
@@ -124,7 +134,7 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
         defaultAggregated: config.defaultAggregated,
         sort,
         folds: config.folds,
-        limit: config.limit ?? -1,
+        limit: effectiveLimit,
         computationFunction: computation,
         timezoneDisplayOffset: config['timezoneDisplayOffset'],
     });

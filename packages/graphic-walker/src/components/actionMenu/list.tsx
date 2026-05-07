@@ -91,61 +91,61 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
         }
     }, [children.length, hover, focus, ctx, basePath]);
 
-    return (
-        <div
-            tabIndex={disabled ? undefined : 0}
-            role="button"
-            aria-haspopup={children.length ? 'menu' : undefined}
-            aria-disabled={disabled}
-            className={classNames(
-                active ? 'bg-accent text-accent-foreground' : 'text-foreground',
-                disabled ? 'text-muted-foreground' : 'cursor-pointer',
-                'transition-colors text-xs'
-            )}
-            onClick={(e) => {
-                if (disabled || children.length) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return;
-                }
-                if (!disabled) {
-                    onPress?.();
-                    ctx.onDismiss();
-                }
-            }}
-            onFocus={() => {
-                if (!disabled) {
-                    setFocus(true);
-                }
-                if (children.length && !expanded) {
-                    ctx.setPath(path);
-                }
-            }}
-            onBlur={() => {
-                setFocus(false);
-            }}
-            onMouseEnter={() => {
-                setHover(true);
-                if (children.length && !expanded && !disabled) {
-                    ctx.setPath(path);
-                }
-            }}
-            onMouseLeave={() => {
-                setHover(false);
-            }}
-            onKeyDown={(e) => {
-                if (disabled || children.length) {
-                    return;
-                }
-                if (e.key === 'Enter' || e.key === 'Space') {
-                    onPress?.();
-                    ctx.onDismiss();
-                }
-            }}
-        >
+    const commonProps = {
+        tabIndex: disabled ? undefined : 0,
+        role: 'button',
+        className: classNames(
+            active ? 'bg-accent text-accent-foreground' : 'text-foreground',
+            disabled ? 'text-muted-foreground' : 'cursor-pointer',
+            'transition-colors text-xs'
+        ),
+        onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+            if (disabled || children.length) {
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
+            if (!disabled) {
+                onPress?.();
+                ctx.onDismiss();
+            }
+        },
+        onFocus: () => {
+            if (!disabled) {
+                setFocus(true);
+            }
+            if (children.length && !expanded) {
+                ctx.setPath(path);
+            }
+        },
+        onBlur: () => {
+            setFocus(false);
+        },
+        onMouseEnter: () => {
+            setHover(true);
+            if (children.length && !expanded && !disabled) {
+                ctx.setPath(path);
+            }
+        },
+        onMouseLeave: () => {
+            setHover(false);
+        },
+        onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+            if (disabled || children.length) {
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Space') {
+                onPress?.();
+                ctx.onDismiss();
+            }
+        },
+    } as const;
+
+    const content = (
+        <>
             <div aria-hidden="true">{icon}</div>
             <div>
-                <span className="truncate self-start">{label}</span>
+                <span className="whitespace-nowrap self-start">{label}</span>
             </div>
             <div aria-hidden="true" className="relative">
                 {children.length > 0 && (
@@ -163,7 +163,7 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                                 leaveFrom="transform opacity-100 scale-100"
                                 leaveTo="transform opacity-0 scale-95"
                             >
-                                <div className="fixed rounded-md -translate-x-1 z-50 min-w-[8rem] max-w-[16rem] bg-popover shadow-lg border focus:outline-none">
+                                <div className="fixed rounded-md -translate-x-1 z-50 min-w-[10rem] w-max max-w-[90vw] bg-popover shadow-lg border focus:outline-none">
                                     <MenuItemList items={children} path={path} />
                                 </div>
                             </Transition>
@@ -171,8 +171,31 @@ const ActionMenuItem = memo<IActionMenuItemProps>(function ActionMenuItem({ item
                     </>
                 )}
             </div>
-        </div>
+        </>
     );
+
+    if (children.length && disabled) {
+        return (
+            <div {...commonProps} aria-haspopup="menu" aria-disabled="true">
+                {content}
+            </div>
+        );
+    }
+    if (children.length) {
+        return (
+            <div {...commonProps} aria-haspopup="menu">
+                {content}
+            </div>
+        );
+    }
+    if (disabled) {
+        return (
+            <div {...commonProps} aria-disabled="true">
+                {content}
+            </div>
+        );
+    }
+    return <div {...commonProps}>{content}</div>;
 });
 
 interface IActionMenuItemListProps {

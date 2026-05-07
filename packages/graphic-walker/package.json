@@ -116,7 +116,11 @@
     "vega": "^5.22.1",
     "vega-embed": "^6.21.0",
     "vega-lite": "^5.6.0",
-    "vega-webgl-renderer": "^1.0.0-beta.2"
+    "vega-webgl-renderer": "^1.0.0-beta.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "optionalDependencies": {
+    "@kanaries/duckdb-computation": "0.0.1"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.5",

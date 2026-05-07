@@ -55,7 +55,7 @@ const DataBoard = observer(function DataBoardModal({hideProfiling}: {hideProfili
                 vizStore.setShowDataBoard(false);
             }}
         >
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
                 <div className="mt-4">
                     <DataTable hideProfiling={hideProfiling} size={100} computation={filteredComputation} metas={metas} disableFilter displayOffset={config.timezoneDisplayOffset} />
                 </div>
