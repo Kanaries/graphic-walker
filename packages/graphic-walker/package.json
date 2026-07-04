@@ -4,6 +4,7 @@
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
+    "sync:datasets": "node ../../scripts/demo-datasets.mjs ./public/datasets",
     "gen-schema": "node scripts/create-json-schema.js",
     "build": "vite build && tspc --build && yarn gen-schema",
     "build:app": "vite build --config vite-app.config.ts",

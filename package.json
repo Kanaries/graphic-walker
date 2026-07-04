@@ -7,7 +7,8 @@
   "devDependencies": {},
   "scripts": {
     "build": "yarn workspace @kanaries/graphic-walker build",
-    "deploy": "yarn workspace playground deploy"
+    "deploy": "yarn workspace playground deploy",
+    "sync:datasets": "node scripts/demo-datasets.mjs"
   },
   "workspaces": {
     "packages": [

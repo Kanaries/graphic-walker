@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "sync:datasets": "node ../../scripts/demo-datasets.mjs ./public/datasets",
     "build:gw": "yarn workspace @kanaries/graphic-walker build",
     "build:db": "yarn workspace @kanaries/duckdb-computation build",
     "build": "npm run build:gw && npm run build:db && tsc && cp ../graphic-walker/public/* ./public && vite build",

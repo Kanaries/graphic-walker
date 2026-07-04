@@ -11,11 +11,13 @@ import { GalleryItemOption } from './GalleryGroup';
 import { specDict } from '../resources';
 import { IDataSource, useFetch } from '../util';
 
+const DEMO_DATASET_BASE_URL = import.meta.env.DEV ? '/datasets' : 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets';
+
 function getResourceURL(type: 'datasets' | 'specs', name: string): string {
     if (type === 'specs') {
         return specDict[name];
     } else if (type === 'datasets') {
-        return `https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/${name}.json`;
+        return `${DEMO_DATASET_BASE_URL}/${name}.json`;
     } else {
         throw new Error(`Unknown fetch type: "${type}".`);
     }

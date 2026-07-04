@@ -13,7 +13,7 @@ export const DemoDataAssets = process.env.NODE_ENV === 'production' ? {
     CARS: "/datasets/ds-cars-service.json",
     // STUDENTS: "https://chspace.oss-cn-hongkong.aliyuncs.com/datasets/ds-students-service.json",
     STUDENTS: "/datasets/ds-students-service.json",
-    BTC_GOLD: "/datasets/ds_btc_gold_service.json",
+    BTC_GOLD: "/datasets/ds-btcgold-service.json",
     BIKE_SHARING: '/datasets/ds-bikesharing-service.json',
     CAR_SALES: '/datasets/ds-carsales-service.json',
     COLLAGE: '/datasets/ds-collage-service.json',
