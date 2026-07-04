@@ -59,7 +59,7 @@ function parsePalette(v?: RangeScheme): string[] | undefined {
 }
 
 export function getColor(theme: VegaGlobalConfig) {
-    const stroke = theme.point?.stroke ?? DEFAULT_COLOR;
+    const stroke = theme.point?.stroke ?? theme.point?.fill ?? DEFAULT_COLOR;
     const primaryColor = typeof stroke === 'string' ? stroke : DEFAULT_COLOR;
     const nominalPalette = parsePalette(theme.range?.category) ?? getPalette('tableau10');
     const quantitativePalette = parsePalette(theme.range?.ramp) ?? getPalette('blues');

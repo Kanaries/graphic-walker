@@ -475,7 +475,7 @@ export enum ISegmentKey {
     chat = 'chat',
 }
 
-export type IThemeKey = 'vega' | 'g2' | 'streamlit';
+export type IThemeKey = 'vega' | 'g2' | 'streamlit' | 'danqing' | 'sodapop';
 export type IDarkMode = 'media' | 'light' | 'dark';
 export type IComputationFunction = (payload: IDataQueryPayload) => Promise<IRow[]>;
 

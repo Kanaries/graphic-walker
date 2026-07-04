@@ -269,6 +269,8 @@ const VisualConfigPanel: React.FC = () => {
                                                 { value: 'vega', label: 'vega' },
                                                 { value: 'g2', label: 'g2' },
                                                 { value: 'streamlit', label: 'streamlit' },
+                                                { value: 'danqing', label: 'danqing' },
+                                                { value: 'sodapop', label: 'sodapop' },
                                             ]}
                                         />
                                     </div>
