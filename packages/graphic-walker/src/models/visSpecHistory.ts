@@ -61,6 +61,8 @@ export enum Methods {
     removeAllField,
     editAllField,
     replaceWithNLPQuery,
+    // appended at the end: enum values are serialized in exported timelines
+    replaceChart,
 }
 export type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -89,6 +91,7 @@ export type PropsMap = {
     [Methods.removeAllField]: [string];
     [Methods.editAllField]: [string, Partial<IField>];
     [Methods.replaceWithNLPQuery]: [string, string];
+    [Methods.replaceChart]: [PartialChart];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -483,6 +486,9 @@ const actions: {
     },
     [Methods.replaceWithNLPQuery]: (data, _query, response) => {
         return { ...JSON.parse(response), visId: data.visId, name: data.name };
+    },
+    [Methods.replaceChart]: (data, chart) => {
+        return fillChart({ ...chart, visId: data.visId, name: chart.name ?? data.name });
     },
 };
 

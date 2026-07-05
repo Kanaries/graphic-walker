@@ -7,13 +7,14 @@ import DataTypeIcon from '../../components/dataTypeIcon';
 import ActionMenu from '../../components/actionMenu';
 import { useMenuActions } from './utils';
 import { FieldPill } from './fieldPill';
-import { MEA_KEY_ID } from '../../constants';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
 import { refMapper } from '../fieldsContext';
 import { getFieldIdentifier } from '@/utils';
 
 const MeaFields: React.FC = (props) => {
     const vizStore = useVizStore();
-    const { measures } = vizStore;
+    // read in the observer render scope: the render prop below runs outside mobx tracking
+    const { measures, selectedFieldIds } = vizStore;
 
     const menuActions = useMenuActions('measures');
 
@@ -22,6 +23,8 @@ const MeaFields: React.FC = (props) => {
             {measures.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`measure_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
+                        const selectable = f.fid !== MEA_KEY_ID && f.fid !== MEA_VAL_ID;
+                        const selected = selectable && selectedFieldIds.includes(f.fid);
                         return (
                             <div className="block">
                                 <ActionMenu
@@ -31,9 +34,20 @@ const MeaFields: React.FC = (props) => {
                                     disabled={snapshot.isDragging || f.fid === MEA_KEY_ID}
                                 >
                                     <FieldPill
-                                        className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border border-transparent ${
-                                            snapshot.isDragging ? 'bg-measure/20' : ''
-                                        }`}
+                                        data-field-pill
+                                        onClick={(e) => {
+                                            if (!selectable) {
+                                                return;
+                                            }
+                                            if (e.metaKey || e.ctrlKey) {
+                                                vizStore.toggleFieldSelection(f.fid);
+                                            } else {
+                                                vizStore.selectField(f.fid);
+                                            }
+                                        }}
+                                        className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-measure/20 rounded-md truncate border ${
+                                            selected ? 'border-primary/50 bg-primary/10' : 'border-transparent'
+                                        } ${snapshot.isDragging ? 'bg-measure/20' : ''}`}
                                         isDragging={snapshot.isDragging}
                                         ref={refMapper(provided.innerRef)}
                                         {...provided.draggableProps}

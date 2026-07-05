@@ -12,19 +12,29 @@ import { getFieldIdentifier } from '@/utils';
 
 const DimFields: React.FC = (props) => {
     const vizStore = useVizStore();
-    const { dimensions } = vizStore;
+    // read in the observer render scope: the render prop below runs outside mobx tracking
+    const { dimensions, selectedFieldIds } = vizStore;
     const menuActions = useMenuActions('dimensions');
     return (
         <div className="relative touch-none">
             {dimensions.map((f, index) => (
                 <Draggable key={getFieldIdentifier(f)} draggableId={`dimension_${getFieldIdentifier(f)}`} index={index}>
                     {(provided, snapshot) => {
+                        const selected = selectedFieldIds.includes(f.fid);
                         return (
                             <ActionMenu title={f.name || f.fid} menu={menuActions[index]} enableContextMenu={false} disabled={snapshot.isDragging}>
                                 <FieldPill
-                                    className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border border-transparent ${
-                                        snapshot.isDragging ? 'bg-dimension/20' : ''
-                                    }`}
+                                    data-field-pill
+                                    onClick={(e) => {
+                                        if (e.metaKey || e.ctrlKey) {
+                                            vizStore.toggleFieldSelection(f.fid);
+                                        } else {
+                                            vizStore.selectField(f.fid);
+                                        }
+                                    }}
+                                    className={`touch-none flex pt-0.5 pb-0.5 pl-2 pr-2 mx-0 m-1 text-xs hover:bg-dimension/20 transition-colors rounded-md truncate border ${
+                                        selected ? 'border-primary/50 bg-primary/10' : 'border-transparent'
+                                    } ${snapshot.isDragging ? 'bg-dimension/20' : ''}`}
                                     ref={refMapper(provided.innerRef)}
                                     isDragging={snapshot.isDragging}
                                     {...provided.draggableProps}

@@ -25,6 +25,7 @@ import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
 import DatasetConfig from './dataSource/datasetConfig';
 import CodeExport from './components/codeExport';
+import AutoVizPanel from './components/autoViz';
 import VisualConfig from './components/visualConfig';
 import ExplainData from './components/explainData';
 import GeoConfigPanel from './components/leafletRenderer/geoConfigPanel';
@@ -281,6 +282,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                         <VizEmbedMenu />
                                                     </div>
                                                 </div>
+                                                <AutoVizPanel />
                                             </div>
                                         </div>
                                     </TabsContent>

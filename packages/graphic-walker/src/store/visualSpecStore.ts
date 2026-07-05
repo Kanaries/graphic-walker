@@ -67,6 +67,8 @@ export class VizSpecStore {
     segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
     showDataBoard: boolean = false;
+    // the Auto Viz dock on the right of the workspace starts expanded; the toolbar toggle collapses it
+    showAutoVizPanel: boolean = true;
     vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     showDataConfig: boolean = false;
     showCodeExportPanel: boolean = false;
@@ -88,6 +90,8 @@ export class VizSpecStore {
     lastSpec: string = '';
     editingComputedFieldFid: string | undefined = undefined;
     defaultConfig: IDefaultConfig | undefined;
+    /** fields highlighted in the field list (Tableau-style multi-select feeding Auto Viz); UI state, not part of the undo timeline */
+    selectedFieldIds: string[] = [];
 
     onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
 
@@ -241,7 +245,7 @@ export class VizSpecStore {
 
     get canRedo() {
         const viz = this.visList[this.visIndex];
-        return viz.cursor !== viz.timeline.length;
+        return viz.cursor < viz.timeline.length;
     }
 
     get chatMessages() {
@@ -649,8 +653,14 @@ export class VizSpecStore {
         this.showAskvizFeedbackIndex = show ? this.visIndex : undefined;
     }
 
+    /** replace the current chart and RESET its history (used by controlled `spec` prop syncing) */
     replaceNow(chart: IChart) {
         this.visList[this.visIndex] = fromSnapshot(chart);
+    }
+
+    /** replace the current chart as an undoable/redoable timeline action (used by Auto Viz) */
+    applyChart(chart: IChart) {
+        this.visList[this.visIndex] = performers.replaceChart(this.visList[this.visIndex], chart);
     }
 
     selectVisualization(index: number) {
@@ -665,6 +675,30 @@ export class VizSpecStore {
     }
     setShowDataBoard(show: boolean) {
         this.showDataBoard = show;
+    }
+    setShowAutoVizPanel(show: boolean) {
+        this.showAutoVizPanel = show;
+    }
+    /** plain click: make this the only selected field; clicking the sole selected field deselects it */
+    selectField(fid: string) {
+        if (this.selectedFieldIds.length === 1 && this.selectedFieldIds[0] === fid) {
+            this.selectedFieldIds = [];
+        } else {
+            this.selectedFieldIds = [fid];
+        }
+    }
+    /** ctrl/cmd click: toggle this field in the selection */
+    toggleFieldSelection(fid: string) {
+        if (this.selectedFieldIds.includes(fid)) {
+            this.selectedFieldIds = this.selectedFieldIds.filter((x) => x !== fid);
+        } else {
+            this.selectedFieldIds = [...this.selectedFieldIds, fid];
+        }
+    }
+    clearFieldSelection() {
+        if (this.selectedFieldIds.length > 0) {
+            this.selectedFieldIds = [];
+        }
     }
     showEmbededMenu(position: [number, number]) {
         this.vizEmbededMenu.show = true;

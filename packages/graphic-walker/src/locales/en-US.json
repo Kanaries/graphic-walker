@@ -217,6 +217,7 @@
                     "debug": "debugging"
                 },
                 "sort": "Sorting Order",
+                "autoviz": "Auto Viz",
                 "button": {
                     "ascending": "Sort in Ascending Order",
                     "descending": "Sort in Descending Order",
@@ -366,5 +367,53 @@
         "log_panel_title": "Logarithm Transformation",
         "log_panel_desc": "Set log config for field",
         "log_panel_number": "Logarithmic base"
+    },
+    "autoviz": {
+        "title": "Auto Viz",
+        "description": "Pick the fields you care about; legal chart types light up and the best one is starred.",
+        "recommended": "Recommended",
+        "apply_best": "Apply recommended",
+        "hint": "{{count}} chart types match your selection",
+        "empty": "…or click any lit chart type to start",
+        "based_on_view": "Based on the fields in the current chart · {{count}} types match",
+        "selected_count": "{{count}} fields selected in the field list",
+        "clear": "Clear",
+        "uses": "Uses: {{fields}}",
+        "select_hint": "Pick fields on the left · <k></k>+click to multi-select",
+        "refine_hint": "Click or <k></k>+click fields on the left to refine",
+        "collapse": "Collapse panel",
+        "expand": "Show Auto Viz",
+        "charts": {
+            "table": "Text Table",
+            "highlight_table": "Highlight Table",
+            "heatmap": "Heat Map",
+            "bar": "Bar Chart",
+            "stacked_bar": "Stacked Bar",
+            "grouped_bar": "Grouped Bar",
+            "line": "Line Chart",
+            "area": "Area Chart",
+            "histogram": "Histogram",
+            "scatter": "Scatter Plot",
+            "circle_view": "Circle View",
+            "pie": "Pie Chart",
+            "boxplot": "Box Plot",
+            "poi_map": "Symbol Map",
+            "choropleth_map": "Filled Map"
+        },
+        "reason": {
+            "need_fields": "Select at least one field",
+            "need_dimension": "Needs at least 1 dimension",
+            "need_two_dimensions": "Needs at least 2 dimensions",
+            "too_many_dimensions": "Too many dimensions for this chart",
+            "need_measure": "Needs at least 1 measure",
+            "need_two_measures": "Needs at least 2 measures",
+            "need_single_measure": "Needs exactly 1 measure",
+            "too_many_measures": "Too many measures for this chart",
+            "need_temporal": "Needs a date/time dimension",
+            "need_temporal_or_ordinal": "Needs a date/time or ordinal dimension",
+            "need_raw_measure": "Needs a raw measure, not row count",
+            "need_lon_lat": "Needs longitude & latitude fields",
+            "need_geo_feature": "Needs a configured GeoJSON boundary"
+        }
     }
 }

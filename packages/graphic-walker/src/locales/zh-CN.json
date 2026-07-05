@@ -212,6 +212,7 @@
                     "debug": "图表调试"
                 },
                 "sort": "排序",
+                "autoviz": "图表推荐",
                 "button": {
                     "ascending": "升序排序",
                     "descending": "降序排序",
@@ -361,5 +362,53 @@
         "log_panel_title": "对数变换",
         "log_panel_desc": "设置字段的对数配置",
         "log_panel_number": "对数底数"
+    },
+    "autoviz": {
+        "title": "Auto Viz · 图表推荐",
+        "description": "勾选你关心的字段，可用的图表类型会亮起，最佳推荐带星标。",
+        "recommended": "推荐",
+        "apply_best": "应用推荐",
+        "hint": "当前选择匹配 {{count}} 种图表类型",
+        "empty": "或直接点击任意亮起的图表开始",
+        "based_on_view": "基于当前图表中的字段 · 匹配 {{count}} 种类型",
+        "selected_count": "字段列表中已选中 {{count}} 个字段",
+        "clear": "清除",
+        "uses": "将使用：{{fields}}",
+        "select_hint": "点击左侧字段进行选择 · <k></k>+点击可多选",
+        "refine_hint": "点击或 <k></k>+点击左侧字段可细化推荐",
+        "collapse": "收起面板",
+        "expand": "展开图表推荐",
+        "charts": {
+            "table": "文本表",
+            "highlight_table": "高亮表",
+            "heatmap": "热力图",
+            "bar": "条形图",
+            "stacked_bar": "堆叠条形图",
+            "grouped_bar": "并列条形图",
+            "line": "折线图",
+            "area": "面积图",
+            "histogram": "直方图",
+            "scatter": "散点图",
+            "circle_view": "圆点视图",
+            "pie": "饼图",
+            "boxplot": "箱线图",
+            "poi_map": "符号地图",
+            "choropleth_map": "填充地图"
+        },
+        "reason": {
+            "need_fields": "请至少选择一个字段",
+            "need_dimension": "需要至少 1 个维度",
+            "need_two_dimensions": "需要至少 2 个维度",
+            "too_many_dimensions": "维度数量过多",
+            "need_measure": "需要至少 1 个度量",
+            "need_two_measures": "需要至少 2 个度量",
+            "need_single_measure": "只能选择 1 个度量",
+            "too_many_measures": "度量数量过多",
+            "need_temporal": "需要一个日期/时间维度",
+            "need_temporal_or_ordinal": "需要一个日期/时间或有序维度",
+            "need_raw_measure": "需要原始度量（不能是行数）",
+            "need_lon_lat": "需要经度和纬度字段",
+            "need_geo_feature": "需要先配置 GeoJSON 边界"
+        }
     }
 }

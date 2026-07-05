@@ -13,3 +13,5 @@ export { getComputation } from './computation/clientComputation';
 export { addFilterForQuery, chartToWorkflow } from './utils/workflow';
 export * from './utils/colors';
 export * from './components/filterContext';
+export { recommend, extractFeatures, AUTO_VIZ_CHART_ORDER, AUTO_VIZ_RULES } from './lib/autoViz';
+export type { IAutoVizChartType, IAutoVizItem, IAutoVizResult, IRecommendOptions, IAutoVizDisableReason } from './lib/autoViz';

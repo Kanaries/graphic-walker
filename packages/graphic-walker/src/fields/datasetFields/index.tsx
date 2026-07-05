@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Droppable } from '@kanaries/react-beautiful-dnd';
 import { useTranslation } from 'react-i18next';
 import DimFields from './dimFields';
 import MeaFields from './meaFields';
 import { refMapper } from '../fieldsContext';
+import { useVizStore } from '../../store';
 
 const DatasetFields: React.FC = (props) => {
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.DatasetFields' });
+    const vizStore = useVizStore();
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                vizStore.clearFieldSelection();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [vizStore]);
 
     return (
-        <div className="p-1 sm:mr-0.5 my-0.5 border flex sm:flex-col sm:h-full" style={{ paddingBlock: 0, paddingInline: '0.6em' }}>
+        <div
+            className="p-1 sm:mr-0.5 my-0.5 border flex sm:flex-col sm:h-full"
+            style={{ paddingBlock: 0, paddingInline: '0.6em' }}
+            onClick={(e) => {
+                // clicking blank space (not a field pill) drops the selection
+                if (!(e.target as HTMLElement).closest('[data-field-pill]')) {
+                    vizStore.clearFieldSelection();
+                }
+            }}
+        >
             <h4 className="text-xs mb-2 flex-grow-0 cursor-default select-none mt-2">{t('field_list')}</h4>
             <Droppable droppableId="dimensions" direction="vertical">
                 {(provided, snapshot) => (

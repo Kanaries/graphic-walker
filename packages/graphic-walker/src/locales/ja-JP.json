@@ -206,6 +206,7 @@
                     "debug": "デバッグ"
                 },
                 "sort": "並べ替えの順序",
+                "autoviz": "Auto Viz",
                 "button": {
                     "ascending": "昇順に並べ替える",
                     "descending": "降順に並べ替える",
@@ -355,5 +356,53 @@
         "log_panel_title": "対数変換",
         "log_panel_desc": "フィールドの対数設定を設定する",
         "log_panel_number": "対数の底"
+    },
+    "autoviz": {
+        "title": "Auto Viz",
+        "description": "関心のあるフィールドを選ぶと、作成可能なチャートがハイライトされ、最適なものに印が付きます。",
+        "recommended": "おすすめ",
+        "apply_best": "おすすめを適用",
+        "hint": "{{count}} 種類のチャートが利用可能です",
+        "empty": "またはチャートをクリックして開始",
+        "based_on_view": "現在のチャートのフィールドに基づく · {{count}} 種類が利用可能",
+        "selected_count": "フィールドリストで {{count}} 個選択中",
+        "clear": "クリア",
+        "uses": "使用フィールド：{{fields}}",
+        "select_hint": "左のフィールドをクリックで選択 · <k></k>+クリックで複数選択",
+        "refine_hint": "フィールドをクリック / <k></k>+クリックで絞り込み",
+        "collapse": "パネルを折りたたむ",
+        "expand": "Auto Viz を表示",
+        "charts": {
+            "table": "テキストテーブル",
+            "highlight_table": "ハイライトテーブル",
+            "heatmap": "ヒートマップ",
+            "bar": "棒グラフ",
+            "stacked_bar": "積み上げ棒グラフ",
+            "grouped_bar": "グループ棒グラフ",
+            "line": "折れ線グラフ",
+            "area": "面グラフ",
+            "histogram": "ヒストグラム",
+            "scatter": "散布図",
+            "circle_view": "サークルビュー",
+            "pie": "円グラフ",
+            "boxplot": "箱ひげ図",
+            "poi_map": "シンボルマップ",
+            "choropleth_map": "塗り分けマップ"
+        },
+        "reason": {
+            "need_fields": "フィールドを1つ以上選択してください",
+            "need_dimension": "ディメンションが1つ以上必要です",
+            "need_two_dimensions": "ディメンションが2つ以上必要です",
+            "too_many_dimensions": "ディメンションが多すぎます",
+            "need_measure": "メジャーが1つ以上必要です",
+            "need_two_measures": "メジャーが2つ以上必要です",
+            "need_single_measure": "メジャーは1つだけ選択できます",
+            "too_many_measures": "メジャーが多すぎます",
+            "need_temporal": "日付/時間ディメンションが必要です",
+            "need_temporal_or_ordinal": "日付/時間または順序ディメンションが必要です",
+            "need_raw_measure": "行数ではなく生のメジャーが必要です",
+            "need_lon_lat": "経度・緯度フィールドが必要です",
+            "need_geo_feature": "GeoJSON 境界の設定が必要です"
+        }
     }
 }

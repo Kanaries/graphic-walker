@@ -293,6 +293,7 @@ const actionMessageMapper: {
     [Methods.removeAllField]: () => '',
     [Methods.editAllField]: () => '',
     [Methods.replaceWithNLPQuery]: () => '',
+    [Methods.replaceChart]: (_data, chart) => `Replace the chart with a recommended ${chart.config?.geoms?.[0] ?? ''} chart.`,
 };
 
 function toMessage<T>(data: IChart, action: VisActionOf<T>) {
