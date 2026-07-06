@@ -32,6 +32,10 @@ export const pages = [
         name: 'TableWalker',
     },
     {
+        comp: () => import('./pages/pivotTable'),
+        name: 'PivotTable',
+    },
+    {
         comp: () => import('./pages/tableSettings'),
         name: 'TableWalker Settings',
     },

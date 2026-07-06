@@ -131,6 +131,41 @@ const YourChart: React.FC = props => {
 export default YourChart;
 ```
 
+如果你只想使用数据透视表（Pivot Table），也可以直接使用独立的 `PivotTable` API，不需要字段拖拽配置 UI。
+
+```typescript
+import { PivotTable, type IViewField } from '@kanaries/graphic-walker';
+
+const rowDimensions: IViewField[] = [
+    { fid: 'region', name: '地区', analyticType: 'dimension', semanticType: 'nominal' },
+];
+
+const columnDimensions: IViewField[] = [
+    { fid: 'year', name: '年份', analyticType: 'dimension', semanticType: 'ordinal' },
+];
+
+const values = [
+    {
+        fid: 'sales',
+        name: '销售额',
+        analyticType: 'measure',
+        semanticType: 'quantitative',
+        aggName: 'sum',
+        placement: 'column' as const,
+    },
+];
+
+const YourPivotTable = ({ data }) => (
+    <PivotTable
+        data={data}
+        rowDimensions={rowDimensions}
+        columnDimensions={columnDimensions}
+        values={values}
+        numberFormat=".2s"
+    />
+);
+```
+
 #### 在Vue3中使用
 
 虽然`graphic-walker`是一个React组件，但我们还是可以通过一些技巧在Vue3中使用它，比如利用`veaury`。

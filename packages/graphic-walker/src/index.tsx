@@ -1,6 +1,8 @@
 export * from './root';
 export { default as PureRenderer } from './renderer/pureRenderer';
 export type { ILocalPureRendererProps, IRemotePureRendererProps } from './renderer/pureRenderer';
+export { default as PivotTable } from './pivotTable';
+export type { IPivotTableProps, IPivotTableValueField } from './pivotTable';
 export { embedGraphicWalker, embedGraphicRenderer, embedPureRenderer, embedTableWalker } from './vanilla';
 export * from './interfaces';
 export * from './store/visualSpecStore';
