@@ -1,0 +1,24 @@
+{
+    "visId": "gw-fixture-special",
+    "name": "特殊字符 \"图表\"",
+    "encodings": {
+        "columns": [{ "fid": "Price (USD)", "name": "Price (USD)", "semanticType": "nominal", "analyticType": "dimension" }],
+        "rows": [
+            { "fid": "销售额 \"净\"", "name": "销售额 \"净\"", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }
+        ],
+        "filters": [
+            {
+                "fid": "Price (USD)",
+                "name": "Price (USD)",
+                "semanticType": "nominal",
+                "analyticType": "dimension",
+                "rule": { "type": "one of", "value": ["$1.00", "a'b\\c"] }
+            }
+        ]
+    },
+    "config": {
+        "defaultAggregated": true,
+        "geoms": ["bar"],
+        "limit": -1
+    }
+}

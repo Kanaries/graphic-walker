@@ -1,0 +1,41 @@
+{
+    "datasets": [
+        {
+            "id": "meta-sales",
+            "name": "Sales Dataset",
+            "dsId": "src-sales",
+            "rawFields": [
+                { "fid": "category", "name": "Category", "semanticType": "nominal", "analyticType": "dimension" },
+                { "fid": "sales", "name": "Sales", "semanticType": "quantitative", "analyticType": "measure" }
+            ]
+        }
+    ],
+    "dataSources": [
+        {
+            "id": "src-sales",
+            "data": [
+                { "category": "A", "sales": 10 },
+                { "category": "B", "sales": 20 }
+            ]
+        }
+    ],
+    "specList": [
+        {
+            "visId": "gw-old-app-chart",
+            "name": "Chart 1",
+            "encodings": {
+                "dimensions": [{ "fid": "category", "name": "Category", "semanticType": "nominal", "analyticType": "dimension" }],
+                "measures": [{ "fid": "sales", "name": "Sales", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }],
+                "rows": [{ "fid": "sales", "name": "Sales", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }],
+                "columns": [{ "fid": "category", "name": "Category", "semanticType": "nominal", "analyticType": "dimension" }]
+            },
+            "config": {
+                "defaultAggregated": true,
+                "geoms": ["bar"],
+                "stack": "stack",
+                "showTableSummary": false,
+                "limit": -1
+            }
+        }
+    ]
+}

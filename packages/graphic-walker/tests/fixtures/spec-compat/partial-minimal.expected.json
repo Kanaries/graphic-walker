@@ -1,0 +1,69 @@
+{
+    "config": {
+        "defaultAggregated": true,
+        "geoms": [
+            "auto"
+        ],
+        "coordSystem": "generic",
+        "limit": -1
+    },
+    "encodings": {
+        "dimensions": [],
+        "measures": [],
+        "rows": [
+            {
+                "fid": "sales",
+                "name": "Sales",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "sum"
+            }
+        ],
+        "columns": [
+            {
+                "fid": "category",
+                "name": "Category",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            }
+        ],
+        "color": [],
+        "opacity": [],
+        "size": [],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [],
+        "details": [],
+        "filters": [],
+        "text": []
+    },
+    "layout": {
+        "showActions": false,
+        "showTableSummary": false,
+        "stack": "stack",
+        "interactiveScale": false,
+        "zeroScale": true,
+        "size": {
+            "mode": "auto",
+            "width": 320,
+            "height": 200
+        },
+        "format": {},
+        "geoKey": "name",
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        },
+        "renderer": "vega-lite"
+    },
+    "visId": "gw_mock-id",
+    "name": "Chart",
+    "$schema": "https://graphic-walker.kanaries.net/chartinfo.json"
+}

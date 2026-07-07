@@ -1,0 +1,45 @@
+{
+    "visId": "gw-fixture-geo",
+    "name": "Store Locations",
+    "encodings": {
+        "dimensions": [{ "fid": "store", "name": "Store", "semanticType": "nominal", "analyticType": "dimension" }],
+        "measures": [
+            { "fid": "lng", "name": "Longitude", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" },
+            { "fid": "lat", "name": "Latitude", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" },
+            { "fid": "revenue", "name": "Revenue", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }
+        ],
+        "rows": [],
+        "columns": [],
+        "color": [],
+        "opacity": [],
+        "size": [{ "fid": "revenue", "name": "Revenue", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [{ "fid": "lng", "name": "Longitude", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }],
+        "latitude": [{ "fid": "lat", "name": "Latitude", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }],
+        "geoId": [],
+        "details": [{ "fid": "store", "name": "Store", "semanticType": "nominal", "analyticType": "dimension" }],
+        "filters": [],
+        "text": []
+    },
+    "config": {
+        "defaultAggregated": false,
+        "geoms": ["poi"],
+        "coordSystem": "geographic",
+        "limit": -1
+    },
+    "layout": {
+        "showTableSummary": false,
+        "format": {},
+        "resolve": {},
+        "size": { "mode": "auto", "width": 320, "height": 200 },
+        "interactiveScale": false,
+        "stack": "stack",
+        "showActions": false,
+        "zeroScale": true,
+        "geoKey": "name",
+        "geoUrl": { "type": "GeoJSON", "url": "https://example.com/regions.geo.json" },
+        "geoMapTileUrl": "https://tile.example.com/{z}/{x}/{y}.png"
+    }
+}

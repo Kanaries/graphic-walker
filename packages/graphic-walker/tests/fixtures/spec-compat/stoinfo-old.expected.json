@@ -1,0 +1,81 @@
+{
+    "metaDict": {
+        "meta-sales": [
+            {
+                "fid": "category",
+                "name": "Category",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "sales",
+                "name": "Sales",
+                "semanticType": "quantitative",
+                "analyticType": "measure"
+            }
+        ]
+    },
+    "dataSources": [
+        {
+            "data": [
+                {
+                    "category": "A",
+                    "sales": 10
+                },
+                {
+                    "category": "B",
+                    "sales": 20
+                }
+            ],
+            "id": "src-sales",
+            "metaId": "meta-sales",
+            "name": "Sales Dataset"
+        }
+    ],
+    "visDict": {
+        "meta-sales": [
+            "{\"base\":{\"config\":{\"defaultAggregated\":true,\"geoms\":[\"bar\"],\"coordSystem\":\"generic\",\"limit\":-1},\"encodings\":{\"dimensions\":[{\"fid\":\"category\",\"name\":\"Category\",\"semanticType\":\"nominal\",\"analyticType\":\"dimension\"}],\"measures\":[{\"fid\":\"sales\",\"name\":\"Sales\",\"semanticType\":\"quantitative\",\"analyticType\":\"measure\",\"aggName\":\"sum\"}],\"rows\":[{\"fid\":\"sales\",\"name\":\"Sales\",\"semanticType\":\"quantitative\",\"analyticType\":\"measure\",\"aggName\":\"sum\"}],\"columns\":[{\"fid\":\"category\",\"name\":\"Category\",\"semanticType\":\"nominal\",\"analyticType\":\"dimension\"}],\"color\":[],\"opacity\":[],\"size\":[],\"shape\":[],\"radius\":[],\"theta\":[],\"longitude\":[],\"latitude\":[],\"geoId\":[],\"details\":[],\"filters\":[],\"text\":[]},\"layout\":{\"showActions\":false,\"showTableSummary\":false,\"stack\":\"stack\",\"interactiveScale\":false,\"zeroScale\":true,\"size\":{\"mode\":\"auto\",\"width\":320,\"height\":200},\"format\":{},\"geoKey\":\"name\",\"resolve\":{\"x\":false,\"y\":false,\"color\":false,\"opacity\":false,\"shape\":false,\"size\":false},\"renderer\":\"vega-lite\",\"scaleIncludeUnmatchedChoropleth\":false},\"visId\":\"gw-old-app-chart\",\"name\":\"Chart 1\"},\"timeline\":[]}"
+        ]
+    },
+    "exportData": {
+        "$schema": "https://graphic-walker.kanaries.net/stoinfo_v2.json",
+        "datasets": [
+            {
+                "data": [
+                    {
+                        "category": "A",
+                        "sales": 10
+                    },
+                    {
+                        "category": "B",
+                        "sales": 20
+                    }
+                ],
+                "id": "src-sales",
+                "metaId": "meta-sales",
+                "name": "Sales Dataset"
+            }
+        ],
+        "metaDict": {
+            "meta-sales": [
+                {
+                    "fid": "category",
+                    "name": "Category",
+                    "semanticType": "nominal",
+                    "analyticType": "dimension"
+                },
+                {
+                    "fid": "sales",
+                    "name": "Sales",
+                    "semanticType": "quantitative",
+                    "analyticType": "measure"
+                }
+            ]
+        },
+        "specDict": {
+            "meta-sales": [
+                "{\"base\":{\"config\":{\"defaultAggregated\":true,\"geoms\":[\"bar\"],\"coordSystem\":\"generic\",\"limit\":-1},\"encodings\":{\"dimensions\":[{\"fid\":\"category\",\"name\":\"Category\",\"semanticType\":\"nominal\",\"analyticType\":\"dimension\"}],\"measures\":[{\"fid\":\"sales\",\"name\":\"Sales\",\"semanticType\":\"quantitative\",\"analyticType\":\"measure\",\"aggName\":\"sum\"}],\"rows\":[{\"fid\":\"sales\",\"name\":\"Sales\",\"semanticType\":\"quantitative\",\"analyticType\":\"measure\",\"aggName\":\"sum\"}],\"columns\":[{\"fid\":\"category\",\"name\":\"Category\",\"semanticType\":\"nominal\",\"analyticType\":\"dimension\"}],\"color\":[],\"opacity\":[],\"size\":[],\"shape\":[],\"radius\":[],\"theta\":[],\"longitude\":[],\"latitude\":[],\"geoId\":[],\"details\":[],\"filters\":[],\"text\":[]},\"layout\":{\"showActions\":false,\"showTableSummary\":false,\"stack\":\"stack\",\"interactiveScale\":false,\"zeroScale\":true,\"size\":{\"mode\":\"auto\",\"width\":320,\"height\":200},\"format\":{},\"geoKey\":\"name\",\"resolve\":{\"x\":false,\"y\":false,\"color\":false,\"opacity\":false,\"shape\":false,\"size\":false},\"renderer\":\"vega-lite\",\"scaleIncludeUnmatchedChoropleth\":false},\"visId\":\"gw-old-app-chart\",\"name\":\"Chart 1\"},\"timeline\":[]}"
+            ]
+        }
+    }
+}

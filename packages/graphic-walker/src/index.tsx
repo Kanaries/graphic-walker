@@ -5,6 +5,8 @@ export { embedGraphicWalker, embedGraphicRenderer, embedPureRenderer, embedTable
 export * from './interfaces';
 export * from './store/visualSpecStore';
 export { resolveChart, convertChart, parseChart } from './models/visSpecHistory';
+export { normalize, detectSpecKind } from './models/normalize';
+export type { ISpecKind } from './models/normalize';
 export { getGlobalConfig } from './config';
 export { DataSourceSegmentComponent } from './dataSource';
 export * from './models/visSpecHistory';

@@ -1,0 +1,70 @@
+{
+    "config": {
+        "defaultAggregated": false,
+        "geoms": [
+            "line"
+        ],
+        "coordSystem": "generic",
+        "limit": -1
+    },
+    "encodings": {
+        "dimensions": [
+            {
+                "fid": "category",
+                "name": "Category",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            }
+        ],
+        "measures": [],
+        "rows": [
+            {
+                "fid": "sales",
+                "name": "Sales",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "mean"
+            }
+        ],
+        "columns": [],
+        "color": [],
+        "opacity": [],
+        "size": [],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [],
+        "details": [],
+        "filters": [],
+        "text": []
+    },
+    "layout": {
+        "showActions": false,
+        "showTableSummary": false,
+        "stack": "stack",
+        "interactiveScale": false,
+        "zeroScale": true,
+        "size": {
+            "mode": "auto",
+            "width": 320,
+            "height": 200
+        },
+        "format": {},
+        "geoKey": "name",
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        },
+        "renderer": "vega-lite",
+        "scaleIncludeUnmatchedChoropleth": false
+    },
+    "visId": "gw-fixture-old-sparse",
+    "name": "Chart",
+    "$schema": "https://graphic-walker.kanaries.net/chartinfo.json"
+}

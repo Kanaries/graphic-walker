@@ -1,0 +1,177 @@
+{
+    "config": {
+        "defaultAggregated": true,
+        "geoms": [
+            "bar"
+        ],
+        "coordSystem": "generic",
+        "limit": 30,
+        "folds": [
+            "sales",
+            "profit"
+        ]
+    },
+    "encodings": {
+        "dimensions": [
+            {
+                "fid": "region",
+                "name": "Region",
+                "basename": "Region",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "order_date",
+                "name": "Order Date",
+                "basename": "Order Date",
+                "semanticType": "temporal",
+                "analyticType": "dimension"
+            },
+            {
+                "fid": "gw_bin4",
+                "name": "bin(Profit)",
+                "semanticType": "ordinal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "bin",
+                    "as": "gw_bin4",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "profit"
+                        }
+                    ]
+                }
+            }
+        ],
+        "measures": [
+            {
+                "fid": "sales",
+                "name": "Sales",
+                "basename": "Sales",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            },
+            {
+                "fid": "profit",
+                "name": "Profit",
+                "basename": "Profit",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            },
+            {
+                "fid": "gw_count_fid",
+                "name": "Row count",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum",
+                "computed": true,
+                "expression": {
+                    "op": "one",
+                    "params": [],
+                    "as": "gw_count_fid"
+                }
+            }
+        ],
+        "rows": [
+            {
+                "fid": "sales",
+                "name": "Sales",
+                "basename": "Sales",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+            }
+        ],
+        "columns": [
+            {
+                "fid": "region",
+                "name": "Region",
+                "basename": "Region",
+                "semanticType": "nominal",
+                "analyticType": "dimension"
+            }
+        ],
+        "color": [
+            {
+                "fid": "gw_bin4",
+                "name": "bin(Profit)",
+                "semanticType": "ordinal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "bin",
+                    "as": "gw_bin4",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "profit"
+                        }
+                    ]
+                }
+            }
+        ],
+        "opacity": [],
+        "size": [],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [],
+        "details": [],
+        "filters": [
+            {
+                "fid": "region",
+                "name": "Region",
+                "basename": "Region",
+                "semanticType": "nominal",
+                "analyticType": "dimension",
+                "rule": {
+                    "type": "one of",
+                    "value": [
+                        "East",
+                        "West"
+                    ]
+                }
+            }
+        ],
+        "text": []
+    },
+    "layout": {
+        "showActions": false,
+        "showTableSummary": false,
+        "stack": "normalize",
+        "interactiveScale": false,
+        "zeroScale": true,
+        "background": "#ffffff",
+        "size": {
+            "mode": "fixed",
+            "width": 640,
+            "height": 480
+        },
+        "format": {
+            "numberFormat": ",.2f"
+        },
+        "geoKey": "name",
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        },
+        "renderer": "vega-lite",
+        "colorPalette": "tableau10",
+        "primaryColor": "#4e79a7",
+        "scaleIncludeUnmatchedChoropleth": false,
+        "useSvg": true
+    },
+    "visId": "gw-fixture-old-full",
+    "name": "Sales by Region",
+    "$schema": "https://graphic-walker.kanaries.net/chartinfo.json"
+}

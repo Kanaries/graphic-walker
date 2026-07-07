@@ -692,7 +692,15 @@ export interface IRawQuery {
 
 export type IViewQuery = IAggQuery | IFoldQuery | IBinQuery | IRawQuery;
 
+export const IChartSchemaUrl = 'https://graphic-walker.kanaries.net/chartinfo.json';
+
 export interface IChart {
+    /**
+     * Version stamp added by `normalize()`. Optional so that specs persisted by
+     * earlier releases (which never carried it) stay valid, and readers must
+     * tolerate its absence. `exportCode()` output is unaffected.
+     */
+    $schema?: string;
     visId: string;
     name?: string;
     encodings: DraggableFieldState;

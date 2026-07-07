@@ -1,0 +1,6 @@
+{
+    "encodings": {
+        "columns": [{ "fid": "category", "name": "Category", "semanticType": "nominal", "analyticType": "dimension" }],
+        "rows": [{ "fid": "sales", "name": "Sales", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" }]
+    }
+}

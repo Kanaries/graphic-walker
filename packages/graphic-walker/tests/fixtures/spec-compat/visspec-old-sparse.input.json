@@ -1,0 +1,12 @@
+{
+    "visId": "gw-fixture-old-sparse",
+    "encodings": {
+        "dimensions": [{ "fid": "category", "name": "Category", "semanticType": "nominal", "analyticType": "dimension" }],
+        "rows": [{ "fid": "sales", "name": "Sales", "semanticType": "quantitative", "analyticType": "measure", "aggName": "mean" }]
+    },
+    "config": {
+        "defaultAggregated": false,
+        "geoms": ["line"],
+        "stack": "stack"
+    }
+}

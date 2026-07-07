@@ -1,0 +1,82 @@
+{
+    "visId": "gw-fixture-modern",
+    "name": "Complex Modern Chart",
+    "encodings": {
+        "dimensions": [
+            { "fid": "region", "name": "Region", "basename": "Region", "semanticType": "nominal", "analyticType": "dimension" },
+            { "fid": "order_date", "name": "Order Date", "basename": "Order Date", "semanticType": "temporal", "analyticType": "dimension" },
+            { "fid": "segment", "name": "Segment", "basename": "Segment", "semanticType": "nominal", "analyticType": "dimension" }
+        ],
+        "measures": [
+            { "fid": "sales", "name": "Sales", "basename": "Sales", "analyticType": "measure", "semanticType": "quantitative", "aggName": "sum" },
+            { "fid": "profit", "name": "Profit", "basename": "Profit", "analyticType": "measure", "semanticType": "quantitative", "aggName": "mean" },
+            {
+                "fid": "gw_log1",
+                "name": "log10(Sales)",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum",
+                "computed": true,
+                "expression": { "op": "log10", "as": "gw_log1", "params": [{ "type": "field", "value": "sales" }] }
+            }
+        ],
+        "rows": [
+            { "fid": "sales", "name": "Sales", "basename": "Sales", "analyticType": "measure", "semanticType": "quantitative", "aggName": "sum" },
+            { "fid": "profit", "name": "Profit", "basename": "Profit", "analyticType": "measure", "semanticType": "quantitative", "aggName": "mean" }
+        ],
+        "columns": [
+            { "fid": "region", "name": "Region", "basename": "Region", "semanticType": "nominal", "analyticType": "dimension" },
+            { "fid": "order_date", "name": "Order Date", "basename": "Order Date", "semanticType": "temporal", "analyticType": "dimension", "timeUnit": "month" }
+        ],
+        "color": [{ "fid": "segment", "name": "Segment", "basename": "Segment", "semanticType": "nominal", "analyticType": "dimension" }],
+        "opacity": [],
+        "size": [
+            { "fid": "gw_log1", "name": "log10(Sales)", "analyticType": "measure", "semanticType": "quantitative", "aggName": "sum", "computed": true, "expression": { "op": "log10", "as": "gw_log1", "params": [{ "type": "field", "value": "sales" }] } }
+        ],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [],
+        "details": [{ "fid": "order_date", "name": "Order Date", "basename": "Order Date", "semanticType": "temporal", "analyticType": "dimension" }],
+        "filters": [
+            {
+                "fid": "profit",
+                "name": "Profit",
+                "basename": "Profit",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum",
+                "enableAgg": true,
+                "rule": { "type": "range", "value": [0, 10000] }
+            }
+        ],
+        "text": []
+    },
+    "config": {
+        "defaultAggregated": true,
+        "geoms": ["bar"],
+        "coordSystem": "generic",
+        "limit": 10,
+        "folds": [],
+        "timezoneDisplayOffset": -480
+    },
+    "layout": {
+        "showTableSummary": false,
+        "format": { "numberFormat": ",.0f", "timeFormat": "%Y-%m-%d" },
+        "resolve": { "x": false, "y": true, "color": false, "opacity": false, "shape": false, "size": false },
+        "size": { "mode": "full", "width": 320, "height": 200 },
+        "interactiveScale": true,
+        "stack": "stack",
+        "showActions": true,
+        "zeroScale": false,
+        "background": "#fafafa",
+        "primaryColor": "#e15759",
+        "colorPalette": "category10",
+        "useSvg": false,
+        "renderer": "observable-plot",
+        "scale": { "size": { "rangeMin": 4, "rangeMax": 36 } },
+        "geoKey": "name"
+    }
+}
