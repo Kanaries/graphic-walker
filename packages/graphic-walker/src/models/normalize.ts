@@ -4,6 +4,7 @@ import { uniqueId } from './utils';
 import { VegaliteMapper } from '../lib/vl2gw';
 import { algebraLint } from '../lib/gog';
 import { expandTerse } from './terse';
+import { assertValidWorkflowFields } from '../utils/workflowValidate';
 
 /**
  * The kind of spec accepted by {@link normalize}:
@@ -126,6 +127,9 @@ export function detectSpecKind(input: object): ISpecKind {
  * `normalize(normalize(x, meta), meta)` deep-equals `normalize(x, meta)`.
  *
  * Existing import/export paths do not call this function; it is a purely additive entry point.
+ * As a strict entry it also runs the workflow field validation pass and throws on structurally
+ * corrupt field sets (dangling computed references, cyclic dependencies, duplicate fids) that
+ * would otherwise compute silently wrong data downstream.
  *
  * @param input a full or partial IChart, a deprecated IVisSpec, or a Vega-Lite-like spec.
  * @param meta dataset fields; required to resolve field names for the Vega-Lite path.
@@ -155,6 +159,9 @@ export function normalize(input: IChart | IVisSpec | PartialChart | TerseSpec | 
             break;
     }
     const filled = fillChart(chart);
+    // Existence can only be judged against the dataset schema, so that check activates
+    // only when meta is supplied; cycle/duplicate checks are intrinsic and always run.
+    assertValidWorkflowFields([...filled.encodings.dimensions, ...filled.encodings.measures], meta.length > 0 ? meta : undefined);
     const geom = filled.config.geoms[0] ?? 'auto';
     // Same lint pass the store reducer applies on every encoding change (diffLinter middleware),
     // so normalized output matches what the UI would converge to for the same spec.
