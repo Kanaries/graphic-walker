@@ -28,8 +28,26 @@ export type ISpecKind = 'chart' | 'vis-spec' | 'vega-lite' | 'terse' | 'partial-
 const VEGA_LITE_EXCLUSIVE_KEYS = ['encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat'] as const;
 
 // Top-level keys that exist on TerseSpec but never on IChart / IVisSpec / PartialChart
-// (canonical specs keep fields and filters inside `encodings`).
-const TERSE_TRIGGER_KEYS = ['x', 'y', 'computed', 'filters'] as const;
+// (canonical specs keep fields and filters inside `encodings`). All terse channel keys
+// are triggers so charts that use no x/y (pie: theta+color, geo: longitude/latitude)
+// still route to the terse branch.
+const TERSE_TRIGGER_KEYS = [
+    'x',
+    'y',
+    'color',
+    'opacity',
+    'size',
+    'shape',
+    'text',
+    'details',
+    'theta',
+    'radius',
+    'longitude',
+    'latitude',
+    'geoId',
+    'computed',
+    'filters',
+] as const;
 
 // Keys of the deprecated IVisualConfig that IVisualConfigNew does not have. Real-world IVisSpec
 // exports always carry them because they were serialized from initVisualConfig()-filled configs;

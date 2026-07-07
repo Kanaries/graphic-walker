@@ -29,8 +29,9 @@ type TerseFieldRef =
     | string // 'Sales' | 'sum(Sales)' | 'fid:sales'(见 §3、§4)
     | {
           field: string; // 名字、shorthand 或 'fid:' 前缀引用
-          aggregate?: IAggregator; // 与 shorthand 二选一,重复时报错
+          aggregate?: Exclude<IAggregator, 'expr'>; // 与 shorthand 二选一,重复时报错;'expr' 不允许(走内联 computed)
           sort?: 'ascending' | 'descending';
+          /** 展开为真实的 dateTimeDrill 计算字段(query 级钻取,与 UI 钻取语义一致),而非仅轴显示格式 */
           timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
       };
 
@@ -149,6 +150,8 @@ interface TerseSpec {
 
 **为什么不做模糊匹配**:LLM 与人都会写错字段名,但静默容错会把错误图表当正确结果交付;显式报错 + 候选提示的纠错回路更短。
 
+**已知边界**(实现定稿):字面名恰为整个引用串的字段优先于 shorthand 解读(exact 匹配限定,大小写不敏感回退不参与此规则),`count()` 同样适用;数据列名字面为 `fid:xxx` 形式时无法按名引用,须用其自身 fid 引用(文档明示的限制);内联 computed 的 fid 哈希与既有 fid 冲突时报错(单图冲突检测)。
+
 ## 4. 聚合 shorthand 文法
 
 ```
@@ -168,7 +171,7 @@ aggName   := 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median'
 
 1. **解析引用**:全部 `TerseFieldRef` / `TerseFilter.field` / `TerseComputedField` 内的字段引用按 §3 解析成 fid;内联 computed 字段生成确定性 fid(`gw_t_` + name 的短哈希,同名同 fid,保证幂等);
 2. **构建池子**:`dimensions/measures 池 = meta 全体字段(newChart 语义,含 count/mea_key/mea_val 合成字段) + 内联 computed 字段`。这正是 dsl-design-review §3.3 的重建规则——terse 不含池子,池子是推导物;
-3. **通道映射**:`x → columns`、`y → rows`,其余通道同名映射;`TerseFieldRef` 展开为完整 `IViewField`(从池子取字段对象,叠加 aggregate/sort/timeUnit 覆盖);
+3. **通道映射**:`x → columns`、`y → rows`,其余通道同名映射;`TerseFieldRef` 展开为完整 `IViewField`(从池子取字段对象,叠加 aggregate/sort 覆盖);**`timeUnit` 展开为真实的 dateTimeDrill 计算字段**——镜像 UI 的 `createDateDrillField` 语义,drill 字段同时进入 dimensions/measures 池(供 `toWorkflow` 收集 transform)与目标通道,影响查询 group-by 而非仅显示;
 4. **旋钮映射**:`mark → config.geoms[0]`、`aggregate → config.defaultAggregated`、`stack → layout.stack`、`limit → config.limit`、`sort → 最后一个 y 度量的 sort`;
 5. **canonical 片段合并**:`config`/`layout` 字段浅合并,**优先级最高**(显式的 canonical 写法压过扁平旋钮;两处都写时产生 warning);
 6. **进入既有管线**:结果作为 `PartialChart` 走 `fillChart` → `algebraLint` + `lintExtraFields` → `$schema` 戳——与 normalize 现有出口完全一致。
@@ -190,6 +193,8 @@ aggName   := 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median'
 3. **内联 computed 的 fid 生成 → name 短哈希(`gw_t_` 前缀)+ 单图冲突检测**。此机制只存在于 terse 展开这一新领地,不触碰既有行为(canonical 图表的 fid 永远显式携带,UI 内建字段仍走 `gw_` + nanoid)。同名同 fid 保证幂等;单图内同名不同表达式报错;跨图冲突理论存在但与现状(nanoid 随机)相比不劣化。表达式哈希方案(fid 随表达式变化)因破坏重命名稳定性被否。
 4. **投影往返标准 → 采纳 canonical 层等价**:`normalize(project(normalize(t))) ≡ normalize(t)`。这是测试标准而非运行时行为,不涉及兼容风险;shorthand 的多种等价写法不可能也不需要逐字往返。
 5. **mark 数组 / layer → 明确不做**。GW 的 `geoms` 是单值语义,layer 是全新的渲染能力而非语法问题,不在 DSL 层解决。terse 的 `mark` 保持单值;layered Vega-Lite spec 由 `detectSpecKind` 显式路由到 VL 路径并在能力边界处报错(不静默吞掉)。
+
+**Conformance 待办**(实现阶段发现):`log: { base: N }` 在 N ≠ 2/10 时映射到 op `'log'`(客户端已实现,但 UI 从不生成),SQL 后端与 conformance 套件从未覆盖此 op——上线前应在 conformance 套件加用例。
 
 ## 8. 与现有机制的关系速查
 

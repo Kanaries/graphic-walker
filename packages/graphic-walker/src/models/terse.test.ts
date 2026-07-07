@@ -323,3 +323,128 @@ describe('projectTerse', () => {
         expect(normalize(projected, dupMeta).encodings.rows[0].fid).toBe('a2');
     });
 });
+
+describe('review fixes (phase-3 single-agent review)', () => {
+    test('F1: count() with sort survives the roundtrip standard', () => {
+        const t: TerseSpec = { x: 'Region', y: 'count()', sort: 'descending' };
+        const canonical = normalize(t, META);
+        const projected = projectTerse(canonical, silent);
+        const reNormalized = normalize(projected, META);
+        const strip = ({ visId, ...rest }: Record<string, unknown>) => rest;
+        expect(strip(reNormalized as never)).toEqual(strip(canonical as never));
+    });
+
+    test('F1: object-form field strings are shorthand-parsed', () => {
+        const chart = normalize({ y: { field: 'sum(Sales)', sort: 'ascending' } } as TerseSpec, META);
+        expect(chart.encodings.rows[0]).toMatchObject({ fid: 'sales', aggName: 'sum', sort: 'ascending' });
+        expect(() => expandTerse({ y: { field: 'sum(Sales)', aggregate: 'mean' } } as TerseSpec, META, silent)).toThrow(/already carries a shorthand/);
+    });
+
+    test('F2: pie and geo specs without x/y route to terse and roundtrip', () => {
+        expect(detectSpecKind({ mark: 'arc', theta: 'sum(Sales)', color: 'Region' })).toBe('terse');
+        expect(detectSpecKind({ longitude: 'fid:sales', latitude: 'fid:profit' })).toBe('terse');
+        const t: TerseSpec = { mark: 'arc', theta: 'sum(Sales)', color: 'Region' };
+        const canonical = normalize(t, META);
+        expect(canonical.encodings.theta[0].fid).toBe('sales');
+        const reNormalized = normalize(projectTerse(canonical, silent), META);
+        const strip = ({ visId, ...rest }: Record<string, unknown>) => rest;
+        expect(strip(reNormalized as never)).toEqual(strip(canonical as never));
+    });
+
+    test('F2: projected specs carry the terse $schema stamp', () => {
+        const projected = projectTerse(normalize({ x: 'Region', y: 'sum(Sales)' } as TerseSpec, META), silent);
+        expect(projected.$schema).toBe(TerseSpecSchemaUrl);
+        expect(detectSpecKind(projected)).toBe('terse');
+    });
+
+    test('F3: timeUnit expands to a real dateTimeDrill computed field affecting the query', () => {
+        const chart = normalize({ x: { field: 'Order Date', timeUnit: 'month' }, y: 'sum(Sales)' } as TerseSpec, META);
+        const drill = chart.encodings.columns[0];
+        expect(drill.computed).toBe(true);
+        expect(drill.expression).toMatchObject({
+            op: 'dateTimeDrill',
+            params: [
+                { type: 'field', value: 'order_date' },
+                { type: 'value', value: 'month' },
+            ],
+        });
+        const workflow = chartToWorkflow(chart).workflow;
+        const transform = workflow.find((s) => s.type === 'transform') as { transform: { expression: { op: string } }[] } | undefined;
+        expect(transform?.transform.some((x) => x.expression.op === 'dateTimeDrill')).toBe(true);
+        const view = workflow.find((s) => s.type === 'view') as { query: { op: string; groupBy?: string[] }[] };
+        expect(view.query[0].groupBy).toContain(drill.fid);
+        // and the roundtrip preserves the drill
+        const reNormalized = normalize(projectTerse(chart, silent), META);
+        const strip = ({ visId, ...rest }: Record<string, unknown>) => rest;
+        expect(strip(reNormalized as never)).toEqual(strip(chart as never));
+    });
+
+    test('F3: display-only timeUnit (no drill expression) is dropped from projection with a warning', () => {
+        const warnings: string[] = [];
+        const canonical = normalize({ x: 'Region', y: 'sum(Sales)' } as TerseSpec, META);
+        const doctored = {
+            ...canonical,
+            encodings: {
+                ...canonical.encodings,
+                columns: [{ ...canonical.encodings.columns[0], timeUnit: 'month' as const }],
+            },
+        };
+        const projected = projectTerse(doctored, (m) => warnings.push(m));
+        expect(projected.x).toBe('Region');
+        expect(warnings.some((w) => w.includes('Display-only timeUnit'))).toBe(true);
+    });
+
+    test('F4: dimension aggregate override, limit 0, and runtime sort none roundtrip', () => {
+        const t1: TerseSpec = { x: { field: 'Region', aggregate: 'sum' }, y: 'sum(Sales)' };
+        const strip = ({ visId, ...rest }: Record<string, unknown>) => rest;
+        const c1 = normalize(t1, META);
+        expect(strip(normalize(projectTerse(c1, silent), META) as never)).toEqual(strip(c1 as never));
+
+        const t2: TerseSpec = { x: 'Region', y: 'sum(Sales)', limit: 0 };
+        const c2 = normalize(t2, META);
+        expect(c2.config.limit).toBe(0);
+        expect(strip(normalize(projectTerse(c2, silent), META) as never)).toEqual(strip(c2 as never));
+
+        const c3 = normalize({ y: { field: 'Sales', sort: 'none' } } as unknown as TerseSpec, META);
+        expect(c3.encodings.rows[0].sort).toBeUndefined();
+    });
+
+    test('F5: computed fid hash collisions are detected within a spec', () => {
+        // real djb2 collision pair found by brute force during review
+        expect(terseComputedFid('f1sq5ezgx7i')).toBe(terseComputedFid('f1wrzde9o54'));
+        expect(() =>
+            expandTerse(
+                {
+                    computed: [
+                        { name: 'f1sq5ezgx7i', expr: '"Sales" + 1' },
+                        { name: 'f1wrzde9o54', expr: '"Sales" + 2' },
+                    ],
+                } as TerseSpec,
+                META,
+                silent,
+            ),
+        ).toThrow(/hashes to fid/);
+    });
+
+    test('F6: a column literally named count() wins over the builtin with a warning', () => {
+        const trickyMeta: IMutField[] = [...META, { fid: 'cnt', name: 'count()', semanticType: 'quantitative', analyticType: 'measure' }];
+        const warnings: string[] = [];
+        const partial = expandTerse({ y: 'count()' } as TerseSpec, trickyMeta, (m) => warnings.push(m));
+        expect(partial.encodings?.rows?.[0].fid).toBe('cnt');
+        expect(warnings.some((w) => w.includes('literally named'))).toBe(true);
+    });
+
+    test('F6: aggregate expr on a field reference is rejected', () => {
+        expect(() => expandTerse({ y: { field: 'Sales', aggregate: 'expr' } } as unknown as TerseSpec, META, silent)).toThrow(
+            /not allowed on a field reference/,
+        );
+    });
+
+    test('F6: case-insensitive fallback no longer masquerades as the literal-name rule', () => {
+        const trickyMeta: IMutField[] = [...META, { fid: 'shout', name: 'SUM(SALES)', semanticType: 'quantitative', analyticType: 'measure' }];
+        const warnings: string[] = [];
+        // exact-name miss → shorthand reading wins (resolves Sales + sum), not the case-insensitive literal
+        const partial = expandTerse({ y: 'sum(Sales)' } as TerseSpec, trickyMeta, (m) => warnings.push(m));
+        expect(partial.encodings?.rows?.[0]).toMatchObject({ fid: 'sales', aggName: 'sum' });
+    });
+});

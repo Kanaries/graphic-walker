@@ -11,6 +11,7 @@ import {
     TerseFieldRef,
     TerseFilter,
     TerseSpec,
+    TerseSpecSchemaUrl,
 } from '../interfaces';
 import { newChart } from './visSpecHistory';
 import { getSQLItemAnalyticType, parseSQLExpr } from '../lib/sql';
@@ -21,7 +22,12 @@ type OnWarn = (message: string) => void;
 
 // Shorthand aggregates: IAggregator minus 'expr' (aggregate expressions have no
 // sensible shorthand syntax and must go through inline computed fields).
+type ShorthandAgg = Exclude<IAggregator, 'expr'>;
 const SHORTHAND_AGGS = new Set<IAggregator>(['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev', 'distinctCount']);
+
+function asShorthandAgg(aggName: string | undefined): ShorthandAgg | undefined {
+    return aggName !== undefined && SHORTHAND_AGGS.has(aggName as IAggregator) ? (aggName as ShorthandAgg) : undefined;
+}
 
 // terse channel key → canonical encoding channel
 const CHANNEL_MAP = {
@@ -100,6 +106,25 @@ class FieldIndex {
         }
     }
 
+    hasFid(fid: string): boolean {
+        return this.byFid.has(fid);
+    }
+
+    /**
+     * Exact-only lookup (name, then fid) with no case-insensitive fallback and no
+     * error; used by the literal-name-wins rule before the shorthand reading.
+     */
+    resolveExact(raw: string): IViewField | null {
+        const named = this.byName.get(raw);
+        if (named) {
+            if (named.length > 1) {
+                throw new Error(`Field name '${raw}' is ambiguous between fids [${named.map((f) => f.fid).join(', ')}]; reference it with a 'fid:' prefix.`);
+            }
+            return named[0];
+        }
+        return this.byFid.get(raw) ?? null;
+    }
+
     /**
      * Resolution order (docs/terse-spec-design.md §3): `fid:` prefix → exact name
      * (inline computed fields are in the same index) → exact fid → case-insensitive
@@ -164,6 +189,9 @@ function buildComputedFields(defs: TerseComputedField[], index: FieldIndex, pool
         }
         seen.set(def.name, definition);
         const fid = terseComputedFid(def.name);
+        if (index.hasFid(fid)) {
+            throw new Error(`Computed field '${def.name}' hashes to fid '${fid}', which is already taken by another field; rename the computed field.`);
+        }
         let field: IViewField;
         if (def.expr !== undefined) {
             let parsed;
@@ -214,31 +242,94 @@ function buildComputedFields(defs: TerseComputedField[], index: FieldIndex, pool
     return results;
 }
 
-function resolveRef(ref: TerseFieldRef, index: FieldIndex, onWarn: OnWarn): IViewField {
+/**
+ * Resolve a string reference: `fid:` prefix, then a field literally named the
+ * whole string (exact match only — this wins over the shorthand reading, with a
+ * warning), then the aggregate shorthand, then plain resolution.
+ */
+function resolveStringField(raw: string, index: FieldIndex, onWarn: OnWarn): { base: IViewField; aggregate?: IAggregator } {
+    if (raw.startsWith('fid:')) {
+        return { base: index.resolve(raw, onWarn) };
+    }
+    const shorthand = parseShorthand(raw);
+    if (shorthand.aggregate === undefined) {
+        return { base: index.resolve(raw, onWarn) };
+    }
+    const literal = index.resolveExact(raw);
+    if (literal) {
+        onWarn(`'${raw}' resolved to a field literally named '${raw}', not as the ${shorthand.aggregate} shorthand.`);
+        return { base: literal };
+    }
+    if (shorthand.field === '') {
+        if (shorthand.aggregate !== 'count') {
+            throw new Error(`Aggregate shorthand '${raw}' needs a field, e.g. '${shorthand.aggregate}(Sales)'.`);
+        }
+        return { base: index.resolve(`fid:${COUNT_FIELD_ID}`, onWarn) };
+    }
+    return { base: index.resolve(shorthand.field, onWarn), aggregate: shorthand.aggregate };
+}
+
+/**
+ * Mirror of the store's `createDateDrillField` action (visSpecHistory.ts): a terse
+ * `timeUnit` expands to a real dateTimeDrill computed field on the channel, so the
+ * drill affects the query group-by exactly like the UI drill — not just axis display.
+ */
+function createDrillField(base: IViewField, timeUnit: NonNullable<IViewField['timeUnit']>, aggName: IAggregator | undefined, onWarn: OnWarn): IViewField {
+    if (base.semanticType !== 'temporal') {
+        onWarn(`timeUnit '${timeUnit}' applied to non-temporal field '${base.name}' (${base.semanticType}); existing drill semantics parse values as dates.`);
+    }
+    const name = `${timeUnit}(${base.name})`;
+    const fid = terseComputedFid(name);
+    return {
+        fid,
+        name,
+        semanticType: 'temporal',
+        analyticType: base.analyticType,
+        aggName: aggName ?? 'sum',
+        computed: true,
+        timeUnit,
+        expression: {
+            op: 'dateTimeDrill',
+            as: fid,
+            params: [
+                { type: 'field', value: base.fid },
+                { type: 'value', value: timeUnit },
+                ...(base.offset != null ? [{ type: 'offset', value: base.offset } as const] : []),
+            ],
+        },
+    };
+}
+
+function resolveRef(ref: TerseFieldRef, index: FieldIndex, onWarn: OnWarn, onDrill?: (field: IViewField) => void): IViewField {
     let base: IViewField;
     let overrides: { aggregate?: IAggregator; sort?: 'ascending' | 'descending' | 'none'; timeUnit?: IViewField['timeUnit'] } = {};
     if (typeof ref === 'string') {
-        const shorthand = parseShorthand(ref);
-        if (shorthand.aggregate && shorthand.field === '') {
-            if (shorthand.aggregate !== 'count') {
-                throw new Error(`Aggregate shorthand '${ref}' needs a field, e.g. '${shorthand.aggregate}(Sales)'.`);
-            }
-            base = index.resolve(`fid:${COUNT_FIELD_ID}`, onWarn);
-        } else if (shorthand.aggregate) {
-            // A field whose literal name is the whole string wins over the shorthand reading.
-            try {
-                base = index.resolve(ref, () => void 0);
-                onWarn(`'${ref}' resolved to a field literally named '${ref}', not as ${shorthand.aggregate}(${shorthand.field}).`);
-            } catch {
-                base = index.resolve(shorthand.field, onWarn);
-                overrides.aggregate = shorthand.aggregate;
-            }
-        } else {
-            base = index.resolve(ref, onWarn);
-        }
+        const resolved = resolveStringField(ref, index, onWarn);
+        base = resolved.base;
+        overrides.aggregate = resolved.aggregate;
     } else {
-        base = index.resolve(ref.field, onWarn);
-        overrides = { aggregate: ref.aggregate, sort: ref.sort, timeUnit: ref.timeUnit };
+        // runtime JSON may carry 'expr' even though the type excludes it
+        if ((ref.aggregate as string) === 'expr') {
+            throw new Error(`Aggregate 'expr' is not allowed on a field reference ('${ref.field}'); use an inline computed field instead.`);
+        }
+        const resolved = resolveStringField(ref.field, index, onWarn);
+        if (resolved.aggregate !== undefined && ref.aggregate !== undefined) {
+            throw new Error(`'${ref.field}' already carries a shorthand aggregate; do not set 'aggregate' as well.`);
+        }
+        base = resolved.base;
+        // runtime JSON may still carry 'none' even though the type excludes it
+        const sort = (ref.sort as string) === 'none' ? undefined : ref.sort;
+        overrides = { aggregate: ref.aggregate ?? resolved.aggregate, sort, timeUnit: ref.timeUnit };
+    }
+    if (overrides.timeUnit) {
+        const drill = createDrillField(base, overrides.timeUnit, overrides.aggregate, onWarn);
+        // The UI appends drill fields to the dimensions/measures pool (datasetFields/utils.ts
+        // passes originChannel = 'dimensions' | 'measures'), which is where toWorkflow collects
+        // transform steps from — so the pool copy is what makes the drill affect the query.
+        onDrill?.(drill);
+        const channelCopy = { ...drill };
+        if (overrides.sort) channelCopy.sort = overrides.sort;
+        return channelCopy;
     }
     const field: IViewField = { ...base };
     if (overrides.aggregate) {
@@ -248,7 +339,6 @@ function resolveRef(ref: TerseFieldRef, index: FieldIndex, onWarn: OnWarn): IVie
         field.aggName = overrides.aggregate;
     }
     if (overrides.sort) field.sort = overrides.sort;
-    if (overrides.timeUnit) field.timeUnit = overrides.timeUnit;
     return field;
 }
 
@@ -280,11 +370,20 @@ export function expandTerse(spec: TerseSpec, meta: IMutField[], onWarn: OnWarn =
         measures: base.encodings.measures.concat(computedFields.filter((f) => f.analyticType === 'measure')),
     };
 
+    const drillFields = new Map<string, IViewField>();
+    const collectDrill = (field: IViewField) => {
+        if (!drillFields.has(field.fid)) drillFields.set(field.fid, field);
+    };
     for (const key of TERSE_CHANNEL_KEYS) {
         const value = spec[key];
         if (value === undefined) continue;
         const refs = Array.isArray(value) ? value : [value];
-        encodings[CHANNEL_MAP[key]] = refs.map((ref) => resolveRef(ref, index, onWarn));
+        encodings[CHANNEL_MAP[key]] = refs.map((ref) => resolveRef(ref, index, onWarn, collectDrill));
+    }
+    if (drillFields.size > 0) {
+        const drills = [...drillFields.values()];
+        encodings.dimensions = encodings.dimensions!.concat(drills.filter((f) => f.analyticType === 'dimension'));
+        encodings.measures = encodings.measures!.concat(drills.filter((f) => f.analyticType === 'measure'));
     }
 
     if (spec.filters) {
@@ -403,7 +502,14 @@ export function projectTerse(chart: IChart, onWarn: OnWarn = (msg) => console.wa
                     const level = field.expression.params.find((p) => p.type === 'value');
                     const baseField = baseParam ? poolByFid.get(baseParam.value as string) : undefined;
                     if (field.expression.op === 'dateTimeDrill' && baseField && level) {
-                        return { field: refName(baseField), timeUnit: level.value, ...(field.sort && field.sort !== 'none' ? { sort: field.sort } : {}) };
+                        const drillAgg = field.aggName !== 'sum' ? asShorthandAgg(field.aggName) : undefined;
+                        // Round-trips through expandTerse's drill expansion with identical query semantics.
+                        return {
+                            field: refName(baseField),
+                            timeUnit: level.value,
+                            ...(drillAgg ? { aggregate: drillAgg } : {}),
+                            ...(field.sort && field.sort !== 'none' ? { sort: field.sort } : {}),
+                        };
                     }
                     onWarn(`Computed field '${field.name}' (${field.expression.op}) cannot be expressed in a terse spec; skipped.`);
                     return null;
@@ -415,27 +521,36 @@ export function projectTerse(chart: IChart, onWarn: OnWarn = (msg) => console.wa
             }
             name = refName(field);
         }
-        const needsObject = (field.sort && field.sort !== 'none') || field.timeUnit;
-        const aggregate = field.analyticType === 'measure' && field.aggName && SHORTHAND_AGGS.has(field.aggName as IAggregator);
+        // A timeUnit without a drill expression is display-only formatting; terse timeUnit
+        // means a query-level drill, so emitting it would change computed data. Drop + warn.
+        if (field.timeUnit && !field.expression) {
+            onWarn(`Display-only timeUnit '${field.timeUnit}' on '${field.name}' cannot be expressed in a terse spec; dropped from the projection.`);
+        }
+        const needsObject = field.sort && field.sort !== 'none';
+        const aggregate = asShorthandAgg(field.aggName);
         if (needsObject) {
             return {
                 field: name,
-                ...(aggregate ? { aggregate: field.aggName as IAggregator } : {}),
-                ...(field.sort && field.sort !== 'none' ? { sort: field.sort } : {}),
-                ...(field.timeUnit ? { timeUnit: field.timeUnit } : {}),
+                ...(aggregate ? { aggregate } : {}),
+                sort: field.sort as 'ascending' | 'descending',
             };
         }
         if (field.fid === COUNT_FIELD_ID) return 'count()';
         if (aggregate) {
-            const shorthand = `${field.aggName}(${name})`;
+            if (field.analyticType !== 'measure') {
+                return { field: name, aggregate };
+            }
+            const shorthand = `${aggregate}(${name})`;
             const roundtrip = parseShorthand(shorthand);
-            if (roundtrip.aggregate === field.aggName && roundtrip.field === name) return shorthand;
-            return { field: name, aggregate: field.aggName as IAggregator };
+            if (roundtrip.aggregate === aggregate && roundtrip.field === name) return shorthand;
+            return { field: name, aggregate };
         }
         return name;
     };
 
-    const spec: TerseSpec = {};
+    // Stamped so the projected spec always routes back to the terse branch in
+    // detectSpecKind, whatever channels it happens to use.
+    const spec: TerseSpec = { $schema: TerseSpecSchemaUrl };
     if (chart.name && chart.name !== 'Chart') spec.name = chart.name;
     if (chart.config.geoms[0] && chart.config.geoms[0] !== 'auto') spec.mark = chart.config.geoms[0];
 
@@ -481,7 +596,7 @@ export function projectTerse(chart: IChart, onWarn: OnWarn = (msg) => console.wa
     if (computedDefs.size > 0) spec.computed = [...computedDefs.values()];
     if (chart.config.defaultAggregated === false) spec.aggregate = false;
     if (chart.layout.stack !== emptyVisualLayout.stack) spec.stack = chart.layout.stack;
-    if (chart.config.limit > 0) spec.limit = chart.config.limit;
+    if (chart.config.limit !== emptyVisualConfig.limit) spec.limit = chart.config.limit;
 
     const configRest: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(chart.config)) {

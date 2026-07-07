@@ -720,17 +720,20 @@ export interface PartialChart {
 export const TerseSpecSchemaUrl = 'https://graphic-walker.kanaries.net/tersespec_v1.json';
 
 /**
- * A field reference inside a TerseSpec. A plain string is resolved by name
- * (with optional aggregate shorthand like `'sum(Sales)'`, or a `'fid:'` prefix
- * to bypass name resolution); the object form carries per-channel overrides
- * and its `field` string is never shorthand-parsed.
+ * A field reference inside a TerseSpec. A plain string is resolved by name,
+ * with optional aggregate shorthand like `'sum(Sales)'` or a `'fid:'` prefix to
+ * bypass name resolution. The object form carries per-channel overrides; its
+ * `field` string accepts the same syntax (name / shorthand / `fid:` prefix),
+ * and setting `aggregate` alongside a shorthand is an error. `timeUnit` expands
+ * to a dateTimeDrill computed field — a query-level drill identical to the UI's
+ * drill, not just axis formatting.
  */
 export type TerseFieldRef =
     | string
     | {
           field: string;
-          aggregate?: IAggregator;
-          sort?: ISortMode;
+          aggregate?: Exclude<IAggregator, 'expr'>;
+          sort?: 'ascending' | 'descending';
           timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
       };
 
