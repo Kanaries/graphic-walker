@@ -448,3 +448,71 @@ describe('review fixes (phase-3 single-agent review)', () => {
         expect(partial.encodings?.rows?.[0]).toMatchObject({ fid: 'sales', aggName: 'sum' });
     });
 });
+
+describe('re-review fixes (N1/N2 and computed dependency chains)', () => {
+    const strip = ({ visId, ...rest }: Record<string, unknown>) => rest;
+    const roundtripEqual = (t: TerseSpec, meta = META) => {
+        const canonical = normalize(t, meta);
+        const projected = projectTerse(canonical, silent);
+        expect(strip(normalize(projected, meta) as never)).toEqual(strip(canonical as never));
+        return projected;
+    };
+
+    test('N1: a drill fid colliding with a computed field name is rejected', () => {
+        expect(() =>
+            expandTerse(
+                { computed: [{ name: 'month(Order Date)', expr: '"Sales" * 2' }], x: { field: 'Order Date', timeUnit: 'month' } } as TerseSpec,
+                META,
+                silent,
+            ),
+        ).toThrow(/hashes to fid/);
+    });
+
+    test('N2: channel references out of definition order still roundtrip deep-equal', () => {
+        const projected = roundtripEqual({
+            computed: [
+                { name: 'DimA', expr: '"Region"' },
+                { name: 'DimB', expr: '"Segment"' },
+            ],
+            x: 'DimB',
+            color: 'DimA',
+        } as TerseSpec);
+        expect(projected.computed?.map((c) => c.name).sort()).toEqual(['DimA', 'DimB']);
+    });
+
+    test('chains: bin-of-log referenced only at the outer level inlines its dependency', () => {
+        const projected = roundtripEqual({
+            computed: [
+                { name: 'LogSales', log: { field: 'Sales' } },
+                { name: 'LogBucket', bin: { field: 'LogSales', count: 4 } },
+            ],
+            x: 'LogBucket',
+            y: 'count()',
+        } as TerseSpec);
+        expect(projected.computed?.map((c) => c.name)).toEqual(expect.arrayContaining(['LogSales', 'LogBucket']));
+    });
+
+    test('chains: expr referencing a computed field by name inlines it', () => {
+        const projected = roundtripEqual({
+            computed: [
+                { name: 'Net', expr: '"Sales" * 0.85' },
+                { name: 'Big', expr: '"Net" * 2' },
+            ],
+            x: 'Region',
+            y: 'sum(Big)',
+        } as TerseSpec);
+        expect(projected.computed?.map((c) => c.name)).toEqual(expect.arrayContaining(['Net', 'Big']));
+        // dependency emitted before dependent so re-expansion resolves in order
+        const names = projected.computed?.map((c) => c.name) ?? [];
+        expect(names.indexOf('Net')).toBeLessThan(names.indexOf('Big'));
+    });
+
+    test('chains: drill on a computed temporal base inlines the base definition', () => {
+        const projected = roundtripEqual({
+            computed: [{ name: 'OD2', expr: '"Order Date"' }],
+            x: { field: 'OD2', timeUnit: 'year' },
+            y: 'sum(Sales)',
+        } as TerseSpec);
+        expect(projected.computed?.some((c) => c.name === 'OD2')).toBe(true);
+    });
+});

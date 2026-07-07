@@ -323,6 +323,11 @@ function resolveRef(ref: TerseFieldRef, index: FieldIndex, onWarn: OnWarn, onDri
     }
     if (overrides.timeUnit) {
         const drill = createDrillField(base, overrides.timeUnit, overrides.aggregate, onWarn);
+        // Same invariant as the inline-computed collision guard: a synthesized drill fid must
+        // not collide with any existing field (e.g. a computed field named 'month(Order Date)').
+        if (index.hasFid(drill.fid)) {
+            throw new Error(`Drill field '${drill.name}' hashes to fid '${drill.fid}', which is already taken by another field; rename the conflicting field.`);
+        }
         // The UI appends drill fields to the dimensions/measures pool (datasetFields/utils.ts
         // passes originChannel = 'dimensions' | 'measures'), which is where toWorkflow collects
         // transform steps from — so the pool copy is what makes the drill affect the query.
@@ -365,9 +370,13 @@ export function expandTerse(spec: TerseSpec, meta: IMutField[], onWarn: OnWarn =
     const poolFields = [...base.encodings.dimensions, ...base.encodings.measures];
     const computedFields = buildComputedFields(spec.computed ?? [], index, poolFields, onWarn);
 
+    // Pool append order is canonicalized by name so that the declaration order in a terse
+    // spec (which projection cannot reconstruct) does not leak into the canonical form.
+    const byName = (a: IViewField, b: IViewField) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+    const sortedComputed = [...computedFields].sort(byName);
     const encodings: Partial<DraggableFieldState> = {
-        dimensions: base.encodings.dimensions.concat(computedFields.filter((f) => f.analyticType === 'dimension')),
-        measures: base.encodings.measures.concat(computedFields.filter((f) => f.analyticType === 'measure')),
+        dimensions: base.encodings.dimensions.concat(sortedComputed.filter((f) => f.analyticType === 'dimension')),
+        measures: base.encodings.measures.concat(sortedComputed.filter((f) => f.analyticType === 'measure')),
     };
 
     const drillFields = new Map<string, IViewField>();
@@ -454,37 +463,80 @@ export function projectTerse(chart: IChart, onWarn: OnWarn = (msg) => console.wa
         return field.name;
     };
 
+    const poolByName = new Map<string, IViewField>();
+    for (const field of pools) {
+        if (typeof field.name === 'string' && !poolByName.has(field.name)) {
+            poolByName.set(field.name, field);
+        }
+    }
+
+    // Collect `ref` node names from a parsed SQL expression tree (generic walk keeps us
+    // independent of the pgsql-ast-parser node taxonomy).
+    const collectSqlRefNames = (node: unknown, out: Set<string>): void => {
+        if (Array.isArray(node)) {
+            node.forEach((item) => collectSqlRefNames(item, out));
+            return;
+        }
+        if (node && typeof node === 'object') {
+            const record = node as Record<string, unknown>;
+            if (record.type === 'ref' && typeof record.name === 'string') {
+                out.add(record.name);
+            }
+            Object.values(record).forEach((value) => collectSqlRefNames(value, out));
+        }
+    };
+
+    // Recursive so computed-on-computed chains (bin of a computed field, expr referencing a
+    // computed field by name, drill on a computed base) inline their dependencies too —
+    // otherwise the projected spec would reference definitions it does not carry.
+    const emitting = new Set<string>();
     const emitComputed = (field: IViewField): boolean => {
         const expression = field.expression;
         if (!expression) return true;
         if (field.fid === COUNT_FIELD_ID) return true;
-        const baseParam = expression.params.find((p) => p.type === 'field');
-        const baseField = baseParam ? poolByFid.get(baseParam.value as string) : undefined;
-        let def: TerseComputedField;
-        switch (expression.op) {
-            case 'expr': {
-                const sql = expression.params.find((p) => p.type === 'sql');
-                if (!sql) return false;
-                def = { name: field.name, expr: sql.value as string, analyticType: field.analyticType };
-                break;
+        if (computedDefs.has(field.name) || emitting.has(field.fid)) return true;
+        emitting.add(field.fid);
+        try {
+            const baseParam = expression.params.find((p) => p.type === 'field');
+            const baseField = baseParam ? poolByFid.get(baseParam.value as string) : undefined;
+            let def: TerseComputedField;
+            switch (expression.op) {
+                case 'expr': {
+                    const sql = expression.params.find((p) => p.type === 'sql');
+                    if (!sql) return false;
+                    const refNames = new Set<string>();
+                    try {
+                        collectSqlRefNames(parseSQLExpr(sql.value as string), refNames);
+                    } catch {
+                        return false;
+                    }
+                    for (const depName of refNames) {
+                        const dep = poolByName.get(depName);
+                        if (dep && (dep.computed || dep.expression) && !emitComputed(dep)) {
+                            return false;
+                        }
+                    }
+                    def = { name: field.name, expr: sql.value as string, analyticType: field.analyticType };
+                    break;
+                }
+                case 'bin':
+                    if (!baseField || !emitComputed(baseField)) return false;
+                    def = { name: field.name, bin: { field: refName(baseField), count: expression.num ?? 10 } };
+                    break;
+                case 'log':
+                case 'log2':
+                case 'log10':
+                    if (!baseField || !emitComputed(baseField)) return false;
+                    def = { name: field.name, log: { field: refName(baseField), base: expression.num ?? (expression.op === 'log2' ? 2 : 10) } };
+                    break;
+                default:
+                    return false;
             }
-            case 'bin':
-                if (!baseField) return false;
-                def = { name: field.name, bin: { field: refName(baseField), count: expression.num ?? 10 } };
-                break;
-            case 'log':
-            case 'log2':
-            case 'log10':
-                if (!baseField) return false;
-                def = { name: field.name, log: { field: refName(baseField), base: expression.num ?? (expression.op === 'log2' ? 2 : 10) } };
-                break;
-            default:
-                return false;
-        }
-        if (!computedDefs.has(field.name)) {
             computedDefs.set(field.name, def);
+            return true;
+        } finally {
+            emitting.delete(field.fid);
         }
-        return true;
     };
 
     const emitRef = (field: IViewField): TerseFieldRef | null => {
@@ -501,7 +553,7 @@ export function projectTerse(chart: IChart, onWarn: OnWarn = (msg) => console.wa
                     const baseParam = field.expression.params.find((p) => p.type === 'field');
                     const level = field.expression.params.find((p) => p.type === 'value');
                     const baseField = baseParam ? poolByFid.get(baseParam.value as string) : undefined;
-                    if (field.expression.op === 'dateTimeDrill' && baseField && level) {
+                    if (field.expression.op === 'dateTimeDrill' && baseField && level && emitComputed(baseField)) {
                         const drillAgg = field.aggName !== 'sum' ? asShorthandAgg(field.aggName) : undefined;
                         // Round-trips through expandTerse's drill expansion with identical query semantics.
                         return {
