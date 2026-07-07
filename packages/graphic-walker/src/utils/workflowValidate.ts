@@ -54,7 +54,11 @@ function expressionDeps(expression: IExpression): { fids: string[]; sqlRefs: str
  * @param fields the field pools that feed `toWorkflow` (dimensions + measures).
  * @param knownFields the dataset schema (`IMutField[]`-like). Field existence can only be
  * judged against the dataset — computed expressions may legitimately reference raw data
- * columns that are not in the chart pools (the executors read them from the raw rows).
+ * columns that are not in the chart pools (the executors read raw rows keyed by fid).
+ * Note the runtime asymmetry this pass mirrors: `type:'field'` params and pass-through SQL
+ * refs resolve by fid against pools ∪ schema, but SQL refs resolve BY NAME only through the
+ * pools (replaceFid never sees the schema) — a name-only reference to a schema column outside
+ * the pools fails loudly at runtime and is therefore reported as missing.
  * When omitted, the `missing-field` check is skipped and only the intrinsic structural
  * checks (cycles, duplicate fids) run.
  */
@@ -74,14 +78,16 @@ export function validateWorkflowFields(fields: readonly FieldLike[], knownFields
         knownFids.add(field.fid);
     }
 
-    // Same resolution dict as replaceFid (lib/sql.ts): lowercased (name ?? fid) → fid.
+    // Exact mirror of the runtime's replaceFid (lib/sql.ts): the dict is built from the POOLS
+    // only (processExpression passes allFields = pools), keyed by lowercased (name ?? fid),
+    // and a later field overwrites an earlier one on key collision (forEach + set = last-wins).
+    // A ref the dict cannot resolve passes through verbatim and is used as the raw column key,
+    // which works at runtime iff it is a real fid (rows are keyed by fid).
     const sqlDict = new Map<string, string>();
-    for (const field of [...fields, ...(knownFields ?? [])]) {
-        const key = (field.name ?? field.fid).toLowerCase();
-        if (!sqlDict.has(key)) {
-            sqlDict.set(key, field.fid);
-        }
+    for (const field of fields) {
+        sqlDict.set((field.name ?? field.fid).toLowerCase(), field.fid);
     }
+    const resolveSqlRef = (ref: string): string | undefined => sqlDict.get(ref.toLowerCase()) ?? (knownFids.has(ref) ? ref : undefined);
 
     const computed = fields.filter((f) => f.expression);
     const edges = new Map<string, string[]>();
@@ -98,7 +104,7 @@ export function validateWorkflowFields(fields: readonly FieldLike[], knownFields
             }
         }
         for (const ref of sqlRefs) {
-            const resolved = sqlDict.get(ref.toLowerCase());
+            const resolved = resolveSqlRef(ref);
             if (resolved === undefined) {
                 if (checkExistence) {
                     issues.push({ type: 'missing-field', fid: field.fid, missing: ref });
@@ -115,7 +121,7 @@ export function validateWorkflowFields(fields: readonly FieldLike[], knownFields
     // self-references are cycles of length one
     for (const field of computed) {
         const { fids, sqlRefs } = expressionDeps(field.expression!);
-        const selfBySql = sqlRefs.some((ref) => sqlDict.get(ref.toLowerCase()) === field.fid);
+        const selfBySql = sqlRefs.some((ref) => resolveSqlRef(ref) === field.fid);
         if (fids.includes(field.fid) || selfBySql) {
             issues.push({ type: 'cyclic-dependency', cycle: [field.fid, field.fid] });
         }

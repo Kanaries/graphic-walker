@@ -71,6 +71,26 @@ describe('validateWorkflowFields', () => {
     });
 });
 
+describe('review fixes: exact replaceFid mirroring', () => {
+    test('a SQL ref by fid of a schema column outside the pools is valid (runtime pass-through reads rows by fid)', () => {
+        const fields = [dim('region'), exprOf('e1', '"od_fid" + 1')];
+        expect(validateWorkflowFields(fields, [{ fid: 'od_fid', name: 'Order Date' }])).toEqual([]);
+    });
+
+    test('name collisions resolve last-wins like replaceFid, so no phantom cycle on duplicate names', () => {
+        // pipeline resolves "X" to b (last field named X), producing a valid DAG: c = b+1, a = c+1
+        const a: IViewField = { ...exprOf('a', '"c" + 1'), name: 'X' };
+        const b: IViewField = { ...mea('b'), name: 'X' };
+        const c = exprOf('c', '"X" + 1');
+        expect(validateWorkflowFields([a, b, c], [])).toEqual([]);
+    });
+
+    test('a SQL ref by NAME of a schema-only column is reported missing (replaceFid never sees the schema; runtime fails)', () => {
+        const fields = [dim('region'), exprOf('e1', '"Order Date" + 1')];
+        expect(validateWorkflowFields(fields, [{ fid: 'od_fid', name: 'Order Date' }])).toEqual([{ type: 'missing-field', fid: 'e1', missing: 'Order Date' }]);
+    });
+});
+
 describe('characterization: treeShake terminates on cycles but orders transforms unsatisfiably', () => {
     test('chartToWorkflow does not hang on a cyclic chart (the validator exists to catch this class beforehand)', () => {
         const a = exprOf('a', '"b" + 1');
