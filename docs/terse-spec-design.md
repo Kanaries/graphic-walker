@@ -150,7 +150,7 @@ interface TerseSpec {
 
 **为什么不做模糊匹配**:LLM 与人都会写错字段名,但静默容错会把错误图表当正确结果交付;显式报错 + 候选提示的纠错回路更短。
 
-**已知边界**(实现定稿):字面名恰为整个引用串的字段优先于 shorthand 解读(exact 匹配限定,大小写不敏感回退不参与此规则),`count()` 同样适用;数据列名字面为 `fid:xxx` 形式时无法按名引用,须用其自身 fid 引用(文档明示的限制);内联 computed 的 fid 哈希与既有 fid 冲突时报错(单图冲突检测)。
+**已知边界**(实现定稿):字面名恰为整个引用串的字段优先于 shorthand 解读(exact 匹配限定,大小写不敏感回退不参与此规则),`count()` 同样适用;数据列名字面为 `fid:xxx` 形式时无法按名引用,须用其自身 fid 引用(文档明示的限制);内联 computed 的 fid 哈希与既有 fid 冲突时报错(单图冲突检测,同样覆盖合成 drill 字段);**残留边界(LOW,终轮复核归档)**:投影一个含 UI 创建的 computed 字段(nanoid fid)且其显示名恰与 shorthand 文法冲突(如字面名为 `sum(Sales)`)的 canonical 图表时,`refName` 回退发射原始 fid,而内联定义在重新展开时以 `gw_t_` 哈希 fid 重建,导致该投影不可重新展开——仅影响对抗性命名的 UI computed 字段,terse 出身的图表免疫(不在往返标准量化范围内);若要闭合,对 computed 字段的 fid 回退改为发射 `fid:gw_t_<hash(name)>`。
 
 ## 4. 聚合 shorthand 文法
 
