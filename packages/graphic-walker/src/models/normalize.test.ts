@@ -244,4 +244,19 @@ describe('$schema forward compatibility', () => {
         const exported = store.exportCode();
         expect(JSON.stringify(exported)).not.toContain('$schema');
     });
+
+    test('applyChart does not leak the stamp into the undoable timeline or history exports', () => {
+        const store = new VizSpecStore(META);
+        store.applyChart(stamped);
+        expect(JSON.stringify(store.exportCurrentChart())).not.toContain('$schema');
+        expect(JSON.stringify(store.exportAllCharts())).not.toContain('$schema');
+        expect(JSON.stringify(store.exportCode())).not.toContain('$schema');
+        expect(store.exportCode()[0].encodings.columns).toEqual(stamped.encodings.columns);
+    });
+});
+
+describe('vega-lite layer detection', () => {
+    test('layered specs route to the vega-lite path instead of silently normalizing to an empty chart', () => {
+        expect(detectSpecKind({ layer: [{ mark: 'bar' }, { mark: 'line' }] })).toBe('vega-lite');
+    });
 });

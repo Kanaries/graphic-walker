@@ -174,7 +174,7 @@ aggName   := 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median'
 
 ## 6. 与 `normalize()` 的接入方式(第三阶段)
 
-- `detectSpecKind` 增加第一优先级规则:`$schema` 为 tersespec URL,或存在 terse 特征键(`x`/`y`/`mark`/`computed` 且无 `encodings`/`layout`)→ `'terse'`;
+- `detectSpecKind` 增加规则(**排在 vega-lite 判定之后**,避免与 VL unit spec 冲突):`$schema` 为 tersespec URL → `'terse'`;或同时满足 ① 存在 `x`/`y`/`computed`/`filters` 任一 terse 特征键、② 不含任何 VL 结构键(`mark` 单独出现不算 terse 特征,`{mark, encoding}` 是 VL)、③ 不含 `encodings`/`layout` → `'terse'`。纯 `{mark: 'bar'}` 无通道时维持现状路由到 vega-lite(空图语义一致);
 - `normalize()` switch 增加 `case 'terse': chart = expandTerse(input, meta)`,之后共用现有出口管线;
 - 新增 `project(chart: IChart, meta: IMutField[]): TerseSpec` 反向投影:遍历 channels/filters/folds 收集实际引用的字段,computed 字段内联为 `TerseComputedField`,未引用字段全部丢弃(有损,文档明示);`expr`/`bin`/`log` 之外的 expression op(dateTimeDrill 等)投影为对象形式的 `timeUnit`,paint 跳过并 warning;
 - `gen-schema` 管线新增 `tersespec_v1.json` 产物,`$schema` URL 指向它;

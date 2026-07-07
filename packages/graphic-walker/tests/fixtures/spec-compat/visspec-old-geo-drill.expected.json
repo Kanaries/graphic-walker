@@ -1,0 +1,201 @@
+{
+    "config": {
+        "defaultAggregated": true,
+        "geoms": [
+            "choropleth"
+        ],
+        "coordSystem": "geographic",
+        "limit": -1
+    },
+    "encodings": {
+        "dimensions": [
+            {
+                "fid": "province",
+                "name": "Province",
+                "semanticType": "nominal",
+                "analyticType": "dimension",
+                "geoRole": "none"
+            },
+            {
+                "fid": "gw_drill7",
+                "name": "month(Order Date)",
+                "semanticType": "temporal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "dateTimeDrill",
+                    "as": "gw_drill7",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "order_date"
+                        },
+                        {
+                            "type": "value",
+                            "value": "month"
+                        }
+                    ]
+                }
+            }
+        ],
+        "measures": [
+            {
+                "fid": "gdp",
+                "name": "GDP",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "sum"
+            },
+            {
+                "fid": "gw_log9",
+                "name": "log10(GDP)",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "mean",
+                "computed": true,
+                "expression": {
+                    "op": "log10",
+                    "as": "gw_log9",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "gdp"
+                        }
+                    ]
+                }
+            }
+        ],
+        "rows": [],
+        "columns": [],
+        "color": [
+            {
+                "fid": "gw_log9",
+                "name": "log10(GDP)",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "mean",
+                "computed": true,
+                "expression": {
+                    "op": "log10",
+                    "as": "gw_log9",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "gdp"
+                        }
+                    ]
+                }
+            }
+        ],
+        "opacity": [],
+        "size": [],
+        "shape": [],
+        "radius": [],
+        "theta": [],
+        "longitude": [],
+        "latitude": [],
+        "geoId": [
+            {
+                "fid": "province",
+                "name": "Province",
+                "semanticType": "nominal",
+                "analyticType": "dimension",
+                "geoRole": "none"
+            }
+        ],
+        "details": [
+            {
+                "fid": "gw_drill7",
+                "name": "month(Order Date)",
+                "semanticType": "temporal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "dateTimeDrill",
+                    "as": "gw_drill7",
+                    "params": [
+                        {
+                            "type": "field",
+                            "value": "order_date"
+                        },
+                        {
+                            "type": "value",
+                            "value": "month"
+                        }
+                    ]
+                }
+            }
+        ],
+        "filters": [],
+        "text": []
+    },
+    "layout": {
+        "showActions": false,
+        "showTableSummary": false,
+        "stack": "stack",
+        "interactiveScale": false,
+        "zeroScale": true,
+        "size": {
+            "mode": "auto",
+            "width": 320,
+            "height": 200
+        },
+        "format": {},
+        "geoKey": "iso_3166_2",
+        "resolve": {
+            "x": false,
+            "y": false,
+            "color": false,
+            "opacity": false,
+            "shape": false,
+            "size": false
+        },
+        "renderer": "vega-lite",
+        "geojson": {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "iso_3166_2": "CN-BJ"
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    116,
+                                    39.5
+                                ],
+                                [
+                                    116.8,
+                                    39.5
+                                ],
+                                [
+                                    116.8,
+                                    40.2
+                                ],
+                                [
+                                    116,
+                                    40.2
+                                ],
+                                [
+                                    116,
+                                    39.5
+                                ]
+                            ]
+                        ]
+                    }
+                }
+            ]
+        },
+        "geoUrl": {
+            "type": "TopoJSON",
+            "url": "https://example.com/cn-provinces.topo.json"
+        },
+        "scaleIncludeUnmatchedChoropleth": true
+    },
+    "visId": "gw-fixture-old-geo-drill",
+    "name": "Legacy Choropleth with Drill",
+    "$schema": "https://graphic-walker.kanaries.net/chartinfo.json"
+}

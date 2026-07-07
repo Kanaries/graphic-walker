@@ -18,7 +18,9 @@ import { algebraLint } from '../lib/gog';
 export type ISpecKind = 'chart' | 'vis-spec' | 'vega-lite' | 'partial-chart';
 
 // Structural keys that exist on Vega-Lite specs but never on IChart / IVisSpec / PartialChart.
-const VEGA_LITE_KEYS = ['mark', 'encoding', 'spec', 'concat', 'hconcat', 'vconcat'] as const;
+// `layer` is detected so layered specs fail loudly in VegaliteMapper territory instead of
+// silently normalizing into an empty default chart via the partial-chart path.
+const VEGA_LITE_KEYS = ['mark', 'encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat'] as const;
 
 // Keys of the deprecated IVisualConfig that IVisualConfigNew does not have. Real-world IVisSpec
 // exports always carry them because they were serialized from initVisualConfig()-filled configs;

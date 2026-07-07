@@ -20,7 +20,15 @@ import { DataStore } from '../src/store/dataStore';
 const DIR = path.join(__dirname, 'fixtures', 'spec-compat');
 const read = (name: string) => JSON.parse(fs.readFileSync(path.join(DIR, name), 'utf8'));
 
-const CHART_FIXTURES = ['visspec-old-full', 'visspec-old-sparse', 'chart-current-complex', 'chart-geographic', 'partial-minimal', 'special-chars'];
+const CHART_FIXTURES = [
+    'visspec-old-full',
+    'visspec-old-sparse',
+    'visspec-old-geo-drill',
+    'chart-current-complex',
+    'chart-geographic',
+    'partial-minimal',
+    'special-chars',
+];
 
 describe.each(CHART_FIXTURES)('chart fixture: %s', (name) => {
     const input = read(`${name}.input.json`);

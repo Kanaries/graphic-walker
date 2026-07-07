@@ -1,0 +1,87 @@
+{
+    "visId": "gw-fixture-old-geo-drill",
+    "name": "Legacy Choropleth with Drill",
+    "encodings": {
+        "dimensions": [
+            { "fid": "province", "name": "Province", "semanticType": "nominal", "analyticType": "dimension", "geoRole": "none" },
+            {
+                "fid": "gw_drill7",
+                "name": "month(Order Date)",
+                "semanticType": "temporal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "dateTimeDrill",
+                    "as": "gw_drill7",
+                    "params": [
+                        { "type": "field", "value": "order_date" },
+                        { "type": "value", "value": "month" }
+                    ]
+                }
+            }
+        ],
+        "measures": [
+            { "fid": "gdp", "name": "GDP", "semanticType": "quantitative", "analyticType": "measure", "aggName": "sum" },
+            {
+                "fid": "gw_log9",
+                "name": "log10(GDP)",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "mean",
+                "computed": true,
+                "expression": { "op": "log10", "as": "gw_log9", "params": [{ "type": "field", "value": "gdp" }] }
+            }
+        ],
+        "geoId": [{ "fid": "province", "name": "Province", "semanticType": "nominal", "analyticType": "dimension", "geoRole": "none" }],
+        "color": [
+            {
+                "fid": "gw_log9",
+                "name": "log10(GDP)",
+                "semanticType": "quantitative",
+                "analyticType": "measure",
+                "aggName": "mean",
+                "computed": true,
+                "expression": { "op": "log10", "as": "gw_log9", "params": [{ "type": "field", "value": "gdp" }] }
+            }
+        ],
+        "details": [
+            {
+                "fid": "gw_drill7",
+                "name": "month(Order Date)",
+                "semanticType": "temporal",
+                "analyticType": "dimension",
+                "computed": true,
+                "expression": {
+                    "op": "dateTimeDrill",
+                    "as": "gw_drill7",
+                    "params": [
+                        { "type": "field", "value": "order_date" },
+                        { "type": "value", "value": "month" }
+                    ]
+                }
+            }
+        ],
+        "filters": []
+    },
+    "config": {
+        "defaultAggregated": true,
+        "geoms": ["choropleth"],
+        "coordSystem": "geographic",
+        "stack": "stack",
+        "showTableSummary": false,
+        "limit": -1,
+        "geoKey": "iso_3166_2",
+        "geoUrl": { "type": "TopoJSON", "url": "https://example.com/cn-provinces.topo.json" },
+        "geojson": {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "iso_3166_2": "CN-BJ" },
+                    "geometry": { "type": "Polygon", "coordinates": [[[116.0, 39.5], [116.8, 39.5], [116.8, 40.2], [116.0, 40.2], [116.0, 39.5]]] }
+                }
+            ]
+        },
+        "scaleIncludeUnmatchedChoropleth": true
+    }
+}
