@@ -7,6 +7,7 @@ export * from './store/visualSpecStore';
 export { resolveChart, convertChart, parseChart } from './models/visSpecHistory';
 export { normalize, detectSpecKind } from './models/normalize';
 export type { ISpecKind } from './models/normalize';
+export { expandTerse, projectTerse, parseShorthand, terseComputedFid } from './models/terse';
 export { getGlobalConfig } from './config';
 export { DataSourceSegmentComponent } from './dataSource';
 export * from './models/visSpecHistory';

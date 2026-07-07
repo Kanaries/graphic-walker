@@ -1,8 +1,9 @@
-import { DraggableFieldState, IChart, IChartSchemaUrl, IMutField, IVisSpec, PartialChart } from '../interfaces';
+import { DraggableFieldState, IChart, IChartSchemaUrl, IMutField, IVisSpec, PartialChart, TerseSpec, TerseSpecSchemaUrl } from '../interfaces';
 import { fillChart, lintExtraFields, newChart, parseChart } from './visSpecHistory';
 import { uniqueId } from './utils';
 import { VegaliteMapper } from '../lib/vl2gw';
 import { algebraLint } from '../lib/gog';
+import { expandTerse } from './terse';
 
 /**
  * The kind of spec accepted by {@link normalize}:
@@ -13,14 +14,22 @@ import { algebraLint } from '../lib/gog';
  *   migration chain inside `parseChart`.
  * - `vega-lite`: a Vega-Lite-like spec. Routed through `VegaliteMapper`; requires `meta` to
  *   resolve field names, otherwise unresolved fields fall back to the count field.
+ * - `terse`: the human-authored TerseSpec authoring format (docs/terse-spec-design.md).
+ *   Expanded via `expandTerse`; requires `meta` to resolve field names.
  * - `partial-chart`: everything else — treated as `PartialChart` and completed with defaults.
  */
-export type ISpecKind = 'chart' | 'vis-spec' | 'vega-lite' | 'partial-chart';
+export type ISpecKind = 'chart' | 'vis-spec' | 'vega-lite' | 'terse' | 'partial-chart';
 
-// Structural keys that exist on Vega-Lite specs but never on IChart / IVisSpec / PartialChart.
-// `layer` is detected so layered specs fail loudly in VegaliteMapper territory instead of
-// silently normalizing into an empty default chart via the partial-chart path.
-const VEGA_LITE_KEYS = ['mark', 'encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat'] as const;
+// Structural keys that exist on Vega-Lite specs but never on IChart / IVisSpec / PartialChart /
+// TerseSpec. `layer` is detected so layered specs fail loudly in VegaliteMapper territory instead
+// of silently normalizing into an empty default chart via the partial-chart path. `mark` is NOT
+// in this list because TerseSpec shares it; a bare `mark` with no terse channel keys still routes
+// to vega-lite (see detectSpecKind).
+const VEGA_LITE_EXCLUSIVE_KEYS = ['encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat'] as const;
+
+// Top-level keys that exist on TerseSpec but never on IChart / IVisSpec / PartialChart
+// (canonical specs keep fields and filters inside `encodings`).
+const TERSE_TRIGGER_KEYS = ['x', 'y', 'computed', 'filters'] as const;
 
 // Keys of the deprecated IVisualConfig that IVisualConfigNew does not have. Real-world IVisSpec
 // exports always carry them because they were serialized from initVisualConfig()-filled configs;
@@ -50,11 +59,16 @@ const LEGACY_CONFIG_KEYS = [
 
 /**
  * Detect which input format a spec is in. The rules are ordered and explicit:
- * 1. a `$schema` pointing at vega.github.io, or any Vega-Lite structural key
- *    (`mark` / `encoding` / `spec` / `concat` / `hconcat` / `vconcat`) → `vega-lite`;
- * 2. a `layout` key → `chart` (same duck-typing as `parseChart` / `importCode`);
- * 3. a `config` carrying legacy-only keys (`stack`, `size`, `resolve`, …) → `vis-spec`;
- * 4. anything else → `partial-chart`.
+ * 1. a `$schema` pointing at vega.github.io → `vega-lite`; the tersespec URL → `terse`;
+ * 2. any Vega-Lite-exclusive structural key (`encoding` / `spec` / `layer` / `concat` /
+ *    `hconcat` / `vconcat`) → `vega-lite`;
+ * 3. any terse trigger key (`x` / `y` / `computed` / `filters`) without an `encodings`
+ *    key → `terse` (this runs before the `layout` rule so the canonical `layout`
+ *    escape hatch inside a terse spec does not shadow it);
+ * 4. a bare `mark` (shared key, no terse channels present) → `vega-lite`;
+ * 5. a `layout` key → `chart` (same duck-typing as `parseChart` / `importCode`);
+ * 6. a `config` carrying legacy-only keys (`stack`, `size`, `resolve`, …) → `vis-spec`;
+ * 7. anything else → `partial-chart`.
  */
 export function detectSpecKind(input: object): ISpecKind {
     if (input === null || typeof input !== 'object' || Array.isArray(input)) {
@@ -64,7 +78,16 @@ export function detectSpecKind(input: object): ISpecKind {
     if (typeof spec.$schema === 'string' && spec.$schema.includes('vega.github.io')) {
         return 'vega-lite';
     }
-    if (VEGA_LITE_KEYS.some((key) => key in spec)) {
+    if (spec.$schema === TerseSpecSchemaUrl) {
+        return 'terse';
+    }
+    if (VEGA_LITE_EXCLUSIVE_KEYS.some((key) => key in spec)) {
+        return 'vega-lite';
+    }
+    if (TERSE_TRIGGER_KEYS.some((key) => key in spec) && !('encodings' in spec)) {
+        return 'terse';
+    }
+    if ('mark' in spec) {
         return 'vega-lite';
     }
     if ('layout' in spec) {
@@ -89,7 +112,7 @@ export function detectSpecKind(input: object): ISpecKind {
  * @param input a full or partial IChart, a deprecated IVisSpec, or a Vega-Lite-like spec.
  * @param meta dataset fields; required to resolve field names for the Vega-Lite path.
  */
-export function normalize(input: IChart | IVisSpec | PartialChart | Record<string, unknown>, meta: IMutField[] = []): IChart {
+export function normalize(input: IChart | IVisSpec | PartialChart | TerseSpec | Record<string, unknown>, meta: IMutField[] = []): IChart {
     const kind = detectSpecKind(input);
     let chart: IChart;
     switch (kind) {
@@ -101,6 +124,9 @@ export function normalize(input: IChart | IVisSpec | PartialChart | Record<strin
             chart = VegaliteMapper(vl, allFields, uniqueId(), name);
             break;
         }
+        case 'terse':
+            chart = fillChart(expandTerse(input as TerseSpec, meta));
+            break;
         case 'chart':
         case 'vis-spec':
             chart = parseChart(input as IChart | IVisSpec);

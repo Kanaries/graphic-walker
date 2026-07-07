@@ -868,6 +868,7 @@ export class VizSpecStore {
     }
 }
 
+/** @deprecated Superseded by `normalize()` with a {@link TerseSpec}; will be removed in the next major version. */
 export function renderSpec(spec: Specification, meta: IMutField[], name: string, visId: string) {
     const chart = newChart(meta, name, visId);
     const fields = chart.encodings.dimensions.concat(chart.encodings.measures);

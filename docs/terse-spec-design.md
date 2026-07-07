@@ -175,9 +175,9 @@ aggName   := 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median'
 
 ## 6. 与 `normalize()` 的接入方式(第三阶段)
 
-- `detectSpecKind` 增加规则(**排在 vega-lite 判定之后**,避免与 VL unit spec 冲突):`$schema` 为 tersespec URL → `'terse'`;或同时满足 ① 存在 `x`/`y`/`computed`/`filters` 任一 terse 特征键、② 不含任何 VL 结构键(`mark` 单独出现不算 terse 特征,`{mark, encoding}` 是 VL)、③ 不含 `encodings`/`layout` → `'terse'`。纯 `{mark: 'bar'}` 无通道时维持现状路由到 vega-lite(空图语义一致);
+- `detectSpecKind` 探测顺序(实现定稿,2026-07-07):① vega `$schema` → vega-lite;② tersespec `$schema` → terse;③ VL 独占键(`encoding`/`spec`/`layer`/`concat` 系)→ vega-lite;④ terse 特征键(`x`/`y`/`computed`/`filters`)存在且无 `encodings` → terse(**排在 layout 规则之前**,使 terse 的 `layout` 逃生舱不会把 spec 误路由到 chart);⑤ 裸 `mark`(无 terse 通道)→ vega-lite(维持现状);⑥ `layout` → chart;⑦ legacy config 键 → vis-spec;⑧ 其余 → partial-chart;
 - `normalize()` switch 增加 `case 'terse': chart = expandTerse(input, meta)`,之后共用现有出口管线;
-- 新增 `project(chart: IChart, meta: IMutField[]): TerseSpec` 反向投影:遍历 channels/filters/folds 收集实际引用的字段,computed 字段内联为 `TerseComputedField`,未引用字段全部丢弃(有损,文档明示);`expr`/`bin`/`log` 之外的 expression op(dateTimeDrill 等)投影为对象形式的 `timeUnit`,paint 跳过并 warning;
+- 新增 `projectTerse(chart: IChart): TerseSpec` 反向投影(实现名,原设计名 `project` 因过于泛化改名):遍历 channels/filters 收集实际引用的字段(folds 经 config 逃生舱携带),computed 字段内联为 `TerseComputedField`,未引用字段全部丢弃(有损,文档明示);`dateTimeDrill` 投影为对象形式的 `timeUnit`;`paint`/`binCount`/`dateTimeFeature` computed 字段与 `regexp` 过滤器无法表达,跳过并 warning;字段名与 shorthand 文法冲突或重名时回退 `fid:` 前缀形式;非默认的 config/layout 残差经逃生舱携带以满足往返标准;
 - `gen-schema` 管线新增 `tersespec_v1.json` 产物,`$schema` URL 指向它;
 - 废弃 `Specification` 接口与 `renderSpec()`(标 `@deprecated`,下个 major 删除)。
 

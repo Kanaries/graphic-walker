@@ -23,6 +23,7 @@ export interface IRow {
 export type IAggregator = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev' | 'distinctCount' | 'expr';
 
 export type IEmbedMenuItem = 'data_interpretation' | 'data_view';
+/** @deprecated Superseded by {@link TerseSpec} + `normalize()`; will be removed in the next major version. */
 export interface Specification {
     position?: string[];
     color?: string[];
@@ -712,6 +713,76 @@ export interface PartialChart {
     visId?: string;
     name?: string;
     encodings?: Partial<DraggableFieldState>;
+    config?: Partial<IVisualConfigNew>;
+    layout?: Partial<IVisualLayout>;
+}
+
+export const TerseSpecSchemaUrl = 'https://graphic-walker.kanaries.net/tersespec_v1.json';
+
+/**
+ * A field reference inside a TerseSpec. A plain string is resolved by name
+ * (with optional aggregate shorthand like `'sum(Sales)'`, or a `'fid:'` prefix
+ * to bypass name resolution); the object form carries per-channel overrides
+ * and its `field` string is never shorthand-parsed.
+ */
+export type TerseFieldRef =
+    | string
+    | {
+          field: string;
+          aggregate?: IAggregator;
+          sort?: ISortMode;
+          timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
+      };
+
+/** Filter literals. `timeRange` takes epoch milliseconds only, word-for-word aligned with the `temporal range` rule in computation.md. */
+export type TerseFilter =
+    | { field: string; oneOf: any[] }
+    | { field: string; notIn: any[] }
+    | { field: string; range: [number | null, number | null] }
+    | { field: string; timeRange: [number | null, number | null] };
+
+/** An inline computed-field definition; exactly one of `expr` / `bin` / `log` must be set. */
+export interface TerseComputedField {
+    name: string;
+    expr?: string;
+    bin?: { field: string; count?: number };
+    log?: { field: string; base?: number };
+    analyticType?: IAnalyticType;
+}
+
+/**
+ * The human-authored terse spec (authoring format). Expanded into a canonical
+ * IChart by `normalize()`; never used for persistence. See docs/terse-spec-design.md.
+ */
+export interface TerseSpec {
+    $schema?: string;
+    /** chart type; maps to config.geoms[0], defaults to 'auto' */
+    mark?: string;
+    name?: string;
+    x?: TerseFieldRef | TerseFieldRef[];
+    y?: TerseFieldRef | TerseFieldRef[];
+    color?: TerseFieldRef;
+    opacity?: TerseFieldRef;
+    size?: TerseFieldRef;
+    shape?: TerseFieldRef;
+    text?: TerseFieldRef;
+    details?: TerseFieldRef | TerseFieldRef[];
+    theta?: TerseFieldRef;
+    radius?: TerseFieldRef;
+    longitude?: TerseFieldRef;
+    latitude?: TerseFieldRef;
+    geoId?: TerseFieldRef;
+    filters?: TerseFilter[];
+    computed?: TerseComputedField[];
+    /** → config.defaultAggregated, defaults to true */
+    aggregate?: boolean;
+    /** → layout.stack */
+    stack?: IStackMode;
+    /** → config.limit */
+    limit?: number;
+    /** applied to the last y measure */
+    sort?: 'ascending' | 'descending';
+    /** canonical escape hatch, shallow-merged last (highest priority) */
     config?: Partial<IVisualConfigNew>;
     layout?: Partial<IVisualLayout>;
 }
