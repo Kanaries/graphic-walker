@@ -207,6 +207,52 @@ describe('workflow computation conformance', () => {
         });
     });
 
+    test.each([
+        {
+            name: 'non-zero offset',
+            params: [
+                { type: 'offset' as const, value: 480 },
+                { type: 'displayOffset' as const, value: 0 },
+            ],
+        },
+        {
+            name: 'non-zero displayOffset',
+            params: [
+                { type: 'offset' as const, value: 0 },
+                { type: 'displayOffset' as const, value: 480 },
+            ],
+        },
+        {
+            name: 'different offset/displayOffset',
+            params: [
+                { type: 'offset' as const, value: 480 },
+                { type: 'displayOffset' as const, value: -300 },
+            ],
+        },
+    ])('dateTimeDrill day conforms with $name', async ({ params }) => {
+        await expectConformance(baseRows, {
+            workflow: [
+                {
+                    type: 'transform',
+                    transform: [
+                        {
+                            key: 'day',
+                            expression: {
+                                op: 'dateTimeDrill',
+                                as: 'day',
+                                params: [{ type: 'field', value: 'ts' }, { type: 'value', value: 'day' }, ...params],
+                            },
+                        },
+                    ],
+                },
+                {
+                    type: 'view',
+                    query: [{ op: 'raw', fields: ['id', 'category', 'segment', 'value', 'value2', 'ts', 'nullable', 'field (quoted)', '中文', 'day'] }],
+                },
+            ],
+        });
+    });
+
     test.each(['year', 'quarter', 'month', 'weekday', 'day', 'hour', 'minute', 'second'] as const)('dateTimeFeature %s conforms', async (level) => {
         await expectConformance(baseRows, {
             workflow: [
@@ -260,6 +306,52 @@ describe('workflow computation conformance', () => {
                 {
                     type: 'view',
                     query: [{ op: 'raw', fields: ['id', 'category', 'segment', 'value', 'value2', 'ts', 'nullable', 'field (quoted)', '中文', 'week'] }],
+                },
+            ],
+        });
+    });
+
+    test.each([
+        {
+            name: 'non-zero offset',
+            params: [
+                { type: 'offset' as const, value: 480 },
+                { type: 'displayOffset' as const, value: 0 },
+            ],
+        },
+        {
+            name: 'non-zero displayOffset',
+            params: [
+                { type: 'offset' as const, value: 0 },
+                { type: 'displayOffset' as const, value: 480 },
+            ],
+        },
+        {
+            name: 'different offset/displayOffset',
+            params: [
+                { type: 'offset' as const, value: 480 },
+                { type: 'displayOffset' as const, value: -300 },
+            ],
+        },
+    ])('dateTimeFeature hour conforms with $name', async ({ params }) => {
+        await expectConformance(baseRows, {
+            workflow: [
+                {
+                    type: 'transform',
+                    transform: [
+                        {
+                            key: 'hour',
+                            expression: {
+                                op: 'dateTimeFeature',
+                                as: 'hour',
+                                params: [{ type: 'field', value: 'ts' }, { type: 'value', value: 'hour' }, ...params],
+                            },
+                        },
+                    ],
+                },
+                {
+                    type: 'view',
+                    query: [{ op: 'raw', fields: ['id', 'category', 'segment', 'value', 'value2', 'ts', 'nullable', 'field (quoted)', '中文', 'hour'] }],
                 },
             ],
         });
@@ -338,6 +430,34 @@ describe('workflow computation conformance', () => {
                                 measures: [
                                     { field: 'value', agg: 'variance', asFieldKey: 'variance_value' },
                                     { field: 'value', agg: 'stdev', asFieldKey: 'stdev_value' },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        );
+    });
+
+    test.failing('DVG-012: mean/count/median retain null rows under client semantics', async () => {
+        await expectConformance(
+            [
+                { segment: 'A', value: 1 },
+                { segment: 'A', value: null },
+                { segment: 'A', value: 3 },
+            ],
+            {
+                workflow: [
+                    {
+                        type: 'view',
+                        query: [
+                            {
+                                op: 'aggregate',
+                                groupBy: ['segment'],
+                                measures: [
+                                    { field: 'value', agg: 'mean', asFieldKey: 'mean_value' },
+                                    { field: 'value', agg: 'count', asFieldKey: 'count_value' },
+                                    { field: 'value', agg: 'median', asFieldKey: 'median_value' },
                                 ],
                             },
                         ],

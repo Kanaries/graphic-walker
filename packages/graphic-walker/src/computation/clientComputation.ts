@@ -44,7 +44,7 @@ export const dataQueryClient = async (
             }
         }
     }
-    return res.slice(offset ?? 0, limit ? ((offset ?? 0) + limit) : undefined);
+    return res.slice(offset ?? 0, limit && limit > 0 ? (offset ?? 0) + limit : undefined);
 };
 
 export const getComputation = (rawData: IRow[]) => (payload: IDataQueryPayload) => dataQueryClient(rawData, payload.workflow, payload.offset, payload.limit)

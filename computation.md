@@ -17,7 +17,7 @@ export interface IDataQueryPayload {
 
 A payload is evaluated against an ordered array of rows. Each row is a record keyed by field id (`fid`). Workflow steps are evaluated strictly in array order. The output of each step becomes the input to the next step.
 
-`offset` and `limit` are applied after all workflow steps, including `sort`. `offset` defaults to `0`. A missing `limit`, `undefined`, `0`, or a negative UI sentinel means no upper bound. When `limit > 0`, the final slice is `[offset, offset + limit)`.
+`offset` and `limit` are applied after all workflow steps, including `sort`. `offset` defaults to `0`. A missing `limit`, `undefined`, `0`, or a negative UI sentinel means no upper bound. When `limit > 0`, the final slice is `[offset, offset + limit)`. Historical client builds used JavaScript truthiness for `limit`, which made `limit: -1` drop the final row; conforming implementations must use the `limit > 0` rule instead.
 
 Workflow steps may include multiple `view` steps. They cascade exactly like any other step: the rows produced by the first `view` step are the rows consumed by the next step.
 
@@ -187,14 +187,14 @@ Aggregators:
 -   `count`: count of rows in the group, including rows where the measured field is nullish.
 -   `max`: maximum by numeric comparison.
 -   `min`: minimum by numeric comparison.
--   `mean`: `sum(values) / rowCount`.
--   `median`: middle value after ascending numeric sort, or the average of the two middle values.
+-   `mean`: `sum(values) / rowCount`. The current phase-1 semantics keeps nullish rows in the value array; `null` participates through JavaScript numeric coercion, while `undefined` can produce `NaN`.
+-   `median`: middle value after ascending numeric sort, or the average of the two middle values. Nullish rows are retained under the same comparator; this means `null` sorts as a numeric zero in the current client implementation.
 -   `variance`: population variance, `mean((x - mean(values)) ** 2)`.
 -   `stdev`: square root of population variance.
 -   `distinctCount`: count of distinct values using SameValueZero semantics; `null` counts as one distinct value and `undefined` counts as one distinct value.
 -   `expr`: evaluate the SQL-like aggregate expression over the group. It must return a scalar; returning an array is an error.
 
-Aggregators other than `count`, `distinctCount`, and `expr` require numeric inputs. Their nullish behavior is defined by the operator formula above; implementations should converge on SQL-style null exclusion in a later spec revision, but current conformance records existing differences where they occur.
+Aggregators other than `count`, `distinctCount`, and `expr` require numeric inputs. The current normative null behavior follows the client executor for compatibility: nullish rows are not excluded before aggregation unless an operator explicitly says so. SQL-style null exclusion would be a future breaking semantic revision; current backend differences are recorded in `docs/computation-divergences.md`.
 
 ### `fold`
 
@@ -224,6 +224,6 @@ Nullish values sort by their string representation under the same comparator. Im
 
 ## 8. Coverage Notes
 
-The phase-1 conformance suite covers filter range, temporal range, one-of/not-in, regexp, transform bin/binCount/log/one/date drills/date features/expr, all aggregate operators, group-by nulls, raw, sort with limit/offset, special-character fields, numeric strings, empty data, single-row data, null-heavy data, a `toWorkflow()` generated pipeline, and multi-view cascading.
+The phase-1 conformance suite covers filter range, temporal range, one-of/not-in, regexp, transform bin/binCount/log/one/date drills/date features/expr, non-zero `offset`/`displayOffset` combinations, all aggregate operators, aggregate null handling, group-by nulls, raw, sort with limit/offset, special-character fields, numeric strings, empty data, single-row data, null-heavy data, a `toWorkflow()` generated pipeline, and multi-view cascading.
 
 Known gaps are recorded in `docs/computation-divergences.md`. The main not-yet-covered executable areas are `paint` and full expression-language conformance; both require a backend capability contract beyond the current parser behavior.

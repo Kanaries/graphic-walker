@@ -286,7 +286,7 @@ Client result: population variance `1` and stdev `1`.
 
 SQL result: generated SQL currently uses DuckDB aggregate behavior that does not match the client for these cases.
 
-Normative decision: client semantics, because `computation.md` defines population variance and stdev.
+Normative decision: client semantics, because `computation.md` defines population variance and stdev. This decision should be revisited before a broader backend-compatibility release because many SQL engines and BI tools default to sample variance/stdev.
 
 Test handling: `test.failing`.
 
@@ -316,7 +316,50 @@ Client result: nullish values are compared by `String(value)`.
 
 SQL result: DuckDB uses database null ordering unless the generated SQL makes null ordering explicit.
 
-Normative decision: client comparator semantics; SQL generation should make null position explicit.
+Normative decision: client comparator semantics; SQL generation should make null position explicit. This decision intentionally documents current behavior, but a future spec revision should consider explicit `NULLS FIRST` / `NULLS LAST` semantics instead of stringifying nullish values.
+
+Test handling: `test.failing`.
+
+## DVG-012: Aggregate Null Handling Differs For Common Aggregators
+
+Minimal payload:
+
+```json
+{
+    "workflow": [
+        {
+            "type": "view",
+            "query": [
+                {
+                    "op": "aggregate",
+                    "groupBy": ["segment"],
+                    "measures": [
+                        { "field": "value", "agg": "mean", "asFieldKey": "mean_value" },
+                        { "field": "value", "agg": "count", "asFieldKey": "count_value" },
+                        { "field": "value", "agg": "median", "asFieldKey": "median_value" }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
+
+Data:
+
+```json
+[
+    { "segment": "A", "value": 1 },
+    { "segment": "A", "value": null },
+    { "segment": "A", "value": 3 }
+]
+```
+
+Client result: `mean_value = 1.3333333333333333`, `count_value = 3`, `median_value = 1`.
+
+SQL result: `mean_value = 2`, `count_value = 2`, `median_value = 2`.
+
+Normative decision: client semantics for phase 1. `count` explicitly includes rows where the measured field is nullish; `mean` and `median` currently retain nullish rows and apply the client numeric comparator/coercion behavior. A later SQL-style null-exclusion revision would be breaking and should be made deliberately.
 
 Test handling: `test.failing`.
 
