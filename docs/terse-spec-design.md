@@ -1,6 +1,6 @@
-# TerseSpec 设计草案(v0,供设计评审)
+# TerseSpec 设计草案(v0)
 
-> 状态:第二阶段交付的设计文档,**不含实现**。实现排在第三阶段,接入方式见 §6。
+> 状态:设计评审已完成(2026-07-07),§7 开放问题已全部按"不改变既有行为"原则收敛,**可以开始第三阶段实现**。接入方式见 §6。
 > 前置阅读:`docs/dsl-design-review.md`(§1.4、§3.3 修订版)。
 > 核心原则:TerseSpec 是 **authoring format(为人写)**,canonical IChart 是**持久化与机器格式**。TerseSpec → `normalize()` → canonical 单向转换;canonical → TerseSpec 是可选的**有损投影**(丢弃未被图表引用的字段),持久化永远走 canonical。
 
@@ -34,12 +34,13 @@ type TerseFieldRef =
           timeUnit?: (typeof DATE_TIME_DRILL_LEVELS)[number];
       };
 
-/** 过滤器:三种规则的字面语法 */
+/** 过滤器:四种规则的字面语法 */
 type TerseFilter =
     | { field: string; oneOf: any[] }
     | { field: string; notIn: any[] }
     | { field: string; range: [number | null, number | null] }
-    | { field: string; timeRange: [string | number | null, string | number | null] };
+    /** 毫秒时间戳,与 computation.md §3 temporal range 逐字对齐;v0 不做字符串日期解析(见 §7 决议 2) */
+    | { field: string; timeRange: [number | null, number | null] };
 
 /** 内联 computed 字段定义(自包含的关键) */
 interface TerseComputedField {
@@ -180,13 +181,15 @@ aggName   := 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median'
 - `gen-schema` 管线新增 `tersespec_v1.json` 产物,`$schema` URL 指向它;
 - 废弃 `Specification` 接口与 `renderSpec()`(标 `@deprecated`,下个 major 删除)。
 
-## 7. 开放问题(留给设计评审)
+## 7. 开放问题决议(2026-07-07 评审收敛)
 
-1. **`sort` 的作用目标**:v0 定义为"最后一个 y 度量"(Tableau 心智),但对多度量 + facet 场景是否该支持 per-field sort 语法(对象形式已支持,扁平旋钮是否多余)?
-2. **`timeRange` 过滤器的字符串日期**:计算层规范(computation.md §3)规定 temporal range 只接受毫秒;terse 层接受 ISO 字符串意味着 normalize 要做解析并选定时区语义——用 `config.timezoneDisplayOffset` 还是 UTC?这是横跨两层 DSL 的语义决策,建议与 conformance 套件的时区用例一起定;
-3. **内联 computed 的 fid 生成**:短哈希方案保证幂等,但两张图内联同名不同表达式的字段会产生 fid 冲突的隐患(单图内可检测报错,跨图无法);替代方案是 fid = 全表达式哈希(更安全但 fid 不稳定,重命名表达式即换 fid,破坏 per-chart 覆盖)。v0 倾向 name 哈希 + 单图冲突检测,征求意见;
-4. **投影的往返测试标准**:`project(normalize(t)) ≡ t` 不可能严格成立(t 的 shorthand 有多种等价写法);建议标准为 `normalize(project(normalize(t))) ≡ normalize(t)`(canonical 层等价),是否足够?
-5. **多 y 字段 + mark 数组**:Vega-Lite 允许 layer 不同 mark;GW 的 geoms 是单值语义(`geoms[0]`)。terse 的 `mark` 是否要预留数组形式,还是明确宣布 layer 不在此层解决?
+> 决议原则(压倒一切):**本迭代不改变任何既有运行时行为;terse 的新语法只允许映射到既有语义,凡需要新语义的特性一律砍出 v0**。理由:本次迭代体量已经很大;且外部系统(如 gw-dsl-parser 及其下游)依赖当前行为,尤其时区语义历史上有过坑,任何"顺手改进"都可能破坏跨层兼容。
+
+1. **`sort` 的作用目标 → 维持 v0 定义,不扩展**。扁平旋钮 `sort` 是"最后一个 y 度量"的纯语法糖,对象形式的 per-field `sort` 直接映射到既有 `IViewField.sort`——两者都不引入新语义。多度量 + facet 的 per-field 扁平语法不做。
+2. **`timeRange` 字符串日期 → 砍出 v0,只接受毫秒时间戳**。计算层规范与 conformance 套件规定 temporal range 只收毫秒;ISO 字符串解析必须选定新的时区语义,属于新行为,且直接踩在 gw-dsl-parser 历史坑位上。v0 与 computation.md §3 逐字对齐;字符串日期支持若未来要做,须与 parser 层时区语义一起评审(横跨两层 DSL 的联合决策),并先在 conformance 套件加用例。
+3. **内联 computed 的 fid 生成 → name 短哈希(`gw_t_` 前缀)+ 单图冲突检测**。此机制只存在于 terse 展开这一新领地,不触碰既有行为(canonical 图表的 fid 永远显式携带,UI 内建字段仍走 `gw_` + nanoid)。同名同 fid 保证幂等;单图内同名不同表达式报错;跨图冲突理论存在但与现状(nanoid 随机)相比不劣化。表达式哈希方案(fid 随表达式变化)因破坏重命名稳定性被否。
+4. **投影往返标准 → 采纳 canonical 层等价**:`normalize(project(normalize(t))) ≡ normalize(t)`。这是测试标准而非运行时行为,不涉及兼容风险;shorthand 的多种等价写法不可能也不需要逐字往返。
+5. **mark 数组 / layer → 明确不做**。GW 的 `geoms` 是单值语义,layer 是全新的渲染能力而非语法问题,不在 DSL 层解决。terse 的 `mark` 保持单值;layered Vega-Lite spec 由 `detectSpecKind` 显式路由到 VL 路径并在能力边界处报错(不静默吞掉)。
 
 ## 8. 与现有机制的关系速查
 
