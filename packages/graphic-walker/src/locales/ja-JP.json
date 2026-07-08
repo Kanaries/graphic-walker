@@ -43,6 +43,36 @@
         "timezone_settings_desc": "異なるタイムゾーン間での時間ベースのデータの表示方法を設定します。",
         "customOffset_desc": "時間ベースのデータを表示するためのカスタムタイムゾーンを指定します。"
     },
+    "explain": {
+        "title": "データの説明",
+        "loading": "分析中...",
+        "empty": "顕著なパターンは見つかりませんでした",
+        "type": {
+            "extremeValue": "極端な値",
+            "contributingDimension": "寄与するディメンション",
+            "contributingMeasure": "寄与するメジャー",
+            "uniqueMark": "このマークの特徴"
+        },
+        "strength": {
+            "strong": "強",
+            "moderate": "中",
+            "weak": "弱"
+        },
+        "skip": {
+            "noMark": "データの説明を実行する前にマークを選択してください。",
+            "temporalMark": "時間マークの極端な値はまだ分析していません。",
+            "noSensitiveAgg": "選択されたメジャー集計は極端な値に反応しにくい形式です。",
+            "noCandidates": "比較に使える候補フィールドがありません。"
+        },
+        "extremeValue": {
+            "desc": "{{rowCount}} 件のうち {{outlierCount}} 件が極端な値です。これらを除くと、{{measure}} の {{agg}} は {{before}} から {{after}} に変わります（{{changePercent}}%）。",
+            "truncated": "{{measure}} のマークは {{rowCount}} 行を含み、平均と中央値に差があります。集計値を解釈する前に行の内容を確認してください。"
+        },
+        "uniqueMark": {
+            "countDesc": "このマークの {{dimension}} における構成は他のマークと異なります。{{markShare}}% が「{{topCategory}}」に入り、他のマークでは {{siblingShare}}% です。",
+            "measureDesc": "このマークの {{measure}} は、{{dimension}} 上で他のマークと異なる分布を示します（ヒューリスティック）。"
+        }
+    },
     "constant": {
         "row_count": "行数",
         "mea_key": "名",
@@ -305,20 +335,6 @@
         "range": {
             "start_value": "最小",
             "end_value": "最大"
-        }
-    },
-    "explain": {
-        "lg_than": "より大きい",
-        "sm_than": "より小さい",
-        "expection": "期待値",
-        "unrecognized": "未認識",
-        "score": "スコア",
-        "contains": "を含む",
-        "reason": {
-            "selection_dim_distribution": "次元のヒント",
-            "selection_mea_distribution": "尺度のヒント",
-            "children_major_factor": "主要要因",
-            "children_outlier": "外れ値"
         }
     },
     "actions": {

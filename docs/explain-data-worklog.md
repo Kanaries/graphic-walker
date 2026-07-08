@@ -100,3 +100,8 @@
 | 日期 | 角色 | 任务 | 记录 |
 |------|------|------|------|
 | 2026-07-07 | Kernel | — | 方案文档与本分工文档创建；等待方案评审后启动 K-1 |
+| 2026-07-08 | Executor | E-3 | 重写 `components/explainData/index.tsx`：接入 `explainMark()` 流式结果、按类型分组、卡片化展示、证据图/证据表渲染、空状态与加载状态；验证：`npx tsc --noEmit -p tsconfig.json`、`npx jest --silent` 通过。 |
+| 2026-07-08 | Executor | E-4 | 删除旧 Explain Data 路径文件与 `utils/normalization.ts`，移除无剩余引用的旧解释接口/谓词/检查辅助函数；验证：旧路径 grep 无输出，`npx tsc --noEmit -p tsconfig.json`、`npx jest --silent` 通过。 |
+| 2026-07-08 | Executor | E-5 | 为 en-US / zh-CN / ja-JP 补齐 `explain.*` 文案，描述保持关联性措辞；验证：locale JSON 解析通过，禁用因果词 grep 无输出。 |
+| 2026-07-08 | Executor | Verification | 阻塞项：按要求执行 `git status --short packages/graphic-walker/src/lib/explain/` 非空，显示该 frozen 目录下已有未跟踪文件；Executor 未修改该目录，需 Kernel 确认这些文件的归属后该检查才能为 empty。 |
+| 2026-07-08 | Executor | Verification | 补充：最终状态还显示 `packages/graphic-walker/src/lib/explain/index.ts` 有 tracked 修改；该文件属于 frozen 边界，Executor 未编辑，保留给 Kernel 处理。 |

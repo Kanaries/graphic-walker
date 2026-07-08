@@ -235,19 +235,6 @@ export interface IMeasure {
     op: IAggregator;
 }
 
-export interface IPredicate {
-    key: string;
-    type: 'discrete' | 'continuous';
-    range: Set<any> | [number, number];
-}
-
-export interface IExplainProps {
-    dataSource: IRow[];
-    predicates: IPredicate[];
-    viewFields: IField[];
-    metas: IField[];
-}
-
 /** @deprecated */
 export interface IDataSet {
     id: string;
