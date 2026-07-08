@@ -50,6 +50,114 @@ const TERSE_EXAMPLES: { name: string; description: string; spec: TerseSpec }[] =
             color: 'Vehicle_type',
         },
     },
+    {
+        name: 'Raw scatter (no aggregation)',
+        description: 'Set aggregate: false to plot every row as-is — one point per record instead of one mark per aggregated group.',
+        spec: {
+            mark: 'point',
+            x: 'Horsepower',
+            y: 'Price_in_thousands',
+            color: 'Vehicle_type',
+            aggregate: false,
+        },
+    },
+    {
+        name: 'count() and fid: prefix',
+        description:
+            'Two reference escape hatches: fid:col_0_64 bypasses name resolution (for renamed or generated fields), and count() maps to the built-in row-count measure with no field argument.',
+        spec: {
+            mark: 'bar',
+            x: 'fid:col_0_64',
+            y: 'count()',
+        },
+    },
+    {
+        name: 'Bin histogram',
+        description: 'computed.bin declares an inline equal-width bin field; reference it by name like any other field to build a histogram.',
+        spec: {
+            mark: 'bar',
+            x: 'FE_bin',
+            y: 'count()',
+            computed: [{ name: 'FE_bin', bin: { field: 'Fuel_efficiency' } }],
+        },
+    },
+    {
+        name: 'Log transform',
+        description:
+            'computed.log declares an inline log-transformed measure (base 2 or 10 only — the only bases the conformance suite covers); reference it by name and aggregate it like any measure.',
+        spec: {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'mean(log_sales)',
+            computed: [{ name: 'log_sales', log: { field: 'Sales_in_thousands', base: 10 } }],
+        },
+    },
+    {
+        name: 'Pie chart (theta + color)',
+        description: 'theta and color can stand in for x/y entirely — polar charts route through their own channels, no columns/rows needed.',
+        spec: {
+            mark: 'arc',
+            theta: 'sum(Sales_in_thousands)',
+            color: 'Vehicle_type',
+        },
+    },
+    {
+        name: 'Multi-field y (array form)',
+        description: 'A channel can take an array of field refs — y: [a, b] puts two measures on rows instead of one.',
+        spec: {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: ['mean(Price_in_thousands)', 'mean(Horsepower)'],
+        },
+    },
+    {
+        name: 'Filter trio: notIn / range / timeRange',
+        description:
+            'Three more filter shapes beyond oneOf: notIn excludes values, range bounds a quantitative field (either end nullable), and timeRange bounds a temporal field in epoch milliseconds only.',
+        spec: {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'mean(Price_in_thousands)',
+            filters: [
+                { field: 'Vehicle_type', notIn: ['Car'] },
+                { field: 'Price_in_thousands', range: [20, 40] },
+                { field: 'Latest_Launch', timeRange: [1262304000000, 1325376000000] },
+            ],
+        },
+    },
+    {
+        name: 'Normalized stacking',
+        description:
+            'stack: "normalize" is one added knob on the basic-bar-chart skeleton — same shape, but bars now show proportions that sum to 100%.',
+        spec: {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'sum(Sales_in_thousands)',
+            color: 'Vehicle_type',
+            stack: 'normalize',
+        },
+    },
+    {
+        name: 'Monthly drill',
+        description:
+            'timeUnit is not limited to year — any DATE_TIME_DRILL_LEVELS level works; month surfaces seasonality that a yearly drill would average away.',
+        spec: {
+            mark: 'line',
+            x: { field: 'Latest_Launch', timeUnit: 'month' },
+            y: 'sum(Sales_in_thousands)',
+        },
+    },
+    {
+        name: 'config/layout escape hatch',
+        description:
+            'config and layout are canonical passthroughs merged last with the highest priority — any IChart knob not surfaced as a flat terse key (like layout.showActions) reaches through untouched.',
+        spec: {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'mean(Price_in_thousands)',
+            layout: { showActions: true },
+        },
+    },
 ];
 
 const CHEAT_SHEET: [string, string][] = [
