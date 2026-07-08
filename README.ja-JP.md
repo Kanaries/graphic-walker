@@ -128,6 +128,31 @@ const YourChart: React.FC = props => {
 export default YourChart;
 ```
 
+### TerseSpec：手書きできるチャート記述文法 🆕
+
+Graphic Walker が内部で保存するチャート仕様（`IChart`）は、生成された id や明示的なチャネル・レイアウト項目を持つ、機械向けの冗長な形式です。**TerseSpec** はその上に載る手書き用の文法で、フィールドを*名前*で参照し、`normalize()` がどのコンポーネントでも受け付けられる完全なチャートに展開します：
+
+```typescript
+import { GraphicRenderer, normalize } from '@kanaries/graphic-walker';
+
+const YourChart = ({ data, fields }) => {
+    const chart = normalize(
+        {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'mean(Price_in_thousands)',
+            color: 'Vehicle_type',
+        },
+        fields
+    );
+    return <GraphicRenderer data={data} fields={fields} chart={[chart]} />;
+};
+```
+
+集計ショートハンド（`mean(...)` など）、インライン計算フィールド（`computed`）、行フィルタ（`filters`）、クエリレベルの日付ドリル（`timeUnit`）などをサポートします。TerseSpec は記述専用であり、永続化とエクスポート／インポートは従来どおり canonical 形式を使うため、保存済みのチャートには一切影響しません。
+
+👉 [playground](https://graphic-walker.kanaries.net/examples/TerseSpec) で対話的な文法サンプルを試せます。詳細な仕様は [docs/terse-spec-design.md](./docs/terse-spec-design.md) を参照してください。
+
 ### ローカルに試す (dev mode)
 ```bash
 # packages/graphic-walker

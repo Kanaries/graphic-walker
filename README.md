@@ -27,6 +27,7 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + Spatial visualization. (supports GeoJSON, TopoJSON)
 + Natural language / Chat interface. Ask question about your data!
 + A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
++ A hand-writable chart spec (TerseSpec): describe charts with field names and `agg(field)` shorthand, then expand with `normalize()`. See [TerseSpec](#tersespec-write-charts-by-hand-). 🆕
 
 https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
@@ -180,6 +181,46 @@ const YourChart: React.FC<IYourChartProps> = props => {
 export default YourChart;
 ```
 
+### TerseSpec: write charts by hand 🆕
+
+Charts in Graphic Walker are stored in a canonical spec format (`IChart`) that is verbose and machine-oriented: fields carry generated ids, and every channel, pool and layout knob is explicit. **TerseSpec** is a hand-writable authoring grammar on top of it — you reference fields by *name*, and `normalize()` expands the terse spec into a full canonical chart that any component accepts:
+
+```typescript
+import { GraphicRenderer, normalize } from '@kanaries/graphic-walker';
+
+const YourChart = ({ data, fields }) => {
+    const chart = normalize(
+        {
+            mark: 'bar',
+            x: 'Manufacturer',
+            y: 'mean(Price_in_thousands)',
+            color: 'Vehicle_type',
+        },
+        fields
+    );
+    return <GraphicRenderer data={data} fields={fields} chart={[chart]} />;
+};
+```
+
+The grammar at a glance:
+
+| Syntax | Meaning |
+| --- | --- |
+| `"x": "Manufacturer"` | reference a field by name |
+| `"y": "mean(Price_in_thousands)"` | aggregation shorthand: `sum` / `mean` / `count` / `median` / `min` / `max` / `variance` / `stdev` |
+| `"x": "fid:col_0_64"` | `fid:` prefix bypasses name resolution |
+| `{ "field", "aggregate", "sort", "timeUnit" }` | object form for per-channel options; `timeUnit` performs a real query-level date drill |
+| `"computed": [{ "name", "expr" \| "bin" \| "log" }]` | inline computed fields; quote refs inside `expr` like `'"Horsepower" / "Curb_weight"'` |
+| `"filters": [{ "field", "oneOf" \| "notIn" \| "range" \| "timeRange" }]` | row filters; `timeRange` takes epoch milliseconds |
+| `"aggregate": false` / `"stack"` / `"limit"` / `"sort"` | chart-level knobs |
+| `"config"` / `"layout"` | canonical escape hatches, merged last with the highest priority |
+
+`normalize(input, fields)` is a unified entry: besides TerseSpec it also accepts canonical charts, partial charts, legacy persisted specs and Vega-Lite-like specs, always returning a complete canonical `IChart` (stamped with `$schema`) and validating computed-field references along the way — an unknown field name fails fast with nearest-candidate suggestions.
+
+TerseSpec is authoring-only. Persistence and export/import keep using the canonical format, so nothing changes for previously saved charts.
+
+👉 Try the interactive grammar lessons in the [playground](https://graphic-walker.kanaries.net/examples/TerseSpec), read the full contract in [docs/terse-spec-design.md](./docs/terse-spec-design.md), or validate against the JSON Schema at `https://graphic-walker.kanaries.net/tersespec_v1.json`.
+
 ### try local (dev mode)
 ```bash
 # packages/graphic-walker
@@ -284,7 +325,7 @@ Array of fields(columns) of the data. Provide this prop with `data` prop togethe
 
 #### ~~`spec`: optional _{ [`Specification`](./packages/graphic-walker/src/interfaces.ts) }_~~
 
-Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop.
+Visualization specification. This is an internal prop, you should not provide this prop directly. If you want to control the visualization specification, you can use [`storeRef`](#storeref) prop. To describe charts programmatically, prefer [TerseSpec + `normalize()`](#tersespec-write-charts-by-hand-) with the `chart` prop.
 
 #### `i18nLang`: optional _{ `string = 'en-US'` }_
 
