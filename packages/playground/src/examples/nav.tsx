@@ -54,6 +54,10 @@ export const pages = [
     {
         comp: () => import('./pages/vlSpec'),
         name: 'VlSpec',
+    },
+    {
+        comp: () => import('./pages/terseSpec'),
+        name: 'TerseSpec',
     }
 ].map((Component) => ({
     name: Component.name,
