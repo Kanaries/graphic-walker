@@ -26,43 +26,73 @@ export interface IPublicData {
     key: string;
     title: string;
     desc?: string;
+    icon?: string;
+    rows?: number;
+    columns?: number;
 }
 
 export const PUBLIC_DATA_LIST: IPublicData[] = [
     {
         key: "CARS",
         title: "Cars",
+        icon: "🚗",
+        rows: 406,
+        columns: 9
     },
     {
         key: "STUDENTS",
-        title: "Students' Performance"
+        title: "Students' Performance",
+        icon: "🎓",
+        rows: 1000,
+        columns: 8
     },
     {
         key: "BIKE_SHARING",
-        title: "Bike Sharing"
+        title: "Bike Sharing",
+        icon: "🚲",
+        rows: 17379,
+        columns: 16
     },
     {
         key: "EARTHQUAKE",
-        title: "Earthquakes"
+        title: "Earthquakes",
+        icon: "🌋",
+        rows: 23412,
+        columns: 4
     },
     {
         key: "CAR_SALES",
-        title: "Car Sales"
+        title: "Car Sales",
+        icon: "🚙",
+        rows: 157,
+        columns: 16
     },
     {
         key: "COLLAGE",
-        title: "Collage"
+        title: "Colleges",
+        icon: "🏫",
+        rows: 1294,
+        columns: 16
     },
     {
         key: "KELPER",
-        title: "NASA Kelper"
+        title: "NASA Kepler",
+        icon: "🪐",
+        rows: 9218,
+        columns: 44
     },
     {
         key: 'BTC_GOLD',
-        title: "2022MCM Problem C: Trading Strategies"
+        title: "Bitcoin vs. Gold",
+        icon: "📈",
+        rows: 464,
+        columns: 7
     },
     {
         key: "TITANIC",
-        title: "Titanic"
+        title: "Titanic",
+        icon: "🚢",
+        rows: 712,
+        columns: 11
     }
 ]

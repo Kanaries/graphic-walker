@@ -167,19 +167,37 @@
         },
         "dialog": {
             "create_data_source": "新しいデータソース",
-            "data_types": "データソースの種類",
-            "text_file_data": "ローカルファイル",
-            "public_data": "公開データセット",
-            "data_source_type": "データソースの種類：{{sourceType}}",
+            "or_demo": "またはサンプルデータセットを試す",
             "file": {
-                "open": "開く...",
-                "submit": "提出する",
-                "dataset_name": "データセット名",
-                "choose_file": "データファイルを選択してください",
-                "get_start_desc": "データセットの作成を始めましょう。"
+                "drop_title": "CSV / JSON ファイルをここにドロップ",
+                "drop_desc": "またはクリックしてファイルを選択",
+                "charset": "文字コード",
+                "parsing": "{{file}} を読み込み中…",
+                "unsupported": "「{{file}}」は対応していない形式です。.csv または .json を選択してください。",
+                "read_error": "「{{file}}」を読み込めませんでした。有効な CSV / JSON ファイルか確認してください。"
             },
             "public": {
-                "submit": "提出する"
+                "loading": "読み込み中…",
+                "meta": "{{rows}} 行 · {{cols}} フィールド",
+                "fetch_error": "「{{name}}」の読み込みに失敗しました。接続を確認して、もう一度クリックしてください。",
+                "datasets": {
+                    "CARS": "400 以上の車種の燃費・馬力・重量・生産国データ。",
+                    "STUDENTS": "学生 1,000 人の試験成績と属性（性別・保護者の学歴など）。",
+                    "BIKE_SHARING": "自転車シェアの時間別利用数と天候・季節データ。",
+                    "EARTHQUAKE": "世界の地震 23,000 件超の位置とマグニチュード。",
+                    "CAR_SALES": "157 車種の販売台数・価格・エンジン仕様。",
+                    "COLLAGE": "米国大学の合格率・SAT スコア・学費データ。",
+                    "KELPER": "NASA ケプラー計画の系外惑星候補と軌道データ。",
+                    "BTC_GOLD": "ビットコインと金の日次価格。取引戦略の比較に。",
+                    "TITANIC": "タイタニック号乗客の生存・等級・年齢・運賃。"
+                }
+            },
+            "preview": {
+                "back": "戻る",
+                "dataset_name": "データセット名",
+                "meta": "{{rows}} 行 · {{cols}} フィールド",
+                "use_data": "このデータセットを使う",
+                "tip": "ヒント：インポート前に表ヘッダーの型アイコンをクリックして調整できます。"
             }
         }
     },

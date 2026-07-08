@@ -173,19 +173,37 @@
         },
         "dialog": {
             "create_data_source": "创建数据源",
-            "data_types": "选择类型",
-            "text_file_data": "导入文件",
-            "public_data": "公共数据集",
-            "data_source_type": "数据源类型：{{sourceType}}",
+            "or_demo": "或从示例数据集开始",
             "file": {
-                "open": "打开文件...",
-                "submit": "确认",
-                "dataset_name": "数据集名称",
-                "choose_file": "选择文件",
-                "get_start_desc": "创建一个数据集以开始分析"
+                "drop_title": "拖放 CSV 或 JSON 文件到这里",
+                "drop_desc": "或点击选择文件",
+                "charset": "文件编码",
+                "parsing": "正在读取 {{file}}…",
+                "unsupported": "不支持“{{file}}”的文件类型，请选择 .csv 或 .json 文件。",
+                "read_error": "无法读取“{{file}}”，请确认它是有效的 CSV 或 JSON 文件。"
             },
             "public": {
-                "submit": "确认"
+                "loading": "正在加载…",
+                "meta": "{{rows}} 行 · {{cols}} 个字段",
+                "fetch_error": "“{{name}}”加载失败，请检查网络后点击重试。",
+                "datasets": {
+                    "CARS": "400 多个经典车型：油耗、马力、重量与产地。",
+                    "STUDENTS": "1000 名学生的考试成绩，含性别、父母教育程度与备考情况。",
+                    "BIKE_SHARING": "共享单车每小时租借量，含天气、季节与节假日信息。",
+                    "EARTHQUAKE": "全球 2.3 万余次地震的位置与震级记录。",
+                    "CAR_SALES": "157 款车型的销量、价格与发动机参数。",
+                    "COLLAGE": "美国高校数据：录取率、SAT 分数与费用。",
+                    "KELPER": "NASA 开普勒系外行星候选体及轨道参数。",
+                    "BTC_GOLD": "比特币与黄金每日价格，适合对比交易策略。",
+                    "TITANIC": "泰坦尼克号乘客：生还情况、舱位、年龄与票价。"
+                }
+            },
+            "preview": {
+                "back": "返回",
+                "dataset_name": "数据集名称",
+                "meta": "{{rows}} 行 · {{cols}} 个字段",
+                "use_data": "使用此数据集",
+                "tip": "提示：导入前可点击表头中的字段类型图标进行调整。"
             }
         }
     },

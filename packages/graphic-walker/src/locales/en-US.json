@@ -178,19 +178,37 @@
         },
         "dialog": {
             "create_data_source": "New Data Source",
-            "data_types": "DataSource Type",
-            "text_file_data": "Local Files",
-            "public_data": "Public Datasets",
-            "data_source_type": "Data Source Type: {{sourceType}}",
+            "or_demo": "or try a sample dataset",
             "file": {
-                "open": "Open...",
-                "submit": "Submit",
-                "dataset_name": "Dataset Name",
-                "choose_file": "Choose a Data File",
-                "get_start_desc": "Get started by creating a dataset."
+                "drop_title": "Drop your CSV or JSON file here",
+                "drop_desc": "or click to browse your files",
+                "charset": "Charset",
+                "parsing": "Reading {{file}}…",
+                "unsupported": "\"{{file}}\" is not supported. Please choose a .csv or .json file.",
+                "read_error": "Could not read \"{{file}}\". Make sure it is a valid CSV or JSON file."
             },
             "public": {
-                "submit": "Submit"
+                "loading": "Loading…",
+                "meta": "{{rows}} rows · {{cols}} fields",
+                "fetch_error": "Failed to load \"{{name}}\". Check your connection and click the dataset to try again.",
+                "datasets": {
+                    "CARS": "Classic dataset of 400+ car models: MPG, horsepower, weight, and origin.",
+                    "STUDENTS": "Exam scores of 1,000 students with gender, parental education, and test prep.",
+                    "BIKE_SHARING": "Hourly bike rentals with weather, season, and holiday context.",
+                    "EARTHQUAKE": "23,000+ earthquakes worldwide with location and magnitude.",
+                    "CAR_SALES": "Sales, prices, and engine specs for 157 vehicle models.",
+                    "COLLAGE": "US colleges compared by admission rate, SAT scores, and cost.",
+                    "KELPER": "NASA Kepler exoplanet candidates with orbital measurements.",
+                    "BTC_GOLD": "Daily Bitcoin and gold prices for comparing trading strategies.",
+                    "TITANIC": "Titanic passengers: survival, class, age, and fare."
+                }
+            },
+            "preview": {
+                "back": "Back",
+                "dataset_name": "Dataset Name",
+                "meta": "{{rows}} rows · {{cols}} fields",
+                "use_data": "Use This Dataset",
+                "tip": "Tip: click a field's type icon in the table header to adjust it before importing."
             }
         }
     },
