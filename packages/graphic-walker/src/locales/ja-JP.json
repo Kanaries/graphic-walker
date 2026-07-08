@@ -47,6 +47,10 @@
         "title": "データの説明",
         "loading": "分析中...",
         "empty": "顕著なパターンは見つかりませんでした",
+        "overview": {
+            "all": "すべて",
+            "skippedNote": "{{count}} 件の分析をスキップしました"
+        },
         "type": {
             "extremeValue": "極端な値",
             "contributingDimension": "寄与するディメンション",

@@ -47,6 +47,10 @@
         "title": "数据解释",
         "loading": "正在分析...",
         "empty": "未发现显著模式",
+        "overview": {
+            "all": "全部",
+            "skippedNote": "{{count}} 项分析被跳过"
+        },
         "type": {
             "extremeValue": "极端值",
             "contributingDimension": "贡献维度",

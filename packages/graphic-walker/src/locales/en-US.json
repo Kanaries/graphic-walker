@@ -52,6 +52,10 @@
         "title": "Explain Data",
         "loading": "Analyzing...",
         "empty": "No significant patterns found",
+        "overview": {
+            "all": "All",
+            "skippedNote": "{{count}} analyses were skipped"
+        },
         "type": {
             "extremeValue": "Extreme values",
             "contributingDimension": "Contributing dimensions",

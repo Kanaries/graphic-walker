@@ -1,5 +1,6 @@
 import type { IRow, IViewField } from '../../../interfaces';
 import { getMeaAggKey } from '../../../utils';
+import { categoryLabel } from '../format';
 import { EXPLAIN_COUNT_KEY, complementaryDimensions, markLevelQuery } from '../queries';
 import { standardize } from '../stats/ridge';
 import {
@@ -64,10 +65,11 @@ export const contributingDimExplainer: IExplainer = {
             const baseX = baseFeatures(ctx, table);
             const { candidateKey } = markLevelQuery(ctx, candidate);
 
-            // global top categories by row count
+            // global top categories by row count (categoryLabel formats bin
+            // [lo, hi] tuples — raw float precision must not reach the UI)
             const globalCounts = new Map<string, number>();
             for (const row of rows) {
-                const cat = String(row[candidateKey]);
+                const cat = categoryLabel(row[candidateKey]);
                 globalCounts.set(cat, (globalCounts.get(cat) ?? 0) + (Number(row[EXPLAIN_COUNT_KEY]) || 0));
             }
             const nTrain = table.markKeys.length - 1;
@@ -82,7 +84,7 @@ export const contributingDimExplainer: IExplainer = {
             // per-mark rate of each top category
             const rateOf = (markRows: IRow[], cat: string, total: number): number => {
                 if (total <= 0) return 0;
-                const catCount = markRows.reduce((acc, r) => acc + (String(r[candidateKey]) === cat ? Number(r[EXPLAIN_COUNT_KEY]) || 0 : 0), 0);
+                const catCount = markRows.reduce((acc, r) => acc + (categoryLabel(r[candidateKey]) === cat ? Number(r[EXPLAIN_COUNT_KEY]) || 0 : 0), 0);
                 return catCount / total;
             };
             const rateCols = topCategories.map((cat) => table.rowsByMark.map((markRows, i) => rateOf(markRows, cat, table.counts[i])));

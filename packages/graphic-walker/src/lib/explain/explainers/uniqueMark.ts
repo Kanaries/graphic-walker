@@ -1,5 +1,6 @@
 import type { IRow, IViewField } from '../../../interfaces';
 import { getMeaAggKey } from '../../../utils';
+import { categoryLabel } from '../format';
 import { gTestPValue, jsDistance, laplaceSmooth, subtractMass } from '../stats/divergence';
 import { ADDITIVE_SAFE_AGGS, EXPLAIN_COUNT_KEY, complementaryDimensions, isMarkRow, markLevelQuery } from '../queries';
 import type { IExplainContext, IExplainer, IExplanation, IExplanationStrength } from '../types';
@@ -43,19 +44,11 @@ interface ICandidateComposition {
     siblingSums: Map<string, number[]>;
 }
 
-function formatCategory(value: unknown): string | number {
-    if (Array.isArray(value) && value.length === 2 && typeof value[0] === 'number') {
-        // bin transform emits [lo, hi]
-        return `${Number(value[0].toFixed(2))}–${Number(value[1].toFixed(2))}`;
-    }
-    return value as string | number;
-}
-
 function buildComposition(ctx: IExplainContext, rows: IRow[], candidateKey: string, measureFids: string[]): ICandidateComposition | null {
     type Bucket = { total: number; mark: number; totalSums: number[]; markSums: number[] };
     const buckets = new Map<string | number, Bucket>();
     for (const row of rows) {
-        const category = formatCategory(row[candidateKey]);
+        const category = row[candidateKey] === undefined || row[candidateKey] === null ? row[candidateKey] : categoryLabel(row[candidateKey]);
         if (category === undefined || category === null) continue;
         let bucket = buckets.get(category);
         if (!bucket) {

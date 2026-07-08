@@ -111,3 +111,6 @@
 | 2026-07-08 | Executor | E-8 | 新增 planSnapshot.test.ts：四类解释器的 workflow payload 快照 + B/D 计划相等断言 + 数值候选 bin 断言；两次运行快照稳定。 |
 | 2026-07-08 | Executor | E-9 | UI 接入 candidateLimit / candidateTruncation：截断提示 + "分析更多字段" 按钮（+20 重跑）；验证：jest 21 套件 277 测试、tsc 通过。 |
 | 2026-07-08 | Kernel | 收口 | M0~M2（阶段一~三）全部完成并提交；全量 jest + tsc + vite build 通过。阶段四（M3 产品层）待用户真实 UI 验收后再评估分工。E-8 的 DuckDB 真机对拍列为 M3 开放项。 |
+| 2026-07-08 | 用户 | 验收 | 纯前端模式功能通过；反馈两点：① 小数格式差（分箱标签浮点全精度泄漏）② 洞察罗列缺乏条理。 |
+| 2026-07-08 | Kernel | K-fmt | 新增 `lib/explain/format.ts`（formatMeasureValue / formatBinRange / categoryLabel，精度随量级与箱宽自适应），三个解释器的 descriptionParams 与图表标题全部改走该模块；回归测试锁定用户截图中的两个坏例。 |
+| 2026-07-08 | Executor | E-UI-2 | 重设计 Explain Data 概览/卡片布局：流式概览过滤 chip、标题行前置卡片（强度 pill + `字段 → 度量`）、图文横排（图 340px 左侧）、证据表数字走 formatMeasureValue、强度/分数排序、带计数的紧凑分组标题、跳过/错误收进单个折叠 footer；新增三语 overview 键。验证：locale JSON 单一 explain 键、tsc、jest 22 套件 283 测试通过。（Executor 沙箱无法写本文件，由 Kernel 代记） |

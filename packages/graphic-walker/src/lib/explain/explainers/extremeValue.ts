@@ -1,5 +1,6 @@
 import type { IRow, IViewField } from '../../../interfaces';
 import { getMeaAggKey } from '../../../utils';
+import { formatMeasureValue } from '../format';
 import { detectIqrOutliers, outlierImpact, type ISensitiveAggregator } from '../stats/quantile';
 import { EXPLAIN_COUNT_KEY, markPrescreenQuery, markRawQuery } from '../queries';
 import type { IExplainContext, IExplainer, IExplanation, IExplanationStrength } from '../types';
@@ -154,8 +155,8 @@ export const extremeValueExplainer: IExplainer = {
                     agg,
                     outlierCount: outlierIndices.length,
                     rowCount: values.length,
-                    before: aggregateAll,
-                    after: aggregateWithout,
+                    before: formatMeasureValue(aggregateAll),
+                    after: formatMeasureValue(aggregateWithout),
                     changePercent: Math.round(impact * 1000) / 10,
                 },
                 evidence: {
