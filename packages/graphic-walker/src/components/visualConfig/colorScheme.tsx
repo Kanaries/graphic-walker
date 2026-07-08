@@ -98,5 +98,10 @@ export const extractRGBA = (defaultValue: { r: number; g: number; b: number; a: 
 
     const arr = rgba.match(/\d+/g) || [];
     const [r = 0, g = 0, b = 0, a = 0] = arr.map(Number);
-    return { r, g, b, a };
+    return {
+        r: Number.isFinite(r) ? r : defaultValue.r,
+        g: Number.isFinite(g) ? g : defaultValue.g,
+        b: Number.isFinite(b) ? b : defaultValue.b,
+        a: Number.isFinite(a) ? a : defaultValue.a,
+    };
 };
