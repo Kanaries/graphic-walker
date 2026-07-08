@@ -62,7 +62,8 @@
             "noMark": "データの説明を実行する前にマークを選択してください。",
             "temporalMark": "時間マークの極端な値はまだ分析していません。",
             "noSensitiveAgg": "選択されたメジャー集計は極端な値に反応しにくい形式です。",
-            "noCandidates": "比較に使える候補フィールドがありません。"
+            "noCandidates": "比較に使える候補フィールドがありません。",
+            "noDerivableTarget": "ビューのメジャー集計はモデル化できません。sum、mean、count のみ対応しています。"
         },
         "extremeValue": {
             "desc": "{{rowCount}} 件のうち {{outlierCount}} 件が極端な値です。これらを除くと、{{measure}} の {{agg}} は {{before}} から {{after}} に変わります（{{changePercent}}%）。",
@@ -71,6 +72,16 @@
         "uniqueMark": {
             "countDesc": "このマークの {{dimension}} における構成は他のマークと異なります。{{markShare}}% が「{{topCategory}}」に入り、他のマークでは {{siblingShare}}% です。",
             "measureDesc": "このマークの {{measure}} は、{{dimension}} 上で他のマークと異なる分布を示します（ヒューリスティック）。"
+        },
+        "contributingDimension": {
+            "desc": "{{dimension}} の構成は、マーク全体で {{target}} を予測する助けになります（交差検証の適合度 +{{cvGainPercent}}%）。「{{topCategory}}」の割合が最も強く関連しています。"
+        },
+        "contributingMeasure": {
+            "desc": "{{candidate}}（マークごとに集計）は {{target}} の予測に役立ちます（交差検証の適合度 +{{cvGainPercent}}%）。関連を示すもので、因果ではありません。"
+        },
+        "truncation": {
+            "notice": "{{total}} 件の候補フィールドのうち {{scanned}} 件をスキャンしました。",
+            "more": "さらにフィールドを分析"
         }
     },
     "constant": {

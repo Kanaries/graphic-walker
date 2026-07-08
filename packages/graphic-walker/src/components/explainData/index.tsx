@@ -6,8 +6,18 @@ import { useTranslation } from 'react-i18next';
 import embed from 'vega-embed';
 import { VegaGlobalConfig, IThemeKey, IRow } from '../../interfaces';
 import { builtInThemes } from '../../vis/theme';
-import { defaultExplainers, explainMark, type IExplainContext, type IExplainerResult, type IExplanation, type IExplanationType } from '../../lib/explain';
+import {
+    candidateTruncation,
+    DEFAULT_CANDIDATE_LIMIT,
+    defaultExplainers,
+    explainMark,
+    type IExplainContext,
+    type IExplainerResult,
+    type IExplanation,
+    type IExplanationType,
+} from '../../lib/explain';
 import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/button';
 import { themeContext } from '@/store/theme';
 
 const EXPLANATION_ORDER: IExplanationType[] = ['extreme-value', 'contributing-dimension', 'contributing-measure', 'unique-mark'];
@@ -149,6 +159,8 @@ const ExplainData: React.FC<{
     const { timezoneDisplayOffset } = config;
     const [results, setResults] = useState<IExplainerResult[]>([]);
     const [loading, setLoading] = useState(false);
+    const [candidateLimit, setCandidateLimit] = useState(DEFAULT_CANDIDATE_LIMIT);
+    const selectedMarkKey = JSON.stringify(toJS(selectedMarkObject));
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
@@ -160,9 +172,17 @@ const ExplainData: React.FC<{
     const { t } = useTranslation();
 
     useEffect(() => {
+        setCandidateLimit(DEFAULT_CANDIDATE_LIMIT);
+    }, [selectedMarkKey, showInsightBoard]);
+
+    const ctx = useMemo<IExplainContext>(() => {
+        const selectedMark = JSON.parse(selectedMarkKey) as IExplainContext['selectedMark'];
+        return { allFields, viewDimensions, viewMeasures, viewFilters, selectedMark, timezoneDisplayOffset, candidateLimit };
+    }, [allFields, candidateLimit, selectedMarkKey, timezoneDisplayOffset, viewDimensions, viewFilters, viewMeasures]);
+
+    useEffect(() => {
         let cancelled = false;
-        const selectedMark = toJS(selectedMarkObject) as IExplainContext['selectedMark'];
-        if (!showInsightBoard || Object.keys(selectedMark).length === 0) {
+        if (!showInsightBoard || Object.keys(ctx.selectedMark).length === 0) {
             setResults([]);
             setLoading(false);
             return () => {
@@ -170,7 +190,6 @@ const ExplainData: React.FC<{
             };
         }
 
-        const ctx = { allFields, viewDimensions, viewMeasures, viewFilters, selectedMark, timezoneDisplayOffset };
         setResults([]);
         setLoading(true);
 
@@ -188,7 +207,7 @@ const ExplainData: React.FC<{
         return () => {
             cancelled = true;
         };
-    }, [allFields, computationFunction, selectedMarkObject, showInsightBoard, timezoneDisplayOffset, viewDimensions, viewFilters, viewMeasures]);
+    }, [computationFunction, ctx, showInsightBoard]);
 
     const resultsByType = useMemo(() => {
         return new Map(results.map((result) => [result.explainer, result]));
@@ -196,6 +215,8 @@ const ExplainData: React.FC<{
 
     const hasExplanations = results.some((result) => result.explanations.length > 0);
     const showEmpty = !loading && results.length > 0 && !hasExplanations;
+    const trunc = candidateTruncation(ctx);
+    const showTruncation = !loading && results.length > 0 && trunc.truncated;
 
     return (
         <Dialog
@@ -204,6 +225,7 @@ const ExplainData: React.FC<{
                 vizStore.setShowInsightBoard(false);
                 setResults([]);
                 setLoading(false);
+                setCandidateLimit(DEFAULT_CANDIDATE_LIMIT);
             }}
         >
             <DialogContent className="lg:w-[960px]" containerClassName="p-0">
@@ -243,6 +265,14 @@ const ExplainData: React.FC<{
                         <div className="flex items-center gap-2 border-t px-6 py-3 text-xs text-muted-foreground">
                             <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                             <span>{t('explain.loading')}</span>
+                        </div>
+                    )}
+                    {showTruncation && (
+                        <div className="flex items-center justify-between gap-3 border-t px-6 py-3 text-xs text-muted-foreground">
+                            <span>{t('explain.truncation.notice', { scanned: trunc.scanned, total: trunc.total })}</span>
+                            <Button variant="outline" size="sm" onClick={() => setCandidateLimit((limit) => limit + 20)}>
+                                {t('explain.truncation.more')}
+                            </Button>
                         </div>
                     )}
                 </div>

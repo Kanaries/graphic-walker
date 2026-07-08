@@ -26,16 +26,30 @@ export const QUANT_BIN_NUM = 10;
 /** measure aggregators whose mass composition is meaningful for D/B class analysis */
 export const ADDITIVE_SAFE_AGGS = new Set(['sum', 'mean', 'count']);
 
-/**
- * Candidate dimensions for composition-based explainers: every dimension
- * field not in the view. Temporal candidates are excluded for now (drill
- * granularity selection is an open question, worklog §6.3).
- */
-export function complementaryDimensions(ctx: IExplainContext): IViewField[] {
+export const DEFAULT_CANDIDATE_LIMIT = 20;
+
+function allCandidateDimensions(ctx: IExplainContext): IViewField[] {
     const inView = new Set(ctx.viewDimensions.map((f) => f.fid));
     return ctx.allFields.filter(
         (f) => f.analyticType === 'dimension' && !inView.has(f.fid) && !SPECIAL_FIDS.has(f.fid) && f.semanticType !== 'temporal'
     );
+}
+
+/**
+ * Candidate dimensions for composition-based explainers: every dimension
+ * field not in the view, capped at ctx.candidateLimit (wide tables would
+ * otherwise trigger one query per field). Temporal candidates are excluded
+ * for now (drill granularity selection is an open question, worklog §6.3).
+ */
+export function complementaryDimensions(ctx: IExplainContext): IViewField[] {
+    return allCandidateDimensions(ctx).slice(0, ctx.candidateLimit ?? DEFAULT_CANDIDATE_LIMIT);
+}
+
+/** truncation info so the UI can say "N of M fields scanned" — no silent caps */
+export function candidateTruncation(ctx: IExplainContext): { scanned: number; total: number; truncated: boolean } {
+    const total = allCandidateDimensions(ctx).length;
+    const scanned = Math.min(total, ctx.candidateLimit ?? DEFAULT_CANDIDATE_LIMIT);
+    return { scanned, total, truncated: scanned < total };
 }
 
 /** transform entries for all computed fields the queries may reference */

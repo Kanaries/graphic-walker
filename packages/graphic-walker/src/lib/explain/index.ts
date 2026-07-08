@@ -1,5 +1,6 @@
 export * from './types';
 export { explainMark, explainMarkAll } from './engine';
+export { candidateTruncation, DEFAULT_CANDIDATE_LIMIT } from './queries';
 export { extremeValueExplainer } from './explainers/extremeValue';
 export { uniqueMarkExplainer } from './explainers/uniqueMark';
 export { contributingDimExplainer } from './explainers/contributingDim';

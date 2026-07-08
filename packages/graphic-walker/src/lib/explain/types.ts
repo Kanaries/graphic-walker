@@ -29,6 +29,12 @@ export interface IExplainContext {
     /** the clicked mark: view-dimension fid → value */
     selectedMark: Record<string, string | number>;
     timezoneDisplayOffset?: number;
+    /**
+     * cap on candidate (unvisualized) dimensions scanned per run; defaults
+     * to DEFAULT_CANDIDATE_LIMIT. UI raises it for "analyze more fields".
+     * No silent truncation: read `candidateTruncation(ctx)` to tell users.
+     */
+    candidateLimit?: number;
 }
 
 export interface IExplanationEvidence {

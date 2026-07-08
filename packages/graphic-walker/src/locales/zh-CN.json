@@ -62,7 +62,8 @@
             "noMark": "请先选择一个标记再运行数据解释。",
             "temporalMark": "暂不对时间标记分析极端值。",
             "noSensitiveAgg": "所选度量聚合对极端值不敏感。",
-            "noCandidates": "没有可用于比较的候选字段。"
+            "noCandidates": "没有可用于比较的候选字段。",
+            "noDerivableTarget": "无法对此视图度量的聚合建模；仅支持 sum、mean 和 count。"
         },
         "extremeValue": {
             "desc": "{{rowCount}} 条记录中有 {{outlierCount}} 条是极端值；移除这些记录后，{{measure}} 的 {{agg}} 从 {{before}} 变为 {{after}}（{{changePercent}}%）。",
@@ -71,6 +72,16 @@
         "uniqueMark": {
             "countDesc": "此标记在 {{dimension}} 上的构成与其他标记不同：{{markShare}}% 属于“{{topCategory}}”，其他标记为 {{siblingShare}}%。",
             "measureDesc": "此标记的 {{measure}} 在 {{dimension}} 上的分布与其他标记不同（启发式）。"
+        },
+        "contributingDimension": {
+            "desc": "{{dimension}} 的构成有助于预测各标记上的 {{target}}（交叉验证拟合度 +{{cvGainPercent}}%）；“{{topCategory}}”的占比关联最明显。"
+        },
+        "contributingMeasure": {
+            "desc": "{{candidate}}（按标记聚合）有助于预测 {{target}}（交叉验证拟合度 +{{cvGainPercent}}%）。这是关联，不代表因果。"
+        },
+        "truncation": {
+            "notice": "已扫描 {{scanned}} / {{total}} 个候选字段。",
+            "more": "分析更多字段"
         }
     },
     "constant": {

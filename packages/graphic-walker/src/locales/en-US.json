@@ -67,7 +67,8 @@
             "noMark": "Select a mark before running Explain Data.",
             "temporalMark": "Temporal marks are not analyzed for extreme values yet.",
             "noSensitiveAgg": "The selected measure aggregation is not sensitive to extreme values.",
-            "noCandidates": "No eligible fields were available for comparison."
+            "noCandidates": "No eligible fields were available for comparison.",
+            "noDerivableTarget": "The view measure's aggregation cannot be modeled; only sum, mean, and count are supported."
         },
         "extremeValue": {
             "desc": "{{outlierCount}} of {{rowCount}} records are extreme values; removing them changes {{agg}} of {{measure}} from {{before}} to {{after}} ({{changePercent}}%).",
@@ -76,6 +77,16 @@
         "uniqueMark": {
             "countDesc": "This mark's composition over {{dimension}} differs from other marks: {{markShare}}% falls in \"{{topCategory}}\" vs {{siblingShare}}% elsewhere.",
             "measureDesc": "This mark's {{measure}} mass is distributed differently over {{dimension}} than other marks (heuristic)."
+        },
+        "contributingDimension": {
+            "desc": "The composition of {{dimension}} helps predict {{target}} across marks (cross-validated fit +{{cvGainPercent}}%); the share of \"{{topCategory}}\" is most associated."
+        },
+        "contributingMeasure": {
+            "desc": "{{candidate}} (aggregated per mark) helps predict {{target}} (cross-validated fit +{{cvGainPercent}}%). Association, not causation."
+        },
+        "truncation": {
+            "notice": "Scanned {{scanned}} of {{total}} candidate fields.",
+            "more": "Analyze more fields"
         }
     },
     "constant": {

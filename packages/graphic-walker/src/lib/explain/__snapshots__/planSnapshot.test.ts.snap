@@ -1,0 +1,292 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`explain plan snapshots contributing-dimension workflow payload stays stable: contributing-dimension 1`] = `
+[
+  {
+    "workflow": [
+      {
+        "query": [
+          {
+            "groupBy": [
+              "region",
+              "channel",
+            ],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "sales_sum",
+                "field": "sales",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+  {
+    "workflow": [
+      {
+        "transform": [
+          {
+            "expression": {
+              "as": "age__explain_bin",
+              "num": 10,
+              "op": "bin",
+              "params": [
+                {
+                  "type": "field",
+                  "value": "age",
+                },
+              ],
+            },
+            "key": "age__explain_bin",
+          },
+        ],
+        "type": "transform",
+      },
+      {
+        "query": [
+          {
+            "groupBy": [
+              "region",
+              "age__explain_bin",
+            ],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "sales_sum",
+                "field": "sales",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+]
+`;
+
+exports[`explain plan snapshots contributing-measure workflow payload stays stable: contributing-measure 1`] = `
+[
+  {
+    "workflow": [
+      {
+        "query": [
+          {
+            "groupBy": [
+              "region",
+            ],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "sales_sum",
+                "field": "sales",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "traffic_sum",
+                "field": "traffic",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+]
+`;
+
+exports[`explain plan snapshots extreme-value workflow payload stays stable: extreme-value 1`] = `
+[
+  {
+    "workflow": [
+      {
+        "filters": [
+          {
+            "fid": "region",
+            "rule": {
+              "type": "one of",
+              "value": [
+                "B",
+              ],
+            },
+          },
+        ],
+        "type": "filter",
+      },
+      {
+        "query": [
+          {
+            "groupBy": [],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "mean",
+                "asFieldKey": "sales_mean",
+                "field": "sales",
+              },
+              {
+                "agg": "median",
+                "asFieldKey": "sales_median",
+                "field": "sales",
+              },
+              {
+                "agg": "stdev",
+                "asFieldKey": "sales_stdev",
+                "field": "sales",
+              },
+              {
+                "agg": "min",
+                "asFieldKey": "sales_min",
+                "field": "sales",
+              },
+              {
+                "agg": "max",
+                "asFieldKey": "sales_max",
+                "field": "sales",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+  {
+    "limit": 20000,
+    "workflow": [
+      {
+        "filters": [
+          {
+            "fid": "region",
+            "rule": {
+              "type": "one of",
+              "value": [
+                "B",
+              ],
+            },
+          },
+        ],
+        "type": "filter",
+      },
+      {
+        "query": [
+          {
+            "fields": [
+              "sales",
+            ],
+            "op": "raw",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+]
+`;
+
+exports[`explain plan snapshots unique-mark workflow payload stays stable: unique-mark 1`] = `
+[
+  {
+    "workflow": [
+      {
+        "query": [
+          {
+            "groupBy": [
+              "region",
+              "channel",
+            ],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "sales_sum",
+                "field": "sales",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+  {
+    "workflow": [
+      {
+        "transform": [
+          {
+            "expression": {
+              "as": "age__explain_bin",
+              "num": 10,
+              "op": "bin",
+              "params": [
+                {
+                  "type": "field",
+                  "value": "age",
+                },
+              ],
+            },
+            "key": "age__explain_bin",
+          },
+        ],
+        "type": "transform",
+      },
+      {
+        "query": [
+          {
+            "groupBy": [
+              "region",
+              "age__explain_bin",
+            ],
+            "measures": [
+              {
+                "agg": "count",
+                "asFieldKey": "__explain_row_count",
+                "field": "*",
+              },
+              {
+                "agg": "sum",
+                "asFieldKey": "sales_sum",
+                "field": "sales",
+              },
+            ],
+            "op": "aggregate",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+  },
+]
+`;
