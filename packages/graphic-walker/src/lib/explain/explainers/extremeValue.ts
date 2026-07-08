@@ -56,8 +56,8 @@ function sampleForHistogram(values: number[], outlierIndices: Set<number>): numb
 
 function histogramSpec(values: number[], lowerFence: number, upperFence: number, measureName: string): Record<string, unknown> {
     return {
-        width: 320,
-        height: 160,
+        width: 'container',
+        height: 220,
         data: { values: values.map((v) => ({ value: v })) },
         layer: [
             {

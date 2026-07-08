@@ -119,8 +119,8 @@ function compositionSpec(
         { category: String(category), group: 'siblings', share: siblingShares[i] },
     ]);
     return {
-        width: 320,
-        height: 180,
+        width: 'container',
+        height: 220,
         data: { values },
         mark: { type: 'bar' },
         encoding: {

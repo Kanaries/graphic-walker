@@ -114,3 +114,6 @@
 | 2026-07-08 | 用户 | 验收 | 纯前端模式功能通过；反馈两点：① 小数格式差（分箱标签浮点全精度泄漏）② 洞察罗列缺乏条理。 |
 | 2026-07-08 | Kernel | K-fmt | 新增 `lib/explain/format.ts`（formatMeasureValue / formatBinRange / categoryLabel，精度随量级与箱宽自适应），三个解释器的 descriptionParams 与图表标题全部改走该模块；回归测试锁定用户截图中的两个坏例。 |
 | 2026-07-08 | Executor | E-UI-2 | 重设计 Explain Data 概览/卡片布局：流式概览过滤 chip、标题行前置卡片（强度 pill + `字段 → 度量`）、图文横排（图 340px 左侧）、证据表数字走 formatMeasureValue、强度/分数排序、带计数的紧凑分组标题、跳过/错误收进单个折叠 footer；新增三语 overview 键。验证：locale JSON 单一 explain 键、tsc、jest 22 套件 283 测试通过。（Executor 沙箱无法写本文件，由 Kernel 代记） |
+| 2026-07-08 | 用户 | 反馈 | 借鉴 Tableau master-detail：列表纯文本 + 单图详情，避免一次渲染十几张重图拉垮计算。 |
+| 2026-07-08 | Kernel | K-fmt-2 | 三个证据图 spec 由固定 320px 改为 `width: 'container'`（详情面板自适应），height 统一 220。 |
+| 2026-07-08 | Executor | E-UI-3 | 重写 Explain Data 为 Tableau-style master-detail 布局：左侧固定 `w-72` 文本列表按解释类型分组并支持 chip 过滤/自动选择，右侧 detail 仅渲染当前选中洞察的描述、单个 `EvidenceChart` 与证据表（全对话框唯一 vega 实例）；新增选中 mark subtitle 与三语 `explain.detail.empty`，保留 loading/truncation/skipped footer。验证：jest 283 测试、tsc 通过；`<EvidenceChart` JSX grep 仅 1 处。（Executor 沙箱无法写本文件，由 Kernel 代记） |

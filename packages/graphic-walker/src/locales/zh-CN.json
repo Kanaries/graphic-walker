@@ -47,6 +47,9 @@
         "title": "数据解释",
         "loading": "正在分析...",
         "empty": "未发现显著模式",
+        "detail": {
+            "empty": "在左侧选择一条洞察"
+        },
         "overview": {
             "all": "全部",
             "skippedNote": "{{count}} 项分析被跳过"

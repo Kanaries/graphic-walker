@@ -52,6 +52,9 @@
         "title": "Explain Data",
         "loading": "Analyzing...",
         "empty": "No significant patterns found",
+        "detail": {
+            "empty": "Select an insight on the left"
+        },
         "overview": {
             "all": "All",
             "skippedNote": "{{count}} analyses were skipped"
