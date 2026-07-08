@@ -117,3 +117,4 @@
 | 2026-07-08 | 用户 | 反馈 | 借鉴 Tableau master-detail：列表纯文本 + 单图详情，避免一次渲染十几张重图拉垮计算。 |
 | 2026-07-08 | Kernel | K-fmt-2 | 三个证据图 spec 由固定 320px 改为 `width: 'container'`（详情面板自适应），height 统一 220。 |
 | 2026-07-08 | Executor | E-UI-3 | 重写 Explain Data 为 Tableau-style master-detail 布局：左侧固定 `w-72` 文本列表按解释类型分组并支持 chip 过滤/自动选择，右侧 detail 仅渲染当前选中洞察的描述、单个 `EvidenceChart` 与证据表（全对话框唯一 vega 实例）；新增选中 mark subtitle 与三语 `explain.detail.empty`，保留 loading/truncation/skipped footer。验证：jest 283 测试、tsc 通过；`<EvidenceChart` JSX grep 仅 1 处。（Executor 沙箱无法写本文件，由 Kernel 代记） |
+| 2026-07-08 | Kernel | K-viz | 证据图视觉语义改造（用户指定 Kernel 直做）：新增 `vizTheme.ts`（灰=语境、固定 accent=选中，主题无关）；构成图由并排双色柱改为子弹图式重叠（宽灰底柱 + 窄实色柱，`width:{band}`）；散点图灰底点 + 大号实色选中点置顶；直方图灰色常规箱 + 实色极端箱与围栏线。新增 specCompile.test：金标准产出的全部 spec 必须零 warning 通过 vega-lite compile。 |

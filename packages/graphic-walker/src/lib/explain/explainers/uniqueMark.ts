@@ -1,6 +1,7 @@
 import type { IRow, IViewField } from '../../../interfaces';
 import { getMeaAggKey } from '../../../utils';
 import { categoryLabel } from '../format';
+import { GROUP_COLOR_SCALE, GROUP_CONTEXT, GROUP_SELECTED, LEGEND_BOTTOM } from '../vizTheme';
 import { gTestPValue, jsDistance, laplaceSmooth, subtractMass } from '../stats/divergence';
 import { ADDITIVE_SAFE_AGGS, EXPLAIN_COUNT_KEY, complementaryDimensions, isMarkRow, markLevelQuery } from '../queries';
 import type { IExplainContext, IExplainer, IExplanation, IExplanationStrength } from '../types';
@@ -114,21 +115,36 @@ function compositionSpec(
     siblingShares: number[],
     candidateName: string
 ): Record<string, unknown> {
-    const values = categories.flatMap((category, i) => [
-        { category: String(category), group: 'selected', share: markShares[i] },
-        { category: String(category), group: 'siblings', share: siblingShares[i] },
-    ]);
+    // bullet-style overlay: wide gray context bars, narrow accent bars on top
+    const values = categories.map((category, i) => ({
+        category: String(category),
+        selected: markShares[i],
+        siblings: siblingShares[i],
+    }));
     return {
         width: 'container',
         height: 220,
         data: { values },
-        mark: { type: 'bar' },
         encoding: {
             x: { field: 'category', type: 'nominal', title: candidateName, sort: null },
-            xOffset: { field: 'group' },
-            y: { field: 'share', type: 'quantitative', title: 'share', axis: { format: '.0%' } },
-            color: { field: 'group', type: 'nominal', legend: { orient: 'bottom', title: null } },
+            y: { type: 'quantitative', title: 'share of records', axis: { format: '.0%' } },
         },
+        layer: [
+            {
+                mark: { type: 'bar', width: { band: 0.85 } },
+                encoding: {
+                    y: { field: 'siblings' },
+                    color: { datum: GROUP_CONTEXT, scale: GROUP_COLOR_SCALE, legend: LEGEND_BOTTOM },
+                },
+            },
+            {
+                mark: { type: 'bar', width: { band: 0.45 } },
+                encoding: {
+                    y: { field: 'selected' },
+                    color: { datum: GROUP_SELECTED, scale: GROUP_COLOR_SCALE },
+                },
+            },
+        ],
     };
 }
 

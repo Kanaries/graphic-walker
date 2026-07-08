@@ -1,6 +1,7 @@
 import type { IRow, IViewField } from '../../../interfaces';
 import { getMeaAggKey } from '../../../utils';
 import { formatMeasureValue } from '../format';
+import { ACCENT_COLOR, CONTEXT_COLOR, LEGEND_BOTTOM } from '../vizTheme';
 import { detectIqrOutliers, outlierImpact, type ISensitiveAggregator } from '../stats/quantile';
 import { EXPLAIN_COUNT_KEY, markPrescreenQuery, markRawQuery } from '../queries';
 import type { IExplainContext, IExplainer, IExplanation, IExplanationStrength } from '../types';
@@ -43,32 +44,43 @@ function strengthOf(impact: number): IExplanationStrength {
     return 'weak';
 }
 
+const HIST_GROUP_EXTREME = 'Extreme records';
+const HIST_GROUP_NORMAL = 'Records';
+
 /** deterministic downsample preserving outliers: every k-th value + all outliers */
-function sampleForHistogram(values: number[], outlierIndices: Set<number>): number[] {
-    if (values.length <= MAX_HISTOGRAM_POINTS) return values;
-    const step = Math.ceil(values.length / MAX_HISTOGRAM_POINTS);
-    const sampled: number[] = [];
+function sampleForHistogram(values: number[], outlierIndices: Set<number>): { value: number; group: string }[] {
+    const step = values.length <= MAX_HISTOGRAM_POINTS ? 1 : Math.ceil(values.length / MAX_HISTOGRAM_POINTS);
+    const sampled: { value: number; group: string }[] = [];
     for (let i = 0; i < values.length; i++) {
-        if (i % step === 0 || outlierIndices.has(i)) sampled.push(values[i]);
+        const isOutlier = outlierIndices.has(i);
+        if (i % step === 0 || isOutlier) {
+            sampled.push({ value: values[i], group: isOutlier ? HIST_GROUP_EXTREME : HIST_GROUP_NORMAL });
+        }
     }
     return sampled;
 }
 
-function histogramSpec(values: number[], lowerFence: number, upperFence: number, measureName: string): Record<string, unknown> {
+function histogramSpec(values: { value: number; group: string }[], lowerFence: number, upperFence: number, measureName: string): Record<string, unknown> {
     return {
         width: 'container',
         height: 220,
-        data: { values: values.map((v) => ({ value: v })) },
+        data: { values },
         layer: [
             {
-                mark: { type: 'bar', opacity: 0.85 },
+                mark: { type: 'bar' },
                 encoding: {
                     x: { field: 'value', bin: { maxbins: 30 }, type: 'quantitative', title: measureName },
                     y: { aggregate: 'count', type: 'quantitative', title: null },
+                    color: {
+                        field: 'group',
+                        type: 'nominal',
+                        scale: { domain: [HIST_GROUP_EXTREME, HIST_GROUP_NORMAL], range: [ACCENT_COLOR, CONTEXT_COLOR] },
+                        legend: LEGEND_BOTTOM,
+                    },
                 },
             },
-            { mark: { type: 'rule', strokeDash: [4, 4] }, encoding: { x: { datum: lowerFence } } },
-            { mark: { type: 'rule', strokeDash: [4, 4] }, encoding: { x: { datum: upperFence } } },
+            { mark: { type: 'rule', strokeDash: [4, 4], color: ACCENT_COLOR }, encoding: { x: { datum: lowerFence } } },
+            { mark: { type: 'rule', strokeDash: [4, 4], color: ACCENT_COLOR }, encoding: { x: { datum: upperFence } } },
         ],
     };
 }
