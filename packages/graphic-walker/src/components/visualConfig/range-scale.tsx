@@ -1,10 +1,115 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Slider } from '../../components/rangeslider';
-import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { NumberInput } from '../ui/number-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
+
+function OverrideRow(props: {
+    id: string;
+    title: React.ReactNode;
+    description: React.ReactNode;
+    enabled: boolean;
+    onEnabledChange: (v: boolean) => void;
+    children?: React.ReactNode;
+}) {
+    return (
+        <div className="p-4">
+            <div className="flex justify-between items-center gap-4">
+                <div>
+                    <Label htmlFor={props.id} className="text-xs font-medium leading-6 cursor-pointer">
+                        {props.title}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">{props.description}</p>
+                </div>
+                <Switch id={props.id} checked={props.enabled} onCheckedChange={props.onEnabledChange} />
+            </div>
+            {props.enabled && props.children && <div className="mt-3">{props.children}</div>}
+        </div>
+    );
+}
+
+export function DomainScale(props: {
+    text: string;
+    enableMaxDomain: boolean;
+    enableMinDomain: boolean;
+    enableType: boolean;
+    domainMax: number;
+    domainMin: number;
+    type: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog';
+    setEnableMinDomain: (v: boolean) => void;
+    setEnableMaxDomain: (v: boolean) => void;
+    setEnableType: (v: boolean) => void;
+    setDomainMin: (v: number) => void;
+    setDomainMax: (v: number) => void;
+    setType: (v: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog') => void;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <>
+            <OverrideRow
+                id={`type_${props.text}`}
+                title={t('config.type')}
+                description={t('config.scale_type_desc')}
+                enabled={props.enableType}
+                onEnabledChange={props.setEnableType}
+            >
+                <Select value={props.type} onValueChange={props.setType}>
+                    <SelectTrigger className="w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="linear">Linear</SelectItem>
+                        <SelectItem value="log">Log</SelectItem>
+                        <SelectItem value="pow">Pow</SelectItem>
+                        <SelectItem value="sqrt">Sqrt</SelectItem>
+                        <SelectItem value="symlog">Symlog</SelectItem>
+                    </SelectContent>
+                </Select>
+            </OverrideRow>
+            <OverrideRow
+                id={`min_domain_${props.text}`}
+                title={t('config.min_domain')}
+                description={t('config.min_domain_desc')}
+                enabled={props.enableMinDomain}
+                onEnabledChange={props.setEnableMinDomain}
+            >
+                <NumberInput
+                    className="w-40"
+                    value={props.domainMin}
+                    onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) {
+                            props.setDomainMin(v);
+                        }
+                    }}
+                    type="number"
+                />
+            </OverrideRow>
+            <OverrideRow
+                id={`max_domain_${props.text}`}
+                title={t('config.max_domain')}
+                description={t('config.max_domain_desc')}
+                enabled={props.enableMaxDomain}
+                onEnabledChange={props.setEnableMaxDomain}
+            >
+                <NumberInput
+                    className="w-40"
+                    value={props.domainMax}
+                    onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!isNaN(v)) {
+                            props.setDomainMax(v);
+                        }
+                    }}
+                    type="number"
+                />
+            </OverrideRow>
+        </>
+    );
+}
 
 export function RangeScale(props: {
     text: string;
@@ -32,70 +137,17 @@ export function RangeScale(props: {
     const { t } = useTranslation();
 
     return (
-        <div className="flex md:flex-row flex-col gap-6 my-2">
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`type_${props.text}`} checked={props.enableType} onCheckedChange={props.setEnableType} />
-                    <Label htmlFor={`type_${props.text}`}>{t('config.type')}</Label>
-                </div>
-                <Select value={props.type} disabled={!props.enableType} onValueChange={props.setType}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="linear">Linear</SelectItem>
-                        <SelectItem value="log">Log</SelectItem>
-                        <SelectItem value="pow">Pow</SelectItem>
-                        <SelectItem value="sqrt">Sqrt</SelectItem>
-                        <SelectItem value="symlog">Symlog</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`min_domain_${props.text}`} checked={props.enableMinDomain} onCheckedChange={props.setEnableMinDomain} />
-                    <Label htmlFor={`min_domain_${props.text}`}>{t('config.min_domain')}</Label>
-                </div>
-                <NumberInput
-                    className="w-32"
-                    value={props.domainMin}
-                    onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (!isNaN(v)) {
-                            props.setDomainMin(v);
-                        }
-                    }}
-                    type="number"
-                    disabled={!props.enableMinDomain}
-                />
-            </div>
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`max_domain_${props.text}`} checked={props.enableMaxDomain} onCheckedChange={props.setEnableMaxDomain} />
-                    <Label htmlFor={`max_domain_${props.text}`}>{t('config.max_domain')}</Label>
-                </div>
-                <NumberInput
-                    className="w-32"
-                    value={props.domainMax}
-                    onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (!isNaN(v)) {
-                            props.setDomainMax(v);
-                        }
-                    }}
-                    type="number"
-                    disabled={!props.enableMaxDomain}
-                />
-            </div>
-            <div className="flex flex-col items-start w-48 space-y-2">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`range_${props.text}`} checked={props.enableRange} onCheckedChange={props.setEnableRange} />
-                    <Label htmlFor={`range_${props.text}`}>{t('config.range')}</Label>
-                </div>
-                <div className="flex w-full flex-col space-y-2 pt-2">
+        <>
+            <DomainScale {...props} />
+            <OverrideRow
+                id={`range_${props.text}`}
+                title={t('config.range')}
+                description={t('config.range_desc')}
+                enabled={props.enableRange}
+                onEnabledChange={props.setEnableRange}
+            >
+                <div className="flex max-w-md flex-col space-y-2 pt-2">
                     <Slider
-                        disabled={!props.enableRange}
                         max={props.maxRange}
                         min={props.minRange}
                         value={[props.rangeMin, props.rangeMax]}
@@ -110,85 +162,7 @@ export function RangeScale(props: {
                         <div className="text-xs absolute right-0 text-foreground inset-y-0">{props.rangeMax}</div>
                     </div>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-export function DomainScale(props: {
-    text: string;
-    enableMaxDomain: boolean;
-    enableMinDomain: boolean;
-    enableType: boolean;
-    domainMax: number;
-    domainMin: number;
-    type: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog';
-    setEnableMinDomain: (v: boolean) => void;
-    setEnableMaxDomain: (v: boolean) => void;
-    setEnableType: (v: boolean) => void;
-    setDomainMin: (v: number) => void;
-    setDomainMax: (v: number) => void;
-    setType: (v: 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog') => void;
-}) {
-    const { t } = useTranslation();
-
-    return (
-        <div className="flex md:flex-row flex-col gap-6 my-2">
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`type_${props.text}`} checked={props.enableType} onCheckedChange={props.setEnableType} />
-                    <Label htmlFor={`type_${props.text}`}>{t('config.type')}</Label>
-                </div>
-                <Select value={props.type} disabled={!props.enableType} onValueChange={props.setType}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="linear">Linear</SelectItem>
-                        <SelectItem value="log">Log</SelectItem>
-                        <SelectItem value="pow">Pow</SelectItem>
-                        <SelectItem value="sqrt">Sqrt</SelectItem>
-                        <SelectItem value="symlog">Symlog</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`min_domain_${props.text}`} checked={props.enableMinDomain} onCheckedChange={props.setEnableMinDomain} />
-                    <Label htmlFor={`min_domain_${props.text}`}>{t('config.min_domain')}</Label>
-                </div>
-                <NumberInput
-                    className="w-32"
-                    value={props.domainMin}
-                    onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (!isNaN(v)) {
-                            props.setDomainMin(v);
-                        }
-                    }}
-                    type="number"
-                    disabled={!props.enableMinDomain}
-                />
-            </div>
-            <div className="flex flex-col space-y-2 items-start">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id={`max_domain_${props.text}`} checked={props.enableMaxDomain} onCheckedChange={props.setEnableMaxDomain} />
-                    <Label htmlFor={`max_domain_${props.text}`}>{t('config.max_domain')}</Label>
-                </div>
-                <NumberInput
-                    className="w-32"
-                    value={props.domainMax}
-                    onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (!isNaN(v)) {
-                            props.setDomainMax(v);
-                        }
-                    }}
-                    type="number"
-                    disabled={!props.enableMaxDomain}
-                />
-            </div>
-        </div>
+            </OverrideRow>
+        </>
     );
 }

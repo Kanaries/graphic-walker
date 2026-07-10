@@ -9,7 +9,7 @@ import { IConfigScale, IVisualConfig, IVisualLayout, IThemeKey } from '../../int
 import Toggle from '../toggle';
 import { ColorSchemes, extractRGBA } from './colorScheme';
 import { DomainScale, RangeScale } from './range-scale';
-import { ConfigItemContainer, ConfigItemContent, ConfigItemHeader, ConfigItemTitle } from './config-item';
+import { ConfigItemContainer, ConfigItemContent, ConfigItemDescription, ConfigItemHeader, ConfigItemTitle } from './config-item';
 import { KVTuple } from '../../models/utils';
 import { isNotEmpty } from '../../utils';
 import { timezones } from './timezone';
@@ -20,6 +20,21 @@ import Combobox from '../dropdownSelect/combobox';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { vegaThemeContext } from '../../store/theme';
 import { ColorPickerComponent } from './color-picker';
+import { Switch } from '../ui/switch';
+
+function SettingRow(props: { title: React.ReactNode; description?: React.ReactNode; htmlFor?: string; children?: React.ReactNode }) {
+    return (
+        <div className="p-4 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4">
+            <div className="flex-1 min-w-0 max-w-md">
+                <label htmlFor={props.htmlFor} className="text-xs font-medium leading-6">
+                    {props.title}
+                </label>
+                {props.description && <p className="text-xs text-muted-foreground">{props.description}</p>}
+            </div>
+            <div className="shrink-0 self-end sm:self-auto">{props.children}</div>
+        </div>
+    );
+}
 
 function useDomainScale() {
     const [enableMinDomain, setEnableMinDomain] = useState(false);
@@ -232,34 +247,35 @@ const VisualConfigPanel: React.FC = () => {
                     <div className="overflow-y-auto flex-shrink-1 min-h-0 px-6">
                         <ConfigItemContainer>
                             <ConfigItemHeader>
-                                <ConfigItemTitle>Colors</ConfigItemTitle>
+                                <ConfigItemTitle>{t('config.colors')}</ConfigItemTitle>
+                                <ConfigItemDescription>{t('config.colors_desc')}</ConfigItemDescription>
                             </ConfigItemHeader>
                             <ConfigItemContent>
-                                <div className="flex gap-6 flex-col md:flex-row">
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.primary_color')}</label>
+                                <div className="border rounded-md divide-y">
+                                    <SettingRow title={t('config.primary_color')} description={t('config.primary_color_desc')}>
                                         <ColorPickerComponent
                                             defaultColor={defaultColor}
                                             setDefaultColor={setDefaultColor}
                                             setPrimaryColorEdited={setPrimaryColorEdited}
                                             displayColorPicker={displayColorPicker}
                                             setDisplayColorPicker={setDisplayColorPicker}
+                                            align="right"
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">
-                                            {t('config.background')} {t(`config.color`)}
-                                        </label>
+                                    </SettingRow>
+                                    <SettingRow
+                                        title={`${t('config.background')} ${t(`config.color`)}`}
+                                        description={t('config.background_desc')}
+                                    >
                                         <ColorPickerComponent
                                             defaultColor={background}
                                             setDefaultColor={setBackground}
                                             setPrimaryColorEdited={setBackgroundEdited}
                                             displayColorPicker={displayBackgroundPicker}
                                             setDisplayColorPicker={setDisplayBackgroundPicker}
+                                            align="right"
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.theme')}</label>
+                                    </SettingRow>
+                                    <SettingRow title={t('config.theme')} description={t('config.theme_desc')}>
                                         <Combobox
                                             className="w-48 h-fit"
                                             popClassName="w-48"
@@ -273,9 +289,8 @@ const VisualConfigPanel: React.FC = () => {
                                                 { value: 'sodapop', label: 'sodapop' },
                                             ]}
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.color_palette')}</label>
+                                    </SettingRow>
+                                    <SettingRow title={t('config.color_palette')} description={t('config.color_palette_desc')}>
                                         <Combobox
                                             className="w-48 h-fit"
                                             popClassName="w-48"
@@ -301,17 +316,22 @@ const VisualConfigPanel: React.FC = () => {
                                                 label: <>{t('config.default_color_palette')}</>,
                                             })}
                                         />
-                                    </div>
+                                    </SettingRow>
                                 </div>
                             </ConfigItemContent>
                         </ConfigItemContainer>
                         <ConfigItemContainer>
                             <ConfigItemHeader>
-                                <div className="flex justify-between items-center">
-                                    <ConfigItemTitle>Scale</ConfigItemTitle>
+                                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:justify-between sm:items-start sm:gap-4">
+                                    <div>
+                                        <ConfigItemTitle>{t('config.scale')}</ConfigItemTitle>
+                                        <ConfigItemDescription>{t('config.scale_desc')}</ConfigItemDescription>
+                                    </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">Select Scale</Button>
+                                            <Button variant="outline" className="shrink-0 self-end sm:self-auto">
+                                                {t('config.customize_scales')}
+                                            </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             {['row', 'column', 'color', 'theta', 'radius', 'opacity', 'size'].map((scale) => (
@@ -334,78 +354,61 @@ const VisualConfigPanel: React.FC = () => {
                                 </div>
                             </ConfigItemHeader>
                             <ConfigItemContent>
-                                {scalesSet.has('column') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.column')}</label>
-                                        <DomainScale {...columnValue} text="column" />
-                                    </div>
-                                )}
-                                {scalesSet.has('row') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.row')}</label>
-                                        <DomainScale {...rowValue} text="row" />
-                                    </div>
-                                )}
-                                {scalesSet.has('color') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.color')}</label>
-                                        <DomainScale {...colorValue} text="color" />
-                                    </div>
-                                )}
-                                {scalesSet.has('theta') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.theta')}</label>
-                                        <DomainScale {...thetaValue} text="theta" />
-                                    </div>
-                                )}
-                                {scalesSet.has('radius') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.radius')}</label>
-                                        <DomainScale {...radiusValue} text="radius" />
-                                    </div>
-                                )}
-                                {scalesSet.has('opacity') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.opacity')}</label>
-                                        <RangeScale {...opacityValue} text="opacity" maxRange={1} minRange={0} />
-                                    </div>
-                                )}
-                                {scalesSet.has('size') && (
-                                    <div>
-                                        <label className="block text-xs font-medium leading-6">{t('config.size')}</label>
-                                        <RangeScale {...sizeValue} text="size" maxRange={100} minRange={0} />
-                                    </div>
-                                )}
+                                <div className="flex flex-col gap-4">
+                                    {(
+                                        [
+                                            ['column', <DomainScale {...columnValue} text="column" />],
+                                            ['row', <DomainScale {...rowValue} text="row" />],
+                                            ['color', <DomainScale {...colorValue} text="color" />],
+                                            ['theta', <DomainScale {...thetaValue} text="theta" />],
+                                            ['radius', <DomainScale {...radiusValue} text="radius" />],
+                                            ['opacity', <RangeScale {...opacityValue} text="opacity" maxRange={1} minRange={0} />],
+                                            ['size', <RangeScale {...sizeValue} text="size" maxRange={100} minRange={0} />],
+                                        ] as [string, React.ReactNode][]
+                                    )
+                                        .filter(([key]) => scalesSet.has(key))
+                                        .map(([key, control]) => (
+                                            <div key={key} className="border rounded-md divide-y">
+                                                <div className="p-4">
+                                                    <h3 className="text-sm font-medium">{t(`config.${key}`)}</h3>
+                                                    <p className="text-xs text-muted-foreground">{t(`config.scale_${key}_desc`)}</p>
+                                                </div>
+                                                {control}
+                                            </div>
+                                        ))}
+                                    {enabledScales.length === 0 && <p className="text-xs text-muted-foreground">{t('config.scale_empty')}</p>}
+                                </div>
                             </ConfigItemContent>
                         </ConfigItemContainer>
                         <ConfigItemContainer>
                             <ConfigItemHeader>
                                 <ConfigItemTitle>{t('config.format')}</ConfigItemTitle>
-                                <p className="text-xs">
-                                    {t(`config.formatGuidesDocs`)}:{' '}
+                                <ConfigItemDescription>
+                                    {t('config.format_desc')} {t(`config.formatGuidesDocs`)}:{' '}
                                     <a target="_blank" className="hover:underline text-primary" href="https://github.com/d3/d3-format#locale_format">
                                         {t(`config.readHere`)}
                                     </a>
-                                </p>
+                                    .
+                                </ConfigItemDescription>
                             </ConfigItemHeader>
                             <ConfigItemContent>
-                                <div className="flex gap-4">
+                                <div className="border rounded-md divide-y">
                                     {formatConfigList.map((fc) => (
-                                        <div className="my-2" key={fc}>
-                                            <label className="block text-xs font-medium leading-6">{t(`config.${fc}`)}</label>
-                                            <div className="mt-1">
-                                                <Input
-                                                    type="text"
-                                                    value={format[fc] ?? ''}
-                                                    onChange={(e) => {
-                                                        setFormat((f) => ({
-                                                            ...f,
-                                                            [fc]: e.target.value,
-                                                        }));
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
+                                        <SettingRow key={fc} htmlFor={`format_${fc}`} title={t(`config.${fc}`)} description={t(`config.${fc}_desc`)}>
+                                            <Input
+                                                id={`format_${fc}`}
+                                                className="w-48"
+                                                type="text"
+                                                placeholder={{ numberFormat: ',.2f', timeFormat: '%Y-%m-%d', normalizedNumberFormat: '.0%' }[fc]}
+                                                value={format[fc] ?? ''}
+                                                onChange={(e) => {
+                                                    setFormat((f) => ({
+                                                        ...f,
+                                                        [fc]: e.target.value,
+                                                    }));
+                                                }}
+                                            />
+                                        </SettingRow>
                                     ))}
                                 </div>
                             </ConfigItemContent>
@@ -413,34 +416,31 @@ const VisualConfigPanel: React.FC = () => {
                         <ConfigItemContainer>
                             <ConfigItemHeader>
                                 <ConfigItemTitle>{t('config.independence')}</ConfigItemTitle>
+                                <ConfigItemDescription>{t('config.independence_desc')}</ConfigItemDescription>
                             </ConfigItemHeader>
                             <ConfigItemContent>
-                                <div className="flex gap-x-6 gap-y-2 flex-wrap">
-                                    {GLOBAL_CONFIG.POSITION_CHANNEL_CONFIG_LIST.map((pc) => (
-                                        <Toggle
-                                            label={t(`config.${pc}`)}
-                                            key={pc}
-                                            enabled={resolve[pc] ?? false}
-                                            onChange={(e) => {
-                                                setResolve((r) => ({
-                                                    ...r,
-                                                    [pc]: e,
-                                                }));
-                                            }}
-                                        />
-                                    ))}
-                                    {GLOBAL_CONFIG.NON_POSITION_CHANNEL_CONFIG_LIST.map((npc) => (
-                                        <Toggle
-                                            label={t(`constant.draggable_key.${npc}`)}
-                                            key={npc}
-                                            enabled={resolve[npc] ?? false}
-                                            onChange={(e) => {
-                                                setResolve((r) => ({
-                                                    ...r,
-                                                    [npc]: e,
-                                                }));
-                                            }}
-                                        />
+                                <div className="border rounded-md divide-y">
+                                    {[
+                                        ...GLOBAL_CONFIG.POSITION_CHANNEL_CONFIG_LIST.map((pc) => [pc, t(`config.${pc}`)] as const),
+                                        ...GLOBAL_CONFIG.NON_POSITION_CHANNEL_CONFIG_LIST.map((npc) => [npc, t(`constant.draggable_key.${npc}`)] as const),
+                                    ].map(([channel, label]) => (
+                                        <SettingRow
+                                            key={channel}
+                                            htmlFor={`resolve_${channel}`}
+                                            title={label}
+                                            description={t('config.independent_channel_desc', { channel: label })}
+                                        >
+                                            <Switch
+                                                id={`resolve_${channel}`}
+                                                checked={resolve[channel] ?? false}
+                                                onCheckedChange={(e) => {
+                                                    setResolve((r) => ({
+                                                        ...r,
+                                                        [channel]: e,
+                                                    }));
+                                                }}
+                                            />
+                                        </SettingRow>
                                     ))}
                                 </div>
                             </ConfigItemContent>

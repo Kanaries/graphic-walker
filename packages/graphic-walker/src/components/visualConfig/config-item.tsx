@@ -15,3 +15,7 @@ export function ConfigItemHeader(props: { children?: React.ReactNode }) {
 export function ConfigItemTitle(props: { children?: React.ReactNode }) {
     return <h2 className="text-xl text-foreground font-medium">{props.children}</h2>;
 }
+
+export function ConfigItemDescription(props: { children?: React.ReactNode }) {
+    return <p className="text-xs text-muted-foreground font-normal mt-1">{props.children}</p>;
+}

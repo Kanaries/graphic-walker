@@ -4,7 +4,7 @@ import React from 'react';
 import { Input } from '../ui/input';
 const DEFAULT_COLOR_SCHEME = ['#5B8FF9', '#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'];
 
-export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimaryColorEdited, displayColorPicker, setDisplayColorPicker }) => {
+export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimaryColorEdited, displayColorPicker, setDisplayColorPicker, align = 'left' }) => {
     return (
         <ErrorBoundary
             fallback={
@@ -58,7 +58,7 @@ export const ColorPickerComponent = ({ defaultColor, setDefaultColor, setPrimary
                         setDisplayColorPicker(true);
                     }}
                 ></div>
-                <div className="absolute left-0 top-8 z-40 shadow-sm">
+                <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-8 z-40 shadow-sm`}>
                     {displayColorPicker && (
                         <StyledPicker
                             presetColors={DEFAULT_COLOR_SCHEME}
