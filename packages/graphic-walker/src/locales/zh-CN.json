@@ -43,6 +43,54 @@
         "timezone_settings_desc": "配置时间数据在不同时区之间的显示方式。",
         "customOffset_desc": "为显示基于时间的数据指定自定义时区。"
     },
+    "explain": {
+        "title": "数据解释",
+        "loading": "正在分析...",
+        "empty": "未发现显著模式",
+        "detail": {
+            "empty": "在左侧选择一条洞察"
+        },
+        "overview": {
+            "all": "全部",
+            "skippedNote": "{{count}} 项分析被跳过"
+        },
+        "type": {
+            "extremeValue": "极端值",
+            "contributingDimension": "贡献维度",
+            "contributingMeasure": "贡献度量",
+            "uniqueMark": "标记的独特之处"
+        },
+        "strength": {
+            "strong": "强",
+            "moderate": "中",
+            "weak": "弱"
+        },
+        "skip": {
+            "noMark": "请先选择一个标记再运行数据解释。",
+            "temporalMark": "暂不对时间标记分析极端值。",
+            "noSensitiveAgg": "所选度量聚合对极端值不敏感。",
+            "noCandidates": "没有可用于比较的候选字段。",
+            "noDerivableTarget": "无法对此视图度量的聚合建模；仅支持 sum、mean 和 count。"
+        },
+        "extremeValue": {
+            "desc": "{{rowCount}} 条记录中有 {{outlierCount}} 条是极端值；移除这些记录后，{{measure}} 的 {{agg}} 从 {{before}} 变为 {{after}}（{{changePercent}}%）。",
+            "truncated": "{{measure}} 所在标记包含 {{rowCount}} 行，均值和中位数存在差异；解读该聚合值前请先查看这些行。"
+        },
+        "uniqueMark": {
+            "countDesc": "此标记在 {{dimension}} 上的构成与其他标记不同：{{markShare}}% 属于“{{topCategory}}”，其他标记为 {{siblingShare}}%。",
+            "measureDesc": "此标记的 {{measure}} 在 {{dimension}} 上的分布与其他标记不同（启发式）。"
+        },
+        "contributingDimension": {
+            "desc": "{{dimension}} 的构成有助于预测各标记上的 {{target}}（交叉验证拟合度 +{{cvGainPercent}}%）；“{{topCategory}}”的占比关联最明显。"
+        },
+        "contributingMeasure": {
+            "desc": "{{candidate}}（按标记聚合）有助于预测 {{target}}（交叉验证拟合度 +{{cvGainPercent}}%）。这是关联，不代表因果。"
+        },
+        "truncation": {
+            "notice": "已扫描 {{scanned}} / {{total}} 个候选字段。",
+            "more": "分析更多字段"
+        }
+    },
     "constant": {
         "row_count": "行数",
         "mea_key": "度量名称",
@@ -311,20 +359,6 @@
         "range": {
             "start_value": "起始值",
             "end_value": "终止值"
-        }
-    },
-    "explain": {
-        "lg_than": "大于",
-        "sm_than": "小于",
-        "expection": "期望值",
-        "unrecognized": "未识别",
-        "score": "得分",
-        "contains": "包含",
-        "reason": {
-            "selection_dim_distribution": "维度线索",
-            "selection_mea_distribution": "度量线索",
-            "children_major_factor": "子节点主要因素",
-            "children_outlier": "子节点异常"
         }
     },
     "actions": {

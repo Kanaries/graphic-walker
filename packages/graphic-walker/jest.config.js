@@ -4,6 +4,7 @@ module.exports = {
     testEnvironment: 'node',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^nanoid$': '<rootDir>/../../node_modules/nanoid/index.cjs',
     },
     testPathIgnorePatterns: ['<rootDir>/dist/'],
 };

@@ -48,6 +48,54 @@
         "timezone_settings_desc": "Configure how time-based data is displayed across different timezones.",
         "customOffset_desc": "Specify a custom timezone for displaying time-based data."
     },
+    "explain": {
+        "title": "Explain Data",
+        "loading": "Analyzing...",
+        "empty": "No significant patterns found",
+        "detail": {
+            "empty": "Select an insight on the left"
+        },
+        "overview": {
+            "all": "All",
+            "skippedNote": "{{count}} analyses were skipped"
+        },
+        "type": {
+            "extremeValue": "Extreme values",
+            "contributingDimension": "Contributing dimensions",
+            "contributingMeasure": "Contributing measures",
+            "uniqueMark": "What's unique about this mark"
+        },
+        "strength": {
+            "strong": "Strong",
+            "moderate": "Moderate",
+            "weak": "Weak"
+        },
+        "skip": {
+            "noMark": "Select a mark before running Explain Data.",
+            "temporalMark": "Temporal marks are not analyzed for extreme values yet.",
+            "noSensitiveAgg": "The selected measure aggregation is not sensitive to extreme values.",
+            "noCandidates": "No eligible fields were available for comparison.",
+            "noDerivableTarget": "The view measure's aggregation cannot be modeled; only sum, mean, and count are supported."
+        },
+        "extremeValue": {
+            "desc": "{{outlierCount}} of {{rowCount}} records are extreme values; removing them changes {{agg}} of {{measure}} from {{before}} to {{after}} ({{changePercent}}%).",
+            "truncated": "{{measure}} has a large mark with mean and median values that differ; scan the {{rowCount}} rows before interpreting the aggregate."
+        },
+        "uniqueMark": {
+            "countDesc": "This mark's composition over {{dimension}} differs from other marks: {{markShare}}% falls in \"{{topCategory}}\" vs {{siblingShare}}% elsewhere.",
+            "measureDesc": "This mark's {{measure}} mass is distributed differently over {{dimension}} than other marks (heuristic)."
+        },
+        "contributingDimension": {
+            "desc": "The composition of {{dimension}} helps predict {{target}} across marks (cross-validated fit +{{cvGainPercent}}%); the share of \"{{topCategory}}\" is most associated."
+        },
+        "contributingMeasure": {
+            "desc": "{{candidate}} (aggregated per mark) helps predict {{target}} (cross-validated fit +{{cvGainPercent}}%). Association, not causation."
+        },
+        "truncation": {
+            "notice": "Scanned {{scanned}} of {{total}} candidate fields.",
+            "more": "Analyze more fields"
+        }
+    },
     "constant": {
         "row_count": "Row count",
         "mea_key": "Measure names",
@@ -316,20 +364,6 @@
         "range": {
             "start_value": "Start Value",
             "end_value": "End Value"
-        }
-    },
-    "explain": {
-        "lg_than": "greater than",
-        "sm_than": "less than",
-        "expection": "expectation",
-        "unrecognized": "Unrecognized",
-        "score": "score",
-        "contains": "contains",
-        "reason": {
-            "selection_dim_distribution": "dimensions' clues",
-            "selection_mea_distribution": "measures' clues",
-            "children_major_factor": "major factor",
-            "children_outlier": "outlier"
         }
     },
     "actions": {
