@@ -4,7 +4,7 @@ module.exports = {
     testEnvironment: 'node',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
-        '^nanoid$': '<rootDir>/../../node_modules/nanoid/index.cjs',
+        '^nanoid$': '<rootDir>/tests/shims/nanoid.cjs',
     },
     testPathIgnorePatterns: ['<rootDir>/dist/'],
 };
