@@ -51,7 +51,7 @@
   "dependencies": {
     "@headlessui/react": "1.7.12",
     "@heroicons/react": "^2.2.0",
-    "@kanaries/react-beautiful-dnd": "^0.1.1",
+    "@kanaries/react-beautiful-dnd": "0.2.0",
     "@kanaries/web-data-loader": "^0.1.7",
     "@observablehq/plot": "^0.6.16",
     "@radix-ui/react-checkbox": "^1.3.3",
