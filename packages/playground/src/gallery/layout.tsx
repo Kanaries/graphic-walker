@@ -1,6 +1,6 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogBackdrop, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid';
 import { CurrentTheme } from './components/ThemeToggle';
 import { themeContext, useTheme } from './context';
@@ -42,7 +42,7 @@ const DialogSidebar = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; 
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
             >
-                <Dialog.Backdrop className="fixed inset-0 z-50 bg-gray-900/80" />
+                <DialogBackdrop className="fixed inset-0 z-50 bg-gray-900/80" />
             </Transition.Child>
 
             <div className="fixed inset-0 flex">

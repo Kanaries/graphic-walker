@@ -30,10 +30,10 @@ expressionFunction('formatBin', (datum: [number, number] | number, formatString?
     return `[${formatter(Number(min.toFixed(beaStep)))},${formatter(Number(max.toFixed(beaStep)))}]`;
 });
 
-const CanvaContainer = styled.div<{ rowSize: number; colSize: number }>`
+const CanvaContainer = styled.div<{ $rowSize: number; $colSize: number }>`
     display: grid;
-    grid-template-columns: repeat(${(props) => props.colSize}, auto);
-    grid-template-rows: repeat(${(props) => props.rowSize}, 1fr);
+    grid-template-columns: repeat(${(props) => props.$colSize}, auto);
+    grid-template-rows: repeat(${(props) => props.$rowSize}, 1fr);
 `;
 
 function parseRect(el: HTMLCanvasElement | SVGSVGElement) {
@@ -551,8 +551,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 style={{
                     ...(layoutMode === 'auto' ? {} : { width: '100%', height: '100%' }),
                 }}
-                rowSize={Math.max(rowRepeatFields.length, 1)}
-                colSize={Math.max(colRepeatFields.length, 1)}
+                $rowSize={Math.max(rowRepeatFields.length, 1)}
+                $colSize={Math.max(colRepeatFields.length, 1)}
                 ref={containerRef}
             >
                 {/* <div ref={container}></div> */}

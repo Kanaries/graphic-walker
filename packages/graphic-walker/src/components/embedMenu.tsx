@@ -13,6 +13,7 @@ export const VizEmbedMenu = observer(function VizEmbedMenu() {
     const { vizEmbededMenu } = vizStore;
     return (
         <Transition
+            as="div"
             appear
             show={vizEmbededMenu.show}
             className="absolute inset-0"

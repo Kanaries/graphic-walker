@@ -18,10 +18,10 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@headlessui/react": "1.7.12",
+    "@headlessui/react": "2.2.10",
     "@heroicons/react": "^2.0.8",
     "@kanaries/duckdb-computation": "0.0.1",
-    "@kanaries/graphic-walker": "0.5.0",
+    "@kanaries/graphic-walker": "0.5.1",
     "@vercel/analytics": "^1.1.1",
     "color-space": "2.0.1",
     "react": "^19.2.0",
@@ -32,9 +32,9 @@
     "react-syntax-highlighter": "^15.5.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.37",
+    "@types/react": "^19.2.17",
     "@types/react-color": "^3.0.6",
-    "@types/react-dom": "^18.2.15",
+    "@types/react-dom": "^19.2.3",
     "@types/react-syntax-highlighter": "^15.5.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
