@@ -6,6 +6,7 @@ import GwFile from './dataSelection/gwFile';
 import DataSelection from './dataSelection';
 import DropdownSelect from '../components/dropdownSelect';
 import { IUIThemeConfig, IComputationFunction, IDarkMode, IDataSourceEventType, IDataSourceProvider, IMutField, IThemeKey } from '../interfaces';
+import { syncProviderSpecs } from './syncSpecs';
 import { ShadowDom } from '../shadow-dom';
 import { CommonStore } from '../store/commonStore';
 import { VizSpecStore } from '../store/visualSpecStore';
@@ -153,9 +154,7 @@ export function DataSourceSegmentComponent(props: {
         if (dataset) {
             const { provider } = props;
             provider.getMeta(dataset.id).then(setMeta);
-            provider.getSpecs(dataset.id).then((x) => {
-                vizSpecStoreRef.current?.importRaw(JSON.parse(x));
-            });
+            syncProviderSpecs(provider, dataset.id, vizSpecStoreRef);
             const disposer = provider.registerCallback((e, datasetId) => {
                 if (dataset.id === datasetId) {
                     if (e & IDataSourceEventType.updateData) {
@@ -165,9 +164,7 @@ export function DataSourceSegmentComponent(props: {
                         provider.getMeta(datasetId).then(setMeta);
                     }
                     if (e & IDataSourceEventType.updateSpec) {
-                        provider.getSpecs(datasetId).then((x) => (x) => {
-                            vizSpecStoreRef.current?.importRaw(JSON.parse(x));
-                        });
+                        syncProviderSpecs(provider, datasetId, vizSpecStoreRef);
                     }
                 }
             });

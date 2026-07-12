@@ -1,10 +1,11 @@
 import { getComputation } from '../computation/clientComputation';
 import { IDataSourceEventType, IDataSourceListener, IDataSourceProvider } from '../interfaces';
 import { DataStore } from '../store/dataStore';
+import { createListenerRegistry } from './listeners';
 
 export function createMemoryProvider(initData?: string | null): IDataSourceProvider & { exportData(): string } {
     const store = new DataStore();
-    const listeners: IDataSourceListener[] = [];
+    const listeners = createListenerRegistry<IDataSourceListener>();
 
     initData && store.importData(JSON.parse(initData));
 
@@ -21,7 +22,7 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
                 fields: meta,
                 name,
             });
-            listeners.forEach((cb) => cb(IDataSourceEventType.updateList, ''));
+            listeners.emit(IDataSourceEventType.updateList, '');
             return id;
         },
         async getMeta(datasetId) {
@@ -43,7 +44,7 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
             }
             const metaId = dataSet.metaId;
             store.metaDict[metaId] = meta;
-            listeners.forEach((cb) => cb(IDataSourceEventType.updateMeta, dataSet.id));
+            listeners.emit(IDataSourceEventType.updateMeta, dataSet.id);
         },
         async getSpecs(datasetId) {
             const dataSet = store.dataSources.find((x) => x.id === datasetId);
@@ -64,7 +65,7 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
             }
             const metaId = dataSet.metaId;
             store.visDict[metaId] = JSON.parse(value);
-            listeners.forEach((cb) => cb(IDataSourceEventType.updateSpec, dataSet.id));
+            listeners.emit(IDataSourceEventType.updateSpec, dataSet.id);
         },
         async queryData(query, datasetIds) {
             // TODO: add support for querying multi datasource
@@ -82,13 +83,10 @@ export function createMemoryProvider(initData?: string | null): IDataSourceProvi
         async onImportFile(file) {
             const data = await file.text();
             store.importData(JSON.parse(data));
-            listeners.forEach((cb) => cb(IDataSourceEventType.updateList, ''));
+            listeners.emit(IDataSourceEventType.updateList, '');
         },
         registerCallback(cb) {
-            listeners.push(cb);
-            return () => {
-                listeners.filter((x) => x !== cb);
-            };
+            return listeners.add(cb);
         },
         exportData() {
             return JSON.stringify(store.exportData());

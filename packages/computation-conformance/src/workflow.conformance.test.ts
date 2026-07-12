@@ -28,6 +28,23 @@ describe('workflow computation conformance', () => {
         });
     });
 
+    test.each([
+        { bounds: [2, null] as [number, null], expected: [2, 3, 4] },
+        { bounds: [null, 3] as [null, number], expected: [2, 3] },
+    ])('filter range includes the present boundary when the other bound is open: $bounds', async ({ bounds, expected }) => {
+        const data = [{ value: 2 }, { value: 3 }, { value: 4 }];
+        const payload: IDataQueryPayload = {
+            workflow: [
+                { type: 'filter', filters: [{ fid: 'value', rule: { type: 'range', value: bounds } }] },
+                { type: 'view', query: [{ op: 'raw', fields: ['value'] }] },
+            ],
+        };
+
+        const { rows, sql } = await executeDuckDB(data, payload);
+        expect(rows.map((row) => row.value)).toEqual(expected);
+        expect(sql).toContain(bounds[0] === null ? '"value" <= 3' : '"value" >= 2');
+    });
+
     test('filter temporal range applies offset parsing', async () => {
         await expectConformance(baseRows, {
             workflow: [

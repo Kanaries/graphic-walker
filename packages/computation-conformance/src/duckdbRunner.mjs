@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { Vector } from 'apache-arrow';
 import { bigNumToString } from 'apache-arrow/util/bn';
+import { compileWorkflowToSQL } from '../../duckdb-wasm-computation/src/compile.cjs';
 
 const require = createRequire(import.meta.url);
 
@@ -72,7 +73,7 @@ async function main() {
             conn.insertJSONFromPath(fileName, { name: tableName });
         }
 
-        const sql = parser.parser_dsl_with_table(tableName, JSON.stringify(payload));
+        const sql = compileWorkflowToSQL(parser.parser_dsl_with_table, tableName, payload);
         const rows = transformResult(conn.query(sql));
         process.stdout.write(JSON.stringify({ rows, sql }));
     } finally {

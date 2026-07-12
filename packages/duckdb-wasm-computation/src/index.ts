@@ -1,5 +1,3 @@
-let inited = false;
-
 import * as duckdb from '@duckdb/duckdb-wasm';
 import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
@@ -8,10 +6,12 @@ import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url'
 import initWasm, { parser_dsl_with_table } from '@kanaries/gw-dsl-parser';
 import dslWasm from '@kanaries/gw-dsl-parser/gw_dsl_parser_bg.wasm?url';
 import { nanoid } from 'nanoid';
-import type { IDataSourceProvider, IMutField, IDataSourceListener } from '@kanaries/graphic-walker';
-import { exportFullRaw, fromFields } from '@kanaries/graphic-walker/models/visSpecHistory';
-import { Table, Vector } from 'apache-arrow';
-import { bigNumToString } from 'apache-arrow/util/bn';
+import { IDataSourceEventType, exportFullRaw, fromFields } from '@kanaries/graphic-walker';
+import type { IDataQueryPayload, IDataSourceProvider, IRow } from '@kanaries/graphic-walker';
+import { cleanupComputation, createInitializer, loadJSONTable } from './runtime';
+import { transformData } from './result';
+import { compileWorkflowToSQL } from './compile.cjs';
+import { createDuckDBMemoryProvider } from './provider';
 
 const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
     mvp: {
@@ -26,125 +26,71 @@ const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
 
 let db: duckdb.AsyncDuckDB;
 
-export async function init() {
-    if (inited) return;
-    inited = true;
+const initialize = createInitializer(async () => {
     // Select a bundle based on browser checks
     const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
 
-    const worker_url = URL.createObjectURL(
+    const workerUrl = URL.createObjectURL(
         new Blob([`importScripts("${bundle.mainWorker!}");`], {
             type: 'text/javascript',
         })
     );
 
-    // Instantiate the asynchronus version of DuckDB-Wasm
-    const worker = new Worker(worker_url);
-    const logger = new duckdb.ConsoleLogger();
-    db = new duckdb.AsyncDuckDB(logger, worker);
-    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-    URL.revokeObjectURL(worker_url);
-    await initWasm(dslWasm);
-}
-
-const ArrowToJSON = (v: any): any => {
-    if (typeof v === 'object') {
-        if (v instanceof Vector) {
-            return Array.from(v).map(ArrowToJSON);
+    let worker: Worker | undefined;
+    let nextDatabase: duckdb.AsyncDuckDB | undefined;
+    try {
+        // Instantiate the asynchronous version of DuckDB-Wasm.
+        worker = new Worker(workerUrl);
+        nextDatabase = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker);
+        await nextDatabase.instantiate(bundle.mainModule, bundle.pthreadWorker);
+        await initWasm(dslWasm);
+        db = nextDatabase;
+    } catch (error) {
+        if (nextDatabase) {
+            await nextDatabase.terminate().catch(() => undefined);
         } else {
-            return parseInt(bigNumToString(v as any));
+            worker?.terminate();
         }
+        throw error;
+    } finally {
+        URL.revokeObjectURL(workerUrl);
     }
-    if (typeof v === 'bigint') {
-        return Number(v);
-    }
-    return v;
-};
+});
 
-const transformData = (table: Table) => {
-    return table.toArray().map((r) => Object.fromEntries(Object.entries(r.toJSON()).map(([k, v]) => [k, ArrowToJSON(v)])));
-};
+export async function init() {
+    await initialize();
+}
 
 export async function getMemoryProvider(): Promise<IDataSourceProvider> {
     await init();
-    const conn = await db.connect();
-    const datasets: { name: string; id: string }[] = [];
-    const metaDict = new Map<string, IMutField[]>();
-    const specDict = new Map<string, string>();
-    const listeners: IDataSourceListener[] = [];
-
-    return {
-        async getDataSourceList() {
-            return datasets;
-        },
-        async addDataSource(data, meta, name) {
-            const id = nanoid().replace('-', '');
-            const filename = `${id}.json`;
-            await db.registerFileText(filename, JSON.stringify(data));
-            await conn.insertJSONFromPath(filename, { name: id });
-            datasets.push({ id, name });
-            metaDict.set(id, meta);
-            specDict.set(id, JSON.stringify([exportFullRaw(fromFields(meta, 'Chart 1'))]));
-            return id;
-        },
-        async getMeta(datasetId) {
-            const meta = metaDict.get(datasetId);
-            if (!meta) {
-                throw new Error('cannot find meta');
-            }
-            return meta;
-        },
-        async setMeta(datasetId, meta) {
-            metaDict.set(datasetId, meta);
-            listeners.forEach((cb) => cb(2, datasetId));
-        },
-        async getSpecs(datasetId) {
-            const specs = specDict.get(datasetId);
-            if (!specs) {
-                throw new Error('cannot find specs');
-            }
-            return specs;
-        },
-        async saveSpecs(datasetId, value) {
-            specDict.set(datasetId, value);
-            listeners.forEach((cb) => cb(4, datasetId));
-        },
-        async queryData(query, datasetIds) {
-            const sql = parser_dsl_with_table(datasetIds[0], JSON.stringify(query));
-            if (process.env.NODE_ENV !== 'production') {
-                console.log(query, sql);
-            }
-            const res = await conn.query(sql).then(transformData);
-            return res;
-        },
-        registerCallback(cb) {
-            listeners.push(cb);
-            return () => {
-                listeners.filter((x) => x !== cb);
-            };
-        },
-    };
+    return createDuckDBMemoryProvider({
+        database: db,
+        connection: await db.connect(),
+        compileQuery: (tableName, query) => compileWorkflowToSQL(parser_dsl_with_table, tableName, query),
+        createInitialSpecs: (meta) => JSON.stringify([exportFullRaw(fromFields(meta, 'Chart 1'))]),
+        eventTypes: IDataSourceEventType,
+    });
 }
 
-export async function getComputation(data: Record<string, number>[]) {
+export async function getComputation(data: IRow[]) {
     if (data.length === 0) {
         return {
             close: async () => {},
             computation: async () => [],
         };
     }
+    await init();
     const tableName = nanoid().replace('-', '');
     const fileName = `${tableName}.json`;
     const conn = await db.connect();
-    await db.registerFileText(fileName, JSON.stringify(data));
-    await conn.insertJSONFromPath(fileName, { name: tableName });
+    await loadJSONTable(conn, db, fileName, tableName, data, true);
     return {
-        close: async () => {
-            await conn.close();
-            await db.dropFile(fileName);
-        },
-        computation: async (query: any) => {
-            const sql = parser_dsl_with_table(tableName, JSON.stringify(query));
+        close: (() => {
+            let closePromise: Promise<void> | undefined;
+            return () => (closePromise ??= cleanupComputation(conn, db, fileName, tableName));
+        })(),
+        computation: async (query: IDataQueryPayload) => {
+            const sql = compileWorkflowToSQL(parser_dsl_with_table, tableName, query);
             if (process.env.NODE_ENV !== 'production') {
                 console.log(query, sql);
             }
