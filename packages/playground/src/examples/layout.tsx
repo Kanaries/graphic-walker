@@ -1,22 +1,53 @@
 import { Fragment, useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { themeContext } from './context';
 import { ThemeToggle } from './components/ThemeToggle';
-import { pages } from './nav';
+import { pageGroups } from './nav';
+
+function NavList({ onNavigate }: { onNavigate?: () => void }) {
+    const location = useLocation();
+
+    return (
+        <nav className="flex flex-col gap-5">
+            {pageGroups.map((group) => (
+                <div key={group.label}>
+                    <h3 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                        {group.label}
+                    </h3>
+                    <ul className="space-y-0.5">
+                        {group.pages.map((page) => {
+                            const active = location.pathname === `/examples/${page.path}`;
+                            return (
+                                <li key={page.name}>
+                                    <Link
+                                        to={`/examples/${page.path}`}
+                                        onClick={onNavigate}
+                                        className={`block rounded-md px-2 py-1.5 text-sm transition-colors ${
+                                            active
+                                                ? 'bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300'
+                                                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {page.name}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            ))}
+        </nav>
+    );
+}
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
     return (
-        <themeContext.Provider
-            value={{
-                theme,
-                setTheme,
-            }}
-        >
+        <themeContext.Provider value={{ theme, setTheme }}>
             <div className={theme === 'dark' ? 'dark' : ''}>
                 <div>
                     <Transition.Root show={sidebarOpen} as={Fragment}>
@@ -60,20 +91,9 @@ export default function Layout() {
                                                 </button>
                                             </div>
                                         </Transition.Child>
-                                        <div className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-                                            <span className="font-bold">Examples</span>
-                                            <ul>
-                                                {pages.map((page) => (
-                                                    <li key={page.name}>
-                                                        <Link
-                                                            to={`/examples/${page.path}`}
-                                                            className="block py-1 text-sm text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-                                                        >
-                                                            {page.name}
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                        <div className="flex grow flex-col gap-y-5 overflow-y-auto px-4 py-8 bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+                                            <span className="px-2 text-lg font-bold">Examples</span>
+                                            <NavList onNavigate={() => setSidebarOpen(false)} />
                                         </div>
                                     </Dialog.Panel>
                                 </Transition.Child>
@@ -81,38 +101,23 @@ export default function Layout() {
                         </Dialog>
                     </Transition.Root>
 
-                    <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                        <nav className="flex grow flex-col gap-y-5 overflow-y-auto px-6 py-12 bg-white dark:bg-gray-950 text-gray-900 dark:text-white shadow-md">
-                            <span className="font-bold">Examples</span>
-                            <ul>
-                                {pages.map((page) => (
-                                    <li key={page.name}>
-                                        <Link
-                                            to={`/examples/${page.path}`}
-                                            className="block py-1 text-sm text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-                                        >
-                                            {page.name}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
+                    <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
+                        <div className="flex grow flex-col overflow-y-auto border-r border-zinc-200 bg-white px-4 py-8 dark:border-zinc-800 dark:bg-gray-950 text-gray-900 dark:text-white">
+                            <span className="mb-6 px-2 text-lg font-bold">Examples</span>
+                            <NavList />
+                        </div>
                     </div>
 
-                    <div className="lg:pl-72">
-                        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b bg-white dark:bg-gray-950 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                    <div className="lg:pl-64">
+                        <div className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-gray-950/80 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
                             <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
                                 <span className="sr-only">Open sidebar</span>
                                 <Bars3Icon className="h-6 w-6" aria-hidden="true" />
                             </button>
                             <div className="h-6 w-px bg-gray-950/10 dark:bg-white/10 lg:hidden" aria-hidden="true" />
-                            <div className="flex flex-1 gap-x-4 items-center self-stretch justify-between lg:gap-x-6">
-                                <div className="flex flex-col space-y-1 text-black dark:text-white">
-                                    <div className="text">Graphic Walker Examples</div>
-                                </div>
-                                <div>
-                                    <ThemeToggle />
-                                </div>
+                            <div className="flex flex-1 items-center justify-between">
+                                <span className="text-sm font-medium text-zinc-900 dark:text-white">Graphic Walker Playground</span>
+                                <ThemeToggle />
                             </div>
                         </div>
 
