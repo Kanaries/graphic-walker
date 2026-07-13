@@ -549,6 +549,56 @@ export async function profileNonmialField(service: IComputationFunction, field: 
     return Promise.all([meta, tops] as const);
 }
 
+type DataTableProfilingMode = 'nominal' | 'quantitative';
+
+interface DataTableProfilingCacheOptions {
+    cacheScope?: object;
+    scopeKey?: string;
+}
+
+const DATA_TABLE_PROFILING_SCOPE_KEY = 'default';
+const DATA_TABLE_PROFILING_CACHE_LIMIT = 500;
+const DATA_TABLE_PROFILING_CONCURRENCY = 4;
+const dataTableProfilingCache = new WeakMap<object, Map<string, Promise<unknown>>>();
+const dataTableProfilingQueue: Array<() => void> = [];
+let dataTableProfilingActiveCount = 0;
+
+function getDataTableProfilingKey(mode: DataTableProfilingMode, field: string, scopeKey = DATA_TABLE_PROFILING_SCOPE_KEY) {
+    return JSON.stringify([scopeKey, mode, field]);
+}
+
+function profileDataTableFieldWithCache<T>(cacheScope: object, cacheKey: string, getValue: () => Promise<T>): Promise<T> {
+    let scopeCache = dataTableProfilingCache.get(cacheScope);
+    if (!scopeCache) {
+        scopeCache = new Map();
+        dataTableProfilingCache.set(cacheScope, scopeCache);
+    }
+    const cached = scopeCache.get(cacheKey) as Promise<T> | undefined;
+    if (cached) {
+        scopeCache.delete(cacheKey);
+        scopeCache.set(cacheKey, cached);
+        return cached;
+    }
+    const pending = getValue().catch((error) => {
+        scopeCache?.delete(cacheKey);
+        throw error;
+    });
+    scopeCache.set(cacheKey, pending);
+    if (scopeCache.size > DATA_TABLE_PROFILING_CACHE_LIMIT) {
+        const oldestKey = scopeCache.keys().next().value;
+        if (oldestKey) {
+            scopeCache.delete(oldestKey);
+        }
+    }
+    return pending;
+}
+
+export function profileNonmialFieldWithCache(service: IComputationFunction, field: string, options: DataTableProfilingCacheOptions = {}) {
+    const cacheScope = options.cacheScope ?? service;
+    const cacheKey = getDataTableProfilingKey('nominal', field, options.scopeKey);
+    return profileDataTableFieldWithCache(cacheScope, cacheKey, () => profileNonmialField(wrapComputationWithDataTableProfilingQueue(wrapComputationWithTag(service, 'profiling')), field));
+}
+
 export async function profileQuantitativeField(service: IComputationFunction, field: string) {
     const BIN_FIELD = `bin_${field}`;
     const ROW_NUM_FIELD = `${COUNT_FIELD_ID}_sum`;
@@ -639,6 +689,36 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
         max,
         binValues,
     };
+}
+
+export function profileQuantitativeFieldWithCache(service: IComputationFunction, field: string, options: DataTableProfilingCacheOptions = {}) {
+    const cacheScope = options.cacheScope ?? service;
+    const cacheKey = getDataTableProfilingKey('quantitative', field, options.scopeKey);
+    return profileDataTableFieldWithCache(cacheScope, cacheKey, () => profileQuantitativeField(wrapComputationWithDataTableProfilingQueue(wrapComputationWithTag(service, 'profiling')), field));
+}
+
+function scheduleDataTableProfiling<T>(task: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const run = () => {
+            dataTableProfilingActiveCount++;
+            Promise.resolve()
+                .then(task)
+                .then(resolve, reject)
+                .finally(() => {
+                    dataTableProfilingActiveCount--;
+                    dataTableProfilingQueue.shift()?.();
+                });
+        };
+        if (dataTableProfilingActiveCount < DATA_TABLE_PROFILING_CONCURRENCY) {
+            run();
+        } else {
+            dataTableProfilingQueue.push(run);
+        }
+    });
+}
+
+function wrapComputationWithDataTableProfilingQueue(service: IComputationFunction): IComputationFunction {
+    return (payload) => scheduleDataTableProfiling(() => service(payload));
 }
 
 export function wrapComputationWithTag(service: IComputationFunction, tag: string) {

@@ -1,6 +1,6 @@
 import { ComponentType, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { IComputationFunction, ISemanticType } from '../../interfaces';
-import { profileNonmialField, profileQuantitativeField, wrapComputationWithTag } from '../../computation';
+import { profileNonmialField, profileNonmialFieldWithCache, profileQuantitativeField, profileQuantitativeFieldWithCache } from '../../computation';
 import React from 'react';
 import { formatDate, isNotEmpty } from '../../utils';
 import Tooltip from '../tooltip';
@@ -13,13 +13,36 @@ import { getTheme } from '../../utils/useTheme';
 export interface FieldProfilingProps {
     field: string;
     computation: IComputationFunction;
+    cacheScope?: object;
+    cacheScopeKey?: string;
 }
 
-function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }: FieldProfilingProps & { valueRenderer?: (v: string | number) => string }) {
+function NominalProfiling({
+    computation,
+    field,
+    cacheScope,
+    cacheScopeKey,
+    valueRenderer = (s) => `${s}`,
+}: FieldProfilingProps & { valueRenderer?: (v: string | number) => string }) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileNonmialField>>>();
     useEffect(() => {
-        profileNonmialField(wrapComputationWithTag(computation, "profiling"), field).then(setStat);
-    }, [computation, field]);
+        let canceled = false;
+        setStat(undefined);
+        profileNonmialFieldWithCache(computation, field, { cacheScope, scopeKey: cacheScopeKey })
+            .then((nextStat) => {
+                if (!canceled) {
+                    setStat(nextStat);
+                }
+            })
+            .catch((error) => {
+                if (!canceled) {
+                    console.error(error);
+                }
+            });
+        return () => {
+            canceled = true;
+        };
+    }, [computation, field, cacheScope, cacheScopeKey]);
 
     if (!isNotEmpty(stat)) {
         return <div className="h-24 flex items-center justify-center">Loading...</div>;
@@ -81,11 +104,26 @@ function NominalProfiling({ computation, field, valueRenderer = (s) => `${s}` }:
 
 const formatter = format('~s');
 
-function QuantitativeProfiling({ computation, field }: FieldProfilingProps) {
+function QuantitativeProfiling({ computation, field, cacheScope, cacheScopeKey }: FieldProfilingProps) {
     const [stat, setStat] = useState<Awaited<ReturnType<typeof profileQuantitativeField>>>();
     useEffect(() => {
-        profileQuantitativeField(wrapComputationWithTag(computation, "profiling"), field).then(setStat);
-    }, [computation, field]);
+        let canceled = false;
+        setStat(undefined);
+        profileQuantitativeFieldWithCache(computation, field, { cacheScope, scopeKey: cacheScopeKey })
+            .then((nextStat) => {
+                if (!canceled) {
+                    setStat(nextStat);
+                }
+            })
+            .catch((error) => {
+                if (!canceled) {
+                    console.error(error);
+                }
+            });
+        return () => {
+            canceled = true;
+        };
+    }, [computation, field, cacheScope, cacheScopeKey]);
     if (!isNotEmpty(stat)) {
         return <div className="h-24 flex items-center justify-center">Loading...</div>;
     }
@@ -202,16 +240,20 @@ function LazyLoaded<T>(Component: ComponentType<T>) {
 
 function FieldProfilingElement(props: FieldProfilingProps & { semanticType: ISemanticType; displayOffset?: number; offset?: number }) {
     const { semanticType, displayOffset, offset, ...fieldProps } = props;
+    const profilingProps = {
+        ...fieldProps,
+        cacheScopeKey: JSON.stringify([fieldProps.cacheScopeKey ?? null, semanticType]),
+    };
     switch (semanticType) {
         case 'nominal':
         case 'ordinal':
-            return <NominalProfiling {...fieldProps} />;
+            return <NominalProfiling {...profilingProps} />;
         case 'temporal': {
             const formatter = (date: string | number) => formatDate(parsedOffsetDate(displayOffset, offset)(date));
-            return <NominalProfiling {...fieldProps} valueRenderer={formatter} />;
+            return <NominalProfiling {...profilingProps} valueRenderer={formatter} />;
         }
         case 'quantitative':
-            return <QuantitativeProfiling {...fieldProps} />;
+            return <QuantitativeProfiling {...profilingProps} />;
     }
 }
 
