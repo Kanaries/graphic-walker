@@ -4,6 +4,7 @@ import root from 'react-shadow';
 
 import tailwindStyle from 'tailwindcss/tailwind.css?inline';
 import style from './index.css?inline';
+import leafletStyle from './leaflet.css?inline';
 import { IUIThemeConfig } from './interfaces';
 import { ColorConfigToCSS, zincTheme } from './utils/colors';
 import { uiThemeContext } from './store/theme';
@@ -45,12 +46,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
                 <style>{style}</style>
                 <style>{colorStyle}</style>
                 {/* Leaflet CSS file */}
-                <link
-                    rel="stylesheet"
-                    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-                    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-                    crossOrigin=""
-                />
+                <style>{leafletStyle}</style>
                 {shadowRoot && (
                     <StyleSheetManager target={shadowRoot}>
                         <ShadowDomContext.Provider value={{ root: shadowRoot }}>{children}</ShadowDomContext.Provider>
