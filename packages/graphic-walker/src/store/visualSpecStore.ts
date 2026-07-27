@@ -14,6 +14,7 @@ import {
     redo,
     undo,
 } from '../models/visSpecHistory';
+import { create } from '../models/withHistory';
 import { emptyEncodings, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
 import { feature } from 'topojson-client';
 import type { FeatureCollection } from 'geojson';
@@ -62,6 +63,7 @@ const disposerRegister = (typeof FinalizationRegistry === 'undefined' ? null : n
 export class VizSpecStore {
     instanceID: string = uniqueId();
     visList: VisSpecWithHistory[];
+    private pristineInitialCharts: Set<VisSpecWithHistory>;
     visIndex: number = 0;
     createdVis: number = 0;
     editingFilterIdx: number | null = null;
@@ -107,11 +109,15 @@ export class VizSpecStore {
     ) {
         this.meta = meta;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1', options?.defaultConfig)];
+        this.pristineInitialCharts = meta.length === 0 ? new Set(this.visList) : new Set();
         this.createdVis = this.visList.length;
         this.defaultConfig = options?.defaultConfig;
         this.onMetaChange = options?.onMetaChange;
-        makeAutoObservable(this, {
+        makeAutoObservable<this, 'pristineInitialCharts'>(this, {
             visList: observable.shallow,
+            // Identity distinguishes the untouched async-loading placeholder from
+            // imported or edited charts; it must not be wrapped by MobX.
+            pristineInitialCharts: false,
             allEncodings: computed.struct,
             filters: observable.ref,
             tableCollapsedHeaderMap: observable.ref,
@@ -388,7 +394,16 @@ export class VizSpecStore {
     }
 
     setMeta(meta: IMutField[]) {
+        const pristineInitialChart =
+            this.visList.length === 1 && this.pristineInitialCharts.has(this.visList[0]) ? this.visList[0] : undefined;
         this.meta = meta;
+        if (meta.length === 0) return;
+
+        this.pristineInitialCharts.clear();
+        if (pristineInitialChart) {
+            const { name, visId } = pristineInitialChart.now;
+            this.visList[0] = create(newChart(meta, name ?? 'Chart 1', visId, this.defaultConfig));
+        }
     }
 
     setOnMetaChange(onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void) {
@@ -400,19 +415,29 @@ export class VizSpecStore {
     }
 
     resetVisualization(name = 'Chart 1') {
+        const trackAsInitialPlaceholder = this.meta.length === 0 && this.pristineInitialCharts.size > 0;
         this.visList = [fromFields(this.meta, name, this.defaultConfig)];
+        if (trackAsInitialPlaceholder) {
+            this.pristineInitialCharts.clear();
+            this.pristineInitialCharts.add(this.visList[0]);
+        }
         this.createdVis = 1;
     }
 
     addVisualization(defaultName?: string | ((index: number) => string)) {
+        const trackAsInitialPlaceholder = this.meta.length === 0 && this.pristineInitialCharts.size > 0;
         const name = defaultName ? (typeof defaultName === 'function' ? defaultName(this.createdVis + 1) : defaultName) : 'Chart ' + (this.createdVis + 1);
         this.visList.push(fromFields(this.meta, name, this.defaultConfig));
+        if (trackAsInitialPlaceholder) {
+            this.pristineInitialCharts.add(this.visList[this.visList.length - 1]);
+        }
         this.createdVis += 1;
         this.visIndex = this.visList.length - 1;
     }
 
     removeVisualization(index: number) {
         if (this.visLength === 1) return;
+        this.pristineInitialCharts.delete(this.visList[index]);
         if (this.visIndex >= index && this.visIndex > 0) this.visIndex -= 1;
         this.visList.splice(index, 1);
     }

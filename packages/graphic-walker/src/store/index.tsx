@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useEffect, createContext, useRef } from 'react';
+import React, { useContext, useMemo, useEffect, createContext } from 'react';
 import { VizSpecStore } from './visualSpecStore';
 import { IComputationFunction, IDefaultConfig, IMutField, IRow } from '../interfaces';
 
@@ -51,33 +51,25 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
         return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig });
     // IMPORTANT the store is only associated with the storeKey
     }, [storeKey]);
-    const lastMeta = useRef(props.meta);
+
+    // Keep this effect before metadata sync: first hydration reads the current
+    // default config when rebuilding the untouched loading placeholder.
     useEffect(() => {
-        if (lastMeta.current !== props.meta) {
-            store.setMeta(props.meta);
-            lastMeta.current = props.meta;
-        }
-    }, [props.meta, store]);
-    const lastOnMetaChange = useRef(props.onMetaChange);
+        const defaultConfig = props.defaultRenderer
+            ? { ...props.defaultConfig, layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) } }
+            : props.defaultConfig;
+        store.setDefaultConfig(defaultConfig);
+    }, [props.defaultConfig, props.defaultRenderer, store]);
+
     useEffect(() => {
-        if (lastOnMetaChange.current !== props.onMetaChange) {
-            store.setOnMetaChange(props.onMetaChange);
-            lastOnMetaChange.current = props.onMetaChange;
-        }
+        // Always sync once on mount so a keepAlive store cannot retain stale
+        // loading metadata across an unmount/remount boundary.
+        store.setMeta(props.meta);
     }, [props.meta, store]);
 
-    const lastDefaultConfig = useRef(props.defaultConfig);
-    const lastDefaultRenderer = useRef(props.defaultRenderer);
     useEffect(() => {
-        if (lastDefaultConfig.current !== props.defaultConfig || lastDefaultRenderer.current !== props.defaultRenderer) {
-            const defaultConfig = props.defaultRenderer
-                ? { ...props.defaultConfig, layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) } }
-                : props.defaultConfig;
-            store.setDefaultConfig(defaultConfig);
-            lastDefaultConfig.current = props.defaultConfig;
-            lastDefaultRenderer.current = props.defaultRenderer;
-        }
-    }, [props.defaultConfig, props.defaultRenderer, store]);
+        store.setOnMetaChange(props.onMetaChange);
+    }, [props.onMetaChange, store]);
 
     useEffect(() => {
         if (props.storeRef) {
