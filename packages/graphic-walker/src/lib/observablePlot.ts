@@ -46,7 +46,7 @@ function vegaLiteToPlot(spec: any): any {
     // etc. shape, opacity, text, etc. if present
 
     // Helper function to determine mark direction based on axis types
-    const getMarkDirection = (markType: string, enc: any) => {
+    const getMarkDirection = (markType: string, enc: any, preferredAxis?: 'X' | 'Y') => {
         const xIsQuantitative = enc.x?.type === 'quantitative';
         const yIsQuantitative = enc.y?.type === 'quantitative';
         const xIsTemporal = enc.x?.type === 'temporal';
@@ -64,6 +64,9 @@ function vegaLiteToPlot(spec: any): any {
         };
         
         if (directionalMarks[markType]) {
+            if (preferredAxis) {
+                return { markFunction: directionalMarks[markType][preferredAxis], stackAxis: preferredAxis };
+            }
             // If X is quantitative and Y is not quantitative (temporal, ordinal, nominal), use X-direction mark
             if (xIsQuantitative && !yIsQuantitative) {
                 console.log(`Using X-direction mark for ${markType}: X is quantitative (${enc.x?.type}), Y is ${enc.y?.type}`);
@@ -94,7 +97,7 @@ function vegaLiteToPlot(spec: any): any {
         
         return { 
             markFunction: nonDirectionalMarks[markType] || Plot.dot, 
-            stackAxis: 'Y' as const 
+            stackAxis: preferredAxis || ('Y' as const),
         };
     };
 
@@ -152,11 +155,7 @@ function vegaLiteToPlot(spec: any): any {
     };
 
     // Helper function to create stack configuration
-    const createStackConfig = (stackMode: string | null, baseConfig: any) => {
-        if (!stacked || !colorField) {
-            return baseConfig;
-        }
-        
+    const createStackConfig = (stackMode: string | null) => {
         const stackOptions: any = {};
         if (stackMode === "normalize") {
             stackOptions.offset = "normalize";
@@ -169,12 +168,8 @@ function vegaLiteToPlot(spec: any): any {
         return stackOptions;
     };
 
-    // Helper function to apply stacking to any mark
-    const applyStacking = (markFunction: any, data: any[], baseConfig: any, stackAxis: 'X' | 'Y') => {
-        if (!stacked || !colorField) {
-            return markFunction(data, baseConfig);
-        }
-        
+    // Helper function to apply stacking to a supported mark
+    const applyStacking = (markType: string, markFunction: any, data: any[], baseConfig: any, stackAxis: 'X' | 'Y', stackMode: string | null) => {
         // Sort data for consistent stacking based on which axis we're stacking along
         const sortedData = [...data].sort((a, b) => {
             // For X-direction stacking (stackAxis === 'X'), sort by Y field first (usually temporal)
@@ -198,11 +193,15 @@ function vegaLiteToPlot(spec: any): any {
             if (primaryCompare !== 0) return primaryCompare;
             
             // Secondary sort by color field for consistent stacking order
-            return colorField && a[colorField] < b[colorField] ? -1 : 1;
+            if (!colorField) return 0;
+            if (a[colorField] < b[colorField]) return -1;
+            if (a[colorField] > b[colorField]) return 1;
+            return 0;
         });
         
-        const stackOptions = createStackConfig(stackMode, baseConfig);
-        const stackFunction = stackAxis === 'X' ? Plot.stackX : Plot.stackY;
+        const stackOptions = createStackConfig(stackMode);
+        const rangedMark = markType === 'bar' || markType === 'area';
+        const stackFunction = stackAxis === 'X' ? (rangedMark ? Plot.stackX : Plot.stackX2) : rangedMark ? Plot.stackY : Plot.stackY2;
         
         // Ensure z channel is set for grouping
         const configWithZ = {
@@ -221,61 +220,81 @@ function vegaLiteToPlot(spec: any): any {
         return markFunction(sortedData, stackFunction(stackOptions, configWithZ));
     };
 
-    // 4) Check for stacking in encoding channels (not just transforms)
-    let stacked = false;
-    let stackMode = null; // Can be "normalize", "center", etc.
-    
-    // Check if any quantitative encoding has stack property that's not null/false
-    if (enc.x?.stack !== null && enc.x?.stack !== false && enc.x?.type === 'quantitative') {
-        stacked = true;
-        stackMode = enc.x.stack;
-    }
-    if (enc.y?.stack !== null && enc.y?.stack !== false && enc.y?.type === 'quantitative') {
-        stacked = true;
-        stackMode = enc.y.stack;
-    }
-    if (enc.theta?.stack !== null && enc.theta?.stack !== false && enc.theta?.type === 'quantitative') {
-        stacked = true;
-        stackMode = enc.theta.stack;
-    }
-    if (enc.radius?.stack !== null && enc.radius?.stack !== false && enc.radius?.type === 'quantitative') {
-        stacked = true;
-        stackMode = enc.radius.stack;
-    }
-    
-    // Also check transforms for legacy support
-    if (Array.isArray(spec.transform)) {
-        for (const t of spec.transform) {
-            if (t.stack) {
-                // E.g. "stack": "area"
-                stacked = true;
+    // 4) Resolve Vega-Lite's mark-aware stack semantics.
+    const resolveStack = (markType: string, enc: any, defaultAxis: 'X' | 'Y') => {
+        const explicitlyStackableMarks = new Set(['bar', 'area', 'point', 'circle', 'dot', 'line', 'text', 'tick']);
+        const defaultStackMarks = new Set(['bar', 'area']);
+        const channels = [
+            { axis: 'X' as const, encoding: enc.x },
+            { axis: 'Y' as const, encoding: enc.y },
+        ].filter(({ encoding }) => encoding?.type === 'quantitative' && !encoding.bin);
+        const hasExplicitStack = channels.some(({ encoding }) => encoding.stack !== undefined);
+        const explicitChannel = channels.find(({ encoding }) => Boolean(encoding.stack));
+
+        if (hasExplicitStack) {
+            const mode = explicitChannel?.encoding.stack;
+            const enabled = mode === true || mode === 'zero' || mode === 'normalize' || mode === 'center';
+            // Graphic Walker expresses stack series through color. Without one, Plot would
+            // normalize each pre-aggregated datum to 100% (or center it around zero).
+            const hasRequiredGroup = (mode !== 'normalize' && mode !== 'center') || Boolean(enc.color?.field);
+            if (enabled && hasRequiredGroup && explicitChannel && explicitlyStackableMarks.has(markType)) {
+                return {
+                    stacked: true,
+                    axis: explicitChannel.axis,
+                    mode: mode === 'normalize' || mode === 'center' ? mode : null,
+                };
             }
-            // if t.aggregate => we might build a group transform
-            // if t.bin => we might build a bin transform
-            // etc...
+            return { stacked: false, axis: defaultAxis, mode: null };
         }
-    }
+
+        if (defaultStackMarks.has(markType) && channels.length > 0) {
+            return {
+                stacked: true,
+                axis: channels.length === 1 ? channels[0].axis : ('Y' as const),
+                mode: null,
+            };
+        }
+
+        return { stacked: false, axis: defaultAxis, mode: null };
+    };
+
+    const suppressImplicitStack = (markType: string, enc: any, baseConfig: any, stackAxis: 'X' | 'Y') => {
+        if (!['bar', 'area', 'rect'].includes(markType)) return baseConfig;
+
+        const axis = stackAxis === 'X' ? 'x' : 'y';
+        if (enc[axis]?.type !== 'quantitative') return baseConfig;
+
+        const value = baseConfig[axis];
+        const config = { ...baseConfig };
+        delete config[axis];
+        if (stackAxis === 'X') {
+            config.x1 = 0;
+            config.x2 = value;
+        } else {
+            config.y1 = 0;
+            config.y2 = value;
+        }
+        return config;
+    };
 
     // Universal mark creation function
     const createMark = (markType: string, data: any[], enc: any, fields: any) => {
         const { colorField } = fields;
         
-        // Get the appropriate mark function and stack axis
-        const { markFunction, stackAxis } = getMarkDirection(markType, enc);
+        // Resolve stacking before choosing the directional mark so explicit X stacks use X marks.
+        const defaultDirection = getMarkDirection(markType, enc);
+        const stack = resolveStack(markType, enc, defaultDirection.stackAxis);
+        const { markFunction, stackAxis } = getMarkDirection(markType, enc, stack.stacked ? stack.axis : undefined);
         
         // Create base configuration
         const baseConfig = createBaseConfig(markType, enc, fields);
-        
-        // Determine if we should stack and how
-        // For area charts, if there's a color field and no explicit stack=false, we should stack
-        const shouldStack = stacked || (colorField && ['bar', 'area'].includes(markType) && stacked !== false);
+        const unstackedConfig = stack.stacked ? baseConfig : suppressImplicitStack(markType, enc, baseConfig, stackAxis);
         
         console.log(`Creating ${markType} mark:`, {
             markFunction: markFunction.name,
             stackAxis,
-            shouldStack,
-            stacked,
-            stackMode,
+            stacked: stack.stacked,
+            stackMode: stack.mode,
             colorField,
             hasColorField: !!colorField,
             isStackableMarkType: ['bar', 'area'].includes(markType),
@@ -283,9 +302,9 @@ function vegaLiteToPlot(spec: any): any {
             yType: enc.y?.type
         });
         
-        if (shouldStack && colorField) {
+        if (stack.stacked) {
             // Apply stacking
-            return applyStacking(markFunction, data, baseConfig, stackAxis);
+            return applyStacking(markType, markFunction, data, baseConfig, stackAxis, stack.mode);
         } else if (colorField && ['line', 'area'].includes(markType)) {
             // For multi-series line/area charts without stacking, add z channel for grouping
             // and ensure proper data sorting for line charts
@@ -331,7 +350,7 @@ function vegaLiteToPlot(spec: any): any {
                 if (xIsQuantitative && yIsTemporal) {
                     console.log('Special case: X quantitative, Y temporal - using curve: "linear" for better connection');
                     const configWithZ = {
-                        ...baseConfig,
+                        ...unstackedConfig,
                         z: colorField || undefined,
                         curve: "linear" // Ensure linear interpolation
                     };
@@ -340,13 +359,13 @@ function vegaLiteToPlot(spec: any): any {
             }
             
             const configWithZ = {
-                ...baseConfig,
+                ...unstackedConfig,
                 z: colorField || undefined,
             };
             return markFunction(sortedData, configWithZ);
         } else {
             // Regular mark without stacking
-            return markFunction(data, baseConfig);
+            return markFunction(data, unstackedConfig);
         }
     };
 
