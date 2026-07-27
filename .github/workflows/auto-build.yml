@@ -20,5 +20,9 @@ jobs:
         run: yarn install
       - name: npm package build
         run: yarn workspace @kanaries/graphic-walker build
+      - name: Vite consumer smoke test
+        if: matrix.node-version == '20.x'
+        timeout-minutes: 20
+        run: yarn test:consumer
       - name: Web app (playground) build
         run: yarn workspace playground build

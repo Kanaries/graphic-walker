@@ -7,8 +7,10 @@ import { peerDependencies } from './package.json'
 import { DEMO_DATASETS, downloadDemoDataset } from '../../scripts/demo-datasets.mjs';
 
 
+// styled-components is an externalized runtime dependency so consumer bundlers can
+// dedupe it; consumers are not required to provide it as a peer.
 // @see https://styled-components.com/docs/faqs#marking-styledcomponents-as-external-in-your-package-dependencies
-const modulesNotToBundle = Object.keys(peerDependencies).concat(["react-dom/client", "react-dom/server"]);
+const modulesNotToBundle = Object.keys(peerDependencies).concat(['styled-components', 'react-dom/client', 'react-dom/server']);
 const demoDatasetDownloads = new Map<string, Promise<Buffer>>();
 
 function demoDatasetFallbackPlugin() {

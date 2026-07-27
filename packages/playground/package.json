@@ -29,7 +29,8 @@
     "react-dom": "^19.2.0",
     "react-router": "^6.20.0",
     "react-router-dom": "^6.20.0",
-    "react-syntax-highlighter": "^15.5.0"
+    "react-syntax-highlighter": "^15.5.0",
+    "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
