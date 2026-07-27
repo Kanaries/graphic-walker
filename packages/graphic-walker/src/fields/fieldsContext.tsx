@@ -102,6 +102,7 @@ export const FieldsContextWrapper: React.FC<{ children?: React.ReactNode | Itera
     );
     return (
         <blockContext.Provider value={blockRef}>
+            {/* The transform behind scale-100 is the containing block used by the coordinate adapters above. */}
             <div className="scale-100 w-full h-full" ref={blockRef}>
                 <DragDropContext enableDefaultSensors={false} sensors={sensors} onDragEnd={onDragEnd} onDragStart={() => {}} onDragUpdate={() => {}}>
                     {props.children}

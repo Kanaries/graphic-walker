@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Issue 501 shadow overlay reproduction</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                min-width: 100%;
+                min-height: 100%;
+                background: #e2e8f0;
+                font-family: sans-serif;
+            }
+
+            #scroll-surface {
+                position: relative;
+                width: 2400px;
+                height: 2000px;
+                background:
+                    linear-gradient(#cbd5e1 1px, transparent 1px),
+                    linear-gradient(90deg, #cbd5e1 1px, transparent 1px);
+                background-size: 40px 40px;
+            }
+
+            #host-shell {
+                position: absolute;
+                top: 560px;
+                left: 620px;
+                width: 1040px;
+                height: 720px;
+                transform-origin: top left;
+            }
+
+            #host-scroll {
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                border: 8px solid #0f172a;
+                border-radius: 12px;
+                background: white;
+                box-shadow: 0 24px 64px rgb(15 23 42 / 35%);
+            }
+
+            #root {
+                display: flex;
+                width: 1120px;
+                height: 900px;
+                min-width: 1120px;
+                min-height: 900px;
+            }
+
+            #host-label {
+                position: absolute;
+                bottom: calc(100% + 8px);
+                left: 0;
+                padding: 4px 8px;
+                border-radius: 4px;
+                background: #0f172a;
+                color: white;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <main id="scroll-surface">
+            <section id="host-shell" data-testid="host-shell">
+                <div id="host-label">offset + page scroll + panel scroll host</div>
+                <div id="host-scroll" data-testid="host-scroll">
+                    <div id="root"></div>
+                </div>
+            </section>
+        </main>
+        <script type="module" src="./issue-501.fixture.tsx"></script>
+    </body>
+</html>

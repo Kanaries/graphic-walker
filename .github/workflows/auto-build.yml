@@ -26,3 +26,17 @@ jobs:
         run: yarn test:consumer
       - name: Web app (playground) build
         run: yarn workspace playground build
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.x
+      - name: Install deps
+        run: yarn install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: yarn workspace @kanaries/graphic-walker playwright install --with-deps chromium firefox webkit
+      - name: Browser regression tests
+        run: yarn workspace @kanaries/graphic-walker test:e2e

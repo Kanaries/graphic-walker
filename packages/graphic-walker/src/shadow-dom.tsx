@@ -14,9 +14,19 @@ interface IShadowDomProps extends HTMLAttributes<HTMLDivElement> {
     uiTheme?: IUIThemeConfig;
     onMount?: (shadowRoot: ShadowRoot) => void;
     onUnmount?: () => void;
+    /** Keep fixed-position overlays in this shadow host. */
+    containOverlays?: boolean;
 }
 
-export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount, onUnmount, children, uiTheme = zincTheme, ...attrs }) {
+export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({
+    onMount,
+    onUnmount,
+    children,
+    uiTheme = zincTheme,
+    containOverlays = true,
+    style: hostStyle,
+    ...attrs
+}) {
     const [shadowRoot, setShadowRoot] = useState<ShadowRoot | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +49,7 @@ export const ShadowDom: React.FC<IShadowDomProps> = function ShadowDom({ onMount
     }, []);
 
     return (
-        <root.div {...attrs} mode="open" ref={rootRef}>
+        <root.div {...attrs} style={containOverlays ? { contain: 'layout', ...hostStyle } : hostStyle} mode="open" ref={rootRef}>
             <uiThemeContext.Provider value={uiTheme}>
                 <style>{tailwindStyle}</style>
                 <style>{style}</style>

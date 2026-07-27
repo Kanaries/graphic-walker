@@ -234,7 +234,7 @@ export function SelectFilter(props: { fid: string; name: string; defaultValue?: 
     }, [props.fid, props.name, rule]);
 
     return (
-        <ShadowDom uiTheme={props.uiTheme}>
+        <ShadowDom containOverlays={false} uiTheme={props.uiTheme}>
             <ComputationContext.Provider value={computation}>
                 <SimpleOneOfSelector field={field} allFields={emptyField} onChange={setRule} />
             </ComputationContext.Provider>
@@ -262,7 +262,7 @@ export function RangeFilter(props: { fid: string; name: string; defaultValue?: [
     }, [props.fid, props.name, rule]);
 
     return (
-        <ShadowDom uiTheme={props.uiTheme}>
+        <ShadowDom containOverlays={false} uiTheme={props.uiTheme}>
             <ComputationContext.Provider value={computation}>
                 <SimpleRange field={field} allFields={emptyField} onChange={setRule} />
             </ComputationContext.Provider>
@@ -290,7 +290,7 @@ export function TemporalFilter(props: { fid: string; name: string; defaultValue?
     }, [props.fid, props.name, rule]);
 
     return (
-        <ShadowDom uiTheme={props.uiTheme}>
+        <ShadowDom containOverlays={false} uiTheme={props.uiTheme}>
             <ComputationContext.Provider value={computation}>
                 <SimpleTemporalRange field={field} allFields={emptyField} onChange={setRule} />
             </ComputationContext.Provider>

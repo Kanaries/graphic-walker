@@ -109,7 +109,7 @@ export function PivotTable(props: PivotTableProps) {
     );
 
     return (
-        <ShadowDom className={className} style={style} uiTheme={props.uiTheme ?? props.colorConfig}>
+        <ShadowDom containOverlays={false} className={className} style={style} uiTheme={props.uiTheme ?? props.colorConfig}>
             <div className={`App font-sans bg-background text-foreground w-full h-full ${darkMode === 'dark' ? 'dark' : ''}`}>
                 <PivotTableCore
                     computation={computation}

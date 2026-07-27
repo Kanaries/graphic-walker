@@ -167,6 +167,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     );
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
+    // This mount owns a shadow-local portal; its forwarded className remains the light-DOM opt-out hook.
     return (
         <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} uiTheme={uiTheme ?? colorConfig}>
             <VizAppContext

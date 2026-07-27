@@ -10,7 +10,8 @@
     "build:app": "vite build --config vite-app.config.ts",
     "serve": "vite preview",
     "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "playwright test"
   },
   "files": [
     "dist",
@@ -121,6 +122,7 @@
     "vega-webgl-renderer": "^1.0.0-beta.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@rollup/plugin-typescript": "^8.2.5",
     "@types/color-string": "^1.5.5",
     "@types/d3-format": "^3.0.1",

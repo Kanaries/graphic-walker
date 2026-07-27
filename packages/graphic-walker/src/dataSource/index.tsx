@@ -243,7 +243,12 @@ export function DataSourceSegmentComponent(props: {
 
     return (
         <>
-            <ShadowDom uiTheme={props.uiTheme ?? props.colorConfig}>
+            <ShadowDom
+                // This host is toolbar-sized, while its create-data-source dialog
+                // must remain reachable in the viewport.
+                containOverlays={false}
+                uiTheme={props.uiTheme ?? props.colorConfig}
+            >
                 <DataSourceThemeContext
                     themeContext={darkMode}
                     vegaThemeContext={{ vizThemeConfig: currentTheme, setVizThemeConfig: setCurrentTheme }}

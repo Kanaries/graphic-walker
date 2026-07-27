@@ -18,3 +18,6 @@ chartinfo.json
 stoinfo_v2.json
 
 internal_docs
+
+**/playwright-report/
+**/test-results/

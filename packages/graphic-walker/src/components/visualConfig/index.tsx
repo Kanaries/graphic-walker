@@ -243,7 +243,7 @@ const VisualConfigPanel: React.FC = () => {
                     setDisplayBackgroundPicker(false);
                 }}
             >
-                <div className="flex flex-col max-h-[calc(min(800px,90vh))] py-6">
+                <div className="flex flex-col max-h-[calc(min(100%,800px,90vh))] py-6">
                     <div className="overflow-y-auto flex-shrink-1 min-h-0 px-6">
                         <ConfigItemContainer>
                             <ConfigItemHeader>
