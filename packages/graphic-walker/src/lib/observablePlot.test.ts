@@ -32,6 +32,7 @@ jest.mock('@observablehq/plot', () => {
         ruleY: factory('rule'),
         boxX: factory('box'),
         boxY: factory('box'),
+        geo: factory('geo'),
         stackY: () => (opts: any) => ({ ...opts, stack: 'y' }),
         stackX: () => (opts: any) => ({ ...opts, stack: 'x' }),
     };
@@ -86,5 +87,20 @@ describe('vegaLiteToPlot', () => {
         const plot = __test__vegaLiteToPlot(vlSpec);
         expect(plot.x.type).toBe('band');
         expect(plot.marks[0].ariaLabel).toBe('bar');
+    });
+
+    test('arc chart renders with geo mark', () => {
+        const vlSpec = {
+            mark: 'arc',
+            data: { values: [ { category: 'A', value: 30 }, { category: 'B', value: 70 } ] },
+            encoding: {
+                theta: { field: 'value', type: 'quantitative' },
+                color: { field: 'category', type: 'nominal' },
+            },
+        };
+        const plot = __test__vegaLiteToPlot(vlSpec);
+        expect(plot.marks[0].ariaLabel).toBe('geo');
+        expect(plot.x.axis).toBeNull();
+        expect(plot.y.axis).toBeNull();
     });
 });
