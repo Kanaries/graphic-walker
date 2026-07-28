@@ -21,3 +21,7 @@ internal_docs
 
 **/playwright-report/
 **/test-results/
+
+# Local agent and browser automation artifacts
+/output/
+/.playwright-cli/
