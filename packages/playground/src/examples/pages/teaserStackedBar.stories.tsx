@@ -4,7 +4,7 @@ import { GraphicRenderer, normalize } from '@kanaries/graphic-walker';
 import type { TerseSpec } from '@kanaries/graphic-walker';
 import { useFetch, IDataSource } from '../util';
 
-const DATASET_URL = '/datasets/ds-titanic-service.json';
+const DATASET_URL = 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-titanic-service.json';
 
 const spec: TerseSpec = {
     mark: 'bar',

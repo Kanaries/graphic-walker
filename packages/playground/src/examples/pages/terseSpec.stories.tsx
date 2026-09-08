@@ -10,7 +10,7 @@ import { useFetch, IDataSource } from '../util';
  * that chart to any renderer. The terse layer is for authoring only — persistence
  * (export/import) always uses the canonical form. See docs/terse-spec-design.md.
  */
-const DATASET_URL = '/datasets/ds-carsales-service.json';
+const DATASET_URL = 'https://pub-2422ed4100b443659f588f2382cfc7b1.r2.dev/datasets/ds-carsales-service.json';
 
 // Each entry is one grammar lesson. To add a new example, append an entry here —
 // `spec` must be a valid TerseSpec against the car-sales dataset (fields:
