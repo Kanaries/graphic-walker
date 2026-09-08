@@ -44,10 +44,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
         () =>
             [{ label: 'Select a Geographic Data', value: '-1' }]
                 .concat(
-                    geoList.map((x, i) => ({
+                    geoList?.map((x, i) => ({
                         label: x.name,
                         value: `${i}`,
-                    }))
+                    })) || []
                 )
                 .concat({ label: 'Manual Configuration', value: '-2' }),
         [geoList]
