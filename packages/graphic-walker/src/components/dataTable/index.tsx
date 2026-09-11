@@ -353,10 +353,13 @@ const DataTable = forwardRef(
         };
     }, [computationFunction, pageIndex, size, sorting, filters, disableSorting]);
 
+    const filterRules = useMemo(() => filters.filter((f) => f.rule).map(createFilter), [filters]);
+
+    const profilingCacheScopeKey = useMemo(() => JSON.stringify(filterRules), [filterRules]);
+
     const filteredComputation = useMemo((): IComputationFunction => {
-        const filterRules = filters.filter((f) => f.rule).map(createFilter);
         return (query) => computation(addFilterForQuery(query, filterRules));
-    }, [computation, filters]);
+    }, [computation, filterRules]);
 
     const loading = statLoading || dataLoading;
 
@@ -521,6 +524,8 @@ const DataTable = forwardRef(
                                             field={field.fid}
                                             semanticType={field.semanticType}
                                             computation={filteredComputation}
+                                            cacheScope={computation}
+                                            cacheScopeKey={profilingCacheScopeKey}
                                             displayOffset={displayOffset}
                                             offset={field.offset}
                                         />
