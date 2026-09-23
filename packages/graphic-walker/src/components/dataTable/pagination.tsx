@@ -1,14 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    Pagination as PaginationRoot,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationNext,
-    PaginationPrevious,
-    PaginationContent,
-    PaginationLink,
-} from '../ui/pagination';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/16/solid';
+import { cn } from '../../utils';
 
 type IPageItem = {
     index: number;
@@ -73,56 +66,63 @@ export default function Pagination(props: PaginationProps) {
         () => getShowIndices(total, pageIndex, pageSize, extendPageNumber),
         [pageIndex, pageSize, extendPageNumber, total, pageIndex]
     );
+    const pageCount = Math.ceil(total / (pageSize || 1));
 
-    const pageButton = (index: number) => {
-        return (
-            <PaginationItem key={index}>
-                <PaginationLink
-                    size="default"
-                    className='px-3 min-w-[2.25rem]'
-                    isActive={index === pageIndex}
-                    onClick={() => {
-                        onPageChange && onPageChange(index);
-                    }}
-                >
-                    {index + 1}
-                </PaginationLink>
-            </PaginationItem>
-        );
-    };
+    if (showIndices.length === 0) {
+        return null;
+    }
 
-    return showIndices.length > 0 ? (
-        <PaginationRoot>
-            <PaginationContent>
-                <PaginationItem>
-                    <PaginationPrevious
+    const buttonClassName =
+        'inline-flex h-7 min-w-[28px] items-center justify-center rounded-md px-1.5 text-[13px] tabular-nums text-foreground/80 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-30';
+
+    return (
+        <nav aria-label="pagination" className="flex items-center gap-0.5">
+            <button
+                type="button"
+                className={buttonClassName}
+                aria-label={t('actions.prev')}
+                title={t('actions.prev')}
+                disabled={pageIndex <= 0}
+                onClick={onPrev}
+            >
+                <ChevronLeftIcon className="h-4 w-4" />
+            </button>
+            {showIndices.map((x, i) => {
+                if (x.type === 'placeholder') {
+                    return (
+                        <span key={`gap-${i}`} aria-hidden className="w-6 text-center text-muted-foreground">
+                            …
+                        </span>
+                    );
+                }
+                const active = x.index === pageIndex;
+                return (
+                    <button
+                        key={x.index}
+                        type="button"
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                            buttonClassName,
+                            active && 'bg-primary font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                        )}
                         onClick={() => {
-                            onPrev();
+                            onPageChange && onPageChange(x.index);
                         }}
                     >
-                        {t('actions.prev')}
-                    </PaginationPrevious>
-                </PaginationItem>
-                {showIndices.map((x) => {
-                    if (x.type === 'placeholder') {
-                        return (
-                            <PaginationItem key={x.index}>
-                                <PaginationEllipsis />
-                            </PaginationItem>
-                        );
-                    }
-                    return pageButton(x.index);
-                })}
-                <PaginationItem>
-                    <PaginationNext
-                        onClick={() => {
-                            onNext();
-                        }}
-                    >
-                        {t('actions.next')}
-                    </PaginationNext>
-                </PaginationItem>
-            </PaginationContent>
-        </PaginationRoot>
-    ) : null;
+                        {x.index + 1}
+                    </button>
+                );
+            })}
+            <button
+                type="button"
+                className={buttonClassName}
+                aria-label={t('actions.next')}
+                title={t('actions.next')}
+                disabled={pageIndex >= pageCount - 1}
+                onClick={onNext}
+            >
+                <ChevronRightIcon className="h-4 w-4" />
+            </button>
+        </nav>
+    );
 }

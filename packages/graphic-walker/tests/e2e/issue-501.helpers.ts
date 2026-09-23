@@ -49,9 +49,10 @@ export async function selectTab(page: Page, name: string) {
 }
 
 export async function openFilterDialog(page: Page, shadowHost: Locator) {
-    const header = shadowHost.locator('thead th').first();
+    const header = shadowHost.locator('thead th[aria-sort]').first();
     await header.hover();
-    await header.locator('div.group > div').last().click();
+    await header.getByTestId('data-table-column-menu').click();
+    await page.getByTestId('data-table-filter').click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await waitForAnimations(dialog);

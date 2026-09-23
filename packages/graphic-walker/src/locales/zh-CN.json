@@ -493,5 +493,31 @@
             "need_lon_lat": "需要经度和纬度字段",
             "need_geo_feature": "需要先配置 GeoJSON 边界"
         }
+    },
+    "data_table": {
+        "rows_other": "<b>{{value}}</b> 行",
+        "rows_filtered": "<b>{{value}}</b> / {{total}} 行",
+        "columns_other": "<b>{{value}}</b> 列",
+        "range": "第 <b>{{from}}–{{to}}</b> 行，共 {{total}} 行",
+        "clear": "清除",
+        "clear_filters": "清除筛选",
+        "no_rows": "暂无数据",
+        "no_matching_rows": "没有符合当前筛选条件的数据",
+        "remove_filter": "移除 {{name}} 的筛选",
+        "n_values_other": "{{count}} 个值",
+        "semantic_type": "语义类型",
+        "column_options": "{{name}} 列选项",
+        "sort_asc": "升序排序",
+        "sort_desc": "降序排序",
+        "clear_sort": "取消排序",
+        "filter": "筛选…",
+        "clear_filter": "清除筛选",
+        "empty_value": "(空)",
+        "unique_count": "{{value}} 个唯一值",
+        "unique_values": "个唯一值",
+        "distinct_ratio": "{{percent}}% 的值互不相同",
+        "other": "其他 ({{count}})",
+        "avg": "均值 {{value}}",
+        "row_count_other": "{{value}} 行"
     }
 }

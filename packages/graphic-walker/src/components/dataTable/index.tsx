@@ -1,22 +1,20 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle, ForwardedRef } from 'react';
-import styled from 'styled-components';
-import type { IMutField, IRow, IComputationFunction, IFilterFiledSimple, IFilterRule, IFilterField, IFilterWorkflowStep, IField, IVisFilter } from '../../interfaces';
-import { useTranslation } from 'react-i18next';
-import LoadingLayer from '../loadingLayer';
+import { Trans, useTranslation } from 'react-i18next';
+import { XMarkIcon } from '@heroicons/react/16/solid';
+import type { IMutField, IRow, IComputationFunction, IFilterRule, IFilterField, IFilterWorkflowStep, IVisFilter, ISemanticType } from '../../interfaces';
 import { dataReadRaw } from '../../computation';
 import Pagination from './pagination';
-import DropdownContext from '../dropdownContext';
-import DataTypeIcon from '../dataTypeIcon';
+import { getHeaderKey, getHeaders } from './headers';
 import { PureFilterEditDialog } from '../../fields/filterField/filterEditDialog';
-import { BarsArrowDownIcon, BarsArrowUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { ComputationContext } from '../../store';
 import { parsedOffsetDate } from '../../lib/op/offset';
-import { cn, formatDate } from '../../utils';
-import { FieldProfiling } from './profiling';
+import { _unstable_encodeRuleValue, cn, formatDate } from '../../utils';
+import { FieldProfiling, formatNumber } from './profiling';
+import { ColumnHeader, type ISortDirection } from './columnHeader';
 import { addFilterForQuery, createFilter } from '../../utils/workflow';
-import { Button, buttonVariants } from '../ui/button';
-import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card';
+import Spinner from '../spinner';
 
 interface DataTableProps {
     /** page limit */
@@ -31,103 +29,10 @@ interface DataTableProps {
     hidePaginationAtOnepage?: boolean;
     displayOffset?: number;
 }
-const Container = styled.div`
-    overflow-x: auto;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    table {
-        box-sizing: content-box;
-        border-collapse: collapse;
-        font-size: 12px;
-        tbody {
-            td {
-            }
-            td.number {
-                text-align: right;
-            }
-            td.text {
-                text-align: left;
-            }
-        }
-    }
-`;
-// const ANALYTIC_TYPE_LIST = ['dimension', 'measure'];
-const SEMANTIC_TYPE_LIST = ['nominal', 'ordinal', 'quantitative', 'temporal'];
-// function getCellType(field: IMutField): 'number' | 'text' {
-//     return field.dataType === 'number' || field.dataType === 'integer' ? 'number' : 'text';
-// }
-function getHeaderType(field: IMutField): 'number' | 'text' {
-    return field.analyticType === 'dimension' ? 'text' : 'number';
-}
 
-function getHeaderClassNames(field: IMutField) {
-    return field.analyticType === 'dimension' ? 'border-t-2 border-dimension' : 'border-t-2 border-measure';
-}
+const SEMANTIC_TYPE_LIST: ISemanticType[] = ['nominal', 'ordinal', 'quantitative', 'temporal'];
 
-function getSemanticColors(field: IMutField): string {
-    switch (field.semanticType) {
-        case 'nominal':
-            return 'border border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-100 dark:border-sky-600';
-        case 'ordinal':
-            return 'border border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100 dark:border-indigo-600';
-        case 'quantitative':
-            return 'border border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100 dark:border-purple-600';
-        case 'temporal':
-            return 'border border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-600';
-        default:
-            return 'border border-transparent bg-gray-400';
-    }
-}
-
-type wrapMutField = {
-    colSpan: number;
-    rowSpan: number;
-} & (
-    | { type: 'field'; value: IMutField; fIndex: number }
-    | {
-          type: 'name';
-          value: string;
-      }
-);
-
-const getHeaders = (metas: IMutField[]): wrapMutField[][] => {
-    const height = metas.map((x) => x.path?.length ?? 1).reduce((a, b) => Math.max(a, b), 0);
-    const result: wrapMutField[][] = [...Array(height)].map(() => []);
-    let now = 1;
-    metas.forEach((x, fIndex) => {
-        const path = x.path ?? [x.name ?? x.fid];
-        if (path.length > now) {
-            for (let i = now - 1; i < path.length - 1; i++) {
-                result[i].push({
-                    colSpan: 0,
-                    rowSpan: 1,
-                    type: 'name',
-                    value: path[i],
-                });
-            }
-        }
-        now = path.length;
-        for (let i = 0; i < path.length - 1; i++) {
-            result[i][result[i].length - 1].colSpan++;
-        }
-        result[path.length - 1].push({
-            type: 'field',
-            value: x,
-            colSpan: 1,
-            rowSpan: height - path.length + 1,
-            fIndex,
-        });
-    });
-    return result;
-};
-
-const getHeaderKey = (f: wrapMutField) => {
-    if (f.type === 'name') {
-        return f.value;
-    }
-    return f.value.name ?? f.value.fid;
-};
+const formatCount = (n: number) => n.toLocaleString();
 
 function useFilters(metas: IMutField[]) {
     const [filters, setFilters] = useState<IFilterField[]>([]);
@@ -163,13 +68,31 @@ function useFilters(metas: IMutField[]) {
     const onWriteFilter = useCallback((index: number, rule: IFilterRule | null) => {
         setFilters((f) => f.map((x, i) => (i === index ? { ...x, rule } : x)));
     }, []);
-    const onDeleteFilter = useCallback((index: number) => {
-        setFilters((f) => f.filter((_, i) => i !== index));
-    }, []);
     const onClose = useCallback(() => {
         setEditingFilterIdx(null);
+        // a filter that was opened but never given a rule should not linger as an empty chip
+        setFilters((f) => (f.every((x) => x.rule) ? f : f.filter((x) => x.rule)));
     }, []);
-    return { filters, options, editingFilterIdx, onSelectFilter, onDeleteFilter, onWriteFilter, onClose };
+    /** creates, replaces or (with `null`) removes the filter of a field */
+    const setFieldRule = useCallback(
+        (fid: string, rule: IFilterRule | null) => {
+            setFilters((fs) => {
+                const i = fs.findIndex((x) => x.fid === fid);
+                if (!rule) {
+                    return i > -1 ? fs.filter((_, j) => j !== i) : fs;
+                }
+                if (i > -1) {
+                    return fs.map((x, j) => (j === i ? { ...x, rule } : x));
+                }
+                const meta = metas.find((x) => x.fid === fid);
+                if (!meta) return fs;
+                return fs.concat({ fid, rule, analyticType: meta.analyticType, name: meta.name ?? meta.fid, semanticType: meta.semanticType });
+            });
+        },
+        [metas]
+    );
+    const clearFilters = useCallback(() => setFilters([]), []);
+    return { filters, options, editingFilterIdx, onSelectFilter, onWriteFilter, onClose, setFieldRule, clearFilters };
 }
 
 function fieldValue(props: { field: IMutField; item: IRow; displayOffset?: number }) {
@@ -234,6 +157,58 @@ function TruncateDector(props: { value: string }) {
     );
 }
 
+function useRuleDescription(displayOffset?: number) {
+    const { t } = useTranslation('translation', { keyPrefix: 'data_table' });
+    return useCallback(
+        (rule: IFilterRule) => {
+            switch (rule.type) {
+                case 'one of':
+                case 'not in': {
+                    const values = rule.value.map((x) => `${x}`);
+                    const text = values.length > 2 ? t('n_values', { count: values.length }) : values.join(', ');
+                    return rule.type === 'not in' ? `≠ ${text}` : text;
+                }
+                case 'range':
+                    return `${rule.value[0] === null ? '…' : formatNumber(rule.value[0])} – ${rule.value[1] === null ? '…' : formatNumber(rule.value[1])}`;
+                case 'temporal range': {
+                    const format = (x: number | null) => (x === null ? '…' : formatDate(parsedOffsetDate(displayOffset, rule.offset)(x)));
+                    return `${format(rule.value[0])} – ${format(rule.value[1])}`;
+                }
+                case 'regexp':
+                    return `/${rule.value}/`;
+            }
+        },
+        [t, displayOffset]
+    );
+}
+
+function FilterChip(props: { name: string; description: string; analyticType: IMutField['analyticType']; onEdit: () => void; onRemove: () => void }) {
+    const { t } = useTranslation('translation', { keyPrefix: 'data_table' });
+    return (
+        <span className="inline-flex h-[26px] shrink-0 items-center gap-1.5 rounded-md border pl-2 pr-0.5 text-xs">
+            <span className={cn('h-1.5 w-1.5 shrink-0 rounded-[2px]', props.analyticType === 'dimension' ? 'bg-dimension' : 'bg-measure')} />
+            <button
+                type="button"
+                className="flex min-w-0 items-center gap-1.5 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                onClick={props.onEdit}
+            >
+                <span className="text-muted-foreground">{props.name}</span>
+                <span className="max-w-[180px] truncate font-medium text-foreground">{props.description}</span>
+            </button>
+            <button
+                type="button"
+                aria-label={t('remove_filter', { name: props.name })}
+                className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                onClick={props.onRemove}
+            >
+                <XMarkIcon className="h-3 w-3" />
+            </button>
+        </span>
+    );
+}
+
+const strong = <b className="font-semibold tabular-nums text-foreground" />;
+
 const DataTable = forwardRef(
     (
         props: DataTableProps,
@@ -241,161 +216,411 @@ const DataTable = forwardRef(
             getFilters: () => IVisFilter[];
         }>
     ) => {
-    const {
-        size = 10,
-        onMetaChange,
-        metas,
-        computation,
-        disableFilter,
-        disableSorting,
-        hideSemanticType,
-        displayOffset,
-        hidePaginationAtOnepage,
-        hideProfiling,
-    } = props;
-    const [pageIndex, setPageIndex] = useState(0);
-    const { t } = useTranslation();
-    const computationFunction = computation;
+        const {
+            size = 10,
+            onMetaChange,
+            metas,
+            computation,
+            disableFilter,
+            disableSorting,
+            hideSemanticType,
+            displayOffset,
+            hidePaginationAtOnepage,
+            hideProfiling,
+        } = props;
+        const [pageIndex, setPageIndex] = useState(0);
+        const { t } = useTranslation();
+        const computationFunction = computation;
 
-    const semanticTypeList = useMemo<{ value: string; label: string }[]>(() => {
-        return SEMANTIC_TYPE_LIST.map((st) => ({
-            value: st,
-            label: t(`constant.semantic_type.${st}`),
+        const semanticTypeList = useMemo(() => {
+            return SEMANTIC_TYPE_LIST.map((st) => ({
+                value: st,
+                label: t(`constant.semantic_type.${st}`),
+            }));
+        }, [t]);
+
+        const [rows, setRows] = useState<IRow[]>([]);
+        const [dataLoading, setDataLoading] = useState(false);
+        const taskIdRef = useRef(0);
+
+        const [sorting, setSorting] = useState<{ fid: string; sort: ISortDirection } | undefined>();
+
+        const { filters, editingFilterIdx, onClose, onSelectFilter, onWriteFilter, setFieldRule, clearFilters, options } = useFilters(metas);
+
+        const filtersRef = useRef(filters);
+        filtersRef.current = filters;
+
+        useImperativeHandle(ref, () => ({
+            getFilters: () => filtersRef.current.filter((x) => x.rule) as IVisFilter[],
         }));
-    }, []);
 
-    const [rows, setRows] = useState<IRow[]>([]);
-    const [dataLoading, setDataLoading] = useState(false);
-    const taskIdRef = useRef(0);
+        const activeFilters = useMemo(() => (disableFilter ? [] : filters.filter((x) => x.rule)), [disableFilter, filters]);
+        const filterRules = useMemo(() => activeFilters.map(createFilter), [activeFilters]);
+        const describeRule = useRuleDescription(displayOffset);
 
-    const [sorting, setSorting] = useState<{ fid: string; sort: 'ascending' | 'descending' } | undefined>();
+        const [total, setTotal] = useState(0);
+        const [unfilteredTotal, setUnfilteredTotal] = useState(0);
+        const [statLoading, setStatLoading] = useState(false);
 
-    const { filters, editingFilterIdx, onClose, onDeleteFilter, onSelectFilter, onWriteFilter, options } = useFilters(metas);
-
-    const filtersRef = useRef(filters);
-    filtersRef.current = filters;
-
-    useImperativeHandle(ref, () => ({
-        getFilters: () => filtersRef.current.filter(x => x.rule) as IVisFilter[],
-    }));
-
-    const [total, setTotal] = useState(0);
-    const [statLoading, setStatLoading] = useState(false);
-
-    // Get count when filter changed
-    useEffect(() => {
-        const f = filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule }));
-        setStatLoading(true);
-        computation({
-            workflow: [
-                ...(!disableFilter && f && f.length > 0
-                    ? [
-                          {
-                              type: 'filter',
-                              filters: f,
-                          } as IFilterWorkflowStep,
-                      ]
-                    : []),
-                {
-                    type: 'view',
-                    query: [
+        // Get count when filter changed
+        useEffect(() => {
+            setStatLoading(true);
+            const countOf = (f: IVisFilter[]) =>
+                computation({
+                    workflow: [
+                        ...(f.length > 0
+                            ? [
+                                  {
+                                      type: 'filter',
+                                      filters: f,
+                                  } as IFilterWorkflowStep,
+                              ]
+                            : []),
                         {
-                            op: 'aggregate',
-                            groupBy: [],
-                            measures: [
+                            type: 'view',
+                            query: [
                                 {
-                                    field: '*',
-                                    agg: 'count',
-                                    asFieldKey: 'count',
+                                    op: 'aggregate',
+                                    groupBy: [],
+                                    measures: [
+                                        {
+                                            field: '*',
+                                            agg: 'count',
+                                            asFieldKey: 'count',
+                                        },
+                                    ],
                                 },
                             ],
                         },
                     ],
-                },
-            ],
-        }).then((v) => {
-            setTotal(v[0]?.count ?? 0);
-            setStatLoading(false);
-        });
-    }, [disableFilter, filters, computation]);
+                }).then((v) => (v[0]?.count ?? 0) as number);
+            let alive = true;
+            countOf(filterRules).then((count) => {
+                if (!alive) return;
+                setTotal(count);
+                setStatLoading(false);
+            });
+            if (filterRules.length > 0) {
+                countOf([]).then((count) => alive && setUnfilteredTotal(count));
+            }
+            return () => {
+                alive = false;
+            };
+        }, [filterRules, computation]);
 
-    const from = pageIndex * size;
-    const to = Math.min((pageIndex + 1) * size - 1, total - 1);
-
-    useEffect(() => {
-        if (from > total) {
+        // a new filter or sort order starts from the first page
+        useEffect(() => {
             setPageIndex(0);
-        }
-    }, [from, total]);
+        }, [filterRules, sorting]);
 
-    useEffect(() => {
-        setDataLoading(true);
-        const taskId = ++taskIdRef.current;
-        dataReadRaw(computationFunction, size, pageIndex, {
-            sorting: disableSorting ? undefined : sorting,
-            filters: filters.filter((x) => x.rule).map((x) => ({ ...x, rule: x.rule! })),
-        })
-            .then((data) => {
-                if (taskId === taskIdRef.current) {
-                    setDataLoading(false);
-                    setRows(data);
-                }
+        const from = pageIndex * size;
+        const to = Math.min((pageIndex + 1) * size - 1, total - 1);
+
+        useEffect(() => {
+            if (from > total) {
+                setPageIndex(0);
+            }
+        }, [from, total]);
+
+        useEffect(() => {
+            setDataLoading(true);
+            const taskId = ++taskIdRef.current;
+            dataReadRaw(computationFunction, size, pageIndex, {
+                sorting: disableSorting ? undefined : sorting,
+                filters: filterRules,
             })
-            .catch((err) => {
-                if (taskId === taskIdRef.current) {
-                    console.error(err);
-                    setDataLoading(false);
-                    setRows([]);
-                }
-            });
-        return () => {
-            taskIdRef.current++;
-        };
-    }, [computationFunction, pageIndex, size, sorting, filters, disableSorting]);
-
-    const filteredComputation = useMemo((): IComputationFunction => {
-        const filterRules = filters.filter((f) => f.rule).map(createFilter);
-        return (query) => computation(addFilterForQuery(query, filterRules));
-    }, [computation, filters]);
-
-    const loading = statLoading || dataLoading;
-
-    const headers = useMemo(() => getHeaders(metas), [metas]);
-
-    const [isSticky, setIsSticky] = useState(false);
-
-    const obRef = useRef<IntersectionObserver>(null);
-    const stickyDector = useCallback((node: HTMLDivElement) => {
-        obRef.current?.disconnect();
-        if (node) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    setIsSticky(!entry.isIntersecting);
+                .then((data) => {
+                    if (taskId === taskIdRef.current) {
+                        setDataLoading(false);
+                        setRows(data);
+                    }
+                })
+                .catch((err) => {
+                    if (taskId === taskIdRef.current) {
+                        console.error(err);
+                        setDataLoading(false);
+                        setRows([]);
+                    }
                 });
+            return () => {
+                taskIdRef.current++;
+            };
+        }, [computationFunction, pageIndex, size, sorting, filterRules, disableSorting]);
+
+        // Each column is profiled against every filter except its own, so a filtered column keeps showing its whole
+        // distribution with the selection highlighted. Functions are reused while a column's filters are unchanged,
+        // which keeps its profile from being fetched again.
+        const profileCache = useRef(new Map<string, { key: string; base: IComputationFunction; fn: IComputationFunction }>());
+        const profileComputations = useMemo(() => {
+            const next = new Map<string, { key: string; base: IComputationFunction; fn: IComputationFunction }>();
+            for (const meta of metas) {
+                const rules = filterRules.filter((x) => x.fid !== meta.fid);
+                const key = JSON.stringify(rules);
+                const prev = profileCache.current.get(meta.fid);
+                if (prev && prev.key === key && prev.base === computation) {
+                    next.set(meta.fid, prev);
+                } else {
+                    next.set(meta.fid, {
+                        key,
+                        base: computation,
+                        fn: rules.length > 0 ? (query) => computation(addFilterForQuery(query, rules)) : computation,
+                    });
+                }
+            }
+            profileCache.current = next;
+            return next;
+        }, [computation, filterRules, metas]);
+
+        const loading = statLoading || dataLoading;
+
+        const headers = useMemo(() => getHeaders(metas), [metas]);
+
+        const [isSticky, setIsSticky] = useState(false);
+
+        const obRef = useRef<IntersectionObserver>(null);
+        const stickyDector = useCallback((node: HTMLDivElement) => {
+            obRef.current?.disconnect();
+            if (node) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        setIsSticky(!entry.isIntersecting);
+                    });
+                });
+                observer.observe(node);
+                obRef.current = observer;
+            }
+        }, []);
+
+        const filterByFid = useMemo(() => new Map(activeFilters.map((x) => [x.fid, x])), [activeFilters]);
+
+        const toggleValue = useCallback(
+            (fid: string, value: any) => {
+                const rule = filterByFid.get(fid)?.rule;
+                const values = rule?.type === 'one of' ? [...rule.value] : [];
+                const encoded = _unstable_encodeRuleValue(value);
+                const i = values.findIndex((x) => _unstable_encodeRuleValue(x) === encoded);
+                if (i > -1) {
+                    values.splice(i, 1);
+                } else {
+                    values.push(value);
+                }
+                setFieldRule(fid, values.length > 0 ? { type: 'one of', value: values } : null);
+            },
+            [filterByFid, setFieldRule]
+        );
+
+        const selectRange = useCallback(
+            (fid: string, [lo, hi]: [number, number], extend: boolean) => {
+                const rule = filterByFid.get(fid)?.rule;
+                if (rule?.type === 'range') {
+                    if (extend) {
+                        setFieldRule(fid, { type: 'range', value: [Math.min(rule.value[0] ?? lo, lo), Math.max(rule.value[1] ?? hi, hi)] });
+                        return;
+                    }
+                    if (rule.value[0] === lo && rule.value[1] === hi) {
+                        setFieldRule(fid, null);
+                        return;
+                    }
+                }
+                setFieldRule(fid, { type: 'range', value: [lo, hi] });
+            },
+            [filterByFid, setFieldRule]
+        );
+
+        const toggleSort = useCallback((fid: string) => {
+            setSorting((s) => {
+                if (s?.fid !== fid) return { fid, sort: 'descending' };
+                if (s.sort === 'descending') return { fid, sort: 'ascending' };
+                return undefined;
             });
-            observer.observe(node);
-            obRef.current = observer;
-        }
-    }, []);
-    return (
-        <Container className="relative">
-            {!disableFilter && filters.length > 0 && (
-                <div className="flex items-center p-2 space-x-2">
-                    <span>Filters: </span>
-                    {filters.map((x, i) => (
-                        <FilterPill key={x.fid} name={x.name} onClick={() => onSelectFilter(x.fid)} onRemove={() => onDeleteFilter(i)} />
-                    ))}
+        }, []);
+
+        const showFooter = !(hidePaginationAtOnepage && total <= size);
+        const headerRowCount = headers.length + (hideProfiling ? 0 : 1);
+
+        return (
+            <div className="relative flex h-full flex-col overflow-hidden rounded-lg border bg-background text-[13px] text-foreground">
+                <div className="flex h-12 shrink-0 items-center gap-3 border-b px-4">
+                    <span className="whitespace-nowrap text-muted-foreground">
+                        {activeFilters.length > 0 ? (
+                            <Trans
+                                i18nKey="data_table.rows_filtered"
+                                count={total}
+                                values={{ value: formatCount(total), total: formatCount(unfilteredTotal) }}
+                                components={{ b: strong }}
+                            />
+                        ) : (
+                            <Trans i18nKey="data_table.rows" count={total} values={{ value: formatCount(total) }} components={{ b: strong }} />
+                        )}
+                    </span>
+                    <span className="h-4 w-px shrink-0 bg-border" />
+                    <span className="whitespace-nowrap text-muted-foreground">
+                        <Trans i18nKey="data_table.columns" count={metas.length} values={{ value: formatCount(metas.length) }} components={{ b: strong }} />
+                    </span>
+                    {activeFilters.length > 0 && (
+                        <>
+                            <span className="h-4 w-px shrink-0 bg-border" />
+                            <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                                {activeFilters.map((x) => (
+                                    <FilterChip
+                                        key={x.fid}
+                                        name={x.name}
+                                        analyticType={x.analyticType}
+                                        description={describeRule(x.rule!)}
+                                        onEdit={() => onSelectFilter(x.fid)}
+                                        onRemove={() => setFieldRule(x.fid, null)}
+                                    />
+                                ))}
+                                <button
+                                    type="button"
+                                    className="shrink-0 rounded px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    onClick={clearFilters}
+                                >
+                                    {t('data_table.clear')}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                    {loading && <Spinner className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                 </div>
-            )}
-            {!(hidePaginationAtOnepage && total <= size) && (
-                <nav className="flex items-center justify-end space-x-2 p-2" aria-label="Pagination">
-                    <div className="hidden sm:block flex-1">
-                        <p className="text-sm text-muted-foreground">
-                            Showing <span className="font-medium">{from + 1}</span> to <span className="font-medium">{to + 1}</span> of{' '}
-                            <span className="font-medium">{total}</span> results
-                        </p>
-                    </div>
-                    <div className="space-x-2">
+                <div className="relative min-h-0 flex-1 overflow-auto" style={{ maxHeight: '600px' }}>
+                    <div className="h-0 w-full" ref={stickyDector}></div>
+                    <table className="w-full border-separate border-spacing-0">
+                        <thead className={cn('sticky top-0 z-10 bg-background', isSticky && 'shadow-[0_8px_16px_-12px_rgba(0,0,0,0.35)]')}>
+                            {headers.map((row, rowIndex) => (
+                                <tr key={`row_${rowIndex}`}>
+                                    {rowIndex === 0 && (
+                                        <th
+                                            rowSpan={headerRowCount}
+                                            scope="col"
+                                            className="w-11 min-w-[44px] border-b pr-2.5 pt-[15px] text-right align-top text-[11px] font-normal text-muted-foreground/70"
+                                        >
+                                            #
+                                        </th>
+                                    )}
+                                    {row.map((f, i) => {
+                                        if (f.type === 'name') {
+                                            return (
+                                                <th
+                                                    key={`group_${i}_${f.value}`}
+                                                    colSpan={f.colSpan}
+                                                    rowSpan={f.rowSpan}
+                                                    scope="colgroup"
+                                                    className="border-b border-border/60 px-3 pb-1.5 pt-3 text-left align-bottom text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    <span className="sticky left-3 whitespace-nowrap">{f.value}</span>
+                                                </th>
+                                            );
+                                        }
+                                        const field = f.value;
+                                        const sort = sorting?.fid === field.fid ? sorting.sort : undefined;
+                                        return (
+                                            <th
+                                                key={getHeaderKey(f)}
+                                                colSpan={f.colSpan}
+                                                rowSpan={f.rowSpan}
+                                                scope="col"
+                                                aria-sort={sort ?? 'none'}
+                                                className={cn(
+                                                    'group/th min-w-[128px] px-3 pt-3 text-left align-bottom font-normal',
+                                                    hideProfiling ? 'border-b pb-3' : 'pb-2.5',
+                                                    sort && 'bg-foreground/[0.025]'
+                                                )}
+                                            >
+                                                <ColumnHeader
+                                                    field={field}
+                                                    sort={sort}
+                                                    filtered={filterByFid.has(field.fid)}
+                                                    hideSemanticType={hideSemanticType}
+                                                    semanticTypeOptions={semanticTypeList}
+                                                    onToggleSort={disableSorting ? undefined : () => toggleSort(field.fid)}
+                                                    onSort={disableSorting ? undefined : (s) => setSorting(s ? { fid: field.fid, sort: s } : undefined)}
+                                                    onFilter={disableFilter ? undefined : () => onSelectFilter(field.fid)}
+                                                    onClearFilter={disableFilter ? undefined : () => setFieldRule(field.fid, null)}
+                                                    onChangeSemanticType={
+                                                        onMetaChange ? (semanticType) => onMetaChange(field.fid, f.fIndex, { semanticType }) : undefined
+                                                    }
+                                                />
+                                            </th>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                            {!hideProfiling && (
+                                <tr>
+                                    {metas.map((field) => (
+                                        <th
+                                            key={field.fid}
+                                            className={cn(
+                                                'border-b px-3 pb-3 text-left align-top font-normal',
+                                                sorting?.fid === field.fid && 'bg-foreground/[0.025]'
+                                            )}
+                                        >
+                                            <FieldProfiling
+                                                field={field.fid}
+                                                semanticType={field.semanticType}
+                                                analyticType={field.analyticType}
+                                                computation={profileComputations.get(field.fid)?.fn ?? computation}
+                                                displayOffset={displayOffset}
+                                                offset={field.offset}
+                                                rule={filterByFid.get(field.fid)?.rule}
+                                                onToggleValue={disableFilter ? undefined : (value) => toggleValue(field.fid, value)}
+                                                onSelectRange={disableFilter ? undefined : (range, extend) => selectRange(field.fid, range, extend)}
+                                            />
+                                        </th>
+                                    ))}
+                                </tr>
+                            )}
+                        </thead>
+                        <tbody className={cn('transition-opacity', dataLoading && rows.length > 0 && 'opacity-60')}>
+                            {rows.map((row, index) => (
+                                <tr className="hover:bg-muted/50" key={index}>
+                                    <td className="border-b border-border/60 pr-2.5 text-right text-[11.5px] tabular-nums text-muted-foreground/70">
+                                        {formatCount(from + index + 1)}
+                                    </td>
+                                    {metas.map((field) => {
+                                        const value = fieldValue({ field, item: row, displayOffset });
+                                        return (
+                                            <td
+                                                key={field.fid + index}
+                                                className={cn(
+                                                    'h-9 max-w-[280px] whitespace-nowrap border-b border-border/60 px-3',
+                                                    field.analyticType === 'measure'
+                                                        ? 'text-right tabular-nums text-foreground'
+                                                        : 'text-left text-foreground/80',
+                                                    sorting?.fid === field.fid && 'bg-foreground/[0.025]'
+                                                )}
+                                            >
+                                                <TruncateDector value={value} />
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {!loading && rows.length === 0 && (
+                        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+                            <span>{activeFilters.length > 0 ? t('data_table.no_matching_rows') : t('data_table.no_rows')}</span>
+                            {activeFilters.length > 0 && (
+                                <Button variant="outline" size="sm" onClick={clearFilters}>
+                                    {t('data_table.clear_filters')}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+                {showFooter && (
+                    <div className="flex h-12 shrink-0 items-center justify-between gap-4 border-t pl-4 pr-3">
+                        <span className="whitespace-nowrap text-muted-foreground">
+                            {total > 0 && (
+                                <Trans
+                                    i18nKey="data_table.range"
+                                    values={{ from: formatCount(from + 1), to: formatCount(to + 1), total: formatCount(total) }}
+                                    components={{ b: strong }}
+                                />
+                            )}
+                        </span>
                         <Pagination
                             total={total}
                             pageSize={size}
@@ -411,186 +636,26 @@ const DataTable = forwardRef(
                             }}
                         />
                     </div>
-                </nav>
-            )}
-            <div className="overflow-y-auto h-full" style={{ maxHeight: '600px' }}>
-                <div className="h-0 w-full" ref={stickyDector}></div>
-                <table className="min-w-full relative border-x">
-                    <thead className={`sticky top-0 bg-background ${isSticky ? 'shadow-md' : ''}`}>
-                        {headers.map((row) => (
-                            <tr className="divide-x divide-border" key={`row_${getHeaderKey(row[0])}`}>
-                                {row.map((f, i) => (
-                                    <th
-                                        colSpan={f.colSpan}
-                                        rowSpan={f.rowSpan}
-                                        key={getHeaderKey(f)}
-                                        className="align-top p-0 border-b bg-background"
-                                        style={{ zIndex: row.length - i }}
-                                    >
-                                        {f.type === 'name' && (
-                                            <div
-                                                className={
-                                                    'inset-x-0 border-t-4 border-yellow-400 whitespace-nowrap py-3.5 text-left text-xs font-medium text-foreground'
-                                                }
-                                            >
-                                                <b className="sticky inset-x-0 w-fit px-4 sm:pl-6">{f.value}</b>
-                                            </div>
-                                        )}
-                                        {f.type === 'field' && (
-                                            <div
-                                                className={
-                                                    getHeaderClassNames(f.value) +
-                                                    ' whitespace-nowrap py-3.5 px-4 text-left text-xs font-medium text-foreground flex items-center gap-1 group'
-                                                }
-                                            >
-                                                <div className="font-normal block">
-                                                    {!hideSemanticType && !onMetaChange && (
-                                                        <span className={'inline-flex p-0.5 text-xs mt-1 rounded ' + getSemanticColors(f.value)}>
-                                                            <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
-                                                        </span>
-                                                    )}
-                                                    {!hideSemanticType && onMetaChange && (
-                                                        <DropdownContext
-                                                            options={semanticTypeList}
-                                                            onSelect={(value) => {
-                                                                onMetaChange(f.value.fid, f.fIndex, {
-                                                                    semanticType: value as IMutField['semanticType'],
-                                                                });
-                                                            }}
-                                                        >
-                                                            <span
-                                                                className={
-                                                                    'cursor-pointer inline-flex p-0.5 text-xs mt-1 rounded hover:scale-125 ' +
-                                                                    getSemanticColors(f.value)
-                                                                }
-                                                            >
-                                                                <DataTypeIcon dataType={f.value.semanticType} analyticType={f.value.analyticType} />
-                                                            </span>
-                                                        </DropdownContext>
-                                                    )}
-                                                </div>
-                                                <b
-                                                    className="inline-block"
-                                                    onClick={() => {
-                                                        if (disableSorting) return;
-                                                        setSorting((s) => {
-                                                            if (s?.fid === f.value.fid && s.sort === 'descending') {
-                                                                return {
-                                                                    fid: f.value.fid,
-                                                                    sort: 'ascending',
-                                                                };
-                                                            }
-                                                            return {
-                                                                fid: f.value.fid,
-                                                                sort: 'descending',
-                                                            };
-                                                        });
-                                                    }}
-                                                >
-                                                    {f.value.basename || f.value.name || f.value.fid}
-                                                </b>
-                                                {!disableSorting && sorting?.fid === f.value.fid && (
-                                                    <div className="mx-1">
-                                                        {sorting.sort === 'ascending' && <BarsArrowUpIcon className="w-3" />}
-                                                        {sorting.sort === 'descending' && <BarsArrowDownIcon className="w-3" />}
-                                                    </div>
-                                                )}
-                                                {!disableFilter && (
-                                                    <div
-                                                        className={buttonVariants({
-                                                            variant: 'ghost',
-                                                            className: 'cursor-pointer invisible group-hover:visible',
-                                                            size: 'icon-sm',
-                                                        })}
-                                                        onClick={() => onSelectFilter(f.value.fid)}
-                                                    >
-                                                        <FunnelIcon className="w-4 inline-block" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                        {!props.hideProfiling && (
-                            <tr className="divide-x divide-border border-b">
-                                {metas.map((field) => (
-                                    <th key={field.fid} className={getHeaderType(field) + ' whitespace-nowrap py-2 px-3 text-xs text-muted-foreground'}>
-                                        <FieldProfiling
-                                            field={field.fid}
-                                            semanticType={field.semanticType}
-                                            computation={filteredComputation}
-                                            displayOffset={displayOffset}
-                                            offset={field.offset}
-                                        />
-                                    </th>
-                                ))}
-                            </tr>
-                        )}
-                    </thead>
-                    <tbody className="divide-y divide-border bg-background font-mono">
-                        {rows.map((row, index) => (
-                            <tr className="divide-x divide-border" key={index}>
-                                {metas.map((field) => {
-                                    const value = fieldValue({ field, item: row, displayOffset });
-                                    return (
-                                        <td
-                                            key={field.fid + index}
-                                            className={getHeaderType(field) + ' whitespace-nowrap py-2 px-4 text-xs text-muted-foreground max-w-[240px]'}
-                                        >
-                                            <TruncateDector value={value} />
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                )}
+                {!disableFilter && (
+                    <ComputationContext.Provider value={computation}>
+                        <div className="text-xs">
+                            <PureFilterEditDialog
+                                editingFilterIdx={editingFilterIdx}
+                                meta={metas}
+                                onClose={onClose}
+                                onSelectFilter={onSelectFilter}
+                                onWriteFilter={onWriteFilter}
+                                options={options}
+                                viewFilters={filters}
+                                displayOffset={displayOffset}
+                            />
+                        </div>
+                    </ComputationContext.Provider>
+                )}
             </div>
-
-            {loading && <LoadingLayer />}
-            {!disableFilter && (
-                <ComputationContext.Provider value={computation}>
-                    <div className="text-xs">
-                        <PureFilterEditDialog
-                            editingFilterIdx={editingFilterIdx}
-                            meta={metas}
-                            onClose={onClose}
-                            onSelectFilter={onSelectFilter}
-                            onWriteFilter={onWriteFilter}
-                            options={options}
-                            viewFilters={filters}
-                            displayOffset={displayOffset}
-                        />
-                    </div>
-                </ComputationContext.Provider>
-            )}
-        </Container>
-    );
-});
+        );
+    }
+);
 
 export default DataTable;
-
-const FilterPill = (props: { name: string; onRemove?: () => void; onClick?: () => void }) => {
-    return (
-        <Badge onClick={props.onClick} className="gap-x-0.5">
-            {props.name}
-            <Button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    props.onRemove?.();
-                }}
-                variant="ghost"
-                size="none"
-                className="relative -mr-1 h-3.5 w-3.5 rounded-sm"
-            >
-                <span className="sr-only">Remove</span>
-                <svg viewBox="0 0 14 14" className="h-3.5 w-3.5 stroke-current">
-                    <path d="M4 4l6 6m0-6l-6 6" />
-                </svg>
-                <span className="absolute -inset-1"></span>
-            </Button>
-        </Badge>
-    );
-};
