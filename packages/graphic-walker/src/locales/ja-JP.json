@@ -487,5 +487,31 @@
             "need_lon_lat": "経度・緯度フィールドが必要です",
             "need_geo_feature": "GeoJSON 境界の設定が必要です"
         }
+    },
+    "data_table": {
+        "rows_other": "<b>{{value}}</b> 行",
+        "rows_filtered": "<b>{{value}}</b> / {{total}} 行",
+        "columns_other": "<b>{{value}}</b> 列",
+        "range": "<b>{{from}}–{{to}}</b> 行目 / 全 {{total}} 行",
+        "clear": "クリア",
+        "clear_filters": "フィルターをクリア",
+        "no_rows": "データがありません",
+        "no_matching_rows": "現在のフィルターに一致する行はありません",
+        "remove_filter": "{{name}} のフィルターを削除",
+        "n_values_other": "{{count}} 個の値",
+        "semantic_type": "セマンティックタイプ",
+        "column_options": "{{name}} 列のオプション",
+        "sort_asc": "昇順に並べ替える",
+        "sort_desc": "降順に並べ替える",
+        "clear_sort": "並べ替えを解除",
+        "filter": "フィルター…",
+        "clear_filter": "フィルターを解除",
+        "empty_value": "(空)",
+        "unique_count": "ユニーク値 {{value}}",
+        "unique_values": "ユニーク値",
+        "distinct_ratio": "{{percent}}% がユニーク",
+        "other": "その他 ({{count}})",
+        "avg": "平均 {{value}}",
+        "row_count_other": "{{value}} 行"
     }
 }

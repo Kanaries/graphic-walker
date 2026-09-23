@@ -70,9 +70,9 @@ module.exports = {
             filter: {
                 darkmap: 'var(--map-tiles-filter)',
             },
-        },
-        minWidth: {
-            96: '96px',
+            minWidth: {
+                96: '96px',
+            },
         },
     },
     darkMode: 'class', // or 'media' or 'class

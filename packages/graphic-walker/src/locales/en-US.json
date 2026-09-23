@@ -494,5 +494,35 @@
             "need_lon_lat": "Needs longitude & latitude fields",
             "need_geo_feature": "Needs a configured GeoJSON boundary"
         }
+    },
+    "data_table": {
+        "rows_one": "<b>{{value}}</b> row",
+        "rows_other": "<b>{{value}}</b> rows",
+        "rows_filtered": "<b>{{value}}</b> of {{total}} rows",
+        "columns_one": "<b>{{value}}</b> column",
+        "columns_other": "<b>{{value}}</b> columns",
+        "range": "<b>{{from}}–{{to}}</b> of {{total}}",
+        "clear": "Clear",
+        "clear_filters": "Clear filters",
+        "no_rows": "No data",
+        "no_matching_rows": "No rows match the current filters",
+        "remove_filter": "Remove filter on {{name}}",
+        "n_values_one": "{{count}} value",
+        "n_values_other": "{{count}} values",
+        "semantic_type": "Semantic type",
+        "column_options": "Column options for {{name}}",
+        "sort_asc": "Sort ascending",
+        "sort_desc": "Sort descending",
+        "clear_sort": "Clear sort",
+        "filter": "Filter…",
+        "clear_filter": "Clear filter",
+        "empty_value": "(Empty)",
+        "unique_count": "{{value}} unique",
+        "unique_values": "unique values",
+        "distinct_ratio": "{{percent}}% distinct",
+        "other": "Other ({{count}})",
+        "avg": "avg {{value}}",
+        "row_count_one": "{{value}} row",
+        "row_count_other": "{{value}} rows"
     }
 }

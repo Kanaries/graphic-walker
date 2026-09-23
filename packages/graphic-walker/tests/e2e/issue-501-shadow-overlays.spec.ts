@@ -18,7 +18,7 @@ for (const scale of [1, 0.8]) {
             document.querySelector<HTMLElement>('#host-scroll')!.scrollTo(48, 72);
         });
 
-        const semanticTypeTrigger = shadowHost.locator('thead span.cursor-pointer').first();
+        const semanticTypeTrigger = shadowHost.getByTestId('data-table-semantic-type').first();
         await semanticTypeTrigger.click();
 
         const menu = page.getByRole('menu');

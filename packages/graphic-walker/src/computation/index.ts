@@ -532,15 +532,28 @@ export async function getFieldDistinctCounts(
 }
 
 export async function profileNonmialField(service: IComputationFunction, field: string) {
-    const TOPS_NUM = 2;
+    const TOPS_NUM = 3;
     const meta = getFieldDistinctMeta(service, field);
     const tops = getFieldDistinctCounts(service, field, { sortBy: 'count_dsc', valuesLimit: TOPS_NUM });
     return Promise.all([meta, tops] as const);
 }
 
+export interface IQuantitativeProfileBin {
+    from: number;
+    to: number;
+    count: number;
+    /** smallest value inside the bin, only present for non-empty bins */
+    min?: number;
+    /** largest value inside the bin, only present for non-empty bins */
+    max?: number;
+}
+
 export async function profileQuantitativeField(service: IComputationFunction, field: string) {
     const BIN_FIELD = `bin_${field}`;
     const ROW_NUM_FIELD = `${COUNT_FIELD_ID}_sum`;
+    const MIN_FIELD = `min_${field}`;
+    const MAX_FIELD = `max_${field}`;
+    const SUM_FIELD = `sum_${field}`;
     const BIN_SIZE = 10;
 
     const workflow: IDataQueryWorkflowStep[] = [
@@ -583,6 +596,21 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
                             agg: 'sum',
                             asFieldKey: ROW_NUM_FIELD,
                         },
+                        {
+                            field,
+                            agg: 'min',
+                            asFieldKey: MIN_FIELD,
+                        },
+                        {
+                            field,
+                            agg: 'max',
+                            asFieldKey: MAX_FIELD,
+                        },
+                        {
+                            field,
+                            agg: 'sum',
+                            asFieldKey: SUM_FIELD,
+                        },
                     ],
                 },
             ],
@@ -595,15 +623,23 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
         return {
             max: 0,
             min: 0,
-            binValues: [],
+            total: 0,
+            mean: 0,
+            binValues: [] as IQuantitativeProfileBin[],
         };
+    }
+    let total = 0;
+    let sum = 0;
+    for (const row of values) {
+        total += Number(row[ROW_NUM_FIELD]) || 0;
+        sum += Number(row[SUM_FIELD]) || 0;
     }
     const min = values[0][BIN_FIELD][0];
     const max = values[values.length - 1][BIN_FIELD][1];
     const step = (max - min) / BIN_SIZE;
     const binValues = range(0, BIN_SIZE)
         .map((x) => x * step + min)
-        .map((bin) => {
+        .map((bin): IQuantitativeProfileBin => {
             const row = binarySearchClosest(values, bin, (row) => row[BIN_FIELD][0]);
             const binValue = row[BIN_FIELD][0] as number;
             if (Math.abs(binValue - bin) * 2 < step) {
@@ -613,6 +649,8 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
                     from: bin,
                     to: bin + step,
                     count,
+                    min: Number(row[MIN_FIELD]),
+                    max: Number(row[MAX_FIELD]),
                 };
             } else {
                 // not found
@@ -626,6 +664,8 @@ export async function profileQuantitativeField(service: IComputationFunction, fi
     return {
         min,
         max,
+        total,
+        mean: total ? sum / total : 0,
         binValues,
     };
 }
