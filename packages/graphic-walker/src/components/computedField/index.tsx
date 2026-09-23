@@ -3,7 +3,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useVizStore } from '../../store';
 import { isNotEmpty, parseErrorMessage } from '../../utils';
 import { highlightField } from '../highlightField';
-import { aggFuncs, reservedKeywords, sqlFunctions } from '../../lib/sql';
+import { aggFuncs, reservedKeywords, sqlFunctions, quoteNonAsciiIdents } from '../../lib/sql';
 import { COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID } from '../../constants';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Dialog, DialogContent } from '../ui/dialog';
@@ -29,7 +29,12 @@ const ComputedFieldDialog: React.FC = observer(() => {
             .filter((x) => ![COUNT_FIELD_ID, MEA_KEY_ID, MEA_VAL_ID, PAINT_FIELD_ID].includes(x.fid))
             .map((x) => x.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
             .join('|');
-        const fieldRegex = fields.length > 0 ? new RegExp(`\\b(${fields})\\b`, 'gi') : null;
+        // Use Unicode-aware lookahead/lookbehind instead of \b so that
+        // non-ASCII field names (e.g. Korean, CJK) are matched and highlighted.
+        const fieldRegex =
+            fields.length > 0
+                ? new RegExp(`(?<![\\w\\u00C0-\\uFFFF])(${fields})(?![\\w\\u00C0-\\uFFFF])`, 'gi')
+                : null;
         return highlightField((sql: string) => {
             // highlight field
             if (fieldRegex) {
@@ -130,7 +135,10 @@ const ComputedFieldDialog: React.FC = observer(() => {
                             children={editingComputedFieldFid === '' ? 'Add' : 'Edit'}
                             onClick={() => {
                                 try {
-                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, sql);
+                                    // Pre-process: wrap non-ASCII field names in double-quotes so
+                                    // pgsql-ast-parser can parse them as delimited identifiers.
+                                    const processedSql = quoteNonAsciiIdents(sql, vizStore.allFields);
+                                    vizStore.upsertComputedField(editingComputedFieldFid!, name, processedSql);
                                     vizStore.setComputedFieldFid();
                                 } catch (e) {
                                     setError(parseErrorMessage(e));
