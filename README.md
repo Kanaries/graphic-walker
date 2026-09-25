@@ -123,6 +123,7 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
         fields={fields}
         chart={graphicWalkerSpec}
         i18nLang={langStore.lang}
+        defaultTab="data"
     />;
 }
 

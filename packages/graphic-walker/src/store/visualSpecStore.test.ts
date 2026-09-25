@@ -1,4 +1,4 @@
-import type { IMutField } from '../interfaces';
+import { ISegmentKey, type IMutField } from '../interfaces';
 import { newChart } from '../models/visSpecHistory';
 import { VizSpecStore } from './visualSpecStore';
 
@@ -174,5 +174,19 @@ describe('VizSpecStore metadata updates', () => {
         store.setMeta(META);
 
         expect(store.currentVis.layout.renderer).toBe('observable-plot');
+    });
+});
+
+describe('VizSpecStore initial segment', () => {
+    test('opens on the data segment when requested', () => {
+        const store = new VizSpecStore(META, { initialSegment: ISegmentKey.data });
+
+        expect(store.segmentKey).toBe(ISegmentKey.data);
+    });
+
+    test('defaults to the visualization segment', () => {
+        const store = new VizSpecStore(META);
+
+        expect(store.segmentKey).toBe(ISegmentKey.vis);
     });
 });
