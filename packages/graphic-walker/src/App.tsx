@@ -82,7 +82,6 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         onError,
         hideSegmentNav,
         hideProfiling,
-        defaultTab,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -309,7 +308,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
 });
 
 export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
-    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
+    const { computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultTab, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
