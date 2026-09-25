@@ -82,6 +82,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         onError,
         hideSegmentNav,
         hideProfiling,
+        defaultTab,
     } = props;
 
     const { t, i18n } = useTranslation();
@@ -354,6 +355,7 @@ export function VizAppWithContext(props: IVizAppProps & IComputationProps) {
             keepAlive={keepAlive}
             storeRef={storeRef}
             defaultConfig={defaultConfig}
+            defaultTab={defaultTab}
             defaultRenderer={defaultRenderer}
         >
             <VizApp darkMode={darkMode} computation={safeComputation} {...rest} />
