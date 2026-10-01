@@ -3,6 +3,56 @@ import { useAppRootContext } from "../components/appRoot";
 import type { IReactVegaHandler } from "../vis/react-vega";
 import type { IChartExportResult, IVegaChartRef } from "../interfaces";
 
+function concatCanvases(canvases: HTMLCanvasElement[], refs: IVegaChartRef[]) {
+    if (canvases.length === 0) {
+        return null;
+    }
+
+    if (canvases.length === 1) {
+        return canvases[0];
+    }
+
+    const columnCount = refs.reduce((max, current) => Math.max(max, current.x), 0) + 1;
+    const rowCount = refs.reduce((max, current) => Math.max(max, current.y), 0) + 1;
+    const colWidths = new Array(columnCount).fill(0);
+    const rowHeights = new Array(rowCount).fill(0);
+
+    canvases.forEach((canvas, idx) => {
+        const ref = refs[idx];
+        colWidths[ref.x] = Math.max(colWidths[ref.x], canvas.width);
+        rowHeights[ref.y] = Math.max(rowHeights[ref.y], canvas.height);
+    });
+
+    const colOffsets: number[] = [];
+    const rowOffsets: number[] = [];
+    colWidths.reduce((offset, width, index) => {
+        colOffsets[index] = offset;
+        return offset + width;
+    }, 0);
+    rowHeights.reduce((offset, height, index) => {
+        rowOffsets[index] = offset;
+        return offset + height;
+    }, 0);
+
+    const mergedCanvas = document.createElement('canvas');
+    mergedCanvas.width = colWidths.reduce((sum, width) => sum + width, 0);
+    mergedCanvas.height = rowHeights.reduce((sum, height) => sum + height, 0);
+
+    const ctx = mergedCanvas.getContext('2d');
+    if (!ctx) {
+        return null;
+    }
+
+    canvases.forEach((canvas, idx) => {
+        const ref = refs[idx];
+        const x = colOffsets[ref.x];
+        const y = rowOffsets[ref.y];
+        ctx.drawImage(canvas, x, y, canvas.width, canvas.height);
+    });
+
+    return mergedCanvas;
+}
+
 
 export const useVegaExportApi = (
     name: string | undefined,
@@ -27,7 +77,11 @@ export const useVegaExportApi = (
                 }
                 return item.view.toCanvas(2);
             }));
-            return canvases.map(canvas => canvas.toDataURL('image/png', 1));
+            const merged = concatCanvases(canvases, viewsRef.current);
+            if (!merged) {
+                return [];
+            }
+            return [merged.toDataURL('image/png', 1)];
         },
         async downloadSVG(filename = `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0')) {
             const data = await Promise.all(viewsRef.current.map(item => {
@@ -58,16 +112,16 @@ export const useVegaExportApi = (
                 }
                 return item.view.toCanvas(2);
             }));
-            const data = canvases.map(canvas => canvas.toDataURL('image/png', 1));
-            const files: string[] = [];
-            for (let i = 0; i < data.length; i += 1) {
-                const d = data[i];
-                const a = document.createElement('a');
-                a.download = `${filename}${data.length > 1 ? `_${i + 1}` : ''}.png`;
-                a.href = d.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                a.click();
+            const merged = concatCanvases(canvases, viewsRef.current);
+            if (!merged) {
+                return [];
             }
-            return files;
+            const data = merged.toDataURL('image/png', 1);
+            const a = document.createElement('a');
+            a.download = `${filename}.png`;
+            a.href = data.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+            a.click();
+            return [data];
         },
     };
     
@@ -177,8 +231,8 @@ export const useVegaExportApi = (
                 if (mode === 'data-url') {
                     const imgData = await renderHandle.getCanvasData();
                     if (imgData) {
-                        for (let i = 0; i < imgData.length; i += 1) {
-                            res.charts[i].data = imgData[i];
+                        for (let i = 0; i < res.charts.length; i += 1) {
+                            res.charts[i].data = imgData[Math.min(i, imgData.length - 1)] ?? '';
                         }
                     }
                 } else if (mode === 'svg') {
