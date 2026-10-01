@@ -6,7 +6,7 @@ dist-ssr
 yarn-error.log
 
 build
-icons
+/icons
 
 react.svg
 
