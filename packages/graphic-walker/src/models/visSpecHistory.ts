@@ -554,11 +554,13 @@ export const redo: (data: VisSpecWithHistory) => VisSpecWithHistory = redoWith(r
 export const at: (data: VisSpecWithHistory, cursor: number) => IChart = atWith(reducerT);
 export { freeze };
 
-export const performers = Object.fromEntries(
-    (Object.keys(Methods) as (keyof typeof Methods)[]).map((k) => [k, (data: any, ...args: any[]) => perform(data, [Methods[k], ...args] as any)])
-) as unknown as {
+type VisPerformers = {
     [K in keyof typeof Methods]: (data: VisSpecWithHistory, ...args: PropsMap[(typeof Methods)[K]]) => VisSpecWithHistory;
 };
+
+export const performers: VisPerformers = Object.fromEntries(
+    (Object.keys(Methods) as (keyof typeof Methods)[]).map((k) => [k, (data: any, ...args: any[]) => perform(data, [Methods[k], ...args] as any)])
+) as unknown as VisPerformers;
 
 function emptyChart(visId: string, name: string, defaultConfig?: IDefaultConfig): IChart {
     return {

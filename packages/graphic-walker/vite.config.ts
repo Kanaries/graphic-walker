@@ -87,6 +87,7 @@ export default defineConfig({
     rollupOptions: {
       external: modulesNotToBundle,
       output: {
+        interop: 'auto',
         globals: {
           'react': 'React',
           'react-dom': 'ReactDOM',

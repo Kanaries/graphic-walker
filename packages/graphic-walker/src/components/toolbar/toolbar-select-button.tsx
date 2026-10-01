@@ -29,7 +29,8 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
     const opened = openedKey === id;
 
     const currentOption = options.find((opt) => opt.key === value);
-    const CurrentIcon = currentOption?.icon;
+    // the button shows the selected option itself; the item icon is the fallback when nothing matches
+    const ButtonIcon = currentOption?.icon ?? Icon;
 
     return (
         <DropdownMenu modal={false} open={opened} onOpenChange={(open) => (open ? setOpenedKey(id) : setOpenedKey(''))}>
@@ -43,8 +44,11 @@ const ToolbarSelectButton = memo<IToolbarProps<ToolbarSelectButtonItem>>(functio
             >
                 <DropdownMenuTrigger disabled={disabled} asChild>
                     <Button className="relative" disabled={disabled} variant="none" size="toolbar">
-                        <Icon className="w-[18px] h-[18px]" style={styles?.icon} />
-                        {CurrentIcon && <CurrentIcon style={styles?.icon} className="absolute w-[11px] h-[11px] right-[7px] bottom-[5px]" />}
+                        <ButtonIcon className="w-[18px] h-[18px]" style={styles?.icon} />
+                        <span
+                            aria-hidden
+                            className="absolute right-[3px] bottom-[3px] border-l-4 border-b-4 border-l-transparent border-b-current opacity-50"
+                        />
                     </Button>
                 </DropdownMenuTrigger>
             </ToolbarItemContainer>

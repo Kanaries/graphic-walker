@@ -483,6 +483,11 @@ export interface IVegaChartRef {
 export interface IChartExportResult<T extends 'svg' | 'data-url' = 'svg' | 'data-url'> {
     mode: T;
     title: string;
+    /**
+     * The complete chart, with repeated Vega views composed into one image.
+     * Individual view exports remain available in `charts`.
+     */
+    combinedData?: string;
     nCols: number;
     nRows: number;
     charts: {

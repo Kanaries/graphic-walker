@@ -13,7 +13,7 @@ export default function ExportChartExample() {
         if (!gwRef.current) return;
         if (type === 'svg') {
             const res = await gwRef.current.exportChart('svg');
-            const d = res.charts[0]?.data;
+            const d = res.combinedData ?? res.charts[0]?.data;
             if (d) {
                 const blob = new Blob([d], { type: 'image/svg+xml' });
                 const url = URL.createObjectURL(blob);
@@ -25,7 +25,7 @@ export default function ExportChartExample() {
             }
         } else {
             const res = await gwRef.current.exportChart('data-url');
-            const d = res.charts[0]?.data;
+            const d = res.combinedData ?? res.charts[0]?.data;
             if (d) {
                 const a = document.createElement('a');
                 a.href = d.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
