@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, createContext } from 'react';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IDefaultConfig, IMutField, IRow } from '../interfaces';
+import { IComputationFunction, IDefaultConfig, IMutField, IRow, ISegmentKey } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -21,8 +21,9 @@ const getVizStore = createKeepAliveContext(
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
+            defaultTab?: 'data' | 'visualization';
         }
-    ) => new VizSpecStore(meta, opts)
+    ) => new VizSpecStore(meta, { ...opts, initialSegment: opts?.defaultTab === 'data' ? ISegmentKey.data : ISegmentKey.vis })
 );
 
 export const VisContext = React.createContext<VizSpecStore>(null!);
@@ -36,6 +37,7 @@ interface VizStoreWrapperProps {
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultTab?: 'data' | 'visualization';
     defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
@@ -48,7 +50,7 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
                   layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) },
               }
             : props.defaultConfig;
-        return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig });
+        return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig, defaultTab: props.defaultTab });
     // IMPORTANT the store is only associated with the storeKey
     }, [storeKey]);
 

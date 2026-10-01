@@ -105,9 +105,11 @@ export class VizSpecStore {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
+            initialSegment?: ISegmentKey;
         },
     ) {
         this.meta = meta;
+        this.segmentKey = options?.initialSegment ?? ISegmentKey.vis;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1', options?.defaultConfig)];
         this.pristineInitialCharts = meta.length === 0 ? new Set(this.visList) : new Set();
         this.createdVis = this.visList.length;

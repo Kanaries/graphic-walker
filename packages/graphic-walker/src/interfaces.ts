@@ -983,6 +983,8 @@ export interface IVizProps {
     hideChartNav?: boolean;
     /** hide the segment navigation so make user can only edit on the only segment. */
     hideSegmentNav?: boolean;
+    /** The tab to show when GraphicWalker is first opened. Defaults to 'visualization'. */
+    defaultTab?: 'data' | 'visualization';
     geographicData?: IGeographicData & {
         key: string;
     };
