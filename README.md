@@ -29,14 +29,8 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 + A grammar of graphics based visual analytic user interface where users can build visualizations from low-level visual channel encodings. (based on [vega-lite](https://vega.github.io/vega-lite/))
 + A hand-writable chart spec (TerseSpec): describe charts with field names and `agg(field)` shorthand, then expand with `normalize()`. See [TerseSpec](#tersespec-write-charts-by-hand-). 🆕
 
-https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
 
-> [!TIP]
-> If you want more AI features, we also build [runcell](https://runcell.dev), an AI Code Agent in Jupyter that understands your code/data/cells and generate code, execute cells and take actions for you. It can be used in jupyter lab with `pip install runcell`
-
-
-
-https://github.com/user-attachments/assets/9ec64252-864d-4bd1-8755-83f9b0396d38
+https://github.com/user-attachments/assets/650517e5-105e-46a5-bc5c-495f40df38a4
 
 
 ## Usage for End Users
@@ -236,6 +230,15 @@ npm run dev
 [![GitHub Repo stars](https://img.shields.io/badge/share%20on-linkedin-3949AB?style=flat-square&logo=linkedin)](https://www.linkedin.com/shareArticle?url=https://github.com/Kanaries/graphic-walker&title=Graphic-Walker:%20A%20different%20type%20of%20open-source%20alternative%20to%20Tableau)
 [![GitHub Repo stars](https://img.shields.io/badge/share%20on-hacker%20news-orange?style=flat-square&logo=ycombinator)](https://news.ycombinator.com/submitlink?u=https://github.com/Kanaries/graphic-walker)
 [![GitHub Repo stars](https://img.shields.io/badge/share%20on-reddit-red?style=flat-square&logo=reddit)](https://reddit.com/submit?url=https://github.com/Kanaries/graphic-walker&title=Graphic-Walker:%20A%20different%20type%20of%20open-source%20alternative%20to%20Tableau)
+
+## AI Integration
+
+https://github.com/Kanaries/graphic-walker/assets/22167673/15d34bed-9ccc-42da-a2f4-9859ea36fa65
+
+> [!TIP]
+> If you want more AI features, we also build [runcell](https://runcell.dev), an AI Code Agent in Jupyter that understands your code/data/cells and generate code, execute cells and take actions for you. It can be used in jupyter lab with `pip install runcell`
+
+https://github.com/user-attachments/assets/9ec64252-864d-4bd1-8755-83f9b0396d38
 
 
 ## I18n Support
