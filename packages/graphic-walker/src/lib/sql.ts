@@ -609,6 +609,54 @@ export function replaceFid(sql: string, fields: IMutField[]): string {
     return parser.toSql.expr(mapper.expr(item)!);
 }
 
+/**
+ * Pre-processes a SQL expression string so that field names containing
+ * non-ASCII characters (e.g. Korean, CJK, Arabic) are wrapped in
+ * double-quotes before the string is handed to pgsql-ast-parser.
+ *
+ * Background: pgsql-ast-parser's tokeniser follows the SQL standard and
+ * only recognises ASCII letters, digits and underscores as unquoted
+ * identifier characters.  Any non-ASCII character causes a parse error.
+ * Wrapping the name in double-quotes makes it a "delimited identifier",
+ * which the parser accepts and emits as a `ref` node with the raw name
+ * (quotes stripped) – so replaceFid / getSQLItemAnalyticType continue to
+ * work without modification.
+ *
+ * Names that are already double-quoted in the expression are left untouched.
+ * Longer names are processed before shorter ones to avoid partial matches.
+ *
+ * @param sql    Raw SQL expression as typed by the user.
+ * @param fields All dataset fields (used to build the replacement set).
+ * @returns      The expression with non-ASCII bare identifiers quoted.
+ */
+export function quoteNonAsciiIdents(sql: string, fields: IMutField[]): string {
+    // Collect names that contain at least one non-ASCII character
+    const nonAsciiNames = fields
+        .map((f) => f.name ?? f.fid)
+        .filter((name) => /[^\x00-\x7F]/.test(name))
+        // Longest first – prevents a shorter prefix from being replaced inside a longer name
+        .sort((a, b) => b.length - a.length);
+
+    if (nonAsciiNames.length === 0) return sql;
+
+    let result = sql;
+    for (const name of nonAsciiNames) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Skip occurrences that are already quoted
+        const alreadyQuoted = new RegExp(`"${escaped}"`);
+        // Work on a temporary copy to test for existing quotes, then replace bare form
+        const barePattern = new RegExp(escaped, 'g');
+        result = result.replace(barePattern, (match, offset, str) => {
+            // Check if the match is surrounded by double-quotes already
+            if (str[offset - 1] === '"' && str[offset + match.length] === '"') {
+                return match; // already quoted – leave as-is
+            }
+            return `"${match}"`;
+        });
+    }
+    return result;
+}
+
 function fmap<T>(x: T | T[], mapper: (i: T) => T) {
     if (x instanceof Array) {
         return x.map(mapper);

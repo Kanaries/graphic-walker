@@ -108,8 +108,10 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                         }
                         return { fid: x.fid, name: x.name };
                     });
-                    const result = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
-                    download(result, `${chart.name}.csv`, 'text/plain');
+                    const csvBody = `${headers.map((x) => x.name).join(',')}\n${data.map((x) => headers.map((f) => x[f.fid]).join(',')).join('\n')}`;
+                    // Prepend UTF-8 BOM (\uFEFF) so Excel auto-detects UTF-8 and renders
+                    // non-ASCII column names (e.g. Korean / CJK) without mojibake.
+                    download('\uFEFF' + csvBody, `${chart.name}.csv`, 'text/csv;charset=utf-8');
                 },
             };
         }
