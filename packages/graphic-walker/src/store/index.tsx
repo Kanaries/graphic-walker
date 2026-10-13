@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, createContext } from 'react';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IDefaultConfig, IMutField, IRow, ISegmentKey } from '../interfaces';
+import { IComputationFunction, IDefaultConfig, IDefaultUIConfig, IMutField, IRow, ISegmentKey } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -21,6 +21,7 @@ const getVizStore = createKeepAliveContext(
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
+            defaultUIConfig?: IDefaultUIConfig;
             defaultTab?: 'data' | 'visualization';
         }
     ) => new VizSpecStore(meta, { ...opts, initialSegment: opts?.defaultTab === 'data' ? ISegmentKey.data : ISegmentKey.vis })
@@ -37,12 +38,14 @@ interface VizStoreWrapperProps {
     meta: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    defaultUIConfig?: IDefaultUIConfig;
     defaultTab?: 'data' | 'visualization';
     defaultRenderer?: 'vega-lite' | 'observable-plot';
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
     const storeKey = props.keepAlive ? `${props.keepAlive}` : '';
+    // UI defaults only apply to a new store; rerenders and keepAlive reuse preserve user state.
     const store = useMemo(() => {
         const defaultConfig = props.defaultRenderer
             ? {
@@ -50,8 +53,12 @@ export const VizStoreWrapper = (props: VizStoreWrapperProps) => {
                   layout: { renderer: props.defaultRenderer, ...(props.defaultConfig?.layout ?? {}) },
               }
             : props.defaultConfig;
-        return getVizStore(storeKey, props.meta, { onMetaChange: props.onMetaChange, defaultConfig, defaultTab: props.defaultTab });
-    // IMPORTANT the store is only associated with the storeKey
+        return getVizStore(storeKey, props.meta, {
+            onMetaChange: props.onMetaChange,
+            defaultConfig,
+            defaultUIConfig: props.defaultUIConfig,
+            defaultTab: props.defaultTab,
+        });
     }, [storeKey]);
 
     // Keep this effect before metadata sync: first hydration reads the current

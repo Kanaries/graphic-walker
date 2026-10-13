@@ -124,6 +124,24 @@ const YourEmbeddingApp: React.FC<IYourEmbeddingAppProps> = props => {
 export default YourEmbeddingApp;
 ```
 
+Use `defaultUIConfig` to set the editor's initial UI state. For example, start with the Auto Viz panel collapsed:
+
+```tsx
+<GraphicWalker
+    data={data}
+    fields={fields}
+    defaultUIConfig={{
+        panels: {
+            autoViz: { expanded: false },
+        },
+    }}
+/>
+```
+
+The collapsed panel can still be opened with its expand button or the Auto Viz toolbar toggle. Omitting `panels.autoViz.expanded` keeps the panel expanded by default.
+
+UI defaults apply only when the visualization store is created. Updating `defaultUIConfig`, supplying a new `spec` or `chart`, or switching charts does not reset the user's panel state. A reused `keepAlive` store also retains its state. Use `defaultConfig` for chart configuration and layout defaults, and `defaultTab` for the initial tab.
+
 If you have a configuration of GraphicWalker chart, you can use the `PureRenderer` or `GraphicRenderer` component to make a single chart without controls UI.
 
 ```typescript
