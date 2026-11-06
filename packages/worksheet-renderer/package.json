@@ -1,0 +1,27 @@
+{
+  "name": "@kanaries/worksheet-renderer",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "test": "node scripts/test.mjs",
+    "dev": "node scripts/dev.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.18.10",
+    "typescript": "^5.2.2"
+  },
+  "license": "Apache-2.0"
+}

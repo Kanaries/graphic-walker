@@ -1,0 +1,98 @@
+# 自有工作表渲染器：alignment v0.4
+
+日期：2026-11-06。状态：现有 GW specification 为唯一权威格式、渲染库职责及首版核心范围已确认，映射和接口契约见技术设计 v0.4，预算待 S0 实测。本轮交付文档，不实施产品代码。
+
+沿用现有 Graphic Walker specification，通过新增的 native renderer 适配到 `packages/worksheet-renderer` 中的自有图表库。用户继续编辑和保存现有 spec；自有库负责表头、坐标系、布局、交互和虚拟化，使用 Canvas 2D 与 SVG 绘制。一个工作表对应一个运行实例。
+
+本版沿用 v0.3 确定的主链路 `现有 GW spec + 已准备数据 → native renderer → 自有图表库 → Canvas/SVG`。撤回新增顶层 WorksheetRenderSpec 和 Nest/Cross/Concat 对外语法的方案。renderer 可以生成内部布局计划，但它不是另一种持久化或创作格式。局部配置可兼容 Vega-Lite 风格，兼容范围明确列出，不复刻 VizQL。
+
+固定运算沿用 GW 既有计算 DSL，自定义运算沿用现有 SQL 能力。这些是前置能力，不是本期交付任务；本项目不研究或引入 Tableau 的计算表达式，也不新增、迁移或重写计算语言与执行器。
+
+v0.4 增加技术评审后的 D9，原首版范围与计算边界不变。
+
+## 1. 已确认的要求
+
+| 要求 | 本次约定 |
+| --- | --- |
+| 包的位置 | Graphic Walker monorepo 子包；本提案建议沿用 `@kanaries/worksheet-renderer` 名称与目录 |
+| specification | 现有 GW IChart 的 `encodings / config / layout` 继续作为权威格式；不新建 VizQL 或独立工作表 DSL |
+| renderer 接入 | 沿用 `layout.renderer` 增加自有实现；Canvas/SVG 沿用 `layout.useSvg` 选择 |
+| 语法兼容 | 允许局部使用 Vega-Lite 的 mark/encoding/scale/axis 等配置风格，以明确子集复用现有基础设施 |
+| 自主控制 | 新路径直接拥有显示语义、布局和绘制，不以 Vega-Lite 或其他完整图表引擎为核心 |
+| 两种后端 | Canvas 与可交互 SVG 均进入首版，共用同一套语义、布局和交互协议 |
+| 单 Canvas | Canvas 模式下，主体、表头、坐标轴、网格和高亮在同一个可见 Canvas 中完成 |
+| 动态渲染 | 组件内置双向滚动、可见范围检索和按需绘制；可通过外部供数接口读取窗口数据 |
+| 首版范围 | 多层行列嵌套、统一布局、单 Canvas 双向虚拟滚动、可交互 SVG、基础图形与选择 |
+| 后续渲染范围 | 双轴、多标记层等显示能力可后续扩展 |
+| 长期职责边界 | 现有计算 DSL/SQL 提供结果，现有可视化 DSL 描述显示；本期只建设图表库、renderer 和必要的结果接口适配 |
+
+这里的"复刻"以工作表的显示和交互行为为目标，不表示复刻 Tableau 的计算引擎。像素布局、刻度、文字测量、给定数值的堆叠位置属于渲染计算；对原始数据求 SUM/AVG、运行累计或更改分组粒度属于外部数据计算。
+
+## 2. 建议这次评审定下的技术决定
+
+| 决定 | 建议 | 理由 |
+| --- | --- | --- |
+| D1：渲染路线 | 自有 Canvas 2D 与原生 SVG；不再以直接 Vega 作为新路径的生产后端 | 满足本轮的自主控制要求；历史 V0 可用于对照 |
+| D2：虚拟化范围 | 库负责可见范围、布局检索、窗口请求与缓存；外部负责产出数据 | 渲染库的 CPU/内存应有界，同时不承担数据计算 |
+| D3：高基数接入 | 接收完整的已准备数据，或外部 RenderDataSource；包内只提供已准备数据的索引适配器 | 范围请求表达显示位置，不携带聚合、过滤或 SQL 计划 |
+| D4：行列映射 | 从现有 rows/columns 数组生成分面与坐标槽，保留现有可表达行为；缺失能力做最小兼容扩展 | 用户不需编写新的表代数；递归只发生在内部布局数据结构 |
+| D5：计算边界 | 原 spec 的 aggName、filters 等由既有计算能力处理，renderer 只绑定结果；不增加计算能力建设任务 | 保持现有计算 DSL/SQL 和可视化 DSL 的分工 |
+| D6：后端切换 | 用户显式选择；Canvas/SVG 共用语义与几何，性能容量分别验收 | SVG 是实际可交互后端，不能只交付 SVG 导出；不能超预算后静默换后端 |
+| D7：导出 | 首版提供当前视口 PNG/SVG、有限逻辑范围 SVG；大范围提供可取消的分页 SVG | 保持完整语义，避免为导出创建巨型位图或一次性物化整表 |
+| D8：spec 与兼容 | 现有 IChart → native renderer 的内部 RenderPlan；Vega-Lite 风格只用于局部兼容 | 不新增用户 spec，也不将 Vega-Lite 编译器作为必经路径 |
+| D9：旧后端超出能力时的行为 | canonical IChart 保留全部字段；旧后端显示 unsupported 空态并提供切换 native 的入口，不自动切换或截断显示 | 防止切回旧 renderer 后再次编辑导致字段丢失；这是技术评审后明确的旧路径行为变更 |
+
+D5 的计算边界与 D8 的现有 spec 原则已确认。D9 是本轮技术评审补充的接入决定，详见技术设计 v0.4 与审核记录；尚未实施。其余实施参数仍需技术验证。`native` 为新增 renderer 值的暂定名称，尚未实现。接口、缓存默认值和局部兼容子集可在技术验证后调整。
+
+## 3. 阅读入口
+
+| 文档 | 评审重点 |
+| --- | --- |
+| [需求与验收](./worksheet-renderer-requirements.md) | 首版做什么、哪些行为必须一致、规模和验收门槛 |
+| [技术设计](./worksheet-renderer-design.md) | 现有 spec 映射、Vega-Lite 局部兼容、外部供数、单 Canvas 和二维虚拟化 |
+| [历史调研索引](./worksheet-renderer-research-index.md) | 历史探索原始资料与证据边界 |
+
+仓库中的正式文件：
+
+```text
+/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-alignment.md
+/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-requirements.md
+/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-design.md
+```
+
+三份新文档共同构成本轮提案。它们与历史设计冲突时，本轮需求优先；历史文档保留原貌，不作为新实现的默认规范。
+
+## 4. 历史工作如何使用
+
+| 历史工作 | 可以继续使用 | 本轮需要改变 |
+| --- | --- | --- |
+| Vega-Lite 多层 facet 扩展 | 递归语法案例、非法组合案例 | 递归 facet 不等于统一工作表布局或二维虚拟化 |
+| 多 View / 单 View 虚拟化实验 | 视口与全局 domain 分离、乱序请求、空组合等案例 | 不采用逐 pane 图表实例或逐 pane Canvas |
+| Tableau 机制研究 | 表头、pane、轴和 mark 的显示关系 | 不复制 VizQL/specification 或对外表代数语法 |
+| 当前 worksheet-renderer V0 | 路径身份、显示布局、堆叠位置、交互和测试数据 | 替换 Vega 后端与全量扫描；其中查询、聚合和重聚合代码不进入本库 |
+
+当前 V0 已经是一个 Vega Canvas View，而非大量 Canvas。此次真正要补的是自有后端、统一冻结表头、有界布局检索、按需供数，以及现有 GW spec 的直接映射。V0 的独立工作表格式不是本项目的格式基础。
+
+历史性能数字对应不同样例和计时边界，本提案不引用它们证明目标已达成。2026-11-06 仅阅读了文档与代码、核对公开资料；未运行新样机、性能基准或产品回归。
+
+## 5. 实施顺序与退出条件
+
+| 阶段 | 交付 | 可以进入下一阶段的条件 |
+| --- | --- | --- |
+| S0：验证关键风险 | 现有 IChart fixtures → native renderer → 双后端最小纵切；冻结头、巨大滚动范围、供数样机 | 不转换用户 spec；单 Canvas 恒定；同一 Scene 两后端一致；无需计算引擎即可运行 |
+| S1：首版渲染库 | 五种基础 mark、表头与轴、受控折叠/顺序/范围、统一选择 | 显示和后端一致性用例通过；折叠、排序等请求由宿主处理 |
+| S2：高基数渲染 | 已准备数据的窗口索引、双向读取与缓存、分页导出、规模基准 | 窗口外不物化图元；有界 CPU/内存；数据结果原样显示 |
+| S3：GW 配套接入 | renderer 路由、现有 spec/import/export/历史流程、结果供数、局部 Vega-Lite 兼容 | 切换 renderer 不改用户分析语义；旧图表回归及受支持子集一致性通过 |
+
+S0 就验证 S2 的供数接口，避免最后才发现整表数据只能一次性传入。S3 是库外配套工作，不能因接入方便而把查询计划移入包内。首版交付仍须验证高基数窗口读取，无需为此新建数据库查询引擎。
+
+暂不承诺日历工期。S0 结束后分别估算渲染库与 GW 接入工作；不再将表计算、computation 语义兼容或数据库 provider 研发计入本库计划。
+
+## 6. 评审时优先检查
+
+1. 现有 rows/columns 到 pane/band 的映射是否一致，深层嵌套还缺哪些最小配置。
+2. 折叠、排序和选择事件是否足够让 GW 完成外部数据更新。
+3. 完整输入与按需供数两种接入方式的契约是否清晰，是否可在无 GW 依赖时运行。
+4. Vega-Lite 局部兼容子集、基准规模和导出边界是否合适。
+
+上述问题是设计选择，不阻止先审阅完整提案。确定后更新 D1–D9 的状态，固定需求与基准版本，再按实施顺序推进。
