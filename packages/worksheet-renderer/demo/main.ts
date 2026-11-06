@@ -1,7 +1,11 @@
 import { createWorksheet, createPreparedDataSource, axisLeafKey, headerKey, paneKey, toTypedValue } from '../src';
-import type { AxisLeaf, HeaderSpan, RenderDataSource, RenderPlan, ReadVersion } from '../src';
+import type { AxisLeaf, ControlledRequest, HeaderSpan, RenderDataSource, RenderPlan, ReadVersion, WorksheetInput } from '../src';
 import { adaptChartToRenderPlan } from '../../graphic-walker/src/lib/native/adapter';
 import { createNestedChartFixture } from '../../graphic-walker/src/lib/native/fixtures';
+import { createNativeScenario, type NativeScenario } from '../../graphic-walker/src/lib/native/scenarios';
+import type { NativeWorksheetLayout } from '../../graphic-walker/src/lib/native/presentation';
+import { seriesIdentityFor, seriesKeyFor } from '../src/core/series';
+import { createControlledDemo } from './controlled';
 const fixture = createNestedChartFixture(),
     adapted = adaptChartToRenderPlan(fixture.chart, { columns: fixture.columns });
 if (!adapted.plan) throw new Error(JSON.stringify(adapted.diagnostics));
@@ -133,7 +137,9 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
                             rowPath: row.path,
                             columnPath: column.path,
                             complete: true,
-                            records: [{ datumKey: `record:${r}:${Math.floor(c / 2)}`, ordinal: r, values }],
+                            seriesCount: 1,
+                            records: [{ datumKey: `record:${r}:${Math.floor(c / 2)}`, ordinal: r, values,
+                                seriesKey: seriesKeyFor(paneKey(row.key, column.key), seriesIdentityFor(plan, values)), seriesOrdinal: 0 }],
                         });
                     }
             return { version, panes, coveredWindows: req.windows };
@@ -144,6 +150,7 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
             return {
                 ...result,
                 version,
+                ...(result.series ? { series: { ...result.series, domainId: JSON.stringify(['series-domain', version, plan.domainPlanKey]) } } : {}),
                 domains: Object.fromEntries(
                     Object.entries(result.domains).map(([ref, domain]) => {
                         const column = plan.bindings.find((b) => b.fieldRef === ref)!.columnKey;
@@ -185,7 +192,39 @@ const huge = hugeSource(plan),
     backend = document.querySelector<HTMLSelectElement>('#backend')!,
     example = document.querySelector<HTMLSelectElement>('#example')!;
 const view = createWorksheet(document.querySelector<HTMLElement>('#chart')!, { plan, source: normal });
-const source = () => (example.value === 'huge' ? huge : normal);
+const scope = document.querySelector<HTMLSelectElement>('#scope')!;
+const controlled = createControlledDemo();
+let active: WorksheetInput = { plan, source: normal };
+function chooseScenario() {
+    scope.disabled = example.value !== 'scope';
+    document.querySelector<HTMLElement>('#controlled-status')!.hidden = example.value !== 'controlled';
+    if (example.value === 'controlled') {
+        active = controlled.getInput();
+        document.querySelector('#description')!.textContent = controlled.description;
+        document.querySelector('#controlled-status')!.textContent = 'Host ready. Collapse or sort a header to send a request; confirmation takes 550 ms.';
+        return;
+    }
+    if (example.value === 'nested' || example.value === 'huge') {
+        active = { plan, source: example.value === 'huge' ? huge : normal };
+        document.querySelector('#description')!.textContent = example.value === 'huge'
+            ? 'This random-access source supplies real records for requested windows across one million logical rows.'
+            : createNativeScenario('nested').description;
+        return;
+    }
+    const selected = createNativeScenario(example.value as NativeScenario);
+    if (example.value === 'scope') {
+        const layout = selected.chart.layout as typeof selected.chart.layout & NativeWorksheetLayout;
+        layout.worksheet = { ...layout.worksheet, scaleScopes: { y: scope.value === 'prefix'
+            ? { mode: 'prefix', rowDepth: 1, columnDepth: 0 } : { mode: scope.value as 'shared' | 'pane' } } };
+    }
+    const adapted = adaptChartToRenderPlan(selected.chart, { columns: selected.columns, ...selected.presentation, records: selected.records });
+    if (!adapted.plan) throw new Error(adapted.diagnostics.map((diagnostic) => `${diagnostic.configRef}: ${diagnostic.message}`).join('\n'));
+    active = { plan: adapted.plan, source: createPreparedDataSource({
+        version: { sourceId: `scenario:${example.value}`, snapshotId: '1', presentationId: `scope:${scope.value}` },
+        plan: adapted.plan, records: selected.records, getDatumKey: selected.getDatumKey,
+    }) };
+    document.querySelector('#description')!.textContent = selected.description;
+}
 function report() {
     const s = view.getViewState();
     document.querySelector('#selection')!.textContent = s.selectedTargets.length
@@ -197,22 +236,48 @@ function report() {
         `${s.manifest?.rowLeafCount.toLocaleString() ?? '…'} row positions × ${s.manifest?.columnLeafCount ?? '…'} columns · ${s.frame?.hits.length ?? 0} visible marks · offset ${Math.round(s.scrollX)}, ${Math.round(s.scrollY)} · ${s.cacheWindows} cached windows`;
 }
 view.on('ready', report);
+view.on('viewStateChange', report);
+view.on('loadStateChange', report);
 view.on('diagnostic', (e) => {
     document.querySelector('#error')!.textContent = e.message;
 });
 view.on('selectionChange', (e) => {
     document.querySelector('#selection')!.textContent = e.targets.length ? JSON.stringify(e.targets.map((x) => x.values)) : 'No selection.';
 });
+view.on('requestStateChange', (event) => {
+    if (example.value !== 'controlled') return;
+    document.querySelector('#controlled-status')!.textContent = `${event.requestId}: ${event.status}${event.reason ? ` · ${event.reason}` : ''}`;
+});
+const acceptControlledRequest = async (request: ControlledRequest) => {
+    if (example.value !== 'controlled') {
+        view.rejectRequest(request.requestId, 'Choose the controlled headers example to change the host presentation.');
+        return;
+    }
+    const previous = active;
+    try {
+        const acknowledged = await controlled.accept(request, () => example.value === 'controlled' && active === previous
+            && view.getViewState().requests.some((pending) => pending.requestId === request.requestId));
+        if (!acknowledged) return;
+        active = controlled.getInput();
+        document.querySelector('#error')!.textContent = '';
+        await view.update({ ...acknowledged, backend: backend.value as 'canvas' | 'svg' });
+        report();
+    } catch (error) { document.querySelector('#error')!.textContent = String(error); }
+};
+view.on('collapseRequest', acceptControlledRequest);
+view.on('sortRequest', acceptControlledRequest);
 const update = async () => {
     document.querySelector('#error')!.textContent = '';
-    await view.update({ plan, source: source(), backend: backend.value as 'canvas' | 'svg' });
+    await view.update({ ...active, backend: backend.value as 'canvas' | 'svg' });
     report();
 };
 backend.addEventListener('change', update);
-example.addEventListener('change', async () => {
-    await update();
-    view.scrollToPosition({ x: 0, y: 0 });
-});
+const changeExample = async () => {
+    try { chooseScenario(); await update(); view.scrollToPosition({ x: 0, y: 0 }); }
+    catch (error) { document.querySelector('#error')!.textContent = String(error); }
+};
+example.addEventListener('change', changeExample);
+scope.addEventListener('change', changeExample);
 document.querySelector('#first')!.addEventListener('click', () => view.scrollToPosition({ x: 0, y: 0 }));
 document
     .querySelector('#last')!
@@ -230,5 +295,10 @@ document.querySelector('#export')!.addEventListener('click', async () => {
         document.querySelector('#error')!.textContent = String(e);
     }
 });
-(window as any).worksheetDemo = { view, plan, normal, huge, getRequests: () => requests };
+(window as any).worksheetDemo = { view, plan, normal, huge, controlled, getRequests: () => requests,
+    getCurrent: () => active,
+    setExample: async (name: string) => { example.value = name; await changeExample(); },
+    setScope: async (name: string) => { scope.value = name; await changeExample(); },
+};
+chooseScenario();
 void view.ready.then(report);

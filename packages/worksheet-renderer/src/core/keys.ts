@@ -49,6 +49,30 @@ export function axisLeafKey(axis: Axis, path: MemberPath, slotId: string): strin
     return JSON.stringify(['leaf', axis, path.map((member) => [member.fieldRef, typedValueTuple(member.value)]), slotId]);
 }
 
+/** Decode canonical leaf keys when locating a child hidden by a controlled collapse. */
+export function decodeAxisLeafKey(key: string): { axis: Axis; path: MemberPath; slotId: string } | undefined {
+    try {
+        const [kind, axis, items, slotId] = JSON.parse(key);
+        if (kind !== 'leaf' || axis !== 'row' && axis !== 'column' || typeof slotId !== 'string' || !Array.isArray(items)) return undefined;
+        const decode = (tuple: unknown[]): TypedValue => {
+            if (tuple[0] === 'null' && tuple.length === 1) return { type: 'null' };
+            if (tuple[0] === 'interval') {
+                const start = decode(tuple[1] as unknown[]), end = decode(tuple[2] as unknown[]);
+                if (start.type === 'interval' || end.type === 'interval') throw new Error('Invalid interval');
+                return { type: 'interval', start, end };
+            }
+            const value = toTypedValue(tuple[1], tuple[0] === 'time' ? 'time' : undefined);
+            if (value.type !== tuple[0]) throw new Error('Invalid typed tuple');
+            return value;
+        };
+        const path: MemberPath = items.map((item: unknown[]) => {
+            if (typeof item[0] !== 'string') throw new Error('Invalid field reference');
+            return { fieldRef: item[0], value: decode(item[1] as unknown[]) };
+        });
+        return axisLeafKey(axis, path, slotId) === key ? { axis, path, slotId } : undefined;
+    } catch { return undefined; }
+}
+
 export function paneKey(rowKey: string, columnKey: string): string {
     return JSON.stringify(['pane', rowKey, columnKey]);
 }

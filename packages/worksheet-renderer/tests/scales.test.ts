@@ -39,3 +39,14 @@ test('fixed band domains preserve typed identities and reject duplicate or inval
         assert.throws(() => resolveDomainValues(band, { domain: invalid }), /invalid-domain/);
     }
 });
+
+test('position ticks honor the accepted count range and stay finite for large endpoints', async () => {
+    const { createPositionScale } = await import('../src/scene/scales');
+    const scale = createPositionScale({ ...domain, values: [Number.MAX_VALUE / 2, Number.MAX_VALUE] }, undefined, 0, 100);
+    assert.equal(scale.ticks(100).length, 100);
+    assert.ok(scale.ticks(100).every((value) => typeof value === 'number' && Number.isFinite(value)));
+    assert.equal(scale.ticks(1).length, 1);
+    assert.equal(scale.map(Number.MAX_VALUE / 2), 0);
+    assert.equal(scale.map(Number.MAX_VALUE), 100);
+    assert.ok(Number.isFinite(scale.map(-Number.MAX_VALUE)));
+});

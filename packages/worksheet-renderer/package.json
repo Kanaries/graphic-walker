@@ -1,27 +1,46 @@
 {
-  "name": "@kanaries/worksheet-renderer",
-  "version": "0.0.0",
-  "type": "module",
-  "sideEffects": false,
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "scripts": {
-    "build": "node scripts/build.mjs",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "node scripts/test.mjs",
-    "dev": "node scripts/dev.mjs"
-  },
-  "devDependencies": {
-    "esbuild": "^0.18.10",
-    "typescript": "^5.2.2"
-  },
-  "license": "Apache-2.0"
+    "name": "@kanaries/worksheet-renderer",
+    "version": "0.0.0",
+    "type": "module",
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./react": {
+            "types": "./dist/react.d.ts",
+            "import": "./dist/react.js"
+        }
+    },
+    "scripts": {
+        "build": "node scripts/build.mjs",
+        "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+        "test": "node scripts/test.mjs",
+        "dev": "node scripts/dev.mjs"
+    },
+    "devDependencies": {
+        "@types/d3-format": "^3.0.1",
+        "@types/d3-time-format": "^4.0.0",
+        "@types/react": "*",
+        "esbuild": "^0.18.10",
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "d3-format": "^3.1.0",
+        "d3-time-format": "^4.1.0"
+    },
+    "peerDependencies": {
+        "react": ">=18.0.0"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        }
+    },
+    "license": "Apache-2.0"
 }

@@ -188,7 +188,7 @@ test('host keys use original record identity and returned metadata cannot mutate
     assert.throws(() => createPreparedDataSource({ version, plan: renderPlan, records: [original], getDatumKey: () => undefined as unknown as string }), { code: 'unstable-datum-identity' });
 });
 
-test('read versions, cancellation, rank limits, missing bindings, and unsupported S0 modes fail explicitly', async () => {
+test('read versions, cancellation, rank limits and missing bindings fail explicitly', async () => {
     const renderPlan = plan({ bindings: [binding('value', 'linear')], rows: { facets: [], positions: [] }, columns: { facets: [], positions: ['value'] }, mark: 'point' });
     const source = createPreparedDataSource({ version, plan: renderPlan, records: [{ value: 2 }] });
     const expired = { ...version, snapshotId: 'old' };
@@ -201,6 +201,6 @@ test('read versions, cancellation, rank limits, missing bindings, and unsupporte
     assert.throws(() => createPreparedDataSource({ version, plan: renderPlan, records: [{}] }), { code: 'missing-binding' });
     assert.throws(() => createPreparedDataSource({ version, plan: renderPlan, records: [{ value: Infinity }] }), { code: 'invalid-value' });
     assert.throws(() => createPreparedDataSource({ version, plan: renderPlan, records: [{ value: 1 }], identityScope: 'stable' }), { code: 'unstable-datum-identity' });
-    assert.throws(() => createPreparedDataSource({ version, plan: { ...renderPlan, mark: 'line' }, records: [] }), PreparedDataError);
-    assert.throws(() => createPreparedDataSource({ version, plan: { ...renderPlan, scales: { value: { scope: { mode: 'pane' } } } }, records: [] }), { code: 'unsupported-encoding' });
+    assert.doesNotThrow(() => createPreparedDataSource({ version, plan: { ...renderPlan, mark: 'line' }, records: [] }));
+    assert.doesNotThrow(() => createPreparedDataSource({ version, plan: { ...renderPlan, scales: { value: { scope: { mode: 'pane' } } } }, records: [] }));
 });

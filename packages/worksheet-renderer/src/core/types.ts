@@ -52,7 +52,7 @@ export interface ScaleOptions {
     readonly nice?: boolean;
     readonly reverse?: boolean;
     readonly range?: readonly (string | number)[];
-    readonly scope?: { readonly mode: 'shared' | 'pane' } | { readonly mode: 'prefix'; readonly rowDepth: number; readonly columnDepth: number };
+    readonly scope?: { readonly mode: 'shared' } | { readonly mode: 'pane' } | { readonly mode: 'prefix'; readonly rowDepth: number; readonly columnDepth: number };
 }
 export interface AxisOptions {
     readonly title?: string | null;
@@ -105,6 +105,7 @@ export interface AxisLeaf {
     readonly slotId: string;
     readonly positionRef?: string;
     readonly bandDomainId?: string;
+    readonly collapsed?: boolean;
 }
 export interface HeaderSpan {
     readonly key: string;
@@ -114,6 +115,8 @@ export interface HeaderSpan {
     readonly start: number;
     readonly end: number;
     readonly label: string;
+    readonly kind?: 'member' | 'slot';
+    readonly expanded?: boolean;
 }
 export interface AxisWindowRequest { readonly version: ReadVersion; readonly axis: Axis; readonly range: RankRange }
 export interface AxisWindow {
@@ -139,6 +142,8 @@ export interface PaneRecord {
     readonly ordinal: number;
     readonly values: PreparedRecord;
     readonly sequenceOrder?: number;
+    readonly seriesKey?: string;
+    readonly seriesOrdinal?: number;
 }
 export interface PaneData {
     readonly key: string;
@@ -152,6 +157,7 @@ export interface PaneData {
     readonly columnPath: MemberPath;
     readonly records: readonly PaneRecord[];
     readonly complete: boolean;
+    readonly seriesCount?: number;
 }
 export interface PaneWindowRequest {
     readonly version: ReadVersion;
@@ -166,6 +172,7 @@ export interface PaneBatch {
     readonly nextCursor?: string;
 }
 export interface DomainKey {
+    readonly fieldRef: string;
     readonly channel: 'x' | 'y' | 'color' | 'size' | 'opacity' | 'shape';
     readonly familyId: string;
     readonly domainPlanKey: string;
@@ -182,14 +189,25 @@ export interface DisplayDomain {
     readonly extentKind: 'value' | 'stacked';
     readonly empty: boolean;
     readonly source: 'prepared' | 'fixed' | 'unavailable';
+    readonly key?: DomainKey;
 }
 export interface DomainRequest {
     readonly version: ReadVersion;
     readonly fieldRefs: readonly string[];
-    /** S0 provides shared domains. Scoped keys become available in later stages. */
+    /** Position scopes use canonical keys; fieldRefs request shared field domains. */
     readonly keys?: readonly DomainKey[];
 }
-export interface DomainBatch { readonly version: ReadVersion; readonly domains: Readonly<Record<string, DisplayDomain>> }
+export interface SeriesDomain {
+    readonly domainId: string;
+    /** Actual joint tuples, never the Cartesian product of color/details values. */
+    readonly keys: readonly string[];
+    readonly complete: boolean;
+}
+export interface DomainBatch {
+    readonly version: ReadVersion;
+    readonly domains: Readonly<Record<string, DisplayDomain>>;
+    readonly series?: SeriesDomain;
+}
 export interface RenderDataManifest {
     readonly version: ReadVersion;
     readonly domainPlanKey: string;
@@ -226,6 +244,14 @@ export interface PreparedDataSourceOptions {
     readonly plan: RenderPlan;
     readonly records: readonly PreparedRecord[];
     readonly getDatumKey?: (record: PreparedRecord, ordinal: number) => string;
+    readonly getOrdinal?: (record: PreparedRecord, inputIndex: number) => number;
+    readonly getSequenceOrder?: (record: PreparedRecord, inputIndex: number) => number | undefined;
+    /** Explicit visible member leaves, including supplied parent paths after collapse. */
+    readonly axisMembers?: Partial<Readonly<Record<Axis, readonly { readonly path: MemberPath; readonly collapsed?: boolean }[]>>>;
+    /** The host declares the actual prepared record grain. Hidden children never become parent records. */
+    readonly getRecordPath?: (record: PreparedRecord, inputIndex: number, axis: Axis) => MemberPath;
+    /** Optional order of complete joint series identities, generated with seriesIdentityFor. */
+    readonly seriesOrder?: readonly string[];
     readonly memberOrder?: readonly MemberOrder[];
     readonly identityScope?: 'stable' | 'snapshot';
     /** A preview does not establish absent combinations as empty. */

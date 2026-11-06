@@ -192,16 +192,15 @@ test('time results bind explicit prepared coordinates and raw values without run
     assert.ok(unprepared.diagnostics.some((diagnostic) => diagnostic.code === 'invalid-binding-type'));
 });
 
-test('S0 declares unsupported mark, channels, interval and display options instead of dropping them', () => {
+test('unsupported marks, channel combinations and display options are never silently dropped', () => {
     const mutations: Array<(spec: IChart) => void> = [
-        (spec) => { spec.config.geoms = ['auto']; },
+        (spec) => { spec.config.geoms = ['arc']; },
         (spec) => { spec.config.geoms = ['bar', 'point']; },
         (spec) => { spec.encodings.size = [measure('value')]; },
-        (spec) => { spec.layout.resolve.x = true; },
         (spec) => { spec.layout.resolve.color = true; },
         (spec) => { spec.layout.stack = 'normalize'; },
-        (spec) => { spec.layout.colorPalette = 'tableau10'; },
-        (spec) => { spec.layout.format.numberFormat = ',.2f'; },
+        (spec) => { spec.layout.colorPalette = 'unknown-scheme'; },
+        (spec) => { spec.layout.format.numberFormat = 'unknown-format'; },
         (spec) => { spec.layout.scale = { column: { type: 'log' } }; },
         (spec) => { spec.layout.interactiveScale = true; },
     ];
@@ -215,7 +214,8 @@ test('S0 declares unsupported mark, channels, interval and display options inste
         assert.equal(JSON.stringify(spec), unchanged);
     }
     const interval = adaptChartToRenderPlan(chart([dimension('bucket', 'quantitative')], [measure('value')], 'bar'), { columns: [column('bucket', 'interval'), column('value_sum')] });
-    assert.ok(interval.diagnostics.some((diagnostic) => diagnostic.code === 'unsupported-encoding'));
+    assert.ok(interval.plan);
+    assert.equal(interval.plan.bindings[0].valueType, 'interval');
 });
 
 test('static styles, fixed numeric endpoints and zero settings map without mutating layout', () => {
@@ -229,7 +229,7 @@ test('static styles, fixed numeric endpoints and zero settings map without mutat
     assert.ok(result.plan);
     assert.equal(result.plan.stack, 'zero');
     assert.deepEqual(result.plan.style, { color: '#123456', background: '#ffffff' });
-    assert.deepEqual(result.plan.scales?.[result.plan.columns.positions[0]], { scope: { mode: 'shared' }, zero: false, domainMin: -50, domainMax: 100 });
+    assert.deepEqual(result.plan.scales?.[result.plan.columns.positions[0]], { scope: { mode: 'shared' }, zero: false, domainMin: -50, domainMax: 100, type: 'linear' });
 });
 
 test('numeric measure ambiguity and missing declarations produce actionable paths', () => {

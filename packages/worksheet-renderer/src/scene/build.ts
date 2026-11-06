@@ -1,15 +1,26 @@
 import type { AxisWindow, DomainBatch, PaneBatch, RenderPlan, ResultBinding } from '../core/types';
-import type { Box, Primitive, SceneFrame } from './types';
-import { advanceBarStack } from '../core/prepared';
-import { resolveDomainValues } from './scales';
+import { getDisplayDomain, positionTypeFor } from '../core/domains';
+import { intersect, inflate, type Box, type Primitive, type SceneFrame, type HeaderTarget } from './types';
+import { createPositionScale, createColorEncoder, resolveDomainValues, numericChannel } from './scales';
+import { createEncoders, drawPaneMarks, pointSymbol, pointShapes } from './marks';
+import { fitText, formatValue } from './text';
+import { prepareHitIndex } from './hit';
 
 export interface LayoutMetrics {
     rowHeight: number;
     columnWidth: number;
     headerWidth: number;
     headerHeight: number;
+    legendWidth: number;
+    columnLevelHeight: number;
 }
-export function layoutMetrics(plan: RenderPlan, width: number): LayoutMetrics {
+export function layoutMetrics(plan: RenderPlan, width: number, height = 720): LayoutMetrics {
+    const hasLegend = ['color', 'size', 'opacity', 'shape'].some((name) => {
+        const channel = plan.channels?.[name as 'color'];
+        return channel && 'fieldRef' in channel;
+    });
+    const columnLevels = plan.columns.facets.length + (plan.columns.positions.length > 1 ? 1 : 0);
+    const columnLevelHeight = Math.min(28, Math.max(9, Math.floor((Math.max(90, height * 0.4) - 26) / Math.max(1, columnLevels))));
     return {
         rowHeight: 180,
         columnWidth: 240,
@@ -17,11 +28,11 @@ export function layoutMetrics(plan: RenderPlan, width: number): LayoutMetrics {
             Math.max(112, (plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)) * 78),
             Math.max(112, width * 0.35),
         ),
-        headerHeight: Math.max(40, plan.columns.facets.length * 28 + 26),
+        headerHeight: Math.max(40, columnLevels * columnLevelHeight + (plan.columns.positions.length > 1 ? 0 : 26)),
+        legendWidth: hasLegend ? Math.min(168, Math.max(96, width * 0.23)) : 0,
+        columnLevelHeight,
     };
 }
-const key = (v: unknown) => `${typeof v}:${JSON.stringify(v)}`;
-const numberLabel = (n: number) => Number(n.toPrecision(4)).toLocaleString('en-US');
 export interface SceneInput {
     plan: RenderPlan;
     rows: AxisWindow;
@@ -34,15 +45,17 @@ export interface SceneInput {
     scrollY: number;
     frameId: number;
     selected?: ReadonlySet<string>;
+    focusId?: string;
+    brush?: Box;
 }
 export function buildScene(input: SceneInput): SceneFrame {
     const { plan, width, height, scrollX, scrollY, rows, columns, domains, panes } = input;
-    const m = layoutMetrics(plan, width),
+    const m = layoutMetrics(plan, width, height),
         all: Box = { x: 0, y: 0, width, height };
     const body: Box = {
         x: m.headerWidth,
         y: m.headerHeight,
-        width: Math.max(0, width - m.headerWidth),
+        width: Math.max(0, width - m.headerWidth - m.legendWidth),
         height: Math.max(0, height - m.headerHeight),
     };
     const frame: SceneFrame = {
@@ -51,212 +64,332 @@ export function buildScene(input: SceneInput): SceneFrame {
         height,
         commands: [],
         hits: [],
+        headers: [],
         rowStart: rows.range.start,
         columnStart: columns.range.start,
     };
+    const fontFamily = plan.style?.fontFamily ?? 'sans-serif',
+        fontSize = plan.style?.fontSize ?? 11;
     const add = (id: string, clip: Box, primitive: Primitive) => frame.commands.push({ id, clip, primitive });
     const rect = (id: string, clip: Box, box: Box, fill: string, stroke?: string) => add(id, clip, { kind: 'rect', box, fill, stroke });
-    const text = (id: string, clip: Box, x: number, y: number, label: string, align: 'left' | 'center' | 'right' = 'left') =>
-        add(id, clip, { kind: 'text', x, y, text: label, fill: '#334155', size: 11, align });
-    const bindings = new Map(plan.bindings.map((b) => [b.fieldRef, b]));
-    const resolvedDomains = new Map<string, readonly unknown[]>();
-    const effectiveDomain = (binding: ResultBinding) => {
-        let values = resolvedDomains.get(binding.fieldRef);
-        if (!values) {
-            const domain = domains.domains[binding.fieldRef];
-            values = domain ? resolveDomainValues(domain, plan.scales?.[binding.fieldRef]) : [];
-            resolvedDomains.set(binding.fieldRef, values);
-        }
-        return values;
-    };
-    const intersect = (a: Box, b: Box): Box => ({
-        x: Math.max(a.x, b.x),
-        y: Math.max(a.y, b.y),
-        width: Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)),
-        height: Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)),
-    });
-    const lookup = new Map(panes.panes.map((p) => [`${p.rowRank}:${p.columnRank}`, p]));
+    const text = (
+        id: string,
+        clip: Box,
+        x: number,
+        y: number,
+        label: string,
+        align: 'left' | 'center' | 'right' = 'left',
+        maxWidth = Infinity,
+        size = fontSize,
+    ) => add(id, clip, { kind: 'text', x, y, text: fitText(label, maxWidth, size, fontFamily), fill: '#334155', size, fontFamily, align });
+    const bindings = new Map(plan.bindings.map((binding) => [binding.fieldRef, binding]));
+    const lookup = new Map(panes.panes.map((pane) => [`${pane.rowRank}:${pane.columnRank}`, pane]));
+    const encode = createEncoders(plan, domains);
     rect('background', all, all, plan.style?.background ?? '#fff');
-    const scale = (binding: ResultBinding | undefined, value: unknown, start: number, end: number): number => {
-        if (!binding) return (start + end) / 2;
-        const domain = domains.domains[binding.fieldRef];
-        if (!domain || !domain.complete || domain.source === 'unavailable') return NaN;
-        const reverse = plan.scales?.[binding.fieldRef]?.reverse;
-        const [a, b] = reverse ? [end, start] : [start, end];
-        if (domain.type === 'band') {
-            const values = effectiveDomain(binding);
-            const rank = values.findIndex((v) => key(v) === key(value));
-            return rank < 0 ? NaN : a + ((rank + 0.5) / Math.max(1, values.length)) * (b - a);
-        }
-        if (value === null || typeof value !== 'number' || !Number.isFinite(value)) return NaN;
-        const extent = effectiveDomain(binding);
-        const lo = Number(extent[0]),
-            hi = Number(extent[1]);
-        return a + ((value - lo) / (hi - lo || 1)) * (b - a);
-    };
     for (const row of rows.leaves)
-        for (const col of columns.leaves) {
-            const left = m.headerWidth + col.rank * m.columnWidth - scrollX,
+        for (const column of columns.leaves) {
+            const left = m.headerWidth + column.rank * m.columnWidth - scrollX,
                 top = m.headerHeight + row.rank * m.rowHeight - scrollY;
-            const cell: Box = { x: left, y: top, width: m.columnWidth, height: m.rowHeight };
-            const clip = intersect(body, cell);
+            const cell: Box = { x: left, y: top, width: m.columnWidth, height: m.rowHeight },
+                clip = intersect(body, cell);
             if (!clip.width || !clip.height) continue;
-            const id = `${row.key}:${col.key}`,
-                pane = lookup.get(`${row.rank}:${col.rank}`);
-            rect(`cell:${id}`, clip, cell, '#fff', '#e2e8f0');
-            const plot: Box = { x: left + 48, y: top + 22, width: m.columnWidth - 60, height: m.rowHeight - 52 };
-            const plotClip = intersect(clip, plot);
-            const xb = bindings.get(col.positionRef ?? ''),
+            const id = `${row.key}:${column.key}`,
+                pane = lookup.get(`${row.rank}:${column.rank}`);
+            rect(`cell:${id}`, clip, cell, plan.style?.background ?? '#fff', '#e2e8f0');
+            const plot: Box = { x: left + 48, y: top + 22, width: m.columnWidth - 60, height: m.rowHeight - 52 },
+                plotClip = intersect(clip, plot);
+            const xb = bindings.get(column.positionRef ?? ''),
                 yb = bindings.get(row.positionRef ?? '');
             const covered = panes.coveredWindows.some(
-                (w) => row.rank >= w.rows.start && row.rank < w.rows.end && col.rank >= w.columns.start && col.rank < w.columns.end,
+                (window) =>
+                    row.rank >= window.rows.start &&
+                    row.rank < window.rows.end &&
+                    column.rank >= window.columns.start &&
+                    column.rank < window.columns.end,
             );
             if (!covered || (pane && !pane.complete)) {
                 text(`loading:${id}`, clip, left + 60, top + 60, 'Loading…');
                 continue;
             }
-            for (const [binding, vertical] of [
-                [xb, false],
-                [yb, true],
+            const xDomain = xb ? getDisplayDomain(plan, xb.fieldRef, 'x', domains, row, column) : undefined,
+                yDomain = yb ? getDisplayDomain(plan, yb.fieldRef, 'y', domains, row, column) : undefined;
+            if ((xb && !xDomain) || (yb && !yDomain)) throw new Error('domain-unavailable: pane position domain missing');
+            const xs = createPositionScale(xDomain, xb ? plan.scales?.[xb.fieldRef] : undefined, plot.x, plot.x + plot.width),
+                ys = createPositionScale(yDomain, yb ? plan.scales?.[yb.fieldRef] : undefined, plot.y + plot.height, plot.y);
+            for (const [binding, scale, vertical] of [
+                [xb, xs, false],
+                [yb, ys, true],
             ] as const) {
                 if (!binding) continue;
-                const domain = domains.domains[binding.fieldRef];
-                if (!domain) continue;
-                const extent = effectiveDomain(binding);
-                const labels = domain.type === 'band' ? extent : [extent[0], (Number(extent[0]) + Number(extent[1])) / 2, extent[1]];
-                const stride = Math.max(1, Math.ceil(labels.length / 10));
-                labels.forEach((value, index) => {
-                    if (index % stride) return;
-                    const at = scale(binding, value, vertical ? plot.y + plot.height : plot.x, vertical ? plot.y : plot.x + plot.width);
+                const axis = plan.axes?.[binding.fieldRef];
+                if (axis?.hidden) continue;
+                const ticks = scale.ticks(axis?.tickCount ?? (scale.type === 'band' ? 10 : 3));
+                const labelStride = Math.max(
+                    1,
+                    Math.ceil(
+                        ticks.length / Math.max(1, Math.floor((vertical ? plot.height : plot.width) / (vertical ? fontSize + 6 : 40))),
+                    ),
+                );
+                ticks.forEach((value, index) => {
+                    const at = scale.map(value);
                     if (!Number.isFinite(at)) return;
-                    const label =
-                        domain.type === 'time'
-                            ? new Date(Number(value)).toISOString().slice(0, 10)
-                            : typeof value === 'number'
-                              ? numberLabel(value)
-                              : String(value ?? '∅');
-                    if (vertical) text(`y:${id}:${index}`, clip, plot.x - 5, at + 4, label.slice(0, 16), 'right');
-                    else text(`x:${id}:${index}`, clip, at, plot.y + plot.height + 16, label.slice(0, 16), 'center');
+                    const label = formatValue(value, scale.type, axis?.format);
+                    if (axis?.grid)
+                        add(
+                            `grid:${vertical ? 'y' : 'x'}:${id}:${index}`,
+                            plotClip,
+                            vertical
+                                ? { kind: 'line', x1: plot.x, y1: at, x2: plot.x + plot.width, y2: at, stroke: '#e2e8f0' }
+                                : { kind: 'line', x1: at, y1: plot.y, x2: at, y2: plot.y + plot.height, stroke: '#e2e8f0' },
+                        );
+                    if (index % labelStride) return;
+                    if (vertical) text(`y:${id}:${index}`, clip, plot.x - 5, at + fontSize * 0.35, label, 'right', 40);
+                    else
+                        text(
+                            `x:${id}:${index}`,
+                            clip,
+                            at,
+                            plot.y + plot.height + 16,
+                            label,
+                            'center',
+                            Math.max(16, plot.width / Math.max(1, Math.ceil(ticks.length / labelStride)) - 4),
+                        );
                 });
-            }
-            text(`title:${id}`, clip, left + 52, top + 14, [yb?.label, xb?.label].filter(Boolean).join(' / ').slice(0, 32));
-            const stacks = new Map<string, { positive: number; negative: number }>();
-            for (const record of pane?.records ?? []) {
-                const xv = xb ? record.values[xb.columnKey] : undefined,
-                    yv = yb ? record.values[yb.columnKey] : undefined;
-                let x = scale(xb, xv, plot.x, plot.x + plot.width),
-                    y = scale(yb, yv, plot.y + plot.height, plot.y);
-                if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-                let color = plan.style?.color ?? '#2563eb';
-                const colorChannel = plan.channels?.color;
-                if (colorChannel && 'value' in colorChannel) color = String(colorChannel.value);
-                if (colorChannel && 'fieldRef' in colorChannel) {
-                    const cb = bindings.get(colorChannel.fieldRef)!;
-                    const values = effectiveDomain(cb);
-                    const ordinal = values.findIndex((v) => key(v) === key(record.values[cb.columnKey]));
-                    const palette = ['#2563eb', '#f97316', '#16a34a', '#9333ea', '#dc2626', '#0891b2'];
-                    color = palette[Math.max(0, ordinal) % palette.length];
-                }
-                const markId = `${pane!.key}:${record.datumKey}`;
-                if (input.selected?.has(markId)) color = '#ea580c';
-                let bounds: Box;
-                if (plan.mark === 'point') {
-                    const radius = 4;
-                    add(markId, plotClip, { kind: 'circle', x, y, radius, fill: color });
-                    bounds = { x: x - radius, y: y - radius, width: radius * 2, height: radius * 2 };
-                } else {
-                    const horizontal = plan.barOrientation === 'horizontal' || yb?.positionType === 'band';
-                    const valueBinding = horizontal ? xb : yb,
-                        bandBinding = horizontal ? yb : xb;
-                    const value = horizontal ? xv : yv,
-                        category = horizontal ? yv : xv;
-                    if (!valueBinding || typeof value !== 'number') continue;
-                    const { start, end } = plan.stack === 'zero' ? advanceBarStack(stacks, category, value) : { start: 0, end: value };
-                    const pixelStart = scale(
-                        valueBinding,
-                        start,
-                        horizontal ? plot.x : plot.y + plot.height,
-                        horizontal ? plot.x + plot.width : plot.y,
-                    );
-                    const pixelEnd = scale(
-                        valueBinding,
-                        end,
-                        horizontal ? plot.x : plot.y + plot.height,
-                        horizontal ? plot.x + plot.width : plot.y,
-                    );
-                    const bandCount = bandBinding ? effectiveDomain(bandBinding).length : 1;
-                    const thickness =
-                        bandBinding?.positionType === 'band'
-                            ? Math.max(1, ((horizontal ? plot.height : plot.width) / Math.max(1, bandCount)) * 0.72)
-                            : 8;
-                    bounds = horizontal
-                        ? {
-                              x: Math.min(pixelStart, pixelEnd),
-                              y: y - thickness / 2,
-                              width: Math.abs(pixelEnd - pixelStart),
-                              height: thickness,
-                          }
+                add(
+                    `axis:${vertical ? 'y' : 'x'}:${id}`,
+                    clip,
+                    vertical
+                        ? { kind: 'line', x1: plot.x, y1: plot.y, x2: plot.x, y2: plot.y + plot.height, stroke: '#94a3b8' }
                         : {
-                              x: x - thickness / 2,
-                              y: Math.min(pixelStart, pixelEnd),
-                              width: thickness,
-                              height: Math.abs(pixelEnd - pixelStart),
-                          };
-                    rect(markId, plotClip, bounds, color);
-                }
-                frame.hits.push({
-                    id: markId,
-                    paneKey: pane!.key,
-                    datumKey: record.datumKey,
-                    box: bounds,
-                    clip: plotClip,
-                    values: record.values,
-                });
+                              kind: 'line',
+                              x1: plot.x,
+                              y1: plot.y + plot.height,
+                              x2: plot.x + plot.width,
+                              y2: plot.y + plot.height,
+                              stroke: '#94a3b8',
+                          },
+                );
             }
+            const title = (binding: ResultBinding | undefined) =>
+                binding && !plan.axes?.[binding.fieldRef]?.hidden
+                    ? plan.axes?.[binding.fieldRef]?.title === null
+                        ? ''
+                        : (plan.axes?.[binding.fieldRef]?.title ?? binding.label)
+                    : '';
+            text(`title:${id}`, clip, left + 48, top + 14, [title(yb), title(xb)].filter(Boolean).join(' / '), 'left', plot.width);
+            if (pane)
+                drawPaneMarks({
+                    plan,
+                    pane,
+                    row,
+                    column,
+                    xb,
+                    yb,
+                    xs,
+                    ys,
+                    plot,
+                    clip: plotClip,
+                    frame,
+                    encode,
+                    selected: input.selected,
+                    focusId: input.focusId,
+                });
         }
-    const rowClip: Box = { x: 0, y: m.headerHeight, width: m.headerWidth, height: Math.max(0, height - m.headerHeight) };
-    const colClip: Box = { x: m.headerWidth, y: 0, width: Math.max(0, width - m.headerWidth), height: m.headerHeight };
+    const rowClip: Box = { x: 0, y: m.headerHeight, width: m.headerWidth, height: Math.max(0, height - m.headerHeight) },
+        columnClip: Box = { x: m.headerWidth, y: 0, width: Math.max(0, width - m.headerWidth - m.legendWidth), height: m.headerHeight };
     rect('row-background', rowClip, rowClip, '#f8fafc');
-    rect('column-background', colClip, colClip, '#f8fafc');
+    rect('column-background', columnClip, columnClip, '#f8fafc');
     const rowDepth = Math.max(1, plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)),
         rowLevelWidth = m.headerWidth / rowDepth;
-    for (const span of rows.ancestors) {
-        const box = {
-            x: span.depth * rowLevelWidth,
-            y: m.headerHeight + span.start * m.rowHeight - scrollY,
-            width: rowLevelWidth,
-            height: (span.end - span.start) * m.rowHeight,
-        };
-        const clip = intersect(rowClip, box);
-        rect(`rh:${span.key}`, clip, box, '#f8fafc', '#cbd5e1');
-        text(
-            `rht:${span.key}`,
-            clip,
-            box.x + 5,
-            Math.max(box.y, clip.y) + 17,
-            span.label.slice(0, Math.max(2, Math.floor(rowLevelWidth / 7))),
-        );
-    }
-    for (const span of columns.ancestors) {
-        const box = {
-            x: m.headerWidth + span.start * m.columnWidth - scrollX,
-            y: span.depth * 28,
-            width: (span.end - span.start) * m.columnWidth,
-            height: 28,
-        };
-        const clip = intersect(colClip, box);
-        rect(`ch:${span.key}`, clip, box, '#f8fafc', '#cbd5e1');
-        text(`cht:${span.key}`, clip, Math.max(box.x, clip.x) + 5, box.y + 18, span.label.slice(0, 30));
+    for (const [axis, window, region] of [
+        ['row', rows, rowClip],
+        ['column', columns, columnClip],
+    ] as const) {
+        for (const span of window.ancestors) {
+            const box: Box =
+                axis === 'row'
+                    ? {
+                          x: span.depth * rowLevelWidth,
+                          y: m.headerHeight + span.start * m.rowHeight - scrollY,
+                          width: rowLevelWidth,
+                          height: (span.end - span.start) * m.rowHeight,
+                      }
+                    : {
+                          x: m.headerWidth + span.start * m.columnWidth - scrollX,
+                          y: span.depth * m.columnLevelHeight,
+                          width: (span.end - span.start) * m.columnWidth,
+                          height: m.columnLevelHeight,
+                      };
+            const clip = intersect(region, box);
+            if (!clip.width || !clip.height) continue;
+            const slot = span.kind === 'slot' || span.key.startsWith('["slot-header"'),
+                expanded = slot ? undefined : span.expanded;
+            const canCollapse =
+                !slot && (expanded !== undefined || span.path.length < plan[axis === 'row' ? 'rows' : 'columns'].facets.length);
+            const target: HeaderTarget = {
+                kind: 'header',
+                id: `header:${axis}:${span.key}`,
+                key: span.key,
+                axis,
+                path: span.path,
+                fieldRef: slot
+                    ? window.leaves.find((leaf) => leaf.rank === span.start)?.positionRef
+                    : span.path[span.path.length - 1]?.fieldRef,
+                box,
+                clip,
+                label: span.label,
+                expanded: canCollapse ? (expanded ?? true) : undefined,
+                canCollapse,
+            };
+            frame.headers.push(target);
+            const prefix = axis === 'row' ? 'rh' : 'ch';
+            rect(`${prefix}:${span.key}`, clip, box, '#f8fafc', '#cbd5e1');
+            const label = (canCollapse ? (target.expanded ? '▾ ' : '▸ ') : '') + span.label;
+            const size = axis === 'column' ? Math.min(fontSize, Math.max(7, m.columnLevelHeight - 5)) : fontSize;
+            text(
+                `${prefix}t:${span.key}`,
+                clip,
+                Math.max(box.x, clip.x) + 4,
+                Math.max(box.y, clip.y) + Math.min(axis === 'row' ? 17 : m.columnLevelHeight - 5, size + 5),
+                label,
+                'left',
+                clip.width - 8,
+                size,
+            );
+        }
     }
     for (const leaf of plan.columns.positions.length > 1 ? [] : columns.leaves)
         text(
             `slot:${leaf.key}`,
-            colClip,
+            columnClip,
             m.headerWidth + leaf.rank * m.columnWidth - scrollX + 8,
             m.headerHeight - 8,
             bindings.get(leaf.positionRef ?? '')?.label ?? '',
+            'left',
+            m.columnWidth - 16,
         );
     rect('corner', all, { x: 0, y: 0, width: m.headerWidth, height: m.headerHeight }, '#eef2f6', '#cbd5e1');
-    text('corner-title', all, 12, 24, 'Worksheet');
+    text('corner-title', all, 12, 24, 'Worksheet', 'left', m.headerWidth - 24);
+    if (m.legendWidth) {
+        const legend: Box = { x: width - m.legendWidth, y: 0, width: m.legendWidth, height };
+        rect('legend-background', all, legend, '#f8fafc', '#cbd5e1');
+        let y = 20;
+        for (const name of ['color', 'size', 'opacity', 'shape'] as const) {
+            const channel = plan.channels?.[name];
+            if (!channel || !('fieldRef' in channel)) continue;
+            const binding = bindings.get(channel.fieldRef)!,
+                domain = getDisplayDomain(plan, binding.fieldRef, name, domains);
+            if (!domain) throw new Error(`domain-unavailable: ${name} legend`);
+            const values = resolveDomainValues(domain, plan.scales?.[binding.fieldRef]);
+            text(`legend-title:${name}`, legend, legend.x + 10, y, `${binding.label} (${name})`, 'left', legend.width - 20);
+            y += 20;
+            const entries = domain.type === 'band' ? values : [values[0], Number(values[0]) / 2 + Number(values[1]) / 2, values[1]];
+            const available = Math.max(
+                1,
+                Math.floor(
+                    (height - y - 35) /
+                        18 /
+                        Math.max(1, ['color', 'size', 'opacity', 'shape'].filter((key) => plan.channels?.[key as 'color']).length),
+                ),
+            );
+            const displayed = entries.slice(0, Math.min(12, available));
+            const mapColor =
+                name === 'color' ? createColorEncoder(domain, plan.scales?.[binding.fieldRef], plan.style?.palette) : undefined;
+            if (mapColor && domain.type !== 'band') {
+                const span = Number(values[1]) - Number(values[0]);
+                for (let step = 0; step < 24; step++)
+                    rect(
+                        `legend-gradient:${name}:${step}`,
+                        legend,
+                        {
+                            x: legend.x + 10 + (step * (legend.width - 20)) / 24,
+                            y: y - 10,
+                            width: (legend.width - 20) / 24 + 0.1,
+                            height: 10,
+                        },
+                        mapColor(Number(values[0]) + (span * step) / 23),
+                    );
+                y += 16;
+            }
+            displayed.forEach((value, index) => {
+                if (mapColor)
+                    rect(`legend-swatch:${name}:${index}`, legend, { x: legend.x + 10, y: y - 9, width: 10, height: 10 }, mapColor(value));
+                else if (name === 'opacity')
+                    add(`legend-swatch:${name}:${index}`, legend, {
+                        kind: 'rect',
+                        box: { x: legend.x + 10, y: y - 9, width: 12, height: 10 },
+                        fill: plan.style?.color ?? '#2563eb',
+                        opacity: Math.max(0, Math.min(1, numericChannel(value, domain, plan.scales?.[binding.fieldRef], [0.15, 1]))),
+                    });
+                else if (name === 'size') {
+                    const size = numericChannel(value, domain, plan.scales?.[binding.fieldRef], plan.mark === 'line' ? [1, 6] : [16, 256]);
+                    if (plan.mark === 'line')
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'line',
+                            x1: legend.x + 8,
+                            y1: y - 4,
+                            x2: legend.x + 24,
+                            y2: y - 4,
+                            stroke: plan.style?.color ?? '#2563eb',
+                            width: Math.min(12, size),
+                        });
+                    else
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'circle',
+                            x: legend.x + 16,
+                            y: y - 4,
+                            radius: Math.min(9, Math.sqrt(size / Math.PI)),
+                            fill: plan.style?.color ?? '#2563eb',
+                        });
+                } else if (name === 'shape') {
+                    const range = plan.scales?.[binding.fieldRef]?.range ?? pointShapes,
+                        ordinal = plan.scales?.[binding.fieldRef]?.reverse ? values.length - 1 - index : index;
+                    const primitive = pointSymbol(
+                        range[ordinal % range.length] as (typeof pointShapes)[number],
+                        legend.x + 16,
+                        y - 4,
+                        64,
+                    ).primitive;
+                    add(`legend-swatch:${name}:${index}`, legend, { ...primitive, fill: plan.style?.color ?? '#2563eb' });
+                }
+                text(
+                    `legend-value:${name}:${index}`,
+                    legend,
+                    legend.x + 30,
+                    y,
+                    formatValue(value, domain.type, plan.axes?.[binding.fieldRef]?.format),
+                    'left',
+                    legend.width - 38,
+                );
+                y += 18;
+            });
+            if (entries.length > displayed.length) {
+                text(
+                    `legend-more:${name}`,
+                    legend,
+                    legend.x + 10,
+                    y,
+                    `+${entries.length - displayed.length} more`,
+                    'left',
+                    legend.width - 20,
+                );
+                y += 18;
+            }
+            y += 12;
+        }
+    }
+    if (input.focusId) {
+        const target = frame.hits.find((hit) => hit.id === input.focusId) ?? frame.headers.find((header) => header.id === input.focusId);
+        if (target)
+            add('focus-ring', target.clip, {
+                kind: 'rect',
+                box: inflate(target.box, 2),
+                fill: 'transparent',
+                stroke: '#111827',
+                strokeWidth: 2,
+            });
+    }
+    if (input.brush) add('selection-brush', body, { kind: 'rect', box: input.brush, fill: '#93c5fd', stroke: '#2563eb', opacity: 0.3 });
+    prepareHitIndex(frame);
     return frame;
 }

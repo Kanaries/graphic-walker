@@ -1,6 +1,9 @@
 import type { IChart, IViewField } from '../../interfaces';
 import { getMeaAggKey, getMeaAggName } from '../../utils';
-import type { AxisPlan, Diagnostic, RenderPlan, ResultBinding, ScaleOptions } from '../../../../worksheet-renderer/src/core/types';
+import type { AxisPlan, Diagnostic, RenderPlan, ResultBinding } from '../../../../worksheet-renderer/src/core/types';
+import { validateRenderCapabilities } from '../../../../worksheet-renderer/src/core/capabilities';
+import { autoMark } from '../../vis/spec/mark';
+import { resolvePresentation, type NativePresentationInput, type NativeWorksheetLayout } from './presentation';
 
 /** Metadata for results the host has already prepared. This adapter never reads or computes records. */
 export interface PreparedColumn {
@@ -10,7 +13,7 @@ export interface PreparedColumn {
     readonly unitKey?: string;
 }
 
-export interface NativeAdapterInput {
+export interface NativeAdapterInput extends NativePresentationInput {
     readonly columns: readonly PreparedColumn[];
 }
 
@@ -36,8 +39,7 @@ function stableJson(value: unknown): string {
 
 /**
  * Interpret an existing IChart without changing it or invoking a chart compiler.
- * S0 deliberately supports bar/point and the configuration exercised by its vertical slice.
- * Other display capabilities return errors, so callers cannot mistake a partial chart for a full one.
+ * Display capabilities are validated with the independent library before a plan is returned.
  */
 export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput): NativeAdapterResult {
     const diagnostics: Diagnostic[] = [];
@@ -71,9 +73,9 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
             return fieldRef;
         }
         const positionType = field.analyticType === 'measure' || field.semanticType === 'quantitative' ? 'linear' : field.semanticType === 'temporal' ? 'time' : 'band';
-        if (column.valueType === 'interval') {
-            unsupported(configRef, 'Prepared interval geometry is not supported by the S0 renderer.', fieldRef);
-        } else if ((positionType === 'linear' && column.valueType !== 'number') || (positionType === 'time' && column.valueType !== 'time')) {
+        if (column.valueType === 'interval' && (field.analyticType === 'measure' || positionType === 'band')) {
+            unsupported(configRef, 'Prepared intervals require a numeric or time dimension position.', fieldRef);
+        } else if (column.valueType !== 'interval' && ((positionType === 'linear' && column.valueType !== 'number') || (positionType === 'time' && column.valueType !== 'time'))) {
             diagnostics.push({ code: 'invalid-binding-type', severity: 'error', recoverable: true, fieldRef, configRef, message: `${JSON.stringify(field.name)} requires a prepared ${positionType === 'time' ? 'time coordinate' : 'number'} column; received ${column.valueType}.` });
         }
         if (column.rawColumnKey && !columns.has(column.rawColumnKey)) {
@@ -105,99 +107,59 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
     };
     const rows = axis('rows');
     const columnsAxis = axis('columns');
-    const geom = chart.config.geoms[0];
-    if (chart.config.geoms.length !== 1 || (geom !== 'bar' && geom !== 'point')) {
-        unsupported('config.geoms', 'S0 supports one explicitly selected bar or point mark.');
-    }
+    let geom = chart.config.geoms[0];
+    if (chart.config.geoms.length !== 1) unsupported('config.geoms', 'A worksheet target supports exactly one mark.');
     if (chart.config.coordSystem && chart.config.coordSystem !== 'generic') unsupported('config.coordSystem', 'The native worksheet supports Cartesian coordinates.');
-
-    const color = chart.encodings.color.map((field, index) => bind(field, `encodings.color[${index}]`));
-    if (color.length > 1) unsupported('encodings.color', 'Only one color field is supported.');
-    if (chart.encodings.color.some((field) => field.semanticType !== 'nominal' && field.semanticType !== 'ordinal')) {
-        unsupported('encodings.color', 'Continuous color is not supported by the S0 renderer.');
-    }
-    const details = chart.encodings.details.map((field, index) => bind(field, `encodings.details[${index}]`));
-    for (const channel of ['size', 'opacity', 'shape', 'text', 'theta', 'radius', 'longitude', 'latitude', 'geoId'] as const) {
-        if (chart.encodings[channel].length) unsupported(`encodings.${channel}`, `The ${channel} encoding is not supported by the S0 renderer.`);
-    }
-
-    let barOrientation: RenderPlan['barOrientation'];
     const bindingByRef = new Map(bindings.map((binding) => [binding.fieldRef, binding]));
+    if (geom === 'auto') {
+        const choices = new Set<string>();
+        for (const row of rows.positions.length ? rows.positions : [undefined]) for (const column of columnsAxis.positions.length ? columnsAxis.positions : [undefined]) {
+            const types = [column, row].filter((ref): ref is string => ref !== undefined).map((ref) => fieldRefs.get(ref)!.field.semanticType);
+            choices.add(autoMark(types, chart.config.defaultAggregated));
+        }
+        if (choices.size !== 1) unsupported('config.geoms', 'Automatic mark selection differs between measure slots; choose one explicit mark.');
+        geom = [...choices][0];
+    }
+    if (!['bar', 'point', 'line', 'rect', 'text'].includes(geom)) unsupported('config.geoms', `The selected ${geom} mark is not supported.`);
+    const channels: NonNullable<RenderPlan['channels']> = {};
+    for (const name of ['color', 'size', 'opacity', 'shape', 'text'] as const) {
+        const refs = chart.encodings[name].map((field, index) => bind(field, `encodings.${name}[${index}]`));
+        if (refs.length > 1) unsupported(`encodings.${name}`, `Only one ${name} field is supported.`);
+        if (refs.length) (channels as Record<string, unknown>)[name] = { fieldRef: refs[0] };
+    }
+    if (chart.encodings.details.length) (channels as { details: string[] }).details = chart.encodings.details.map((field, index) => bind(field, `encodings.details[${index}]`));
+    for (const name of ['theta', 'radius', 'longitude', 'latitude', 'geoId'] as const) if (chart.encodings[name].length) unsupported(`encodings.${name}`, `The ${name} encoding is not supported.`);
+    let barOrientation: RenderPlan['barOrientation'];
     if (geom === 'bar') {
         const rowMeasures = rows.positions.length > 0 && rows.positions.every((ref) => fieldRefs.get(ref)!.field.analyticType === 'measure');
         const columnMeasures = columnsAxis.positions.length > 0 && columnsAxis.positions.every((ref) => fieldRefs.get(ref)!.field.analyticType === 'measure');
-        if (rowMeasures === columnMeasures) {
-            unsupported('encodings', 'Bars need a measure axis and a dimension position or default position on the other axis.');
-        } else {
-            barOrientation = rowMeasures ? 'vertical' : 'horizontal';
-            const numeric = rowMeasures ? rows.positions : columnsAxis.positions;
-            if (numeric.some((ref) => bindingByRef.get(ref)?.positionType !== 'linear')) unsupported('encodings', 'The bar measure axis requires numeric prepared results.');
-        }
+        if (rowMeasures === columnMeasures) unsupported('encodings', 'Bars need a measure axis and a dimension position or default position on the other axis.');
+        else barOrientation = rowMeasures ? 'vertical' : 'horizontal';
         if (chart.layout.stack === 'normalize' || chart.layout.stack === 'center') unsupported('layout.stack', `${chart.layout.stack} stacking is not supported.`);
-    } else if (!rows.positions.length && !columnsAxis.positions.length) {
-        unsupported('encodings', 'A point chart requires at least one position field.');
     }
-
-    const scales: Record<string, ScaleOptions> = {};
-    for (const [axisName, plan, resolve] of [['row', rows, 'y'], ['column', columnsAxis, 'x']] as const) {
-        const config = chart.layout.scale?.[axisName];
-        if (config?.type && config.type !== 'linear') unsupported(`layout.scale.${axisName}.type`, `The ${config.type} scale is not supported.`);
-        if (config?.rangeMin !== undefined || config?.rangeMax !== undefined) unsupported(`layout.scale.${axisName}`, 'Custom position ranges are not supported by the S0 renderer.');
-        if (chart.layout.resolve[resolve]) unsupported(`layout.resolve.${resolve}`, 'Independent position domains are not supported by the S0 renderer.');
-        for (const ref of plan.positions) {
-            const binding = bindingByRef.get(ref);
-            if (config?.type === 'linear' && binding?.positionType === 'time') {
-                unsupported(`layout.scale.${axisName}.type`, 'Overriding a time position with a linear scale is not supported by the S0 renderer.', ref);
-            }
-            if (config && binding?.positionType === 'band' && Object.values(config).some((value) => value !== undefined)) {
-                unsupported(`layout.scale.${axisName}`, 'Numeric scale overrides cannot be applied to a band position.', ref);
-            }
-            const endpoints = [config?.domainMin, config?.domainMax];
-            if (endpoints.some((value) => value !== undefined && !Number.isFinite(value))) unsupported(`layout.scale.${axisName}`, 'Fixed domain endpoints must be finite numbers.', ref);
-            if (config?.domainMin !== undefined && config?.domainMax !== undefined && config.domainMin >= config.domainMax) unsupported(`layout.scale.${axisName}`, 'Fixed domainMin must be less than domainMax.', ref);
-            scales[ref] = {
-                scope: { mode: 'shared' },
-                zero: binding?.positionType === 'linear' && chart.layout.zeroScale,
-                ...(config?.domainMin === undefined ? {} : { domainMin: config.domainMin }),
-                ...(config?.domainMax === undefined ? {} : { domainMax: config.domainMax }),
-            };
-        }
-    }
-    for (const channel of ['color', 'opacity', 'shape', 'size'] as const) {
-        if (chart.layout.resolve[channel]) unsupported(`layout.resolve.${channel}`, 'Independent non-position domains are not supported.');
-    }
-    for (const channel of ['color', 'opacity', 'size', 'radius', 'theta'] as const) {
-        if (chart.layout.scale?.[channel] && Object.values(chart.layout.scale[channel]!).some((value) => value !== undefined)) {
-            unsupported(`layout.scale.${channel}`, `Custom ${channel} scales are not supported by the S0 renderer.`);
-        }
-    }
-    for (const [key, value] of Object.entries(chart.layout.format)) {
-        if (value) unsupported(`layout.format.${key}`, 'Custom formatting is not supported by the S0 renderer.');
-    }
-    if (chart.layout.colorPalette) unsupported('layout.colorPalette', 'Named color palettes are not supported by the S0 renderer.');
-    if (chart.layout.interactiveScale) unsupported('layout.interactiveScale', 'Interactive scale changes are not supported by the S0 renderer.');
-    if ((chart.layout as unknown as Record<string, unknown>).worksheet !== undefined) unsupported('layout.worksheet', 'Worksheet layout extensions are not supported by the S0 renderer.');
-
-    if (diagnostics.some((diagnostic) => diagnostic.severity === 'error')) return { diagnostics, fieldRefs };
-    const planWithoutKey: Omit<RenderPlan, 'domainPlanKey'> = {
-        bindings,
-        rows,
-        columns: columnsAxis,
-        mark: geom as 'bar' | 'point',
-        channels: { ...(color.length ? { color: { fieldRef: color[0] } } : {}), ...(details.length ? { details } : {}) },
+    const worksheet = (chart.layout as typeof chart.layout & NativeWorksheetLayout).worksheet;
+    const preferredProgression = (refs: readonly string[]) => refs.length && refs.every((ref) => ['band', 'time'].includes(bindingByRef.get(ref)?.positionType ?? ''));
+    const base: Omit<RenderPlan, 'domainPlanKey'> = {
+        bindings, rows, columns: columnsAxis, mark: geom as RenderPlan['mark'], channels,
         stack: geom === 'bar' && chart.layout.stack !== 'none' ? 'zero' : 'none',
-        barLayout: 'overlap',
+        barLayout: worksheet?.barLayout ?? 'overlap',
         ...(barOrientation ? { barOrientation } : {}),
-        scales,
-        style: {
-            ...(chart.layout.primaryColor === undefined ? {} : { color: chart.layout.primaryColor }),
-            ...(chart.layout.background === undefined ? {} : { background: chart.layout.background }),
-        },
+        ...(geom === 'line' ? { lineProgression: preferredProgression(columnsAxis.positions) ? 'x' : preferredProgression(rows.positions) ? 'y' : 'x' } : {}),
     };
-    // The key describes domain semantics, independent of names, colors and viewport size.
+    if (diagnostics.some((diagnostic) => diagnostic.severity === 'error')) return { diagnostics, fieldRefs };
+    const presentation = resolvePresentation(chart, input, base, fieldRefs);
+    diagnostics.push(...presentation.diagnostics);
+    const { diagnostics: _presentationDiagnostics, ...display } = presentation;
+    const planWithoutKey = { ...base, ...display };
     const domainPlanKey = `gw-domain:${stableJson({
         bindings: bindings.map(({ fieldRef, bindingId }) => ({ fieldRef, bindingId })),
-        rows, columns: columnsAxis, mark: geom, channels: planWithoutKey.channels, stack: planWithoutKey.stack, scales,
+        rows, columns: columnsAxis, mark: geom, channels, stack: base.stack, barLayout: base.barLayout, scales: display.scales,
     })}`;
-    return { plan: { ...planWithoutKey, domainPlanKey }, diagnostics, fieldRefs };
+    const plan = { ...planWithoutKey, domainPlanKey };
+    for (const diagnostic of validateRenderCapabilities(plan)) {
+        const original = diagnostic.fieldRef ? fieldRefs.get(diagnostic.fieldRef)?.configRef : undefined;
+        const path = diagnostic.configRef?.replace(/^channels\./, 'encodings.').replace(/^mark$/, 'config.geoms').replace(/^barLayout$/, 'layout.worksheet.barLayout');
+        diagnostics.push({ ...diagnostic, configRef: original ?? path });
+    }
+    return diagnostics.some((diagnostic) => diagnostic.severity === 'error') ? { diagnostics, fieldRefs } : { plan, diagnostics, fieldRefs };
 }

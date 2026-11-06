@@ -36,6 +36,12 @@ test('complete sparse windows certify absent combinations as empty without creat
     assert.doesNotThrow(() => assertCompleteWindow(input));
 });
 
+test('stacked external windows require the complete joint series order even with complete numeric domains', async () => {
+    const input = mutable(await fixture());
+    delete input.domains.series;
+    assert.throws(() => assertCompleteWindow(input), { code: 'domain-unavailable' });
+});
+
 test('all response versions and manifest domain plans must match the requested presentation', async () => {
     const input = await fixture();
     for (const response of ['manifest', 'rows', 'columns', 'panes', 'domains'] as const) {
