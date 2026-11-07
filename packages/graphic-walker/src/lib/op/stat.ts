@@ -14,6 +14,16 @@ export function median(nums: number[]): number {
     return sorted.length % 2 === 0 ? (sorted[mid] + sorted[mid - 1]) / 2 : sorted[mid];
 }
 
+/** Type-7 quantile of an ascending numeric sample; used by the boxplot computation stage. */
+export function quantileSorted(nums: readonly number[], probability: number): number {
+    if (!nums.length) return NaN;
+    const position = (nums.length - 1) * probability;
+    const lower = Math.floor(position);
+    const upper = Math.ceil(position);
+    const fraction = position - lower;
+    return nums[lower] * (1 - fraction) + nums[upper] * fraction;
+}
+
 export function variance(nums: number[]): number {
     const m = mean(nums);
     return mean(nums.map((x) => (x - m) ** 2));

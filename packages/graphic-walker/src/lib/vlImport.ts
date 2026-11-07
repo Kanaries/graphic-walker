@@ -18,7 +18,7 @@ const object = (value: unknown): value is Record<string, any> => !!value && type
 const primitive = (value: unknown) =>
     value === null || typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value));
 const aggregates = new Set(['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev']);
-const marks = new Set(['bar', 'point', 'circle', 'line', 'area', 'rect', 'text', 'tick', 'arc', 'boxplot', 'interval', 'heatmap']);
+const marks = new Set(['bar', 'point', 'circle', 'line', 'trail', 'area', 'rect', 'text', 'tick', 'arc', 'boxplot', 'interval', 'heatmap']);
 const channels = new Set(['x', 'y', 'row', 'column', 'facet', 'color', 'opacity', 'shape', 'size', 'detail', 'details', 'text', 'theta', 'radius', 'order']);
 const scaleChannels = { x: 'column', y: 'row', color: 'color', opacity: 'opacity', size: 'size', theta: 'theta', radius: 'radius' } as const;
 

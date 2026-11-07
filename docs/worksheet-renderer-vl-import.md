@@ -8,7 +8,7 @@ These import rules are narrower than the worksheet library's static `RenderPlan`
 
 | Input | Canonical result |
 | --- | --- |
-| Supported single `mark`, or `mark.type` | `config.geoms`; bar, point, circle, line, area, rect, text, tick, arc and boxplot retain their existing geometry names. Existing interval→bar and heatmap→circle aliases remain. Native renderer capability checks still apply after import. |
+| Supported single `mark`, or `mark.type` | `config.geoms`; bar, point, circle, line, area, trail, rect, text, tick, arc and boxplot retain their existing geometry names. Existing interval→bar and heatmap→circle aliases remain. Native renderer capability checks still apply after import. |
 | `mark.color`, `background` | `layout.primaryColor`, `layout.background` |
 | String chart `title`; numeric positive `width` and `height` together | Chart name; fixed `layout.size` |
 | `x/y`, row/column facets, color/opacity/shape/size/text/theta/radius, detail/details | Existing field channels. Names must resolve unambiguously; fids are accepted. Detail arrays preserve their fields. Repeated facet/position instances on an axis are retained. |

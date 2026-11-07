@@ -7,6 +7,9 @@ import { fold2WithMetadata, type FoldBranch, type FoldRecordMetadata } from '../
 import type { PreparedColumn } from './adapter';
 import { declaredResultQuery, prepareResultIdentity, type NativeGetRowKey } from './identity';
 import { prepareTemporalValue } from './temporal';
+import { nativeEncodingKeys } from '../../models/visSpec';
+import type { BoxplotComputationResult } from '../../computation/boxplot';
+import type { RenderPlan } from '@kanaries/worksheet-renderer';
 
 export interface NativeResultInput {
     /** The immutable chart snapshot used to execute workflow, not the current edited chart. */
@@ -17,6 +20,8 @@ export interface NativeResultInput {
     /** Owned by the host transaction. Changing values or their interpretation requires new IDs. */
     readonly version: ReadVersion;
     readonly getRowKey?: NativeGetRowKey;
+    /** Statistics already produced by the common computation stage. */
+    readonly boxplot?: BoxplotComputationResult;
 }
 
 export interface NativeResultSnapshot {
@@ -31,6 +36,7 @@ export interface NativeResultSnapshot {
     readonly identityScope: 'stable' | 'snapshot';
     readonly getDatumKey: (record: PreparedRecord, inputIndex?: number) => string;
     readonly diagnostics: readonly Diagnostic[];
+    readonly boxplot?: RenderPlan['boxplot'];
 }
 
 /** Display-only metadata. Keys use the renderer's canonical typed value encoding. */
@@ -38,7 +44,6 @@ export interface NativePreparedColumn extends PreparedColumn {
     readonly valueLabels?: Readonly<Record<string, string>>;
 }
 
-const channels = ['rows', 'columns', 'color', 'size', 'opacity', 'shape', 'text', 'details', 'theta', 'radius', 'longitude', 'latitude', 'geoId'] as const;
 const has = (record: object, key: string) => Object.prototype.hasOwnProperty.call(record, key);
 const isInterval = (value: unknown) =>
     Array.isArray(value) && value.length === 2 && value.every((part) => typeof part === 'number' && Number.isFinite(part)) && value[0] <= value[1];
@@ -63,16 +68,19 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
     const version = Object.freeze({ ...input.version });
     const diagnostics: Diagnostic[] = [];
     const reject = (code: string, configRef: string, message: string) => diagnostics.push({ code, configRef, message, severity: 'error', recoverable: true });
+    const isBoxplot = chart.config.geoms[0] === 'boxplot';
+    const defaultAggregated = isBoxplot ? false : chart.config.defaultAggregated;
+    if (isBoxplot && !input.boxplot) reject('missing-boxplot-statistics', 'prepared.boxplot', 'Boxplots require statistics from the completed computation stage.');
     if (!['sourceId', 'snapshotId', 'presentationId'].every((key) => typeof version[key] === 'string' && version[key].length > 0)) {
         reject('invalid-version', 'prepared.version', 'All three host result version IDs must be nonempty strings.');
     }
-    const occurrences = channels.flatMap((channel) => chart.encodings[channel].map((field, index) => ({ field, configRef: `encodings.${channel}[${index}]` })));
+    const occurrences = nativeEncodingKeys(chart.config.geoms[0]).flatMap((channel) => chart.encodings[channel].map((field, index) => ({ field, configRef: `encodings.${channel}[${index}]` })));
     const viewFields = occurrences.map(({ field }) => field);
     const allFields = [...chart.encodings.dimensions, ...chart.encodings.measures];
     const byFid = new Map([...allFields, ...viewFields].map((field) => [field.fid, field]));
     const folded = fold2WithMetadata(
         queryRows,
-        chart.config.defaultAggregated,
+        defaultAggregated,
         allFields,
         viewFields.filter((field) => field.analyticType === 'measure'),
         viewFields.filter((field) => field.analyticType === 'dimension'),
@@ -96,7 +104,7 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
         for (const [index, fid] of (chart.config.folds ?? []).entries()) {
             const field = allFields.find((candidate) => candidate.fid === fid);
             if (!field) reject('missing-binding', `config.folds[${index}]`, `Fold field ${JSON.stringify(fid)} is not declared in the chart fields.`);
-            else if (!chart.config.defaultAggregated && field.aggName === 'expr')
+            else if (!defaultAggregated && field.aggName === 'expr')
                 reject(
                     'missing-binding',
                     `config.folds[${index}]`,
@@ -105,7 +113,7 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
         }
         addOriginal(MEA_KEY_ID);
         const meaVal = viewFields.find((field) => field.fid === MEA_VAL_ID)!;
-        addOriginal(chart.config.defaultAggregated ? getMeaAggKey(MEA_VAL_ID, meaVal.aggName) : MEA_VAL_ID, meaVal, true);
+        addOriginal(defaultAggregated ? getMeaAggKey(MEA_VAL_ID, meaVal.aggName) : MEA_VAL_ID, meaVal, true);
         for (const branch of folded.branches) {
             if (!declaredKeys.has(branch.columnKey))
                 reject('missing-binding', 'config.folds', `Fold result column ${JSON.stringify(branch.columnKey)} is not declared by the completed workflow.`);
@@ -146,7 +154,7 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
     const validated = new Set<string>();
     const localOffset = new Date().getTimezoneOffset();
     for (const { field, configRef } of occurrences) {
-        const resultKey = chart.config.defaultAggregated && field.analyticType === 'measure' ? getMeaAggKey(field.fid, field.aggName) : field.fid;
+        const resultKey = defaultAggregated && field.analyticType === 'measure' ? getMeaAggKey(field.fid, field.aggName) : field.fid;
         if (!declaredKeys.has(resultKey)) {
             reject('missing-binding', configRef, `Result column ${JSON.stringify(resultKey)} is not declared by the completed workflow.`);
             continue;
@@ -232,9 +240,76 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
         }
         fieldColumns.set(configRef, displayKey);
     }
-    const immutableRecords = Object.freeze(records.map((record) => Object.freeze(record)));
+    let displayRecords = records;
+    let displayMetadata: FoldRecordMetadata[] = [...folded.metadata];
+    let datumKeys = identity.keys;
+    let boxplot: RenderPlan['boxplot'];
+    if (isBoxplot && input.boxplot) {
+        const groupKeyColumn = allocateColumn('__gw_boxplot_group');
+        const roleColumn = allocateColumn('__gw_boxplot_role');
+        boxplot = { groupKeyColumn, roleColumn };
+        columns.set(groupKeyColumn, { columnKey: groupKeyColumn, valueType: 'string' });
+        columns.set(roleColumn, { columnKey: roleColumn, valueType: 'string' });
+        const measureColumns = new Set([...chart.encodings.rows, ...chart.encodings.columns].filter((field) => field.analyticType === 'measure').map((field) => field.fid));
+        // A measure reused as a color/detail must retain its original visual group value.
+        const originals = new Map<string, string>();
+        for (const { field, configRef } of occurrences) if (!/^encodings\.(rows|columns)\[/.test(configRef) && measureColumns.has(field.fid)) {
+            let key = originals.get(field.fid);
+            if (!key) {
+                key = allocateColumn(`__gw_boxplot_original_${field.fid}`);
+                originals.set(field.fid, key);
+                // The alias itself holds the original value. The measure column below becomes a statistic or null.
+                columns.set(key, { columnKey: key, valueType: 'number' });
+                for (const record of records) record[key] = record[field.fid];
+            }
+            fieldColumns.set(configRef, key);
+        }
+        displayRecords = [];
+        displayMetadata = [];
+        datumKeys = [];
+        const seen = new Set<string>();
+        const append = (groupKey: string, measureColumn: string, role: string, value: number, inputIndex: number, key: string) => {
+            displayRecords.push({ ...records[inputIndex], ...Object.fromEntries([...measureColumns].map((column) => [column, null])), [measureColumn]: value, [groupKeyColumn]: groupKey, [roleColumn]: role });
+            displayMetadata.push({ inputIndex });
+            datumKeys.push(key);
+        };
+        for (const group of input.boxplot.groups) {
+            const groupKey = JSON.stringify([group.groupKey, group.measureColumn]);
+            const values = [group.lowerWhisker, group.q1, group.median, group.q3, group.upperWhisker];
+            if (!measureColumns.has(group.measureColumn) || !Number.isInteger(group.representativeIndex) || !records[group.representativeIndex]
+                || values.some((value) => !Number.isFinite(value)) || group.q1 > group.median || group.median > group.q3 || group.lowerWhisker > group.upperWhisker || seen.has(groupKey)) {
+                reject('invalid-boxplot-statistics', 'prepared.boxplot', 'Each boxplot group needs a unique measure, an original row and ordered finite statistics.');
+                continue;
+            }
+            seen.add(groupKey);
+            for (const [index, role] of ['lower', 'q1', 'median', 'q3', 'upper'].entries())
+                append(groupKey, group.measureColumn, role, values[index], group.representativeIndex, JSON.stringify(['gw-boxplot-summary', version.sourceId, group.groupKey, group.measureColumn, role]));
+            for (const outlier of group.outliers) {
+                if (!Number.isInteger(outlier.inputIndex) || !records[outlier.inputIndex] || !Number.isFinite(outlier.value) || records[outlier.inputIndex][group.measureColumn] !== outlier.value) {
+                    reject('invalid-boxplot-statistics', 'prepared.boxplot', 'An outlier must reference its unchanged original numeric sample.');
+                    continue;
+                }
+                append(groupKey, group.measureColumn, 'outlier', outlier.value, outlier.inputIndex, JSON.stringify(['gw-boxplot-outlier', identity.keys[outlier.inputIndex], group.measureColumn]));
+            }
+        }
+        // The computation stage supplies one representative per all-null group.
+        const emptyKeys = new Set<string>();
+        for (const empty of input.boxplot.emptyGroups ?? []) {
+            const inputIndex = empty.representativeIndex, record = records[inputIndex];
+            if (!Number.isInteger(inputIndex) || !record || !measureColumns.size || [...measureColumns].some((column) => record[column] !== null) || emptyKeys.has(empty.groupKey)) {
+                reject('invalid-boxplot-statistics', 'prepared.boxplot', 'An empty boxplot group needs one original all-null representative.');
+                continue;
+            }
+            emptyKeys.add(empty.groupKey);
+            const key = JSON.stringify(['gw-boxplot-empty', version.sourceId, empty.groupKey]);
+            displayRecords.push({ ...record, [groupKeyColumn]: key, [roleColumn]: 'empty' });
+            displayMetadata.push({ inputIndex });
+            datumKeys.push(key);
+        }
+    }
+    const immutableRecords = Object.freeze(displayRecords.map((record) => Object.freeze(record)));
     const keyByRecord = new WeakMap<PreparedRecord, string>();
-    immutableRecords.forEach((record, index) => keyByRecord.set(record, identity.keys[index]));
+    immutableRecords.forEach((record, index) => keyByRecord.set(record, datumKeys[index]));
     const invalidIdentity = identity.diagnostics.some((item) => item.severity === 'error');
     const invalidResult = diagnostics.some((item) => item.severity === 'error');
     return {
@@ -243,8 +318,9 @@ export function prepareNativeResults(input: NativeResultInput): NativeResultSnap
         columns: Object.freeze([...columns.values()].map((column) => Object.freeze(column))),
         fieldColumns,
         foldMetadata: Object.freeze(
-            folded.metadata.map((item) => Object.freeze({ ...item, ...(item.branch ? { branch: Object.freeze({ ...item.branch }) } : {}) })),
+            displayMetadata.map((item) => Object.freeze({ ...item, ...(item.branch ? { branch: Object.freeze({ ...item.branch }) } : {}) })),
         ),
+        ...(boxplot ? { boxplot } : {}),
         version,
         identityScope: identity.identityScope,
         diagnostics: Object.freeze(diagnostics),

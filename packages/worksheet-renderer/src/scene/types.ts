@@ -10,6 +10,15 @@ export interface Point {
     x: number;
     y: number;
 }
+/** Clockwise radians measured from the positive x axis; endAngle is at most one turn after startAngle. */
+export interface ArcGeometry {
+    x: number;
+    y: number;
+    innerRadius: number;
+    outerRadius: number;
+    startAngle: number;
+    endAngle: number;
+}
 export type Primitive = (
     | { kind: 'rect'; box: Box; fill: string; stroke?: string; strokeWidth?: number }
     | { kind: 'line'; x1: number; y1: number; x2: number; y2: number; stroke: string; width?: number }
@@ -24,16 +33,20 @@ export type Primitive = (
           align?: 'left' | 'center' | 'right';
       }
     | { kind: 'circle'; x: number; y: number; radius: number; fill: string; stroke?: string; strokeWidth?: number }
+    | ({ kind: 'arc'; fill: string; stroke?: string; strokeWidth?: number } & ArcGeometry)
     | { kind: 'path'; points: readonly Point[]; closed?: boolean; fill?: string; stroke?: string; width?: number }
 ) & { opacity?: number };
 export interface DrawCommand {
     id: string;
+    /** Several drawing commands can share one compound-mark selection target. */
+    interactionId?: string;
     clip: Box;
     primitive: Primitive;
 }
 export type HitGeometry =
     | { kind: 'rect'; box: Box }
     | { kind: 'circle'; x: number; y: number; radius: number }
+    | ({ kind: 'arc' } & ArcGeometry)
     | { kind: 'polygon'; points: readonly Point[] }
     | { kind: 'segment'; start: Point; end: Point; width: number };
 export interface HitRegion {

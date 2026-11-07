@@ -2,7 +2,7 @@ import { ColorSchemes } from '../../components/visualConfig/colorScheme';
 import type { IChannelScales, IChart, IColorScale, IScale, IViewField } from '../../interfaces';
 import type { AxisOptions, Diagnostic, PreparedRecord, RenderPlan, RenderStyle, ScaleOptions } from '@kanaries/worksheet-renderer';
 
-type Channel = 'row' | 'column' | 'color' | 'size' | 'opacity' | 'shape';
+type Channel = 'row' | 'column' | 'color' | 'size' | 'opacity' | 'shape' | 'radius';
 type StaticScale = Omit<IColorScale, 'domain' | 'range'> & ScaleOptions;
 export type WorksheetScope = NonNullable<ScaleOptions['scope']>;
 /** Optional fields will join the existing IVisualLayout schema during GW integration. */
@@ -78,7 +78,7 @@ export function resolvePresentation(chart: IChart, input: NativePresentationInpu
         return byField.get(key)!;
     }
     const channels: Array<[Channel, readonly string[]]> = [['row', plan.rows.positions], ['column', plan.columns.positions]];
-    for (const name of ['color', 'size', 'opacity', 'shape'] as const) {
+    for (const name of ['color', 'size', 'opacity', 'shape', 'radius'] as const) {
         const channel = plan.channels?.[name];
         if (channel && 'fieldRef' in channel) channels.push([name, [channel.fieldRef]]);
     }
@@ -110,9 +110,12 @@ export function resolvePresentation(chart: IChart, input: NativePresentationInpu
             ...(base.domain === undefined ? {} : { domain: [...base.domain] }),
             scope,
         };
+        const normalizedAxis = plan.stack === 'normalize' && (plan.mark === 'bar'
+            ? name === (plan.barOrientation === 'horizontal' ? 'column' : 'row')
+            : plan.mark === 'area' && name === (plan.lineProgression === 'y' ? 'column' : 'row'));
         if (isPosition) axes[ref] = {
             ...input.theme?.axes?.[name as 'row' | 'column'],
-            ...format(binding.positionType, chart),
+            ...(normalizedAxis ? { format: chart.layout.format.normalizedNumberFormat || '.0%' } : format(binding.positionType, chart)),
         };
     }
     const text = plan.channels?.text;
@@ -121,9 +124,8 @@ export function resolvePresentation(chart: IChart, input: NativePresentationInpu
         if (!palettes[palette]) reject('layout.colorPalette', `Unknown native color palette ${JSON.stringify(palette)}; use an explicit static range.`);
         else (style as { palette?: readonly string[] }).palette = palettes[palette];
     }
-    for (const name of ['radius', 'theta'] as const) if (input.scales?.[name] || chart.layout.scale?.[name]) reject(`scales.${name}`, 'Polar scales are not supported.');
+    if (plan.mark === 'arc' && (input.scales?.theta || chart.layout.scale?.theta)) reject('scales.theta', 'Theta values are non-negative weights; a separate angle scale is not supported.');
     if (chart.layout.interactiveScale) reject('layout.interactiveScale', 'Interactive scale domain editing is not supported.');
-    if (chart.layout.format.normalizedNumberFormat) reject('layout.format.normalizedNumberFormat', 'Normalized stacking and its format are not supported.');
     return { scales, axes, style, diagnostics };
 }
 function format(positionType: string | undefined, chart: IChart): AxisOptions {

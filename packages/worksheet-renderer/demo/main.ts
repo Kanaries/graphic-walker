@@ -2,11 +2,14 @@ import { createWorksheet, createPreparedDataSource, axisLeafKey, headerKey, pane
 import type { AxisLeaf, ControlledRequest, HeaderSpan, RenderDataSource, RenderPlan, ReadVersion, WorksheetInput } from '../src';
 import { adaptChartToRenderPlan } from '../../graphic-walker/src/lib/native/adapter';
 import { createNestedChartFixture } from '../../graphic-walker/src/lib/native/fixtures';
-import { createNativeScenario, type NativeScenario } from '../../graphic-walker/src/lib/native/scenarios';
+import { createNativeScenario, nativeExtendedScenarios, type NativeScenario } from '../../graphic-walker/src/lib/native/scenarios';
 import type { NativeWorksheetLayout } from '../../graphic-walker/src/lib/native/presentation';
 import { seriesIdentityFor, seriesKeyFor } from '../src/core/series';
 import { createControlledDemo } from './controlled';
 import { createPagedDemo } from './paged';
+import { planBoxplotComputation, computeBoxplotStatistics } from '../../graphic-walker/src/computation/boxplot';
+import { prepareNativeResults } from '../../graphic-walker/src/lib/native/results';
+import type { IDataQueryWorkflowStep } from '../../graphic-walker/src/interfaces';
 const fixture = createNestedChartFixture(),
     adapted = adaptChartToRenderPlan(fixture.chart, { columns: fixture.columns });
 if (!adapted.plan) throw new Error(JSON.stringify(adapted.diagnostics));
@@ -231,6 +234,12 @@ const view = createWorksheet(document.querySelector<HTMLElement>('#chart')!, {
     plan,
     source: normal,
 });
+for (const item of nativeExtendedScenarios) {
+    const option = document.createElement('option');
+    option.value = item.id;
+    option.textContent = item.label;
+    example.appendChild(option);
+}
 const scope = document.querySelector<HTMLSelectElement>('#scope')!;
 const controlled = createControlledDemo();
 let paged: ReturnType<typeof createPagedDemo> | undefined;
@@ -290,24 +299,30 @@ function chooseScenario() {
             },
         };
     }
+    const version = { sourceId: `scenario:${example.value}`, snapshotId: '1', presentationId: `scope:${scope.value}` };
+    const boxplotPlan = planBoxplotComputation(selected.chart);
+    const workflow: IDataQueryWorkflowStep[] = [{ type: 'view', query: [{ op: 'raw', fields: selected.columns.map(column => column.columnKey) }] }];
+    const prepared = boxplotPlan ? prepareNativeResults({
+        chart: selected.chart, queryRows: selected.records, workflow, version, getRowKey: selected.getDatumKey,
+        boxplot: computeBoxplotStatistics(selected.records, boxplotPlan, workflow),
+    }) : undefined;
+    const records = prepared?.records ?? selected.records;
+    if (prepared?.diagnostics.some(diagnostic => diagnostic.severity === 'error')) throw new Error(JSON.stringify(prepared.diagnostics));
     const adapted = adaptChartToRenderPlan(selected.chart, {
-        columns: selected.columns,
+        columns: prepared?.columns ?? selected.columns,
         ...selected.presentation,
-        records: selected.records,
+        records,
+        ...(prepared ? { fieldColumns: prepared.fieldColumns, boxplot: prepared.boxplot } : {}),
     });
     if (!adapted.plan)
         throw new Error(adapted.diagnostics.map((diagnostic) => `${diagnostic.configRef}: ${diagnostic.message}`).join('\n'));
     active = {
         plan: adapted.plan,
         source: createPreparedDataSource({
-            version: {
-                sourceId: `scenario:${example.value}`,
-                snapshotId: '1',
-                presentationId: `scope:${scope.value}`,
-            },
+            version,
             plan: adapted.plan,
-            records: selected.records,
-            getDatumKey: selected.getDatumKey,
+            records,
+            getDatumKey: prepared?.getDatumKey ?? selected.getDatumKey,
         }),
     };
     document.querySelector('#description')!.textContent = selected.description;
@@ -318,7 +333,7 @@ function report() {
         ? JSON.stringify(s.selectedTargets.map((x) => x.values))
         : s.pendingSelection.length
           ? 'Selection awaiting current data.'
-          : 'Select a bar to inspect its prepared values.';
+          : 'Select a mark to inspect its prepared values.';
     document.querySelector('#summary')!.textContent =
         `${s.manifest?.rowLeafCount.toLocaleString() ?? '…'} row positions × ${s.manifest?.columnLeafCount ?? '…'} columns · ${s.frame?.hits.length ?? 0} visible marks · offset ${Math.round(s.scrollX)}, ${Math.round(s.scrollY)} · ${s.cacheWindows} cached windows`;
 }

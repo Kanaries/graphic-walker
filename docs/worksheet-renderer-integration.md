@@ -1,6 +1,8 @@
 # Native Worksheet 的 GW 接入
 
-状态：S3 接入已通过独立代码审核、浏览器验收和构建消费检查。本文件说明现有 API 与边界；完整验收证据见 [实施记录](./worksheet-renderer-implementation.md)。
+图表类型扩展和箱线图计算边界见 [S4 文档](./worksheet-renderer-chart-types.md)。
+
+状态：S3 接入与 S4 图表扩展已通过独立代码审核、浏览器验收和构建消费检查。本文件说明现有 API 与边界；完整验收证据见 [实施记录](./worksheet-renderer-implementation.md)。
 
 ## 选择渲染器
 
@@ -28,7 +30,7 @@ PivotTable 和 geographic 图表仍走现有专门组件。普通 rows/columns �
 
 ## 查询与显示的交接
 
-现有 `toWorkflow` 和 computation 执行查询，返回未 fold 的查询结果。接入层把该结果与 workflow、source/snapshot 版本作为同一次完成结果提交，再准备 native 所需的列绑定、fold 身份和时间显示坐标。库内不执行过滤、聚合、SQL、表计算或 LOD。
+现有 `toWorkflow` 和 computation 执行查询，返回未 fold 的查询结果。接入层把该结果与 workflow、source/snapshot 版本作为同一次完成结果提交，再准备 native 所需的列绑定、fold 身份和时间显示坐标。库内不执行过滤、聚合、SQL、表计算或 LOD。 Native 箱线图另在 GW 公共计算结果阶段生成分位数、实际须端点和离群观测，查询返回完整筛选样本后才计算；图表库消费统计角色行。详见 S4 文档。
 
 时间坐标由 GW 侧的纯显示 helper 逐值准备，native、Vega 和 Plot 共用该规则。原时间列保留，新增的显示列按字段和 offset 区分；null 保留为空，数值 0 是有效时间戳。混合 ISO 与日期字符串不再由首行格式决定整列偏移，重排不会改变某条记录的坐标。这个修正也消除了旧 Plot 路径忽略 Vega 时间 transform 的差异。显示别名不写入 IChart，scale 回调与选择仍使用原字段和原值。
 

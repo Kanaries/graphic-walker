@@ -12,7 +12,7 @@ export function translatedPrimitive(p: Primitive, x: number, y: number, selected
 function translatedGeometry(g: HitGeometry | undefined, x: number, y: number): HitGeometry | undefined {
     if (!g) return;
     if (g.kind === 'rect') return { kind: 'rect', box: translatedBox(g.box, x, y) };
-    if (g.kind === 'circle') return { ...g, x: g.x + x, y: g.y + y };
+    if (g.kind === 'circle' || g.kind === 'arc') return { ...g, x: g.x + x, y: g.y + y };
     if (g.kind === 'segment') return { ...g, start: { x: g.start.x + x, y: g.start.y + y }, end: { x: g.end.x + x, y: g.end.y + y } };
     return { ...g, points: g.points.map((point) => ({ x: point.x + x, y: point.y + y })) };
 }

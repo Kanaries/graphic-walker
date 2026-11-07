@@ -11,6 +11,7 @@ type markType =
     | 'arc'
     | 'circle'
     | 'line'
+    | 'trail'
     | 'point'
     | 'rect'
     | 'rule'
@@ -197,6 +198,8 @@ function getGeom(mark: markChannel): GWGeoms {
                 return 'bar';
             case 'line':
                 return 'line';
+            case 'trail':
+                return 'trail';
             case 'boxplot':
                 return 'boxplot';
             case 'area':

@@ -1,5 +1,5 @@
 import type { AxisLeaf, DomainBatch, PaneData, ReadVersion, RenderPlan } from '../core/types';
-import { getDisplayDomain } from '../core/domains';
+import { getDisplayDomain, hasFixedDomain } from '../core/domains';
 import type { DrawCommand, HitRegion, SceneFrame } from './types';
 
 export interface CachedPaneGeometry {
@@ -73,17 +73,21 @@ export function createSceneCache(store: SceneCacheStore, maxEntries = 256) {
             state: string,
             build: () => SceneFrame,
         ): CachedPaneGeometry {
+            // Fixed domains are determined by begin()'s plan signature. Their temporary
+            // wrapper objects must not turn every scroll/selection frame into a cache miss.
+            const domainIdentity = (ref: string, channel: Parameters<typeof getDisplayDomain>[2]) =>
+                hasFixedDomain(plan, ref) ? `fixed:${ref}` : identity(getDisplayDomain(plan, ref, channel, domains, row, column));
             const refs = [
-                row.positionRef ? getDisplayDomain(plan, row.positionRef, 'y', domains, row, column) : undefined,
-                column.positionRef ? getDisplayDomain(plan, column.positionRef, 'x', domains, row, column) : undefined,
-                ...(['color', 'size', 'opacity', 'shape'] as const).map((channel) => {
+                row.positionRef ? domainIdentity(row.positionRef, 'y') : 0,
+                column.positionRef ? domainIdentity(column.positionRef, 'x') : 0,
+                ...(['color', 'size', 'opacity', 'shape', 'theta', 'radius'] as const).map((channel) => {
                     const binding = plan.channels?.[channel];
-                    return binding && 'fieldRef' in binding ? getDisplayDomain(plan, binding.fieldRef, channel, domains) : undefined;
+                    return binding && 'fieldRef' in binding ? domainIdentity(binding.fieldRef, channel) : 0;
                 }),
             ];
             // Ranks are unique within begin()'s complete immutable presentation signature.
             // Keeping typed member paths out of this administrative key bounds its footprint.
-            const key = `${prefix}${row.rank}:${column.rank}:${identity(pane?.records)}:${refs.map(identity).join(',')}:${identity(domains.series)}:${pane?.seriesCount ?? 0}:${complete}:${state}`;
+            const key = `${prefix}${row.rank}:${column.rank}:${identity(pane?.records)}:${JSON.stringify(refs)}:${identity(domains.series)}:${pane?.seriesCount ?? 0}:${complete}:${state}`;
             const cached = store.get(key);
             keys.delete(key);
             keys.set(key, true);

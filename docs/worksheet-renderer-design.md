@@ -1,5 +1,7 @@
 # 自有工作表渲染器：技术设计 v0.4
 
+2026-11-07 增补：[S4 图表类型扩展](./worksheet-renderer-chart-types.md) 更新本文原 S0–S3 的 mark/stack 能力矩阵，并定义 GW 箱图统计供给与库内纯绘制的边界。两者冲突时以 S4 对新增类型的说明为准。
+
 日期：2026-11-06。状态：本设计的首版渲染库与 GW native 接入已实施。需求见 [需求与验收](./worksheet-renderer-requirements.md)，范围见 [alignment](./worksheet-renderer-alignment.md)，设计审核见 [技术审核记录](./worksheet-renderer-technical-review.md)。当前公开 API 见子包 README 和 [GW 接入说明](./worksheet-renderer-integration.md)，实现与实测结果见 [实施记录](./worksheet-renderer-implementation.md)。本文保留设计契约，不将性能目标当作实测结果。
 
 ## 1. 设计结论与职责边界

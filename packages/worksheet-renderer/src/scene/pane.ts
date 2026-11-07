@@ -60,7 +60,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
     ) => add(id, clip, { kind: 'text', x, y, text: fitText(label, maxWidth, size, fontFamily), fill: plan.style?.foreground ?? '#334155', size, fontFamily, align });
     const id = `${row.key}:${column.key}`;
     rect(`cell:${id}`, clip, cell, plan.style?.background ?? '#fff', plan.style?.borderColor ?? '#e2e8f0');
-    const plot: Box = {
+    const plot: Box = plan.mark === 'arc' ? { x: left + 12, y: top + 12, width: width - 24, height: height - 24 } : {
             x: left + 48,
             y: top + 22,
             width: m.columnWidth - 60,
@@ -169,6 +169,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
     if (pane)
         drawPaneMarks({
             plan,
+            domains,
             pane,
             row,
             column,

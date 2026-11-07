@@ -1,6 +1,7 @@
+import { validateBoxplotPane } from './boxplot';
 import { axisLeafKey, decodeAxisLeafKey, headerKey, paneKey, pathKey, sameVersion, toTypedValue, typedValueKey } from './keys';
 import { PreparedDataError } from './prepared';
-import { barIsHorizontal, bindingTypedValue, domainRequestForWindow, domainStorageKey, getDisplayDomain, hasFixedDomain, positionTypeFor } from './domains';
+import { valueAxisIsHorizontal, isStacked, bindingTypedValue, domainRequestForWindow, domainStorageKey, getDisplayDomain, hasFixedDomain, positionTypeFor } from './domains';
 import { needsSeriesDomain, seriesIdentityFor, seriesKeyFor } from './series';
 import type { Axis, AxisLeaf, AxisLocation, AxisPlan, AxisWindow, DomainBatch, LocateRequest, MemberPath, PaneBatch, PaneRecord, PaneWindow, RankRange, ReadVersion, RenderDataManifest, RenderPlan, ResultBinding, TypedValue } from './types';
 
@@ -167,11 +168,11 @@ function validateDomains(input: CompleteWindowInput, bindings: ReadonlyMap<strin
         if (!domain.key || domainStorageKey(domain.key) !== domainStorageKey(key)) reject('Scoped domain metadata does not match the requested key.', 'source-contract-violation', key.fieldRef);
     }
     const stackedFields = new Set<string>();
-    if (plan.mark === 'bar' && plan.stack === 'zero') {
+    if (isStacked(plan)) {
         for (const rowRef of plan.rows.positions.length ? plan.rows.positions : [undefined]) {
             for (const columnRef of plan.columns.positions.length ? plan.columns.positions : [undefined]) {
                 const rowBinding = bindings.get(rowRef ?? '');
-                const horizontal = barIsHorizontal(plan, rowBinding);
+                const horizontal = valueAxisIsHorizontal(plan, rowBinding, bindings.get(columnRef ?? ''));
                 const valueRef = horizontal ? columnRef : rowRef;
                 if (valueRef) stackedFields.add(valueRef);
             }
@@ -212,7 +213,7 @@ function validateDomains(input: CompleteWindowInput, bindings: ReadonlyMap<strin
             if (scope === 'shared' && domain.type === 'band' && domain.source !== 'fixed' && leaf.bandDomainId !== domain.domainId) reject('A band leaf does not identify its complete domain.', 'source-contract-violation', leaf.positionRef);
         }
     }
-    for (const channel of ['color', 'size', 'opacity', 'shape'] as const) {
+    for (const channel of ['color', 'size', 'opacity', 'shape', 'theta', 'radius'] as const) {
         const encoding = plan.channels?.[channel];
         if (!encoding || !('fieldRef' in encoding)) continue;
         const domain = getDisplayDomain(plan, encoding.fieldRef, channel, domains);
@@ -246,7 +247,7 @@ function validateRecordValues(record: PaneRecord, row: AxisLeaf, column: AxisLea
     const required = new Set([...row.path.map((member) => member.fieldRef), ...column.path.map((member) => member.fieldRef), ...(plan.channels?.details ?? [])]);
     if (row.positionRef) required.add(row.positionRef);
     if (column.positionRef) required.add(column.positionRef);
-    for (const name of ['color', 'size', 'opacity', 'shape', 'text'] as const) {
+    for (const name of ['color', 'size', 'opacity', 'shape', 'text', 'theta', 'radius'] as const) {
         const channel = plan.channels?.[name];
         if (channel && 'fieldRef' in channel) required.add(channel.fieldRef);
     }
@@ -295,7 +296,7 @@ function validateWindow(input: CompleteWindowInput, partial: boolean, allowUnava
     if (panes.nextCursor !== undefined) reject('A complete pane batch cannot have a continuation cursor.', 'incomplete-data');
     const series = input.domains.series;
     const needsSeries = needsSeriesDomain(plan);
-    if (needsSeries && (!series || !series.complete) && !(allowUnavailableDomains && panes.panes.length === 0)) reject('Line, grouped-bar, and stacked-bar windows require a complete joint series domain.', 'domain-unavailable');
+    if (needsSeries && (!series || !series.complete) && !(allowUnavailableDomains && panes.panes.length === 0)) reject('Path, grouped-bar, and stacked windows require a complete joint series domain.', 'domain-unavailable');
     if (series && !series.complete && !(allowUnavailableDomains && panes.panes.length === 0)) reject('The joint series domain is incomplete.', 'domain-unavailable');
     if (series && (typeof series.domainId !== 'string' || !series.domainId || series.keys.some((key) => typeof key !== 'string' || !key) || new Set(series.keys).size !== series.keys.length)) reject('The joint series domain is invalid.', 'source-contract-violation');
     const seriesOrdinals = new Map(series?.keys.map((key, ordinal) => [key, ordinal]));
@@ -334,7 +335,8 @@ function validateWindow(input: CompleteWindowInput, partial: boolean, allowUnava
             datumKeys.add(record.datumKey);
             ordinals.add(record.ordinal);
         }
-        if (plan.mark === 'line' && [...sequenceCounts.values()].some((counts) => counts.withSequence > 0 && counts.withSequence !== counts.total)) reject('A line series must supply sequenceOrder for all of its records or none.');
+        validateBoxplotPane(plan, pane, row, column, bindings);
+        if (['line', 'area', 'trail'].includes(plan.mark) && [...sequenceCounts.values()].some((counts) => counts.withSequence > 0 && counts.withSequence !== counts.total)) reject('A path series must supply sequenceOrder for all of its records or none.');
     }
     validateCoverage(input, !partial);
     if (allowUnavailableDomains && panes.panes.length === 0) requireVersion(input.domains.version, version, 'Preview domains');

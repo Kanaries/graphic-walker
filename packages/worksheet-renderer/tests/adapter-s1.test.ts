@@ -125,6 +125,5 @@ test('auto mark selection reuses the existing pure rule and validates the select
     const fixture = createNativeScenario('nested');
     fixture.chart.encodings.rows = []; fixture.chart.encodings.columns = [fixture.chart.encodings.columns[1]]; fixture.chart.config.geoms = ['auto'];
     const result = adaptChartToRenderPlan(fixture.chart, { columns: fixture.columns });
-    assert.equal(result.plan, undefined);
-    assert.ok(result.diagnostics.some((diagnostic) => diagnostic.message.includes('tick')));
+    assert.equal(result.plan?.mark, 'tick', JSON.stringify(result.diagnostics));
 });

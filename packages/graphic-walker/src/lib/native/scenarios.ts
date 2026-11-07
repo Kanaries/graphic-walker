@@ -3,7 +3,23 @@ import type { PreparedColumn, NativeAdapterInput } from './adapter';
 import type { NativeWorksheetLayout } from './presentation';
 import { createNestedChartFixture } from './fixtures';
 
-export type NativeScenario = 'nested' | 'line' | 'heatmap' | 'text' | 'grouped' | 'stack' | 'scatter' | 'deep' | 'scope' | 'interval';
+export const nativeExtendedScenarios = [
+    { id: 'circle', label: 'Circle · fixed symbols and size' },
+    { id: 'tick', label: 'Tick · two position axes' },
+    { id: 'auto-tick', label: 'Auto · single continuous field' },
+    { id: 'area', label: 'Area · zero stack and null gap' },
+    { id: 'trail', label: 'Trail · changing width' },
+    { id: 'pie', label: 'Pie · nested row and column facets' },
+    { id: 'donut', label: 'Donut · empty center' },
+    { id: 'pie-size', label: 'Pie · proportional slice area' },
+    { id: 'bar-normalize', label: 'Bars · normalized stack' },
+    { id: 'bar-center', label: 'Bars · centered stack' },
+    { id: 'area-normalize', label: 'Area · normalized stack' },
+    { id: 'area-center', label: 'Area · centered stack' },
+    { id: 'boxplot', label: 'Boxplot · raw distribution' },
+] as const;
+export type NativeExtendedScenario = (typeof nativeExtendedScenarios)[number]['id'];
+export type NativeScenario = NativeExtendedScenario | 'nested' | 'line' | 'heatmap' | 'text' | 'grouped' | 'stack' | 'scatter' | 'deep' | 'scope' | 'interval';
 export interface NativeScenarioFixture {
     chart: IChart;
     records: Record<string, unknown>[];
@@ -43,7 +59,62 @@ export function createNativeScenario(name: NativeScenario): NativeScenarioFixtur
     };
     let description = '';
     let presentation: NativeScenarioFixture['presentation'] = { theme: { style: { fontSize: 11, pointSize: 70, lineWidth: 2, barWidth: 12 } } };
-    if (name === 'line') {
+    if (name === 'circle' || name === 'tick' || name === 'auto-tick') {
+        const value = add(mea('Value'), 'number'), group = add(dim('Group'), 'string');
+        chart.config.geoms = [name === 'auto-tick' ? 'auto' : name];
+        chart.encodings.columns = [value];
+        if (name !== 'auto-tick') chart.encodings.rows = [group];
+        if (name === 'circle') chart.encodings.size = [add(mea('Area'), 'number')];
+        chart.encodings.color = [group];
+        for (let index = 0; index < 12; index++) records.push({
+            __datumKey: `${name}:${index}`, Value: index === 10 ? null : index === 0 ? 0 : index - 4,
+            Group: ['A', 'B', 'C'][index % 3], Area: 12 + index * 15,
+        });
+        description = name === 'auto-tick' ? 'Auto resolves one continuous position to tick. Zero and negative values remain visible; null has no mark.'
+            : name === 'circle' ? 'Every symbol remains circular. Area varies with its supplied value; null positions are omitted.'
+            : 'Ticks stand perpendicular to the numeric axis. Zero and negative values are ordinary positions.';
+    } else if (name === 'area' || name === 'trail' || name === 'area-normalize' || name === 'area-center') {
+        const region = add(dim('Region'), 'string'), district = add(dim('District'), 'string'), year = add(dim('Year'), 'string');
+        const step = add(dim('Step', 'ordinal'), 'string'), series = add(dim('Series'), 'string'), value = add(mea('Value'), 'number');
+        chart.config.geoms = [name === 'trail' ? 'trail' : 'area'];
+        chart.encodings.rows = [region, district, value]; chart.encodings.columns = [year, step]; chart.encodings.color = [series];
+        chart.layout.stack = name === 'area-normalize' ? 'normalize' : name === 'area-center' ? 'center' : name === 'area' ? 'zero' : 'none';
+        chart.layout.format = { numberFormat: ',.0f', normalizedNumberFormat: '.0%' };
+        if (name === 'trail') {
+            chart.encodings.size = [add(mea('Width'), 'number')];
+            chart.layout.scale = { size: { domainMin: 0, domainMax: 12, rangeMin: 1, rangeMax: 16 } };
+        }
+        for (let r = 0; r < 3; r++) for (let d = 0; d < 2; d++) for (let y = 0; y < 4; y++) for (let s = 0; s < 2; s++) for (let t = 0; t < 6; t++) records.push({
+            __datumKey: `${name}:${r}:${d}:${y}:${s}:${t}`, Region: ['East', 'West', 'Central'][r], District: ['Local', 'Metro'][d], Year: String(2023 + y),
+            Series: s ? 'Returning' : 'New', Step: String(t + 1), Width: 2 + t * 2,
+            Value: t === 3 && s === 0 ? null : t === 0 && s === 0 ? 0 : (t === 1 && s === 0 && name === 'area' ? -6 : 10 + t * 4 + s * 9 + d * 3 + r * 2),
+        });
+        description = name === 'trail' ? 'Widths change at every vertex. Each filled segment retains both source records. Null breaks the path.'
+            : `${chart.layout.stack} area layout shares complete-pane stack endpoints and two row-header levels. Null creates a visible gap.`;
+    } else if (name === 'pie' || name === 'donut' || name === 'pie-size') {
+        const region = add(dim('Region'), 'string'), district = add(dim('District'), 'string'), year = add(dim('Year'), 'string'), quarter = add(dim('Quarter'), 'string');
+        const series = add(dim('Series'), 'string'), weight = add(mea('Weight'), 'number');
+        chart.config.geoms = ['arc']; chart.encodings.rows = [region, district]; chart.encodings.columns = [year, quarter];
+        chart.encodings.color = [series]; chart.encodings.theta = [weight];
+        if (name === 'pie-size') chart.encodings.size = [add(mea('Area'), 'number')];
+        if (name === 'donut') presentation = { theme: { style: { arcInnerRadius: 32 } } };
+        for (let r = 0; r < 4; r++) for (let d = 0; d < 2; d++) for (let y = 0; y < 3; y++) for (let q = 0; q < 2; q++) for (let s = 0; s < 5; s++) records.push({
+            __datumKey: `${name}:${r}:${d}:${y}:${q}:${s}`, Region: ['East', 'West', 'Central', 'North'][r], District: ['Local', 'Metro'][d],
+            Year: String(2024 + y), Quarter: ['Q1', 'Q2'][q], Series: ['A', 'B', 'C', 'Zero', 'Missing'][s], Weight: [1, 2, 3, 0, null][s], Area: 25 + s * 25,
+        });
+        description = name === 'donut' ? 'Two row and two column levels group complete rings. The inner circle has no hover or selection target.'
+            : name === 'pie-size' ? 'Weight controls angle. Area controls squared radius with one scale across every pane.'
+            : 'Two row and two column levels group complete pies. A/B/C occupy 1/6, 2/6 and 3/6 of each circle; zero and null create no sector.';
+    } else if (name === 'boxplot') {
+        const region = add(dim('Region'), 'string'), category = add(dim('Category'), 'string'), value = add(mea('Value'), 'number');
+        chart.config.geoms = ['boxplot']; chart.encodings.rows = [region, value]; chart.encodings.columns = [category];
+        const distribution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 30, null];
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) for (let i = 0; i < distribution.length; i++) records.push({
+            __datumKey: `boxplot:${r}:${c}:${i}`, Region: ['East', 'West', 'Central'][r], Category: ['Office', 'Furniture', 'Technology'][c],
+            Value: distribution[i] === null ? null : Number(distribution[i]) + r * 4 + c * 2,
+        });
+        description = 'GW computes quartiles, actual whisker endpoints and outliers from complete raw groups. The rendering package receives only prepared statistics.';
+    } else if (name === 'line') {
         const region = add(dim('Region'), 'string'), month = add(dim('Month', 'temporal'), 'time');
         const series = add(dim('Series'), 'string'), value = add(mea('Value'), 'number');
         chart.config.geoms = ['line'];
@@ -83,14 +154,14 @@ export function createNativeScenario(name: NativeScenario): NativeScenarioFixtur
         if (name === 'grouped' || name === 'scope') worksheet.barLayout = 'grouped';
         if (name === 'scope') worksheet.scaleScopes = { y: { mode: 'prefix', rowDepth: 1, columnDepth: 0 } };
         (chart.layout as typeof chart.layout & NativeWorksheetLayout).worksheet = worksheet;
-        chart.layout.stack = name === 'stack' ? 'zero' : 'none'; chart.layout.format = { numberFormat: ',.0f' };
+        chart.layout.stack = name === 'stack' ? 'zero' : name === 'bar-normalize' ? 'normalize' : name === 'bar-center' ? 'center' : 'none'; chart.layout.format = { numberFormat: ',.0f', normalizedNumberFormat: '.0%' };
         for (let r = 0; r < 3; r++) for (let d = 0; d < (name === 'scope' ? 2 : 1); d++) for (let c = 0; c < 3; c++) for (let s = 0; s < 3; s++) records.push({
             __datumKey: `bar:${r}:${d}:${c}:${s}`, Region: ['East', 'West', 'Central'][r],
             ...(name === 'scope' ? { District: ['Local', 'Metro'][d] } : {}),
             Category: ['Office', 'Furniture', 'Technology'][c], Series: ['Online', 'Store', 'Partner'][s],
             Value: (s === 2 ? -1 : 1) * (10 + c * 6 + s * 5) * (name === 'scope' ? 10 ** r * (d ? 4 : 1) : r + 1),
         });
-        description = name === 'stack' ? 'Positive and negative supplied values stack separately around zero.' : name === 'scope' ? 'Each Region has Local and Metro panes with different value ranges. Region prefix shares their axis; per pane fits each district; shared uses one domain across all six panes.' : 'Complete series order keeps grouped bar positions stable across panes.';
+        description = name === 'bar-normalize' ? 'Each complete position stacks absolute magnitudes into 100%; selection retains the original signed values.' : name === 'bar-center' ? 'The supplied series stack around a shared centered baseline.' : name === 'stack' ? 'Positive and negative supplied values stack separately around zero.' : name === 'scope' ? 'Each Region has Local and Metro panes with different value ranges. Region prefix shares their axis; per pane fits each district; shared uses one domain across all six panes.' : 'Complete series order keeps grouped bar positions stable across panes.';
     }
     return { chart, records, columns, getDatumKey: (record) => String(record.__datumKey), presentation, description };
 }

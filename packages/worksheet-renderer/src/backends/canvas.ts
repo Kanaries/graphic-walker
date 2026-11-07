@@ -63,6 +63,30 @@ export function paintCanvas(canvas: HTMLCanvasElement, frame: SceneFrame, reques
                 ctx.lineWidth = p.strokeWidth ?? 1;
                 ctx.stroke();
             }
+        } else if (p.kind === 'arc') {
+            ctx.fillStyle = p.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.outerRadius, p.startAngle, p.endAngle);
+            if (p.endAngle - p.startAngle >= Math.PI * 2 - 1e-10) {
+                ctx.closePath();
+                if (p.innerRadius) {
+                    ctx.moveTo(p.x + Math.cos(p.startAngle) * p.innerRadius, p.y + Math.sin(p.startAngle) * p.innerRadius);
+                    ctx.arc(p.x, p.y, p.innerRadius, p.startAngle, p.startAngle - Math.PI * 2, true);
+                    ctx.closePath();
+                }
+            } else {
+                if (p.innerRadius) {
+                    ctx.lineTo(p.x + Math.cos(p.endAngle) * p.innerRadius, p.y + Math.sin(p.endAngle) * p.innerRadius);
+                    ctx.arc(p.x, p.y, p.innerRadius, p.endAngle, p.startAngle, true);
+                } else ctx.lineTo(p.x, p.y);
+                ctx.closePath();
+            }
+            ctx.fill();
+            if (p.stroke) {
+                ctx.strokeStyle = p.stroke;
+                ctx.lineWidth = p.strokeWidth ?? 1;
+                ctx.stroke();
+            }
         } else if (p.kind === 'path') {
             ctx.beginPath();
             p.points.forEach((point, index) => {

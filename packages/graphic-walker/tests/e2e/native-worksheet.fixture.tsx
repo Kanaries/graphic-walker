@@ -4,6 +4,7 @@ import PureRenderer from '../../src/renderer/pureRenderer';
 import { GraphicWalker, GraphicRenderer } from '../../src/root';
 import { getComputation } from '../../src/computation/clientComputation';
 import { createNestedChartFixture } from '../../src/lib/native/fixtures';
+import { createNativeScenario, nativeExtendedScenarios, type NativeExtendedScenario } from '../../src/lib/native/scenarios';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../../src/constants';
 import { createCountField } from '../../src/utils';
 import type { IChart, IDataQueryPayload, IRow, IGWHandler, IComputationFunction, IChartExportResult, IViewField } from '../../src/interfaces';
@@ -21,8 +22,9 @@ const initial: IChart = {
     layout: { ...fixture.chart.layout, renderer: 'native', size: { mode: 'fixed', width: 1050, height: 700 } },
 };
 const rawRows = fixture.records.map((row, index) => ({ ...row, Channel: index % 2 ? 'Partner' : 'Direct', Sales: row.Sales_sum, Profit: row.Profit_sum }));
-export type NativeWorksheetSample = 'nested' | 'bin' | 'binCount' | 'same-name-fold' | 'temporal-raw';
+export type NativeWorksheetSample = NativeExtendedScenario | 'nested' | 'bin' | 'binCount' | 'same-name-fold' | 'temporal-raw';
 const samples: { id: NativeWorksheetSample; label: string; description: string }[] = [
+    ...nativeExtendedScenarios.map(item => ({ ...item, description: createNativeScenario(item.id).description })),
     { id: 'nested', label: 'Nested dimensions', description: 'The original 24-pane chart with real aggregate queries.' },
     { id: 'bin', label: 'Standard bin', description: 'GW computes four intervals from eight raw Amount values, then counts two rows per interval.' },
     {
@@ -43,6 +45,11 @@ const samples: { id: NativeWorksheetSample; label: string; description: string }
 ];
 function sampleInput(id: NativeWorksheetSample): { chart: IChart; data: IRow[] } {
     if (id === 'nested') return { chart: clone(initial), data: clone(rawRows) };
+    if (nativeExtendedScenarios.some(sample => sample.id === id)) {
+        const selected = createNativeScenario(id as NativeExtendedScenario);
+        selected.chart.layout = { ...selected.chart.layout, renderer: 'native', useSvg: true, size: { mode: 'fixed', width: 1050, height: 700 } };
+        return { chart: selected.chart, data: selected.records };
+    }
     const dimension = (fid: string, semanticType: IViewField['semanticType'] = 'nominal'): IViewField => ({
         fid,
         name: fid,
@@ -131,6 +138,7 @@ export interface NativeWorksheetFixtureApi {
     setSample(sample: NativeWorksheetSample): void;
     getChart(): IChart;
     setChart(chart: IChart): void;
+    setBackend(svg: boolean): void;
     setVegaLiteSpec(spec: unknown): void;
     importErrors(): typeof importErrors;
     getData(): IRow[];
@@ -208,10 +216,12 @@ function Fixture() {
             return complete();
         };
     }, [data]);
+    const extended = nativeExtendedScenarios.some(item => item.id === sample);
     const nativeRenderer = useMemo(
-        () => ({ getResultRowKey: (row: Readonly<IRow>) => String(row.__datumKey), onSelectionChange: (event: NativeSelectionEvent) => events.push(event) }),
-        [],
+        () => ({ ...(extended ? {} : { getResultRowKey: (row: Readonly<IRow>) => String(row.__datumKey) }), onSelectionChange: (event: NativeSelectionEvent) => events.push(event) }),
+        [extended],
     );
+    const vizThemeConfig = useMemo(() => sample === 'donut' ? { light: { arc: { innerRadius: 32 } }, dark: { arc: { innerRadius: 32 } } } : undefined, [sample]);
     const selectSample = (next: NativeWorksheetSample) => {
         if (!samples.some((sample) => sample.id === next)) throw new Error(`Unknown native worksheet sample: ${next}`);
         const input = sampleInput(next);
@@ -227,6 +237,7 @@ function Fixture() {
         setSample: selectSample,
         getChart: () => clone(storeRef.current?.currentVis ?? chartRef.current),
         setChart: (next: IChart) => setChart(next),
+        setBackend: (svg: boolean) => setChart(current => ({ ...current, layout: { ...current.layout, useSvg: svg } })),
         setVegaLiteSpec: (spec) => setVegaLiteSpec(spec == null ? undefined : clone(spec)),
         importErrors: () => clone(importErrors),
         getData: () => clone(data),
@@ -284,6 +295,7 @@ function Fixture() {
                         appearance={dark ? 'dark' : 'light'}
                         onError={handleError}
                         nativeRenderer={nativeRenderer}
+                        vizThemeConfig={vizThemeConfig}
                         hideChartNav
                     />
                 ) : mode === 'viewer' ? (
@@ -298,6 +310,7 @@ function Fixture() {
                         appearance={dark ? 'dark' : 'light'}
                         onError={handleError}
                         nativeRenderer={nativeRenderer}
+                        vizThemeConfig={vizThemeConfig}
                     />
                 ) : (
                     <PureRenderer
@@ -310,6 +323,7 @@ function Fixture() {
                         visualLayout={chart.layout}
                         appearance={dark ? 'dark' : 'light'}
                         nativeRenderer={nativeRenderer}
+                        vizThemeConfig={vizThemeConfig}
                         onRendererChange={(renderer) => setChart((current) => ({ ...current, layout: { ...current.layout, renderer } }))}
                     />
                 ))}

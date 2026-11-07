@@ -3,6 +3,7 @@ import { getMeaAggKey, getMeaAggName } from '../../utils';
 import type { AxisPlan, Diagnostic, RenderPlan, ResultBinding } from '@kanaries/worksheet-renderer';
 import { validateRenderCapabilities } from '@kanaries/worksheet-renderer';
 import { autoMark } from '../../vis/spec/mark';
+import { nativeEncodingKeys } from '../../models/visSpec';
 import { resolvePresentation, type NativePresentationInput, type NativeWorksheetLayout } from './presentation';
 
 /** Metadata for results the host has already prepared. This adapter never reads or computes records. */
@@ -17,6 +18,7 @@ export interface PreparedColumn {
 export interface NativeAdapterInput extends NativePresentationInput {
     readonly columns: readonly PreparedColumn[];
     readonly fieldColumns?: ReadonlyMap<string, string>;
+    readonly boxplot?: RenderPlan['boxplot'];
 }
 
 export interface NativeFieldReference {
@@ -67,7 +69,7 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
         occurrences.set(signature, occurrence + 1);
         const fieldRef = `gw-field:${signature}:${occurrence}`;
         fieldRefs.set(fieldRef, { field, configRef });
-        const aggregatedMeasure = chart.config.defaultAggregated && field.analyticType === 'measure';
+        const aggregatedMeasure = chart.config.defaultAggregated && chart.config.geoms[0] !== 'boxplot' && field.analyticType === 'measure';
         const columnKey = input.fieldColumns?.get(configRef) ?? (aggregatedMeasure ? getMeaAggKey(field.fid, field.aggName) : field.fid);
         const column = columns.get(columnKey);
         if (!column) {
@@ -98,11 +100,16 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
         return fieldRef;
     };
 
+    let geom = chart.config.geoms[0];
     const axis = (name: 'rows' | 'columns'): AxisPlan => {
         const fields = chart.encodings[name].map((field, index) => ({ field, fieldRef: bind(field, `encodings.${name}[${index}]`) }));
         // This is the existing measureAfterDimension rule, without crossLimit's data loss.
         const dimensions = fields.filter(({ field }) => field.analyticType === 'dimension');
         const measures = fields.filter(({ field }) => field.analyticType === 'measure');
+        if (geom === 'arc') {
+            for (const { fieldRef } of measures) unsupported(fieldRefs.get(fieldRef)!.configRef, 'Arc worksheet shelves accept facet dimensions; encode measures with theta, radius or size.', fieldRef);
+            return { facets: dimensions.map(({ fieldRef }) => fieldRef), positions: [] };
+        }
         return {
             facets: (measures.length ? dimensions : dimensions.slice(0, -1)).map(({ fieldRef }) => fieldRef),
             positions: (measures.length ? measures : dimensions.slice(-1)).map(({ fieldRef }) => fieldRef),
@@ -110,7 +117,6 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
     };
     const rows = axis('rows');
     const columnsAxis = axis('columns');
-    let geom = chart.config.geoms[0];
     if (chart.config.geoms.length !== 1) unsupported('config.geoms', 'A worksheet target supports exactly one mark.');
     if (chart.config.coordSystem && chart.config.coordSystem !== 'generic') unsupported('config.coordSystem', 'The native worksheet supports Cartesian coordinates.');
     const bindingByRef = new Map(bindings.map((binding) => [binding.fieldRef, binding]));
@@ -123,31 +129,32 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
         if (choices.size !== 1) unsupported('config.geoms', 'Automatic mark selection differs between measure slots; choose one explicit mark.');
         geom = [...choices][0];
     }
-    if (!['bar', 'point', 'line', 'rect', 'text'].includes(geom)) unsupported('config.geoms', `The selected ${geom} mark is not supported.`);
+    if (!['bar', 'point', 'circle', 'tick', 'line', 'area', 'trail', 'arc', 'boxplot', 'rect', 'text'].includes(geom)) unsupported('config.geoms', `The selected ${geom} mark is not supported.`);
     const channels: NonNullable<RenderPlan['channels']> = {};
-    for (const name of ['color', 'size', 'opacity', 'shape', 'text'] as const) {
+    const active = new Set(nativeEncodingKeys(geom));
+    for (const name of ['color', 'size', 'opacity', 'shape', 'text', 'theta', 'radius'] as const) {
+        if (!active.has(name)) continue;
         const refs = chart.encodings[name].map((field, index) => bind(field, `encodings.${name}[${index}]`));
         if (refs.length > 1) unsupported(`encodings.${name}`, `Only one ${name} field is supported.`);
         if (refs.length) (channels as Record<string, unknown>)[name] = { fieldRef: refs[0] };
     }
-    if (chart.encodings.details.length) (channels as { details: string[] }).details = chart.encodings.details.map((field, index) => bind(field, `encodings.details[${index}]`));
-    for (const name of ['theta', 'radius', 'longitude', 'latitude', 'geoId'] as const) if (chart.encodings[name].length) unsupported(`encodings.${name}`, `The ${name} encoding is not supported.`);
+    if (active.has('details') && chart.encodings.details.length) (channels as { details: string[] }).details = chart.encodings.details.map((field, index) => bind(field, `encodings.details[${index}]`));
     let barOrientation: RenderPlan['barOrientation'];
-    if (geom === 'bar') {
+    if (geom === 'bar' || geom === 'boxplot') {
         const rowMeasures = rows.positions.length > 0 && rows.positions.every((ref) => fieldRefs.get(ref)!.field.analyticType === 'measure');
         const columnMeasures = columnsAxis.positions.length > 0 && columnsAxis.positions.every((ref) => fieldRefs.get(ref)!.field.analyticType === 'measure');
-        if (rowMeasures === columnMeasures) unsupported('encodings', 'Bars need a measure axis and a dimension position or default position on the other axis.');
+        if (rowMeasures === columnMeasures) unsupported('encodings', `${geom} needs a measure axis and a dimension position or default position on the other axis.`);
         else barOrientation = rowMeasures ? 'vertical' : 'horizontal';
-        if (chart.layout.stack === 'normalize' || chart.layout.stack === 'center') unsupported('layout.stack', `${chart.layout.stack} stacking is not supported.`);
     }
     const worksheet = (chart.layout as typeof chart.layout & NativeWorksheetLayout).worksheet;
     const preferredProgression = (refs: readonly string[]) => refs.length && refs.every((ref) => ['band', 'time'].includes(bindingByRef.get(ref)?.positionType ?? ''));
     const base: Omit<RenderPlan, 'domainPlanKey'> = {
         bindings, rows, columns: columnsAxis, mark: geom as RenderPlan['mark'], channels,
-        stack: geom === 'bar' && chart.layout.stack !== 'none' ? 'zero' : 'none',
+        stack: ['bar', 'area'].includes(geom) ? chart.layout.stack === 'stack' ? 'zero' : chart.layout.stack : 'none',
         barLayout: worksheet?.barLayout ?? 'overlap',
         ...(barOrientation ? { barOrientation } : {}),
-        ...(geom === 'line' ? { lineProgression: preferredProgression(columnsAxis.positions) ? 'x' : preferredProgression(rows.positions) ? 'y' : 'x' } : {}),
+        ...(geom === 'boxplot' && input.boxplot ? { boxplot: input.boxplot } : {}),
+        ...(['line', 'area', 'trail'].includes(geom) ? { lineProgression: preferredProgression(columnsAxis.positions) ? 'x' : preferredProgression(rows.positions) ? 'y' : 'x' } : {}),
     };
     if (diagnostics.some((diagnostic) => diagnostic.severity === 'error')) return { diagnostics, fieldRefs };
     const presentation = resolvePresentation(chart, input, base, fieldRefs);
@@ -156,7 +163,7 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
     const planWithoutKey = { ...base, ...display };
     const domainPlanKey = `gw-domain:${stableJson({
         bindings: bindings.map(({ fieldRef, bindingId }) => ({ fieldRef, bindingId })),
-        rows, columns: columnsAxis, mark: geom, channels, stack: base.stack, barLayout: base.barLayout, scales: Object.fromEntries(Object.entries(display.scales).map(([ref, { range: _range, ...domainOptions }]) => [ref, domainOptions])),
+        rows, columns: columnsAxis, mark: geom, channels, stack: base.stack, barLayout: base.barLayout, boxplot: base.boxplot, scales: Object.fromEntries(Object.entries(display.scales).map(([ref, { range: _range, ...domainOptions }]) => [ref, domainOptions])),
     })}`;
     const plan = { ...planWithoutKey, domainPlanKey };
     for (const diagnostic of validateRenderCapabilities(plan)) {

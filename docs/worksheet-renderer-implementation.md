@@ -1,5 +1,7 @@
 # 自有工作表渲染器实施记录
 
+2026-11-07 后续：S4 已完成图表类型扩展与 GW 箱图统计供给，独立门禁通过。见 [S4 设计与验收范围](./worksheet-renderer-chart-types.md)。以下 S0–S3 记录对应此前冻结版本。
+
 日期：2026-11-06。S0–S3 已按约定实现并分别提交至同一 draft PR。独立 Sol 代码审核和 Terra 浏览器验收均通过；最终有 473 项 GW 测试、226 项渲染库测试、114 项三引擎浏览器回归、类型检查、生产构建与仓库外 fresh tarball 消费证据。
 
 R01–R17、A01–A16 和 B1–B5 的首版门禁已按本文证据关闭。最终 76 文件候选指纹为 `04f08b1acc58d29a9d609e3dcb645b859973a79035fba05eba724289865aa6b6`，GW 浏览器资产指纹为 `d8a42531535a4b20f38305dac42a7b987ebadbc9b4bbfd7c8df9372976c75812`。S2 与 S3 均在真实 60 Hz、1440×900、DPR 2 完成规定样本；显示设置已恢复 ProMotion。独立真实 Safari 复验 bin→fold，Chromium 验证两个宿主的过期及当前请求错误；WebKit 自动化不代替 Safari。
@@ -18,6 +20,7 @@ Canvas 模式的表头、轴、主体、选择与焦点高亮共用一个可见 
 | S1 | 五 mark、统一布局与域、受控顺序/折叠、选择与事件 | 2026-11-06 提交 `feat(worksheet): add marks, display scopes and controlled interaction`；126 项测试与独立门禁通过。提交标识 `6534b263`。 |
 | S2 | 窗口调度、共享预算、几何缓存、分页导出、规模与生命周期 | 2026-11-06 提交 `feat(worksheet): add bounded virtualization and range exports`；202 项阶段测试、独立代码/浏览器和原定 60 Hz 门禁通过。提交标识 `540df460`。 |
 | S3 | GW renderer、正规化/保存/历史、公开 API、局部兼容 | 2026-11-06 提交 `feat(graphic-walker): integrate native worksheet renderer`；最终代码、功能、60 Hz 性能和构建消费门禁通过。 |
+| S4 | circle/tick/area/trail/arc/boxplot、normalize/center、rect/text size、GW 箱图统计结果 | 2026-11-07 提交 `feat(worksheet): support extended marks and prepared boxplots`；298 库测试、473 GW 测试及4 snapshots、162 三引擎回归与最终48项复验、独立审核和 fresh consumer 通过。 |
 
 代码审核使用独立 `gpt-6.1-sol`、`xhigh`；浏览器验收使用独立 `gpt-6.1-terra`、`xhigh`。实施方工程测试、独立审核和独立浏览器证据分别保存。
 
@@ -157,3 +160,12 @@ R01–R17、A01–A16、B1–B5以及构建消费、现有spec保存/历史/输�
 S3按独立审核的76文件清单逐一核对S2基线和最终SHA后转入主工作树，内容与已验收候选一致；转入后再次完成生产构建并复核指纹。`.gitattributes`只将验证目录中的原始JSON标为generated，便于审查产品diff，原始测量与失败记录完整保留。显示器已恢复ProMotion。
 
 已准备数据的完整/按需两种入口都属于交付。新计算DSL、VizQL和LOD不属于本项目。双轴、多mark层、地图和超预算单pane仍按既有范围保留明确诊断或旧路径，不把它们计入本版已支持能力。
+
+
+## S4 增量验收
+
+用户在 2026-11-07 要求继续补图表类型，并明确授权同时扩展 GW 计算层以供给箱图统计，图表库仍只接收已算结果。新增范围与限制以 [图表类型文档](./worksheet-renderer-chart-types.md) 为准。
+
+最终产品 fingerprint 为 `0e4eae5a7caafa11c21a857c37aff4bb23a62db7bd8938a77fea4a1a006f520c`，51 文件 [清单](./verification/s4/source-manifest.json) 自身 SHA256 为 `73ebd4e6db155a6625c3021fea1c1276e344c1483220f2e925edde72721f9638`。独立 [Sol 审核](./verification/s4/code-review.md)、[Terra 浏览器验收](./verification/s4/browser-acceptance.md) 和 [工程检查](./verification/s4/engineering-validation.md) 均通过。
+
+完整162项浏览器回归对应圆环近孔容差修复前构建；最终仅调整内孔排除后，fresh build 上48项新增图形三引擎回归与独立查询、选择、导出、命中和滚动探针重新通过。旧性能数据不重标为 S4 测量。最终库构建、声明检查、仓库外 fresh tarball 安装与 Vite 构建均通过。

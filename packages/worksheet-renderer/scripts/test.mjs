@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { readdir, mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 const dir = await mkdtemp(join(tmpdir(), 'worksheet-tests-'));
@@ -9,7 +9,7 @@ try {
   const files = [];
   for (const entry of entries) {
     const outfile = join(dir, entry.replace(/\.ts$/, '.mjs'));
-    await build({ entryPoints: [join('tests', entry)], outfile, bundle: true, platform: 'node', format: 'esm', target: 'node20' });
+    await build({ entryPoints: [join('tests', entry)], outfile, bundle: true, alias: { '@kanaries/worksheet-renderer': resolve('src/index.ts') }, platform: 'node', format: 'esm', target: 'node20' });
     files.push(outfile);
   }
   if (!files.length) throw new Error('No tests discovered');

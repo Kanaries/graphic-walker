@@ -198,7 +198,7 @@ test('unsupported marks, channel combinations and display options are never sile
         (spec) => { spec.config.geoms = ['bar', 'point']; },
         (spec) => { spec.encodings.size = [measure('value')]; },
         (spec) => { spec.layout.resolve.color = true; },
-        (spec) => { spec.layout.stack = 'normalize'; },
+        (spec) => { spec.config.geoms = ['rule']; },
         (spec) => { spec.layout.colorPalette = 'unknown-scheme'; },
         (spec) => { spec.layout.format.numberFormat = 'unknown-format'; },
         (spec) => { spec.layout.scale = { column: { type: 'log' } }; },

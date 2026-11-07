@@ -34,8 +34,8 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     }
     if (plan.layout?.headerLabelMode !== undefined && !['member', 'path'].includes(plan.layout.headerLabelMode))
         reject('layout.headerLabelMode', 'Header labels must use member or path mode.', undefined, 'invalid-layout');
-    if (!['bar', 'point', 'line', 'rect', 'text'].includes(plan.mark))
-        reject('mark', 'Supported marks are bar, point, line, rect and text.');
+    if (!['bar', 'point', 'circle', 'tick', 'line', 'area', 'trail', 'arc', 'boxplot', 'rect', 'text'].includes(plan.mark))
+        reject('mark', 'Unsupported worksheet mark.');
     const bindings = new Map(plan.bindings.map((binding) => [binding.fieldRef, binding]));
     if (bindings.size !== plan.bindings.length)
         reject('bindings', 'Field references must be unique.', undefined, 'source-contract-violation');
@@ -58,7 +58,7 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     };
     const positions = new Set([...plan.rows.positions, ...plan.columns.positions]);
     for (const ref of [...plan.rows.facets, ...positions, ...plan.columns.facets, ...(plan.channels?.details ?? [])]) requireBinding(ref);
-    const channelNames = ['color', 'size', 'opacity', 'shape', 'text'] as const;
+    const channelNames = ['color', 'size', 'opacity', 'shape', 'text', 'theta', 'radius'] as const;
     whitelist(plan.channels, [...channelNames, 'details'], 'channels');
     for (const name of channelNames) {
         const channel = plan.channels?.[name];
@@ -75,21 +75,22 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
             );
         if (name === 'text' && plan.mark !== 'text') reject('channels.text', 'Text labels on non-text marks are not supported.');
         if (name === 'shape' && plan.mark !== 'point') reject('channels.shape', 'Shape encoding is supported only for points.');
-        if (name === 'size' && !['point', 'line'].includes(plan.mark))
-            reject('channels.size', 'Size encoding is supported only for points and lines.');
-        if (binding && ['size', 'opacity'].includes(name) && (position(binding) !== 'linear' || binding.valueType !== 'number'))
+        if (name === 'size' && !['point', 'circle', 'line', 'trail', 'tick', 'rect', 'text', 'arc'].includes(plan.mark))
+            reject('channels.size', 'This mark does not support size encoding.');
+        if (binding && ['size', 'opacity', 'theta', 'radius'].includes(name) && (position(binding) !== 'linear' || binding.valueType !== 'number'))
             reject(`channels.${name}`, `${name} requires numeric prepared results.`, binding.fieldRef);
         if (binding && name === 'shape' && position(binding) !== 'band')
             reject('channels.shape', 'Shape requires a discrete field.', binding.fieldRef);
-        if (binding && name === 'color' && plan.mark === 'line' && position(binding) !== 'band')
-            reject('channels.color', 'Lines require a constant or discrete series color.', binding.fieldRef);
+        if (binding && name === 'color' && ['line', 'area', 'trail'].includes(plan.mark) && position(binding) !== 'band')
+            reject('channels.color', 'Path marks require a constant or discrete series color.', binding.fieldRef);
+        if (['theta', 'radius'].includes(name) && plan.mark !== 'arc') reject(`channels.${name}`, `${name} is supported only for arc marks.`);
         if ('value' in channel) {
             if (name === 'color' && typeof channel.value !== 'string')
                 reject('channels.color', 'A static color must be a CSS color string.');
             if (name === 'shape' && !POINT_SHAPES.includes(channel.value as (typeof POINT_SHAPES)[number]))
                 reject('channels.shape', 'Unsupported point symbol.');
-            if (name === 'size' && (typeof channel.value !== 'number' || !Number.isFinite(channel.value) || channel.value < 0))
-                reject('channels.size', 'Static size must be finite and non-negative.');
+            if (['size', 'theta', 'radius'].includes(name) && (typeof channel.value !== 'number' || !Number.isFinite(channel.value) || channel.value < 0))
+                reject(`channels.${name}`, `Static ${name} must be finite and non-negative.`);
             if (
                 name === 'opacity' &&
                 (typeof channel.value !== 'number' || !Number.isFinite(channel.value) || channel.value < 0 || channel.value > 1)
@@ -102,20 +103,20 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     for (const binding of [...row, ...column])
         if (binding.valueType === 'interval' && position(binding) === 'band')
             reject('bindings', 'Interval positions require a continuous scale.', binding.fieldRef);
-    if (plan.mark === 'point' && !positions.size) reject('rows', 'Point marks require at least one position field.');
-    if (plan.mark === 'line') {
+    if (['point', 'circle', 'tick'].includes(plan.mark) && !positions.size) reject('rows', 'Point, circle and tick marks require at least one position field.');
+    if (['line', 'area', 'trail'].includes(plan.mark)) {
         if (!row.length || !column.length || row.some((y) => column.some((x) => position(y) !== 'linear' && position(x) !== 'linear')))
-            reject('rows', 'Every line pane needs two positions, including at least one numeric axis.');
+            reject('rows', 'Every path pane needs two positions, including at least one numeric axis.');
         if (plan.lineProgression && !['x', 'y'].includes(plan.lineProgression))
-            reject('lineProgression', 'Line progression must be x or y.');
+            reject('lineProgression', 'Path progression must be x or y.');
     }
     if (plan.mark === 'rect' || plan.mark === 'text') {
-        if ([...row, ...column].some((binding) => position(binding) !== 'band'))
+        if (plan.mark === 'rect' && [...row, ...column].some((binding) => position(binding) !== 'band'))
             reject('rows', `${plan.mark} marks support band positions or a default cell.`);
         if (plan.mark === 'text' && !plan.channels?.text)
             reject('channels.text', 'Text marks require an explicit text field or static value.');
     }
-    if (plan.mark === 'bar') {
+    if (plan.mark === 'bar' || plan.mark === 'boxplot') {
         if (plan.barOrientation && !['horizontal', 'vertical'].includes(plan.barOrientation))
             reject('barOrientation', 'Bar orientation must be horizontal or vertical.');
         const orientation =
@@ -130,10 +131,37 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
         if (!values.length || values.some((binding) => position(binding) !== 'linear' || binding.valueType !== 'number'))
             reject('barOrientation', 'Bar values require a numeric result field.');
     }
-    if (plan.stack && !['none', 'zero'].includes(plan.stack)) reject('stack', 'Only none and zero stacking are supported.');
-    if (plan.stack === 'zero' && plan.mark !== 'bar') reject('stack', 'Stacking is supported only for bars.');
+    if (plan.mark === 'boxplot') {
+        const boxplot = plan.boxplot;
+        if (!boxplot || typeof boxplot.groupKeyColumn !== 'string' || !boxplot.groupKeyColumn || typeof boxplot.roleColumn !== 'string' || !boxplot.roleColumn || boxplot.groupKeyColumn === boxplot.roleColumn)
+            reject('boxplot', 'Boxplots require distinct prepared group-key and statistic-role columns.');
+        whitelist(boxplot, ['groupKeyColumn', 'roleColumn'], 'boxplot');
+        if (boxplot && plan.bindings.some(binding => binding.columnKey === boxplot.groupKeyColumn || binding.columnKey === boxplot.roleColumn))
+            reject('boxplot', 'Boxplot metadata columns must be separate from visual result bindings.');
+    } else if (plan.boxplot) reject('boxplot', 'Prepared boxplot metadata is supported only for boxplot marks.');
+    if (plan.mark === 'area') {
+        for (const y of row) for (const x of column) {
+            const progression = plan.lineProgression ?? (position(x) !== 'linear' ? 'x' : position(y) !== 'linear' ? 'y' : 'x');
+            const value = progression === 'x' ? y : x;
+            if (position(value) !== 'linear' || value.valueType !== 'number') reject('lineProgression', 'Area values require a numeric result field.', value.fieldRef);
+        }
+    }
+    if (plan.mark === 'arc') {
+        if (positions.size) reject('rows', 'Arc marks use facet axes and theta/radius channels, without Cartesian positions.');
+        if (plan.channels?.size && plan.channels?.radius) reject('channels.radius', 'Choose radius or size for arc radius, not both.');
+        const theta = plan.channels?.theta;
+        if (theta && 'fieldRef' in theta && plan.scales?.[theta.fieldRef]) {
+            const shared = ['color', 'size', 'opacity', 'radius'].some(name => {
+                const channel = plan.channels?.[name as 'color' | 'size' | 'opacity' | 'radius'];
+                return channel && 'fieldRef' in channel && channel.fieldRef === theta.fieldRef;
+            });
+            if (!shared) reject(`scales.${theta.fieldRef}`, 'Theta consumes raw non-negative weights; a theta scale is not supported.', theta.fieldRef);
+        }
+    }
+    if (plan.stack && !['none', 'zero', 'normalize', 'center'].includes(plan.stack)) reject('stack', 'Unsupported stack mode.');
+    if (plan.stack && plan.stack !== 'none' && !['bar', 'area'].includes(plan.mark)) reject('stack', 'Stacking is supported only for bars and areas.');
     if (plan.barLayout && !['overlap', 'grouped'].includes(plan.barLayout)) reject('barLayout', 'Unsupported bar layout.');
-    if (plan.barLayout === 'grouped' && (plan.mark !== 'bar' || plan.stack === 'zero'))
+    if (plan.barLayout === 'grouped' && (plan.mark !== 'bar' || !!plan.stack && plan.stack !== 'none'))
         reject('barLayout', 'Grouped bars require bar marks with stack none.');
     for (const binding of bindings.values())
         if (binding.valueType === 'interval' && (!positions.has(binding.fieldRef) || plan.mark !== 'bar'))
@@ -182,7 +210,7 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
                 scale.range.some((value) => !POINT_SHAPES.includes(value as (typeof POINT_SHAPES)[number]))
             )
                 reject(`scales.${ref}.range`, 'A shape range contains an unsupported symbol.', ref);
-            for (const name of ['color', 'size', 'opacity'] as const) {
+            for (const name of ['color', 'size', 'opacity', 'radius'] as const) {
                 const channel = plan.channels?.[name];
                 if (!channel || !('fieldRef' in channel) || channel.fieldRef !== ref) continue;
                 if (name === 'color' && scale.range.some((value) => typeof value !== 'string'))
@@ -213,12 +241,12 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     }
     whitelist(
         plan.style,
-        ['color', 'background', 'foreground', 'headerBackground', 'gridColor', 'borderColor', 'palette', 'opacity', 'pointSize', 'lineWidth', 'barWidth', 'fontFamily', 'fontSize'],
+        ['color', 'background', 'foreground', 'headerBackground', 'gridColor', 'borderColor', 'palette', 'opacity', 'pointSize', 'lineWidth', 'barWidth', 'tickSize', 'tickThickness', 'arcInnerRadius', 'arcOuterRadius', 'fontFamily', 'fontSize'],
         'style',
     );
     for (const name of ['color', 'background', 'foreground', 'headerBackground', 'gridColor', 'borderColor'] as const)
         if (plan.style?.[name] !== undefined && typeof plan.style[name] !== 'string') reject(`style.${name}`, 'Static colors must be CSS color strings.');
-    for (const name of ['pointSize', 'lineWidth', 'barWidth', 'fontSize'] as const) {
+    for (const name of ['pointSize', 'lineWidth', 'barWidth', 'fontSize', 'tickSize', 'tickThickness', 'arcInnerRadius', 'arcOuterRadius'] as const) {
         const value = plan.style?.[name];
         if (value !== undefined && (!Number.isFinite(value) || value < 0))
             reject(`style.${name}`, `${name} must be finite and non-negative.`);

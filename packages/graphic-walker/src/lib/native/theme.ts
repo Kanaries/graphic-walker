@@ -55,21 +55,29 @@ export function nativeTheme(
             style.background = value;
         });
     const mark = { ...object(raw.mark), ...object(raw[selected]) };
-    const color = selected === 'line' || selected === 'point' ? (mark.color ?? mark.stroke ?? mark.fill) : (mark.color ?? mark.fill ?? mark.stroke);
+    const color = ['line', 'trail', 'tick', 'point'].includes(selected) ? (mark.color ?? mark.stroke ?? mark.fill) : (mark.color ?? mark.fill ?? mark.stroke);
     string(color, `${selected}.color`, (value) => {
         style.color = value;
     });
     number(mark.opacity, `${selected}.opacity`, (value) => {
         style.opacity = value;
     });
-    if (selected === 'point' || selected === 'auto')
+    if (selected === 'point' || selected === 'circle')
         number(mark.size, `${selected}.size`, (value) => {
             style.pointSize = value;
         });
-    if (selected === 'line')
-        number(mark.strokeWidth, 'line.strokeWidth', (value) => {
+    if (selected === 'line' || selected === 'trail')
+        number(mark.strokeWidth ?? mark.size, `${selected}.strokeWidth`, (value) => {
             style.lineWidth = value;
         });
+    if (selected === 'tick') {
+        number(mark.size ?? mark.bandSize, 'tick.size', (value) => { style.tickSize = value; });
+        number(mark.thickness, 'tick.thickness', (value) => { style.tickThickness = value; });
+    }
+    if (selected === 'arc') {
+        number(mark.innerRadius, 'arc.innerRadius', (value) => { style.arcInnerRadius = value; });
+        number(mark.outerRadius, 'arc.outerRadius', (value) => { style.arcOuterRadius = value; });
+    }
     if (selected === 'text')
         number(mark.fontSize, 'text.fontSize', (value) => {
             style.fontSize = value;
@@ -83,8 +91,10 @@ export function nativeTheme(
         'stroke',
         'opacity',
         'font',
-        ...(selected === 'point' ? ['size'] : []),
-        ...(selected === 'line' ? ['strokeWidth'] : []),
+        ...(['point', 'circle'].includes(selected) ? ['size'] : []),
+        ...(['line', 'trail'].includes(selected) ? ['strokeWidth', 'size'] : []),
+        ...(selected === 'tick' ? ['size', 'bandSize', 'thickness'] : []),
+        ...(selected === 'arc' ? ['innerRadius', 'outerRadius'] : []),
         ...(selected === 'text' ? ['fontSize'] : []),
     ]);
     for (const key of Object.keys(mark))
@@ -163,6 +173,7 @@ export function nativeTheme(
         'bar',
         'point',
         'line',
+        'trail',
         'rect',
         'text',
         'area',

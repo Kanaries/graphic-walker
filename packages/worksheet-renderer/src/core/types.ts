@@ -1,7 +1,7 @@
 /** Internal rendering contracts. These types are not a persisted authoring format. */
 export type Axis = 'row' | 'column';
 export type PositionType = 'band' | 'linear' | 'time';
-export type MarkType = 'bar' | 'point' | 'line' | 'rect' | 'text';
+export type MarkType = 'bar' | 'point' | 'circle' | 'tick' | 'line' | 'area' | 'trail' | 'arc' | 'boxplot' | 'rect' | 'text';
 export type PreparedRecord = Readonly<Record<string, unknown>>;
 
 export interface ReadVersion {
@@ -75,6 +75,10 @@ export interface RenderStyle {
     readonly pointSize?: number;
     readonly lineWidth?: number;
     readonly barWidth?: number;
+    readonly tickSize?: number;
+    readonly tickThickness?: number;
+    readonly arcInnerRadius?: number;
+    readonly arcOuterRadius?: number;
     readonly fontFamily?: string;
     readonly fontSize?: number;
 }
@@ -100,9 +104,13 @@ export interface RenderPlan {
         readonly opacity?: FieldChannel;
         readonly shape?: FieldChannel;
         readonly text?: FieldChannel;
+        readonly theta?: FieldChannel;
+        readonly radius?: FieldChannel;
         readonly details?: readonly string[];
     };
-    readonly stack?: 'none' | 'zero';
+    readonly stack?: 'none' | 'zero' | 'normalize' | 'center';
+    /** Names of prepared metadata columns; statistics are computed by the host. */
+    readonly boxplot?: { readonly groupKeyColumn: string; readonly roleColumn: string };
     readonly barLayout?: 'overlap' | 'grouped';
     readonly barOrientation?: 'horizontal' | 'vertical';
     readonly lineProgression?: 'x' | 'y';
@@ -189,7 +197,7 @@ export interface PaneBatch {
 }
 export interface DomainKey {
     readonly fieldRef: string;
-    readonly channel: 'x' | 'y' | 'color' | 'size' | 'opacity' | 'shape';
+    readonly channel: 'x' | 'y' | 'color' | 'size' | 'opacity' | 'shape' | 'theta' | 'radius';
     readonly familyId: string;
     readonly domainPlanKey: string;
     readonly scope: { readonly mode: 'shared' }

@@ -1,4 +1,15 @@
-import { contains, inflate, intersect, type Box, type HeaderTarget, type HitRegion, type Point, type SceneFrame } from './types';
+import {
+    contains,
+    inflate,
+    intersect,
+    type ArcGeometry,
+    type Box,
+    type HeaderTarget,
+    type HitRegion,
+    type Point,
+    type SceneFrame,
+} from './types';
+import { angleInArc, arcPoint, pointInArc } from './arc';
 
 const gridSize = 48;
 interface HitIndex {
@@ -65,6 +76,31 @@ function exactHit(hit: HitRegion, point: Point, tolerance: number): Point | unde
         const projected = nearest(geometry.start, geometry.end, point);
         return Math.hypot(projected.x - point.x, projected.y - point.y) <= geometry.width / 2 + tolerance ? projected : undefined;
     }
+    if (geometry.kind === 'arc') {
+        const distance = Math.hypot(point.x - geometry.x, point.y - geometry.y);
+        // The donut hole is an explicit excluded region, including near its inner edge.
+        if (distance < geometry.innerRadius) return;
+        if (pointInArc(geometry, point)) return point;
+        if (
+            angleInArc(geometry, Math.atan2(point.y - geometry.y, point.x - geometry.x)) &&
+            distance >= geometry.innerRadius &&
+            distance <= geometry.outerRadius + tolerance
+        )
+            return point;
+        if (
+            geometry.endAngle - geometry.startAngle < Math.PI * 2 - 1e-10 &&
+            [geometry.startAngle, geometry.endAngle].some((angle) => {
+                const projected = nearest(
+                    arcPoint(geometry, geometry.innerRadius, angle),
+                    arcPoint(geometry, geometry.outerRadius, angle),
+                    point,
+                );
+                return Math.hypot(projected.x - point.x, projected.y - point.y) <= tolerance;
+            })
+        )
+            return point;
+        return;
+    }
     if (pointInPolygon(geometry.points, point)) return point;
     return geometry.points.some((a, i) => {
         const p = nearest(a, geometry.points[(i + 1) % geometry.points.length], point);
@@ -127,6 +163,39 @@ function segmentNearBox(start: Point, end: Point, box: Box, radius: number): boo
         return Math.hypot(point.x - projected.x, point.y - projected.y) <= radius;
     });
 }
+/** Intersect circular boundaries analytically, without polygon approximation or selecting a donut's hole. */
+function arcIntersectsBox(arc: ArcGeometry, box: Box): boolean {
+    const corners = [
+        { x: box.x, y: box.y },
+        { x: box.x + box.width, y: box.y },
+        { x: box.x, y: box.y + box.height },
+        { x: box.x + box.width, y: box.y + box.height },
+    ];
+    if (corners.some((point) => pointInArc(arc, point))) return true;
+    const inside = (point: Point) => point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+    for (const angle of [arc.startAngle, arc.endAngle]) {
+        const a = arcPoint(arc, arc.innerRadius, angle),
+            b = arcPoint(arc, arc.outerRadius, angle);
+        if (inside(a) || inside(b)) return true;
+        if (arc.endAngle - arc.startAngle < Math.PI * 2 - 1e-10 && segmentIntersectsBox(a, b, box)) return true;
+    }
+    for (const radius of [arc.innerRadius, arc.outerRadius]) {
+        if (!radius) continue;
+        for (const x of [box.x, box.x + box.width]) {
+            const squared = radius * radius - (x - arc.x) ** 2;
+            if (squared < 0) continue;
+            for (const y of [arc.y - Math.sqrt(squared), arc.y + Math.sqrt(squared)])
+                if (y >= box.y && y <= box.y + box.height && angleInArc(arc, Math.atan2(y - arc.y, x - arc.x))) return true;
+        }
+        for (const y of [box.y, box.y + box.height]) {
+            const squared = radius * radius - (y - arc.y) ** 2;
+            if (squared < 0) continue;
+            for (const x of [arc.x - Math.sqrt(squared), arc.x + Math.sqrt(squared)])
+                if (x >= box.x && x <= box.x + box.width && angleInArc(arc, Math.atan2(y - arc.y, x - arc.x))) return true;
+        }
+    }
+    return false;
+}
 /** Select only geometry that actually intersects both the brush and the painted clip. */
 export function hitsInBox(frame: SceneFrame, selection: Box): HitRegion[] {
     return frame.hits.filter((hit) => {
@@ -140,6 +209,7 @@ export function hitsInBox(frame: SceneFrame, selection: Box): HitRegion[] {
             return Math.hypot(g.x - x, g.y - y) <= g.radius;
         }
         if (g.kind === 'segment') return segmentNearBox(g.start, g.end, box, g.width / 2);
+        if (g.kind === 'arc') return arcIntersectsBox(g, box);
         const corners = [
             { x: box.x, y: box.y },
             { x: box.x + box.width, y: box.y },

@@ -1,0 +1,79 @@
+{
+  "center": {
+    "x": 288,
+    "y": 229
+  },
+  "innerRadius": 32,
+  "attempts": [
+    {
+      "backend": "svg",
+      "radius": 35,
+      "tooltip": true,
+      "events": 1,
+      "targets": 1
+    },
+    {
+      "backend": "svg",
+      "radius": 31,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "svg",
+      "radius": 29,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "svg",
+      "radius": 27,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "svg",
+      "radius": 0,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "canvas",
+      "radius": 35,
+      "tooltip": true,
+      "events": 1,
+      "targets": 1
+    },
+    {
+      "backend": "canvas",
+      "radius": 31,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "canvas",
+      "radius": 29,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "canvas",
+      "radius": 27,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    },
+    {
+      "backend": "canvas",
+      "radius": 0,
+      "tooltip": false,
+      "events": 1,
+      "targets": 0
+    }
+  ]
+}

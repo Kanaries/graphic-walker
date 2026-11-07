@@ -59,6 +59,7 @@ const NativeRenderer = forwardRef<IReactVegaHandler, NativeRendererProps>(functi
                 ? adaptChartToRenderPlan(chart, {
                       columns: result.columns,
                       fieldColumns: result.fieldColumns,
+                      boxplot: result.boxplot,
                       records: result.records,
                       sourceMode: 'complete',
                       scales,

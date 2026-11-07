@@ -2,9 +2,7 @@
 
 `@kanaries/worksheet-renderer` 是 Graphic Walker monorepo 中的自有工作表渲染库。它读取已经准备好的记录，负责成员表头、pane 布局、比例尺、图形几何和 Canvas/SVG 绘制。它不执行聚合、过滤、SQL、计算表达式或查询规划。
 
-2026-11-06 状态：S0 与 S1 已按独立审核、浏览器验收门禁提交。S1 提交为 `feat(worksheet): add marks, display scopes and controlled interaction`。S2 已实现调度、分页读取、资源预算和分页导出，正在独立审核及真实浏览器验收。所有阶段进入同一个 [draft PR #528](https://github.com/Kanaries/graphic-walker/pull/528)，当前不是首版发布。
-
-批准范围仍是全部 [R01–R17、A01–A16、B1–B5](../../docs/worksheet-renderer-requirements.md)，进展见 [实施记录](../../docs/worksheet-renderer-implementation.md)。[技术设计 v0.4](../../docs/worksheet-renderer-design.md) 和 [alignment v0.4](../../docs/worksheet-renderer-alignment.md) 是实施依据。S0 的 [代码复审](../../docs/verification/s0/code-review.md) 和 [浏览器验收](../../docs/verification/s0/browser-acceptance.md) 均已通过；S1 的 [代码复审](../../docs/verification/s1/code-review.md) 和 [浏览器验收](../../docs/verification/s1/browser-acceptance.md) 也已通过。浏览器覆盖 Chromium 全面验收与 Playwright WebKit smoke，未代替正式 Safari/Firefox 验收。
+2026-11-07 状态：S0–S3 已完成独立代码审核、浏览器验收与构建消费检查；记录见 [实施文档](../../docs/worksheet-renderer-implementation.md)。S4 加入 circle、tick、area、trail、arc、boxplot 与堆积布局；当前能力和验收状态见 [类型与计算边界](../../docs/worksheet-renderer-chart-types.md)。全部工作继续进入同一个 [draft PR #528](https://github.com/Kanaries/graphic-walker/pull/528)。
 
 ## 构建与预览
 
@@ -19,7 +17,7 @@ yarn workspace @kanaries/worksheet-renderer dev
 
 `build` 生成根入口、独立 `react.js` 入口、共享 ESM chunk、source map 和 TypeScript 声明。`test` 用 esbuild 打包 `tests/*.test.ts`，再通过 `node --test` 运行。`dev` 启动默认地址 `http://127.0.0.1:4178/`，可用 `PORT` 覆盖端口。
 
-预览页包含 U1 嵌套工作表、五种 mark、分组/堆叠/区间柱、八层表头、作用域比较、受控双轴折叠与排序，以及程序化超长窗口供数。Domains 示例每个 Region 有 Local/Metro 两个不同值域的 pane，可区分 shared、prefix 和 pane。受控示例等待 host 550 ms 确认，父级用明确给定的常量；缺父级记录的槽位保持空白。超长例子用于核对坐标和窗口读取，不是 B3 的百万条真实输入基准。
+预览页包含 U1 嵌套工作表、基础与扩展 mark、分组/堆叠/区间柱、八层表头、作用域比较、受控双轴折叠与排序，以及程序化超长窗口供数。Domains 示例每个 Region 有 Local/Metro 两个不同值域的 pane，可区分 shared、prefix 和 pane。受控示例等待 host 550 ms 确认，父级用明确给定的常量；缺父级记录的槽位保持空白。超长例子用于核对坐标和窗口读取，不是 B3 的百万条真实输入基准。
 
 包根入口不导入 React、GW store、计算执行器、Vega 或 Plot。内部只使用 `d3-format`、`d3-time-format` 做数值与 UTC 日期格式化；它们不是整图渲染器。`@kanaries/worksheet-renderer/react` 单独导出 React 组件，React 是可选 peer dependency。
 

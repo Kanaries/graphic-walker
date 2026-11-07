@@ -43,7 +43,7 @@ export function toVegaSimplified(chart: IChart) {
 
     const fieldNames = new Map(dimensions.concat(measures).map((f) => [f.fid, f.name]));
 
-    const viewEncodingFields = viewEncodingKeys(geoms[0] ?? 'auto').flatMap<IViewField>((k) => chart.encodings?.[k] ?? []);
+    const viewEncodingFields = viewEncodingKeys(geoms[0] ?? 'auto', chart.layout.renderer).flatMap<IViewField>((k) => chart.encodings?.[k] ?? []);
 
     const viewDimensions = viewEncodingFields.filter((x) => x.analyticType === 'dimension');
     const viewMeasures = viewEncodingFields.filter((x) => x.analyticType === 'measure');
@@ -320,7 +320,7 @@ export function toChatMessage(history: VisSpecWithHistory): IChatMessage[] {
             if (now.config.geoms[0] === 'auto') {
                 message += `\nChange the geom type to ${autoMark(now.encodings.rows.concat(now.encodings.columns).map((x) => x.semanticType))}.`;
             }
-            const viewEncodingFields = viewEncodingKeys(now.config.geoms[0] ?? 'auto').flatMap<IViewField>((k) => now.encodings?.[k] ?? []);
+            const viewEncodingFields = viewEncodingKeys(now.config.geoms[0] ?? 'auto', now.layout.renderer).flatMap<IViewField>((k) => now.encodings?.[k] ?? []);
             const isEmptyChart = viewEncodingFields.length === 0;
             if (!isEmptyChart) {
                 result.push({ role: 'user', content: message, type: 'generated' });

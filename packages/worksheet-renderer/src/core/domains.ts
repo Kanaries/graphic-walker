@@ -9,6 +9,18 @@ export function barIsHorizontal(plan: RenderPlan, rowBinding?: ResultBinding): b
     return plan.barOrientation === 'horizontal' || plan.barOrientation === undefined && !!rowBinding && positionTypeFor(rowBinding) === 'band';
 }
 
+
+/** Area progression identifies the category axis; bars retain their explicit orientation. */
+export function valueAxisIsHorizontal(plan: RenderPlan, rowBinding?: ResultBinding, columnBinding?: ResultBinding): boolean {
+    if (plan.mark !== 'area') return barIsHorizontal(plan, rowBinding);
+    const progression = plan.lineProgression ??
+        (columnBinding && positionTypeFor(columnBinding) !== 'linear' ? 'x' : rowBinding && positionTypeFor(rowBinding) !== 'linear' ? 'y' : 'x');
+    return progression === 'y';
+}
+export function isStacked(plan: RenderPlan): boolean {
+    return (plan.mark === 'bar' || plan.mark === 'area') && !!plan.stack && plan.stack !== 'none';
+}
+
 /** A complete explicit domain does not depend on source statistics. One fixed endpoint still does. */
 export function hasFixedDomain(plan: RenderPlan, fieldRef: string): boolean {
     const scale = plan.scales?.[fieldRef];
@@ -93,7 +105,7 @@ export function getDisplayDomain(plan: RenderPlan, fieldRef: string, channel: Do
 export function sharedDomainRefs(plan: RenderPlan): readonly string[] {
     const refs = new Set<string>();
     for (const ref of [...plan.rows.positions, ...plan.columns.positions]) if (!plan.scales?.[ref]?.scope || plan.scales[ref].scope!.mode === 'shared') refs.add(ref);
-    for (const channel of ['color', 'size', 'opacity', 'shape'] as const) {
+    for (const channel of ['color', 'size', 'opacity', 'shape', 'theta', 'radius'] as const) {
         const value = plan.channels?.[channel];
         if (value && 'fieldRef' in value) refs.add(value.fieldRef);
     }

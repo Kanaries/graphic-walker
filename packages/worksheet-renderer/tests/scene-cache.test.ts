@@ -222,3 +222,17 @@ test('candidate pane retention is incremental and a rejected reservation stops f
     assert.equal(calls, 2);
     f.dispose();
 });
+
+
+test('fixed position and channel domains reuse geometry until the fixed plan changes', async () => {
+    const f = await fixture();
+    const plan: RenderPlan = { ...f.plan, scales: { x: { domain: [0, 10] }, y: { domain: [-10, 10] }, series: { domain: ['a', 'b'] } } };
+    const first = buildScene({ ...f.input, plan, cache: f.cache });
+    const selected = new Set(first.hits.slice(0, 1).map(hit => hit.id));
+    const next = buildScene({ ...f.input, plan, scrollX: 1.25, cache: f.cache, selected });
+    assert.equal(first.paneLayer!.groups[0].commands, next.paneLayer!.groups[0].commands);
+    assert.deepEqual(normalized(next.commands), normalized(buildScene({ ...f.input, plan, scrollX: 1.25, selected }).commands));
+    const changed = buildScene({ ...f.input, plan: { ...plan, scales: { ...plan.scales, y: { domain: [-20, 20] } } }, cache: f.cache });
+    assert.notEqual(next.paneLayer!.groups[0].commands, changed.paneLayer!.groups[0].commands);
+    f.dispose();
+});

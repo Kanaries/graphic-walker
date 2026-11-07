@@ -10,6 +10,7 @@ import { setSceneAccounting, type CachedPaneGeometry, type SceneAccounting, type
 import { buildPaneGeometry } from './pane';
 import { translatedBox, translatedHit, translatedPrimitive } from './translate';
 import { typedValueLabel } from '../core/keys';
+import { arcOuterLimit, createArcRadiusScale } from './arc';
 
 export interface LayoutMetrics {
     rowHeight: number;
@@ -173,9 +174,9 @@ export function buildScene(input: SceneInput): SceneFrame {
                         clip = intersect(body, translatedBox(command.clip, left, top));
                         clips.set(command.clip, clip);
                     }
-                    const selected = !!input.selected?.size && input.selected.has(command.id);
+                    const selected = !!input.selected?.size && input.selected.has(command.interactionId ?? command.id);
                     if (selected) selectedIds.push(command.id);
-                    frame.commands.push({ id: command.id, clip, primitive: translatedPrimitive(command.primitive, left, top, selected) });
+                    frame.commands.push({ id: command.id, interactionId: command.interactionId, clip, primitive: translatedPrimitive(command.primitive, left, top, selected) });
                     translatedBytes += 512 + (command.primitive.kind === 'path' ? command.primitive.points.length * 48 : 0);
                 }
                 for (const hit of geometry.hits) {
@@ -326,7 +327,10 @@ export function buildScene(input: SceneInput): SceneFrame {
             const binding = bindings.get(channel.fieldRef)!,
                 domain = getDisplayDomain(plan, binding.fieldRef, name, domains);
             if (!domain) throw new Error(`domain-unavailable: ${name} legend`);
-            const values = resolveDomainValues(domain, plan.scales?.[binding.fieldRef]);
+            const arcLimit = plan.mark === 'arc' && name === 'size' ? arcOuterLimit(plan, m.columnWidth - 24, m.rowHeight - 24) : 0;
+            const arcSize = plan.mark === 'arc' && name === 'size'
+                ? createArcRadiusScale('size', arcLimit, domain, plan.scales?.[binding.fieldRef]) : undefined;
+            const values = arcSize?.values ?? resolveDomainValues(domain, plan.scales?.[binding.fieldRef]);
             text(`legend-title:${name}`, legend, legend.x + 10, y, `${binding.label} (${name})`, 'left', legend.width - 20);
             y += 20;
             const entries = domain.type === 'band' ? values : [values[0], Number(values[0]) / 2 + Number(values[1]) / 2, values[1]];
@@ -368,8 +372,21 @@ export function buildScene(input: SceneInput): SceneFrame {
                         opacity: Math.max(0, Math.min(1, numericChannel(value, domain, plan.scales?.[binding.fieldRef], [0.15, 1]))),
                     });
                 else if (name === 'size') {
-                    const size = numericChannel(value, domain, plan.scales?.[binding.fieldRef], plan.mark === 'line' ? [1, 6] : [16, 256]);
-                    if (plan.mark === 'line')
+                    const size = arcSize ? 0 : numericChannel(
+                        value, domain, plan.scales?.[binding.fieldRef],
+                        plan.mark === 'line' || plan.mark === 'trail'
+                            ? [1, 6]
+                            : plan.mark === 'tick' ? [4, 32] : plan.mark === 'text' ? [8, 24] : [16, 256],
+                    );
+                    if (arcSize)
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'circle',
+                            x: legend.x + 16,
+                            y: y - 4,
+                            radius: arcLimit ? arcSize.map(value) * 9 / arcLimit : 0,
+                            fill: plan.style?.color ?? '#2563eb',
+                        });
+                    else if (plan.mark === 'line' || plan.mark === 'trail')
                         add(`legend-swatch:${name}:${index}`, legend, {
                             kind: 'line',
                             x1: legend.x + 8,
@@ -378,6 +395,39 @@ export function buildScene(input: SceneInput): SceneFrame {
                             y2: y - 4,
                             stroke: plan.style?.color ?? '#2563eb',
                             width: Math.min(12, size),
+                        });
+                    else if (plan.mark === 'tick')
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'rect',
+                            box: {
+                                x: legend.x + 16 - size / 2,
+                                y: y - 4 - (plan.style?.tickThickness ?? plan.style?.lineWidth ?? 1) / 2,
+                                width: size,
+                                height: plan.style?.tickThickness ?? plan.style?.lineWidth ?? 1,
+                            },
+                            fill: plan.style?.color ?? '#2563eb',
+                        });
+                    else if (plan.mark === 'text')
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'text',
+                            x: legend.x + 16,
+                            y,
+                            text: 'A',
+                            size,
+                            align: 'center',
+                            fontFamily: plan.style?.fontFamily ?? 'sans-serif',
+                            fill: plan.style?.color ?? '#2563eb',
+                        });
+                    else if (plan.mark === 'rect')
+                        add(`legend-swatch:${name}:${index}`, legend, {
+                            kind: 'rect',
+                            box: {
+                                x: legend.x + 16 - Math.sqrt(size) / 2,
+                                y: y - 4 - Math.sqrt(size) / 2,
+                                width: Math.sqrt(size),
+                                height: Math.sqrt(size),
+                            },
+                            fill: plan.style?.color ?? '#2563eb',
                         });
                     else
                         add(`legend-swatch:${name}:${index}`, legend, {

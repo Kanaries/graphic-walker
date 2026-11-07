@@ -216,14 +216,14 @@ export class VizSpecStore {
 
     get viewEncodings(): Partial<Omit<DraggableFieldState, 'filters'>> {
         const result: Record<string, IViewField[]> = {};
-        viewEncodingKeys(this.config.geoms[0]).forEach((k) => {
+        viewEncodingKeys(this.config.geoms[0], this.layout.renderer).forEach((k) => {
             result[k] = this.currentEncodings[k];
         });
         return result;
     }
 
     get viewEncodingFields() {
-        return getViewEncodingFields(this.viewEncodings, this.config.geoms[0]);
+        return getViewEncodingFields(this.viewEncodings, this.config.geoms[0], this.layout.renderer);
     }
 
     get viewDimensions() {

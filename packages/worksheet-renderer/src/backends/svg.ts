@@ -1,4 +1,5 @@
 import type { Primitive, SceneFrame } from '../scene/types';
+import { arcSvgPath } from '../scene/arc';
 export function svgPrimitive(primitive: Primitive): { tag: string; attrs: Record<string, string | number>; text?: string } {
     const p = primitive;
     let attrs: Record<string, string | number>, tag: string;
@@ -19,6 +20,9 @@ export function svgPrimitive(primitive: Primitive): { tag: string; attrs: Record
     } else if (p.kind === 'circle') {
         tag = 'circle';
         attrs = { cx: p.x, cy: p.y, r: p.radius, fill: p.fill, stroke: p.stroke ?? 'none', 'stroke-width': p.strokeWidth ?? 1 };
+    } else if (p.kind === 'arc') {
+        tag = 'path';
+        attrs = { d: arcSvgPath(p), fill: p.fill, stroke: p.stroke ?? 'none', 'stroke-width': p.strokeWidth ?? 1 };
     } else if (p.kind === 'path') {
         tag = 'path';
         attrs = {

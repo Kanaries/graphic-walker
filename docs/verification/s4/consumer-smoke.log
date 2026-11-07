@@ -1,0 +1,44 @@
+Using Yarn 1.22.19.
+$ yarn pack --filename /var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/graphic-walker.tgz
+yarn pack v1.22.19
+success Wrote tarball to "/var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/graphic-walker.tgz".
+Done in 1.09s.
+$ yarn pack --filename /var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/worksheet-renderer.tgz
+yarn pack v1.22.19
+success Wrote tarball to "/var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/worksheet-renderer.tgz".
+Done in 0.06s.
+$ yarn install --non-interactive --production=false --cache-folder /var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/yarn-cache
+yarn install v1.22.19
+info No lockfile found.
+[1/4] Resolving packages...
+warning @kanaries/graphic-walker > vega-webgl-renderer@1.0.0-beta.2: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+warning "@kanaries/graphic-walker > autoprefixer@10.6.2" has unmet peer dependency "postcss@^8.1.0".
+warning "@kanaries/graphic-walker > react-shadow@20.6.0" has unmet peer dependency "prop-types@^15.0.0".
+warning "@kanaries/graphic-walker > ts-jest@29.4.15" has unmet peer dependency "jest@^29.0.0 || ^30.0.0".
+warning "@kanaries/graphic-walker > ts-jest@29.4.15" has unmet peer dependency "typescript@>=4.3 <7".
+warning Workspaces can only be enabled in private projects.
+[4/4] Building fresh packages...
+success Saved lockfile.
+Done in 91.46s.
+Verified styled-components remains external in the packed ESM and UMD bundles.
+$ yarn build
+yarn run v1.22.19
+$ vite build
+vite v4.5.0 building for production...
+transforming...
+✓ 47 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                    0.14 kB │ gzip:     0.13 kB
+dist/assets/index-d8e0ede2.js  4,793.96 kB │ gzip: 1,425.98 kB
+
+(!) Some chunks are larger than 500 kBs after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.54s
+Done in 5.29s.
+Resolved styled-components from /private/var/folders/2l/sbhmcv_j0md6yl1bvk3q6zsc0000gn/T/gw-361-fHHYJP/consumer/node_modules/styled-components/dist/styled-components.cjs.js.
+Graphic Walker Vite consumer smoke test passed.

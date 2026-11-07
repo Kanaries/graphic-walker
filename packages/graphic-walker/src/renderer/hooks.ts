@@ -8,6 +8,7 @@ import { fold2 } from '../lib/op/fold';
 import { prepareNativeResults, type NativeResultSnapshot } from '../lib/native/results';
 import type { NativeGetRowKey } from '../lib/native/identity';
 import { runOwnedComputation } from '../utils/computationOwnership';
+import { computeBoxplotStatistics, planBoxplotComputation, type BoxplotComputationPlan, type BoxplotComputationResult } from '../computation/boxplot';
 
 interface UseRendererProps {
     chart?: IChart;
@@ -28,11 +29,13 @@ interface QueryRequest {
     readonly sourceId: string;
     readonly workflow: IDataQueryWorkflowStep[];
     readonly limit?: number;
+    readonly boxplot?: BoxplotComputationPlan;
 }
 interface QueryResult {
     readonly request: QueryRequest;
     readonly queryRows: IRow[];
     readonly version: ReadVersion;
+    readonly boxplot?: BoxplotComputationResult;
     readonly error?: unknown;
 }
 export interface UseRendererResult {
@@ -53,10 +56,15 @@ const emptyWorkflow: IDataQueryWorkflowStep[] = [];
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const { chart, allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds, timezoneDisplayOffset } =
         props;
+    const boxplot = chart?.layout.renderer === 'native' ? planBoxplotComputation(chart) : undefined;
+    const boxplotKey = JSON.stringify(boxplot);
+    const effectiveAggregated = boxplot ? false : defaultAggregated;
+    // Statistics need the entire filtered raw sample, never the first N provider rows.
+    const queryLimit = boxplot ? undefined : limit > 0 ? limit : undefined;
     const workflow = useMemo(
         () =>
-            toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined, timezoneDisplayOffset),
-        [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit, timezoneDisplayOffset],
+            toWorkflow(filters, allFields, viewDimensions, viewMeasures, effectiveAggregated, sort, folds, queryLimit, timezoneDisplayOffset),
+        [filters, allFields, viewDimensions, viewMeasures, effectiveAggregated, sort, folds, queryLimit, timezoneDisplayOffset],
     );
     // A renderer, style or header-label edit can create new arrays without changing the query.
     // Compare the serializable existing workflow, not IChart or display configuration.
@@ -64,8 +72,8 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const request = useMemo<QueryRequest>(() => {
         let sourceId = sourceIds.get(computationFunction);
         if (sourceId === undefined) sourceIds.set(computationFunction, (sourceId = ++nextSourceId));
-        return { source: computationFunction, sourceId: `gw:${sourceId}:${chart?.visId ?? 'view'}`, workflow, limit: limit > 0 ? limit : undefined };
-    }, [computationFunction, chart?.visId, workflowKey, limit]);
+        return { source: computationFunction, sourceId: `gw:${sourceId}:${chart?.visId ?? 'view'}`, workflow, limit: queryLimit, boxplot };
+    }, [computationFunction, chart?.visId, workflowKey, queryLimit, boxplotKey]);
     const [settled, setSettled] = useState<QueryResult>();
     const appRef = useAppRootContext();
     const committedRequest = useRef<QueryRequest | undefined>(undefined);
@@ -91,8 +99,9 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
             .then((queryRows) => {
                 if (!isCurrent()) return;
                 if (!Array.isArray(queryRows)) throw new TypeError('The computation result must be an array of rows.');
+                const boxplot = request.boxplot ? computeBoxplotStatistics(queryRows, request.boxplot, request.workflow) : undefined;
                 appRef.current?.updateRenderStatus('rendering');
-                setSettled({ request, queryRows, version: { sourceId: request.sourceId, snapshotId, presentationId: 'query' } });
+                setSettled({ request, queryRows, boxplot, version: { sourceId: request.sourceId, snapshotId, presentationId: 'query' } });
             })
             .catch((error: unknown) => {
                 if (!isCurrent()) return;
@@ -113,8 +122,8 @@ export const useRenderer = (props: UseRendererProps): UseRendererResult => {
     const current = settled?.request === request ? settled : undefined;
     const query = current && current.error === undefined ? current : undefined;
     const viewData = useMemo(
-        () => (query ? (fold2(query.queryRows, defaultAggregated, allFields, viewMeasures, viewDimensions, folds) as IRow[]) : emptyRows),
-        [query, defaultAggregated, allFields, viewMeasures, viewDimensions, folds],
+        () => (query ? (fold2(query.queryRows, effectiveAggregated, allFields, viewMeasures, viewDimensions, folds) as IRow[]) : emptyRows),
+        [query, effectiveAggregated, allFields, viewMeasures, viewDimensions, folds],
     );
     return { viewData, loading: !current, error: current?.error, query, parsed: { workflow: query?.request.workflow ?? emptyWorkflow } };
 };
@@ -131,6 +140,7 @@ export function useNativeResult(chart: IChart, query: UseRendererResult['query']
             queryRows: query.queryRows,
             workflow: query.request.workflow,
             getRowKey,
+            boxplot: query.boxplot,
             version: { ...query.version, presentationId: String(++revision.current) },
         });
     }, [enabled, semantics, query, getRowKey]);

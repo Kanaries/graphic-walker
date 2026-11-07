@@ -1,0 +1,2319 @@
+
+> @kanaries/graphic-walker@0.5.3 test
+> jest --runInBand
+
+watchman warning:  Recrawled this watch 5 times, most recently because:
+MustScanSubDirs UserDroppedTo resolve, please review the information on
+https://facebook.github.io/watchman/docs/troubleshooting.html#recrawl
+To clear this warning, run:
+`watchman watch-del '/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker' ; watchman watch-project '/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker'`
+
+PASS src/models/terse.test.ts
+  ● Console
+
+    console.warn
+      [terse] Aggregate 'sum' on dimension 'Region' follows existing semantics (ignored unless the field acts as a measure).
+
+      362 |  * Pure: no store, no side effects beyond `onWarn`.
+      363 |  */
+    > 364 | export function expandTerse(spec: TerseSpec, meta: IMutField[], onWarn: OnWarn = (msg) => console.warn(`[terse] ${msg}`)): PartialChart {
+          |                                                                                                   ^
+      365 |     const base = newChart(meta, spec.name || 'Chart');
+      366 |     const index = new FieldIndex();
+      367 |     for (const field of [...base.encodings.dimensions, ...base.encodings.measures]) {
+
+      at onWarn (src/models/terse.ts:364:99)
+      at resolveRef (src/models/terse.ts:342:13)
+      at src/models/terse.ts:390:57
+          at Array.map (<anonymous>)
+      at expandTerse (src/models/terse.ts:390:44)
+      at normalize (src/models/normalize.ts:150:42)
+      at Object.<anonymous> (src/models/terse.test.ts:400:29)
+
+    console.warn
+      [terse] Aggregate 'sum' on dimension 'Region' follows existing semantics (ignored unless the field acts as a measure).
+
+      362 |  * Pure: no store, no side effects beyond `onWarn`.
+      363 |  */
+    > 364 | export function expandTerse(spec: TerseSpec, meta: IMutField[], onWarn: OnWarn = (msg) => console.warn(`[terse] ${msg}`)): PartialChart {
+          |                                                                                                   ^
+      365 |     const base = newChart(meta, spec.name || 'Chart');
+      366 |     const index = new FieldIndex();
+      367 |     for (const field of [...base.encodings.dimensions, ...base.encodings.measures]) {
+
+      at onWarn (src/models/terse.ts:364:99)
+      at resolveRef (src/models/terse.ts:342:13)
+      at src/models/terse.ts:390:57
+          at Array.map (<anonymous>)
+      at expandTerse (src/models/terse.ts:390:44)
+      at normalize (src/models/normalize.ts:150:42)
+      at Object.<anonymous> (src/models/terse.test.ts:401:31)
+
+PASS src/lib/observablePlot.test.ts
+  ● Console
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'a', type: 'nominal' },
+          y: { field: 'b', type: 'quantitative' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'a',
+        yField: 'b',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 2,
+        primaryField: 'a',
+        colorField: null
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        vlSpecs: [
+          {
+            data: [Object],
+            params: [Array],
+            autosize: 'fit',
+            width: 595,
+            height: 395,
+            mark: [Object],
+            encoding: [Object],
+            resolve: {}
+          }
+        ]
+      }
+
+      at toObservablePlotSpec (src/lib/observablePlot.ts:553:13)
+
+    console.log
+      {
+        encoding: {
+          x: {
+            field: 'Sales_sum',
+            title: 'sum(Sales)',
+            type: 'quantitative',
+            axis: [Object],
+            stack: null
+          },
+          y: {
+            field: 'Region',
+            title: 'Region',
+            type: 'nominal',
+            aggregate: null,
+            axis: [Object]
+          },
+          tooltip: [ [Object], [Object] ]
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+          at Array.map (<anonymous>)
+
+    console.log
+      {
+        xField: 'Sales_sum',
+        yField: 'Region',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: [
+          { field: 'Sales_sum', type: 'quantitative', title: 'sum(Sales)' },
+          { field: 'Region', type: 'nominal', title: 'Region' }
+        ]
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+          at Array.map (<anonymous>)
+
+    console.log
+      Using X-direction mark for bar: X is quantitative (quantitative), Y is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:75:25)
+          at Array.map (<anonymous>)
+
+    console.log
+      Using X-direction mark for bar: X is quantitative (quantitative), Y is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:75:25)
+          at Array.map (<anonymous>)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'X',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'quantitative',
+        yType: 'nominal'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+          at Array.map (<anonymous>)
+
+    console.log
+      {
+        plotSpecs: [ { marks: [Array], x: [Object], y: [Object], color: [Object] } ]
+      }
+
+      at toObservablePlotSpec (src/lib/observablePlot.ts:557:13)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', axis: [Object] },
+          y: { field: 'y', type: 'quantitative', format: ',.2f' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'date', type: 'temporal' },
+          y: { field: 'value', type: 'quantitative' }
+        },
+        markType: 'line'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'date',
+        yField: 'value',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for line: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for line: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating line mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'date', type: 'temporal' },
+          y: { field: 'value', type: 'quantitative' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'date',
+        yField: 'value',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 0,
+        primaryField: 'date',
+        colorField: null
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'date', type: 'temporal' },
+          y: { field: 'value', type: 'quantitative' }
+        },
+        markType: 'tick'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'date',
+        yField: 'value',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for tick: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for tick: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating tick mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 't', type: 'temporal' },
+          y: { field: 'v', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'line'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 't',
+        yField: 'v',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for line: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for line: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating line mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Sorted line chart data: {
+        temporalField: 't',
+        xIsQuantitative: false,
+        yIsTemporal: false,
+        originalLength: 2,
+        sortedLength: 2,
+        sampleData: [
+          { t: '2024-01-01', v: 1, c: 'A' },
+          { t: '2024-01-02', v: 2, c: 'B' }
+        ]
+      }
+
+      at createMark (src/lib/observablePlot.ts:342:25)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 't', type: 'temporal' },
+          y: { field: 'v', type: 'quantitative' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 't',
+        yField: 'v',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 2,
+        primaryField: 't',
+        colorField: null
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative' },
+          y: { field: 'y', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', stack: null },
+          y: { field: 'y', type: 'quantitative', stack: null },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', stack: 'normalize' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'X',
+        stacked: true,
+        stackMode: 'normalize',
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: 'normalize', stackOptions: { offset: 'normalize' } }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying X-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: { offset: 'normalize' },
+        dataLength: 1,
+        primaryField: 'y',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', stack: 'normalize' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', stack: 'center' },
+          y: { field: 'y', type: 'quantitative', stack: 'center' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x[0]', bin: [Object] },
+          x2: { field: 'x[1]' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x[0]',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is undefined
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: 'normalize',
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: undefined,
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: 'normalize', stackOptions: { offset: 'normalize' } }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: { offset: 'normalize' },
+        dataLength: 1,
+        primaryField: 'x[0]',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 't', type: 'temporal' },
+          y: { field: 'v', type: 'quantitative', stack: 'normalize' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'line'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 't',
+        yField: 'v',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for line: Y is quantitative (quantitative), X is temporal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating line mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: 'normalize',
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'temporal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: 'normalize', stackOptions: { offset: 'normalize' } }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: { offset: 'normalize' },
+        dataLength: 1,
+        primaryField: 't',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 2,
+        primaryField: 'x',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative' },
+          y: { field: 'y', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Both axes quantitative for bar, defaulting to Y-direction
+
+      at getMarkDirection (src/lib/observablePlot.ts:85:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 1,
+        primaryField: 'x',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative' },
+          y: { field: 'y', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'area'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Both axes quantitative for area, defaulting to Y-direction
+
+      at getMarkDirection (src/lib/observablePlot.ts:85:25)
+
+    console.log
+      Creating area mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 1,
+        primaryField: 'x',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'zero' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: true,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying Y-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 1,
+        primaryField: 'x',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: {
+            field: 'y',
+            type: 'quantitative',
+            aggregate: 'sum',
+            stack: 'normalize'
+          }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: {
+            field: 'y',
+            type: 'quantitative',
+            aggregate: 'sum',
+            stack: 'center'
+          }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: null },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: null }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: null },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'area'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for area: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for area: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating area mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative' },
+          y: { field: 'y', type: 'nominal' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using X-direction mark for bar: X is quantitative (quantitative), Y is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:75:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'X',
+        stacked: true,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'quantitative',
+        yType: 'nominal'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: null, stackOptions: {} }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying X-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: {},
+        dataLength: 1,
+        primaryField: 'y',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'quantitative', stack: 'normalize' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Both axes quantitative for bar, defaulting to Y-direction
+
+      at getMarkDirection (src/lib/observablePlot.ts:85:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'X',
+        stacked: true,
+        stackMode: 'normalize',
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'quantitative',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      Stack options for mark: { stackMode: 'normalize', stackOptions: { offset: 'normalize' } }
+
+      at createStackConfig (src/lib/observablePlot.ts:169:17)
+
+    console.log
+      Applying X-direction stacking: {
+        stackFunction: 'mockConstructor',
+        stackOptions: { offset: 'normalize' },
+        dataLength: 1,
+        primaryField: 'y',
+        colorField: 'c'
+      }
+
+      at applyStacking (src/lib/observablePlot.ts:215:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'rect'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating rect mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: null },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'rect'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating rect mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'rect'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for rect: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating rect mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'nominal', stack: null }
+        },
+        markType: 'rect'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Neither axis quantitative for rect, defaulting to Y-direction
+
+      at getMarkDirection (src/lib/observablePlot.ts:89:21)
+
+    console.log
+      Neither axis quantitative for rect, defaulting to Y-direction
+
+      at getMarkDirection (src/lib/observablePlot.ts:89:21)
+
+    console.log
+      Creating rect mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'nominal'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' }
+        },
+        markType: 'rule'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for rule: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for rule: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating rule mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'normalize' }
+        },
+        markType: 'trail'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: null,
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating trail mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: null,
+        hasColorField: false,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'stack' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'point'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Creating point mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: false,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+    console.log
+      {
+        encoding: {
+          x: { field: 'x', type: 'nominal' },
+          y: { field: 'y', type: 'quantitative', stack: 'stack' },
+          color: { field: 'c', type: 'nominal' }
+        },
+        markType: 'bar'
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:33:13)
+
+    console.log
+      {
+        xField: 'x',
+        yField: 'y',
+        xFacetField: null,
+        yFacetField: null,
+        colorField: 'c',
+        sizeField: null,
+        shapeField: null,
+        opacityField: null,
+        opacityValue: null,
+        tooltipEnc: undefined
+      }
+
+      at vegaLiteToPlot (src/lib/observablePlot.ts:48:13)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Using Y-direction mark for bar: Y is quantitative (quantitative), X is nominal
+
+      at getMarkDirection (src/lib/observablePlot.ts:80:25)
+
+    console.log
+      Creating bar mark: {
+        markFunction: '',
+        stackAxis: 'Y',
+        stacked: false,
+        stackMode: null,
+        colorField: 'c',
+        hasColorField: true,
+        isStackableMarkType: true,
+        xType: 'nominal',
+        yType: 'quantitative'
+      }
+
+      at createMark (src/lib/observablePlot.ts:296:17)
+
+PASS src/components/pivotTable/view.test.tsx
+PASS src/components/pivotTable/query.test.ts
+  ● Console
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [
+        { type: 'view', query: [ [Object] ] },
+        { type: 'sort', by: [ 'region' ], sort: 'descending' }
+      ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [
+        { type: 'view', query: [ [Object] ] },
+        { type: 'sort', by: [ 'sales_sum' ], sort: 'descending' }
+      ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+          at Array.map (<anonymous>)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+          at Array.map (<anonymous>)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+          at Array.map (<anonymous>)
+
+    console.log
+      local query triggered [
+        { type: 'view', query: [ [Object] ] },
+        { type: 'sort', by: [ 'sales_sum' ], sort: 'descending' }
+      ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+
+    console.log
+      local query triggered [ { type: 'view', query: [ [Object] ] } ]
+
+      at dataQueryClient (src/computation/clientComputation.ts:11:17)
+          at Array.map (<anonymous>)
+
+PASS src/models/normalize.test.ts
+  ● Console
+
+    console.error
+      [mobx] Encountered an uncaught exception that was thrown by a reaction or observer component, in: 'Reaction[Reaction@2]' TypeError: Cannot read properties of undefined (reading 'now')
+          at VizSpecStore.get currentVis (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:155:44)
+          at call (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/derivation.ts:183:24)
+          at ComputedValue.trackDerivedFunction [as computeValue_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:250:19)
+          at ComputedValue.computeValue_ [as trackAndCompute] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:218:31)
+          at ComputedValue.trackAndCompute [as get] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:183:26)
+          at ObservableObjectAdministration.get [as getObservablePropValue_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/types/observableobject.ts:122:39)
+          at VizSpecStore.getObservablePropValue_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/types/observableobject.ts:706:36)
+          at VizSpecStore.document.dispatchEvent.CustomEvent.detail.spec (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:131:24)
+          at expression (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:169:62)
+          at func (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:155:16)
+          at allowStateChanges (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:169:31)
+          at call (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/derivation.ts:183:24)
+          at Reaction.trackDerivedFunction [as track] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:137:24)
+          at track (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:168:11)
+          at Reaction.reactionRunner [as onInvalidate_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+          at Reaction.onInvalidate_ [as runReaction_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+          at runReaction_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+          at f (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+          at reactionScheduler (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+          at Reaction.runReactions [as schedule_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:81:13)
+          at schedule_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:186:11)
+          at new VizSpecStore (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:130:34)
+          at Object.<anonymous> (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/models/normalize.test.ts:233:23)
+          at Promise.then.completed (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:444:34)
+
+      128 |             tableCollapsedHeaderMap: observable.ref,
+      129 |         });
+    > 130 |         const disposer = reaction(
+          |                                  ^
+      131 |             () => this.currentVis,
+      132 |             () => {
+      133 |                 document.dispatchEvent(
+
+      at Reaction.error [as reportExceptionInDerivation_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:170:21)
+      at Reaction.reportExceptionInDerivation_ [as track] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:146:18)
+      at track (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:168:11)
+      at Reaction.reactionRunner [as onInvalidate_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+      at Reaction.onInvalidate_ [as runReaction_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+      at runReaction_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+      at f (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+      at reactionScheduler (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+      at Reaction.runReactions [as schedule_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:81:13)
+      at schedule_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:186:11)
+      at new VizSpecStore (src/store/visualSpecStore.ts:130:34)
+      at Object.<anonymous> (src/models/normalize.test.ts:233:23)
+
+    console.error
+      [mobx] Encountered an uncaught exception that was thrown by a reaction or observer component, in: 'Reaction[Reaction@2]' ReferenceError: document is not defined
+          at /Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:133:17
+          at apply (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:69:19)
+          at executeAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+          at effectAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:180:13)
+          at Reaction.reactionRunner [as onInvalidate_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+          at Reaction.onInvalidate_ [as runReaction_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+          at runReaction_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+          at f (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+          at reactionScheduler (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+          at runReactions (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/observable.ts:118:9)
+          at endBatch (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:142:5)
+          at _endAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:74:9)
+          at VizSpecStore.executeAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+          at Object.<anonymous> (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/models/normalize.test.ts:234:15)
+          at Promise.then.completed (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:444:34)
+
+      232 |     test('store import/export round trip does not persist the stamp', () => {
+      233 |         const store = new VizSpecStore(META, { empty: true });
+    > 234 |         store.importCode([stamped]);
+          |               ^
+      235 |         const exported = store.exportCode();
+      236 |         expect(exported).toHaveLength(1);
+      237 |         expect('$schema' in exported[0]).toBe(false);
+
+      at Reaction.error [as reportExceptionInDerivation_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:170:21)
+      at Reaction.reportExceptionInDerivation_ [as runReaction_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:111:26)
+      at runReaction_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+      at f (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+      at reactionScheduler (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+      at runReactions (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/observable.ts:118:9)
+      at endBatch (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:142:5)
+      at _endAction (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:74:9)
+      at VizSpecStore.executeAction (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+      at Object.<anonymous> (src/models/normalize.test.ts:234:15)
+
+    console.error
+      [mobx] Encountered an uncaught exception that was thrown by a reaction or observer component, in: 'Reaction[Reaction@6]' ReferenceError: document is not defined
+          at /Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:133:17
+          at apply (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:69:19)
+          at executeAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+          at effectAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:180:13)
+          at Reaction.reactionRunner [as onInvalidate_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+          at Reaction.onInvalidate_ [as runReaction_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+          at runReaction_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+          at f (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+          at reactionScheduler (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+          at runReactions (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/observable.ts:118:9)
+          at endBatch (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:142:5)
+          at _endAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:74:9)
+          at VizSpecStore.executeAction (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+          at Object.<anonymous> (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/models/normalize.test.ts:250:15)
+          at Promise.then.completed (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:444:34)
+
+      248 |     test('applyChart does not leak the stamp into the undoable timeline or history exports', () => {
+      249 |         const store = new VizSpecStore(META);
+    > 250 |         store.applyChart(stamped);
+          |               ^
+      251 |         expect(JSON.stringify(store.exportCurrentChart())).not.toContain('$schema');
+      252 |         expect(JSON.stringify(store.exportAllCharts())).not.toContain('$schema');
+      253 |         expect(JSON.stringify(store.exportCode())).not.toContain('$schema');
+
+      at Reaction.error [as reportExceptionInDerivation_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:170:21)
+      at Reaction.reportExceptionInDerivation_ [as runReaction_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:111:26)
+      at runReaction_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+      at f (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+      at reactionScheduler (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+      at runReactions (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/observable.ts:118:9)
+      at endBatch (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:142:5)
+      at _endAction (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:74:9)
+      at VizSpecStore.executeAction (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:50:16)
+      at Object.<anonymous> (src/models/normalize.test.ts:250:15)
+
+PASS src/lib/temporalDisplay.test.ts
+PASS src/lib/explain/engine.test.ts
+PASS src/lib/explain/golden.test.ts
+PASS src/lib/explain/goldenModel.test.ts
+PASS src/components/dataTable/pagination.test.ts
+PASS src/lib/autoViz/autoViz.test.ts
+PASS src/components/pivotTable/core.test.ts
+PASS src/models/nativeCanonical.test.ts
+PASS src/store/visualSpecStore.test.ts
+  ● Console
+
+    console.error
+      [mobx] Encountered an uncaught exception that was thrown by a reaction or observer component, in: 'Reaction[Reaction@16]' TypeError: Cannot read properties of undefined (reading 'now')
+          at VizSpecStore.get currentVis (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:155:44)
+          at call (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/derivation.ts:183:24)
+          at ComputedValue.trackDerivedFunction [as computeValue_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:250:19)
+          at ComputedValue.computeValue_ [as trackAndCompute] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:218:31)
+          at ComputedValue.trackAndCompute [as get] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/computedvalue.ts:183:26)
+          at ObservableObjectAdministration.get [as getObservablePropValue_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/types/observableobject.ts:122:39)
+          at VizSpecStore.getObservablePropValue_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/types/observableobject.ts:706:36)
+          at VizSpecStore.document.dispatchEvent.CustomEvent.detail.spec (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:131:24)
+          at expression (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:169:62)
+          at func (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/action.ts:155:16)
+          at allowStateChanges (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:169:31)
+          at call (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/derivation.ts:183:24)
+          at Reaction.trackDerivedFunction [as track] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:137:24)
+          at track (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:168:11)
+          at Reaction.reactionRunner [as onInvalidate_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+          at Reaction.onInvalidate_ [as runReaction_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+          at runReaction_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+          at f (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+          at reactionScheduler (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+          at Reaction.runReactions [as schedule_] (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:81:13)
+          at schedule_ (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:186:11)
+          at new VizSpecStore (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.ts:130:34)
+          at Object.<anonymous> (/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker/packages/graphic-walker/src/store/visualSpecStore.test.ts:162:23)
+          at Promise.then.completed (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/observedobserver/Documents/GitHub/graphic-walker/node_modules/jest-runner/build/runTest.js:444:34)
+
+      128 |             tableCollapsedHeaderMap: observable.ref,
+      129 |         });
+    > 130 |         const disposer = reaction(
+          |                                  ^
+      131 |             () => this.currentVis,
+      132 |             () => {
+      133 |                 document.dispatchEvent(
+
+      at Reaction.error [as reportExceptionInDerivation_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:170:21)
+      at Reaction.reportExceptionInDerivation_ [as track] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:146:18)
+      at track (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:168:11)
+      at Reaction.reactionRunner [as onInvalidate_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:152:17)
+      at Reaction.onInvalidate_ [as runReaction_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:102:26)
+      at runReaction_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:265:35)
+      at f (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:235:56)
+      at reactionScheduler (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:242:5)
+      at Reaction.runReactions [as schedule_] (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/core/reaction.ts:81:13)
+      at schedule_ (../../../../../../Documents/GitHub/graphic-walker/node_modules/mobx/src/api/autorun.ts:186:11)
+      at new VizSpecStore (src/store/visualSpecStore.ts:130:34)
+      at Object.<anonymous> (src/store/visualSpecStore.test.ts:162:23)
+
+PASS src/store/index.test.tsx
+PASS src/models/vlImport.test.ts
+PASS src/lib/op/dateTime.test.ts
+PASS src/utils/vegaApiExport.test.ts
+PASS src/lib/explain/specCompile.test.ts
+PASS src/models/withHistory.test.ts
+PASS src/lib/native/legacyCapabilities.test.ts
+PASS src/utils/workflowValidate.test.ts
+PASS tests/specCompat.test.ts
+PASS src/utils/computationOwnership.test.ts
+PASS src/models/chat.test.ts
+PASS src/lib/explain/stats/ridge.test.ts
+PASS src/fields/filterField/array.test.ts
+PASS src/lib/op/offset.test.ts
+PASS src/lib/explain/planSnapshot.test.ts
+PASS src/models/replaceChart.test.ts
+PASS src/lib/explain/stats/divergence.test.ts
+PASS src/utils/media.test.ts
+PASS src/components/pivotTable/utils.test.ts
+PASS src/components/dataTable/headers.test.ts
+PASS src/workers/buildPivotTable.test.ts
+PASS src/visualSettings/utils.test.ts
+PASS src/dataSource/syncSpecs.test.ts
+PASS src/vis/spec/stack.test.ts
+PASS src/components/pivotTable/public.types.test.ts
+PASS src/lib/explain/stats/quantile.test.ts
+PASS src/lib/explain/format.test.ts
+PASS src/dataSourceProvider/memory.test.ts
+
+Test Suites: 42 passed, 42 total
+Tests:       473 passed, 473 total
+Snapshots:   4 passed, 4 total
+Time:        6.874 s, estimated 9 s
+Ran all test suites.

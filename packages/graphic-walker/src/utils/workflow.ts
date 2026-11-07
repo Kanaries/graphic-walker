@@ -349,7 +349,7 @@ export const addFilterForQuery = (query: IDataQueryPayload, filters: IVisFilter[
 export const chartToWorkflow = specToWorkflow;
 export function specToWorkflow(chart: IVisSpec | IChart): IDataQueryPayload {
     const parsedChart = parseChart(chart);
-    const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto').flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
+    const viewEncodingFields = viewEncodingKeys(parsedChart.config?.geoms?.[0] ?? 'auto', parsedChart.layout?.renderer).flatMap<IViewField>((k) => parsedChart.encodings?.[k] ?? []);
     const rows = parsedChart.encodings?.rows ?? [];
     const columns = parsedChart.encodings?.columns ?? [];
     const limit = parsedChart.config?.limit ?? -1;

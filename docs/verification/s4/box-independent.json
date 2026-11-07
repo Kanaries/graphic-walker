@@ -1,0 +1,728 @@
+{
+  "filtered": {
+    "rows": 12055,
+    "query": {
+      "workflow": [
+        {
+          "type": "filter",
+          "filters": [
+            {
+              "fid": "Region",
+              "rule": {
+                "type": "one of",
+                "value": [
+                  "East"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "view",
+          "query": [
+            {
+              "op": "raw",
+              "fields": [
+                "Region",
+                "Category",
+                "Value"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "lastBulk": [
+      {
+        "Region": "East",
+        "Category": "Bulk",
+        "Value": 100,
+        "__datumKey": "e12048"
+      },
+      {
+        "Region": "East",
+        "Category": "Bulk",
+        "Value": 100,
+        "__datumKey": "e12049"
+      }
+    ],
+    "categories": [
+      "Bulk",
+      "Empty",
+      "Small"
+    ],
+    "svgText": "BulkEmptySmall050100Value / CategoryEastCategoryWorksheet"
+  },
+  "small": {
+    "texts": [
+      "Empty",
+      "Small",
+      "0",
+      "50",
+      "100",
+      "Value / Category",
+      "East",
+      "Category",
+      "Worksheet"
+    ],
+    "commands": [
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:box",
+        "tag": "rect",
+        "fill": "#2563eb",
+        "stroke": "none",
+        "bounds": {
+          "x": 274.6000061035156,
+          "y": 212.1199951171875,
+          "w": 64.80001831054688,
+          "h": 32.6400146484375
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:q1-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 274.6000061035156,
+          "y": 244.75999450683594,
+          "w": 64.79998779296875,
+          "h": 0
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:q3-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 274.6000061035156,
+          "y": 212.1199951171875,
+          "w": 64.79998779296875,
+          "h": 0
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:left-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 274.6000061035156,
+          "y": 212.1199951171875,
+          "w": 0,
+          "h": 32.63999938964844
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:right-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 339.3999938964844,
+          "y": 212.1199951171875,
+          "w": 0,
+          "h": 32.63999938964844
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:median",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 274.6000061035156,
+          "y": 243.8000030517578,
+          "w": 64.79998779296875,
+          "h": 0
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:lower-whisker",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 307,
+          "y": 244.75999450683594,
+          "w": 0,
+          "h": 0.9600067138671875
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:upper-whisker",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 307,
+          "y": 212.1199951171875,
+          "w": 0,
+          "h": 31.040008544921875
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:lower-cap",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 290.79998779296875,
+          "y": 245.72000122070312,
+          "w": 32.4000244140625,
+          "h": 0
+        }
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:upper-cap",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#2563eb",
+        "bounds": {
+          "x": 290.79998779296875,
+          "y": 243.16000366210938,
+          "w": 32.4000244140625,
+          "h": 0
+        }
+      }
+    ],
+    "event": {
+      "renderer": "native",
+      "inputRevision": 3,
+      "frameId": 4,
+      "version": {
+        "sourceId": "gw:3:_r_0_",
+        "snapshotId": "3",
+        "presentationId": "3:gw-native:3"
+      },
+      "source": "pointer",
+      "operation": "replace",
+      "targets": [
+        {
+          "kind": "segment",
+          "markId": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]",
+          "paneKey": "[\"pane\",\"[\\\"leaf\\\",\\\"row\\\",[[\\\"gw-field:[\\\\\\\"Region\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"East\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"row\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\",\"[\\\"leaf\\\",\\\"column\\\",[],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"column\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\"]",
+          "slotId": "[\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\",\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Category\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\"]\"]",
+          "datumKeys": [
+            "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+            "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+            "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+            "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+            "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]"
+          ],
+          "seriesKey": "[\"pane-series\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"series\\\",[]]\"]",
+          "hitPoint": {
+            "x": 295,
+            "y": 171
+          },
+          "rowKey": "[\"leaf\",\"row\",[[\"gw-field:[\\\"Region\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"East\"]]],\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]",
+          "columnKey": "[\"leaf\",\"column\",[],\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Category\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\"]\"]",
+          "values": [
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "East",
+              "raw": "East",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 1,
+              "raw": 1,
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Small",
+              "raw": "Small",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+              "field": {
+                "fid": "Category",
+                "name": "Category",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "East",
+              "raw": "East",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 1.75,
+              "raw": 1.75,
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Small",
+              "raw": "Small",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+              "field": {
+                "fid": "Category",
+                "name": "Category",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "East",
+              "raw": "East",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 2.5,
+              "raw": 2.5,
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Small",
+              "raw": "Small",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+              "field": {
+                "fid": "Category",
+                "name": "Category",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "East",
+              "raw": "East",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 27.25,
+              "raw": 27.25,
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Small",
+              "raw": "Small",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+              "field": {
+                "fid": "Category",
+                "name": "Category",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "East",
+              "raw": "East",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 3,
+              "raw": 3,
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Small",
+              "raw": "Small",
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+              "field": {
+                "fid": "Category",
+                "name": "Category",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            }
+          ],
+          "endpoints": [
+            {
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "East",
+                  "raw": "East",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 1,
+                  "raw": 1,
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Small",
+                  "raw": "Small",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"lower\"]",
+                  "field": {
+                    "fid": "Category",
+                    "name": "Category",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "East",
+                  "raw": "East",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 1.75,
+                  "raw": 1.75,
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Small",
+                  "raw": "Small",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q1\"]",
+                  "field": {
+                    "fid": "Category",
+                    "name": "Category",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "East",
+                  "raw": "East",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 2.5,
+                  "raw": 2.5,
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Small",
+                  "raw": "Small",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"median\"]",
+                  "field": {
+                    "fid": "Category",
+                    "name": "Category",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "East",
+                  "raw": "East",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 27.25,
+                  "raw": 27.25,
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Small",
+                  "raw": "Small",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"q3\"]",
+                  "field": {
+                    "fid": "Category",
+                    "name": "Category",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "East",
+                  "raw": "East",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 3,
+                  "raw": 3,
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Category\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Small",
+                  "raw": "Small",
+                  "datumKey": "[\"gw-boxplot-summary\",\"gw:3:_r_0_\",\"[[\\\"Category\\\",[\\\"string\\\",\\\"Small\\\"]],[\\\"Region\\\",[\\\"string\\\",\\\"East\\\"]]]\",\"Value\",\"upper\"]",
+                  "field": {
+                    "fid": "Category",
+                    "name": "Category",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "interaction": {
+        "clientX": 307,
+        "clientY": 228
+      }
+    },
+    "tooltip": "Value: lower=1, Q1=1.75, median=2.5, Q3=27.25, upper=3",
+    "after": [
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:box",
+        "tag": "rect",
+        "fill": "#ea580c",
+        "stroke": "none"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:q1-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:q3-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:left-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:right-edge",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:median",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:lower-whisker",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:upper-whisker",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:lower-cap",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      },
+      {
+        "id": "[\"boxplot\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Category\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"[[\\\\\\\"Category\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Small\\\\\\\"]],[\\\\\\\"Region\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"East\\\\\\\"]]]\\\",\\\"Value\\\"]\"]:upper-cap",
+        "tag": "line",
+        "fill": null,
+        "stroke": "#ea580c"
+      }
+    ],
+    "selectedValues": [
+      1,
+      1.75,
+      2.5,
+      27.25,
+      3
+    ]
+  }
+}

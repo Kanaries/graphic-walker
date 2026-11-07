@@ -1,43 +1,21 @@
 import { bindingValueLabel, axisLeafKey, decodeAxisLeafKey, headerKey, paneKey, pathKey, sameVersion, toTypedValue, typedValueKey, typedValueLabel } from './keys';
-import { barIsHorizontal, bindingTypedValue, domainKeyFor, domainStorageKey, positionTypeFor } from './domains';
+import { valueAxisIsHorizontal, isStacked, bindingTypedValue, domainKeyFor, domainStorageKey, positionTypeFor } from './domains';
 import { seriesIdentityFor, seriesKeyFor } from './series';
 import type {
     Axis, AxisLeaf, AxisPlan, Diagnostic, DisplayDomain, HeaderSpan, MemberPath, PaneData, PaneRecord,
     PreparedDataSourceOptions, PreparedRecord, RankRange, ReadVersion, RenderDataSource, ResultBinding, TypedValue, DomainKey, SeriesDomain,
 } from './types';
 
-/** Contract failures are explicit so hosts can show a capability or data diagnostic. */
-export class PreparedDataError extends Error {
-    readonly diagnostic: Diagnostic;
-    readonly code: string;
-    constructor(code: string, message: string, fieldRef?: string) {
-        super(message);
-        this.name = 'PreparedDataError';
-        this.code = code;
-        this.diagnostic = { code, message, fieldRef, severity: 'error', recoverable: false };
-    }
-}
+import { PreparedDataError } from './errors';
+import { advanceBarStack, computeStackEndpoints, type BarStackState } from './stack';
+export { PreparedDataError } from './errors';
+export { advanceBarStack, type BarStackState } from './stack';
 
 const MAX_AXIS_WINDOW = 100_000;
 const MAX_PANE_WINDOWS = 64;
 const MAX_UINT32 = 0xffffffff;
 // The complete adapter is bounded independently of the much larger logical grid.
 const MAX_INDEX_ENTRIES = 16_000_000;
-
-export type BarStackState = Map<string, { positive: number; negative: number }>;
-
-/** Pure rendering endpoints for supplied values. Domain preparation and scene use this rule. */
-export function advanceBarStack(stacks: BarStackState, position: unknown, value: number): { start: number; end: number } {
-    const key = position === undefined ? '["default-position"]' : typedValueKey(toTypedValue(position, Array.isArray(position) ? 'interval' : undefined));
-    const state = stacks.get(key) ?? { positive: 0, negative: 0 };
-    const start = value >= 0 ? state.positive : state.negative;
-    const end = start + value;
-    if (!Number.isFinite(end)) fail('invalid-value', 'Stacked rendering endpoints must remain finite.');
-    if (value >= 0) state.positive = end;
-    else state.negative = end;
-    stacks.set(key, state);
-    return { start, end };
-}
 
 function fail(code: string, message: string, fieldRef?: string): never {
     throw new PreparedDataError(code, message, fieldRef);
@@ -292,7 +270,8 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
     const recordSeries = new Uint32Array(records.length), seenSeries = new Map<string, number>();
     const seriesColor = plan.channels?.color, seriesShape = plan.channels?.shape;
     const hasSeriesFields = !!plan.channels?.details?.length
-        || !!seriesColor && 'fieldRef' in seriesColor && positionTypeFor(bindings.get(seriesColor.fieldRef)!) === 'band'
+        || !!seriesColor && 'fieldRef' in seriesColor && (plan.mark === 'boxplot' || positionTypeFor(bindings.get(seriesColor.fieldRef)!) === 'band')
+        || plan.mark === 'boxplot' && !!plan.channels?.opacity && 'fieldRef' in plan.channels.opacity
         || plan.mark === 'point' && !!seriesShape && 'fieldRef' in seriesShape;
     const emptySeries = hasSeriesFields ? undefined : seriesIdentityFor(plan, {});
     const seriesInputOrder = options.getOrdinal ? [...visibleRecordIndices].sort((a, b) => paneRecords[a].ordinal - paneRecords[b].ordinal) : visibleRecordIndices;
@@ -373,12 +352,12 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
         }
     }
     const stackedFields = new Set<string>();
-    if (plan.mark === 'bar' && plan.stack === 'zero') {
+    if (isStacked(plan)) {
         for (const rowRef of plan.rows.positions.length ? plan.rows.positions : [undefined]) {
             for (const columnRef of plan.columns.positions.length ? plan.columns.positions : [undefined]) {
                 const xBinding = bindings.get(columnRef ?? '');
                 const yBinding = bindings.get(rowRef ?? '');
-                const horizontal = barIsHorizontal(plan, yBinding);
+                const horizontal = valueAxisIsHorizontal(plan, yBinding, xBinding);
                 const valueBinding = horizontal ? xBinding : yBinding;
                 if (valueBinding) stackedFields.add(valueBinding.fieldRef);
             }
@@ -390,16 +369,31 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
         stackOrder.sort((a, b) => rows[a] - rows[b] || columns[a] - columns[b]
             || recordSeries[ordinals[a]] - recordSeries[ordinals[b]]
             || paneRecords[ordinals[a]].ordinal - paneRecords[ordinals[b]].ordinal);
+        let paneEndpoints: ReadonlyMap<string, { start: number; end: number }> | undefined;
         for (let index = 0; index < stackOrder.length; index++) {
             const from = stackOrder[index];
             const rowRank = rows[from];
             const columnRank = columns[from];
-            if (rowRank !== previousRow || columnRank !== previousColumn) stacks = new Map();
+            if (rowRank !== previousRow || columnRank !== previousColumn) {
+                stacks = new Map();
+                if (plan.stack !== 'zero') {
+                    const x = bindings.get(columnIndex.leaves[columnRank].positionRef ?? '');
+                    const y = bindings.get(rowIndex.leaves[rowRank].positionRef ?? '');
+                    const horizontal = valueAxisIsHorizontal(plan, y, x);
+                    const value = horizontal ? x : y;
+                    const pane: PaneRecord[] = [];
+                    for (let cursor = index; cursor < stackOrder.length && rows[stackOrder[cursor]] === rowRank && columns[stackOrder[cursor]] === columnRank; cursor++) {
+                        const ordinal = ordinals[stackOrder[cursor]];
+                        pane.push({ ...paneRecords[ordinal], seriesOrdinal: recordSeries[ordinal] });
+                    }
+                    paneEndpoints = value ? computeStackEndpoints(pane, value, horizontal ? y : x, plan.stack as 'normalize' | 'center') : undefined;
+                }
+            }
             previousRow = rowRank;
             previousColumn = columnRank;
             const xBinding = bindings.get(columnIndex.leaves[columnRank].positionRef ?? '');
             const yBinding = bindings.get(rowIndex.leaves[rowRank].positionRef ?? '');
-            const horizontal = barIsHorizontal(plan, yBinding);
+            const horizontal = valueAxisIsHorizontal(plan, yBinding, xBinding);
             const valueBinding = horizontal ? xBinding : yBinding;
             const positionBinding = horizontal ? yBinding : xBinding;
             if (!valueBinding) continue;
@@ -408,7 +402,9 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
             const position = positionBinding ? valueFor(record, positionBinding) : undefined;
             if (value === null || position === null && positionBinding && positionTypeFor(positionBinding) !== 'band') continue;
             if (typeof value !== 'number' || !Number.isFinite(value)) fail('invalid-value', 'Bar values must be finite prepared numbers or null.', valueBinding.fieldRef);
-            const { start, end } = advanceBarStack(stacks, position, value);
+            const endpoint = plan.stack === 'zero' ? advanceBarStack(stacks, position, value) : paneEndpoints?.get(paneRecords[ordinals[from]].datumKey);
+            if (!endpoint) continue;
+            const { start, end } = endpoint;
             const extent = stackedExtents.get(valueBinding.fieldRef) ?? { minimum: 0, maximum: 0 };
             extent.minimum = Math.min(extent.minimum, start, end);
             extent.maximum = Math.max(extent.maximum, start, end);
