@@ -6,6 +6,7 @@ import { createNativeScenario, type NativeScenario } from '../../graphic-walker/
 import type { NativeWorksheetLayout } from '../../graphic-walker/src/lib/native/presentation';
 import { seriesIdentityFor, seriesKeyFor } from '../src/core/series';
 import { createControlledDemo } from './controlled';
+import { createPagedDemo } from './paged';
 const fixture = createNestedChartFixture(),
     adapted = adaptChartToRenderPlan(fixture.chart, { columns: fixture.columns });
 if (!adapted.plan) throw new Error(JSON.stringify(adapted.diagnostics));
@@ -19,7 +20,11 @@ const normal = createPreparedDataSource({
 });
 let requests = 0;
 function hugeSource(plan: RenderPlan): RenderDataSource {
-    const version: ReadVersion = { sourceId: 'programmatic-scroll-fixture', snapshotId: '1', presentationId: '1' };
+    const version: ReadVersion = {
+        sourceId: 'programmatic-scroll-fixture',
+        snapshotId: '1',
+        presentationId: '1',
+    };
     const rowCount = 1_000_000,
         colCount = 4;
     const makeLeaf = (axis: 'row' | 'column', rank: number): AxisLeaf => {
@@ -27,10 +32,21 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
         const path =
             axis === 'row'
                 ? [
-                      { fieldRef: plan.rows.facets[0], value: toTypedValue(`Group ${Math.floor(rank / 100)}`) },
-                      { fieldRef: plan.rows.facets[1], value: toTypedValue(`Item ${rank}`) },
+                      {
+                          fieldRef: plan.rows.facets[0],
+                          value: toTypedValue(`Group ${Math.floor(rank / 100)}`),
+                      },
+                      {
+                          fieldRef: plan.rows.facets[1],
+                          value: toTypedValue(`Item ${rank}`),
+                      },
                   ]
-                : [{ fieldRef: plan.columns.facets[0], value: toTypedValue(rank < 2 ? '2025' : '2026') }];
+                : [
+                      {
+                          fieldRef: plan.columns.facets[0],
+                          value: toTypedValue(rank < 2 ? '2025' : '2026'),
+                      },
+                  ];
         return {
             rank,
             path,
@@ -107,7 +123,13 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
                     });
                 }
             }
-            return { version, axis: req.axis, range: req.range, leaves, ancestors: [...spans.values()] };
+            return {
+                version,
+                axis: req.axis,
+                range: req.range,
+                leaves,
+                ancestors: [...spans.values()],
+            };
         },
         async readPaneData(req, signal) {
             check(req.version, signal);
@@ -138,8 +160,15 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
                             columnPath: column.path,
                             complete: true,
                             seriesCount: 1,
-                            records: [{ datumKey: `record:${r}:${Math.floor(c / 2)}`, ordinal: r, values,
-                                seriesKey: seriesKeyFor(paneKey(row.key, column.key), seriesIdentityFor(plan, values)), seriesOrdinal: 0 }],
+                            records: [
+                                {
+                                    datumKey: `record:${r}:${Math.floor(c / 2)}`,
+                                    ordinal: r,
+                                    values,
+                                    seriesKey: seriesKeyFor(paneKey(row.key, column.key), seriesIdentityFor(plan, values)),
+                                    seriesOrdinal: 0,
+                                },
+                            ],
                         });
                     }
             return { version, panes, coveredWindows: req.windows };
@@ -150,7 +179,14 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
             return {
                 ...result,
                 version,
-                ...(result.series ? { series: { ...result.series, domainId: JSON.stringify(['series-domain', version, plan.domainPlanKey]) } } : {}),
+                ...(result.series
+                    ? {
+                          series: {
+                              ...result.series,
+                              domainId: JSON.stringify(['series-domain', version, plan.domainPlanKey]),
+                          },
+                      }
+                    : {}),
                 domains: Object.fromEntries(
                     Object.entries(result.domains).map(([ref, domain]) => {
                         const column = plan.bindings.find((b) => b.fieldRef === ref)!.columnKey;
@@ -191,38 +227,89 @@ function hugeSource(plan: RenderPlan): RenderDataSource {
 const huge = hugeSource(plan),
     backend = document.querySelector<HTMLSelectElement>('#backend')!,
     example = document.querySelector<HTMLSelectElement>('#example')!;
-const view = createWorksheet(document.querySelector<HTMLElement>('#chart')!, { plan, source: normal });
+const view = createWorksheet(document.querySelector<HTMLElement>('#chart')!, {
+    plan,
+    source: normal,
+});
 const scope = document.querySelector<HTMLSelectElement>('#scope')!;
 const controlled = createControlledDemo();
+let paged: ReturnType<typeof createPagedDemo> | undefined;
+let exportController: AbortController | undefined;
+let lastExportManifest: unknown;
+const exportUrls: string[] = [];
+
 let active: WorksheetInput = { plan, source: normal };
 function chooseScenario() {
     scope.disabled = example.value !== 'scope';
+    document.querySelector<HTMLElement>('#release-page')!.hidden = example.value !== 'paged';
+    if (example.value === 'paged' || example.value === 'preview') {
+        const options = {
+            plan,
+            records: fixture.records,
+            getDatumKey: fixture.getDatumKey,
+            version: {
+                sourceId: `demo:${example.value}`,
+                snapshotId: '1',
+                presentationId: '1',
+            },
+        };
+        paged = example.value === 'paged' ? createPagedDemo(options) : undefined;
+        active = {
+            plan,
+            source: paged?.source ?? createPreparedDataSource({ ...options, complete: false }),
+        };
+        document.querySelector('#description')!.textContent = paged
+            ? 'The first page contains part of one pane. Release the remaining records to draw the complete chart.'
+            : 'The host marks this input as incomplete. Missing domains and records stay visibly unknown.';
+        return;
+    }
+
     document.querySelector<HTMLElement>('#controlled-status')!.hidden = example.value !== 'controlled';
     if (example.value === 'controlled') {
         active = controlled.getInput();
         document.querySelector('#description')!.textContent = controlled.description;
-        document.querySelector('#controlled-status')!.textContent = 'Host ready. Collapse or sort a header to send a request; confirmation takes 550 ms.';
+        document.querySelector('#controlled-status')!.textContent =
+            'Host ready. Collapse or sort a header to send a request; confirmation takes 550 ms.';
         return;
     }
     if (example.value === 'nested' || example.value === 'huge') {
         active = { plan, source: example.value === 'huge' ? huge : normal };
-        document.querySelector('#description')!.textContent = example.value === 'huge'
-            ? 'This random-access source supplies real records for requested windows across one million logical rows.'
-            : createNativeScenario('nested').description;
+        document.querySelector('#description')!.textContent =
+            example.value === 'huge'
+                ? 'This random-access source supplies real records for requested windows across one million logical rows.'
+                : createNativeScenario('nested').description;
         return;
     }
     const selected = createNativeScenario(example.value as NativeScenario);
     if (example.value === 'scope') {
         const layout = selected.chart.layout as typeof selected.chart.layout & NativeWorksheetLayout;
-        layout.worksheet = { ...layout.worksheet, scaleScopes: { y: scope.value === 'prefix'
-            ? { mode: 'prefix', rowDepth: 1, columnDepth: 0 } : { mode: scope.value as 'shared' | 'pane' } } };
+        layout.worksheet = {
+            ...layout.worksheet,
+            scaleScopes: {
+                y: scope.value === 'prefix' ? { mode: 'prefix', rowDepth: 1, columnDepth: 0 } : { mode: scope.value as 'shared' | 'pane' },
+            },
+        };
     }
-    const adapted = adaptChartToRenderPlan(selected.chart, { columns: selected.columns, ...selected.presentation, records: selected.records });
-    if (!adapted.plan) throw new Error(adapted.diagnostics.map((diagnostic) => `${diagnostic.configRef}: ${diagnostic.message}`).join('\n'));
-    active = { plan: adapted.plan, source: createPreparedDataSource({
-        version: { sourceId: `scenario:${example.value}`, snapshotId: '1', presentationId: `scope:${scope.value}` },
-        plan: adapted.plan, records: selected.records, getDatumKey: selected.getDatumKey,
-    }) };
+    const adapted = adaptChartToRenderPlan(selected.chart, {
+        columns: selected.columns,
+        ...selected.presentation,
+        records: selected.records,
+    });
+    if (!adapted.plan)
+        throw new Error(adapted.diagnostics.map((diagnostic) => `${diagnostic.configRef}: ${diagnostic.message}`).join('\n'));
+    active = {
+        plan: adapted.plan,
+        source: createPreparedDataSource({
+            version: {
+                sourceId: `scenario:${example.value}`,
+                snapshotId: '1',
+                presentationId: `scope:${scope.value}`,
+            },
+            plan: adapted.plan,
+            records: selected.records,
+            getDatumKey: selected.getDatumKey,
+        }),
+    };
     document.querySelector('#description')!.textContent = selected.description;
 }
 function report() {
@@ -246,7 +333,8 @@ view.on('selectionChange', (e) => {
 });
 view.on('requestStateChange', (event) => {
     if (example.value !== 'controlled') return;
-    document.querySelector('#controlled-status')!.textContent = `${event.requestId}: ${event.status}${event.reason ? ` · ${event.reason}` : ''}`;
+    document.querySelector('#controlled-status')!.textContent =
+        `${event.requestId}: ${event.status}${event.reason ? ` · ${event.reason}` : ''}`;
 });
 const acceptControlledRequest = async (request: ControlledRequest) => {
     if (example.value !== 'controlled') {
@@ -255,50 +343,174 @@ const acceptControlledRequest = async (request: ControlledRequest) => {
     }
     const previous = active;
     try {
-        const acknowledged = await controlled.accept(request, () => example.value === 'controlled' && active === previous
-            && view.getViewState().requests.some((pending) => pending.requestId === request.requestId));
+        const acknowledged = await controlled.accept(
+            request,
+            () =>
+                example.value === 'controlled' &&
+                active === previous &&
+                view.getViewState().requests.some((pending) => pending.requestId === request.requestId),
+        );
         if (!acknowledged) return;
         active = controlled.getInput();
         document.querySelector('#error')!.textContent = '';
-        await view.update({ ...acknowledged, backend: backend.value as 'canvas' | 'svg' });
+        await view.update({
+            ...acknowledged,
+            backend: backend.value as 'canvas' | 'svg',
+        });
         report();
-    } catch (error) { document.querySelector('#error')!.textContent = String(error); }
+    } catch (error) {
+        document.querySelector('#error')!.textContent = String(error);
+    }
 };
 view.on('collapseRequest', acceptControlledRequest);
 view.on('sortRequest', acceptControlledRequest);
 const update = async () => {
     document.querySelector('#error')!.textContent = '';
-    await view.update({ ...active, backend: backend.value as 'canvas' | 'svg' });
+    await view.update({
+        ...active,
+        plan: {
+            ...active.plan,
+            layout: document.querySelector<HTMLInputElement>('#path-labels')!.checked
+                ? {
+                      ...active.plan.layout,
+                      headerLabelMode: 'path',
+                      rowHeaderWidth: 240,
+                      columnHeaderHeight: 100,
+                  }
+                : active.plan.layout,
+        },
+        backend: backend.value as 'canvas' | 'svg',
+    });
     report();
 };
 backend.addEventListener('change', update);
+document.querySelector('#path-labels')!.addEventListener('change', update);
+document.querySelector('#release-page')!.addEventListener('click', () => paged?.release());
 const changeExample = async () => {
-    try { chooseScenario(); await update(); view.scrollToPosition({ x: 0, y: 0 }); }
-    catch (error) { document.querySelector('#error')!.textContent = String(error); }
+    try {
+        chooseScenario();
+        await update();
+        view.scrollToPosition({ x: 0, y: 0 });
+    } catch (error) {
+        document.querySelector('#error')!.textContent = String(error);
+    }
 };
 example.addEventListener('change', changeExample);
 scope.addEventListener('change', changeExample);
 document.querySelector('#first')!.addEventListener('click', () => view.scrollToPosition({ x: 0, y: 0 }));
-document
-    .querySelector('#last')!
-    .addEventListener('click', () => view.scrollToPosition({ x: Number.MAX_SAFE_INTEGER, y: Number.MAX_SAFE_INTEGER }));
-document.querySelector('#export')!.addEventListener('click', async () => {
+document.querySelector('#last')!.addEventListener('click', () =>
+    view.scrollToPosition({
+        x: Number.MAX_SAFE_INTEGER,
+        y: Number.MAX_SAFE_INTEGER,
+    }),
+);
+function download(content: string, name: string, mime: string) {
+    const url = URL.createObjectURL(new Blob([content], { type: mime })),
+        link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+for (const [id, format] of [
+    ['export', 'svg'],
+    ['export-png', 'png'],
+] as const)
+    document.querySelector('#' + id)!.addEventListener('click', async () => {
+        try {
+            const page = await view.exportViewport({ format });
+            if (format === 'svg') download(page.content, page.metadata.name, 'image/svg+xml');
+            else {
+                const link = document.createElement('a');
+                link.href = page.content;
+                link.download = page.metadata.name;
+                link.click();
+            }
+            document.querySelector('#export-status')!.textContent = `Exported complete viewport ${format.toUpperCase()}.`;
+        } catch (error) {
+            document.querySelector('#error')!.textContent = String(error);
+        }
+    });
+document.querySelector('#cancel-export')!.addEventListener('click', () => exportController?.abort());
+document.querySelector('#export-range')!.addEventListener('click', async () => {
+    exportController?.abort();
+    exportController = new AbortController();
+    const controller = exportController,
+        button = document.querySelector<HTMLButtonElement>('#cancel-export')!;
+    const state = view.getViewState(),
+        files = document.querySelector('#export-files')!;
+    if (!state.manifest) return;
+    for (const url of exportUrls.splice(0)) URL.revokeObjectURL(url);
+    files.replaceChildren();
+    lastExportManifest = undefined;
+    button.disabled = false;
+    document.querySelector('#export-status')!.textContent = 'Exporting pages…';
     try {
-        const svg = await view.export({ format: 'svg' }),
-            url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })),
-            a = document.createElement('a');
-        a.href = url;
-        a.download = 'worksheet.svg';
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (e) {
-        document.querySelector('#error')!.textContent = String(e);
+        lastExportManifest = await view.exportRange(
+            {
+                range: {
+                    rows: { start: 0, end: Math.min(6, state.manifest.rowLeafCount) },
+                    columns: {
+                        start: 0,
+                        end: Math.min(4, state.manifest.columnLeafCount),
+                    },
+                },
+                mode: 'pages',
+                page: { rows: 2, columns: 2 },
+                async sink(page, signal) {
+                    const url = URL.createObjectURL(new Blob([page.content], { type: 'image/svg+xml' }));
+                    exportUrls.push(url);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = page.metadata.name;
+                    link.textContent = page.metadata.name;
+                    link.style.marginRight = '12px';
+                    files.appendChild(link);
+                    document.querySelector('#export-status')!.textContent = `Prepared page ${page.metadata.page}.`;
+                    await new Promise<void>((resolve, reject) => {
+                        const abort = () => {
+                            clearTimeout(timer);
+                            signal.removeEventListener('abort', abort);
+                            reject(signal.reason);
+                        };
+                        const timer = setTimeout(() => {
+                            signal.removeEventListener('abort', abort);
+                            resolve();
+                        }, 350);
+                        signal.addEventListener('abort', abort, { once: true });
+                        if (signal.aborted) abort();
+                    });
+                },
+            },
+            controller.signal,
+        );
+        document.querySelector('#export-status')!.textContent = 'Export complete. Download individual pages above.';
+    } catch (error) {
+        document.querySelector('#export-status')!.textContent = controller.signal.aborted
+            ? 'Export cancelled. Files already prepared remain available.'
+            : String(error);
+    } finally {
+        if (exportController === controller) button.disabled = true;
     }
 });
-(window as any).worksheetDemo = { view, plan, normal, huge, controlled, getRequests: () => requests,
+(window as any).worksheetDemo = {
+    view,
+    plan,
+    normal,
+    huge,
+    controlled,
+    getRequests: () => requests,
     getCurrent: () => active,
-    setExample: async (name: string) => { example.value = name; await changeExample(); },
-    setScope: async (name: string) => { scope.value = name; await changeExample(); },
+    getExportManifest: () => lastExportManifest,
+    getPagedRequests: () => paged?.getRequests(),
+    setExample: async (name: string) => {
+        example.value = name;
+        await changeExample();
+    },
+    setScope: async (name: string) => {
+        scope.value = name;
+        await changeExample();
+    },
 };
 chooseScenario();
 void view.ready.then(report);

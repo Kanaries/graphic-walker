@@ -1,6 +1,6 @@
 # 自有工作表渲染器实施记录
 
-日期：2026-11-06。S0 已提交为 `feat(worksheet): establish native rendering and window contracts`，提交标识 `b4e3be7c`。S1 已有本文列出的实现与回归证据，候选已通过提交门禁，126 项测试、严格类型检查、构建和 diff 检查通过，独立 Sol/Terra 最终结论均为 PASS。S2/S3 未完成，当前不具备首版发布条件。
+日期：2026-11-06。S0、S1 已按独立审核和浏览器门禁提交。S2 已完成窗口调度、共享预算、几何缓存与范围导出，202 项测试、独立 Sol 代码审核及 Terra 浏览器验收通过；原生 60 Hz 参考环境的规定样本已完成，真实 VoiceOver、跨后端几何、DPR、单位及非首位锚点补证均已保存。S3 在隔离工作树完成候选实现，尚未合入本阶段；首版全部接入以 S3 的最终报告为准。
 
 本记录追踪 [需求与验收](./worksheet-renderer-requirements.md)、[技术设计 v0.4](./worksheet-renderer-design.md) 和 [alignment v0.4](./worksheet-renderer-alignment.md)，不修改批准范围。IChart 继续是用户保存的权威格式；RenderPlan 是临时显示参数。现有 GW 计算 DSL/SQL 负责结果，库不新增聚合、过滤、表达式、查询规划或数据库 provider。
 
@@ -15,9 +15,9 @@ S0 的独立 [代码复审](./verification/s0/code-review.md) 与 [浏览器复�
 | 阶段 | 交付范围 | 当前状态与退出条件 |
 | --- | --- | --- |
 | S0 | IChart fixtures → 纯 adapter → 自有 Canvas/SVG 纵切；冻结头、版本供数、超长滚动 | 已按门禁提交；保留报告及 58 项测试证据 |
-| S1 | 五种 mark、布局与域、顺序/折叠请求、统一选择与事件 | 已实现下列能力，冻结候选的 126 项测试、类型检查和构建通过；独立代码与浏览器门禁均通过，可创建阶段commit |
-| S2 | 范围调度、字节预算、窗口缓存、分页导出、真实规模与生命周期基准 | 待完成；preview/补页和范围导出有实际语义，B2/B3/B5 有真实记录与可复现测量 |
-| S3 | GW renderer、正规化/输入、保存/历史、公开 ref/callback、局部兼容 | 待实施；同一 IChart 切换不丢语义，旧后端和导入导出回归通过 |
+| S1 | 五种 mark、布局与域、顺序/折叠请求、统一选择与事件 | 已按门禁提交为 `feat(worksheet): add marks, display scopes and controlled interaction`；126 项测试和独立报告保留 |
+| S2 | 范围调度、字节预算、窗口缓存、分页导出、真实规模与生命周期基准 | 202 项测试、独立 Sol 代码审核和 Terra 浏览器验收 PASS；原生 60 Hz 规定样本、VoiceOver、滚动及几何补证完成；本阶段提交 |
+| S3 | GW renderer、正规化/输入、保存/历史、公开 ref/callback、局部兼容 | 隔离工作树的最终 76 文件候选已通过代码审核、473 GW/226 core 测试、114 浏览器用例、类型/构建及 fresh tarball 消费；S3 尚未合入本阶段 |
 
 ## 当前代码与验证入口
 
@@ -38,7 +38,7 @@ S0 的独立 [代码复审](./verification/s0/code-review.md) 与 [浏览器复�
 | [受控 demo](../packages/worksheet-renderer/demo/controlled.ts) | 两轴 Region/City × Year/Quarter，host 550 ms 后确认；明确父常量，缺父值为空，展开恢复稳定 datum |
 | [S1 浏览器验收](./verification/s1/browser-acceptance.md) | 真实 Canvas/SVG 五 mark、tooltip/多选/框选、键盘、SVG 回收、三种scope和受控双轴更新通过；WebKit smoke通过 |
 
-冻结候选已通过包级严格 TypeScript 检查、126 项测试、构建和 diff 检查，demo bundle 也已验证。构建脚本同时生成根入口、React 入口、共享 ESM chunk 与声明，并规范声明的相对 ESM 引用。独立报告已核对这份冻结构建的内容指纹。外部strict NodeNext消费、原生ESM导入、根入口依赖检查和pack dry-run均通过；真实React宿主生命周期与正式发布仍未完成。
+S1 的 126 项测试与旧报告保留。S2 冻结候选已通过包级严格 TypeScript 检查、202 项测试、构建和 diff 检查，独立审核核对了 81 个源码文件的内容指纹。构建脚本同时生成根入口、React 入口、共享 ESM chunk 与声明，并规范声明的相对 ESM 引用。外部 strict NodeNext 消费、原生 ESM 导入、根入口依赖检查和 pack dry-run 均通过；S3 正式 GW 消费与 React 宿主生命周期有单独门禁。
 
 仓库根目录命令：
 
@@ -53,23 +53,23 @@ yarn workspace @kanaries/worksheet-renderer dev
 
 “已有”指实现及列明证据，不等于完整首版通过。含待办的行继续保持开放。
 
-| ID | S0/S1 已有证据 | 仍需完成 |
+| ID | 已有实现及证据 | 仍需完成 |
 | --- | --- | --- |
 | R01 独立子包 | 根 ESM、声明、独立 `/react`；外部NodeNext/ESM消费、依赖检查和pack dry-run通过；仅低层d3格式化 | 真实React宿主生命周期与正式发布消费复验 |
-| R02 自有双后端 | 五 mark 共用 Scene/clip/命中；最终浏览器多场景 commands/hits 相同；SVG keyed 更新与节点回收测试 | B5正式规模、更新与回收测量 |
-| R03 单 Canvas | 一个可见 Canvas 共画表头/轴/主体/高亮；位图随视口分配；内部测字使用独立非可见工具 | 固定 DPR/规模场景的持续验收及生命周期报告 |
-| R04 递归行列 | 两轴 3/5/10/20 层字段保留；实际路径、并列槽、空交叉；不等深父叶；U1=24 pane | 两轴同时全部深度的实际 UI 验收及产品字段操作全链路 |
+| R02 自有双后端 | 五 mark 共用 Scene/clip/命中；最终浏览器多场景 commands/hits 相同；SVG keyed 更新与节点回收测试 | S3产品挂载与切换复验；S2的B5正式规模、更新与50次回收已有记录 |
+| R03 单 Canvas | 一个可见 Canvas 共画表头/轴/主体/高亮；位图随视口分配；内部测字使用独立非可见工具 | S3产品生命周期复验；S2固定DPR2和50次销毁报告已完成 |
+| R04 递归行列 | 两轴 3/5/10/20 层字段保留；实际路径、并列槽、空交叉；不等深父叶；U1=24 pane | 产品字段操作全链路；S2独立B1两轴3/5/10/20层实际UI已完成 |
 | R05 字段与数据绑定 | binding/fieldRef、typed path、datum 与实际 joint series 身份；count/fold/expr/raw；完整系列序、跨快照选择重新验证 | GW 生产结果身份与全部真实结果映射复验 |
 | R06 统一布局 | 父跨度、冻结区、轴/图例、共同 clip、文本测量/截断、不等深可见叶、负值/null 规则 | 长文本/中英文及全部不等长层级固定用例的最终双后端验收；固定步长属于设计允许基线 |
 | R07 冻结与滚动 | 双轴滚动、首尾/按 key 跳转、align、resize/DPR 监听、focus、折叠 hidden 祖先锚点；locate 回应校验 | 折叠/重排锚点与焦点完整复验、触控板及正式跨浏览器矩阵 |
-| R08 有界虚拟化 | 稀疏索引、非空目录、窗口 Scene、8 窗口缓存、压缩轨道，无 R×C 对象矩阵 | 字节预算、相邻范围合并/去重、总并发/优先级/预取、B3 正式规模和内存 |
+| R08 有界虚拟化 | 稀疏索引、非空目录、窗口 Scene、共享字节 LRU、范围合并/去重、压缩轨道，无 R×C 对象矩阵 | 参考性能环境确认；调度/预算独立复审、真实百万记录B3及内存已完成 |
 | R09 基础图形 | bar/point/line/rect/text；分组柱、正负零点堆叠、给定区间端点、系列隔离与 null 断线 | B1全部固定输入与clip边界系统验收 |
 | R10 轴/范围/编码 | band/linear/time；shared/prefix/pane/fixed；zero/nice/reverse/range；颜色/size/opacity/shape/text、轴选项和图例；固定域无需统计 | 滚动完整域不变量和单位边界的最终验收，正式局部兼容 fixture 全覆盖 |
 | R11 顺序和折叠 | memberOrder、axisMembers/getRecordPath；双轴受控请求状态、明确父记录、缺父空槽；demo 异步 accepted/rejected 协议 | 生产宿主接入与规模下锚点/顺序更新验收 |
 | R12 统一交互 | tooltip、精确多选、框选、clear、受控 selection、焦点；line segment 两端点与 hitPoint；版本事件 microtask 通知 | 指定 tuple 的排序/滚动/后端往返最终验收及 GW 公开事件适配 |
 | R13 GW 配套接入 | 纯 IChart adapter、展示优先级和完整结果 callback/static scales；无库内 computation | 产品 renderer、过滤/折叠准备结果、字段操作、存储、历史和公开 ref/callback |
-| R14 导出/可访问性 | 视口 PNG/SVG、焦点代理、可访问名称/摘要、Visible data 每页最多100可见项、键盘折叠/排序请求 | PNG 完整浏览器验收，未访问范围/分页/取消，正式屏幕阅读器与 DOM 上界测量 |
-| R15 完整性/诊断 | 完整窗口校验、过期取消、候选失败保留旧画面/选择；requested/committed/displayed 状态区分；请求超时/拒绝/取代 | preview/部分加载/补页、统一资源/字节预算和导出取消；已通过的事务合同在S2调度中持续回归 |
+| R14 导出/可访问性 | 视口 PNG/SVG、未访问范围/分页/取消、焦点代理、Visible data 每页最多100项、AX按需数据和销毁后DOM归零；真实 VoiceOver 字幕已读取库内摘要、当前位置、数据值及展开状态，并用键盘进入数据表 | S3 产品组件的对应语义复验；指定 A14 读屏场景见独立补验报告 |
+| R15 完整性/诊断 | 完整窗口校验、过期取消、候选失败保留旧画面/选择；requested/committed/displayed 状态区分；请求超时/拒绝/取代 | S3查询/显示交接复验；S2冻结构建的preview/补页/共享调度/取消与生命周期已有证据 |
 | R16 现有 spec 入口 | IChart fixture 原样映射，无第二套持久化 spec；demo 切换 plan/source/backend | 生产 layout.renderer 接入，切换/保存/重载不丢字段，旧后端深层 unsupported |
 | R17 局部兼容 | 五 mark/channel/scale/axis/style 子集准入；theme→host→layout 优先级，格式与 callback 边界明确 | 既有正规化入口、原始 VL-like 输入诊断/保留策略和所有批准配置固定用例 |
 
@@ -88,9 +88,9 @@ yarn workspace @kanaries/worksheet-renderer dev
 | A09 | 过期/部分/错key响应拒绝；候选事务、取消兄弟读取、失败保留旧提交、readonly快照、微任务事件回归 | 已通过的事务合同在S2调度中持续回归，preview/加载/真实空组合与S2乱序调度全组合 |
 | A10 | 祖先跨窗口、冻结clip、首末位/resize、逻辑坐标往返；locate匹配请求，hidden祖先验证；focus接口 | 折叠后锚点与焦点任务复验，正式浏览器矩阵 |
 | A11 | line按pane/series隔离、null断线、显式sequenceOrder；cell rect/text定位；浏览器实际点线段返回端点 | 裁剪边界线段、全部固定输入与最终双后端复验 |
-| A12 | 视口SVG实际下载，PNG实现；错误/缺覆盖拒绝导出 | 未访问逻辑范围读取、分页无遗漏重复、PNG实测、取消及导出资源释放 |
+| A12 | 冻结 S2 实际下载 PNG/SVG；6×4 未访问范围导出为六个2×2页面，父头与范围保留；导出中切换UI仍固定旧snapshot，取消后队列与export分区归零 | S3 的四公开 ref 方法、AppRoot 及列表导出在最终构建复验 |
 | A13 | adapter不改IChart；React独立input封装和运行时受控状态 | 产品保存/重载/undo/redo/导入导出、所有旧路径回归 |
-| A14 | 焦点代理/箭头/H/Enter/S/Escape、摘要、Visible data按100项分页；实际键盘发出选择与请求 | 完整键盘折叠往返、屏幕阅读器位置/展开状态、语义DOM上界正式测量 |
+| A14 | 真实键盘、AX摘要/100项数据分页和焦点路径；VoiceOver 实际字幕确认库内摘要、可见行列起点、展开状态，以及键盘进入表格后的数据行 | 指定读屏场景通过；证据为真实字幕，不声称听到音频，系统设置已恢复 |
 | A15 | IChart字段/聚合标签/time/fold/count绑定，format/有效域/外部scale映射 | 同IChart三renderer对照、renderer/useSvg切换编辑无损和深层旧后端诊断 |
 | A16 | 当前五mark/channel/scale/axis/style子集有准入和unsupported测试；回调完整输入与windowed静态边界 | 原始输入transform/params/表达式的正规化诊断与完整批准兼容清单 |
 
@@ -99,23 +99,45 @@ yarn workspace @kanaries/worksheet-renderer dev
 | ID | 当前证据 | 仍需完成的正式基准 |
 | --- | --- | --- |
 | B1 显示语义集 | U1、五mark、格式/域/图例、typed身份、缺值、受控父记录与作用域fixture；已列出的真实浏览器场景 | A01–A16全部固定输入、长文本/单位和局部兼容的完整B1基准汇编 |
-| B2 日常工作表 | 窗口记录上限、单Canvas、有界窗口数、命中与交互回归 | 10,000非空pane、6层、最多100可见/overscan pane与20,000 marks，规定样本的提交/呈现/交互/生命周期报告 |
-| B3 高基数稀疏表 | 稀疏单测；曾以100,000×1,000轴、1,000,000真实记录运行单次Node索引探索，见下文 | 正式6层不均匀结构，索引时间/峰值内存/首帧/随机跳转/热滚动及字节预算报告 |
-| B4 超长坐标 | 程序化source为1,000,000行×4列，逻辑高180,000,000px；首末跳转与往返有浏览器证据 | 原生滚动上限实测、双轴压缩/普通组合、完整键盘/定位/resize及正式浏览器矩阵 |
-| B5 SVG 工作表 | keyed节点复用与clip定义计入预算；5,000 hits/10,000元素门限；实测八次首尾切换节点数稳定 | B2同等语义正式测量、连续更新回收、导出一致性及生命周期报告 |
+| B2 日常工作表 | 冻结版20万记录、10,000非空pane、每轴6层；30冷帧、5×300移动及50次回收；热commit/rAF p95为12.6/9.3ms，运行时峰值48,560,198 bytes；双后端各50次点击反馈有独立记录 | 60Hz→实测120Hz参考环境变更待用户确认；受控demo折叠/排序提交到两rAF p95为15.2/14.1ms，等待DOM最大0.8ms |
+| B3 高基数稀疏表 | 冻结版100,000×1,000叶、每轴6层、100万真实记录；30次完整重建索引p95 2158.7ms，已备records到呈现2219.8ms；Node峰值RSS约1.31GiB；浏览器热帧与生命周期已有报告 | 参考环境确认；B3源按真实记录索引，结果不能与程序化B4混用 |
+| B4 超长坐标 | 冻结benchmark的10亿行×100万列；Chromium Canvas/SVG首末与远近定位无诊断；Safari原生下滚及End到末端有证据 | 混合普通/压缩轴、resize及Home/End已补验；滚动条拖动及物理触控板仍没有通过证据 |
+| B5 SVG 工作表 | 普通及203,000记录/5,000可见项压力版本均完成规定样本；压力commit/rAF p95 13.0/16.7ms，峰值130,735,136 bytes，50次回收heap +0.422%、DOM归零；超5,000项明确拒绝并可恢复 | 参考环境确认；不以0–20px合法压力范围掩盖23px已达5,033项的资源拒绝 |
 
-B4 按需生成记录，不能证明 B3 的真实输入索引或内存达标。现有浏览器验收不是规定的1440×900、DPR2、60Hz性能配置；尚无正式 p50/p95、峰值/驻留内存、long task、掉帧、50次挂载/销毁或1,000次窗口移动报告。
+B4 按需生成记录，不能替代 B3 的真实输入索引测量。S2 冻结构建已在1440×900、DPR2、实测约120Hz记录30次冷控制器、5×300次移动、50次销毁，以及B3的30次完整重建。原定60Hz尚未实测，参考环境修改待用户明确确认。所有原始失败和最终结果均保留在S2报告。
 
 一次真实记录探索使用 Node v22.20、Apple M4 Max、64GiB：生成1,000,000条记录83.95ms，100,000×1,000轴索引准备2193.99ms，计时含准备前GC；GC后heap从仅输入的131,696,736 bytes增至带索引的397,780,232 bytes。300个10×10随机窗口共读取314条记录，readPaneData p95为0.0121ms，原始脚本保留在本地 `work/s0-real-index-benchmark.mjs`。这是单次准备/读取探索，不是正式6层不均匀B3、浏览器帧预算、峰值内存或运行时128MiB预算验收。
 
-正式报告须按需求第7节固定机器、浏览器、字体、种子和构建，分列外部准备、adapter、索引、读取等待、layout、Scene、命中、提交与呈现，不遗漏库内索引准备。目标保持为冷首帧p95≤500ms；Canvas提交p95≤16ms、呈现间隔p95≤33ms分别记录；SVG提交p95≤32ms；交互p95≤50ms；运行时驻留≤128MiB，位图/完整输入/供数索引另报。当前未宣称达标。
+正式报告须按需求第7节固定机器、浏览器、字体、种子和构建，分列外部准备、adapter、索引、读取等待、layout、Scene、命中、提交与呈现，不遗漏库内索引准备。目标保持为冷首帧p95≤500ms；Canvas提交p95≤16ms、呈现间隔p95≤33ms分别记录；SVG提交p95≤32ms；交互p95≤50ms；运行时驻留≤128MiB，位图/完整输入/供数索引另报。冻结构建在实际120Hz环境满足这些绝对耗时阈值；尚未宣称原定60Hz环境或首版全部验收通过。
 
-## 当前实现边界与后续缺口
+## S2 候选的实现边界与剩余验收
 
-准备索引按实际记录到度量槽保存，最多16,000,000条，不分配R×C矩阵。单次轴读最多100,000叶，pane读最多64窗口；控制器每窗口最多20,000槽位记录、缓存8窗口。SVG的5,000 hits/10,000元素限制包含clip定义。尚无字节计数、总并发优先级、相邻范围合并、分页补全或统一导出预算，不能关闭R08/R15。
+S2 的独立代码审核已 PASS，阶段仍等待性能参考环境决定及未完成的原生输入验收；以下实现说明不代替独立报告。原始规模数据与复现命令见 [基准记录](./verification/s2/benchmark-data.md)，浏览器过程与未通过项见 [浏览器验收](./verification/s2/browser-acceptance.md)。
 
-当前只提交完整窗口，preview、续页、部分pane、缺统计域和缺覆盖明确拒绝。完整fixed域可独立于源统计生成，但需要完整series的line/分组/堆叠仍遵循series合同。只读快照区分requestedVersion、committedVersion和displayedFrame，失败候选保留已提交画面/选择并禁用旧图导出。事件经microtask在当前状态事务完成后交付，受控请求默认10,000ms超时；这些事务已通过回归和冻结候选独立复审；S2调度变更仍需持续复验。
+共享资源管理器限制实际供数调用并发为 4；取消不配合的 provider 仍占用物理槽，直到实际返回。元数据、必需视口、续页、预取和导出有优先级；同版本同请求去重，相邻范围可合并。数据、轴、域、几何缓存与活动帧共用 128 MiB 估计字节预算。源输入和完整显示索引、Canvas 位图单列。不可变窗口只校验、计量一次，热命中复用；可见 pane 几何保存在受预算约束的 LRU 中，Canvas 与 SVG 使用同一局部几何及全局命中坐标。
 
-S2继续实现预览/部分输入的显示与补页、字节缓存和范围调度、未访问范围/分页导出及取消、正式性能和生命周期验收。S3尚未解除产品canonical rows/columns的旧深度裁剪，也未增加实际native renderer分支；必须落实D9，完整保留字段并对旧后端不支持场景明确诊断，不能截断、自动切换或以demo代替产品接入。
+SVG 由公共主体 clip、滚动变换组和局部 pane 组组成。纯滚动复用 mark 节点；表头和轴仍属于同一 SVG。Canvas 仍只有一个可见画布。字体、源、显示计划、格子尺寸和相关完整域变化会使几何缓存失效；缓存清理不改变当前帧持有的数据及其预算。
 
-首版关闭条件仍是全部R01–R17完成、A01–A16通过、B1–B5有可复现记录，以及构建消费、GW保存/历史/导入/切换与旧路径回归通过。阶段commit和单个PR不替代这些条件。
+控制器名义视口容量为 100 格，允许像素滚动时相交的边缘行/列；10×10 格最多相交 121 格，长条视口最多 202 格。整窗读取最多 40,400 条、单 pane 最多 20,000 条，可见 marks 最多 20,000 个。SVG 保持 5,000 hits/10,000 元素上限，元素计数包含 clip 和分组。可选预取目标最多 100 格。边缘预算修正的原因见需求第 7 节，测试必须包含连续像素偏移。
+
+部分窗口只能绘制已完整提交的 pane。未完成 pane 显示 Loading；preview 输入明确标为 Preview。缺少必要完整域时不推断 scale。完整 fixed 域可独立于源统计生成，但 line、分组柱和堆叠仍遵循完整联合系列合同。错误候选保留旧画面及选择，requested、committed、displayed 版本分别报告。
+
+视口 PNG/SVG 导出默认等待目标完整，允许显式导出带占位的视口。逻辑范围 SVG 导出固定源版本、plan、字体和布局，通过独立低优先级 reader 顺序读取并交付分页 sink；支持取消、超时、页数/读取次数/字节数上限。UI 更新不改变运行中的旧版本导出。销毁会取消任务并释放库持有资源。
+
+性能修复针对真实203,000条B5压力输入和5,000个可见marks，减少重复窗口校验、字符串计量、pane几何重建及SVG属性写入，并移除隐藏tooltip引起的强制布局。冻结版本已完成规定样本，B5压力提交/rAF p95为13.0/16.7ms，热源读取和eviction均为0，账本峰值130,735,136 bytes。销毁保留控制器的GC探针发现并修复了数据源和SVG节点引用未释放的问题；最终50次对称回收heap增长0.422%、DOM归零。原先失败保留。
+
+S3 在另一工作树实施，候选已解除普通canonical rows/columns的深度裁剪，新增native选择与旧后端unsupported诊断。该工作尚未合入本阶段提交；生产结果绑定、保存/重载/历史、事件、公开ref及旧renderer的最终集成门禁仍然开放。
+
+首版关闭条件仍是全部 R01–R17 完成、A01–A16 通过、B1–B5 有可复现记录，以及构建消费、GW 保存/历史/导入/切换与旧路径回归通过。阶段 commit 和单个 PR 不替代这些条件。
+
+S2最终证据补充：B2/B5普通0–120px连续滚动各1,500次，commit p95为12.2/11.4ms；B3的30次真实重建索引p95为2158.7ms，已备records到呈现2219.8ms，含输入生成2775.2ms。最终Node B3索引单次2284.82ms，进程峰值RSS1,403,322,368 bytes，GC后heapUsed+arrayBuffers为1,038,191,711 bytes。详见[完整基准](./verification/s2/benchmark-data.md)与[独立代码审核](./verification/s2/code-review.md)。
+
+真实 VoiceOver 补验见 [独立读屏报告](./verification/s2/accessibility-final.md)。系统原生组合键能够进入网页与数据表；先前 CUA 组合键未获得正向响应，不据此认定产品缺陷。摘要、可见行列起点、展开状态和数据行都有字幕证据。
+
+## S2 阶段关闭记录
+
+本阶段以独立 [浏览器最终报告](./verification/s2/browser-acceptance.md) 和 [60 Hz 原始样本](./verification/s2/performance-60/performance-B2-reference.json) 关闭原先开放的参考环境条件；没有把 120 Hz 改成验收环境。内置显示器临时从 ProMotion 切至 60 Hertz，新启动 Chromium 实测约 16.7 ms 周期。设置和恢复见 [环境记录](./verification/s2/reference-refresh-rate.md)。旧 120 Hz 结果及失败候选保留，不能与新结果混写。
+
+原表中 B4 拖条/wheel、A06/A07、A08 几何、A10 非首位锚点和 A14 读屏的待办已经由后续补证关闭。五 mark 和长中英文的实际 Canvas 调用与 SVG CTM/clip 数值对照最大误差不超过 5.7e-14 CSS px；不声称字形抗锯齿逐像素相同。DPR1→2→1 配合实际 resize 后位图更新、逻辑位置和 hit 身份保持。非首位 Portland 重排保留 20 px 偏移，West 折叠后定位到 hidden 祖先；Sales USD 与 Profit percent 的可见轴独立。对应原始文件及脚本均在 `docs/verification/s2/`。
+
+上文保留了分阶段追踪过程，其中涉及 S3 产品接入的待办不由 S2 提交替代。S3 合入时会以当前证据重新整理整个 R/A/B 台账。物理触控板硬件与读屏音频没有实测，分别使用受信任软件 wheel 和实际 VoiceOver 字幕验证软件合同；不宣称超出证据的方法。

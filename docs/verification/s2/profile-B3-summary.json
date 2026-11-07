@@ -1,0 +1,188 @@
+{
+  "profileFile": "CPU.20261106.145248.22858.0.001.cpuprofile",
+  "sampledWallMs": 13336.959,
+  "topSelf": [
+    {
+      "function": "typedValueKey",
+      "ms": 3889.794,
+      "percent": 29.16552416484148
+    },
+    {
+      "function": "(anonymous)",
+      "ms": 3414.075,
+      "percent": 25.59860160025985
+    },
+    {
+      "function": "(garbage collector)",
+      "ms": 1338.212,
+      "percent": 10.033861542200137
+    },
+    {
+      "function": "pathKey",
+      "ms": 1165.921,
+      "percent": 8.742030323404308
+    },
+    {
+      "function": "createAxisIndex",
+      "ms": 842.414,
+      "percent": 6.316387416351808
+    },
+    {
+      "function": "createPreparedDataSource",
+      "ms": 629.505,
+      "percent": 4.72000401290879
+    },
+    {
+      "function": "buildDomain",
+      "ms": 529.048,
+      "percent": 3.966781332986028
+    },
+    {
+      "function": "createBenchmarkFixture",
+      "ms": 341.584,
+      "percent": 2.561183550163122
+    },
+    {
+      "function": "domainKeyFor",
+      "ms": 222.667,
+      "percent": 1.6695485080219559
+    },
+    {
+      "function": "valueFor",
+      "ms": 160.455,
+      "percent": 1.203085351015925
+    },
+    {
+      "function": "(program)",
+      "ms": 159.499,
+      "percent": 1.1959173001881465
+    },
+    {
+      "function": "typedFor",
+      "ms": 127.914,
+      "percent": 0.9590941983101244
+    },
+    {
+      "function": "headerKey",
+      "ms": 106.043,
+      "percent": 0.7951062907218954
+    },
+    {
+      "function": "prepareBenchmark",
+      "ms": 75.625,
+      "percent": 0.5670333094673231
+    },
+    {
+      "function": "append",
+      "ms": 63.165,
+      "percent": 0.473608713950459
+    },
+    {
+      "function": "seriesIdentityFor",
+      "ms": 57.373,
+      "percent": 0.4301805231612394
+    },
+    {
+      "function": "axisLeafKey",
+      "ms": 56.794,
+      "percent": 0.42583920367454076
+    },
+    {
+      "function": "bindingTypedValue",
+      "ms": 51.164,
+      "percent": 0.38362568258626273
+    }
+  ],
+  "topInclusive": [
+    {
+      "function": "(root)",
+      "ms": 13336.959,
+      "percent": 100.0
+    },
+    {
+      "function": "(anonymous)",
+      "ms": 11787.412,
+      "percent": 88.38155684515489
+    },
+    {
+      "function": "evaluate",
+      "ms": 11733.748,
+      "percent": 87.97918625977631
+    },
+    {
+      "function": "run",
+      "ms": 11733.748,
+      "percent": 87.97918625977631
+    },
+    {
+      "function": "prepareBenchmark",
+      "ms": 11729.248,
+      "percent": 87.94544543475016
+    },
+    {
+      "function": "createPreparedDataSource",
+      "ms": 11281.289,
+      "percent": 84.58666627077433
+    },
+    {
+      "function": "createAxisIndex",
+      "ms": 7848.706,
+      "percent": 58.849292406162455
+    },
+    {
+      "function": "typedValueKey",
+      "ms": 3889.794,
+      "percent": 29.16552416484148
+    },
+    {
+      "function": "validatePath",
+      "ms": 1382.459,
+      "percent": 10.365623827740642
+    },
+    {
+      "function": "(garbage collector)",
+      "ms": 1338.212,
+      "percent": 10.033861542200137
+    },
+    {
+      "function": "buildDomain",
+      "ms": 1263.83,
+      "percent": 9.47614819840115
+    },
+    {
+      "function": "pathKey",
+      "ms": 1259.545,
+      "percent": 9.444019435015132
+    },
+    {
+      "function": "createBenchmarkFixture",
+      "ms": 369.792,
+      "percent": 2.7726860373492936
+    },
+    {
+      "function": "typedFor",
+      "ms": 294.074,
+      "percent": 2.204955417498097
+    },
+    {
+      "function": "append",
+      "ms": 262.96,
+      "percent": 1.9716638553061459
+    },
+    {
+      "function": "domainKeyFor",
+      "ms": 222.667,
+      "percent": 1.6695485080219559
+    },
+    {
+      "function": "valueFor",
+      "ms": 160.455,
+      "percent": 1.203085351015925
+    },
+    {
+      "function": "(program)",
+      "ms": 159.499,
+      "percent": 1.1959173001881465
+    }
+  ]
+}

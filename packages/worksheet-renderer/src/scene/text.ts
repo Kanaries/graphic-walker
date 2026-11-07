@@ -29,6 +29,10 @@ export function formatValue(value: unknown, type: PositionType = 'band', format?
 
 let context: OffscreenCanvasRenderingContext2D | null | undefined;
 const widths = new Map<string, number>();
+let widthBytes = 0;
+export function textMetricsBytes(): number {
+    return widthBytes;
+}
 /** One bounded metrics cache shared by both backends. It never creates a visible canvas. */
 export function measureText(text: string, size = 11, fontFamily = 'sans-serif'): number {
     const key = `${size}:${fontFamily}:${text}`;
@@ -45,8 +49,13 @@ export function measureText(text: string, size = 11, fontFamily = 'sans-serif'):
             0,
         );
     if (text.length <= 2048 && fontFamily.length <= 256) {
-        if (widths.size >= 4096) widths.delete(widths.keys().next().value!);
+        if (widths.size >= 4096) {
+            const oldest = widths.keys().next().value!;
+            widthBytes -= 128 + oldest.length * 2;
+            widths.delete(oldest);
+        }
         widths.set(key, result);
+        widthBytes += 128 + key.length * 2;
     }
     return result;
 }
@@ -69,4 +78,5 @@ export function fitText(text: string, width: number, size = 11, fontFamily = 'sa
 /** Call after host fonts change so both backends use fresh shared measurements. */
 export function clearTextMetrics(): void {
     widths.clear();
+    widthBytes = 0;
 }

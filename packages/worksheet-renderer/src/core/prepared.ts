@@ -112,30 +112,61 @@ function createAxisIndex(axis: Axis, axisPlan: AxisPlan, records: readonly Prepa
         if (!Array.isArray(path) || path.length > axisPlan.facets.length) fail('source-contract-violation', 'Prepared path exceeds the axis facet depth.');
         path.forEach((member, depth) => { if (member.fieldRef !== axisPlan.facets[depth]) fail('source-contract-violation', 'Prepared path does not match the axis field order.'); typedValueKey(member.value); });
     };
-    const recordPaths = records.map((record, ordinal) => {
-        const path = options.getRecordPath ? options.getRecordPath(options.records[ordinal], ordinal, axis) : axisPlan.facets.map((fieldRef) => ({ fieldRef, value: typedFor(record, bindings.get(fieldRef)!) }));
-        validatePath(path);
-        for (const member of path) if (typedValueKey(typedFor(record, bindings.get(member.fieldRef)!)) !== typedValueKey(member.value)) fail('source-contract-violation', 'Prepared record does not match its declared member path.', member.fieldRef);
-        return path;
-    });
-    const visible = options.axisMembers?.[axis] ?? (recordPaths.length ? recordPaths.map((path) => ({ path, collapsed: path.length < axisPlan.facets.length })) : axisPlan.facets.length ? [] : [{ path: [], collapsed: false }]);
-    for (const member of visible) {
-        validatePath(member.path);
-        let node = root;
-        for (const { fieldRef, value } of member.path) {
-            const key = typedValueKey(value);
-            let child = node.children.get(key);
-            if (!child) {
-                child = { path: frozenPath([...node.path, { fieldRef, value }]), children: new Map(), start: 0, end: 0, terminal: false, collapsed: false };
-                node.children.set(key, child);
-                nodes.set(pathKey(child.path), child);
-            }
-            node = child;
+    // Intern actual members while reading records. Each record stores one node index,
+    // rather than allocating a second full path and JSON path key for every occurrence.
+    const nodeList: Node[] = [root], nodeIds = new Map<Node, number>([[root, 0]]);
+    const recordNodes = new Uint32Array(records.length);
+    const explicit = options.axisMembers?.[axis];
+    const fieldBindings = axisPlan.facets.map(fieldRef => bindings.get(fieldRef)!);
+    const valueCaches = fieldBindings.map(() => new Map<unknown, { value: TypedValue; key: string }>());
+    const preparedMember = (record: PreparedRecord, depth: number) => {
+        const binding = fieldBindings[depth], raw = valueFor(record, binding), cache = valueCaches[depth];
+        let found = cache.get(raw);
+        if (!found) {
+            const value = typedFor(record, binding);
+            found = { value, key: typedValueKey(value) }; cache.set(raw, found);
         }
-        if (node.terminal && options.axisMembers?.[axis]) fail('source-contract-violation', 'Explicit visible member paths must be unique.');
-        node.terminal = true;
-        node.collapsed = member.collapsed ?? member.path.length < axisPlan.facets.length;
+        return found;
+    };
+    const childFor = (node: Node | undefined, fieldRef: string, value: TypedValue, key: string, create: boolean): Node | undefined => {
+        if (!node) return undefined;
+        let child = node.children.get(key);
+        if (!child && create) {
+            // Frozen prefix members can safely be shared by all descendant paths.
+            const member = frozenPath([{ fieldRef, value }])[0];
+            child = { path: Object.freeze([...node.path, member]), children: new Map(), start: 0, end: 0, terminal: false, collapsed: false };
+            node.children.set(key, child); nodes.set(pathKey(child.path), child);
+            nodeIds.set(child, nodeList.length); nodeList.push(child);
+        }
+        return child;
+    };
+    for (const member of explicit ?? []) {
+        validatePath(member.path); let node = root;
+        for (const { fieldRef, value } of member.path) node = childFor(node, fieldRef, value, typedValueKey(value), true)!;
+        if (node.terminal) fail('source-contract-violation', 'Explicit visible member paths must be unique.');
+        node.terminal = true; node.collapsed = member.collapsed ?? member.path.length < axisPlan.facets.length;
     }
+    for (let ordinal = 0; ordinal < records.length; ordinal++) {
+        const record = records[ordinal]; let node: Node | undefined = root;
+        if (options.getRecordPath) {
+            const path = options.getRecordPath(options.records[ordinal], ordinal, axis); validatePath(path);
+            for (let depth = 0; depth < path.length; depth++) {
+                const member = path[depth], actual = preparedMember(record, depth), key = typedValueKey(member.value);
+                if (actual.key !== key) fail('source-contract-violation', 'Prepared record does not match its declared member path.', member.fieldRef);
+                node = childFor(node, member.fieldRef, actual.value, key, !explicit);
+            }
+        } else {
+            for (let depth = 0; depth < fieldBindings.length; depth++) {
+                const member = preparedMember(record, depth);
+                node = childFor(node, fieldBindings[depth].fieldRef, member.value, member.key, !explicit);
+            }
+        }
+        if (node && !explicit) { node.terminal = true; node.collapsed = node.path.length < axisPlan.facets.length; }
+        recordNodes[ordinal] = node && node.terminal ? nodeIds.get(node)! : MAX_UINT32;
+    }
+    if (!records.length && !explicit && !axisPlan.facets.length) root.terminal = true;
+    // Caches are preparation-only; retaining them would duplicate the immutable member tree.
+    valueCaches.forEach(cache => cache.clear()); nodeIds.clear();
     const order = new Map<string, ReadonlyMap<string, number>>();
     for (const item of options.memberOrder ?? []) {
         if (item.axis !== axis) continue;
@@ -185,7 +216,8 @@ function createAxisIndex(axis: Axis, axisPlan: AxisPlan, records: readonly Prepa
     };
     append(root);
     if (leaves.length > MAX_UINT32) fail('resource-limit', 'The prepared axis exceeds the 32-bit rank index.');
-    const recordBases = Uint32Array.from(recordPaths, (path) => { const node = nodes.get(pathKey(path)); return node?.terminal ? node.start : MAX_UINT32; });
+    const recordBases = recordNodes;
+    for (let index = 0; index < recordBases.length; index++) if (recordBases[index] !== MAX_UINT32) recordBases[index] = nodeList[recordBases[index]].start;
     return { leaves: Object.freeze(leaves), byKey: new Map(leaves.map((leaf) => [leaf.key, leaf])),
         headers: Object.freeze(headers.map((level) => Object.freeze(level.sort((a, b) => a.start - b.start)))), recordBases, slotCount: positions.length,
         nodes, headerByKey: new Map(headers.flat().map((header) => [header.key, header])) };
@@ -233,7 +265,11 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
     }
     const upperEntryCount = options.records.length * Math.max(1, plan.rows.positions.length) * Math.max(1, plan.columns.positions.length);
     if (!Number.isSafeInteger(upperEntryCount) || upperEntryCount > MAX_INDEX_ENTRIES) fail('resource-limit', `Prepared inputs are limited to ${MAX_INDEX_ENTRIES} record-to-slot index entries.`);
-    const records: PreparedRecord[] = options.records.map((record) => Object.freeze(Object.fromEntries(Object.entries(record).map(([key, value]) => [key, Array.isArray(value) ? Object.freeze([...value]) : value]))));
+    const records: PreparedRecord[] = options.records.map((record) => {
+        const copy: Record<string, unknown> = { ...record };
+        for (const key of Object.keys(copy)) if (Array.isArray(copy[key])) copy[key] = Object.freeze([...(copy[key] as unknown[])]);
+        return Object.freeze(copy);
+    });
     const keys = new Set<string>();
     const recordOrdinals = new Set<number>();
     const paneRecords: readonly PaneRecord[] = Object.freeze(records.map((record, inputIndex) => {
@@ -242,23 +278,37 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
         const sequenceOrder = options.getSequenceOrder?.(options.records[inputIndex], inputIndex);
         if (!Number.isSafeInteger(ordinal) || ordinal < 0 || recordOrdinals.has(ordinal)) fail('source-contract-violation', 'Prepared ordinals must be unique non-negative safe integers.');
         if (sequenceOrder !== undefined && !Number.isFinite(sequenceOrder)) fail('source-contract-violation', 'Explicit sequenceOrder must be finite.');
-        recordOrdinals.add(ordinal);
+        if (options.getOrdinal) recordOrdinals.add(ordinal);
         if (typeof datumKey !== 'string' || !datumKey) fail('unstable-datum-identity', 'Datum keys must be non-empty strings.');
         if (keys.has(datumKey)) fail('unstable-datum-identity', 'Prepared records must have unique datum keys.');
         keys.add(datumKey);
         return Object.freeze({ datumKey, ordinal, values: record, ...(sequenceOrder === undefined ? {} : { sequenceOrder }) });
     }));
+    keys.clear(); recordOrdinals.clear();
     const rowIndex = createAxisIndex('row', plan.rows, records, bindings, options);
     const columnIndex = createAxisIndex('column', plan.columns, records, bindings, options);
-    const visibleRecordIndices = records.map((_, index) => index).filter((index) => rowIndex.recordBases[index] !== MAX_UINT32 && columnIndex.recordBases[index] !== MAX_UINT32);
-    const seriesIdentities = new Map<number, string>(), seenSeries = new Set<string>();
-    for (const index of [...visibleRecordIndices].sort((a, b) => paneRecords[a].ordinal - paneRecords[b].ordinal)) {
-        const identity = seriesIdentityFor(plan, records[index]); seriesIdentities.set(index, identity); seenSeries.add(identity);
+    const visibleRecordIndices: number[] = [];
+    for (let index = 0; index < records.length; index++) if (rowIndex.recordBases[index] !== MAX_UINT32 && columnIndex.recordBases[index] !== MAX_UINT32) visibleRecordIndices.push(index);
+    const recordSeries = new Uint32Array(records.length), seenSeries = new Map<string, number>();
+    const seriesColor = plan.channels?.color, seriesShape = plan.channels?.shape;
+    const hasSeriesFields = !!plan.channels?.details?.length
+        || !!seriesColor && 'fieldRef' in seriesColor && positionTypeFor(bindings.get(seriesColor.fieldRef)!) === 'band'
+        || plan.mark === 'point' && !!seriesShape && 'fieldRef' in seriesShape;
+    const emptySeries = hasSeriesFields ? undefined : seriesIdentityFor(plan, {});
+    const seriesInputOrder = options.getOrdinal ? [...visibleRecordIndices].sort((a, b) => paneRecords[a].ordinal - paneRecords[b].ordinal) : visibleRecordIndices;
+    for (const index of seriesInputOrder) {
+        const identity = emptySeries ?? seriesIdentityFor(plan, records[index]);
+        let ordinal = seenSeries.get(identity);
+        if (ordinal === undefined) { ordinal = seenSeries.size; seenSeries.set(identity, ordinal); }
+        recordSeries[index] = ordinal;
     }
     if (options.seriesOrder && new Set(options.seriesOrder).size !== options.seriesOrder.length) fail('source-contract-violation', 'Explicit series order contains duplicate identities.');
     const orderedSeries = new Set(options.seriesOrder ?? []);
-    const seriesKeys = [...(options.seriesOrder ?? []).filter((key) => seenSeries.has(key)), ...[...seenSeries].filter((key) => !orderedSeries.has(key))];
+    const seriesKeys = [...(options.seriesOrder ?? []).filter((key) => seenSeries.has(key)), ...[...seenSeries.keys()].filter((key) => !orderedSeries.has(key))];
     const seriesOrdinals = new Map(seriesKeys.map((key, index) => [key, index]));
+    const remapSeries = new Uint32Array(seenSeries.size);
+    for (const [identity, ordinal] of seenSeries) remapSeries[ordinal] = seriesOrdinals.get(identity)!;
+    for (const index of visibleRecordIndices) recordSeries[index] = remapSeries[recordSeries[index]];
     const series: SeriesDomain = Object.freeze({ domainId: JSON.stringify(['series-domain', version, domainPlanKey]), keys: Object.freeze(seriesKeys), complete: options.complete !== false });
     const entryCount = visibleRecordIndices.length * rowIndex.slotCount * columnIndex.slotCount;
     const rows = new Uint32Array(entryCount);
@@ -274,8 +324,14 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
             }
         }
     }
-    const sorted = Uint32Array.from({ length: entryCount }, (_, index) => index);
-    sorted.sort((a, b) => rows[a] - rows[b] || columns[a] - columns[b] || paneRecords[ordinals[a]].ordinal - paneRecords[ordinals[b]].ordinal);
+    const sorted = new Uint32Array(entryCount);
+    let sortedAlready = true;
+    for (let index = 0; index < entryCount; index++) {
+        sorted[index] = index;
+        if (index && (rows[index - 1] > rows[index] || rows[index - 1] === rows[index] && (columns[index - 1] > columns[index]
+            || columns[index - 1] === columns[index] && paneRecords[ordinals[index - 1]].ordinal > paneRecords[ordinals[index]].ordinal))) sortedAlready = false;
+    }
+    if (!sortedAlready) sorted.sort((a, b) => rows[a] - rows[b] || columns[a] - columns[b] || paneRecords[ordinals[a]].ordinal - paneRecords[ordinals[b]].ordinal);
     const sortedColumns = new Uint32Array(entryCount);
     const sortedOrdinals = new Uint32Array(entryCount);
     const nonEmptyRows: number[] = [];
@@ -303,10 +359,11 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
     const complete = options.complete !== false;
     const stackedExtents = new Map<string, { minimum: number; maximum: number }>();
     const scopedGroups = new Map<string, { key: DomainKey; indices: Set<number>; extent?: { minimum: number; maximum: number } }>();
-    for (let index = 0; index < sorted.length; index++) {
+    const hasScopedPositions = [...plan.rows.positions, ...plan.columns.positions].some(ref => plan.scales?.[ref]?.scope && plan.scales[ref].scope!.mode !== 'shared');
+    if (hasScopedPositions) for (let index = 0; index < sorted.length; index++) {
         const from = sorted[index], row = rowIndex.leaves[rows[from]], column = columnIndex.leaves[columns[from]];
         for (const [ref, channel] of [[column.positionRef, 'x'], [row.positionRef, 'y']] as const) {
-            if (!ref) continue;
+            if (!ref || !plan.scales?.[ref]?.scope || plan.scales[ref].scope!.mode === 'shared') continue;
             const key = domainKeyFor(plan, ref, channel, row, column);
             if (key.scope.mode === 'shared') continue;
             const storage = domainStorageKey(key);
@@ -331,7 +388,7 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
         let stacks: BarStackState = new Map();
         const stackOrder = Uint32Array.from(sorted);
         stackOrder.sort((a, b) => rows[a] - rows[b] || columns[a] - columns[b]
-            || seriesOrdinals.get(seriesIdentities.get(ordinals[a])!)! - seriesOrdinals.get(seriesIdentities.get(ordinals[b])!)!
+            || recordSeries[ordinals[a]] - recordSeries[ordinals[b]]
             || paneRecords[ordinals[a]].ordinal - paneRecords[ordinals[b]].ordinal);
         for (let index = 0; index < stackOrder.length; index++) {
             const from = stackOrder[index];
@@ -372,7 +429,7 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
     const buildDomain = (binding: ResultBinding, indices: Iterable<number>, key?: DomainKey, stacked?: { minimum: number; maximum: number }): DisplayDomain => {
         const type = positionTypeFor(binding);
         const values: unknown[] = [];
-        const seen = new Set<string>();
+        const seen = new Set<string>(), seenPrimitives = new Set<unknown>();
         let minimum = Infinity;
         let maximum = -Infinity;
         for (const index of indices) {
@@ -380,14 +437,19 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
             if (!requiredValues.has(binding.fieldRef) && !Object.prototype.hasOwnProperty.call(record, binding.columnKey)) continue;
             const value = valueFor(record, binding);
             if (type === 'band') {
+                // Repeated primitive members were already validated and canonically encoded.
+                if (!Array.isArray(value) && seenPrimitives.has(value)) continue;
                 const key = typedValueKey(typedFor(record, binding));
+                if (!Array.isArray(value)) seenPrimitives.add(value);
                 if (!seen.has(key)) { seen.add(key); values.push(value); }
             } else if (value !== null) {
                 typedFor(record, binding);
-                const endpoints = binding.valueType === 'interval' ? value as readonly number[] : [value];
-                if (endpoints.some((endpoint) => typeof endpoint !== 'number' || !Number.isFinite(endpoint))) fail('invalid-value', 'Continuous coordinates must be finite prepared numbers or null.', binding.fieldRef);
-                minimum = Math.min(minimum, ...endpoints as number[]);
-                maximum = Math.max(maximum, ...endpoints as number[]);
+                if (binding.valueType === 'interval') {
+                    const [start, end] = value as readonly number[]; minimum = Math.min(minimum, start); maximum = Math.max(maximum, end);
+                } else {
+                    if (typeof value !== 'number' || !Number.isFinite(value)) fail('invalid-value', 'Continuous coordinates must be finite prepared numbers or null.', binding.fieldRef);
+                    minimum = Math.min(minimum, value); maximum = Math.max(maximum, value);
+                }
             }
         }
         if (stackedFields.has(binding.fieldRef)) { minimum = Infinity; maximum = -Infinity; }
@@ -504,8 +566,8 @@ export function createPreparedDataSource(options: PreparedDataSourceOptions): Re
                         const key = paneKey(rowLeaf.key, columnLeaf.key);
                         const values: PaneRecord[] = [];
                         do {
-                            const index = sortedOrdinals[cursor++], identity = seriesIdentities.get(index)!;
-                            values.push({ ...paneRecords[index], seriesKey: seriesKeyFor(key, identity), seriesOrdinal: seriesOrdinals.get(identity)! });
+                            const index = sortedOrdinals[cursor++], seriesOrdinal = recordSeries[index];
+                            values.push({ ...paneRecords[index], seriesKey: seriesKeyFor(key, seriesKeys[seriesOrdinal]), seriesOrdinal });
                         } while (cursor < end && sortedColumns[cursor] === columnRank);
                         if (!panes.has(key)) panes.set(key, { key, rowKey: rowLeaf.key, columnKey: columnLeaf.key, rowRank, columnRank,
                             rowSlotId: rowLeaf.slotId, columnSlotId: columnLeaf.slotId, rowPath: rowLeaf.path, columnPath: columnLeaf.path,

@@ -204,3 +204,44 @@ test('read versions, cancellation, rank limits and missing bindings fail explici
     assert.doesNotThrow(() => createPreparedDataSource({ version, plan: { ...renderPlan, mark: 'line' }, records: [] }));
     assert.doesNotThrow(() => createPreparedDataSource({ version, plan: { ...renderPlan, scales: { value: { scope: { mode: 'pane' } } } }, records: [] }));
 });
+
+test('repeated six-level paths retain every value and stable series with custom global ordinals', async () => {
+    const rowFields = Array.from({ length: 6 }, (_, index) => `r${index}`), columnFields = Array.from({ length: 6 }, (_, index) => `c${index}`);
+    const renderPlan: RenderPlan = {
+        bindings: [...rowFields, ...columnFields, 'series'].map(field => binding(field)).concat(binding('x', 'linear'), binding('y', 'linear')),
+        rows: { facets: rowFields, positions: ['y'] }, columns: { facets: columnFields, positions: ['x'] },
+        mark: 'point', domainPlanKey: 'deep-series', channels: { color: { fieldRef: 'series' } },
+    };
+    const records: Record<string, unknown>[] = [];
+    for (let row = 0; row < 15; row++) for (let column = 0; column < 4; column++) for (let point = 0; point < 8; point++) {
+        const record: Record<string, unknown> = { id: `${row}:${column}:${point}`, ordinal: records.length, x: point - 3, y: row * 100 + column, series: point % 2 ? 'B' : 'A' };
+        rowFields.forEach((field, depth) => { record[field] = `row:${Math.floor(row / (6 - depth))}`; });
+        columnFields.forEach((field, depth) => { record[field] = `column:${Math.floor(column / (6 - depth))}`; });
+        records.push(record);
+    }
+    const source = createPreparedDataSource({ version, plan: renderPlan, records: [...records].reverse(), getDatumKey: record => String(record.id), getOrdinal: record => Number(record.ordinal) });
+    const manifest = await source.describe(signal()); assert.equal(manifest.rowLeafCount, 15); assert.equal(manifest.columnLeafCount, 4); assert.equal(manifest.recordCount, 480);
+    const window = { rows: { start: 0, end: 15 }, columns: { start: 0, end: 4 } };
+    const batch = await source.readPaneData({ version, windows: [window] }, signal());
+    assert.equal(batch.panes.length, 60); assert.equal(batch.panes.flatMap(pane => pane.records).length, records.length);
+    const expected = new Map(records.map(record => [String(record.id), structuredClone(record)]));
+    records[0].r0 = 'host mutation'; records[0].y = -999;
+    for (const pane of batch.panes) {
+        assert.equal(pane.rowPath.length, 6); assert.equal(pane.columnPath.length, 6); assert.equal(pane.records.length, 8);
+        assert(pane.records.every((record, index) => !index || record.ordinal > pane.records[index - 1].ordinal));
+        for (const record of pane.records) { assert.deepEqual(record.values, expected.get(record.datumKey)); assert.equal(record.seriesOrdinal, record.values.series === 'A' ? 0 : 1); }
+    }
+    assert.deepEqual(await source.readPaneData({ version, windows: [window] }, signal()), batch);
+    const domains = await source.readDomains({ version, fieldRefs: ['r0', 'series', 'x', 'y'] }, signal());
+    assert.deepEqual(domains.domains.x.values, [-3, 4]); assert.deepEqual(domains.domains.y.values, [0, 1403]);
+});
+
+test('repeated typed members keep primitive identities and reject a later missing value', async () => {
+    const renderPlan = plan({ bindings: [binding('member'), binding('x', 'linear')], rows: { facets: ['member'], positions: [] }, columns: { facets: [], positions: ['x'] }, mark: 'point' });
+    const values = [null, 'null', 1, '1', true, 'true'];
+    const records = values.flatMap((member, index) => [{ id: `a${index}`, member, x: index }, { id: `b${index}`, member, x: index + 1 }]);
+    const source = createPreparedDataSource({ version, plan: renderPlan, records, getDatumKey: record => String(record.id) });
+    const axis = await source.readAxis({ version, axis: 'row', range: { start: 0, end: values.length } }, signal());
+    assert.deepEqual(axis.leaves.map(leaf => leaf.path[0].value), values.map(value => toTypedValue(value)));
+    assert.throws(() => createPreparedDataSource({ version, plan: renderPlan, records: [...records, { id: 'bad', member: undefined, x: 1 }], getDatumKey: record => String(record.id) }), { code: 'missing-binding' });
+});

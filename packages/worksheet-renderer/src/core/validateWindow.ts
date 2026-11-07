@@ -97,7 +97,7 @@ export function assertLocation({ location, request, plan, manifest }: LocationIn
     if (ancestor.start === ancestor.end || ancestor.start % slots !== 0 || ancestor.end % slots !== 0) reject('Hidden ancestor must span complete visible measure-slot groups.');
 }
 
-function validateAxis(response: AxisWindow, axis: Axis, axisPlan: AxisPlan, range: RankRange, total: number, version: ReadVersion): ReadonlyMap<number, AxisLeaf> {
+export function validateAxis(response: AxisWindow, axis: Axis, axisPlan: AxisPlan, range: RankRange, total: number, version: ReadVersion): ReadonlyMap<number, AxisLeaf> {
     requireVersion(response.version, version, `${axis} axis`);
     if (response.axis !== axis) reject(`The ${axis} response has the wrong axis identifier.`);
     requireRange(response.range, total, `${axis} response`);
@@ -220,13 +220,13 @@ function validateDomains(input: CompleteWindowInput, bindings: ReadonlyMap<strin
     }
 }
 
-function validateCoverage(input: CompleteWindowInput): void {
+function validateCoverage(input: CompleteWindowInput, requireComplete = true): void {
     const { window, panes, manifest } = input;
     for (const coverage of panes.coveredWindows) {
         requireRange(coverage.rows, manifest.rowLeafCount, 'Pane coverage rows');
         requireRange(coverage.columns, manifest.columnLeafCount, 'Pane coverage columns');
     }
-    if (window.rows.start === window.rows.end || window.columns.start === window.columns.end) return;
+    if (!requireComplete || window.rows.start === window.rows.end || window.columns.start === window.columns.end) return;
     // A viewport bounds the requested rows. Union column intervals rather than allocating a grid.
     for (let row = window.rows.start; row < window.rows.end; row++) {
         const intervals = panes.coveredWindows.filter((coverage) => row >= coverage.rows.start && row < coverage.rows.end)
@@ -272,9 +272,18 @@ function validateRecordValues(record: PaneRecord, row: AxisLeaf, column: AxisLea
 
 /** Partial or mismatched responses cannot be painted or exported as complete. */
 export function assertCompleteWindow(input: CompleteWindowInput): void {
+    validateWindow(input, false, false);
+}
+
+/** Progress can expose complete panes only; uncovered slots remain explicitly loading/preview. */
+export function assertWindowProgress(input: CompleteWindowInput, options: { allowUnavailableDomains?: boolean } = {}): void {
+    validateWindow(input, true, options.allowUnavailableDomains ?? false);
+}
+
+function validateWindow(input: CompleteWindowInput, partial: boolean, allowUnavailableDomains: boolean): void {
     const { plan, version, manifest, window, rows, columns, panes } = input;
     requireVersion(manifest.version, version, 'Source manifest');
-    if (manifest.status !== 'complete') reject('A complete source manifest is required.', 'incomplete-data');
+    if (manifest.status !== 'complete' && (!partial || manifest.status !== 'preview')) reject('A complete source manifest is required.', 'incomplete-data');
     if (manifest.domainPlanKey !== plan.domainPlanKey || !manifest.capabilities.domainPlanKeys.includes(plan.domainPlanKey)) reject('Source domain plan does not match the render plan.');
     for (const count of [manifest.rowLeafCount, manifest.columnLeafCount, manifest.recordCount, manifest.nonEmptyPaneCount]) if (!Number.isSafeInteger(count) || count < 0) reject('Source manifest counts must be non-negative safe integers.');
     requireRange(window.rows, manifest.rowLeafCount, 'Requested rows');
@@ -286,8 +295,9 @@ export function assertCompleteWindow(input: CompleteWindowInput): void {
     if (panes.nextCursor !== undefined) reject('A complete pane batch cannot have a continuation cursor.', 'incomplete-data');
     const series = input.domains.series;
     const needsSeries = needsSeriesDomain(plan);
-    if (needsSeries && (!series || !series.complete)) reject('Line, grouped-bar, and stacked-bar windows require a complete joint series domain.', 'domain-unavailable');
-    if (series && (!series.complete || typeof series.domainId !== 'string' || !series.domainId || series.keys.some((key) => typeof key !== 'string' || !key) || new Set(series.keys).size !== series.keys.length)) reject('The joint series domain is incomplete or invalid.', 'source-contract-violation');
+    if (needsSeries && (!series || !series.complete) && !(allowUnavailableDomains && panes.panes.length === 0)) reject('Line, grouped-bar, and stacked-bar windows require a complete joint series domain.', 'domain-unavailable');
+    if (series && !series.complete && !(allowUnavailableDomains && panes.panes.length === 0)) reject('The joint series domain is incomplete.', 'domain-unavailable');
+    if (series && (typeof series.domainId !== 'string' || !series.domainId || series.keys.some((key) => typeof key !== 'string' || !key) || new Set(series.keys).size !== series.keys.length)) reject('The joint series domain is invalid.', 'source-contract-violation');
     const seriesOrdinals = new Map(series?.keys.map((key, ordinal) => [key, ordinal]));
     const paneKeys = new Set<string>();
     const paneRanks = new Set<string>();
@@ -326,6 +336,7 @@ export function assertCompleteWindow(input: CompleteWindowInput): void {
         }
         if (plan.mark === 'line' && [...sequenceCounts.values()].some((counts) => counts.withSequence > 0 && counts.withSequence !== counts.total)) reject('A line series must supply sequenceOrder for all of its records or none.');
     }
-    validateCoverage(input);
-    validateDomains(input, bindings);
+    validateCoverage(input, !partial);
+    if (allowUnavailableDomains && panes.panes.length === 0) requireVersion(input.domains.version, version, 'Preview domains');
+    else validateDomains(input, bindings);
 }

@@ -1,0 +1,31 @@
+[
+  {
+    "example": "long-bilingual-labels",
+    "commands": 21,
+    "canvasDraw": 21,
+    "svgNodes": 21,
+    "canvasHits": 1,
+    "svgHits": 1,
+    "sameHits": true,
+    "compared": 145,
+    "maxError": 5.684341886080802e-14,
+    "worst": [
+      {
+        "d": 5.684341886080802e-14,
+        "name": "clip",
+        "a": 503.99999999999994,
+        "b": 504,
+        "current": "cell:[\"leaf\",\"row\",[[\"gw-field:[\\\"Region\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"华东地区：这是一个用于检查冻结表头和省略号的较长中文名称\"]]],\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"y\\\\\\\",null,\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]:[\"leaf\",\"column\",[[\"gw-field:[\\\"Product\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"A deliberately long English product label with punctuation / and spaces\"]]],\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"x\\\\\\\",null,\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]"
+      },
+      {
+        "d": 5.684341886080802e-14,
+        "name": "clip",
+        "a": 220.00000000000006,
+        "b": 220,
+        "current": "cell:[\"leaf\",\"row\",[[\"gw-field:[\\\"Region\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"华东地区：这是一个用于检查冻结表头和省略号的较长中文名称\"]]],\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"y\\\\\\\",null,\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]:[\"leaf\",\"column\",[[\"gw-field:[\\\"Product\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"A deliberately long English product label with punctuation / and spaces\"]]],\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"x\\\\\\\",null,\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  }
+]

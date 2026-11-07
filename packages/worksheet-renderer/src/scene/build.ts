@@ -1,10 +1,14 @@
-import type { AxisWindow, DomainBatch, PaneBatch, RenderPlan, ResultBinding } from '../core/types';
-import { getDisplayDomain, positionTypeFor } from '../core/domains';
+import type { AxisWindow, DomainBatch, PaneBatch, RenderPlan } from '../core/types';
+import { getDisplayDomain } from '../core/domains';
 import { intersect, inflate, type Box, type Primitive, type SceneFrame, type HeaderTarget } from './types';
-import { createPositionScale, createColorEncoder, resolveDomainValues, numericChannel } from './scales';
-import { createEncoders, drawPaneMarks, pointSymbol, pointShapes } from './marks';
+import { createColorEncoder, resolveDomainValues, numericChannel } from './scales';
+import { createEncoders, pointSymbol, pointShapes } from './marks';
 import { fitText, formatValue } from './text';
-import { prepareHitIndex } from './hit';
+import { prepareHitIndex, hitIndexBytes } from './hit';
+import { setSceneAccounting, type CachedPaneGeometry, type SceneAccounting, type SceneCache } from './cache';
+import { buildPaneGeometry } from './pane';
+import { translatedBox, translatedHit, translatedPrimitive } from './translate';
+import { typedValueLabel } from '../core/keys';
 
 export interface LayoutMetrics {
     rowHeight: number;
@@ -20,15 +24,21 @@ export function layoutMetrics(plan: RenderPlan, width: number, height = 720): La
         return channel && 'fieldRef' in channel;
     });
     const columnLevels = plan.columns.facets.length + (plan.columns.positions.length > 1 ? 1 : 0);
-    const columnLevelHeight = Math.min(28, Math.max(9, Math.floor((Math.max(90, height * 0.4) - 26) / Math.max(1, columnLevels))));
+    const naturalLevelHeight = Math.min(28, Math.max(9, Math.floor((Math.max(90, height * 0.4) - 26) / Math.max(1, columnLevels))));
+    const headerHeight = Math.min(
+        plan.layout?.columnHeaderHeight ?? Math.max(40, columnLevels * naturalLevelHeight + (plan.columns.positions.length > 1 ? 0 : 26)),
+        Math.max(1, height * 0.4),
+    );
+    const slotHeight = plan.columns.positions.length > 1 ? 0 : Math.min(26, headerHeight * 0.65);
+    const columnLevelHeight = Math.min(naturalLevelHeight, Math.max(1, (headerHeight - slotHeight) / Math.max(1, columnLevels)));
     return {
-        rowHeight: 180,
-        columnWidth: 240,
+        rowHeight: plan.layout?.rowHeight ?? 180,
+        columnWidth: plan.layout?.columnWidth ?? 240,
         headerWidth: Math.min(
-            Math.max(112, (plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)) * 78),
-            Math.max(112, width * 0.35),
+            plan.layout?.rowHeaderWidth ?? Math.max(112, (plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)) * 78),
+            Math.max(1, width * 0.35),
         ),
-        headerHeight: Math.max(40, columnLevels * columnLevelHeight + (plan.columns.positions.length > 1 ? 0 : 26)),
+        headerHeight,
         legendWidth: hasLegend ? Math.min(168, Math.max(96, width * 0.23)) : 0,
         columnLevelHeight,
     };
@@ -47,10 +57,19 @@ export interface SceneInput {
     selected?: ReadonlySet<string>;
     focusId?: string;
     brush?: Box;
+    /** A fixed export task can preserve its original layout while sizing page targets. */
+    metrics?: LayoutMetrics;
+    /** Explicit, budgeted local geometry cache; clear it when font metrics change. */
+    cache?: SceneCache;
+    /** Pins each candidate base before later cache insertions can evict it. */
+    onRetainPane?: (value: CachedPaneGeometry, bytes: number, translatedBytes: number) => void;
+    dataStatus?: 'complete' | 'loading' | 'preview';
+    /** Missing domains allow explicit placeholders, never inferred scales. */
+    domainsReady?: boolean;
 }
 export function buildScene(input: SceneInput): SceneFrame {
     const { plan, width, height, scrollX, scrollY, rows, columns, domains, panes } = input;
-    const m = layoutMetrics(plan, width, height),
+    const m = input.metrics ?? layoutMetrics(plan, width, height),
         all: Box = { x: 0, y: 0, width, height };
     const body: Box = {
         x: m.headerWidth,
@@ -81,122 +100,136 @@ export function buildScene(input: SceneInput): SceneFrame {
         align: 'left' | 'center' | 'right' = 'left',
         maxWidth = Infinity,
         size = fontSize,
-    ) => add(id, clip, { kind: 'text', x, y, text: fitText(label, maxWidth, size, fontFamily), fill: '#334155', size, fontFamily, align });
+    ) =>
+        add(id, clip, {
+            kind: 'text',
+            x,
+            y,
+            text: fitText(label, maxWidth, size, fontFamily),
+            fill: '#334155',
+            size,
+            fontFamily,
+            align,
+        });
     const bindings = new Map(plan.bindings.map((binding) => [binding.fieldRef, binding]));
     const lookup = new Map(panes.panes.map((pane) => [`${pane.rowRank}:${pane.columnRank}`, pane]));
-    const encode = createEncoders(plan, domains);
+    let encode: ReturnType<typeof createEncoders> | undefined;
+    const encoders = () => (input.domainsReady === false ? undefined : (encode ??= createEncoders(plan, domains)));
     rect('background', all, all, plan.style?.background ?? '#fff');
-    for (const row of rows.leaves)
-        for (const column of columns.leaves) {
-            const left = m.headerWidth + column.rank * m.columnWidth - scrollX,
-                top = m.headerHeight + row.rank * m.rowHeight - scrollY;
-            const cell: Box = { x: left, y: top, width: m.columnWidth, height: m.rowHeight },
-                clip = intersect(body, cell);
-            if (!clip.width || !clip.height) continue;
-            const id = `${row.key}:${column.key}`,
-                pane = lookup.get(`${row.rank}:${column.rank}`);
-            rect(`cell:${id}`, clip, cell, plan.style?.background ?? '#fff', '#e2e8f0');
-            const plot: Box = { x: left + 48, y: top + 22, width: m.columnWidth - 60, height: m.rowHeight - 52 },
-                plotClip = intersect(clip, plot);
-            const xb = bindings.get(column.positionRef ?? ''),
-                yb = bindings.get(row.positionRef ?? '');
-            const covered = panes.coveredWindows.some(
-                (window) =>
-                    row.rank >= window.rows.start &&
-                    row.rank < window.rows.end &&
-                    column.rank >= window.columns.start &&
-                    column.rank < window.columns.end,
-            );
-            if (!covered || (pane && !pane.complete)) {
-                text(`loading:${id}`, clip, left + 60, top + 60, 'Loading…');
-                continue;
-            }
-            const xDomain = xb ? getDisplayDomain(plan, xb.fieldRef, 'x', domains, row, column) : undefined,
-                yDomain = yb ? getDisplayDomain(plan, yb.fieldRef, 'y', domains, row, column) : undefined;
-            if ((xb && !xDomain) || (yb && !yDomain)) throw new Error('domain-unavailable: pane position domain missing');
-            const xs = createPositionScale(xDomain, xb ? plan.scales?.[xb.fieldRef] : undefined, plot.x, plot.x + plot.width),
-                ys = createPositionScale(yDomain, yb ? plan.scales?.[yb.fieldRef] : undefined, plot.y + plot.height, plot.y);
-            for (const [binding, scale, vertical] of [
-                [xb, xs, false],
-                [yb, ys, true],
-            ] as const) {
-                if (!binding) continue;
-                const axis = plan.axes?.[binding.fieldRef];
-                if (axis?.hidden) continue;
-                const ticks = scale.ticks(axis?.tickCount ?? (scale.type === 'band' ? 10 : 3));
-                const labelStride = Math.max(
-                    1,
-                    Math.ceil(
-                        ticks.length / Math.max(1, Math.floor((vertical ? plot.height : plot.width) / (vertical ? fontSize + 6 : 40))),
-                    ),
+    let panePayloadBytes = 0,
+        translatedBytes = 0;
+    const retainedBases: SceneAccounting['bases'][number][] = [];
+    if (input.cache) {
+        input.cache.begin(plan, panes.version, m.columnWidth, m.rowHeight);
+        const layer = (frame.paneLayer = {
+            clip: body,
+            x: m.headerWidth - scrollX,
+            y: m.headerHeight - scrollY,
+            commandStart: frame.commands.length,
+            commandEnd: 0,
+            groups: [] as NonNullable<SceneFrame['paneLayer']>['groups'],
+        });
+        for (const row of rows.leaves)
+            for (const column of columns.leaves) {
+                const x = column.rank * m.columnWidth,
+                    y = row.rank * m.rowHeight,
+                    left = layer.x + x,
+                    top = layer.y + y;
+                const visible = intersect(body, { x: left, y: top, width: m.columnWidth, height: m.rowHeight });
+                if (!visible.width || !visible.height) continue;
+                const pane = lookup.get(`${row.rank}:${column.rank}`);
+                const covered = panes.coveredWindows.some(
+                    (window) =>
+                        row.rank >= window.rows.start &&
+                        row.rank < window.rows.end &&
+                        column.rank >= window.columns.start &&
+                        column.rank < window.columns.end,
                 );
-                ticks.forEach((value, index) => {
-                    const at = scale.map(value);
-                    if (!Number.isFinite(at)) return;
-                    const label = formatValue(value, scale.type, axis?.format);
-                    if (axis?.grid)
-                        add(
-                            `grid:${vertical ? 'y' : 'x'}:${id}:${index}`,
-                            plotClip,
-                            vertical
-                                ? { kind: 'line', x1: plot.x, y1: at, x2: plot.x + plot.width, y2: at, stroke: '#e2e8f0' }
-                                : { kind: 'line', x1: at, y1: plot.y, x2: at, y2: plot.y + plot.height, stroke: '#e2e8f0' },
-                        );
-                    if (index % labelStride) return;
-                    if (vertical) text(`y:${id}:${index}`, clip, plot.x - 5, at + fontSize * 0.35, label, 'right', 40);
-                    else
-                        text(
-                            `x:${id}:${index}`,
-                            clip,
-                            at,
-                            plot.y + plot.height + 16,
-                            label,
-                            'center',
-                            Math.max(16, plot.width / Math.max(1, Math.ceil(ticks.length / labelStride)) - 4),
-                        );
-                });
-                add(
-                    `axis:${vertical ? 'y' : 'x'}:${id}`,
-                    clip,
-                    vertical
-                        ? { kind: 'line', x1: plot.x, y1: plot.y, x2: plot.x, y2: plot.y + plot.height, stroke: '#94a3b8' }
-                        : {
-                              kind: 'line',
-                              x1: plot.x,
-                              y1: plot.y + plot.height,
-                              x2: plot.x + plot.width,
-                              y2: plot.y + plot.height,
-                              stroke: '#94a3b8',
-                          },
+                const complete = input.domainsReady !== false && (covered || !!pane?.complete) && (!pane || pane.complete);
+                const geometry = input.cache.pane(plan, row, column, pane, domains, complete, input.dataStatus ?? 'complete', () =>
+                    buildPaneGeometry({
+                        plan,
+                        row,
+                        column,
+                        pane,
+                        domains,
+                        width: m.columnWidth,
+                        height: m.rowHeight,
+                        covered,
+                        domainsReady: input.domainsReady,
+                        dataStatus: input.dataStatus,
+                        encode: encoders(),
+                    }),
                 );
+                panePayloadBytes += geometry.bytes;
+                retainedBases.push({ value: geometry, bytes: geometry.bytes });
+                input.onRetainPane?.(geometry, geometry.bytes, translatedBytes);
+                const selectedIds: string[] = [],
+                    clips = new Map<Box, Box>();
+                for (const command of geometry.commands) {
+                    let clip = clips.get(command.clip);
+                    if (!clip) {
+                        clip = intersect(body, translatedBox(command.clip, left, top));
+                        clips.set(command.clip, clip);
+                    }
+                    const selected = !!input.selected?.size && input.selected.has(command.id);
+                    if (selected) selectedIds.push(command.id);
+                    frame.commands.push({ id: command.id, clip, primitive: translatedPrimitive(command.primitive, left, top, selected) });
+                    translatedBytes += 512 + (command.primitive.kind === 'path' ? command.primitive.points.length * 48 : 0);
+                }
+                for (const hit of geometry.hits) {
+                    const translated = translatedHit(hit, left, top, body);
+                    if (translated) {
+                        frame.hits.push(translated);
+                        translatedBytes += 768 + (hit.geometry?.kind === 'polygon' ? hit.geometry.points.length * 48 : 0);
+                    }
+                }
+                layer.groups.push({ id: `${row.key}:${column.key}`, x, y, commands: geometry.commands, selectedIds });
             }
-            const title = (binding: ResultBinding | undefined) =>
-                binding && !plan.axes?.[binding.fieldRef]?.hidden
-                    ? plan.axes?.[binding.fieldRef]?.title === null
-                        ? ''
-                        : (plan.axes?.[binding.fieldRef]?.title ?? binding.label)
-                    : '';
-            text(`title:${id}`, clip, left + 48, top + 14, [title(yb), title(xb)].filter(Boolean).join(' / '), 'left', plot.width);
-            if (pane)
-                drawPaneMarks({
+        layer.commandEnd = frame.commands.length;
+    } else {
+        for (const row of rows.leaves)
+            for (const column of columns.leaves) {
+                const pane = lookup.get(`${row.rank}:${column.rank}`);
+                const covered = panes.coveredWindows.some(
+                    (window) =>
+                        row.rank >= window.rows.start &&
+                        row.rank < window.rows.end &&
+                        column.rank >= window.columns.start &&
+                        column.rank < window.columns.end,
+                );
+                buildPaneGeometry({
                     plan,
-                    pane,
                     row,
                     column,
-                    xb,
-                    yb,
-                    xs,
-                    ys,
-                    plot,
-                    clip: plotClip,
+                    pane,
+                    domains,
+                    width: m.columnWidth,
+                    height: m.rowHeight,
+                    left: m.headerWidth + column.rank * m.columnWidth - scrollX,
+                    top: m.headerHeight + row.rank * m.rowHeight - scrollY,
+                    viewportClip: body,
                     frame,
-                    encode,
                     selected: input.selected,
-                    focusId: input.focusId,
+                    covered,
+                    domainsReady: input.domainsReady,
+                    dataStatus: input.dataStatus,
+                    encode: encoders(),
                 });
-        }
-    const rowClip: Box = { x: 0, y: m.headerHeight, width: m.headerWidth, height: Math.max(0, height - m.headerHeight) },
-        columnClip: Box = { x: m.headerWidth, y: 0, width: Math.max(0, width - m.headerWidth - m.legendWidth), height: m.headerHeight };
+            }
+    }
+    const rowClip: Box = {
+            x: 0,
+            y: m.headerHeight,
+            width: m.headerWidth,
+            height: Math.max(0, height - m.headerHeight),
+        },
+        columnClip: Box = {
+            x: m.headerWidth,
+            y: 0,
+            width: Math.max(0, width - m.headerWidth - m.legendWidth),
+            height: m.headerHeight,
+        };
     rect('row-background', rowClip, rowClip, '#f8fafc');
     rect('column-background', columnClip, columnClip, '#f8fafc');
     const rowDepth = Math.max(1, plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)),
@@ -244,7 +277,11 @@ export function buildScene(input: SceneInput): SceneFrame {
             frame.headers.push(target);
             const prefix = axis === 'row' ? 'rh' : 'ch';
             rect(`${prefix}:${span.key}`, clip, box, '#f8fafc', '#cbd5e1');
-            const label = (canCollapse ? (target.expanded ? '▾ ' : '▸ ') : '') + span.label;
+            const memberLabel =
+                plan.layout?.headerLabelMode === 'path' && !slot
+                    ? span.path.map((member) => typedValueLabel(member.value)).join(' / ')
+                    : span.label;
+            const label = (canCollapse ? (target.expanded ? '▾ ' : '▸ ') : '') + memberLabel;
             const size = axis === 'column' ? Math.min(fontSize, Math.max(7, m.columnLevelHeight - 5)) : fontSize;
             text(
                 `${prefix}t:${span.key}`,
@@ -271,10 +308,17 @@ export function buildScene(input: SceneInput): SceneFrame {
     rect('corner', all, { x: 0, y: 0, width: m.headerWidth, height: m.headerHeight }, '#eef2f6', '#cbd5e1');
     text('corner-title', all, 12, 24, 'Worksheet', 'left', m.headerWidth - 24);
     if (m.legendWidth) {
-        const legend: Box = { x: width - m.legendWidth, y: 0, width: m.legendWidth, height };
+        const legend: Box = {
+            x: width - m.legendWidth,
+            y: 0,
+            width: m.legendWidth,
+            height,
+        };
         rect('legend-background', all, legend, '#f8fafc', '#cbd5e1');
         let y = 20;
-        for (const name of ['color', 'size', 'opacity', 'shape'] as const) {
+        if (input.domainsReady === false)
+            text('legend-unavailable', legend, legend.x + 10, y, 'Domain unavailable', 'left', legend.width - 20);
+        for (const name of input.domainsReady === false ? [] : (['color', 'size', 'opacity', 'shape'] as const)) {
             const channel = plan.channels?.[name];
             if (!channel || !('fieldRef' in channel)) continue;
             const binding = bindings.get(channel.fieldRef)!,
@@ -350,7 +394,10 @@ export function buildScene(input: SceneInput): SceneFrame {
                         y - 4,
                         64,
                     ).primitive;
-                    add(`legend-swatch:${name}:${index}`, legend, { ...primitive, fill: plan.style?.color ?? '#2563eb' });
+                    add(`legend-swatch:${name}:${index}`, legend, {
+                        ...primitive,
+                        fill: plan.style?.color ?? '#2563eb',
+                    });
                 }
                 text(
                     `legend-value:${name}:${index}`,
@@ -389,7 +436,26 @@ export function buildScene(input: SceneInput): SceneFrame {
                 strokeWidth: 2,
             });
     }
-    if (input.brush) add('selection-brush', body, { kind: 'rect', box: input.brush, fill: '#93c5fd', stroke: '#2563eb', opacity: 0.3 });
+    if (input.brush)
+        add('selection-brush', body, {
+            kind: 'rect',
+            box: input.brush,
+            fill: '#93c5fd',
+            stroke: '#2563eb',
+            opacity: 0.3,
+        });
     prepareHitIndex(frame);
+    if (input.cache && frame.paneLayer) {
+        const chrome = { commands: [frame.commands[0], ...frame.commands.slice(frame.paneLayer.commandEnd)], headers: frame.headers };
+        frame.retainedBytes =
+            panePayloadBytes +
+            translatedBytes +
+            Math.ceil(input.cache.measure(chrome) * 1.25) +
+            hitIndexBytes(frame) +
+            frame.paneLayer.groups.length * 512 +
+            input.cache.metadataBytes() +
+            1024;
+        setSceneAccounting(frame, { bases: retainedBases, exclusiveBytes: frame.retainedBytes - panePayloadBytes });
+    }
     return frame;
 }

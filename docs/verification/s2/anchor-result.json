@@ -1,0 +1,190 @@
+{
+  "before": {
+    "scroll": [
+      0,
+      200
+    ],
+    "start": [
+      1,
+      0
+    ],
+    "headers": [
+      {
+        "label": "West",
+        "path": [
+          "West"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]]]]",
+        "box": {
+          "x": 0,
+          "y": -118,
+          "width": 78,
+          "height": 360
+        }
+      },
+      {
+        "label": "Portland",
+        "path": [
+          "West",
+          "Portland"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]],[\"City\",[\"string\",\"Portland\"]]]]",
+        "box": {
+          "x": 78,
+          "y": 62,
+          "width": 78,
+          "height": 180
+        }
+      },
+      {
+        "label": "East",
+        "path": [
+          "East"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"East\"]]]]",
+        "box": {
+          "x": 0,
+          "y": 242,
+          "width": 78,
+          "height": 360
+        }
+      },
+      {
+        "label": "Boston",
+        "path": [
+          "East",
+          "Boston"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"East\"]],[\"City\",[\"string\",\"Boston\"]]]]",
+        "box": {
+          "x": 78,
+          "y": 242,
+          "width": 78,
+          "height": 180
+        }
+      }
+    ],
+    "version": {
+      "sourceId": "controlled-prepared-demo",
+      "snapshotId": "prepared-v1",
+      "presentationId": "display-1"
+    }
+  },
+  "requested": "request-1-1",
+  "sorted": {
+    "scroll": [
+      0,
+      20
+    ],
+    "start": [
+      0,
+      0
+    ],
+    "headers": [
+      {
+        "label": "West",
+        "path": [
+          "West"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]]]]",
+        "box": {
+          "x": 0,
+          "y": 62,
+          "width": 78,
+          "height": 360
+        }
+      },
+      {
+        "label": "Portland",
+        "path": [
+          "West",
+          "Portland"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]],[\"City\",[\"string\",\"Portland\"]]]]",
+        "box": {
+          "x": 78,
+          "y": 62,
+          "width": 78,
+          "height": 180
+        }
+      },
+      {
+        "label": "Seattle",
+        "path": [
+          "West",
+          "Seattle"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]],[\"City\",[\"string\",\"Seattle\"]]]]",
+        "box": {
+          "x": 78,
+          "y": 242,
+          "width": 78,
+          "height": 180
+        }
+      }
+    ],
+    "version": {
+      "sourceId": "controlled-prepared-demo",
+      "snapshotId": "prepared-v1",
+      "presentationId": "display-2"
+    }
+  },
+  "req2": "request-1-2",
+  "collapsed": {
+    "scroll": [
+      0,
+      0
+    ],
+    "start": [
+      0,
+      0
+    ],
+    "headers": [
+      {
+        "label": "West",
+        "path": [
+          "West"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"West\"]]]]",
+        "box": {
+          "x": 0,
+          "y": 82,
+          "width": 78,
+          "height": 180
+        }
+      },
+      {
+        "label": "East",
+        "path": [
+          "East"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"East\"]]]]",
+        "box": {
+          "x": 0,
+          "y": 262,
+          "width": 78,
+          "height": 360
+        }
+      },
+      {
+        "label": "Boston",
+        "path": [
+          "East",
+          "Boston"
+        ],
+        "key": "[\"header\",\"row\",[[\"Region\",[\"string\",\"East\"]],[\"City\",[\"string\",\"Boston\"]]]]",
+        "box": {
+          "x": 78,
+          "y": 262,
+          "width": 78,
+          "height": 180
+        }
+      }
+    ],
+    "version": {
+      "sourceId": "controlled-prepared-demo",
+      "snapshotId": "prepared-v1",
+      "presentationId": "display-3"
+    }
+  }
+}

@@ -76,6 +76,17 @@ export interface SceneFrame {
     headers: HeaderTarget[];
     rowStart: number;
     columnStart: number;
+    /** Optional stable local geometry. The flattened commands/hits remain in viewport coordinates. */
+    paneLayer?: {
+        clip: Box;
+        x: number;
+        y: number;
+        commandStart: number;
+        commandEnd: number;
+        groups: Array<{ id: string; x: number; y: number; commands: readonly DrawCommand[]; selectedIds: readonly string[] }>;
+    };
+    /** Conservative resident cost including local payloads retained from an evictable cache. */
+    retainedBytes?: number;
 }
 export function contains(box: Box, x: number, y: number): boolean {
     return x >= box.x && x < box.x + box.width && y >= box.y && y < box.y + box.height;

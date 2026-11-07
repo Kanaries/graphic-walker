@@ -7,10 +7,12 @@ import type {
     AxisWindow,
     PaneBatch,
     AxisLocation,
+    PaneWindow,
 } from '../core/types';
 import { buildScene, layoutMetrics, type SceneInput } from '../scene/build';
+import { createSceneCache, sceneAccounting, type CachedPaneGeometry } from '../scene/cache';
 import { type Box, type HeaderTarget, type HitRegion, type SceneFrame } from '../scene/types';
-import { hitTest, hitsInBox, headerAt } from '../scene/hit';
+import { hitTest, hitsInBox, headerAt, hitIndexBytes } from '../scene/hit';
 import { paintCanvas } from '../backends/canvas';
 import { createSvgBackend } from '../backends/svg';
 import { ScrollMapper } from './scroll';
@@ -22,8 +24,14 @@ import { createRequestRegistry } from './requests';
 import { createSemanticView, headerDescription } from './semantic';
 import { withAbort } from './abort';
 import { typedValueLabel, pathKey } from '../core/keys';
-import { clearTextMetrics } from '../scene/text';
+import { clearTextMetrics, textMetricsBytes } from '../scene/text';
 import { immutableSnapshot, type ReadonlySnapshot } from './snapshot';
+import { createResourceManager, estimateBytes } from './resources';
+import { createWindowReader, type WindowProgress } from './reader';
+import { exportViewport as serializeViewport } from '../export/viewport';
+import { exportRange as serializeRange } from '../export/range';
+import type { ViewportExportOptions, ViewportExportSnapshot, RangeExportOptions } from '../export/types';
+import { limitsFor } from '../export/shared';
 import {
     selectionTarget,
     type WorksheetInput,
@@ -37,6 +45,11 @@ import {
 } from './types';
 export type { WorksheetInput, UpdateReceipt, WorksheetEvents } from './types';
 
+type RuntimeSceneInput = SceneInput & { retainedDataBytes: number };
+
+// A full-capacity grid needs an extra partial row/column during pixel scrolling.
+const displayReaderLimits = { maxRecords: 40_400, maxPaneRecords: 20_000, maxWindowCells: 202 };
+
 const sameVersion = (a: ReadVersion, b: ReadVersion) =>
     a.sourceId === b.sourceId && a.snapshotId === b.snapshotId && a.presentationId === b.presentationId;
 /** One paint root, one scroll owner, and versioned display state. */
@@ -44,6 +57,26 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
     for (const value of [options.width, options.height, options.dpr, options.requestTimeoutMs])
         if (value !== undefined && (!Number.isFinite(value) || value <= 0))
             throw new Error('invalid-option: dimensions, DPR, and timeout must be positive finite numbers');
+    if (
+        options.resourceBudgetBytes !== undefined &&
+        (!Number.isSafeInteger(options.resourceBudgetBytes) ||
+            options.resourceBudgetBytes <= 0 ||
+            options.resourceBudgetBytes > 128 * 1024 * 1024)
+    )
+        throw new Error('invalid-option: resourceBudgetBytes must be a positive integer at most 128 MiB');
+    const resources = createResourceManager({
+        maxBytes: options.resourceBudgetBytes,
+    });
+    const sceneCache = createSceneCache({
+        get: (key) => resources.cacheGet<CachedPaneGeometry>('geometry', key),
+        put: (key, value, bytes) => resources.cachePut('geometry', key, value, { bytes }),
+        remove: (key) => resources.cacheRemove('geometry', key),
+        measure: estimateBytes,
+    });
+    let reader = createWindowReader(initial.source, initial.plan, resources, displayReaderLimits);
+    const lifetime = new AbortController();
+    let prefetch = new AbortController();
+    let fontRevision = 0;
     let input = initial,
         revision = 0,
         frameCounter = 0,
@@ -59,14 +92,14 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         layoutRevision = 0,
         loadState: LoadState = 'loading';
     let acceptedInput: WorksheetInput | undefined,
-        lastScene: SceneInput | undefined,
+        lastScene: RuntimeSceneInput | undefined,
         focusId: string | undefined,
         headerFocus = false;
     let committed:
         | {
               input: WorksheetInput;
               frame: SceneFrame;
-              scene: SceneInput;
+              scene: RuntimeSceneInput;
               manifest: RenderDataManifest;
               domains: DomainBatch;
               version: ReadVersion;
@@ -74,6 +107,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
               scrollX: number;
               scrollY: number;
               scrollEpoch: number;
+              reader: typeof reader;
           }
         | undefined;
     let requestedVersion = initial.source.version;
@@ -92,6 +126,8 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         if (!value) return undefined;
         let snapshot = frameSnapshots.get(value);
         if (!snapshot) {
+            if (value === frame || value === committed?.frame)
+                resources.reserve('public-frame-snapshot', estimateBytes(value, { sharedStrings: true }));
             snapshot = immutableSnapshot(value);
             frameSnapshots.set(value, snapshot);
         }
@@ -108,7 +144,10 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
     const selected = new Set<string>(),
         selections = new Map<string, HitRegion>();
     const pendingTargets = new Map<string, SelectionTarget>();
-    const cache = new Map<string, { rows: AxisWindow; columns: AxisWindow; panes: PaneBatch; domains?: DomainBatch }>();
+    const frameWaiters = new Set<() => void>();
+    const wakeFrameWaiters = () => {
+        for (const check of [...frameWaiters]) check();
+    };
     const listeners = new Map<keyof WorksheetEvents, Set<(value: any) => void>>();
     const root = document.createElement('div'),
         scroller = document.createElement('div'),
@@ -144,7 +183,12 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             requestNotice = 'Waiting for host: ' + requests.snapshot().length + ' display requests';
         if (!loading) setStatus(requestNotice);
         syncSemantic();
-        emit('requestStateChange', { ...metadata(), requestId: request.requestId, status: state, reason });
+        emit('requestStateChange', {
+            ...metadata(),
+            requestId: request.requestId,
+            status: state,
+            reason,
+        });
     });
     const semantic = createSemanticView(root, options.accessibleName ?? 'Worksheet', {
         step: (delta) => moveFocus(delta),
@@ -187,13 +231,23 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         setStatus(message || requestNotice);
         semantic.tooltip(undefined);
         if (loading || state === 'error') semantic.update(undefined, undefined, false, message || state);
-        emit('loadStateChange', { ...metadata(), state, requestedVersion, message });
+        emit('loadStateChange', {
+            ...metadata(),
+            state,
+            requestedVersion,
+            message,
+        });
+        wakeFrameWaiters();
     }
     function diagnostic(error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         const structured =
             error && typeof error === 'object'
-                ? (error as { diagnostic?: Partial<import('../core/types').Diagnostic>; code?: string; fieldRef?: string })
+                ? (error as {
+                      diagnostic?: Partial<import('../core/types').Diagnostic>;
+                      code?: string;
+                      fieldRef?: string;
+                  })
                 : undefined;
         const details = structured?.diagnostic;
         const prefix = /^[a-z][a-z0-9-]+:/.test(message) ? message.split(':')[0] : 'render-error';
@@ -227,14 +281,54 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         if (paint instanceof HTMLCanvasElement) paintCanvas(paint, next, requestedDpr);
         else svgPaint!(next);
     }
+    function buildAndDraw(scene: RuntimeSceneInput, backend = input.backend ?? 'canvas', beforeDraw?: (next: SceneFrame) => void) {
+        // The reader measures its immutable payload once; scrolling only creates small display state.
+        const dataBytes = scene.retainedDataBytes + 1024;
+        resources.reserve('candidate-frame', dataBytes);
+        try {
+            const sceneStarted = performance.now();
+            const retainedPanes: Array<{ value: CachedPaneGeometry; bytes: number }> = [];
+            const next = buildScene({
+                ...scene,
+                onRetainPane(value, bytes, translatedBytes) {
+                    retainedPanes.push({ value, bytes });
+                    resources.reserve('candidate-frame', dataBytes + translatedBytes + sceneCache.metadataBytes() + textMetricsBytes(), {
+                        shared: retainedPanes,
+                    });
+                },
+            });
+            const sceneMs = performance.now() - sceneStarted;
+            if (next.hits.length > 20_000) throw new Error('resource-limit: viewport exceeds 20,000 marks');
+            // The readonly public copy is charged only when requested. Its immutable strings are shared.
+            // Cached pane costs include their retained base geometry even if the LRU evicts it.
+            const accounting = sceneAccounting(next);
+            const geometryBytes = accounting?.exclusiveBytes ?? estimateBytes(next) + hitIndexBytes(next);
+            const cost = dataBytes + geometryBytes + textMetricsBytes();
+            const reservation = { shared: accounting?.bases };
+            resources.reserve('candidate-frame', cost, reservation);
+            beforeDraw?.(next);
+            const submitted = performance.now();
+            draw(next, backend);
+            const submitMs = performance.now() - submitted;
+            resources.release('display-frame');
+            resources.release('public-frame-snapshot');
+            resources.release('candidate-frame');
+            resources.reserve('display-frame', cost, reservation);
+            return { next, sceneMs, submitMs };
+        } catch (error) {
+            resources.release('candidate-frame');
+            throw error;
+        }
+    }
     function retainCommittedDisplay() {
         frame = undefined;
         frameVersion = undefined;
         lastScene = undefined;
         manifest = undefined;
         domains = undefined;
-        cache.clear();
         if (committed) {
+            if (reader !== committed.reader) reader.dispose();
+            reader = committed.reader;
             input = committed.input;
             acceptedInput = committed.input;
             manifest = committed.manifest;
@@ -290,8 +384,13 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
     }
     function redrawOverlay() {
         if (!frame || !lastScene || loading || disposed) return;
-        const next = buildScene({ ...lastScene, frameId: ++frameCounter, selected, focusId, brush });
-        draw(next);
+        const { next } = buildAndDraw({
+            ...lastScene,
+            frameId: ++frameCounter,
+            selected,
+            focusId,
+            brush,
+        });
         frame = next;
         if (committed) committed = { ...committed, frame: next };
         syncSemantic();
@@ -301,39 +400,82 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             .map((id) => (selections.has(id) ? selectionTarget(selections.get(id)!, input.plan) : pendingTargets.get(id)))
             .filter((target): target is SelectionTarget => !!target);
     }
-    function choose(hits: readonly HitRegion[], operation: 'replace' | 'add' | 'toggle' | 'clear', source: 'pointer' | 'keyboard') {
-        if (loading || !frame || disposed) return;
-        if (operation === 'replace' || operation === 'clear') {
-            selected.clear();
-            selections.clear();
-            pendingTargets.clear();
-        }
-        for (const hit of hits) {
-            if (operation === 'toggle' && selected.has(hit.id)) {
-                selected.delete(hit.id);
-                selections.delete(hit.id);
-                pendingTargets.delete(hit.id);
-            } else {
-                selected.add(hit.id);
-                selections.set(hit.id, hit);
-                pendingTargets.delete(hit.id);
-            }
-        }
-        redrawOverlay();
-        emit('selectionChange', { ...metadata(), targets: currentSelection(), operation, source });
+    function selectionBytes(ids: ReadonlySet<string>, hits: ReadonlyMap<string, HitRegion>, targets: ReadonlyMap<string, SelectionTarget>) {
+        if (ids.size > 20_000) throw new Error('resource-limit: selection exceeds 20,000 targets');
+        return estimateBytes({ ids, hits, targets }) * 2;
     }
-    function setSelection(targets: readonly SelectionTarget[]) {
-        if (disposed) return;
+    function applySelection(ids: ReadonlySet<string>, hits: ReadonlyMap<string, HitRegion>, targets: ReadonlyMap<string, SelectionTarget>) {
+        resources.reserve('selection', selectionBytes(ids, hits, targets));
         selected.clear();
         selections.clear();
         pendingTargets.clear();
-        for (const target of targets) {
-            selected.add(target.markId);
-            const hit = frame?.hits.find((item) => item.id === target.markId);
-            if (hit) selections.set(target.markId, hit);
-            else pendingTargets.set(target.markId, { ...target, datumKeys: [...target.datumKeys], values: [...target.values] });
+        for (const id of ids) selected.add(id);
+        for (const [id, hit] of hits) selections.set(id, hit);
+        for (const [id, target] of targets) pendingTargets.set(id, target);
+    }
+    function changeSelection(
+        ids: ReadonlySet<string>,
+        hits: ReadonlyMap<string, HitRegion>,
+        targets: ReadonlyMap<string, SelectionTarget>,
+    ) {
+        const previousIds = new Set(selected),
+            previousKnown = new Map(selections),
+            previousPending = new Map(pendingTargets);
+        applySelection(ids, hits, targets);
+        try {
+            redrawOverlay();
+        } catch (error) {
+            applySelection(previousIds, previousKnown, previousPending);
+            throw error;
         }
-        redrawOverlay();
+    }
+    function choose(hits: readonly HitRegion[], operation: 'replace' | 'add' | 'toggle' | 'clear', source: 'pointer' | 'keyboard') {
+        if (loading || !frame || disposed) return;
+        const clear = operation === 'replace' || operation === 'clear';
+        const ids = clear ? new Set<string>() : new Set(selected),
+            known = clear ? new Map<string, HitRegion>() : new Map(selections),
+            unknown = clear ? new Map<string, SelectionTarget>() : new Map(pendingTargets);
+        for (const hit of hits) {
+            if (operation === 'toggle' && ids.has(hit.id)) {
+                ids.delete(hit.id);
+                known.delete(hit.id);
+                unknown.delete(hit.id);
+            } else {
+                ids.add(hit.id);
+                known.set(hit.id, hit);
+                unknown.delete(hit.id);
+            }
+        }
+        try {
+            changeSelection(ids, known, unknown);
+        } catch (error) {
+            setStatus(diagnostic(error));
+            return;
+        }
+        emit('selectionChange', {
+            ...metadata(),
+            targets: currentSelection(),
+            operation,
+            source,
+        });
+    }
+    function setSelection(targets: readonly SelectionTarget[]) {
+        if (disposed) return;
+        const ids = new Set<string>(),
+            known = new Map<string, HitRegion>(),
+            unknown = new Map<string, SelectionTarget>();
+        for (const target of targets) {
+            ids.add(target.markId);
+            const hit = frame?.hits.find((item) => item.id === target.markId);
+            if (hit) known.set(hit.id, hit);
+            else
+                unknown.set(target.markId, {
+                    ...target,
+                    datumKeys: [...target.datumKeys],
+                    values: [...target.values],
+                });
+        }
+        changeSelection(ids, known, unknown);
     }
     function moveFocus(delta: number) {
         if (!frame || loading) return;
@@ -352,19 +494,34 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
                   : Math.max(0, Math.min(items.length - 1, (at < 0 ? 0 : at) + delta));
         focusId = items[next].id;
         redrawOverlay();
-        emit('viewStateChange', { ...metadata(), scrollX, scrollY, focus: focusTarget(), source: 'keyboard' });
+        emit('viewStateChange', {
+            ...metadata(),
+            scrollX,
+            scrollY,
+            focus: focusTarget(),
+            source: 'keyboard',
+        });
     }
     function focusTarget(): FocusTarget | undefined {
         const target = focused();
         if (!target) return undefined;
         return target.kind === 'header'
             ? { headerKey: target.key }
-            : { markId: target.id, rowKey: target.rowKey, columnKey: target.columnKey };
+            : {
+                  markId: target.id,
+                  rowKey: target.rowKey,
+                  columnKey: target.columnKey,
+              };
     }
     function requestHeader(target: HeaderTarget, kind: 'collapse' | 'sort') {
         if (!target.fieldRef || loading) return;
         if (kind === 'collapse' && !target.canCollapse) return;
-        const header = { axis: target.axis, key: target.key, path: target.path, fieldRef: target.fieldRef };
+        const header = {
+            axis: target.axis,
+            key: target.key,
+            path: target.path,
+            fieldRef: target.fieldRef,
+        };
         if (kind === 'collapse') requestCollapse(header, target.expanded === false);
         else requestSort(header, 'ascending');
     }
@@ -388,18 +545,53 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         if (target.kind === 'header') requestHeader(target, 'collapse');
         else choose([target], 'toggle', 'keyboard');
     }
+    function prefetchWindow(window: PaneWindow, activeReader: typeof reader, description: RenderDataManifest) {
+        if (options.overscan === false || description.status !== 'complete' || disposed) return;
+        prefetch.abort();
+        prefetch = new AbortController();
+        const rowCount = window.rows.end - window.rows.start,
+            columnCount = window.columns.end - window.columns.start;
+        let rowPad = rowCount,
+            columnPad = columnCount;
+        const expanded = () => ({
+            rows: {
+                start: Math.max(0, window.rows.start - rowPad),
+                end: Math.min(description.rowLeafCount, window.rows.end + rowPad),
+            },
+            columns: {
+                start: Math.max(0, window.columns.start - columnPad),
+                end: Math.min(description.columnLeafCount, window.columns.end + columnPad),
+            },
+        });
+        let target = expanded();
+        while ((target.rows.end - target.rows.start) * (target.columns.end - target.columns.start) > 100 && (rowPad || columnPad)) {
+            if (rowPad >= columnPad && rowPad) rowPad--;
+            else columnPad--;
+            target = expanded();
+        }
+        if (JSON.stringify(target) === JSON.stringify(window)) return;
+        void activeReader.readWindow(target, { signal: prefetch.signal, priority: 'overscan' }).then(
+            (result) => result.release(),
+            () => {
+                /* Optional overscan can be dropped; required viewport failures remain visible. */
+            },
+        );
+    }
     async function render(expected?: { row?: AxisLocation; column?: AxisLocation; scrollEpoch: number }): Promise<UpdateReceipt> {
-        const own = revision;
-        const started = options.metrics ? performance.now() : 0;
-        const layoutAtStart = layoutRevision;
+        const own = revision,
+            started = performance.now(),
+            layoutAtStart = layoutRevision;
         if (disposed) return { inputRevision: own, status: 'disposed' };
-        if (!manifest || !domains || loadState === 'error') return { inputRevision: own, status: 'rejected' };
+        if (!manifest || !domains || (loadState === 'error' && committed?.inputRevision !== own))
+            return { inputRevision: own, status: 'rejected' };
+        prefetch.abort();
         pending.abort();
         pending = new AbortController();
-        const signal = pending.signal;
-        const source = input.source,
+        const signal = pending.signal,
+            activeReader = reader,
+            batchManifest = manifest,
             plan = input.plan,
-            version = source.version;
+            version = input.source.version;
         const x = scrollX,
             y = scrollY,
             m = layoutMetrics(plan, width, height),
@@ -409,177 +601,245 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             colStart = Math.floor(x / m.columnWidth);
         const rows = {
             start: rowStart,
-            end: Math.min(manifest.rowLeafCount, rowStart + Math.max(0, Math.ceil((height - m.headerHeight) / m.rowHeight)) + 1),
+            end: Math.min(
+                manifest.rowLeafCount,
+                height > m.headerHeight ? Math.ceil((y + height - m.headerHeight) / m.rowHeight) : rowStart,
+            ),
         };
         const columns = {
             start: colStart,
             end: Math.min(
                 manifest.columnLeafCount,
-                colStart + Math.max(0, Math.ceil((width - m.headerWidth - m.legendWidth) / m.columnWidth)) + 1,
+                width > m.headerWidth + m.legendWidth ? Math.ceil((x + width - m.headerWidth - m.legendWidth) / m.columnWidth) : colStart,
             ),
         };
-        const key = JSON.stringify([version, rows, columns]);
+        const window = { rows, columns };
+        const current = () =>
+            !disposed &&
+            !signal.aborted &&
+            own === revision &&
+            x === scrollX &&
+            y === scrollY &&
+            frameWidth === width &&
+            frameHeight === height &&
+            layoutAtStart === layoutRevision;
         setLoadState(frame ? 'stale' : 'loading', 'Loading worksheet…');
-        try {
-            let batch = cache.get(key);
-            if (!batch) {
-                const [rowData, colData, paneData] = await withAbort(
-                    Promise.all([
-                        source.readAxis({ version, axis: 'row', range: rows }, signal),
-                        source.readAxis({ version, axis: 'column', range: columns }, signal),
-                        source.readPaneData({ version, windows: [{ rows, columns }] }, signal),
-                    ]),
-                    signal,
-                );
-                if (![rowData, colData, paneData].every((v) => sameVersion(v.version, version)))
-                    throw new Error('source-contract-violation: mismatched response version');
-                if (paneData.nextCursor) throw new Error('unsupported-source-paging: S0 requires complete pane batches');
-                if (paneData.panes.reduce((n, p) => n + p.records.length, 0) > 20_000)
-                    throw new Error('resource-limit: S0 window exceeds 20,000 records');
-                batch = { rows: rowData, columns: colData, panes: paneData };
-                const domainRequest = domainRequestForWindow(plan, version, rowData.leaves, colData.leaves);
-                if (domainRequest.keys?.length) {
-                    batch.domains = await withAbort(source.readDomains(domainRequest, signal), signal);
-                    if (!sameVersion(batch.domains.version, version))
-                        throw new Error('source-contract-violation: scoped domain version mismatch');
+        const setupCpuMs = performance.now() - started;
+        return new Promise<UpdateReceipt>((resolve) => {
+            let resolved = false;
+            const finish = (receipt: UpdateReceipt) => {
+                if (!resolved) {
+                    resolved = true;
+                    resolve(receipt);
                 }
-            }
-            if (
-                disposed ||
-                signal.aborted ||
-                own !== revision ||
-                x !== scrollX ||
-                y !== scrollY ||
-                frameWidth !== width ||
-                frameHeight !== height ||
-                layoutAtStart !== layoutRevision
-            )
-                return { inputRevision: own, status: disposed ? 'disposed' : 'superseded' };
-            const frameDomains = batch.domains ?? domains;
-            assertCompleteWindow({ plan, version, manifest, window: { rows, columns }, ...batch, domains: frameDomains });
-            if (expected?.scrollEpoch === scrollEpoch) {
-                for (const [location, axisData] of [
-                    [expected.row, batch.rows],
-                    [expected.column, batch.columns],
-                ] as const) {
-                    if (!location || location.status === 'missing') continue;
-                    const rank = location.status === 'found' ? location.rank : location.ancestor.start;
-                    const actual = axisData.leaves.find((leaf) => leaf.rank === rank);
-                    if (
-                        !actual ||
-                        (location.status === 'found'
-                            ? actual.key !== location.leaf.key
-                            : !actual.collapsed || pathKey(actual.path) !== pathKey(location.ancestor.path))
-                    )
-                        throw new Error('source-contract-violation: located member does not match the rendered axis window');
-                }
-            }
-            cache.delete(key);
-            cache.set(key, batch);
-            while (cache.size > 8) cache.delete(cache.keys().next().value!);
-            const sourceChanged = !!committed && committed.input.source.version.sourceId !== version.sourceId;
-            const snapshotChanged = !!committed && committed.input.source.version.snapshotId !== version.snapshotId;
-            const newInputCommit = committed?.inputRevision !== own;
-            const previousPresentation = committed?.version.presentationId ?? version.presentationId;
-            if (newInputCommit) requests.validate(input.requestResults, previousPresentation);
-            const controlledTargets = newInputCommit ? input.viewState?.selection : undefined;
-            const frameSelection = controlledTargets
-                ? new Set(controlledTargets.map((target) => target.markId))
-                : sourceChanged
-                  ? new Set<string>()
-                  : selected;
-            const frameFocus =
-                newInputCommit && input.viewState?.focus ? input.viewState.focus.markId : sourceChanged ? undefined : focusId;
-            lastScene = {
-                plan,
-                ...batch,
-                domains: frameDomains,
-                width: frameWidth,
-                height: frameHeight,
-                scrollX: x,
-                scrollY: y,
-                frameId: ++frameCounter,
-                selected: frameSelection,
-                focusId: frameFocus,
-                brush,
             };
-            const next = buildScene(lastScene);
-            draw(next);
-            focusId = frameFocus;
-            if (sourceChanged) {
-                selected.clear();
-                selections.clear();
-                pendingTargets.clear();
-            } else if (snapshotChanged) {
-                for (const [id, target] of pendingTargets) pendingTargets.set(id, { ...target, values: [] });
-                for (const [id, hit] of selections) pendingTargets.set(id, { ...selectionTarget(hit, committed!.input.plan), values: [] });
-                selections.clear();
-            }
-            if (controlledTargets) {
-                selected.clear();
-                selections.clear();
-                pendingTargets.clear();
-                for (const target of controlledTargets) {
-                    selected.add(target.markId);
-                    pendingTargets.set(target.markId, { ...target, datumKeys: [...target.datumKeys], values: [...target.values] });
-                }
-            }
-            for (const hit of next.hits)
-                if (selected.has(hit.id)) {
-                    selections.set(hit.id, hit);
-                    pendingTargets.delete(hit.id);
-                }
-            frame = next;
-            frameVersion = version;
-            frameRevision = own;
-            acceptedInput = input;
-            committed = {
-                input,
-                frame: next,
-                scene: lastScene,
-                manifest,
-                domains,
-                version,
+            const superseded = (): UpdateReceipt => ({
                 inputRevision: own,
-                scrollX: x,
-                scrollY: y,
-                scrollEpoch,
-            };
-            if (newInputCommit) {
-                requests.commit(input.requestResults, previousPresentation, version.presentationId);
-                if (sourceChanged) requests.supersedeAll('A different data source was committed');
-                if (!requests.snapshot().length) requestNotice = '';
-            }
-            setLoadState(
-                manifest.status === 'preview' ? 'preview' : 'complete',
-                manifest.status === 'preview' ? 'Preview: incomplete input' : '',
-            );
-            syncSemantic();
-            if (sourceChanged && !controlledTargets)
-                emit('selectionChange', { ...metadata(), targets: [], operation: 'clear', source: 'input' });
-            if (!readyEmitted) {
-                readyEmitted = true;
-                emit('ready', { ...metadata(), backend: input.backend ?? 'canvas', loadState });
-            }
-            emit('viewStateChange', { ...metadata(), scrollX, scrollY, focus: focusTarget(), source: 'render' });
-            if (options.metrics)
-                emit('metrics', {
+                status: disposed ? 'disposed' : 'superseded',
+            });
+            const present = (batch: WindowProgress): UpdateReceipt => {
+                const readMs = performance.now() - started,
+                    cpuStarted = performance.now();
+                if (expected?.scrollEpoch === scrollEpoch) {
+                    for (const [location, axisData] of [
+                        [expected.row, batch.rows],
+                        [expected.column, batch.columns],
+                    ] as const) {
+                        if (!location || location.status === 'missing') continue;
+                        const rank = location.status === 'found' ? location.rank : location.ancestor.start;
+                        const actual = axisData.leaves.find((leaf) => leaf.rank === rank);
+                        if (
+                            !actual ||
+                            (location.status === 'found'
+                                ? actual.key !== location.leaf.key
+                                : !actual.collapsed || pathKey(actual.path) !== pathKey(location.ancestor.path))
+                        )
+                            throw new Error('source-contract-violation: located member does not match the rendered axis window');
+                    }
+                }
+                const sourceChanged = !!committed && committed.input.source.version.sourceId !== version.sourceId;
+                const snapshotChanged = !!committed && committed.input.source.version.snapshotId !== version.snapshotId;
+                const newInputCommit = committed?.inputRevision !== own;
+                const previousPresentation = committed?.version.presentationId ?? version.presentationId;
+                if (newInputCommit) requests.validate(input.requestResults, previousPresentation);
+                const controlledTargets = newInputCommit ? input.viewState?.selection : undefined;
+                const frameSelection = controlledTargets
+                    ? new Set(controlledTargets.map((target) => target.markId))
+                    : sourceChanged
+                      ? new Set<string>()
+                      : selected;
+                const frameFocus =
+                    newInputCommit && input.viewState?.focus ? input.viewState.focus.markId : sourceChanged ? undefined : focusId;
+                lastScene = {
+                    plan,
+                    rows: batch.rows,
+                    columns: batch.columns,
+                    panes: batch.panes,
+                    domains: batch.domains,
+                    dataStatus: batch.status,
+                    domainsReady: batch.domainsReady,
+                    retainedDataBytes: batch.retainedBytes,
+                    cache: sceneCache,
+                    width: frameWidth,
+                    height: frameHeight,
+                    scrollX: x,
+                    scrollY: y,
+                    frameId: ++frameCounter,
+                    selected: frameSelection,
+                    focusId: frameFocus,
+                    brush,
+                };
+                if (controlledTargets && controlledTargets.length > 20_000)
+                    throw new Error('resource-limit: selection exceeds 20,000 targets');
+                const nextIds = new Set(frameSelection),
+                    nextKnown = sourceChanged || snapshotChanged || controlledTargets ? new Map<string, HitRegion>() : new Map(selections),
+                    nextPending = sourceChanged || controlledTargets ? new Map<string, SelectionTarget>() : new Map(pendingTargets);
+                if (snapshotChanged && !sourceChanged && !controlledTargets) {
+                    for (const [id, target] of nextPending) nextPending.set(id, { ...target, values: [] });
+                    for (const [id, hit] of selections)
+                        nextPending.set(id, {
+                            ...selectionTarget(hit, committed!.input.plan),
+                            values: [],
+                        });
+                }
+                if (controlledTargets)
+                    for (const target of controlledTargets)
+                        nextPending.set(target.markId, {
+                            ...target,
+                            datumKeys: [...target.datumKeys],
+                            values: [...target.values],
+                        });
+                let selectionCost = 0;
+                let drawn: ReturnType<typeof buildAndDraw>;
+                try {
+                    drawn = buildAndDraw(lastScene, input.backend ?? 'canvas', (candidate) => {
+                        for (const hit of candidate.hits)
+                            if (nextIds.has(hit.id)) {
+                                nextKnown.set(hit.id, hit);
+                                nextPending.delete(hit.id);
+                            }
+                        selectionCost = selectionBytes(nextIds, nextKnown, nextPending);
+                        resources.reserve('candidate-selection', selectionCost);
+                    });
+                } catch (error) {
+                    resources.release('candidate-selection');
+                    throw error;
+                }
+                const { next, sceneMs, submitMs } = drawn;
+                resources.release('candidate-selection');
+                applySelection(nextIds, nextKnown, nextPending);
+                focusId = frameFocus;
+                frame = next;
+                frameVersion = version;
+                frameRevision = own;
+                acceptedInput = input;
+                if (committed && committed.reader !== activeReader) committed.reader.dispose();
+                committed = {
+                    input,
+                    frame: next,
+                    scene: lastScene,
+                    manifest: batch.manifest,
+                    domains: batch.domains,
+                    reader: activeReader,
+                    version,
+                    inputRevision: own,
+                    scrollX: x,
+                    scrollY: y,
+                    scrollEpoch,
+                };
+                if (newInputCommit) {
+                    requests.commit(input.requestResults, previousPresentation, version.presentationId);
+                    if (sourceChanged) requests.supersedeAll('A different data source was committed');
+                    if (!requests.snapshot().length) requestNotice = '';
+                }
+                setLoadState(
+                    batch.status,
+                    batch.status === 'preview' ? 'Preview: incomplete input' : batch.status === 'loading' ? 'Loading remaining panes…' : '',
+                );
+                syncSemantic();
+                if (sourceChanged && !controlledTargets)
+                    emit('selectionChange', {
+                        ...metadata(),
+                        targets: [],
+                        operation: 'clear',
+                        source: 'input',
+                    });
+                if (!readyEmitted) {
+                    readyEmitted = true;
+                    emit('ready', {
+                        ...metadata(),
+                        backend: input.backend ?? 'canvas',
+                        loadState,
+                    });
+                }
+                emit('viewStateChange', {
                     ...metadata(),
-                    renderMs: performance.now() - started,
-                    marks: frame.hits.length,
-                    commands: frame.commands.length,
-                    cacheWindows: cache.size,
+                    scrollX,
+                    scrollY,
+                    focus: focusTarget(),
+                    source: 'render',
                 });
-            return { inputRevision: own, status: 'committed', frameId: next.frameId };
-        } catch (error) {
-            if (disposed || signal.aborted || own !== revision) return { inputRevision: own, status: disposed ? 'disposed' : 'superseded' };
-            pending.abort();
-            const message = diagnostic(error);
-            retainCommittedDisplay();
-            setLoadState('error', message);
-            syncSemantic();
-            return { inputRevision: own, status: 'rejected' };
-        }
+                if (options.metrics)
+                    emit('metrics', {
+                        ...metadata(),
+                        renderMs: performance.now() - started,
+                        marks: frame.hits.length,
+                        commands: frame.commands.length,
+                        readMs,
+                        sceneMs,
+                        submitMs,
+                        cpuMs: setupCpuMs + performance.now() - cpuStarted + batch.timings.readerCpuMs + batch.timings.sourceSyncMs,
+                        cacheWindows: resources.stats().layers.data.entries,
+                        resources: resources.stats(),
+                    });
+                return {
+                    inputRevision: own,
+                    status: 'committed',
+                    frameId: next.frameId,
+                };
+            };
+            void (async () => {
+                try {
+                    const nominalRows = Math.min(
+                        batchManifest.rowLeafCount,
+                        Math.ceil(Math.max(0, frameHeight - m.headerHeight) / m.rowHeight),
+                    );
+                    const nominalColumns = Math.min(
+                        batchManifest.columnLeafCount,
+                        Math.ceil(Math.max(0, frameWidth - m.headerWidth - m.legendWidth) / m.columnWidth),
+                    );
+                    if (nominalRows * nominalColumns > 100)
+                        throw new Error('resource-limit: viewport exceeds the 100-pane grid capacity; increase fixed strip sizes');
+                    const batch = await activeReader.readWindow(window, {
+                        signal,
+                        priority: 'viewport',
+                        onProgress: (progress) => {
+                            if (current()) finish(present(progress));
+                        },
+                    });
+                    try {
+                        if (!current()) finish(superseded());
+                        else {
+                            finish(present(batch));
+                            if (batch.status === 'complete') prefetchWindow(window, activeReader, batch.manifest);
+                        }
+                    } finally {
+                        batch.release();
+                    }
+                } catch (error) {
+                    if (!current()) {
+                        finish(superseded());
+                        return;
+                    }
+                    pending.abort();
+                    const message = diagnostic(error);
+                    retainCommittedDisplay();
+                    setLoadState('error', message);
+                    syncSemantic();
+                    finish({ inputRevision: own, status: 'rejected' });
+                }
+            })();
+        });
     }
     function schedule() {
         if (!raf && !disposed)
@@ -593,6 +853,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         scrollX = mx.clamp(x);
         scrollY = my.clamp(y);
         physicalSync();
+        wakeFrameWaiters();
         schedule();
     }
     const onScroll = () => {
@@ -735,6 +996,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         dimensions();
         if (force || width !== previousWidth || height !== previousHeight) {
             layoutRevision++;
+            wakeFrameWaiters();
             schedule();
         }
     };
@@ -755,7 +1017,10 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
     }
     const onFonts = () => {
         clearTextMetrics();
+        sceneCache.clear();
+        fontRevision++;
         layoutRevision++;
+        wakeFrameWaiters();
         if (frame && !loading) redrawOverlay();
         else schedule();
     };
@@ -763,12 +1028,13 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
     async function readSharedDomains(candidate: WorksheetInput, signal: AbortSignal): Promise<DomainBatch> {
         const fieldRefs = sharedDomainRefs(candidate.plan);
         if (!fieldRefs.length && !needsSeriesDomain(candidate.plan)) return { version: candidate.source.version, domains: {} };
-        return withAbort(candidate.source.readDomains({ version: candidate.source.version, fieldRefs }, signal), signal);
+        return reader.readDomains({ version: candidate.source.version, fieldRefs }, { signal, priority: 'metadata' });
     }
     async function update(next: WorksheetInput): Promise<UpdateReceipt> {
         const own = ++revision;
         if (disposed) return { inputRevision: own, status: 'disposed' };
         pending.abort();
+        prefetch.abort();
         pending = new AbortController();
         const signal = pending.signal;
         const previous = committed?.input ?? acceptedInput ?? input;
@@ -787,7 +1053,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
               }
             : undefined;
         const dataPlan = (plan: RenderPlan) => {
-            const { style: _style, axes: _axes, ...rest } = plan;
+            const { style: _style, axes: _axes, layout: _layout, ...rest } = plan;
             return JSON.stringify(rest);
         };
         const reuse = next.source === input.source && dataPlan(next.plan) === dataPlan(input.plan) && manifest && domains;
@@ -804,18 +1070,23 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             if (next.version && !sameVersion(next.version, next.source.version))
                 throw new Error('source-contract-violation: input version must match the source');
             requests.validate(next.requestResults, previousPresentation);
+            if (input.source !== next.source) sceneCache.clear();
             input = next;
             if (!paint) createPaint();
             if (!reuse) {
                 manifest = undefined;
                 domains = undefined;
-                cache.clear();
+                if (reader !== committed?.reader) reader.dispose();
+                reader = createWindowReader(next.source, next.plan, resources, displayReaderLimits);
                 const [description, domainData] = await withAbort(
-                    Promise.all([next.source.describe(signal), readSharedDomains(next, signal)]),
+                    Promise.all([reader.describe({ signal, priority: 'metadata' }), readSharedDomains(next, signal)]),
                     signal,
                 );
                 if (disposed || signal.aborted || own !== revision)
-                    return { inputRevision: own, status: disposed ? 'disposed' : 'superseded' };
+                    return {
+                        inputRevision: own,
+                        status: disposed ? 'disposed' : 'superseded',
+                    };
                 if (
                     !sameVersion(description.version, next.source.version) ||
                     !sameVersion(domainData.version, next.source.version) ||
@@ -840,34 +1111,60 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
                 anchor &&
                 !next.viewState?.scroll &&
                 previous.source.version.sourceId === next.source.version.sourceId &&
-                previousPresentation !== next.source.version.presentationId &&
+                (previousPresentation !== next.source.version.presentationId ||
+                    JSON.stringify(previous.plan.layout) !== JSON.stringify(next.plan.layout)) &&
                 beforeScroll === scrollEpoch &&
                 beforeScroll === anchor.scrollEpoch
             ) {
                 const [row, column] = await withAbort(
                     Promise.all([
                         anchor.rowKey
-                            ? next.source.locate({ version: next.source.version, axis: 'row', key: anchor.rowKey }, signal)
+                            ? reader.locate(
+                                  {
+                                      version: next.source.version,
+                                      axis: 'row',
+                                      key: anchor.rowKey,
+                                  },
+                                  { signal },
+                              )
                             : undefined,
                         anchor.columnKey
-                            ? next.source.locate({ version: next.source.version, axis: 'column', key: anchor.columnKey }, signal)
+                            ? reader.locate(
+                                  {
+                                      version: next.source.version,
+                                      axis: 'column',
+                                      key: anchor.columnKey,
+                                  },
+                                  { signal },
+                              )
                             : undefined,
                     ]),
                     signal,
                 );
                 if (disposed || signal.aborted || own !== revision)
-                    return { inputRevision: own, status: disposed ? 'disposed' : 'superseded' };
+                    return {
+                        inputRevision: own,
+                        status: disposed ? 'disposed' : 'superseded',
+                    };
                 if (row && anchor.rowKey)
                     assertLocation({
                         location: row,
-                        request: { version: next.source.version, axis: 'row', key: anchor.rowKey },
+                        request: {
+                            version: next.source.version,
+                            axis: 'row',
+                            key: anchor.rowKey,
+                        },
                         plan: next.plan,
                         manifest: manifest!,
                     });
                 if (column && anchor.columnKey)
                     assertLocation({
                         location: column,
-                        request: { version: next.source.version, axis: 'column', key: anchor.columnKey },
+                        request: {
+                            version: next.source.version,
+                            axis: 'column',
+                            key: anchor.columnKey,
+                        },
                         plan: next.plan,
                         manifest: manifest!,
                     });
@@ -901,7 +1198,11 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             }
             return receipt;
         } catch (error) {
-            if (disposed || signal.aborted || own !== revision) return { inputRevision: own, status: disposed ? 'disposed' : 'superseded' };
+            if (disposed || signal.aborted || own !== revision)
+                return {
+                    inputRevision: own,
+                    status: disposed ? 'disposed' : 'superseded',
+                };
             pending.abort();
             const message = diagnostic(error);
             retainCommittedDisplay();
@@ -935,13 +1236,19 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         try {
             const [row, column] = await withAbort(
                 Promise.all([
-                    rowKey ? source.locate({ version: source.version, axis: 'row', key: rowKey }, controller.signal) : undefined,
-                    columnKey ? source.locate({ version: source.version, axis: 'column', key: columnKey }, controller.signal) : undefined,
+                    rowKey
+                        ? reader.locate({ version: source.version, axis: 'row', key: rowKey }, { signal: controller.signal })
+                        : undefined,
+                    columnKey
+                        ? reader.locate({ version: source.version, axis: 'column', key: columnKey }, { signal: controller.signal })
+                        : undefined,
                 ]),
                 controller.signal,
             );
             if (disposed || own !== revision || controller.signal.aborted)
-                return { status: disposed ? ('disposed' as const) : ('superseded' as const) };
+                return {
+                    status: disposed ? ('disposed' as const) : ('superseded' as const),
+                };
             if (row && rowKey)
                 assertLocation({
                     location: row,
@@ -998,8 +1305,110 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         semantic.focus();
         return { status: 'found' as const };
     }
+    async function withLifetime<T>(operation: (signal: AbortSignal) => Promise<T>, external?: AbortSignal, timeoutMs?: number): Promise<T> {
+        const controller = new AbortController();
+        const abort = () => controller.abort(external?.aborted ? external.reason : lifetime.signal.reason);
+        for (const signal of [external, lifetime.signal]) signal?.addEventListener('abort', abort, { once: true });
+        if (external?.aborted || lifetime.signal.aborted) abort();
+        const timer =
+            timeoutMs === undefined
+                ? undefined
+                : setTimeout(() => controller.abort(new Error('resource-limit: export time limit exceeded')), timeoutMs);
+        try {
+            controller.signal.throwIfAborted();
+            return await operation(controller.signal);
+        } finally {
+            clearTimeout(timer);
+            for (const signal of [external, lifetime.signal]) signal?.removeEventListener('abort', abort);
+        }
+    }
+    async function waitForViewport(includePlaceholders: boolean, signal: AbortSignal): Promise<ViewportExportSnapshot> {
+        if (revision === 0) await withAbort(ready, signal);
+        const own = revision,
+            x = scrollX,
+            y = scrollY,
+            layout = layoutRevision;
+        return new Promise((resolve, reject) => {
+            const cleanup = () => {
+                frameWaiters.delete(check);
+                signal.removeEventListener('abort', abort);
+            };
+            const fail = (error: unknown) => {
+                cleanup();
+                reject(error);
+            };
+            const abort = () => fail(signal.reason ?? new DOMException('Export cancelled', 'AbortError'));
+            const check = () => {
+                if (signal.aborted) {
+                    abort();
+                    return;
+                }
+                if (disposed || loadState === 'error' || (loadState === 'preview' && !includePlaceholders)) {
+                    fail(new Error('Worksheet has no complete committed viewport'));
+                    return;
+                }
+                if (own !== revision || x !== scrollX || y !== scrollY || layout !== layoutRevision) {
+                    fail(new Error('export-superseded: target viewport changed while waiting'));
+                    return;
+                }
+                if (
+                    !committed ||
+                    committed.inputRevision !== own ||
+                    committed.scrollX !== x ||
+                    committed.scrollY !== y ||
+                    !sameVersion(committed.version, requestedVersion) ||
+                    loadState === 'stale' ||
+                    (loadState !== 'complete' && !includePlaceholders)
+                )
+                    return;
+                cleanup();
+                resolve({
+                    frame: committed.frame,
+                    version: committed.version,
+                    requestedVersion,
+                    domainPlanKey: committed.input.plan.domainPlanKey,
+                    state: loadState,
+                    scroll: { x, y },
+                    range: {
+                        rows: committed.scene.rows.range,
+                        columns: committed.scene.columns.range,
+                    },
+                    fontFamily: committed.input.plan.style?.fontFamily,
+                    fontSize: committed.input.plan.style?.fontSize,
+                    dpr: requestedDpr,
+                });
+            };
+            frameWaiters.add(check);
+            signal.addEventListener('abort', abort, { once: true });
+            check();
+        });
+    }
+    const exportViewport = (exportOptions: ViewportExportOptions, signal?: AbortSignal) =>
+        withLifetime(
+            async (live) => {
+                const snapshot = await waitForViewport(exportOptions.includePlaceholders === true, live);
+                return serializeViewport(snapshot, exportOptions, resources, live);
+            },
+            signal,
+            limitsFor(exportOptions.limits).maxElapsedMs,
+        );
+    const exportRange = (exportOptions: RangeExportOptions, signal?: AbortSignal) => {
+        const context = {
+            plan: input.plan,
+            source: input.source,
+            viewport: { width, height, dpr: requestedDpr },
+            resources,
+            fontRevision: () => fontRevision,
+        };
+        return withLifetime((live) => serializeRange(context, exportOptions, live), signal);
+    };
     const ready: Promise<UpdateReceipt> = Promise.resolve().then(() =>
-        revision === 0 ? update(initial) : { inputRevision: 0, status: disposed ? ('disposed' as const) : ('superseded' as const) },
+        revision === 0
+            ? update(initial)
+            : {
+                  inputRevision: 0,
+                  status: disposed ? ('disposed' as const) : ('superseded' as const),
+              },
     );
     return {
         ready,
@@ -1034,6 +1443,8 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             const interactive = loading || loadState === 'error' ? undefined : frame;
             return Object.freeze({
                 inputRevision: revision,
+                frameId: interactive?.frameId,
+                displayedFrameId: displayed?.frameId,
                 version: immutableSnapshot(frameVersion ?? input.source.version),
                 requestedVersion: immutableSnapshot(requestedVersion),
                 committedVersion: immutableSnapshot(committed?.version),
@@ -1057,26 +1468,24 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
                 selected: Object.freeze([...selected]),
                 selectedTargets: immutableSnapshot([...selections.values()]),
                 pendingSelection: Object.freeze([...selected].filter((id) => !selections.has(id))),
-                cacheWindows: cache.size,
+                cacheWindows: resources.stats().layers.data.entries,
+                resources: immutableSnapshot(resources.stats()),
                 canvasCount: root.querySelectorAll('canvas').length,
             });
         },
-        async export({ format }: { format: 'svg' | 'png' }) {
-            if (!frame || loading || disposed) throw new Error('Worksheet has no complete committed viewport');
-            if (format === 'svg') {
-                const target = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                createSvgBackend(target)(frame);
-                return new XMLSerializer().serializeToString(target);
-            }
-            const target = document.createElement('canvas');
-            paintCanvas(target, frame);
-            return target.toDataURL('image/png');
+        exportViewport,
+        exportRange,
+        async export(exportOptions: ViewportExportOptions, signal?: AbortSignal) {
+            if (disposed) throw new Error('Worksheet has no complete committed viewport');
+            return (await exportViewport(exportOptions, signal)).content;
         },
         dispose() {
             if (disposed) return;
             disposed = true;
             revision++;
             pending.abort();
+            prefetch.abort();
+            lifetime.abort();
             cancelAnimationFrame(raf);
             resize?.disconnect();
             dprMedia?.removeEventListener?.('change', onDpr);
@@ -1093,7 +1502,10 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             scroller.removeEventListener('pointercancel', onPointerCancel);
             scroller.removeEventListener('pointerleave', onPointerLeave);
             listeners.clear();
-            cache.clear();
+            reader.dispose();
+            committed?.reader.dispose();
+            sceneCache.clear();
+            resources.dispose();
             selected.clear();
             selections.clear();
             pendingTargets.clear();
@@ -1101,6 +1513,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
             lastScene = undefined;
             committed = undefined;
             loadState = 'disposed';
+            wakeFrameWaiters();
             loading = false;
             frameVersion = undefined;
             frame = undefined;
@@ -1110,6 +1523,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
                 paint.width = 0;
                 paint.height = 0;
             } else paint.replaceChildren();
+            svgPaint = undefined;
             root.replaceChildren();
             root.remove();
             const version = input.source.version,
@@ -1133,6 +1547,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
                     locate: unavailable,
                 },
             };
+            initial = input;
         },
     };
 }

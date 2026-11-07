@@ -1,0 +1,2216 @@
+{
+  "schema": "worksheet-browser-benchmark-v1",
+  "case": "B5-stress",
+  "backend": "svg",
+  "profile": "quick",
+  "environment": {
+    "timestamp": "2026-11-06T23:01:01.408Z",
+    "node": "v24.11.1",
+    "v8": "13.6.233.10-node.28",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "cpuModel": "Apple M4 Max",
+    "logicalCPUs": 16,
+    "totalMemoryBytes": 68719476736,
+    "gitCommit": "6534b263dce565d08324aeab97620a35310ded85",
+    "gitDirty": true,
+    "bundleSha256": "b689f6bf651d82f1edf7b82520f50801b60df6c1883f5268ac571fd960e0e9f7",
+    "builtAt": "2026-11-06T23:20:45.998Z",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/132.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 16,
+    "deviceMemoryGiB": 8,
+    "seed": 1592598566,
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "dpr": 2
+    },
+    "actualDevicePixelRatio": 2,
+    "font": "Arial, \"Noto Sans CJK SC\", sans-serif",
+    "fontChecks": {
+      "Arial": true,
+      "NotoSansCJK": true
+    },
+    "longTaskObserverSupported": true
+  },
+  "manifest": {
+    "version": {
+      "sourceId": "B5-stress",
+      "snapshotId": "1592598566",
+      "presentationId": "1"
+    },
+    "domainPlanKey": "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}",
+    "rowLeafCount": 100,
+    "columnLeafCount": 100,
+    "recordCount": 203000,
+    "nonEmptyPaneCount": 10000,
+    "status": "complete",
+    "identityScope": "stable",
+    "capabilities": {
+      "randomAxisAccess": true,
+      "locateByKey": true,
+      "maxAxisWindow": 100000,
+      "maxPaneWindows": 64,
+      "domainPlanKeys": [
+        "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}"
+      ]
+    }
+  },
+  "preparation": {
+    "inputMs": 109.20000004768372,
+    "adapterMs": 0.9000000953674316,
+    "indexMs": 252.09999990463257,
+    "manifestMs": 0.20000004768371582,
+    "totalMs": 362.40000009536743
+  },
+  "cold": {
+    "commitMs": {
+      "n": 3,
+      "p50": 188.5,
+      "p95": 192.10000014305115,
+      "maximum": 192.10000014305115
+    },
+    "presentedMs": {
+      "n": 3,
+      "p50": 200.29999995231628,
+      "p95": 207.90000009536743,
+      "maximum": 207.90000009536743
+    },
+    "samples": [
+      {
+        "commitMs": 192.10000014305115,
+        "presentedMs": 207.90000009536743,
+        "state": {
+          "fixture": "B5-stress",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 1
+          },
+          "canvasCount": 0,
+          "svgNodes": 6190,
+          "domNodes": 6204,
+          "memory": {
+            "usedJSHeapSize": 160179110,
+            "totalJSHeapSize": 173662714,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 10,
+          "metrics": 2,
+          "diagnostics": []
+        }
+      },
+      {
+        "commitMs": 184.59999990463257,
+        "presentedMs": 200.29999995231628,
+        "state": {
+          "fixture": "B5-stress",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 1
+          },
+          "canvasCount": 0,
+          "svgNodes": 6190,
+          "domNodes": 6204,
+          "memory": {
+            "usedJSHeapSize": 194616882,
+            "totalJSHeapSize": 211710598,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 15,
+          "metrics": 3,
+          "diagnostics": []
+        }
+      },
+      {
+        "commitMs": 188.5,
+        "presentedMs": 200.20000004768372,
+        "state": {
+          "fixture": "B5-stress",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 1
+          },
+          "canvasCount": 0,
+          "svgNodes": 6190,
+          "domNodes": 6204,
+          "memory": {
+            "usedJSHeapSize": 234935483,
+            "totalJSHeapSize": 250763839,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 20,
+          "metrics": 4,
+          "diagnostics": []
+        }
+      }
+    ]
+  },
+  "scroll": {
+    "combinedCommitMs": {
+      "n": 30,
+      "p50": 71.70000004768372,
+      "p95": 83.79999995231628,
+      "maximum": 90.20000004768372
+    },
+    "combinedRafIntervalMs": {
+      "n": 59,
+      "p50": 65.60000000000036,
+      "p95": 83.39999999999964,
+      "maximum": 99.89999999999964
+    },
+    "rounds": [
+      {
+        "round": 0,
+        "commitMs": {
+          "n": 30,
+          "p50": 71.70000004768372,
+          "p95": 83.79999995231628,
+          "maximum": 90.20000004768372
+        },
+        "runtimeCpuMs": {
+          "n": 30,
+          "p50": 68.5,
+          "p95": 78.59999990463257,
+          "maximum": 89.79999995231628
+        },
+        "runtimeSceneMs": {
+          "n": 30,
+          "p50": 15.600000143051147,
+          "p95": 19.59999990463257,
+          "maximum": 28.5
+        },
+        "runtimeSubmitMs": {
+          "n": 30,
+          "p50": 19.799999952316284,
+          "p95": 22.700000047683716,
+          "maximum": 23.5
+        },
+        "runtimeReadMs": {
+          "n": 30,
+          "p50": 0.5,
+          "p95": 0.7000000476837158,
+          "maximum": 0.7000000476837158
+        },
+        "rafIntervalMs": {
+          "n": 59,
+          "p50": 65.60000000000036,
+          "p95": 83.39999999999964,
+          "maximum": 99.89999999999964
+        },
+        "frameIds": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "commitSamplesMs": [
+          78.30000019073486,
+          69.29999995231628,
+          70.69999980926514,
+          68.59999990463257,
+          76.70000004768372,
+          76.59999990463257,
+          65.20000004768372,
+          66.70000004768372,
+          76.89999985694885,
+          70.5,
+          71.70000004768372,
+          66.70000004768372,
+          79.5,
+          69,
+          70.60000014305115,
+          75.5,
+          83.79999995231628,
+          90.20000004768372,
+          79.40000009536743,
+          78.20000004768372,
+          81.90000009536743,
+          72.70000004768372,
+          67.40000009536743,
+          70.40000009536743,
+          83.09999990463257,
+          71.79999995231628,
+          67.10000014305115,
+          65.90000009536743,
+          71.80000019073486,
+          70.20000004768372
+        ],
+        "rafIntervalsMs": [
+          75,
+          8.399999999999636,
+          75,
+          8.300000000001091,
+          66.69999999999891,
+          8.300000000001091,
+          75,
+          8.299999999999272,
+          75,
+          8.300000000001091,
+          75,
+          8.299999999999272,
+          65.60000000000036,
+          9.799999999999272,
+          74.70000000000073,
+          8.299999999999272,
+          75,
+          7.100000000000364,
+          76.20000000000073,
+          8.399999999999636,
+          66.60000000000036,
+          8.399999999999636,
+          75,
+          8.299999999999272,
+          75,
+          8.300000000001091,
+          75,
+          8.299999999999272,
+          75,
+          8.399999999999636,
+          75,
+          8.300000000001091,
+          83.09999999999854,
+          8.700000000000728,
+          99.89999999999964,
+          8.399999999999636,
+          75,
+          8.300000000001091,
+          83.29999999999927,
+          8.300000000001091,
+          83.39999999999964,
+          7.5,
+          75.79999999999927,
+          8.300000000001091,
+          66.59999999999854,
+          8.5,
+          74.90000000000146,
+          8.299999999999272,
+          83.39999999999964,
+          8.300000000001091,
+          75,
+          8.299999999999272,
+          66.70000000000073,
+          8.399999999999636,
+          66.60000000000036,
+          8.299999999999272,
+          74.60000000000036,
+          8.899999999999636,
+          74.89999999999964
+        ],
+        "sourceReadCount": 0,
+        "metrics": [
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 6,
+            "renderMs": 70.20000004768372,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 16.800000190734863,
+            "submitMs": 20.5,
+            "cpuMs": 70.00000023841858,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 50,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 7,
+            "renderMs": 67,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 15.200000047683716,
+            "submitMs": 20.299999952316284,
+            "cpuMs": 66.80000019073486,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 51,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 8,
+            "renderMs": 64.20000004768372,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.5,
+            "sceneMs": 14.5,
+            "submitMs": 19.399999856948853,
+            "cpuMs": 64.10000014305115,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 52,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 9,
+            "renderMs": 66.5,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5,
+            "sceneMs": 15.400000095367432,
+            "submitMs": 19.799999952316284,
+            "cpuMs": 66.39999985694885,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 53,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 10,
+            "renderMs": 70.09999990463257,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 16,
+            "submitMs": 21.399999856948853,
+            "cpuMs": 69.89999985694885,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 54,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 11,
+            "renderMs": 73.39999985694885,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5,
+            "sceneMs": 16.399999856948853,
+            "submitMs": 22.200000047683716,
+            "cpuMs": 73.2999997138977,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 55,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 12,
+            "renderMs": 64.79999995231628,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 14.5,
+            "submitMs": 18.799999952316284,
+            "cpuMs": 64.79999995231628,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 56,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 13,
+            "renderMs": 65.5,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.3000001907348633,
+            "sceneMs": 15.600000143051147,
+            "submitMs": 18.40000009536743,
+            "cpuMs": 65.5,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 57,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 14,
+            "renderMs": 68.90000009536743,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 16.399999856948853,
+            "submitMs": 19.100000143051147,
+            "cpuMs": 68.79999995231628,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 58,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 15,
+            "renderMs": 67.90000009536743,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 15.099999904632568,
+            "submitMs": 20.5,
+            "cpuMs": 67.70000004768372,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 59,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 16,
+            "renderMs": 65.19999980926514,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 14.600000143051147,
+            "submitMs": 18.700000047683716,
+            "cpuMs": 64.99999976158142,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 60,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 17,
+            "renderMs": 66.10000014305115,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 16.200000047683716,
+            "submitMs": 17.699999809265137,
+            "cpuMs": 66.10000014305115,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 61,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 18,
+            "renderMs": 72.29999995231628,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.7000000476837158,
+            "sceneMs": 16.40000009536743,
+            "submitMs": 21.40000009536743,
+            "cpuMs": 72,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 62,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 19,
+            "renderMs": 68.5,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 15.200000047683716,
+            "submitMs": 20.700000047683716,
+            "cpuMs": 68.5,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 63,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 20,
+            "renderMs": 66,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 14.5,
+            "submitMs": 18.899999856948853,
+            "cpuMs": 65.89999985694885,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 64,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 21,
+            "renderMs": 67.59999990463257,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 16,
+            "submitMs": 18.700000047683716,
+            "cpuMs": 67.39999985694885,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 65,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 22,
+            "renderMs": 78.39999985694885,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.6999998092651367,
+            "sceneMs": 18.100000143051147,
+            "submitMs": 23.5,
+            "cpuMs": 78.20000004768372,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 66,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 23,
+            "renderMs": 90,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.7000000476837158,
+            "sceneMs": 28.5,
+            "submitMs": 22.700000047683716,
+            "cpuMs": 89.79999995231628,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 67,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 24,
+            "renderMs": 68.90000009536743,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.6000001430511475,
+            "sceneMs": 16.299999952316284,
+            "submitMs": 19.5,
+            "cpuMs": 68.70000004768372,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 68,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 25,
+            "renderMs": 72.79999995231628,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 18,
+            "submitMs": 19.700000047683716,
+            "cpuMs": 72.60000014305115,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 69,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 26,
+            "renderMs": 77.39999985694885,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.6999998092651367,
+            "sceneMs": 17.200000047683716,
+            "submitMs": 21.700000047683716,
+            "cpuMs": 77.20000004768372,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 70,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 27,
+            "renderMs": 70.5,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5,
+            "sceneMs": 16.299999952316284,
+            "submitMs": 20.40000009536743,
+            "cpuMs": 70.39999985694885,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 71,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 28,
+            "renderMs": 64.20000004768372,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 14.5,
+            "submitMs": 17.200000047683716,
+            "cpuMs": 64.10000014305115,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 72,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 29,
+            "renderMs": 69,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 15.5,
+            "submitMs": 19.59999990463257,
+            "cpuMs": 68.79999995231628,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 73,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 30,
+            "renderMs": 78.79999995231628,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.6000001430511475,
+            "sceneMs": 19.59999990463257,
+            "submitMs": 22,
+            "cpuMs": 78.59999990463257,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 74,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 31,
+            "renderMs": 69.40000009536743,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.5,
+            "sceneMs": 15.400000095367432,
+            "submitMs": 22,
+            "cpuMs": 69.30000019073486,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 75,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 32,
+            "renderMs": 63.299999952316284,
+            "marks": 4430,
+            "commands": 5137,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 13.900000095367432,
+            "submitMs": 18.799999952316284,
+            "cpuMs": 63.200000047683716,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 76,
+              "evictions": 0,
+              "bytes": 54224810,
+              "reservedBytes": 33739676,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 54224810,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 33,
+            "renderMs": 63.299999952316284,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 15.099999904632568,
+            "submitMs": 17.200000047683716,
+            "cpuMs": 63.200000047683716,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 77,
+              "evictions": 0,
+              "bytes": 56017120,
+              "reservedBytes": 35531986,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56017120,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 34,
+            "renderMs": 69.90000009536743,
+            "marks": 5000,
+            "commands": 5699,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 15.900000095367432,
+            "submitMs": 20.5,
+            "cpuMs": 69.79999995231628,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 78,
+              "evictions": 0,
+              "bytes": 57999826,
+              "reservedBytes": 37514692,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 57999826,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5-stress",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 35,
+            "renderMs": 66.70000004768372,
+            "marks": 4700,
+            "commands": 5403,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 14.600000143051147,
+            "submitMs": 20.200000047683716,
+            "cpuMs": 66.60000014305115,
+            "cacheWindows": 7,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 79,
+              "evictions": 0,
+              "bytes": 56011932,
+              "reservedBytes": 35526798,
+              "maxBytes": 134217728,
+              "peakBytes": 88596346,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 8010
+                },
+                "members": {
+                  "entries": 4,
+                  "bytes": 124974
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 2332
+                },
+                "data": {
+                  "entries": 7,
+                  "bytes": 20349818
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 56011932,
+                "export": 0
+              }
+            }
+          }
+        ],
+        "longTasks": [
+          {
+            "startTime": 11479.700000047684,
+            "duration": 80
+          },
+          {
+            "startTime": 11562.300000190735,
+            "duration": 76
+          },
+          {
+            "startTime": 11645.600000143051,
+            "duration": 73
+          },
+          {
+            "startTime": 11721.100000143051,
+            "duration": 75
+          },
+          {
+            "startTime": 11803.900000095367,
+            "duration": 80
+          },
+          {
+            "startTime": 11887.300000190735,
+            "duration": 83
+          },
+          {
+            "startTime": 11970.800000190735,
+            "duration": 73
+          },
+          {
+            "startTime": 12045.900000095367,
+            "duration": 75
+          },
+          {
+            "startTime": 12129,
+            "duration": 79
+          },
+          {
+            "startTime": 12211.100000143051,
+            "duration": 77
+          },
+          {
+            "startTime": 12295.700000047684,
+            "duration": 74
+          },
+          {
+            "startTime": 12370.600000143051,
+            "duration": 75
+          },
+          {
+            "startTime": 12454,
+            "duration": 82
+          },
+          {
+            "startTime": 12537.300000190735,
+            "duration": 77
+          },
+          {
+            "startTime": 12620.600000143051,
+            "duration": 75
+          },
+          {
+            "startTime": 12704,
+            "duration": 77
+          },
+          {
+            "startTime": 12787.200000047684,
+            "duration": 91
+          },
+          {
+            "startTime": 12879.100000143051,
+            "duration": 100
+          },
+          {
+            "startTime": 12989.900000095367,
+            "duration": 78
+          },
+          {
+            "startTime": 13074.300000190735,
+            "duration": 83
+          },
+          {
+            "startTime": 13162.300000190735,
+            "duration": 87
+          },
+          {
+            "startTime": 13253.100000143051,
+            "duration": 80
+          },
+          {
+            "startTime": 13337.300000190735,
+            "duration": 73
+          },
+          {
+            "startTime": 13412.300000190735,
+            "duration": 79
+          },
+          {
+            "startTime": 13496.100000143051,
+            "duration": 89
+          },
+          {
+            "startTime": 13587.800000190735,
+            "duration": 79
+          },
+          {
+            "startTime": 13670.600000143051,
+            "duration": 72
+          },
+          {
+            "startTime": 13745.5,
+            "duration": 72
+          },
+          {
+            "startTime": 13820.700000047684,
+            "duration": 79
+          }
+        ],
+        "droppedFrameIntervals": 30,
+        "state": {
+          "canvasCount": 0,
+          "svgNodes": 5898,
+          "domNodes": 5912,
+          "memory": {
+            "usedJSHeapSize": 319343368,
+            "totalJSHeapSize": 338728108,
+            "jsHeapSizeLimit": 4294705152
+          }
+        }
+      }
+    ]
+  },
+  "sourceReads": {
+    "count": 45,
+    "syncCallMs": {
+      "n": 45,
+      "p50": 0,
+      "p95": 22.90000009536743,
+      "maximum": 25.700000047683716
+    },
+    "awaitMs": {
+      "n": 45,
+      "p50": 0,
+      "p95": 0,
+      "maximum": 0.09999990463256836
+    },
+    "wallMs": {
+      "n": 45,
+      "p50": 0,
+      "p95": 22.90000009536743,
+      "maximum": 25.700000047683716
+    }
+  },
+  "lifecycle": {
+    "count": 3,
+    "maximumDomNodes": 6204,
+    "finalDomNodes": 0,
+    "gcAvailable": true,
+    "before": {
+      "usedJSHeapSize": 97867298,
+      "totalJSHeapSize": 199401310,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "after": {
+      "usedJSHeapSize": 107700126,
+      "totalJSHeapSize": 205882962,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "retainedHeapGrowthFraction": 0.10047102761537363
+  },
+  "diagnostics": [],
+  "limitations": [
+    "Automated scrolling uses the public controller API and actual browser painting. Native wheel, keyboard, pointer and selection acceptance are separate interactive checks.",
+    "Provider syncCallMs is synchronous time before its promise returns, not a CPU profiler. awaitMs includes asynchronous work as well as waiting.",
+    "Browser heap includes fixture records, complete-source index and library state; it is not an isolated 128 MiB runtime measurement.",
+    "Font checks report availability requested by the browser and do not identify fallback glyph fonts."
+  ]
+}

@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { createWorksheet } from '../src/runtime/worksheet';
 import { createPreparedDataSource } from '../src/core/prepared';
 import type { RenderDataSource } from '../src/core/types';
@@ -25,6 +27,24 @@ function installDom() {
         textContent = '';
         tabIndex = -1;
         constructor(readonly tagName = 'div') {}
+        get firstChild(): Element | null {
+            return this.children[0] ?? null;
+        }
+        get nextSibling(): Element | null {
+            return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null;
+        }
+        getAttribute(name: string) {
+            return this.attrs.get(name) ?? null;
+        }
+        removeAttribute(name: string) {
+            this.attrs.delete(name);
+        }
+        insertBefore(child: Element, before: Element) {
+            child.remove();
+            this.children.splice(this.children.indexOf(before), 0, child);
+            child.parent = this;
+            return child;
+        }
         appendChild(child: Element) {
             child.remove();
             this.children.push(child);
@@ -64,7 +84,12 @@ function installDom() {
             this.listeners.get(name)?.forEach((listener) => listener(event));
         }
         getBoundingClientRect() {
-            return { left: 0, top: 0, width: this.clientWidth, height: this.clientHeight };
+            return {
+                left: 0,
+                top: 0,
+                width: this.clientWidth,
+                height: this.clientHeight,
+            };
         }
         querySelectorAll(tagName: string): Element[] {
             return this.children.flatMap((child) => [...(child.tagName === tagName ? [child] : []), ...child.querySelectorAll(tagName)]);
@@ -118,7 +143,11 @@ function installDom() {
     };
     const descriptors = new Map(Object.keys(values).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
     for (const [key, value] of Object.entries(values))
-        Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
+        Object.defineProperty(globalThis, key, {
+            configurable: true,
+            writable: true,
+            value,
+        });
     return {
         host: new Element(),
         observers,
@@ -136,7 +165,9 @@ function installDom() {
 
 function fixtureInput() {
     const fixture = createNestedChartFixture();
-    const result = adaptChartToRenderPlan(fixture.chart, { columns: fixture.columns });
+    const result = adaptChartToRenderPlan(fixture.chart, {
+        columns: fixture.columns,
+    });
     assert.ok(result.plan);
     const plan = result.plan;
     const makeSource = (sourceId = 'runtime', snapshotId = '1', records = fixture.records) =>
@@ -160,7 +191,13 @@ function clickVisibleHit(dom: ReturnType<typeof installDom>, hits: readonly HitR
     const y = (Math.max(hit.box.y, hit.clip.y) + Math.min(hit.box.y + hit.box.height, hit.clip.y + hit.clip.height)) / 2;
     const scroller = dom.host.querySelectorAll('div').find((element) => element.attrs.get('role') === 'region');
     assert.ok(scroller);
-    scroller.dispatch('click', { clientX: x, clientY: y, ctrlKey: false, metaKey: false, shiftKey: false });
+    scroller.dispatch('click', {
+        clientX: x,
+        clientY: y,
+        ctrlKey: false,
+        metaKey: false,
+        shiftKey: false,
+    });
     return hit;
 }
 
@@ -218,7 +255,12 @@ test('a later candidate can acknowledge a request from the committed presentatio
         await view.ready;
         const header = view.getViewState().frame!.headers.find((target) => target.canCollapse)!;
         const requestId = view.requestCollapse(
-            { axis: header.axis, key: header.key, path: header.path, fieldRef: header.fieldRef! },
+            {
+                axis: header.axis,
+                key: header.key,
+                path: header.path,
+                fieldRef: header.fieldRef!,
+            },
             false,
         )!;
         const a = fixture.makeSource('runtime', '2');
@@ -233,7 +275,11 @@ test('a later candidate can acknowledge a request from the committed presentatio
         const first = view.update({ plan: fixture.plan, source: waiting });
         assert.equal(view.getViewState().loadState, 'loading');
         const b = fixture.makeSource('runtime', '3');
-        const second = await view.update({ plan: fixture.plan, source: b, requestResults: [{ requestId, status: 'accepted' }] });
+        const second = await view.update({
+            plan: fixture.plan,
+            source: b,
+            requestResults: [{ requestId, status: 'accepted' }],
+        });
         assert.equal(second.status, 'committed');
         assert.equal((await first).status, 'superseded', 'Cancellation must settle even if a provider ignores AbortSignal');
         assert.equal(view.getViewState().committedVersion?.presentationId, '3');
@@ -296,7 +342,10 @@ test('complete fixed scales render without calling unavailable statistical-domai
             return new Promise(() => {});
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan,
+        source,
+    });
     try {
         assert.equal((await view.ready).status, 'committed');
         assert.equal(domainReads, 0);
@@ -327,7 +376,10 @@ test('diagnostics preserve structured contract codes and field references', asyn
             };
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan: fixture.plan,
+        source,
+    });
     const errors: WorksheetEvents['diagnostic'][] = [];
     view.on('diagnostic', (error) => errors.push(error));
     try {
@@ -344,14 +396,29 @@ test('locate must return the requested member before scrolling can commit', asyn
     const dom = installDom(),
         fixture = fixtureInput();
     const signal = new AbortController().signal;
-    const rows = await fixture.source.readAxis({ version: fixture.source.version, axis: 'row', range: { start: 0, end: 2 } }, signal);
+    const rows = await fixture.source.readAxis(
+        {
+            version: fixture.source.version,
+            axis: 'row',
+            range: { start: 0, end: 2 },
+        },
+        signal,
+    );
     const source: RenderDataSource = {
         ...fixture.source,
         async locate(request) {
-            return { version: request.version, status: 'found', rank: 1, leaf: rows.leaves[1] };
+            return {
+                version: request.version,
+                status: 'found',
+                rank: 1,
+                leaf: rows.leaves[1],
+            };
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan: fixture.plan,
+        source,
+    });
     try {
         await view.ready;
         await assert.rejects(view.scrollTo({ rowKey: rows.leaves[0].key }), /requested|identity|key/i);
@@ -371,7 +438,15 @@ test('changing source clears a previous focus ring even when mark keys happen to
         const hit = view.getViewState().frame!.hits[0];
         assert.equal((await view.focus({ markId: hit.id })).status, 'found');
         assert.ok(view.getViewState().frame!.commands.some((command) => command.id.includes('focus')));
-        assert.equal((await view.update({ plan: fixture.plan, source: fixture.makeSource('another-source') })).status, 'committed');
+        assert.equal(
+            (
+                await view.update({
+                    plan: fixture.plan,
+                    source: fixture.makeSource('another-source'),
+                })
+            ).status,
+            'committed',
+        );
         assert.equal(view.getViewState().focus, undefined);
         assert.equal(
             view.getViewState().frame!.commands.some((command) => command.id.includes('focus')),
@@ -396,11 +471,20 @@ test('new snapshots clear stale values for selections that were already pending'
                 paneKey: 'pane',
                 slotId: 'slot',
                 datumKeys: ['pending'],
-                values: [{ fieldRef: fixture.plan.columns.positions[0], value: 111, raw: 'old value' }],
+                values: [
+                    {
+                        fieldRef: fixture.plan.columns.positions[0],
+                        value: 111,
+                        raw: 'old value',
+                    },
+                ],
             },
         ]);
         assert.equal(view.getViewState().selection[0].values[0].raw, 'old value');
-        await view.update({ plan: fixture.plan, source: fixture.makeSource('runtime', '2') });
+        await view.update({
+            plan: fixture.plan,
+            source: fixture.makeSource('runtime', '2'),
+        });
         assert.deepEqual(view.getViewState().pendingSelection, ['not-in-window']);
         assert.deepEqual(view.getViewState().selection[0].values, []);
     } finally {
@@ -416,7 +500,15 @@ test('host callbacks can start another update only after the previous request wa
     try {
         await view.ready;
         const header = view.getViewState().frame!.headers.find((target) => target.canCollapse)!;
-        const id = view.requestCollapse({ axis: header.axis, key: header.key, path: header.path, fieldRef: header.fieldRef! }, false)!;
+        const id = view.requestCollapse(
+            {
+                axis: header.axis,
+                key: header.key,
+                path: header.path,
+                fieldRef: header.fieldRef!,
+            },
+            false,
+        )!;
         const acknowledgements: string[] = [];
         view.on('requestStateChange', (event) => {
             if (event.status === 'accepted') acknowledgements.push(event.requestId);
@@ -424,7 +516,10 @@ test('host callbacks can start another update only after the previous request wa
         let following: ReturnType<typeof view.update> | undefined;
         view.on('viewStateChange', (event) => {
             if (event.version.presentationId === '2')
-                following = view.update({ plan: fixture.plan, source: fixture.makeSource('runtime', '3') });
+                following = view.update({
+                    plan: fixture.plan,
+                    source: fixture.makeSource('runtime', '3'),
+                });
         });
         const receipt = await view.update({
             plan: fixture.plan,
@@ -445,7 +540,10 @@ test('host callbacks can start another update only after the previous request wa
 test('subscriptions added after creation receive synchronous input-validation diagnostics', async () => {
     const dom = installDom(),
         fixture = fixtureInput();
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { ...fixture, plan: { ...fixture.plan, mark: 'unsupported' as any } });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        ...fixture,
+        plan: { ...fixture.plan, mark: 'unsupported' as any },
+    });
     const errors: WorksheetEvents['diagnostic'][] = [];
     view.on('diagnostic', (error) => errors.push(error));
     try {
@@ -494,21 +592,133 @@ test('partial pane coverage cannot commit or export a complete viewport', async 
         view.on('viewStateChange', () => {
             completeFrames++;
         });
+        let partialReads = 0;
         const partial: RenderDataSource = {
             ...fixture.source,
             async readPaneData() {
-                return { version: fixture.source.version, panes: [], coveredWindows: [] };
+                partialReads++;
+                return {
+                    version: fixture.source.version,
+                    panes: [],
+                    coveredWindows: [],
+                };
             },
         };
         assert.equal((await view.update({ plan: fixture.plan, source: partial })).status, 'rejected');
         assert.equal(completeFrames, 0);
         assert.equal(view.getViewState().frame, undefined);
-        assert.equal(view.getViewState().cacheWindows, 0, 'An incomplete response must not become a reusable complete window');
+        const readsAfterFailure = partialReads;
+        assert.equal((await view.update({ plan: fixture.plan, source: partial })).status, 'rejected');
+        assert.ok(partialReads > readsAfterFailure, 'An incomplete response must be read again; earlier valid source caches may remain');
         await assert.rejects(view.export({ format: 'png' }), /no complete committed viewport/);
         await assert.rejects(view.export({ format: 'svg' }), /no complete committed viewport/);
         assert.equal((await view.update(fixture)).status, 'committed', 'A valid complete source must recover after rejection');
         assert.equal(completeFrames, 1);
     } finally {
+        view.dispose();
+        dom.restore();
+    }
+});
+
+test('paged input commits loading placeholders, waits for complete export and never draws an incomplete pane', async () => {
+    const dom = installDom(),
+        fixture = fixtureInput();
+    let completePage!: () => void;
+    const pageGate = new Promise<void>((resolve) => {
+        completePage = resolve;
+    });
+    const source: RenderDataSource = {
+        ...fixture.source,
+        async readPaneData(request, signal) {
+            const full = await fixture.source.readPaneData({ ...request, cursor: undefined }, signal);
+            const first = full.panes[0],
+                split = Math.max(1, Math.floor(first.records.length / 2));
+            if (!request.cursor)
+                return {
+                    version: full.version,
+                    coveredWindows: [],
+                    panes: [
+                        {
+                            ...first,
+                            records: first.records.slice(0, split),
+                            complete: false,
+                        },
+                    ],
+                    nextCursor: 'remaining',
+                };
+            await pageGate;
+            signal.throwIfAborted();
+            return {
+                ...full,
+                panes: [{ ...first, records: first.records.slice(split) }, ...full.panes.slice(1)],
+            };
+        },
+    };
+    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source }, { overscan: false });
+    try {
+        assert.equal((await view.ready).status, 'committed');
+        const partial = view.getViewState();
+        assert.equal(partial.loadState, 'loading');
+        assert.equal(partial.displayedFrame?.hits.length, 0);
+        assert.equal(partial.frame, undefined);
+        const preview = await view.exportViewport({
+            format: 'svg',
+            includePlaceholders: true,
+        });
+        assert.equal(preview.metadata.status, 'loading');
+        assert.equal(preview.metadata.includesPlaceholders, true);
+        assert.match(preview.content, /Loading/);
+        let exported = false;
+        const complete = view.exportViewport({ format: 'png' }).then((page) => {
+            exported = true;
+            return page;
+        });
+        await Promise.resolve();
+        assert.equal(exported, false);
+        completePage();
+        const page = await complete;
+        assert.equal(page.metadata.status, 'complete');
+        assert.equal(page.metadata.includesPlaceholders, false);
+        assert.ok(view.getViewState().frame!.hits.length > 0);
+        assert.ok(view.getViewState().resources.peakBytes <= 128 * 1024 * 1024);
+    } finally {
+        completePage();
+        view.dispose();
+        dom.restore();
+    }
+});
+
+test('waiting viewport exports are cancelled by caller or changed target and disposal releases accounting', async () => {
+    const dom = installDom(),
+        fixture = fixtureInput();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    const source: RenderDataSource = {
+        ...fixture.source,
+        async describe(signal) {
+            await gate;
+            signal.throwIfAborted();
+            return fixture.source.describe(signal);
+        },
+    };
+    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source }, { overscan: false });
+    try {
+        await Promise.resolve();
+        const cancel = new AbortController();
+        const cancelled = view.exportViewport({ format: 'svg' }, cancel.signal);
+        cancel.abort();
+        await assert.rejects(cancelled, { name: 'AbortError' });
+        const stale = view.exportViewport({ format: 'svg' });
+        const updated = view.update(fixture);
+        await assert.rejects(stale, /target viewport changed/);
+        assert.equal((await updated).status, 'committed');
+        view.dispose();
+        assert.equal(view.getViewState().resources.bytes, 0);
+        assert.equal(view.getViewState().resources.consumers, 0);
+    } finally {
+        release();
         view.dispose();
         dom.restore();
     }
@@ -531,7 +741,10 @@ test('a failed manifest read aborts its pending parallel domain read', async () 
             });
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan: fixture.plan,
+        source,
+    });
     try {
         assert.equal((await view.ready).status, 'rejected');
         assert.equal(domainStarted, true);
@@ -544,7 +757,7 @@ test('a failed manifest read aborts its pending parallel domain read', async () 
     }
 });
 
-test('a failed axis read aborts the pending parallel axis and pane reads', async () => {
+test('a failed axis read cancels every started sibling without requiring dependent pane reads to start', async () => {
     const dom = installDom();
     const fixture = fixtureInput();
     const started = new Set<string>();
@@ -565,11 +778,18 @@ test('a failed axis read aborts the pending parallel axis and pane reads', async
             });
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan: fixture.plan,
+        source,
+    });
     try {
         assert.equal((await view.ready).status, 'rejected');
-        assert.deepEqual(started, new Set(['row', 'column', 'panes']));
-        assert.deepEqual(aborted, new Set(['column', 'panes']), 'Axis failure must cancel sibling reads before disposal');
+        assert.ok(started.has('row') && started.has('column'));
+        assert.deepEqual(
+            aborted,
+            new Set([...started].filter((name) => name !== 'row')),
+            'Axis failure must cancel every pending sibling before disposal',
+        );
         assert.equal(view.getViewState().frame, undefined);
         assert.equal(view.getViewState().cacheWindows, 0);
         await assert.rejects(view.export({ format: 'png' }), /no complete committed viewport/);
@@ -592,7 +812,10 @@ test('dispose clears exposed data, DOM, bitmap, listeners and pending work', asy
             return fixture.source.readPaneData(request, signal);
         },
     };
-    const view = createWorksheet(dom.host as unknown as HTMLElement, { plan: fixture.plan, source });
+    const view = createWorksheet(dom.host as unknown as HTMLElement, {
+        plan: fixture.plan,
+        source,
+    });
     try {
         assert.equal((await view.ready).status, 'committed');
         const committed = view.getViewState();
@@ -642,8 +865,19 @@ test('selection refreshes values for a new snapshot and clears for a different s
         assert.equal((await view.ready).status, 'committed');
         const target = clickVisibleHit(dom, view.getViewState().frame!.hits);
         assert.deepEqual(view.getViewState().selected, [target.id]);
-        const records = fixture.records.map((record) => ({ ...record, Sales_sum: Number(record.Sales_sum) + 500 }));
-        assert.equal((await view.update({ plan: fixture.plan, source: fixture.makeSource('runtime', '2', records) })).status, 'committed');
+        const records = fixture.records.map((record) => ({
+            ...record,
+            Sales_sum: Number(record.Sales_sum) + 500,
+        }));
+        assert.equal(
+            (
+                await view.update({
+                    plan: fixture.plan,
+                    source: fixture.makeSource('runtime', '2', records),
+                })
+            ).status,
+            'committed',
+        );
         const refreshed = view.getViewState();
         assert.deepEqual(refreshed.selected, [target.id]);
         assert.equal(refreshed.selectedTargets.length, 1);
@@ -652,7 +886,12 @@ test('selection refreshes values for a new snapshot and clears for a different s
         const changes: Array<readonly HitRegion[]> = [];
         view.on('selectionChange', ({ targets }) => changes.push(targets));
         assert.equal(
-            (await view.update({ plan: fixture.plan, source: fixture.makeSource('different-source', '2', records) })).status,
+            (
+                await view.update({
+                    plan: fixture.plan,
+                    source: fixture.makeSource('different-source', '2', records),
+                })
+            ).status,
             'committed',
         );
         assert.deepEqual(view.getViewState().selected, []);
@@ -660,6 +899,101 @@ test('selection refreshes values for a new snapshot and clears for a different s
         assert.deepEqual(changes, [[]], 'A different source must clear selection even when its datum keys happen to match');
     } finally {
         view.dispose();
+        dom.restore();
+    }
+});
+
+test('a 100-pane viewport supports pixel scrolling across partial boundary rows and columns', async () => {
+    const dom = installDom();
+    const plan: import('../src/core/types').RenderPlan = {
+        bindings: ['r', 'c', 'v'].map((fieldRef) => ({
+            fieldRef,
+            bindingId: fieldRef,
+            columnKey: fieldRef,
+            label: fieldRef,
+            valueType: fieldRef === 'v' ? 'number' : 'string',
+            positionType: fieldRef === 'v' ? 'linear' : 'band',
+        })),
+        rows: { facets: ['r'], positions: ['v'] },
+        columns: { facets: ['c'], positions: [] },
+        mark: 'point',
+        domainPlanKey: '100-panes',
+        layout: { rowHeight: 70, columnWidth: 110, rowHeaderWidth: 340, columnHeaderHeight: 200 },
+    };
+    const records = Array.from({ length: 121 }, (_, index) => ({ r: String(Math.floor(index / 11)), c: String(index % 11), v: 1 }));
+    const source = createPreparedDataSource({ plan, records, version: { sourceId: '100-panes', snapshotId: '1', presentationId: '1' } });
+    const view = createWorksheet(
+        dom.host as unknown as HTMLElement,
+        { plan, source },
+        { autoResize: false, width: 1440, height: 900, overscan: false },
+    );
+    try {
+        assert.equal((await view.ready).status, 'committed');
+        assert.equal(view.getViewState().frame?.hits.length, 100);
+        for (const offset of [1, 1.25, 17.5, 31, 55, 0]) {
+            const before = view.getViewState().frameId;
+            view.scrollToPosition({ x: offset, y: offset });
+            for (const callback of [...dom.scheduled.values()]) callback();
+            dom.scheduled.clear();
+            for (let i = 0; i < 300 && view.getViewState().loadState !== 'complete'; i++) await Promise.resolve();
+            const state = view.getViewState();
+            assert.equal(state.loadState, 'complete', `partial boundary panes must remain scrollable at ${offset}px`);
+            assert.ok(state.frameId > before);
+            assert.ok(state.frame!.hits.length > 0);
+            assert.ok(state.resources.layers.geometry.entries > 0);
+            assert.ok(state.resources.bytes <= 128 * 1024 * 1024);
+        }
+        assert.equal(view.getViewState().frame?.hits.length, 100);
+    } finally {
+        view.dispose();
+        dom.restore();
+    }
+});
+
+test('a host-retained disposed controller releases its complete source and SVG mark nodes', async () => {
+    const dom = installDom();
+    // Node's isolated test children may omit --expose-gc from execArgv.
+    setFlagsFromString('--expose_gc');
+    const gc: () => void = runInNewContext('gc');
+    async function make(backend: 'canvas' | 'svg') {
+        const plan: import('../src/core/types').RenderPlan = {
+            bindings: [{ fieldRef: 'v', bindingId: 'v', columnKey: 'v', label: 'Value', valueType: 'number', positionType: 'linear' }],
+            rows: { facets: [], positions: ['v'] },
+            columns: { facets: [], positions: [] },
+            mark: 'point',
+            domainPlanKey: 'retention',
+        };
+        const source = createPreparedDataSource({
+            plan,
+            version: { sourceId: 'retention', snapshotId: backend, presentationId: '1' },
+            records: [{ v: 1, payload: 'x'.repeat(1_000_000) }],
+        });
+        const weak = new WeakRef(source),
+            view = createWorksheet(
+                dom.host as unknown as HTMLElement,
+                { plan, source, backend },
+                { autoResize: false, width: 640, height: 480, overscan: false },
+            );
+        assert.equal((await view.ready).status, 'committed');
+        const node = dom.host.querySelectorAll('circle')[0],
+            weakNode = node ? new WeakRef(node) : undefined;
+        if (backend === 'svg') assert.ok(weakNode);
+        view.dispose();
+        return { view, weak, weakNode };
+    }
+    try {
+        const retained = [await make('canvas'), await make('svg')];
+        // WeakRef targets are kept through the current JS job, so collect across tasks.
+        for (let index = 0; index < 12; index++) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            gc();
+        }
+        for (const held of retained) {
+            assert.equal(held.weak.deref(), undefined);
+            assert.equal(held.weakNode?.deref(), undefined);
+            assert.equal(held.view.getViewState().resources.bytes, 0);
+        }
+    } finally {
         dom.restore();
     }
 });

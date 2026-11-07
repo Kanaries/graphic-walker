@@ -4,6 +4,7 @@ const gridSize = 48;
 interface HitIndex {
     cells: Map<string, number[]>;
     broad: number[];
+    bytes: number;
 }
 const indexes = new WeakMap<SceneFrame, HitIndex>();
 const overlaps = (a: Box, b: Box) => a.x <= b.x + b.width && b.x <= a.x + a.width && a.y <= b.y + b.height && b.y <= a.y + a.height;
@@ -46,7 +47,13 @@ export function prepareHitIndex(frame: SceneFrame): void {
                 cells.set(key, values);
             }
     });
-    indexes.set(frame, { cells, broad });
+    let bytes = 128 + broad.length * 8;
+    for (const [key, entries] of cells) bytes += 128 + key.length * 2 + entries.length * 8;
+    indexes.set(frame, { cells, broad, bytes });
+}
+/** Conservative accounting units, measured heap is reported separately by benchmarks. */
+export function hitIndexBytes(frame: SceneFrame): number {
+    return indexes.get(frame)?.bytes ?? 0;
 }
 function exactHit(hit: HitRegion, point: Point, tolerance: number): Point | undefined {
     if (!contains(hit.clip, point.x, point.y) || !contains(inflate(hit.box, tolerance), point.x, point.y)) return;

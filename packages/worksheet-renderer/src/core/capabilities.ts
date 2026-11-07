@@ -8,11 +8,31 @@ export const POINT_SHAPES = ['circle', 'square', 'diamond', 'triangle-up', 'tria
 export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     const reject = (configRef: string, message: string, fieldRef?: string, code = 'unsupported-encoding') =>
-        diagnostics.push({ code, configRef, fieldRef, message, severity: 'error', recoverable: true });
+        diagnostics.push({
+            code,
+            configRef,
+            fieldRef,
+            message,
+            severity: 'error',
+            recoverable: true,
+        });
     const whitelist = (object: object | undefined, names: readonly string[], path: string) => {
         for (const [name, value] of Object.entries(object ?? {}))
             if (value !== undefined && !names.includes(name)) reject(`${path}.${name}`, `Unsupported ${path} property ${name}.`);
     };
+    whitelist(plan.layout, ['rowHeight', 'columnWidth', 'rowHeaderWidth', 'columnHeaderHeight', 'headerLabelMode'], 'layout');
+    for (const [name, minimum] of [
+        ['rowHeight', 64],
+        ['columnWidth', 72],
+        ['rowHeaderWidth', 24],
+        ['columnHeaderHeight', 24],
+    ] as const) {
+        const value = plan.layout?.[name];
+        if (value !== undefined && (!Number.isFinite(value) || value < minimum || value > 16_384))
+            reject(`layout.${name}`, `${name} must be between ${minimum} and 16384 CSS pixels.`, undefined, 'invalid-layout');
+    }
+    if (plan.layout?.headerLabelMode !== undefined && !['member', 'path'].includes(plan.layout.headerLabelMode))
+        reject('layout.headerLabelMode', 'Header labels must use member or path mode.', undefined, 'invalid-layout');
     if (!['bar', 'point', 'line', 'rect', 'text'].includes(plan.mark))
         reject('mark', 'Supported marks are bar, point, line, rect and text.');
     const bindings = new Map(plan.bindings.map((binding) => [binding.fieldRef, binding]));

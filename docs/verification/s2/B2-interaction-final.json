@@ -1,0 +1,436 @@
+[
+  {
+    "backend": "canvas",
+    "points": [
+      {
+        "x": 312.085,
+        "y": 204.0626,
+        "id": "B2:0:0:0"
+      },
+      {
+        "x": 373.94,
+        "y": 218.9852,
+        "id": "B2:0:0:1"
+      }
+    ],
+    "records": [
+      {
+        "selectionMs": 3.9000000953674316,
+        "presentedMs": 3.9000000953674316
+      },
+      {
+        "selectionMs": 4.700000047683716,
+        "presentedMs": 5.6000001430511475
+      },
+      {
+        "selectionMs": 6.6000001430511475,
+        "presentedMs": 7.6000001430511475
+      },
+      {
+        "selectionMs": 3.799999952316284,
+        "presentedMs": 4.599999904632568
+      },
+      {
+        "selectionMs": 2.8999998569488525,
+        "presentedMs": 4.599999904632568
+      },
+      {
+        "selectionMs": 3.1000001430511475,
+        "presentedMs": 9
+      },
+      {
+        "selectionMs": 3.299999952316284,
+        "presentedMs": 5.799999952316284
+      },
+      {
+        "selectionMs": 4.700000047683716,
+        "presentedMs": 6.900000095367432
+      },
+      {
+        "selectionMs": 4.800000190734863,
+        "presentedMs": 8.800000190734863
+      },
+      {
+        "selectionMs": 2.6000001430511475,
+        "presentedMs": 7.5
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 7.299999952316284
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 7.800000190734863
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 7.5
+      },
+      {
+        "selectionMs": 2.0999999046325684,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 2.200000047683716,
+        "presentedMs": 7.799999952316284
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 7.400000095367432
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.6000001430511475
+      },
+      {
+        "selectionMs": 2.5,
+        "presentedMs": 6
+      },
+      {
+        "selectionMs": 2.3999998569488525,
+        "presentedMs": 9.5
+      },
+      {
+        "selectionMs": 2.3999998569488525,
+        "presentedMs": 7.599999904632568
+      },
+      {
+        "selectionMs": 2.5999999046325684,
+        "presentedMs": 7.599999904632568
+      },
+      {
+        "selectionMs": 2.5999999046325684,
+        "presentedMs": 7.799999952316284
+      },
+      {
+        "selectionMs": 2.3999998569488525,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 4,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 3.5,
+        "presentedMs": 9
+      },
+      {
+        "selectionMs": 2.3999998569488525,
+        "presentedMs": 6.599999904632568
+      },
+      {
+        "selectionMs": 2.200000047683716,
+        "presentedMs": 8.200000047683716
+      },
+      {
+        "selectionMs": 2.3000001907348633,
+        "presentedMs": 7.5
+      },
+      {
+        "selectionMs": 2.200000047683716,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 2.200000047683716,
+        "presentedMs": 7.599999904632568
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.6000001430511475
+      },
+      {
+        "selectionMs": 2.5,
+        "presentedMs": 6.900000095367432
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 9
+      },
+      {
+        "selectionMs": 2.3000001907348633,
+        "presentedMs": 7.400000095367432
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.199999809265137
+      },
+      {
+        "selectionMs": 2.6000001430511475,
+        "presentedMs": 8.200000047683716
+      },
+      {
+        "selectionMs": 2.200000047683716,
+        "presentedMs": 7.700000047683716
+      },
+      {
+        "selectionMs": 3.5,
+        "presentedMs": 8.899999856948853
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 3.1000001430511475
+      },
+      {
+        "selectionMs": 2.0999999046325684,
+        "presentedMs": 8.899999856948853
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.299999952316284
+      },
+      {
+        "selectionMs": 2.1000001430511475,
+        "presentedMs": 7
+      },
+      {
+        "selectionMs": 2.299999952316284,
+        "presentedMs": 7.3999998569488525
+      },
+      {
+        "selectionMs": 2.4000000953674316,
+        "presentedMs": 8.700000047683716
+      },
+      {
+        "selectionMs": 2.5,
+        "presentedMs": 7.5
+      },
+      {
+        "selectionMs": 2.3999998569488525,
+        "presentedMs": 7.599999904632568
+      },
+      {
+        "selectionMs": 2.3000001907348633,
+        "presentedMs": 7.5
+      },
+      {
+        "selectionMs": 2.700000047683716,
+        "presentedMs": 7.5
+      }
+    ]
+  },
+  {
+    "backend": "svg",
+    "points": [
+      {
+        "x": 312.085,
+        "y": 204.0626,
+        "id": "B2:0:0:0"
+      },
+      {
+        "x": 373.94,
+        "y": 218.9852,
+        "id": "B2:0:0:1"
+      }
+    ],
+    "records": [
+      {
+        "selectionMs": 5.200000047683716,
+        "presentedMs": 5.5
+      },
+      {
+        "selectionMs": 1.3000001907348633,
+        "presentedMs": 2.1000001430511475
+      },
+      {
+        "selectionMs": 1.3999998569488525,
+        "presentedMs": 66.19999980926514
+      },
+      {
+        "selectionMs": 1.3999998569488525,
+        "presentedMs": 4.299999952316284
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.400000095367432
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.400000095367432
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 4.800000190734863
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 8.100000143051147
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.599999904632568
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.300000190734863
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 4.700000047683716
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 8.299999952316284
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.2999999523162842,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.1000001430511475
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 5.8999998569488525
+      },
+      {
+        "selectionMs": 1,
+        "presentedMs": 6.700000047683716
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.3999998569488525
+      },
+      {
+        "selectionMs": 1.1999998092651367,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1,
+        "presentedMs": 6.400000095367432
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.300000190734863
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.400000095367432
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.5
+      },
+      {
+        "selectionMs": 1.1999998092651367,
+        "presentedMs": 6.3999998569488525
+      },
+      {
+        "selectionMs": 1.2999999523162842,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 5.900000095367432
+      },
+      {
+        "selectionMs": 1.1999998092651367,
+        "presentedMs": 6.3999998569488525
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 1.2999999523162842,
+        "presentedMs": 6.200000047683716
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.299999952316284
+      },
+      {
+        "selectionMs": 1.2999999523162842,
+        "presentedMs": 6.099999904632568
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.1000001430511475
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.300000190734863
+      },
+      {
+        "selectionMs": 1.1000001430511475,
+        "presentedMs": 6
+      },
+      {
+        "selectionMs": 1.2000000476837158,
+        "presentedMs": 6.1000001430511475
+      },
+      {
+        "selectionMs": 1.1999998092651367,
+        "presentedMs": 6.3999998569488525
+      },
+      {
+        "selectionMs": 1.0999999046325684,
+        "presentedMs": 6.299999952316284
+      }
+    ]
+  }
+]

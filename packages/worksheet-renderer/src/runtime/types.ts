@@ -1,5 +1,6 @@
 import type { Axis, Diagnostic, MemberPath, ReadVersion, RenderDataSource, RenderPlan } from '../core/types';
 import type { HitRegion } from '../scene/types';
+import type { ResourceStats } from './resources';
 
 export interface SelectionTarget {
     kind: 'datum' | 'segment';
@@ -12,7 +13,12 @@ export interface SelectionTarget {
     hitPoint?: Readonly<{ x: number; y: number }>;
     rowKey?: string;
     columnKey?: string;
-    values: readonly { fieldRef: string; value: unknown; raw: unknown; datumKey?: string }[];
+    values: readonly {
+        fieldRef: string;
+        value: unknown;
+        raw: unknown;
+        datumKey?: string;
+    }[];
 }
 export interface FocusTarget {
     markId?: string;
@@ -32,7 +38,11 @@ export interface WorksheetInput {
     source: RenderDataSource;
     backend?: 'canvas' | 'svg';
     viewState?: ControlledViewState;
-    requestResults?: readonly { requestId: string; status: 'accepted' | 'rejected'; reason?: string }[];
+    requestResults?: readonly {
+        requestId: string;
+        status: 'accepted' | 'rejected';
+        reason?: string;
+    }[];
 }
 export interface WorksheetOptions {
     autoResize?: boolean;
@@ -42,6 +52,10 @@ export interface WorksheetOptions {
     requestTimeoutMs?: number;
     accessibleName?: string;
     metrics?: boolean;
+    /** Tighten the default 128 MiB runtime allowance. Source input/index and Canvas pixels are reported separately. */
+    resourceBudgetBytes?: number;
+    /** Prefetch at most one screen per direction, subject to the 100-pane working-set limit. */
+    overscan?: boolean;
 }
 export interface UpdateReceipt {
     inputRevision: number;
@@ -77,11 +91,36 @@ export interface WorksheetEvents {
     };
     collapseRequest: EventVersion & ControlledRequest;
     sortRequest: EventVersion & ControlledRequest;
-    requestStateChange: EventVersion & { requestId: string; status: RequestStatus; reason?: string };
-    viewStateChange: EventVersion & { scrollX: number; scrollY: number; focus?: FocusTarget; source: string };
-    loadStateChange: EventVersion & { state: LoadState; requestedVersion: ReadVersion; message?: string };
+    requestStateChange: EventVersion & {
+        requestId: string;
+        status: RequestStatus;
+        reason?: string;
+    };
+    viewStateChange: EventVersion & {
+        scrollX: number;
+        scrollY: number;
+        focus?: FocusTarget;
+        source: string;
+    };
+    loadStateChange: EventVersion & {
+        state: LoadState;
+        requestedVersion: ReadVersion;
+        message?: string;
+    };
     diagnostic: Partial<EventVersion> & Diagnostic;
-    metrics: EventVersion & { renderMs: number; marks: number; commands: number; cacheWindows: number };
+    metrics: EventVersion & {
+        /** End-to-end render work, including asynchronous source waiting. */
+        renderMs: number;
+        readMs: number;
+        sceneMs: number;
+        submitMs: number;
+        /** Synchronous validation/accounting/Scene/backend work. Does not claim to be browser presentation time. */
+        cpuMs: number;
+        marks: number;
+        commands: number;
+        cacheWindows: number;
+        resources: ResourceStats;
+    };
 }
 
 export function selectionTarget(hit: HitRegion, plan: RenderPlan): SelectionTarget {

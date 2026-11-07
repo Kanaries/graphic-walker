@@ -1,10 +1,25 @@
 import type { SceneFrame } from '../scene/types';
 
+export function canvasDimensions(width: number, height: number, requestedDpr: number) {
+    if (![width, height, requestedDpr].every((value) => Number.isFinite(value) && value > 0))
+        throw new Error('invalid-layout: Canvas dimensions and DPR must be positive finite numbers');
+    const pixels = 16_777_216;
+    let dpr = Math.max(0.5, Math.min(2, requestedDpr, Math.sqrt(pixels / (width * height))));
+    let bitmapWidth = Math.ceil(width * dpr),
+        bitmapHeight = Math.ceil(height * dpr);
+    if (bitmapWidth * bitmapHeight > pixels && dpr > 0.5) {
+        dpr = Math.max(0.5, dpr - 1 / Math.min(width, height));
+        bitmapWidth = Math.ceil(width * dpr);
+        bitmapHeight = Math.ceil(height * dpr);
+    }
+    if (bitmapWidth * bitmapHeight > pixels || bitmapWidth > 32_768 || bitmapHeight > 32_768)
+        throw new Error('resource-limit: Canvas viewport exceeds the bounded bitmap at minimum DPR');
+    return { width: bitmapWidth, height: bitmapHeight, dpr };
+}
+
 /** One viewport bitmap; every mark, axis, header and interaction overlay uses this context. */
 export function paintCanvas(canvas: HTMLCanvasElement, frame: SceneFrame, requestedDpr = window.devicePixelRatio || 1): void {
-    const dpr = Math.max(0.5, Math.min(2, requestedDpr, Math.sqrt(16_777_216 / Math.max(1, frame.width * frame.height))));
-    const width = Math.ceil(frame.width * dpr),
-        height = Math.ceil(frame.height * dpr);
+    const { width, height, dpr } = canvasDimensions(frame.width, frame.height, requestedDpr);
     if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;

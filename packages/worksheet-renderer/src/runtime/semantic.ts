@@ -170,6 +170,8 @@ export function createSemanticView(root: HTMLElement, name: string, actions: Sem
         tooltip(label: string | undefined, x = 0, y = 0) {
             tooltip.hidden = !label;
             tooltip.textContent = label ?? '';
+            // Clearing a hidden tooltip during scrolling must not flush the chart's layout.
+            if (!label) return;
             tooltip.style.left = Math.max(0, Math.min(x + 12, root.clientWidth - 360)) + 'px';
             tooltip.style.top = Math.max(0, Math.min(y + 12, root.clientHeight - 100)) + 'px';
         },
@@ -180,6 +182,10 @@ export function createSemanticView(root: HTMLElement, name: string, actions: Sem
             previous.removeEventListener('click', back);
             next.removeEventListener('click', forward);
             frame = undefined;
+            table.replaceChildren();
+            summary.textContent = '';
+            tooltip.textContent = '';
+            proxy.removeAttribute?.('aria-label');
             for (const node of [summary, proxy, tooltip, button, panel]) node.remove();
         },
     };

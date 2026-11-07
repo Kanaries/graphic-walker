@@ -1,0 +1,5 @@
+{
+  "extends": "../../graphic-walker/tsconfig.json",
+  "compilerOptions": { "noEmit": true, "declaration": false, "emitDeclarationOnly": false },
+  "include": ["./**/*.ts", "../../graphic-walker/src/**/*.d.ts"]
+}

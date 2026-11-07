@@ -72,6 +72,15 @@ export interface RenderStyle {
     readonly fontFamily?: string;
     readonly fontSize?: number;
 }
+/** Fixed CSS-pixel strips. These do not depend on which data page is loaded. */
+export interface RenderLayout {
+    readonly rowHeight?: number;
+    readonly columnWidth?: number;
+    readonly rowHeaderWidth?: number;
+    readonly columnHeaderHeight?: number;
+    /** Full member paths remain available to tooltip and keyboard users in either mode. */
+    readonly headerLabelMode?: 'member' | 'path';
+}
 export interface RenderPlan {
     readonly bindings: readonly ResultBinding[];
     readonly rows: AxisPlan;
@@ -94,6 +103,7 @@ export interface RenderPlan {
     readonly scales?: Readonly<Record<string, ScaleOptions>>;
     readonly axes?: Readonly<Record<string, AxisOptions>>;
     readonly style?: RenderStyle;
+    readonly layout?: RenderLayout;
 }
 
 export interface RankRange { readonly start: number; readonly end: number }
