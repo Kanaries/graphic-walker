@@ -2,7 +2,7 @@ import type { AxisLeaf, DomainBatch, FieldChannel, PaneData, PaneRecord, Prepare
 import { getDisplayDomain, positionCoordinate, positionTypeFor, barIsHorizontal } from '../core/domains';
 import { seriesIdentityFor, seriesKeyFor } from '../core/series';
 import { advanceBarStack } from '../core/prepared';
-import { toTypedValue, typedValueKey } from '../core/keys';
+import { bindingValueLabel, toTypedValue, typedValueKey } from '../core/keys';
 import { createColorEncoder, numericChannel, resolveDomainValues, type PositionScale } from './scales';
 import { fitText, formatValue, measureText } from './text';
 import { intersect, inflate, type Box, type HitGeometry, type HitRegion, type Point, type Primitive, type SceneFrame } from './types';
@@ -312,7 +312,7 @@ export function drawPaneMarks(input: PaneGeometryInput): void {
                 const formatted =
                     value === null
                         ? ''
-                        : formatValue(
+                        : bindingValueLabel(binding, toTypedValue(value)) ?? formatValue(
                               value,
                               binding ? positionTypeFor(binding) : typeof value === 'number' ? 'linear' : 'band',
                               binding ? plan.axes?.[binding.fieldRef]?.format : undefined,

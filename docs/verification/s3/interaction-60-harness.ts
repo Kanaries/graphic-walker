@@ -1,0 +1,17 @@
+import { createBenchmarkFixture, adaptBenchmarkFixture } from '../../../packages/worksheet-renderer/bench/fixtures';
+import { createPreparedDataSource } from '../../../packages/worksheet-renderer/src/core/prepared';
+import { createWorksheet } from '../../../packages/worksheet-renderer/src/runtime/worksheet';
+const host = document.querySelector<HTMLElement>('#worksheet')!;
+const fixture = createBenchmarkFixture('B2');
+const plan = adaptBenchmarkFixture(fixture);
+const source = createPreparedDataSource({plan, records: fixture.records, version:{sourceId:'B2',snapshotId:String(fixture.seed),presentationId:'1'}, getDatumKey:fixture.getDatumKey});
+const backend = new URLSearchParams(location.search).get('backend') === 'svg' ? 'svg' : 'canvas';
+const view = createWorksheet(host,{plan,source,backend},{width:1440,height:900,dpr:2,autoResize:false,accessibleName:'B2 interaction 60'});
+const selection: {eventMs:number;rafMs:number}[] = [], hover: {eventMs:number;rafMs:number}[] = [];
+let down = 0, move = 0;
+host.addEventListener('pointerdown',()=>{down=performance.now()},true);
+host.addEventListener('pointermove',()=>{move=performance.now()},true);
+view.on('selectionChange',()=>{const start=down;if(start){const eventMs=performance.now()-start;requestAnimationFrame(()=>selection.push({eventMs,rafMs:performance.now()-start}))}});
+new MutationObserver(()=>{const tooltip=host.querySelector<HTMLElement>('[role=tooltip]');const start=move;if(start&&tooltip&&!tooltip.hidden&&tooltip.textContent){const eventMs=performance.now()-start;move=0;requestAnimationFrame(()=>hover.push({eventMs,rafMs:performance.now()-start}))}}).observe(host,{subtree:true,attributes:true,childList:true,characterData:true});
+(window as any).interaction60={view,selection,hover};
+view.ready.then(()=>document.querySelector('#status')!.textContent='ready');

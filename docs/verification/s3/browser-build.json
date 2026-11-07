@@ -1,0 +1,51 @@
+{
+  "schema": "s3-browser-build-v1",
+  "sourceFingerprint": "04f08b1acc58d29a9d609e3dcb645b859973a79035fba05eba724289865aa6b6",
+  "fingerprint": "d8a42531535a4b20f38305dac42a7b987ebadbc9b4bbfd7c8df9372976c75812",
+  "assets": [
+    {
+      "path": "assets/fixtures-Ax8nE1yH.js",
+      "sha256": "1ca1f62690deb702089ae3774b27cee6dab1e5c06b523cb1752bd9aeb504c307"
+    },
+    {
+      "path": "assets/issue-501-wvzaoHyT.js",
+      "sha256": "75a1f546a04dd0b251ebe1a4035cc8bd75400f0dceb5115d43f7c26403cca4a0"
+    },
+    {
+      "path": "assets/kanaries-hkUKdbeD.png",
+      "sha256": "e0c2191e8fb4c3d9bf01d3478e6f826f8f7aaced0cf95c393e58a5655cf8e0d0"
+    },
+    {
+      "path": "assets/native-renderer-WjTHL9Zt.js",
+      "sha256": "f0413253b0f81b0da84c628a3a2d603db3d37fe91f234d648805fa13e888a7c4"
+    },
+    {
+      "path": "assets/native-worksheet-enuE-Cuz.js",
+      "sha256": "0a3cd687f91206e0909818d64e52c7676849aca7af5cbd28d8b524e30b1a45ea"
+    },
+    {
+      "path": "assets/results-p8wdUfeG.js",
+      "sha256": "7122e42c5a7d721001b447968f2dded5877aa5b308d88b05d2517176f3572378"
+    },
+    {
+      "path": "assets/root-1jx_wpsr.js",
+      "sha256": "28289a5b0acbe04438b81d5378b6d55cce9b4c2a0a3a96939b69871f7ab6feb4"
+    },
+    {
+      "path": "assets/root-f0mNRiTD.css",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/e2e/issue-501.html",
+      "sha256": "33b28590f5f497d067768614cecb32d18ad052f46020e2e1996bc74dbbb36111"
+    },
+    {
+      "path": "tests/e2e/native-renderer.html",
+      "sha256": "0ef1cc78e0f6edac399f6a9cadb774dedeed8ec6c3627152fe3ebf1c93259a67"
+    },
+    {
+      "path": "tests/e2e/native-worksheet.html",
+      "sha256": "0598a5b6bee9b78eec6f918c6d3fa3ffe30a88d3e96441ba2369f777b0a2a926"
+    }
+  ]
+}

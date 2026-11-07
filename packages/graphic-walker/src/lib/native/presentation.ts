@@ -1,5 +1,6 @@
+import { ColorSchemes } from '../../components/visualConfig/colorScheme';
 import type { IChannelScales, IChart, IColorScale, IScale, IViewField } from '../../interfaces';
-import type { AxisOptions, Diagnostic, PreparedRecord, RenderPlan, RenderStyle, ScaleOptions } from '../../../../worksheet-renderer/src/core/types';
+import type { AxisOptions, Diagnostic, PreparedRecord, RenderPlan, RenderStyle, ScaleOptions } from '@kanaries/worksheet-renderer';
 
 type Channel = 'row' | 'column' | 'color' | 'size' | 'opacity' | 'shape';
 type StaticScale = Omit<IColorScale, 'domain' | 'range'> & ScaleOptions;
@@ -27,6 +28,7 @@ const palettes: Record<string, readonly string[]> = {
     category10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'],
     blues: ['#eff3ff', '#bdd7e7', '#6baed6', '#3182bd', '#08519c'],
     redblue: ['#b2182b', '#ef8a62', '#f7f7f7', '#67a9cf', '#2166ac'],
+    ...Object.fromEntries(ColorSchemes.map(item => [item.name, item.value])),
 };
 const callbackCache = new WeakMap<Function, WeakMap<readonly PreparedRecord[], Map<string, IScale>>>();
 const defined = (object: object | undefined) => Object.fromEntries(Object.entries(object ?? {}).filter(([, value]) => value !== undefined));

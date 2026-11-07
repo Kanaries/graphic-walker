@@ -1,11 +1,13 @@
+import { assertLegacyRendererCapabilities } from './native/legacyCapabilities';
 import * as Plot from '@observablehq/plot';
-import { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
+import { utcFormat } from 'd3-time-format';
+import { IChannelScales, ICoordMode, IWorksheetLayout, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
 import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, SingleViewProps } from '@/vis/spec/view';
 import { toVegaSpec } from './vega';
 import { t } from 'i18next';
 
-function vegaLiteToPlot(spec: any): any {
+function vegaLiteToPlot(spec: any, vegaConfig: VegaGlobalConfig = {}): any {
     /**
      * We read the major parts from the single-view Vega-Lite spec, e.g.:
      *  - spec.data?.values => data array
@@ -31,6 +33,7 @@ function vegaLiteToPlot(spec: any): any {
     console.log({ encoding: spec.encoding, markType });
     // 3) Gather encoding fields
     const enc = spec.encoding || {};
+    const config = { ...vegaConfig, ...spec.config };
     const xField = enc.x?.field || null;
     const yField = enc.y?.field || null;
     const xFacetField = enc.column?.field || null;
@@ -414,12 +417,27 @@ function vegaLiteToPlot(spec: any): any {
         return false;
     };
 
+    const tickFormat = (axis: 'x' | 'y') => {
+        const encoding = enc[axis];
+        if (encoding?.type !== 'quantitative' && encoding?.type !== 'temporal') return undefined;
+        const axisConfig = axis === 'x' ? config.axisX : config.axisY;
+        const fallback = encoding.type === 'temporal' ? config.timeFormat : config.numberFormat;
+        const format = encoding.axis?.format ?? encoding.format ?? axisConfig?.format ?? config.axis?.format ?? fallback;
+        if (typeof format !== 'string') return undefined;
+        if (encoding.type === 'quantitative') return format;
+        // Temporal bars use band scales; their string/epoch ticks must not be
+        // interpreted as numeric format specifiers. Keep the existing UTC display.
+        const formatDate = utcFormat(format);
+        return (value: Date | string | number | null | undefined) => value == null ? '' : formatDate(value instanceof Date ? value : new Date(value));
+    };
+
     // 7) Build top-level any
     const plotOptions: any = {
         marks: [mark],
         // Possibly define top-level x, y, color scales
         x: {
             label: enc.x?.title || undefined,
+            tickFormat: tickFormat('x'),
             // For temporal fields: use 'utc' for continuous scales, 'band' for categorical scales
             type: enc.x?.type === 'temporal' 
                 ? (isTemporalUsedCategorically('x') ? 'band' : 'utc')
@@ -428,6 +446,7 @@ function vegaLiteToPlot(spec: any): any {
         },
         y: {
             label: enc.y?.title || undefined,
+            tickFormat: tickFormat('y'),
             // Apply the same logic for y-axis temporal fields
             type: enc.y?.type === 'temporal' 
                 ? (isTemporalUsedCategorically('y') ? 'band' : 'utc')
@@ -475,6 +494,8 @@ export function toObservablePlotSpec({
     mediaTheme,
     vegaConfig,
     displayOffset,
+    worksheet,
+    coordSystem,
 }: {
     rows: readonly IViewField[];
     columns: readonly IViewField[];
@@ -498,7 +519,10 @@ export function toObservablePlotSpec({
     mediaTheme: 'dark' | 'light';
     vegaConfig: VegaGlobalConfig;
     displayOffset?: number;
+    worksheet?: IWorksheetLayout;
+    coordSystem?: ICoordMode;
 }): any[] {
+    assertLegacyRendererCapabilities({ rows: rowsRaw, columns: columnsRaw, geomType, coordSystem, worksheet }, 'observable-plot');
     const vlSpecs: any[] = toVegaSpec({
         rows: rowsRaw,
         columns: columnsRaw,
@@ -522,11 +546,13 @@ export function toObservablePlotSpec({
         mediaTheme,
         vegaConfig,
         displayOffset,
+        worksheet,
+        coordSystem,
     });
 
     console.log({ vlSpecs });
 
-    const plotSpecs: any[] = vlSpecs.map((vlSpec) => vegaLiteToPlot(vlSpec));
+    const plotSpecs: any[] = vlSpecs.map((vlSpec) => vegaLiteToPlot(vlSpec, vegaConfig));
 
     console.log({ plotSpecs });
     return plotSpecs;

@@ -1,6 +1,6 @@
 # 自有工作表渲染器：技术设计 v0.4
 
-日期：2026-11-06。状态：在已确认的 v0.3 需求范围内补齐实施契约。需求见 [需求与验收](./worksheet-renderer-requirements.md)，范围决策见 [alignment](./worksheet-renderer-alignment.md)，独立审核及意见处理见 [技术审核记录](./worksheet-renderer-technical-review.md)。文中的 native 接口和值均是拟实施设计，尚未实现；性能数值仍须 S0 实测。
+日期：2026-11-06。状态：本设计的首版渲染库与 GW native 接入已实施。需求见 [需求与验收](./worksheet-renderer-requirements.md)，范围见 [alignment](./worksheet-renderer-alignment.md)，设计审核见 [技术审核记录](./worksheet-renderer-technical-review.md)。当前公开 API 见子包 README 和 [GW 接入说明](./worksheet-renderer-integration.md)，实现与实测结果见 [实施记录](./worksheet-renderer-implementation.md)。本文保留设计契约，不将性能目标当作实测结果。
 
 ## 1. 设计结论与职责边界
 
@@ -20,9 +20,11 @@
 
 库内仍有刻度、文字尺寸、坐标变换、堆叠位置和完整输入域推导等渲染计算。库不对输入值做业务 SUM/AVG，也不生成查询计划。外部算好的累计值或均值作为普通结果列绘制。
 
-### 1.2 当前代码核对
+### 1.2 设计时的代码基线与对接点
 
-| 当前入口 | 已核对事实 | 对接方式 |
+以下保留技术评审时的代码基线。对应接入现已实施，当前 API、行为和测试结果见实施记录及 GW 接入说明。
+
+| 设计时入口 | 已核对事实 | 对接方式 |
 | --- | --- | --- |
 | [interfaces.ts](../packages/graphic-walker/src/interfaces.ts) | IChart 保存 encodings/config/layout；IVisualLayout 的 renderer 为 vega-lite/observable-plot，另有 useSvg | 增加自有 renderer 值，沿用 useSvg 区分 Canvas/SVG |
 | [models/normalize.ts](../packages/graphic-walker/src/models/normalize.ts) | 已支持 IChart、旧 IVisSpec、PartialChart、TerseSpec、有限 Vega-Lite-like 输入，并输出 IChart | 继续使用已有输入体系，不新增顶层输入类型 |
@@ -30,9 +32,9 @@
 | [renderer/hooks.ts](../packages/graphic-walker/src/renderer/hooks.ts) | GW 在进入显示前准备 workflow 结果和 fold 数据 | 继续在库外准备数据并明确结果列绑定 |
 | [lib/gog.ts](../packages/graphic-walker/src/lib/gog.ts) | 普通图表存在 crossLimit(2)，normalize 与 reducer 会使用它 | 新路径需解除显示深度限制，不能等字段被裁掉后才换 renderer |
 | [lib/observablePlot.ts](../packages/graphic-walker/src/lib/observablePlot.ts) | 当前 Plot 路径先调用 toVegaSpec 再转换 | 新 native 路径直接映射 GW spec，避免继承旧 facet 限制 |
-| [历史 V0](../packages/worksheet-renderer/README.md) | 包含独立工作表格式、查询调度和单 Vega Canvas | 只复用有价值的显示实现与案例，不继承格式和计算边界 |
+| [历史 V0](./worksheet-renderer-research-index.md) | 包含独立工作表格式、查询调度和单 Vega Canvas | 只复用有价值的显示实现与案例，不继承格式和计算边界 |
 
-normalize 是现有正规化入口，但并非所有历史导入/导出路径都调用它；接入时要逐条核对，不能假定改一个函数就覆盖所有入口。以上是代码阅读结果，未重新运行产品测试。
+normalize 是现有正规化入口，但并非所有历史导入/导出路径都调用它；接入需逐条核对。以上为设计阶段的代码阅读记录；实际产品回归已随 S3 完成，证据见实施记录。
 
 ### 1.3 固定约束
 

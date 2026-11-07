@@ -14,7 +14,7 @@ import { assertValidWorkflowFields } from '../utils/workflowValidate';
  *   fields). Routed through the `forwardVisualConfigs` → `visSpecDecoder` → `convertChart`
  *   migration chain inside `parseChart`.
  * - `vega-lite`: a Vega-Lite-like spec. Routed through `VegaliteMapper`; requires `meta` to
- *   resolve field names, otherwise unresolved fields fall back to the count field.
+ *   resolve field names; unsupported or unresolved inputs produce structured diagnostics.
  * - `terse`: the human-authored TerseSpec authoring format (docs/terse-spec-design.md).
  *   Expanded via `expandTerse`; requires `meta` to resolve field names.
  * - `partial-chart`: everything else — treated as `PartialChart` and completed with defaults.
@@ -26,7 +26,7 @@ export type ISpecKind = 'chart' | 'vis-spec' | 'vega-lite' | 'terse' | 'partial-
 // of silently normalizing into an empty default chart via the partial-chart path. `mark` is NOT
 // in this list because TerseSpec shares it; a bare `mark` with no terse channel keys still routes
 // to vega-lite (see detectSpecKind).
-const VEGA_LITE_EXCLUSIVE_KEYS = ['encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat'] as const;
+const VEGA_LITE_EXCLUSIVE_KEYS = ['encoding', 'spec', 'layer', 'concat', 'hconcat', 'vconcat', 'repeat', 'params', 'selection', 'transform'] as const;
 
 // Top-level keys that exist on TerseSpec but never on IChart / IVisSpec / PartialChart
 // (canonical specs keep fields and filters inside `encodings`). All terse channel keys

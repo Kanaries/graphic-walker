@@ -1,10 +1,21 @@
+import { assertLegacyRendererCapabilities } from './native/legacyCapabilities';
 import { GLOBAL_CONFIG } from '../config';
-import { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
+import { IChannelScales, ICoordMode, IWorksheetLayout, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
 import { encodeFid } from '../vis/spec/encode';
 import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, resolveScales } from '../vis/spec/view';
 
 const leastOne = (x: number) => Math.max(x, 1);
+const temporalFieldMaps = new WeakMap<object, Readonly<Record<string, string>>>();
+
+/** Used only by the host event bridge; aliases never become persisted chart metadata. */
+export function getVegaTemporalFieldMap(spec: object): Readonly<Record<string, string>> | undefined {
+    return temporalFieldMaps.get(spec);
+}
+
+function registerTemporalFields(spec: object, fields: ReadonlyMap<string, string>): void {
+    if (fields.size) temporalFieldMaps.set(spec, Object.freeze(Object.assign(Object.create(null), Object.fromEntries(fields))));
+}
 
 export function toVegaSpec({
     rows: rowsRaw,
@@ -29,6 +40,8 @@ export function toVegaSpec({
     mediaTheme,
     vegaConfig,
     displayOffset,
+    worksheet,
+    coordSystem,
 }: {
     rows: readonly IViewField[];
     columns: readonly IViewField[];
@@ -52,7 +65,10 @@ export function toVegaSpec({
     mediaTheme: 'dark' | 'light';
     vegaConfig: VegaGlobalConfig;
     displayOffset?: number;
+    worksheet?: IWorksheetLayout;
+    coordSystem?: ICoordMode;
 }) {
+    assertLegacyRendererCapabilities({ rows: rowsRaw, columns: columnsRaw, geomType, coordSystem, worksheet }, 'vega-lite');
     const guard = defaultAggregated ? (x?: IViewField) => x ?? NULL_FIELD : (x?: IViewField) => (x ? (x.aggName === 'expr' ? NULL_FIELD : x) : NULL_FIELD);
     const rows = rowsRaw.map(guard).filter((x) => x !== NULL_FIELD);
     const columns = columnsRaw.map(guard).filter((x) => x !== NULL_FIELD);
@@ -111,7 +127,7 @@ export function toVegaSpec({
             spec.height = Math.floor(height / rowNums);
         }
 
-        const v = getSingleView({
+        const { dataSource: preparedData, rawFieldsByDisplay, ...v } = getSingleView({
             x: xField,
             y: yField,
             color: guard(color),
@@ -133,8 +149,9 @@ export function toVegaSpec({
             dataSource,
             vegaConfig,
         });
-        const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
+        const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme, rawFieldsByDisplay) : v;
 
+        spec.data = { values: preparedData };
         spec.mark = singleView.mark;
         if ('encoding' in singleView) {
             spec.encoding = singleView.encoding;
@@ -155,6 +172,7 @@ export function toVegaSpec({
                 spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
             }
         }
+        registerTemporalFields(spec, rawFieldsByDisplay);
         return [spec];
     } else {
         if (layoutMode === 'auto') {
@@ -174,7 +192,7 @@ export function toVegaSpec({
             for (let j = 0; j < leastOne(colRepeatFields.length); j++, index++) {
                 const hasLegend = j === colRepeatFields.length - 1;
                 const showLegend = i == 0;
-                const v = getSingleView({
+                const { dataSource: preparedData, rawFieldsByDisplay, ...v } = getSingleView({
                     x: colRepeatFields[j] || NULL_FIELD,
                     y: rowRepeatFields[i] || NULL_FIELD,
                     color: guard(color),
@@ -196,14 +214,16 @@ export function toVegaSpec({
                     hideLegend: !showLegend,
                     displayOffset,
                     dataSource,
+                    vegaConfig,
                 });
-                const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
+                const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme, rawFieldsByDisplay) : v;
                 let commonSpec = { ...spec };
 
-                const ans = { ...commonSpec, ...singleView };
+                const ans = { ...commonSpec, ...singleView, data: { values: preparedData } };
                 if ('params' in commonSpec) {
                     ans.params = commonSpec.params;
                 }
+                registerTemporalFields(ans, rawFieldsByDisplay);
                 result[index] = ans;
             }
         }

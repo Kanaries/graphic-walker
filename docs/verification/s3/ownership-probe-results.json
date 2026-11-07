@@ -1,0 +1,293 @@
+{
+  "sourceFingerprint": "04f08b1acc58d29a9d609e3dcb645b859973a79035fba05eba724289865aa6b6",
+  "probeSourceSha256": "514931769f89a92cec64dfa16a8057f2b2cbba3c4588d9126f707a7ba6225866",
+  "runtime": "Real React and real useRenderer in an isolated Chromium scratch page via Playwright CLI; no product e2e server or build started by reviewer.",
+  "beforeFix": {
+    "scope": "Initial real React production probe used the real ownership helper and the former passive-effect-only active guard; this log is not a product e2e run.",
+    "log": [
+      [
+        "layout",
+        1
+      ],
+      [
+        "setup",
+        1
+      ],
+      [
+        "layout",
+        2
+      ],
+      [
+        "catch",
+        1,
+        "committed",
+        2,
+        "isCurrent",
+        true
+      ],
+      [
+        "cleanup",
+        1
+      ],
+      [
+        "setup",
+        2
+      ],
+      [
+        "cleanup",
+        2
+      ]
+    ],
+    "reports": [
+      1
+    ]
+  },
+  "afterFix": {
+    "production": [
+      {
+        "scenario": "commit",
+        "strict": false,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            false
+          ],
+          [
+            "start",
+            2
+          ]
+        ],
+        "reports": [],
+        "starts": [
+          1,
+          2
+        ],
+        "result": {
+          "loading": false,
+          "values": [
+            2
+          ]
+        },
+        "passed": true
+      },
+      {
+        "scenario": "unmount",
+        "strict": false,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            false
+          ]
+        ],
+        "reports": [],
+        "starts": [
+          1
+        ],
+        "result": {
+          "loading": true,
+          "values": []
+        },
+        "passed": true
+      },
+      {
+        "scenario": "display-only",
+        "strict": false,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            true
+          ]
+        ],
+        "reports": [
+          1
+        ],
+        "starts": [
+          1
+        ],
+        "result": {
+          "loading": false,
+          "error": "Old failure during replacement commit",
+          "values": []
+        },
+        "passed": true
+      }
+    ],
+    "development": [
+      {
+        "scenario": "commit",
+        "strict": true,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            false
+          ],
+          [
+            "start",
+            2
+          ]
+        ],
+        "reports": [],
+        "starts": [
+          1,
+          2
+        ],
+        "result": {
+          "loading": false,
+          "values": [
+            2
+          ]
+        },
+        "passed": true
+      },
+      {
+        "scenario": "unmount",
+        "strict": true,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            false
+          ]
+        ],
+        "reports": [],
+        "starts": [
+          1
+        ],
+        "result": {
+          "loading": true,
+          "values": []
+        },
+        "passed": true
+      },
+      {
+        "scenario": "display-only",
+        "strict": true,
+        "log": [
+          [
+            "layout",
+            1
+          ],
+          [
+            "layout",
+            1
+          ],
+          [
+            "start",
+            1
+          ],
+          [
+            "layout",
+            2
+          ],
+          [
+            "catch",
+            1,
+            "committed",
+            2,
+            "isCurrent",
+            true
+          ]
+        ],
+        "reports": [
+          1
+        ],
+        "starts": [
+          1
+        ],
+        "result": {
+          "loading": false,
+          "error": "Old failure during replacement commit",
+          "values": []
+        },
+        "passed": true
+      }
+    ]
+  }
+}

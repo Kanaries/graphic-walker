@@ -1,3 +1,4 @@
+import { toTypedValue, typedValueKey } from './keys';
 import type { Diagnostic, RenderPlan, ResultBinding } from './types';
 import { validateFormat } from '../scene/text';
 import { positionTypeFor as position } from './domains';
@@ -38,6 +39,18 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     const bindings = new Map(plan.bindings.map((binding) => [binding.fieldRef, binding]));
     if (bindings.size !== plan.bindings.length)
         reject('bindings', 'Field references must be unique.', undefined, 'source-contract-violation');
+    for (const binding of bindings.values()) if (binding.valueLabels !== undefined) {
+        const labels = binding.valueLabels;
+        let valid = position(binding) === 'band' && !!labels && typeof labels === 'object' && !Array.isArray(labels);
+        if (valid) for (const [key, label] of Object.entries(labels)) {
+            try {
+                const tuple = JSON.parse(key);
+                const value = tuple[0] === 'null' ? { type: 'null' as const } : toTypedValue(tuple[1], tuple[0] === 'time' ? 'time' : undefined);
+                if (typeof label !== 'string' || typedValueKey(value) !== key) valid = false;
+            } catch { valid = false; }
+        }
+        if (!valid) reject(`bindings.${binding.fieldRef}.valueLabels`, 'Value labels require a band binding and canonical typed keys with string labels.', binding.fieldRef);
+    }
     const requireBinding = (ref: string) => {
         const binding = bindings.get(ref);
         if (!binding) reject('bindings', `No result binding exists for ${ref}.`, ref, 'missing-binding');
@@ -200,9 +213,11 @@ export function validateRenderCapabilities(plan: RenderPlan): Diagnostic[] {
     }
     whitelist(
         plan.style,
-        ['color', 'background', 'palette', 'opacity', 'pointSize', 'lineWidth', 'barWidth', 'fontFamily', 'fontSize'],
+        ['color', 'background', 'foreground', 'headerBackground', 'gridColor', 'borderColor', 'palette', 'opacity', 'pointSize', 'lineWidth', 'barWidth', 'fontFamily', 'fontSize'],
         'style',
     );
+    for (const name of ['color', 'background', 'foreground', 'headerBackground', 'gridColor', 'borderColor'] as const)
+        if (plan.style?.[name] !== undefined && typeof plan.style[name] !== 'string') reject(`style.${name}`, 'Static colors must be CSS color strings.');
     for (const name of ['pointSize', 'lineWidth', 'barWidth', 'fontSize'] as const) {
         const value = plan.style?.[name];
         if (value !== undefined && (!Number.isFinite(value) || value < 0))

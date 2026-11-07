@@ -60,6 +60,8 @@ export interface HeaderTarget {
     key: string;
     axis: Axis;
     path: MemberPath;
+    /** Human-readable path can differ from opaque categorical identity values. */
+    pathLabel?: string;
     fieldRef?: string;
     box: Box;
     clip: Box;

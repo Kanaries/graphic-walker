@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from '@/renderer/specRenderer';
 import { vegaThemeContext } from '@/store/theme';
-import { useRenderer } from '@/renderer/hooks';
+import { useRenderer, useNativeResult } from '@/renderer/hooks';
 import { getSort, parseErrorMessage } from '@/utils';
 import { useReporter } from '@/utils/reportError';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -47,7 +47,7 @@ async function queryChat(
         chats: IChatMessage[];
         query: string;
     },
-    headers: Record<string, string>
+    headers: Record<string, string>,
 ) {
     const chats = data.chats.concat({
         role: 'user',
@@ -116,7 +116,13 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [encodings]);
 
-    const { viewData: data, loading: waiting } = useRenderer({
+    const {
+        viewData: data,
+        loading: waiting,
+        error,
+        query,
+    } = useRenderer({
+        chart: props.message.chart,
         allFields,
         viewDimensions,
         viewMeasures,
@@ -128,6 +134,7 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
         computationFunction: computation,
         timezoneDisplayOffset: config['timezoneDisplayOffset'],
     });
+    const nativeResult = useNativeResult(props.message.chart, query);
     const { i18n } = useTranslation();
 
     return (
@@ -149,6 +156,10 @@ const AssistantMessage = observer(function AssistantMessage(props: { message: IA
                     vizThemeConfig={vizThemeConfig}
                     name={name}
                     data={data}
+                    chart={props.message.chart}
+                    nativeResult={nativeResult}
+                    loading={waiting}
+                    error={error}
                     draggableFieldState={encodings}
                     visualConfig={config}
                     layout={{

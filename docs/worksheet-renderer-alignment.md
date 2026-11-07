@@ -1,6 +1,6 @@
 # 自有工作表渲染器：alignment v0.4
 
-日期：2026-11-06。状态：现有 GW specification 为唯一权威格式、渲染库职责及首版核心范围已确认，映射和接口契约见技术设计 v0.4，预算待 S0 实测。本轮交付文档，不实施产品代码。
+日期：2026-11-06。状态：现有 GW specification 为唯一权威格式、渲染库职责及首版核心范围已确认。S0–S3 已按此范围实施；映射与接口契约见技术设计 v0.4，实现、验收、性能及阶段提交见 [实施记录](./worksheet-renderer-implementation.md)。本文保留已确认的范围决策。
 
 沿用现有 Graphic Walker specification，通过新增的 native renderer 适配到 `packages/worksheet-renderer` 中的自有图表库。用户继续编辑和保存现有 spec；自有库负责表头、坐标系、布局、交互和虚拟化，使用 Canvas 2D 与 SVG 绘制。一个工作表对应一个运行实例。
 
@@ -28,9 +28,9 @@ v0.4 增加技术评审后的 D9，原首版范围与计算边界不变。
 
 这里的"复刻"以工作表的显示和交互行为为目标，不表示复刻 Tableau 的计算引擎。像素布局、刻度、文字测量、给定数值的堆叠位置属于渲染计算；对原始数据求 SUM/AVG、运行累计或更改分组粒度属于外部数据计算。
 
-## 2. 建议这次评审定下的技术决定
+## 2. 已确认并实施的技术决定
 
-| 决定 | 建议 | 理由 |
+| 决定 | 方案 | 理由 |
 | --- | --- | --- |
 | D1：渲染路线 | 自有 Canvas 2D 与原生 SVG；不再以直接 Vega 作为新路径的生产后端 | 满足本轮的自主控制要求；历史 V0 可用于对照 |
 | D2：虚拟化范围 | 库负责可见范围、布局检索、窗口请求与缓存；外部负责产出数据 | 渲染库的 CPU/内存应有界，同时不承担数据计算 |
@@ -42,7 +42,7 @@ v0.4 增加技术评审后的 D9，原首版范围与计算边界不变。
 | D8：spec 与兼容 | 现有 IChart → native renderer 的内部 RenderPlan；Vega-Lite 风格只用于局部兼容 | 不新增用户 spec，也不将 Vega-Lite 编译器作为必经路径 |
 | D9：旧后端超出能力时的行为 | canonical IChart 保留全部字段；旧后端显示 unsupported 空态并提供切换 native 的入口，不自动切换或截断显示 | 防止切回旧 renderer 后再次编辑导致字段丢失；这是技术评审后明确的旧路径行为变更 |
 
-D5 的计算边界与 D8 的现有 spec 原则已确认。D9 是本轮技术评审补充的接入决定，详见技术设计 v0.4 与审核记录；尚未实施。其余实施参数仍需技术验证。`native` 为新增 renderer 值的暂定名称，尚未实现。接口、缓存默认值和局部兼容子集可在技术验证后调整。
+D1–D9 已按首版范围实施。`native` 是新增的 renderer 值，D9 的字段保留、诊断和显式切换已完成产品回归。接口、缓存默认值、兼容子集和实测预算见技术设计、子包 README 与实施记录；后续调整仍须记录兼容性及验收依据。
 
 ## 3. 阅读入口
 
@@ -52,13 +52,7 @@ D5 的计算边界与 D8 的现有 spec 原则已确认。D9 是本轮技术评�
 | [技术设计](./worksheet-renderer-design.md) | 现有 spec 映射、Vega-Lite 局部兼容、外部供数、单 Canvas 和二维虚拟化 |
 | [历史调研索引](./worksheet-renderer-research-index.md) | 历史探索原始资料与证据边界 |
 
-仓库中的正式文件：
-
-```text
-/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-alignment.md
-/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-requirements.md
-/Users/observedobserver/Documents/GitHub/graphic-walker/docs/worksheet-renderer-design.md
-```
+当前实现、阶段提交及验收证据见 [实施记录](./worksheet-renderer-implementation.md)。
 
 三份新文档共同构成本轮提案。它们与历史设计冲突时，本轮需求优先；历史文档保留原貌，不作为新实现的默认规范。
 

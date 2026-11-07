@@ -1,3 +1,4 @@
+import { getLegacyRendererDiagnostics } from '@/lib/native/legacyCapabilities';
 import { toVegaSpec } from '@/lib/vega';
 import { Methods, PropsMap, VisActionOf, VisSpecWithHistory, reducer } from './visSpecHistory';
 import type { IAggregator, IChart, IChatMessage, IFilterField, IViewField } from '@/interfaces';
@@ -30,6 +31,12 @@ function transformFilter(filter: IFilterField) {
 }
 
 export function toVegaSimplified(chart: IChart) {
+    const diagnostics = getLegacyRendererDiagnostics(chart);
+    if (diagnostics.length) {
+        // Chat keeps a lossless canonical summary instead of pretending a truncated
+        // legacy plot is an equivalent specification. This is not a Vega-Lite spec.
+        return { reportType: 'graphic-walker-chart', renderer: chart.layout.renderer ?? 'vega-lite', status: 'unsupported-renderer', diagnostics, chart };
+    }
     const { defaultAggregated, geoms, folds } = chart.config;
     const { stack } = chart.layout;
     const { rows, columns, color, details, opacity, radius, shape, size, text, theta, filters, dimensions, measures } = chart.encodings;
@@ -67,6 +74,8 @@ export function toVegaSimplified(chart: IChart) {
         size: size[0],
         text: text[0],
         theta: theta[0],
+        worksheet: chart.layout.worksheet,
+        coordSystem: chart.config.coordSystem,
     }).map((spec) => {
         const newSpec = { ...spec };
         if (newSpec['data']) delete newSpec['data'];

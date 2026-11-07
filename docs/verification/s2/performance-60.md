@@ -13,11 +13,11 @@
 
 实际 pointer 事件到 tooltip / 下一 rAF 的 p95：Canvas 0.5/16.8 ms，SVG 1.3/16.0 ms；点击到 selectionChange / 下一 rAF：Canvas 3.3/16.8 ms，SVG 2.3/16.1 ms。见 [交互原始数据](./performance-60/interaction-s2.json)。本补充使用 bundle SHA `4ab2b9964829ea14b9dcc1a169016cabbada428ca5a381ed8f404aef3510e371`。
 
-受控折叠/排序：实际 60 Hz rAF p50/p95 16.7/17.6 ms；宿主提交至 committed 加两帧 p95 28.0/28.2 ms，等待态最大 0.3/0.3 ms，分别低于 150/100 ms。见 [原始记录](./performance-60/controlled-interaction-s2.json)。
+受控折叠/排序：实际 60 Hz rAF p50/p95 16.7/17.5 ms；宿主提交至 committed 加两帧 p95 29.6/29.4 ms，等待态最大 0.3/0.2 ms，分别低于 150/100 ms。见 [原始记录](./performance-60/controlled-interaction-s2.json)。先前 1280 × 720、DPR 1 的补测保留为[历史记录](./performance-60/controlled-interaction-s2-1280-dpr1.json)，不用于统一参考环境结论。
 
 ## 方法及复现
 
-机器 Apple M4 Max、64 GiB、macOS 26.5.2。系统内建显示器实际设置 60 Hertz 并读回；新启动 Headless Chromium 151.0.7922.34 的空闲 rAF 180 间隔 p50 16.7 ms、p95 约 17.6 ms。基准视口 1440 × 900 CSS px、DPR 2；受控交互补测为 1280 × 720、DPR 1。各性能组串行，30 次冷呈现、5 × 300 次控制器滚动、50 次挂载销毁；stress 为 5,000 可见项的 0–20 px 像素轨迹。完整 B3 另执行 30 次输入生成、adapter、索引、首帧端到端重建。冷呈现从预备数据就绪后开始，完整重建单列。rAF 为浏览器回调，非光子呈现测量；滚动轨迹是程序化控制器输入，wheel 输入合同见 B4 补充。
+机器 Apple M4 Max、64 GiB、macOS 26.5.2。系统内建显示器实际设置 60 Hertz 并读回；新启动 Headless Chromium 151.0.7922.34 的空闲 rAF 180 间隔 p50 16.7 ms、p95 约 17.6 ms。基准和受控交互补测视口均为 1440 × 900 CSS px、DPR 2；补测前两个新页面分别读回相同视口与 DPR，rAF p50/p95 均 16.7/17.5 ms。各性能组串行，30 次冷呈现、5 × 300 次控制器滚动、50 次挂载销毁；stress 为 5,000 可见项的 0–20 px 像素轨迹。完整 B3 另执行 30 次输入生成、adapter、索引、首帧端到端重建。冷呈现从预备数据就绪后开始，完整重建单列。rAF 为浏览器回调，非光子呈现测量；滚动轨迹是程序化控制器输入，wheel 输入合同见 B4 补充。
 
 在各自冻结源码根目录启动 `BENCH_PORT=端口 node packages/worksheet-renderer/bench/serve.mjs`，顺序运行下列命令（`BENCH_URL` 和 `OUT_DIR` 指向对应端口及新目录）；不要覆盖本报告原始记录：
 

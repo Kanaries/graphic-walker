@@ -42,5 +42,13 @@
             "optional": true
         }
     },
-    "license": "Apache-2.0"
+    "license": "Apache-2.0",
+    "types": "./dist/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "react": [
+                "dist/react.d.ts"
+            ]
+        }
+    }
 }

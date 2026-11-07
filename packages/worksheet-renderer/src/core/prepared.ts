@@ -1,4 +1,4 @@
-import { axisLeafKey, decodeAxisLeafKey, headerKey, paneKey, pathKey, sameVersion, toTypedValue, typedValueKey, typedValueLabel } from './keys';
+import { bindingValueLabel, axisLeafKey, decodeAxisLeafKey, headerKey, paneKey, pathKey, sameVersion, toTypedValue, typedValueKey, typedValueLabel } from './keys';
 import { barIsHorizontal, bindingTypedValue, domainKeyFor, domainStorageKey, positionTypeFor } from './domains';
 import { seriesIdentityFor, seriesKeyFor } from './series';
 import type {
@@ -211,7 +211,7 @@ function createAxisIndex(axis: Axis, axisPlan: AxisPlan, records: readonly Prepa
             headers[node.path.length - 1].push(Object.freeze({ key: headerKey(axis, node.path), kind: 'member' as const, expanded: node.collapsed ? false : node.children.size ? true : undefined,
                 parentKey: node.path.length > 1 ? headerKey(axis, node.path.slice(0, -1)) : undefined,
                 path: node.path, depth: node.path.length - 1, start: node.start, end: node.end,
-                label: typedValueLabel(node.path[node.path.length - 1].value) }));
+                label: bindingValueLabel(bindings.get(node.path[node.path.length - 1].fieldRef), node.path[node.path.length - 1].value) ?? typedValueLabel(node.path[node.path.length - 1].value) }));
         }
     };
     append(root);

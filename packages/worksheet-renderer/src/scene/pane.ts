@@ -1,5 +1,6 @@
 import type { AxisLeaf, DomainBatch, PaneData, RenderPlan, ResultBinding } from '../core/types';
 import { getDisplayDomain } from '../core/domains';
+import { bindingValueLabel, toTypedValue } from '../core/keys';
 import { createPositionScale } from './scales';
 import { drawPaneMarks, type EncodedStyle } from './marks';
 import { fitText, formatValue } from './text';
@@ -56,9 +57,9 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
         align: 'left' | 'center' | 'right' = 'left',
         maxWidth = Infinity,
         size = fontSize,
-    ) => add(id, clip, { kind: 'text', x, y, text: fitText(label, maxWidth, size, fontFamily), fill: '#334155', size, fontFamily, align });
+    ) => add(id, clip, { kind: 'text', x, y, text: fitText(label, maxWidth, size, fontFamily), fill: plan.style?.foreground ?? '#334155', size, fontFamily, align });
     const id = `${row.key}:${column.key}`;
-    rect(`cell:${id}`, clip, cell, plan.style?.background ?? '#fff', '#e2e8f0');
+    rect(`cell:${id}`, clip, cell, plan.style?.background ?? '#fff', plan.style?.borderColor ?? '#e2e8f0');
     const plot: Box = {
             x: left + 48,
             y: top + 22,
@@ -100,7 +101,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
         ticks.forEach((value, index) => {
             const at = scale.map(value);
             if (!Number.isFinite(at)) return;
-            const label = formatValue(value, scale.type, axis?.format);
+            const label = bindingValueLabel(binding, toTypedValue(value)) ?? formatValue(value, scale.type, axis?.format);
             if (axis?.grid)
                 add(
                     `grid:${vertical ? 'y' : 'x'}:${id}:${index}`,
@@ -112,7 +113,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
                               y1: at,
                               x2: plot.x + plot.width,
                               y2: at,
-                              stroke: '#e2e8f0',
+                              stroke: plan.style?.gridColor ?? '#e2e8f0',
                           }
                         : {
                               kind: 'line',
@@ -120,7 +121,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
                               y1: plot.y,
                               x2: at,
                               y2: plot.y + plot.height,
-                              stroke: '#e2e8f0',
+                              stroke: plan.style?.gridColor ?? '#e2e8f0',
                           },
                 );
             if (index % labelStride) return;
@@ -146,7 +147,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
                       y1: plot.y,
                       x2: plot.x,
                       y2: plot.y + plot.height,
-                      stroke: '#94a3b8',
+                      stroke: plan.style?.borderColor ?? '#94a3b8',
                   }
                 : {
                       kind: 'line',
@@ -154,7 +155,7 @@ export function buildPaneGeometry(input: LocalPaneInput): SceneFrame {
                       y1: plot.y + plot.height,
                       x2: plot.x + plot.width,
                       y2: plot.y + plot.height,
-                      stroke: '#94a3b8',
+                      stroke: plan.style?.borderColor ?? '#94a3b8',
                   },
         );
     }

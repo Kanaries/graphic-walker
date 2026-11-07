@@ -27,3 +27,5 @@ export type {
     ExportLimits,
     ExportEstimate,
 } from './export/types';
+
+export { validateRenderCapabilities, assertRenderCapabilities } from './core/capabilities';

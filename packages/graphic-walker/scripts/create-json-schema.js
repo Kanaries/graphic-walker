@@ -10,9 +10,10 @@ const config = {
 };
 
 const generator = tsj.createGenerator(config);
-if (!fs.existsSync(resolve(__dirname, '../public'))) {
-    fs.mkdirSync(resolve(__dirname, '../public'));
+// Both published schema locations use the same canonical types and schema URLs.
+for (const directory of [resolve(__dirname, '../public'), resolve(__dirname, '../../playground/public')]) {
+    fs.mkdirSync(directory, { recursive: true });
+    for (const [type, filename] of [['IChart', 'chartinfo.json'], ['IStoInfoV2', 'stoinfo_v2.json'], ['TerseSpec', 'tersespec_v1.json']]) {
+        fs.writeFileSync(resolve(directory, filename), JSON.stringify(generator.createSchema(type), undefined, 4));
+    }
 }
-fs.writeFileSync(resolve(__dirname, '../public/chartinfo.json'), JSON.stringify(generator.createSchema('IChart'), undefined, 4));
-fs.writeFileSync(resolve(__dirname, '../public/stoinfo_v2.json'), JSON.stringify(generator.createSchema('IStoInfoV2'), undefined, 4));
-fs.writeFileSync(resolve(__dirname, '../public/tersespec_v1.json'), JSON.stringify(generator.createSchema('TerseSpec'), undefined, 4));

@@ -1,4 +1,4 @@
-import type { Axis, MemberPath, ScalarValue, TypedValue } from './types';
+import type { Axis, MemberPath, ResultBinding, ScalarValue, TypedValue } from './types';
 
 /** Canonical typed values preserve null, primitive type, and explicit time identity. */
 export function toTypedValue(value: unknown, valueType?: 'time' | 'interval'): TypedValue {
@@ -86,4 +86,11 @@ export function typedValueLabel(value: TypedValue): string {
     if (value.type === 'time') return new Date(value.value).toISOString();
     if (value.type === 'interval') return `${typedValueLabel(value.start)} – ${typedValueLabel(value.end)}`;
     return String(value.value);
+}
+
+/** Labels affect presentation only; canonical member and series identities use the original value. */
+export function bindingValueLabel(binding: ResultBinding | undefined, value: TypedValue): string | undefined {
+    if (!binding?.valueLabels) return;
+    const key = typedValueKey(value);
+    return Object.prototype.hasOwnProperty.call(binding.valueLabels, key) ? binding.valueLabels[key] : undefined;
 }

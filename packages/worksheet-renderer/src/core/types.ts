@@ -20,6 +20,8 @@ export interface ResultBinding {
     readonly label: string;
     readonly unitKey?: string;
     readonly rawColumnKey?: string;
+    /** Optional display labels keyed by canonical typedValueKey. Identity and scale values stay unchanged. */
+    readonly valueLabels?: Readonly<Record<string, string>>;
 }
 
 export type ScalarValue =
@@ -64,6 +66,10 @@ export interface AxisOptions {
 export interface RenderStyle {
     readonly color?: string;
     readonly background?: string;
+    readonly foreground?: string;
+    readonly headerBackground?: string;
+    readonly gridColor?: string;
+    readonly borderColor?: string;
     readonly palette?: readonly string[];
     readonly opacity?: number;
     readonly pointSize?: number;

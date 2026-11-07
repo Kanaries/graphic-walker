@@ -3,9 +3,9 @@
 const { chromium } = require('@playwright/test');
 (async () => {
   const browser = await chromium.launch({ headless: process.env.HEADLESS === '1' });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
   await page.goto(process.env.DEMO_URL || 'http://127.0.0.1:4178/');
-  const environment = await page.evaluate(async () => { const ts=[]; for (let i=0;i<181;i++) ts.push(await new Promise(requestAnimationFrame)); const intervals=ts.slice(1).map((x,i)=>x-ts[i]).sort((a,b)=>a-b); return { ua:navigator.userAgent, dpr:devicePixelRatio, rafP50:intervals[90], rafP95:intervals[170] }; });
+  const environment = await page.evaluate(async () => { const ts=[]; for (let i=0;i<181;i++) ts.push(await new Promise(requestAnimationFrame)); const intervals=ts.slice(1).map((x,i)=>x-ts[i]).sort((a,b)=>a-b); return { ua:navigator.userAgent, dpr:devicePixelRatio, width:innerWidth, height:innerHeight, rafP50:intervals[90], rafP95:intervals[170] }; });
   await page.evaluate(async () => {
     const demo = window.worksheetDemo;
     await demo.setExample('controlled');

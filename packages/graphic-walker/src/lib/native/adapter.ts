@@ -1,7 +1,7 @@
 import type { IChart, IViewField } from '../../interfaces';
 import { getMeaAggKey, getMeaAggName } from '../../utils';
-import type { AxisPlan, Diagnostic, RenderPlan, ResultBinding } from '../../../../worksheet-renderer/src/core/types';
-import { validateRenderCapabilities } from '../../../../worksheet-renderer/src/core/capabilities';
+import type { AxisPlan, Diagnostic, RenderPlan, ResultBinding } from '@kanaries/worksheet-renderer';
+import { validateRenderCapabilities } from '@kanaries/worksheet-renderer';
 import { autoMark } from '../../vis/spec/mark';
 import { resolvePresentation, type NativePresentationInput, type NativeWorksheetLayout } from './presentation';
 
@@ -11,10 +11,12 @@ export interface PreparedColumn {
     readonly valueType: ResultBinding['valueType'];
     readonly rawColumnKey?: string;
     readonly unitKey?: string;
+    readonly valueLabels?: Readonly<Record<string, string>>;
 }
 
 export interface NativeAdapterInput extends NativePresentationInput {
     readonly columns: readonly PreparedColumn[];
+    readonly fieldColumns?: ReadonlyMap<string, string>;
 }
 
 export interface NativeFieldReference {
@@ -66,13 +68,13 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
         const fieldRef = `gw-field:${signature}:${occurrence}`;
         fieldRefs.set(fieldRef, { field, configRef });
         const aggregatedMeasure = chart.config.defaultAggregated && field.analyticType === 'measure';
-        const columnKey = aggregatedMeasure ? getMeaAggKey(field.fid, field.aggName) : field.fid;
+        const columnKey = input.fieldColumns?.get(configRef) ?? (aggregatedMeasure ? getMeaAggKey(field.fid, field.aggName) : field.fid);
         const column = columns.get(columnKey);
         if (!column) {
             diagnostics.push({ code: 'missing-binding', severity: 'error', recoverable: true, fieldRef, configRef, message: `No prepared result column ${JSON.stringify(columnKey)} exists for ${JSON.stringify(field.name)}.` });
             return fieldRef;
         }
-        const positionType = field.analyticType === 'measure' || field.semanticType === 'quantitative' ? 'linear' : field.semanticType === 'temporal' ? 'time' : 'band';
+        const positionType = field.analyticType === 'measure' || field.semanticType === 'quantitative' || column.valueType === 'interval' && field.computed && field.expression?.op === 'bin' ? 'linear' : field.semanticType === 'temporal' ? 'time' : 'band';
         if (column.valueType === 'interval' && (field.analyticType === 'measure' || positionType === 'band')) {
             unsupported(configRef, 'Prepared intervals require a numeric or time dimension position.', fieldRef);
         } else if (column.valueType !== 'interval' && ((positionType === 'linear' && column.valueType !== 'number') || (positionType === 'time' && column.valueType !== 'time'))) {
@@ -91,6 +93,7 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
             label: aggregatedMeasure ? getMeaAggName(field.name, field.aggName) : field.name,
             ...(column.unitKey === undefined ? {} : { unitKey: column.unitKey }),
             ...(column.rawColumnKey === undefined ? {} : { rawColumnKey: column.rawColumnKey }),
+            ...(column.valueLabels === undefined ? {} : { valueLabels: column.valueLabels }),
         });
         return fieldRef;
     };
@@ -153,7 +156,7 @@ export function adaptChartToRenderPlan(chart: IChart, input: NativeAdapterInput)
     const planWithoutKey = { ...base, ...display };
     const domainPlanKey = `gw-domain:${stableJson({
         bindings: bindings.map(({ fieldRef, bindingId }) => ({ fieldRef, bindingId })),
-        rows, columns: columnsAxis, mark: geom, channels, stack: base.stack, barLayout: base.barLayout, scales: display.scales,
+        rows, columns: columnsAxis, mark: geom, channels, stack: base.stack, barLayout: base.barLayout, scales: Object.fromEntries(Object.entries(display.scales).map(([ref, { range: _range, ...domainOptions }]) => [ref, domainOptions])),
     })}`;
     const plan = { ...planWithoutKey, domainPlanKey };
     for (const diagnostic of validateRenderCapabilities(plan)) {

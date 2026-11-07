@@ -1,143 +1,159 @@
 # 自有工作表渲染器实施记录
 
-日期：2026-11-06。S0、S1 已按独立审核和浏览器门禁提交。S2 已完成窗口调度、共享预算、几何缓存与范围导出，202 项测试、独立 Sol 代码审核及 Terra 浏览器验收通过；原生 60 Hz 参考环境的规定样本已完成，真实 VoiceOver、跨后端几何、DPR、单位及非首位锚点补证均已保存。S3 在隔离工作树完成候选实现，尚未合入本阶段；首版全部接入以 S3 的最终报告为准。
+日期：2026-11-06。S0–S3 已按约定实现并分别提交至同一 draft PR。独立 Sol 代码审核和 Terra 浏览器验收均通过；最终有 473 项 GW 测试、226 项渲染库测试、114 项三引擎浏览器回归、类型检查、生产构建与仓库外 fresh tarball 消费证据。
 
-本记录追踪 [需求与验收](./worksheet-renderer-requirements.md)、[技术设计 v0.4](./worksheet-renderer-design.md) 和 [alignment v0.4](./worksheet-renderer-alignment.md)，不修改批准范围。IChart 继续是用户保存的权威格式；RenderPlan 是临时显示参数。现有 GW 计算 DSL/SQL 负责结果，库不新增聚合、过滤、表达式、查询规划或数据库 provider。
+R01–R17、A01–A16 和 B1–B5 的首版门禁已按本文证据关闭。最终 76 文件候选指纹为 `04f08b1acc58d29a9d609e3dcb645b859973a79035fba05eba724289865aa6b6`，GW 浏览器资产指纹为 `d8a42531535a4b20f38305dac42a7b987ebadbc9b4bbfd7c8df9372976c75812`。S2 与 S3 均在真实 60 Hz、1440×900、DPR 2 完成规定样本；显示设置已恢复 ProMotion。独立真实 Safari 复验 bin→fold，Chromium 验证两个宿主的过期及当前请求错误；WebKit 自动化不代替 Safari。
 
-## 实施与提交门禁
+本记录追踪 [需求与验收](./worksheet-renderer-requirements.md)、[技术设计 v0.4](./worksheet-renderer-design.md) 和 [alignment v0.4](./worksheet-renderer-alignment.md)，不扩大批准范围。**现有 IChart 仍是用户保存的可视化 specification；RenderPlan 是临时显示参数。** GW 现有计算 DSL、SQL 和 computation 负责结果，本库只消费准备好的值，不引入 VizQL、LOD、表计算、聚合引擎、查询规划或数据库 provider。
 
-所有阶段进入同一个 [draft PR #528](https://github.com/Kanaries/graphic-walker/pull/528)，S0、S1、S2、S3 分阶段提交。阶段划分只安排实施顺序，不能把未完成的 R/A/B 项变成可选项。
+Canvas 模式的表头、轴、主体、选择与焦点高亮共用一个可见 Canvas；不按 pane 拼接图表实例。Canvas 与 SVG 共用布局、几何、clip、命中和语义，使用低层格式化工具，不依赖 Vega-Lite、Observable Plot 等整图引擎完成 native 渲染。
 
-每个 commit 必须先通过独立 subagent 的代码 review，指定 `gpt-6.1-sol`、reasoning effort `xhigh`。涉及 UI/UX 的变更还须由独立 agent session 进行 browser use 验收，指定 `gpt-6.1-terra`、reasoning effort `xhigh`。发现问题后修改并复审、复验，所需门禁全部通过后才能 commit。旧构建的通过结果不能代替后续变更的验收。
+## 阶段与提交门禁
 
-S0 的独立 [代码复审](./verification/s0/code-review.md) 与 [浏览器复验](./verification/s0/browser-acceptance.md) 已 PASS，58 项测试通过。浏览器覆盖 Chromium 和 Playwright WebKit；后者不等同于 Safari 发布版，Firefox 因缺少本地缓存未验收。S1 的 `s1_review` [代码复审](./verification/s1/code-review.md) 与 `s1_browser_acceptance` [浏览器验收](./verification/s1/browser-acceptance.md) 均为 PASS。代码审核包括126项测试、NodeNext/原生ESM消费、独立探针和稳定内容指纹；浏览器覆盖Chromium全面验收与Playwright WebKit smoke，未代替正式Safari/Firefox验收，也未关闭S2/S3要求。
+所有阶段进入同一个 [draft PR #528](https://github.com/Kanaries/graphic-walker/pull/528)。阶段划分安排实施顺序，不把 R/A/B 条目变成可选项。每个阶段提交前需通过独立代码审核；涉及 UI 的变更还需独立浏览器验收。旧候选的通过不自动覆盖新修改。
 
-| 阶段 | 交付范围 | 当前状态与退出条件 |
+| 阶段 | 交付范围 | 状态 |
 | --- | --- | --- |
-| S0 | IChart fixtures → 纯 adapter → 自有 Canvas/SVG 纵切；冻结头、版本供数、超长滚动 | 已按门禁提交；保留报告及 58 项测试证据 |
-| S1 | 五种 mark、布局与域、顺序/折叠请求、统一选择与事件 | 已按门禁提交为 `feat(worksheet): add marks, display scopes and controlled interaction`；126 项测试和独立报告保留 |
-| S2 | 范围调度、字节预算、窗口缓存、分页导出、真实规模与生命周期基准 | 202 项测试、独立 Sol 代码审核和 Terra 浏览器验收 PASS；原生 60 Hz 规定样本、VoiceOver、滚动及几何补证完成；本阶段提交 |
-| S3 | GW renderer、正规化/输入、保存/历史、公开 ref/callback、局部兼容 | 隔离工作树的最终 76 文件候选已通过代码审核、473 GW/226 core 测试、114 浏览器用例、类型/构建及 fresh tarball 消费；S3 尚未合入本阶段 |
+| S0 | IChart → 纯 adapter → 自有 Canvas/SVG；冻结头、版本供数、超长滚动 | 2026-11-06 提交 `feat(worksheet): establish native rendering and window contracts`；58 项测试与独立门禁通过。提交标识 `b4e3be7c`。 |
+| S1 | 五 mark、统一布局与域、受控顺序/折叠、选择与事件 | 2026-11-06 提交 `feat(worksheet): add marks, display scopes and controlled interaction`；126 项测试与独立门禁通过。提交标识 `6534b263`。 |
+| S2 | 窗口调度、共享预算、几何缓存、分页导出、规模与生命周期 | 2026-11-06 提交 `feat(worksheet): add bounded virtualization and range exports`；202 项阶段测试、独立代码/浏览器和原定 60 Hz 门禁通过。提交标识 `540df460`。 |
+| S3 | GW renderer、正规化/保存/历史、公开 API、局部兼容 | 2026-11-06 提交 `feat(graphic-walker): integrate native worksheet renderer`；最终代码、功能、60 Hz 性能和构建消费门禁通过。 |
 
-## 当前代码与验证入口
+代码审核使用独立 `gpt-6.1-sol`、`xhigh`；浏览器验收使用独立 `gpt-6.1-terra`、`xhigh`。实施方工程测试、独立审核和独立浏览器证据分别保存。
 
-| 入口 | 证据范围 |
+## 证据索引
+
+下文用 E0–E10 指向记录。各报告保留具体环境、候选指纹、原始失败、修复和复验；本文汇总当前状态，不删除历史失败。
+
+| 编号 | 记录及范围 |
 | --- | --- |
-| [子包 README](../packages/worksheet-renderer/README.md) | 当前 API、独立嵌入、React 入口、脚本及限制 |
-| [core/types.ts](../packages/worksheet-renderer/src/core/types.ts)、[prepared.ts](../packages/worksheet-renderer/src/core/prepared.ts)、[keys.ts](../packages/worksheet-renderer/src/core/keys.ts) | 版本供数、typed 身份、实际成员树、并列槽、稀疏索引、不等深可见叶与父记录 exact-match |
-| [domains.ts](../packages/worksheet-renderer/src/core/domains.ts)、[series.ts](../packages/worksheet-renderer/src/core/series.ts) | shared/prefix/pane/fixed 域统一请求与查询，实际 joint series 身份及顺序 |
-| [validateWindow.ts](../packages/worksheet-renderer/src/core/validateWindow.ts)、[capabilities.ts](../packages/worksheet-renderer/src/core/capabilities.ts) | 完整性、版本、rank/key/slot/顺序/路径/原值校验，locate 身份验证，当前能力准入 |
-| [GW adapter](../packages/graphic-walker/src/lib/native/adapter.ts)、[presentation.ts](../packages/graphic-walker/src/lib/native/presentation.ts)、[scenarios.ts](../packages/graphic-walker/src/lib/native/scenarios.ts) | IChart 到显示参数，准备列绑定、展示优先级、静态 scales 与完整输入 callback 解析；五 mark 场景 |
-| [scene/build.ts](../packages/worksheet-renderer/src/scene/build.ts)、[marks.ts](../packages/worksheet-renderer/src/scene/marks.ts)、[scales.ts](../packages/worksheet-renderer/src/scene/scales.ts)、[text.ts](../packages/worksheet-renderer/src/scene/text.ts) | 共同几何、clip、轴/图例、命中、文本测量与低层 d3 数值/UTC 日期格式化 |
-| [runtime/worksheet.ts](../packages/worksheet-renderer/src/runtime/worksheet.ts)、[requests.ts](../packages/worksheet-renderer/src/runtime/requests.ts)、[semantic.ts](../packages/worksheet-renderer/src/runtime/semantic.ts) | 输入事务、readonly 状态/事件、受控请求、选择/焦点、按需语义数据与视口导出 |
-| [react.ts](../packages/worksheet-renderer/src/react.ts) | React 独立入口、单控制器生命周期、input 更新与卸载清理 |
-| [adapter tests](../packages/worksheet-renderer/tests/adapter.test.ts)、[adapter S1 tests](../packages/worksheet-renderer/tests/adapter-s1.test.ts) | 真实 IChart、U1、深层字段、fold/count/raw、五 mark 到 Scene、格式/作用域/展示优先级 |
-| [prepared tests](../packages/worksheet-renderer/tests/prepared.test.ts)、[domain tests](../packages/worksheet-renderer/tests/domains.test.ts)、[window contract tests](../packages/worksheet-renderer/tests/window-contract.test.ts)、[location tests](../packages/worksheet-renderer/tests/location-contract.test.ts) | 稀疏覆盖、固定域无需统计、scope 隔离、父记录/缺父空槽、完整 series、错误外源响应与定位拒绝 |
-| [scene S1 tests](../packages/worksheet-renderer/tests/scene-s1.test.ts)、[backend tests](../packages/worksheet-renderer/tests/backends.test.ts)、[scale tests](../packages/worksheet-renderer/tests/scales.test.ts) | 五 mark、断线/顺序、区间边界、分组/堆叠、图例与命中、SVG 节点复用和资源门限 |
-| [runtime tests](../packages/worksheet-renderer/tests/runtime.test.ts)、[request tests](../packages/worksheet-renderer/tests/requests.test.ts) | 候选失败保留旧提交、固定域不读统计、只读快照、source/selection 变化、定位安全、取消和请求状态 |
-| [受控 demo](../packages/worksheet-renderer/demo/controlled.ts) | 两轴 Region/City × Year/Quarter，host 550 ms 后确认；明确父常量，缺父值为空，展开恢复稳定 datum |
-| [S1 浏览器验收](./verification/s1/browser-acceptance.md) | 真实 Canvas/SVG 五 mark、tooltip/多选/框选、键盘、SVG 回收、三种scope和受控双轴更新通过；WebKit smoke通过 |
+| E0 | S0 [代码审核](./verification/s0/code-review.md)、[浏览器验收](./verification/s0/browser-acceptance.md)：独立包、单 Canvas、冻结与首尾定位、resize、事务失败。 |
+| E1 | S1 [代码审核](./verification/s1/code-review.md)、[浏览器验收](./verification/s1/browser-acceptance.md)：五 mark、十 fixture、完整 commands/hits 对照、交互及双轴受控更新。 |
+| E2 | S2 [代码审核](./verification/s2/code-review.md)、[浏览器验收](./verification/s2/browser-acceptance.md)：以“冻结候选复验”及其后补证为准，涵盖调度/预算、A06/A07、导出、规模和生命周期。 |
+| E3 | [B4 补证](./verification/s2/b4-browser-supplement.md)：普通/压缩轴组合、resize、Home/End、实际原生滚动条拖动、受信任小数双轴 wheel 及递减模拟惯性。 |
+| E4 | [真实 VoiceOver 补证](./verification/s2/accessibility-final.md)：Safari/macOS 的摘要、位置、展开状态与按需数据行，证据为字幕和键盘路径。 |
+| E5 | [规模数据及复现](./verification/s2/benchmark-data.md)、E2 链接的 final JSON：真实 B3 输入、完整准备链路、Node 内存、浏览器 CPU/呈现/账本/回收。 |
+| E6 | S3 [独立代码审核](./verification/s3/code-review.md)、[候选清单](./verification/s3/candidate-manifest.json)：76 文件 `04f08b…`，含查询 owner/race、旧 renderer 和 retained handle 修复复核。 |
+| E7 | S3 [独立浏览器验收](./verification/s3/browser-acceptance.md)：真实 GW 计算、字段/过滤/历史、公开导出、三 renderer 对照与最终 Safari。 |
+| E8 | S3 [集成工程验证](./verification/s3/integration-engineering.md)、[组件工程验证](./verification/s3/component-engineering.md)：全量测试、真实 StrictMode、构建、三引擎回归与新 tarball 消费；不替代 E6/E7。 |
+| E9 | 最终薄项补证：[五 mark 几何](./verification/s2/geometry-result.json)、[长中英文几何](./verification/s2/geometry-long-result.json)、[DPR](./verification/s2/dpr-browser-result.json)、[非首位锚点](./verification/s2/anchor-result.json)、[不同单位 fixture](./verification/s2/unit-domain-harness.ts)。对应复现为 `geometry-acceptance.cjs`、`geometry-long-acceptance.cjs`、`dpr-browser-probe.cjs`、`anchor-probe.cjs`；单位结果纳入 E2。 |
 
-S1 的 126 项测试与旧报告保留。S2 冻结候选已通过包级严格 TypeScript 检查、202 项测试、构建和 diff 检查，独立审核核对了 81 个源码文件的内容指纹。构建脚本同时生成根入口、React 入口、共享 ESM chunk 与声明，并规范声明的相对 ESM 引用。外部 strict NodeNext 消费、原生 ESM 导入、根入口依赖检查和 pack dry-run 均通过；S3 正式 GW 消费与 React 宿主生命周期有单独门禁。
+E10：最终 [S2 60 Hz 性能](./verification/s2/performance-60.md)、[S3 60 Hz 性能](./verification/s3/performance-60.md) 与 [显示环境恢复](./verification/s2/reference-refresh-rate.md)。报告保存完整原始数据、脚本、实际刷新率和各阶段 bundle 指纹。
 
-仓库根目录命令：
+S0/S1 的 Playwright WebKit 记录不称为真实 Safari。S2/S3 后续有真实 Safari 证据；114 项三引擎自动化中的 WebKit 仍按其实际引擎名称记录。
+
+## 实现与复现入口
+
+| 入口 | 职责 |
+| --- | --- |
+| [子包 README](../packages/worksheet-renderer/README.md)、[GW 接入说明](./worksheet-renderer-integration.md)、[VL 输入兼容清单](./worksheet-renderer-vl-import.md) | 独立嵌入、公开 API、支持边界、现有输入的保留与诊断。 |
+| [core](../packages/worksheet-renderer/src/core/types.ts) / [prepared](../packages/worksheet-renderer/src/core/prepared.ts) / [domains](../packages/worksheet-renderer/src/core/domains.ts) | 版本数据合同、typed 身份、稀疏成员树、并列槽、完整域和联合系列；精确父记录，不推导父值。 |
+| [reader](../packages/worksheet-renderer/src/runtime/reader.ts) / [resources](../packages/worksheet-renderer/src/runtime/resources.ts) | 共享并发、去重、范围合并、续页、优先级、取消、字节 LRU 和活动帧预算。 |
+| [scene](../packages/worksheet-renderer/src/scene/build.ts) / [cache](../packages/worksheet-renderer/src/scene/cache.ts) / [backends](../packages/worksheet-renderer/src/backends/svg.ts) | 共用布局/命中、pane 局部几何缓存、单 Canvas、SVG keyed 更新和组平移。 |
+| [runtime](../packages/worksheet-renderer/src/runtime/worksheet.ts) / [semantic](../packages/worksheet-renderer/src/runtime/semantic.ts) / [export](../packages/worksheet-renderer/src/export/range.ts) | 输入事务、受控请求、滚动/焦点、选择、按需语义数据、固定版本的视口/范围/分页导出。 |
+| [NativeRenderer](../packages/graphic-walker/src/vis/native-renderer.tsx) / [results](../packages/graphic-walker/src/lib/native/results.ts) / [adapter](../packages/graphic-walker/src/lib/native/adapter.ts) | 消费 GW 原 computation 结果，映射现有 IChart，保存 raw 值和身份，接入主题、事件和既有公开 ref。 |
+
+窗口读取默认最多 4 个实际 provider 调用并行。取消后未返回的 provider 仍占物理槽；元数据、视口、续页、预取和导出按优先级调度。窗口、域、轴、几何缓存及活动帧共用 128 MiB 预算，完整输入/索引和 Canvas 位图另报。热滚动复用不可变窗口及 pane 几何，SVG 使用组变换，Canvas/SVG 保持同一全局命中合同。
+
+连续滚动保留实际相交的边缘格。名义容量最多 100 个完整格，10×10 视口偏移 1 px 可相交 11×11 格，长条视口最多 202 格；整窗最多 40,400 条记录，单 pane 最多 20,000 条。可见 Canvas marks 仍限 20,000，SVG 仍限 5,000 hits/10,000 元素；不以采样或删数据达标。
+
+视口导出默认等待目标完整，不返回 stale 旧帧；显式占位导出另行标识。范围导出固定源版本、plan、字体与布局，独立低优先级 reader 读取未访问数据，逐页交付 sink。页数、字节、读取、时间均有上限；取消和销毁释放任务及保留资源。UI 更新不修改正在导出的旧快照。
+
+仓库根目录可运行以下检查；正式浏览器/性能复现使用报告内固定端口、环境与构建，避免测到不同候选。
 
 ```sh
-yarn workspace @kanaries/worksheet-renderer typecheck
-yarn workspace @kanaries/worksheet-renderer test
-yarn workspace @kanaries/worksheet-renderer build
-yarn workspace @kanaries/worksheet-renderer dev
+npm --workspace @kanaries/worksheet-renderer run typecheck
+npm --workspace @kanaries/worksheet-renderer test
+npm --workspace @kanaries/graphic-walker test -- --runInBand
+npm run build
+node scripts/consumer-smoke-test.mjs
 ```
 
 ## 首版需求 R01–R17
 
-“已有”指实现及列明证据，不等于完整首版通过。含待办的行继续保持开放。
+“已覆盖”指该项实现及列出的验收证据齐备；性能结果见 E10 与后文，保留各项测量边界。
 
-| ID | 已有实现及证据 | 仍需完成 |
+| ID | 实现与可追溯证据 | 状态 |
 | --- | --- | --- |
-| R01 独立子包 | 根 ESM、声明、独立 `/react`；外部NodeNext/ESM消费、依赖检查和pack dry-run通过；仅低层d3格式化 | 真实React宿主生命周期与正式发布消费复验 |
-| R02 自有双后端 | 五 mark 共用 Scene/clip/命中；最终浏览器多场景 commands/hits 相同；SVG keyed 更新与节点回收测试 | S3产品挂载与切换复验；S2的B5正式规模、更新与50次回收已有记录 |
-| R03 单 Canvas | 一个可见 Canvas 共画表头/轴/主体/高亮；位图随视口分配；内部测字使用独立非可见工具 | S3产品生命周期复验；S2固定DPR2和50次销毁报告已完成 |
-| R04 递归行列 | 两轴 3/5/10/20 层字段保留；实际路径、并列槽、空交叉；不等深父叶；U1=24 pane | 产品字段操作全链路；S2独立B1两轴3/5/10/20层实际UI已完成 |
-| R05 字段与数据绑定 | binding/fieldRef、typed path、datum 与实际 joint series 身份；count/fold/expr/raw；完整系列序、跨快照选择重新验证 | GW 生产结果身份与全部真实结果映射复验 |
-| R06 统一布局 | 父跨度、冻结区、轴/图例、共同 clip、文本测量/截断、不等深可见叶、负值/null 规则 | 长文本/中英文及全部不等长层级固定用例的最终双后端验收；固定步长属于设计允许基线 |
-| R07 冻结与滚动 | 双轴滚动、首尾/按 key 跳转、align、resize/DPR 监听、focus、折叠 hidden 祖先锚点；locate 回应校验 | 折叠/重排锚点与焦点完整复验、触控板及正式跨浏览器矩阵 |
-| R08 有界虚拟化 | 稀疏索引、非空目录、窗口 Scene、共享字节 LRU、范围合并/去重、压缩轨道，无 R×C 对象矩阵 | 参考性能环境确认；调度/预算独立复审、真实百万记录B3及内存已完成 |
-| R09 基础图形 | bar/point/line/rect/text；分组柱、正负零点堆叠、给定区间端点、系列隔离与 null 断线 | B1全部固定输入与clip边界系统验收 |
-| R10 轴/范围/编码 | band/linear/time；shared/prefix/pane/fixed；zero/nice/reverse/range；颜色/size/opacity/shape/text、轴选项和图例；固定域无需统计 | 滚动完整域不变量和单位边界的最终验收，正式局部兼容 fixture 全覆盖 |
-| R11 顺序和折叠 | memberOrder、axisMembers/getRecordPath；双轴受控请求状态、明确父记录、缺父空槽；demo 异步 accepted/rejected 协议 | 生产宿主接入与规模下锚点/顺序更新验收 |
-| R12 统一交互 | tooltip、精确多选、框选、clear、受控 selection、焦点；line segment 两端点与 hitPoint；版本事件 microtask 通知 | 指定 tuple 的排序/滚动/后端往返最终验收及 GW 公开事件适配 |
-| R13 GW 配套接入 | 纯 IChart adapter、展示优先级和完整结果 callback/static scales；无库内 computation | 产品 renderer、过滤/折叠准备结果、字段操作、存储、历史和公开 ref/callback |
-| R14 导出/可访问性 | 视口 PNG/SVG、未访问范围/分页/取消、焦点代理、Visible data 每页最多100项、AX按需数据和销毁后DOM归零；真实 VoiceOver 字幕已读取库内摘要、当前位置、数据值及展开状态，并用键盘进入数据表 | S3 产品组件的对应语义复验；指定 A14 读屏场景见独立补验报告 |
-| R15 完整性/诊断 | 完整窗口校验、过期取消、候选失败保留旧画面/选择；requested/committed/displayed 状态区分；请求超时/拒绝/取代 | S3查询/显示交接复验；S2冻结构建的preview/补页/共享调度/取消与生命周期已有证据 |
-| R16 现有 spec 入口 | IChart fixture 原样映射，无第二套持久化 spec；demo 切换 plan/source/backend | 生产 layout.renderer 接入，切换/保存/重载不丢字段，旧后端深层 unsupported |
-| R17 局部兼容 | 五 mark/channel/scale/axis/style 子集准入；theme→host→layout 优先级，格式与 callback 边界明确 | 既有正规化入口、原始 VL-like 输入诊断/保留策略和所有批准配置固定用例 |
+| R01 独立子包 | core ESM/声明与独立 `/react`；不依赖 GW store；NodeNext/原生 ESM、正式构建和 fresh tarball consumer 通过。E0/E2/E6/E8。 | 已覆盖。 |
+| R02 自有双后端 | 五 mark 共用 Scene/clip/命中，Canvas 与原生 SVG 支持显示/更新/滚动/选择；keyed 节点与 defs 回收；实际调用/CTM 几何补证。E1/E2/E9。 | 已覆盖。 |
+| R03 单 Canvas | 一个可见 Canvas 画头轴、主体和高亮；bitmap 随视口/DPR，不随逻辑长度增长；挂载/销毁和实际 DPR 切换已验。E0/E2/E8/E9。 | 已覆盖。 |
+| R04 递归行列 | 两轴 3/5/10/20 层、实际路径、并列度量、空交叉和变深叶；真实 GW 20 层保留全部 40 个维度。E2/E7；prepared/adapter/domain 测试。 | 已覆盖。 |
+| R05 字段与数据绑定 | field/configRef、typed path、datum/series 身份；完整联合系列顺序；GW bin/binCount、同名 fold、时间 raw 值与事件稳定。E1/E6/E7；native-results 测试。 | 已覆盖。 |
+| R06 统一布局 | 父跨度、固定条带、轴/图例、clip、负值/null、不等深路径；中英文长标签测量/截断及实际双后端几何。E1/E2/E9；scene-s1/layout/labels 测试。 | 已覆盖。 |
+| R07 冻结与滚动 | 双轴普通/压缩轨道、逻辑/key 定位、首末、resize、DPR1→2→1；Portland 非首位排序保留 20 px 偏移，折 West 回 hidden 祖先 y=0。E0/E3/E9。 | 已覆盖；软件输入证据边界见后文。 |
+| R08 有界虚拟化 | 稀疏索引、窗口数据/Scene、共享字节 LRU、范围合并/去重、最多 4 并发；真实百万记录与超长坐标。E2/E5。 | 已覆盖，60 Hz 性能通过。 |
+| R09 基础图形 | bar/point/line/rect/text；grouped、正负 stack、零值可访问目标、给定区间、系列隔离/null 断线、cell rect/text。E1/E7；scene-s1 测试。 | 已覆盖。 |
+| R10 轴/范围/编码 | band/linear/time、shared/prefix/pane/fixed、颜色/size/opacity/shape/text、格式/图例；滚动域、累计端点和不同单位同时显示已验。E1/E2/E7/E9；domains 测试。 | 已覆盖。 |
+| R11 顺序和折叠 | 外部 memberOrder、受控 accepted/rejected/等待态、双轴 exact 父记录、缺父为空；宿主准备显示顺序；非首位锚点。E1/E2/E7/E9；native-display 测试。 | 已覆盖，不计算缺失父值。 |
+| R12 统一交互 | tooltip、单选/修饰键多选/框选/clear、line 两端点、精确 tuple、键盘；GW 原字段/raw/version 事件；滚动排序/切后端保身份。E1/E2/E7。 | 已覆盖；60 Hz 交互计时通过。 |
+| R13 GW 配套接入 | renderer、字段/过滤/聚合设置、格式、保存/历史、四 ref、AppRoot/List export；StrictMode、旧 handler 移交、卸载回收。E6/E7/E8。 | 已覆盖。 |
+| R14 导出/可访问性 | PNG/SVG 视口、未访问范围/分页/取消；焦点代理、完整名称、100 行按需数据页、真实 VoiceOver；GW 公开导出。E2/E4/E7/E8。 | 已覆盖。 |
+| R15 完整性/诊断 | loading/empty/complete/preview/unsupported/resource-limit；乱序拒绝、取消、stale 导出拒绝；旧查询失败不污染当前图，当前错误仍可见。E2/E6/E7。 | 已覆盖；最终 Safari 切换和 Chromium current/stale 复验通过。 |
+| R16 现有 spec 入口 | IChart 原样选择 native；后端/主题变更不重查；存储/历史不含 RenderPlan；深层旧后端明确 unsupported，不删字段。E6/E7/E8。 | 已覆盖。 |
+| R17 局部兼容 | 声明的 mark/encoding/scale/axis/格式子集；保持原正规化；unsupported transform/params/表达式定位拒绝，合法 aggName/filters 由 GW 处理。E6/E7、兼容清单。 | 已覆盖；未承诺完整 Vega-Lite/VizQL。 |
 
 ## 正确性验收 A01–A16
 
-| ID | 当前可核对的证据 | 待验收部分 |
+| ID | 可追溯证据 | 状态 |
 | --- | --- | --- |
-| A01 | adapter 两轴3/5/10/20层；prepared 20层祖先窗口；八层真实 demo；不等深路径与slot顺序校验 | 两轴同时全部深度的完整布局、成员排序和显示断言 |
-| A02 | U1 24 pane，24输入记录对应48槽位引用，值不变；adapter→source→Scene | 产品数据准备接入后的端到端复验 |
-| A03 | 同轴实际联合路径、跨轴空覆盖；缺父空槽不建假记录；窗口不物化稠密交叉 | 指定 Furniture/Chair、Office/Paper 两布局的完整双后端固定场景 |
-| A04 | typed key 区分 null/字符串/数值/布尔/time/interval及分隔符；给定区间几何保留端点 | 产品导入、排序及事件的身份断言 |
-| A05 | 双轴 axisMembers/getRecordPath；只显 exact-match 父记录；demo父值70/85、95/115、140/155，West×2026无父值为空 | S1固定fixture点击/键盘与宿主确认已通过；S3真实宿主复验 |
-| A06 | 完整 shared/prefix/pane/fixed 域、不同单位family、空scope、stack累计端点；固定域缺统计可用；Domains每Region有两个不同范围pane | 随滚动/跳转/后端切换的完整域不变量最终复验 |
-| A07 | 精确 datum/segment tuple；浏览器验收双目标多选/框选和后端切换；跨快照refresh/source变更清除单测 | 指定 East/Chair 与 West/Paper 的排序、滚出滚回、pending恢复完整任务 |
-| A08 | 五 mark 共用 Scene；浏览器验收多场景 commands/hits一致；线段圆帽与命中、字体/clip共用 | 全部固定输入下文字/焦点/选择及1 CSS px目标系统验收 |
-| A09 | 过期/部分/错key响应拒绝；候选事务、取消兄弟读取、失败保留旧提交、readonly快照、微任务事件回归 | 已通过的事务合同在S2调度中持续回归，preview/加载/真实空组合与S2乱序调度全组合 |
-| A10 | 祖先跨窗口、冻结clip、首末位/resize、逻辑坐标往返；locate匹配请求，hidden祖先验证；focus接口 | 折叠后锚点与焦点任务复验，正式浏览器矩阵 |
-| A11 | line按pane/series隔离、null断线、显式sequenceOrder；cell rect/text定位；浏览器实际点线段返回端点 | 裁剪边界线段、全部固定输入与最终双后端复验 |
-| A12 | 冻结 S2 实际下载 PNG/SVG；6×4 未访问范围导出为六个2×2页面，父头与范围保留；导出中切换UI仍固定旧snapshot，取消后队列与export分区归零 | S3 的四公开 ref 方法、AppRoot 及列表导出在最终构建复验 |
-| A13 | adapter不改IChart；React独立input封装和运行时受控状态 | 产品保存/重载/undo/redo/导入导出、所有旧路径回归 |
-| A14 | 真实键盘、AX摘要/100项数据分页和焦点路径；VoiceOver 实际字幕确认库内摘要、可见行列起点、展开状态，以及键盘进入表格后的数据行 | 指定读屏场景通过；证据为真实字幕，不声称听到音频，系统设置已恢复 |
-| A15 | IChart字段/聚合标签/time/fold/count绑定，format/有效域/外部scale映射 | 同IChart三renderer对照、renderer/useSvg切换编辑无损和深层旧后端诊断 |
-| A16 | 当前五mark/channel/scale/axis/style子集有准入和unsupported测试；回调完整输入与windowed静态边界 | 原始输入transform/params/表达式的正规化诊断与完整批准兼容清单 |
+| A01 | E2 独立 B1 双轴 3/5/10/20 层；E7 真实 GW 同四深度，20 层 groupBy/选择保留 40 维；prepared/adapter 验父路径和顺序。 | 已覆盖。 |
+| A02 | prepared 明确 2 Region×3 Category×2 Year×2 measure=24 panes，Subcategory 在 pane 内、输入值不变；E1/E2 nested 与 E7 真实宿主。pane 数与可见 hits 分别记录。 | 已覆盖。 |
+| A03 | E2 Furniture/Chair、Office/Paper 同轴两真实路径，跨轴四槽两空；prepared/window-contract 无假记录或零值。 | 已覆盖。 |
+| A04 | typed key 测试区分 null/字符串、1/字符串、布尔、time/interval、分隔符和不同父同名子；E7 同名 fold 的四身份与 raw 事件。 | 已覆盖。 |
+| A05 | E1 双轴折叠显示宿主给定的 70/85、95/115、140/155；West×2026 缺父为空；domains/native-display 验 exact parent 和缺父规则。 | 已覆盖。 |
+| A06 | E2 shared/prefix/pane/fixed 滚动/切后端不变；完整 pane 极值、fixed [−500,500]、stack [−96,147]；E9 同时显示 Sales USD 轴 0/97.5/195 和 Profit percent 轴 −31/0/31，未误共享；domains 的 unitKey/family 合同补充。 | 已覆盖。 |
+| A07 | E2 指定 East/Chair、West/Paper 实际 click/Meta，仅两个 datum/raw tuple；滚出滚回、host 重排及切 SVG 后保持，无交叉展开或查询谓词。 | 已覆盖。 |
+| A08 | E1 十 fixture 完整 commands/hits 相等；E9 五 mark 与中英文实际 Canvas calls 对照 SVG CTM/clip，最大几何误差 ≤5.7×10⁻¹⁴ CSS px；共享 text/identity。 | 已覆盖 ≤1 CSS px 几何目标；AA 差异允许，不声称逐像素完全相等。 |
+| A09 | reader/runtime 的版本、乱序、取消及 coverage 合同；E2 loading/preview/empty 分离；E7 Latest 先回/Older 后回只显示新结果，最终 stale reject 无弹窗、当前错误保留。 | 已覆盖。 |
+| A10 | 20 层祖先 spans、四区 clip、First/Last/resize/键盘位置；E3 超长双轴；E9 非首位 Portland 排序保留 20 px、West 折叠回 hidden 祖先 y=0。 | 已覆盖。 |
+| A11 | E1 line 分 pane/series/null 断线、实际命中两端点；scene-s1 的线 x=−10→20 穿过 [0,10] clip，两端在外仍可命中/框选；rect/text cell 定位。 | 已覆盖。 |
+| A12 | E2 未访问范围 reads 127→140、6×4 六页无重漏、父头保留；导出时 UI 换图仍旧 snapshot，取消后队列/export 归零；E7 四 ref 实际下载。 | 已覆盖。 |
+| A13 | E7 字段/过滤/Mean、undo/redo、store 保存/重载、受控 props、导入导出；E8 全量旧 IChart/Vega/Plot 回归。PivotTable 6 suites/44 用例覆盖查询、模型、静态视图/格式/时间、折叠排序及公开类型。 | 已覆盖；PivotTable 证据为真实代码路径测试，未冒称独立手工浏览器操作。 |
+| A14 | E1 键盘导航/选择/折叠；E2 AX 完整路径/状态与 100 行按需页；E4 真实 VoiceOver 摘要、位置、展开状态和数据；生命周期 DOM 回基线。 | 已覆盖；读屏证据为字幕和键盘路径。 |
+| A15 | E7 同 IChart 三 renderer 保留 100/200、1:2 条长、0–200 域及 `.1f`；混合时间间距/raw 对照；切换不增加查询；deep unsupported 不删字段。Plot 格式、Vega 首击修复均复验。 | 已覆盖声明子集；旧 timeUnit 派生 line 选择限制未计入等价通过。 |
+| A16 | vlImport/canonical/normalize/legacyCapabilities 固定输入输出；E7 合法 filter/aggregate/format 成功，calculate 与 fold+bin 明确拒绝且 chart/history 不变；原 GW 计算保留。 | 已覆盖声明子集。 |
+
+PivotTable 回归位于 `src/components/pivotTable/{query,utils,view,core,public.types}.test.*` 和 `src/workers/buildPivotTable.test.ts`，包含真实内置 computation 供数及 `PivotTableView` 输出；已纳入 GW 全量 473 项。相关覆盖不应再写为“旧 PivotTable 尚未验证”。
 
 ## 规模基准 B1–B5
 
-| ID | 当前证据 | 仍需完成的正式基准 |
+| ID | 固定规模与证据 | 结论 |
 | --- | --- | --- |
-| B1 显示语义集 | U1、五mark、格式/域/图例、typed身份、缺值、受控父记录与作用域fixture；已列出的真实浏览器场景 | A01–A16全部固定输入、长文本/单位和局部兼容的完整B1基准汇编 |
-| B2 日常工作表 | 冻结版20万记录、10,000非空pane、每轴6层；30冷帧、5×300移动及50次回收；热commit/rAF p95为12.6/9.3ms，运行时峰值48,560,198 bytes；双后端各50次点击反馈有独立记录 | 60Hz→实测120Hz参考环境变更待用户确认；受控demo折叠/排序提交到两rAF p95为15.2/14.1ms，等待DOM最大0.8ms |
-| B3 高基数稀疏表 | 冻结版100,000×1,000叶、每轴6层、100万真实记录；30次完整重建索引p95 2158.7ms，已备records到呈现2219.8ms；Node峰值RSS约1.31GiB；浏览器热帧与生命周期已有报告 | 参考环境确认；B3源按真实记录索引，结果不能与程序化B4混用 |
-| B4 超长坐标 | 冻结benchmark的10亿行×100万列；Chromium Canvas/SVG首末与远近定位无诊断；Safari原生下滚及End到末端有证据 | 混合普通/压缩轴、resize及Home/End已补验；滚动条拖动及物理触控板仍没有通过证据 |
-| B5 SVG 工作表 | 普通及203,000记录/5,000可见项压力版本均完成规定样本；压力commit/rAF p95 13.0/16.7ms，峰值130,735,136 bytes，50次回收heap +0.422%、DOM归零；超5,000项明确拒绝并可恢复 | 参考环境确认；不以0–20px合法压力范围掩盖23px已达5,033项的资源拒绝 |
+| B1 | A01–A16 汇编：五 mark、U1、深层/不等深、空交叉、typed 身份、长中英文、单位/域/格式，以及真实 GW 计算与局部兼容配置。E1/E2/E6/E7/E9。 | 通过；不是由单一 harness 替代全部正确性验收。 |
+| B2 | 20 万真实记录、1 万非空 pane、每轴 6 层；30 冷样本、5×300 移动、50 次销毁。 | S2/S3 均在原定 60 Hz 通过，见 E10。 |
+| B3 | 100 万真实记录、100,000×1,000 叶、一亿逻辑槽；索引、完整准备、热窗口、Node 峰值与驻留分别记录。 | S2/S3 均通过；不是程序化空表或 B4 的替代结果。 |
+| B4 | 10 亿行×100 万列程序化源；混合普通/压缩轨道、首末/远近定位、resize、Home/End、实际原生拖条与 trusted 小数双轴 wheel/Shift/递减惯性。E3。 | 软件合同通过；不声称物理触控板硬件实测。 |
+| B5 | 普通及 203,000 记录/5,000 hits 压力版，各有30冷样本、5×300移动、50次销毁；压力轨迹0–20px。 | S2/S3 均通过。23px 的5,033 hits明确拒绝，返回原点恢复；未删 marks 达标。 |
 
-B4 按需生成记录，不能替代 B3 的真实输入索引测量。S2 冻结构建已在1440×900、DPR2、实测约120Hz记录30次冷控制器、5×300次移动、50次销毁，以及B3的30次完整重建。原定60Hz尚未实测，参考环境修改待用户明确确认。所有原始失败和最终结果均保留在S2报告。
+## 最终 60 Hz 性能
 
-一次真实记录探索使用 Node v22.20、Apple M4 Max、64GiB：生成1,000,000条记录83.95ms，100,000×1,000轴索引准备2193.99ms，计时含准备前GC；GC后heap从仅输入的131,696,736 bytes增至带索引的397,780,232 bytes。300个10×10随机窗口共读取314条记录，readPaneData p95为0.0121ms，原始脚本保留在本地 `work/s0-real-index-benchmark.mjs`。这是单次准备/读取探索，不是正式6层不均匀B3、浏览器帧预算、峰值内存或运行时128MiB预算验收。
+参考机器为 Apple M4 Max、64 GiB、macOS 26.5.2，Headless Chromium 151.0.7922.34。系统原生显示设置为 60 Hertz；新浏览器实测空闲 rAF 中位数 16.7 ms。视口 1440×900 CSS px、DPR 2，固定字体和种子；控制时序也按相同尺寸、DPR和刷新率补测。完整方法和逐帧原始数据见 E10。历史120Hz和低分辨率控制时序记录保留，但不作为本表依据。
 
-正式报告须按需求第7节固定机器、浏览器、字体、种子和构建，分列外部准备、adapter、索引、读取等待、layout、Scene、命中、提交与呈现，不遗漏库内索引准备。目标保持为冷首帧p95≤500ms；Canvas提交p95≤16ms、呈现间隔p95≤33ms分别记录；SVG提交p95≤32ms；交互p95≤50ms；运行时驻留≤128MiB，位图/完整输入/供数索引另报。冻结构建在实际120Hz环境满足这些绝对耗时阈值；尚未宣称原定60Hz环境或首版全部验收通过。
+下表为最终 S3 core 的实际结果；S2 冻结版亦通过，并在其独立报告中保留。Canvas 的16ms预算针对 JS 检索/布局/绘制提交 CPU，不包含等待下一帧的调度；commit墙钟与rAF间隔分列。单位均为 ms，内存为 bytes。
 
-## S2 候选的实现边界与剩余验收
+| 场景 | 冷呈现 p95 | 每轮 CPU p95 的最大值 | 热 commit / rAF p95 | 运行时账本峰值 | 50次销毁后heap增长 / DOM |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| B2 | 85.3 | 3.0 | 20.9 / 18.2 | 48,569,998 | 0.090% / 0 |
+| B3 | 35.3 | 2.3 | 20.2 / 18.2 | 17,045,385 | 0.010% / 0 |
+| B5 | 85.4 | 4.0 | 22.2 / 18.5 | 48,569,998 | 0.102% / 0 |
+| B5-stress | 163.2 | 4.1 | 22.1 / 18.2 | 130,747,140 | 2.849% / 0 |
 
-S2 的独立代码审核已 PASS，阶段仍等待性能参考环境决定及未完成的原生输入验收；以下实现说明不代替独立报告。原始规模数据与复现命令见 [基准记录](./verification/s2/benchmark-data.md)，浏览器过程与未通过项见 [浏览器验收](./verification/s2/browser-acceptance.md)。
+全部冷呈现小于500ms；Canvas CPU小于16ms且rAF间隔小于33ms；SVG更新提交小于32ms；资源账本低于134,217,728 bytes，生命周期heap增量低于10%，DOM归零。热窗口没有重复源读取；并发4与共享预算合同由独立审核、调度测试和运行时计数共同验证。
 
-共享资源管理器限制实际供数调用并发为 4；取消不配合的 provider 仍占用物理槽，直到实际返回。元数据、必需视口、续页、预取和导出有优先级；同版本同请求去重，相邻范围可合并。数据、轴、域、几何缓存与活动帧共用 128 MiB 估计字节预算。源输入和完整显示索引、Canvas 位图单列。不可变窗口只校验、计量一次，热命中复用；可见 pane 几何保存在受预算约束的 LRU 中，Canvas 与 SVG 使用同一局部几何及全局命中坐标。
+B3的30次完整重建中，索引p95为1952.7ms，已有prepared records到呈现为2034.5ms，测试输入生成到呈现为2399.9ms，分别满足3500/4000/5000ms预算。它与预建供数源的500ms冷帧分开计时。最终Node B3保留完整输入与索引时，最大RSS为1,396,998,144 bytes，GC后heapUsed+arrayBuffers为1,038,536,335 bytes，分别小于2GiB和1.25GiB。完整输入/索引、运行时账本与Canvas位图分别披露，不把总heap称为运行时内存。
 
-SVG 由公共主体 clip、滚动变换组和局部 pane 组组成。纯滚动复用 mark 节点；表头和轴仍属于同一 SVG。Canvas 仍只有一个可见画布。字体、源、显示计划、格子尺寸和相关完整域变化会使几何缓存失效；缓存清理不改变当前帧持有的数据及其预算。
+| 交互预算 | 最终60Hz结果 |
+| --- | --- |
+| hover/选择≤50ms | S3 Canvas/SVG各50次实际pointer。hover到tooltip DOM p95为0.7/1.3ms；点击到selectionChange为3.1/2.6ms，到下一rAF为17.2/16.1ms。完整rAF记录见E10。 |
+| 受控更新≤150ms、等待态≤100ms | 1440×900/DPR2，每种操作10个计时样本。S2折叠/排序提交至committed加两帧p95为29.6/29.4ms，S3为28.5/28.6ms；各12个等待态样本最大均≤0.3ms。模拟宿主550ms等待被排除。 |
 
-控制器名义视口容量为 100 格，允许像素滚动时相交的边缘行/列；10×10 格最多相交 121 格，长条视口最多 202 格。整窗读取最多 40,400 条、单 pane 最多 20,000 条，可见 marks 最多 20,000 个。SVG 保持 5,000 hits/10,000 元素上限，元素计数包含 clip 和分组。可选预取目标最多 100 格。边缘预算修正的原因见需求第 7 节，测试必须包含连续像素偏移。
+rAF 回调、DOM mutation 和提交时间按报告的实际测量含义使用，不称为物理光子时间。真实 VoiceOver 字幕不称为录音。trusted 软件 wheel/模拟惯性不称为物理触控板手势；这些边界不额外增加原需求未规定的硬件验收条件。
 
-部分窗口只能绘制已完整提交的 pane。未完成 pane 显示 Loading；preview 输入明确标为 Preview。缺少必要完整域时不推断 scale。完整 fixed 域可独立于源统计生成，但 line、分组柱和堆叠仍遵循完整联合系列合同。错误候选保留旧画面及选择，requested、committed、displayed 版本分别报告。
+## 交付状态
 
-视口 PNG/SVG 导出默认等待目标完整，允许显式导出带占位的视口。逻辑范围 SVG 导出固定源版本、plan、字体和布局，通过独立低优先级 reader 顺序读取并交付分页 sink；支持取消、超时、页数/读取次数/字节数上限。UI 更新不改变运行中的旧版本导出。销毁会取消任务并释放库持有资源。
+R01–R17、A01–A16、B1–B5以及构建消费、现有spec保存/历史/输入正规化/切换与旧路径回归均已通过本文所列门禁。所有阶段在同一draft PR中保留独立commit和审核记录；没有发布npm包或合并PR。
 
-性能修复针对真实203,000条B5压力输入和5,000个可见marks，减少重复窗口校验、字符串计量、pane几何重建及SVG属性写入，并移除隐藏tooltip引起的强制布局。冻结版本已完成规定样本，B5压力提交/rAF p95为13.0/16.7ms，热源读取和eviction均为0，账本峰值130,735,136 bytes。销毁保留控制器的GC探针发现并修复了数据源和SVG节点引用未释放的问题；最终50次对称回收heap增长0.422%、DOM归零。原先失败保留。
+S3按独立审核的76文件清单逐一核对S2基线和最终SHA后转入主工作树，内容与已验收候选一致；转入后再次完成生产构建并复核指纹。`.gitattributes`只将验证目录中的原始JSON标为generated，便于审查产品diff，原始测量与失败记录完整保留。显示器已恢复ProMotion。
 
-S3 在另一工作树实施，候选已解除普通canonical rows/columns的深度裁剪，新增native选择与旧后端unsupported诊断。该工作尚未合入本阶段提交；生产结果绑定、保存/重载/历史、事件、公开ref及旧renderer的最终集成门禁仍然开放。
-
-首版关闭条件仍是全部 R01–R17 完成、A01–A16 通过、B1–B5 有可复现记录，以及构建消费、GW 保存/历史/导入/切换与旧路径回归通过。阶段 commit 和单个 PR 不替代这些条件。
-
-S2最终证据补充：B2/B5普通0–120px连续滚动各1,500次，commit p95为12.2/11.4ms；B3的30次真实重建索引p95为2158.7ms，已备records到呈现2219.8ms，含输入生成2775.2ms。最终Node B3索引单次2284.82ms，进程峰值RSS1,403,322,368 bytes，GC后heapUsed+arrayBuffers为1,038,191,711 bytes。详见[完整基准](./verification/s2/benchmark-data.md)与[独立代码审核](./verification/s2/code-review.md)。
-
-真实 VoiceOver 补验见 [独立读屏报告](./verification/s2/accessibility-final.md)。系统原生组合键能够进入网页与数据表；先前 CUA 组合键未获得正向响应，不据此认定产品缺陷。摘要、可见行列起点、展开状态和数据行都有字幕证据。
-
-## S2 阶段关闭记录
-
-本阶段以独立 [浏览器最终报告](./verification/s2/browser-acceptance.md) 和 [60 Hz 原始样本](./verification/s2/performance-60/performance-B2-reference.json) 关闭原先开放的参考环境条件；没有把 120 Hz 改成验收环境。内置显示器临时从 ProMotion 切至 60 Hertz，新启动 Chromium 实测约 16.7 ms 周期。设置和恢复见 [环境记录](./verification/s2/reference-refresh-rate.md)。旧 120 Hz 结果及失败候选保留，不能与新结果混写。
-
-原表中 B4 拖条/wheel、A06/A07、A08 几何、A10 非首位锚点和 A14 读屏的待办已经由后续补证关闭。五 mark 和长中英文的实际 Canvas 调用与 SVG CTM/clip 数值对照最大误差不超过 5.7e-14 CSS px；不声称字形抗锯齿逐像素相同。DPR1→2→1 配合实际 resize 后位图更新、逻辑位置和 hit 身份保持。非首位 Portland 重排保留 20 px 偏移，West 折叠后定位到 hidden 祖先；Sales USD 与 Profit percent 的可见轴独立。对应原始文件及脚本均在 `docs/verification/s2/`。
-
-上文保留了分阶段追踪过程，其中涉及 S3 产品接入的待办不由 S2 提交替代。S3 合入时会以当前证据重新整理整个 R/A/B 台账。物理触控板硬件与读屏音频没有实测，分别使用受信任软件 wheel 和实际 VoiceOver 字幕验证软件合同；不宣称超出证据的方法。
+已准备数据的完整/按需两种入口都属于交付。新计算DSL、VizQL和LOD不属于本项目。双轴、多mark层、地图和超预算单pane仍按既有范围保留明确诊断或旧路径，不把它们计入本版已支持能力。

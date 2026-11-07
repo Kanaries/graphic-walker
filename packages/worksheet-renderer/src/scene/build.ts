@@ -4,6 +4,7 @@ import { intersect, inflate, type Box, type Primitive, type SceneFrame, type Hea
 import { createColorEncoder, resolveDomainValues, numericChannel } from './scales';
 import { createEncoders, pointSymbol, pointShapes } from './marks';
 import { fitText, formatValue } from './text';
+import { bindingValueLabel, toTypedValue } from '../core/keys';
 import { prepareHitIndex, hitIndexBytes } from './hit';
 import { setSceneAccounting, type CachedPaneGeometry, type SceneAccounting, type SceneCache } from './cache';
 import { buildPaneGeometry } from './pane';
@@ -106,7 +107,7 @@ export function buildScene(input: SceneInput): SceneFrame {
             x,
             y,
             text: fitText(label, maxWidth, size, fontFamily),
-            fill: '#334155',
+            fill: plan.style?.foreground ?? '#334155',
             size,
             fontFamily,
             align,
@@ -230,8 +231,8 @@ export function buildScene(input: SceneInput): SceneFrame {
             width: Math.max(0, width - m.headerWidth - m.legendWidth),
             height: m.headerHeight,
         };
-    rect('row-background', rowClip, rowClip, '#f8fafc');
-    rect('column-background', columnClip, columnClip, '#f8fafc');
+    rect('row-background', rowClip, rowClip, plan.style?.headerBackground ?? '#f8fafc');
+    rect('column-background', columnClip, columnClip, plan.style?.headerBackground ?? '#f8fafc');
     const rowDepth = Math.max(1, plan.rows.facets.length + (plan.rows.positions.length > 1 ? 1 : 0)),
         rowLevelWidth = m.headerWidth / rowDepth;
     for (const [axis, window, region] of [
@@ -265,6 +266,7 @@ export function buildScene(input: SceneInput): SceneFrame {
                 key: span.key,
                 axis,
                 path: span.path,
+                pathLabel: span.path.map(member => bindingValueLabel(bindings.get(member.fieldRef), member.value) ?? typedValueLabel(member.value)).join(' / '),
                 fieldRef: slot
                     ? window.leaves.find((leaf) => leaf.rank === span.start)?.positionRef
                     : span.path[span.path.length - 1]?.fieldRef,
@@ -276,10 +278,10 @@ export function buildScene(input: SceneInput): SceneFrame {
             };
             frame.headers.push(target);
             const prefix = axis === 'row' ? 'rh' : 'ch';
-            rect(`${prefix}:${span.key}`, clip, box, '#f8fafc', '#cbd5e1');
+            rect(`${prefix}:${span.key}`, clip, box, plan.style?.headerBackground ?? '#f8fafc', plan.style?.borderColor ?? '#cbd5e1');
             const memberLabel =
                 plan.layout?.headerLabelMode === 'path' && !slot
-                    ? span.path.map((member) => typedValueLabel(member.value)).join(' / ')
+                    ? target.pathLabel!
                     : span.label;
             const label = (canCollapse ? (target.expanded ? '▾ ' : '▸ ') : '') + memberLabel;
             const size = axis === 'column' ? Math.min(fontSize, Math.max(7, m.columnLevelHeight - 5)) : fontSize;
@@ -305,7 +307,7 @@ export function buildScene(input: SceneInput): SceneFrame {
             'left',
             m.columnWidth - 16,
         );
-    rect('corner', all, { x: 0, y: 0, width: m.headerWidth, height: m.headerHeight }, '#eef2f6', '#cbd5e1');
+    rect('corner', all, { x: 0, y: 0, width: m.headerWidth, height: m.headerHeight }, plan.style?.headerBackground ?? '#eef2f6', plan.style?.borderColor ?? '#cbd5e1');
     text('corner-title', all, 12, 24, 'Worksheet', 'left', m.headerWidth - 24);
     if (m.legendWidth) {
         const legend: Box = {
@@ -314,7 +316,7 @@ export function buildScene(input: SceneInput): SceneFrame {
             width: m.legendWidth,
             height,
         };
-        rect('legend-background', all, legend, '#f8fafc', '#cbd5e1');
+        rect('legend-background', all, legend, plan.style?.headerBackground ?? '#f8fafc', plan.style?.borderColor ?? '#cbd5e1');
         let y = 20;
         if (input.domainsReady === false)
             text('legend-unavailable', legend, legend.x + 10, y, 'Domain unavailable', 'left', legend.width - 20);
@@ -404,7 +406,7 @@ export function buildScene(input: SceneInput): SceneFrame {
                     legend,
                     legend.x + 30,
                     y,
-                    formatValue(value, domain.type, plan.axes?.[binding.fieldRef]?.format),
+                    bindingValueLabel(binding, toTypedValue(value)) ?? formatValue(value, domain.type, plan.axes?.[binding.fieldRef]?.format),
                     'left',
                     legend.width - 38,
                 );
@@ -432,7 +434,7 @@ export function buildScene(input: SceneInput): SceneFrame {
                 kind: 'rect',
                 box: inflate(target.box, 2),
                 fill: 'transparent',
-                stroke: '#111827',
+                stroke: plan.style?.foreground ?? '#111827',
                 strokeWidth: 2,
             });
     }

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
-import { unstable_batchedUpdates } from 'react-dom';
+import React, { useState, useEffect, forwardRef, useMemo, useId } from 'react';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
@@ -16,10 +15,13 @@ import type {
     IVisualLayout,
     IChannelScales,
     IUIThemeConfig,
+    INativeRendererOptions,
+    IRendererType,
+    IChart,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
-import { useRenderer } from './hooks';
+import { useRenderer, useNativeResult } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
@@ -28,6 +30,9 @@ import { useCurrentMediaTheme } from '../utils/media';
 import LoadingLayer from '@/components/loadingLayer';
 
 type IPureRendererProps = {
+    nativeRenderer?: INativeRendererOptions;
+    /** Controlled renderer choice, offered when the current backend cannot display the chart. */
+    onRendererChange?: (renderer: IRendererType) => void;
     className?: string;
     name?: string;
     /** @deprecated use vizThemeConfig instead */
@@ -104,7 +109,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
             ...rawLayout,
             ...(overrideSize ? { size: overrideSize } : {}),
         }),
-        [rawLayout, overrideSize]
+        [rawLayout, overrideSize],
     );
 
     const sizeMode = visualLayout.size.mode;
@@ -113,7 +118,11 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     const limit = visualConfig.limit ?? -1;
     const defaultAggregated = visualConfig?.defaultAggregated ?? false;
 
-    const [viewData, setViewData] = useState<IRow[]>([]);
+    const instanceId = useId();
+    const chart = useMemo<IChart>(
+        () => ({ visId: instanceId, name: name ?? 'Chart', encodings: visualState, config: visualConfig, layout: visualLayout }),
+        [instanceId, name, visualState, visualConfig, visualLayout],
+    );
     const { allFields, viewDimensions, viewMeasures, filters } = useMemo(() => {
         const viewDimensions: IViewField[] = [];
         const viewMeasures: IViewField[] = [];
@@ -135,7 +144,13 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         return { allFields, viewDimensions, viewMeasures, filters };
     }, [visualState]);
 
-    const { viewData: data, loading: waiting } = useRenderer({
+    const {
+        viewData: data,
+        loading: waiting,
+        error,
+        query,
+    } = useRenderer({
+        chart,
         allFields,
         viewDimensions,
         viewMeasures,
@@ -147,24 +162,15 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
         computationFunction: computation,
         timezoneDisplayOffset: visualConfig['timezoneDisplayOffset'],
     });
-    // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({ data });
-    latestFromRef.current = { data };
-
-    useEffect(() => {
-        if (waiting === false) {
-            unstable_batchedUpdates(() => {
-                setViewData(latestFromRef.current.data);
-            });
-        }
-    }, [waiting]);
+    const nativeResult = useNativeResult(chart, query, props.nativeRenderer?.getResultRowKey);
 
     const { coordSystem = 'generic' } = visualConfig;
     const isSpatial = coordSystem === 'geographic';
     const darkMode = useCurrentMediaTheme(appearance ?? dark);
-    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
-        (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
-    );
+    const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>((vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig);
+    useEffect(() => {
+        setCurrentTheme((vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig);
+    }, [vizThemeConfig, themeConfig, themeKey]);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     // This mount owns a shadow-local portal; its forwarded className remains the light-DOM opt-out hook.
@@ -177,7 +183,10 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                 portalContainerContext={portal}
             >
                 {waiting && <LoadingLayer />}
-                <div className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
+                <div
+                    className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`}
+                    style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}
+                >
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                             <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
@@ -186,7 +195,13 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
                     {isSpatial || (
                         <SpecRenderer
                             name={name}
-                            data={viewData}
+                            data={data}
+                            chart={chart}
+                            nativeResult={nativeResult}
+                            loading={waiting}
+                            error={error}
+                            onNativeSelection={props.nativeRenderer?.onSelectionChange}
+                            onRendererChange={props.onRendererChange}
                             ref={ref}
                             draggableFieldState={visualState}
                             visualConfig={visualConfig}
@@ -204,7 +219,7 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
     );
 });
 
-export default observer(withAppRoot<IPureRendererProps>(PureRenderer)) as {
+export default observer(withAppRoot<IPureRendererProps, IReactVegaHandler>(PureRenderer)) as {
     (p: ILocalPureRendererProps): React.ReactNode;
     (p: IRemotePureRendererProps): React.ReactNode;
 };

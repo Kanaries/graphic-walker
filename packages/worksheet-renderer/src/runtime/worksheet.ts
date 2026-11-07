@@ -23,7 +23,7 @@ import { needsSeriesDomain } from '../core/series';
 import { createRequestRegistry } from './requests';
 import { createSemanticView, headerDescription } from './semantic';
 import { withAbort } from './abort';
-import { typedValueLabel, pathKey } from '../core/keys';
+import { bindingValueLabel, typedValueLabel, pathKey } from '../core/keys';
 import { clearTextMetrics, textMetricsBytes } from '../scene/text';
 import { immutableSnapshot, type ReadonlySnapshot } from './snapshot';
 import { createResourceManager, estimateBytes } from './resources';
@@ -172,7 +172,7 @@ export function createWorksheet(host: HTMLElement, initial: WorksheetInput, opti
         frameId: frame?.frameId ?? 0,
     });
     const requests = createRequestRegistry(options.requestTimeoutMs ?? 10_000, (request, state, reason) => {
-        const path = request.target.path.map((member) => typedValueLabel(member.value)).join(' / ');
+        const path = request.target.path.map((member) => bindingValueLabel(input.plan.bindings.find(binding => binding.fieldRef === member.fieldRef), member.value) ?? typedValueLabel(member.value)).join(' / ');
         requestNotice =
             state === 'pending'
                 ? 'Waiting for host: ' + request.kind + ' ' + path

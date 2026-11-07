@@ -2,7 +2,7 @@ import type { HeaderTarget, HitRegion, SceneFrame } from '../scene/types';
 import { typedValueLabel } from '../core/keys';
 
 export function headerDescription(target: HeaderTarget): string {
-    const path = target.path.map((member) => typedValueLabel(member.value)).join(' / ');
+    const path = target.pathLabel ?? target.path.map((member) => typedValueLabel(member.value)).join(' / ');
     return (target.axis === 'row' ? 'Row header: ' : 'Column header: ') + (path ? path + '. ' : '') + target.label;
 }
 

@@ -1,0 +1,255 @@
+{
+  "url": "http://127.0.0.1:4187/",
+  "environment": {
+    "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "dpr": 2,
+    "rafP50": 16.699999999999818,
+    "rafP95": 17.5
+  },
+  "timing": {
+    "commits": [
+      {
+        "ms": 15.5,
+        "status": "committed"
+      },
+      {
+        "ms": 26.299999952316284,
+        "status": "committed"
+      },
+      {
+        "ms": 27.700000047683716,
+        "status": "committed"
+      },
+      {
+        "ms": 24.399999856948853,
+        "status": "committed"
+      },
+      {
+        "ms": 26.799999952316284,
+        "status": "committed"
+      },
+      {
+        "ms": 28.5,
+        "status": "committed"
+      },
+      {
+        "ms": 28.200000047683716,
+        "status": "committed"
+      },
+      {
+        "ms": 27.799999952316284,
+        "status": "committed"
+      },
+      {
+        "ms": 27.700000047683716,
+        "status": "committed"
+      },
+      {
+        "ms": 26.5,
+        "status": "committed"
+      },
+      {
+        "ms": 27.899999856948853,
+        "status": "committed"
+      },
+      {
+        "ms": 24.199999809265137,
+        "status": "committed"
+      },
+      {
+        "ms": 27.399999856948853,
+        "status": "committed"
+      },
+      {
+        "ms": 26.600000143051147,
+        "status": "committed"
+      },
+      {
+        "ms": 28.59999990463257,
+        "status": "committed"
+      },
+      {
+        "ms": 28.299999952316284,
+        "status": "committed"
+      },
+      {
+        "ms": 28.299999952316284,
+        "status": "committed"
+      },
+      {
+        "ms": 27,
+        "status": "committed"
+      },
+      {
+        "ms": 27.59999990463257,
+        "status": "committed"
+      },
+      {
+        "ms": 27,
+        "status": "committed"
+      },
+      {
+        "ms": 27.09999990463257,
+        "status": "committed"
+      },
+      {
+        "ms": 27.09999990463257,
+        "status": "committed"
+      },
+      {
+        "ms": 28,
+        "status": "committed"
+      },
+      {
+        "ms": 26.200000047683716,
+        "status": "committed"
+      }
+    ],
+    "waits": [
+      {
+        "key": "Enter",
+        "at": 3100.9000000953674,
+        "ms": 0.2999999523162842,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 3691.600000143051,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 4290.5,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 4893.5,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 5491.700000047684,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 6090.400000095367,
+        "ms": 0.2999999523162842,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 6691.5,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 7290.800000190735,
+        "ms": 0.19999980926513672,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 7890.900000095367,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 8491.600000143051,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 9090.800000190735,
+        "ms": 0.2999999523162842,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "Enter",
+        "at": 9693.200000047684,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: collapse West"
+      },
+      {
+        "key": "s",
+        "at": 10290.600000143051,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 10891.800000190735,
+        "ms": 0.09999990463256836,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 11489.900000095367,
+        "ms": 0.09999990463256836,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 12089.600000143051,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 12690.400000095367,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 13291,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 13890.700000047684,
+        "ms": 0.10000014305114746,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 14490.900000095367,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 15091.600000143051,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 15691.400000095367,
+        "ms": 0.09999990463256836,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 16290.800000190735,
+        "ms": 0.09999990463256836,
+        "text": "Waiting for host: sort West"
+      },
+      {
+        "key": "s",
+        "at": 16892.400000095367,
+        "ms": 0.20000004768371582,
+        "text": "Waiting for host: sort West"
+      }
+    ]
+  }
+}

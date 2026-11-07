@@ -234,3 +234,9 @@ range也可为`'all'`，仍受总预算限制；single模式用于有限范围�
 S2的实现和独立验证正在收尾，正式浏览器、性能及生命周期结论以最终报告为准。windowed固定步长布局是首版基线。
 
 S3 尚未接入产品的 native renderer 路由、字段正规化、保存/导入/undo/redo、公开 ref/callback 和旧后端兼容。当前 demo 消费纯 adapter，不能代表 GW 产品集成或首版发布完成。最终关闭条件仍是全部批准的 R/A/B 项与发布消费验证。
+
+### Display labels and static theme colors
+
+A band binding may provide `valueLabels`, keyed by `typedValueKey(value)`. The renderer uses these labels for headers, categorical ticks, legends and text marks; source member keys, domain values and raw selection values keep their original identity. Two distinct values may have the same label. This supports, for example, distinct folded measure columns that share a display name.
+
+`RenderStyle.foreground`, `headerBackground`, `gridColor` and `borderColor` set shared static chrome colors for both backends. These are drawing options, not a saved authoring format. The Graphic Walker adapter maps its existing theme and layout into these options; the standalone core has no dependency on GW or Vega.

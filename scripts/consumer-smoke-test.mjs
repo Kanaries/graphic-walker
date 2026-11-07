@@ -154,6 +154,13 @@ export async function runConsumerSmokeTest(options = {}) {
             await runYarn(['pack', '--filename', tarballPath], packageDir);
         }
 
+        // Test the unpublished workspace dependency from its real package artifact.
+        // This keeps a fresh consumer independent of repository symlinks and npm release order.
+        const worksheetPackage = path.join(repoRoot, 'packages/worksheet-renderer');
+        const worksheetTarball = path.join(tempDir, 'worksheet-renderer.tgz');
+        if (options.worksheetTarballPath) await fs.copyFile(path.resolve(options.worksheetTarballPath), worksheetTarball);
+        else await runYarn(['pack', '--filename', worksheetTarball], worksheetPackage);
+
         const consumerPackage = {
             name: 'graphic-walker-vite-consumer-smoke',
             version: '0.0.0',
@@ -167,6 +174,7 @@ export async function runConsumerSmokeTest(options = {}) {
                 react: '19.2.0',
                 'react-dom': '19.2.0',
             },
+            resolutions: { '@kanaries/worksheet-renderer': 'file:../worksheet-renderer.tgz' },
             devDependencies: {
                 vite: '4.5.0',
             },
@@ -202,6 +210,10 @@ export async function runConsumerSmokeTest(options = {}) {
         assert(!installedConsumerManifest.devDependencies?.['styled-components'], 'Consumer fixture must not declare styled-components');
         await assertExternalized(installedPackageDir);
         await runYarn(['build'], consumerDir);
+        const worksheetManifestPath = path.join(consumerDir, 'node_modules/@kanaries/worksheet-renderer/package.json');
+        const worksheetManifest = JSON.parse(await fs.readFile(worksheetManifestPath, 'utf8'));
+        assert.equal(worksheetManifest.name, '@kanaries/worksheet-renderer');
+        assert(isPathInside(realTempDir, await fs.realpath(worksheetManifestPath)), 'Worksheet package must come from the consumer tarball installation');
 
         const resolvedStyledEntry = require.resolve('styled-components', {
             paths: [installedPackageDir],

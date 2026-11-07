@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Retain raw verification data without expanding generated measurements in PRs.
+docs/verification/**/*.json linguist-generated=true
