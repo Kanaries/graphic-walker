@@ -1,0 +1,209 @@
+{
+  "baseCommit": "799b87377a7599bef68fd8c91504bb78ef528285",
+  "files": [
+    {
+      "path": "packages/graphic-walker/src/computation/boxplot.ts",
+      "sha256": "ffaefd639c8ef8076fa4e18f818963f5bac998994b32b62eccbac1fcfc0c5bd5"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/adapter.ts",
+      "sha256": "0332dfd03dff4c319d75c214cdca202f8e8dc95b830ee45a665a38c281e0f8da"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/presentation.ts",
+      "sha256": "e7a966d8babbcb678bb31f3340f6070974401c6d4ae346b7f46efacf94068d9d"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/results.ts",
+      "sha256": "a8204628d1d6d3c5b0c8620be524ae52c0849095b427ceb168e7ec8711f13bf3"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/scenarios.ts",
+      "sha256": "a83b224467a73e05d33cf682b549aa47c83412e2550bad000a31cd3104df3826"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/theme.ts",
+      "sha256": "bd6dab4e3cdc6dd7d38a36f4cba2eb233f18d5682462d2be918bb717c1473322"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/op/stat.ts",
+      "sha256": "aa94f315f55fe63c66245d53cff7b18d7e6d834e3ae95c2323e34b7264da2496"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/vl2gw.ts",
+      "sha256": "d00b4d67b2413ff0186716ff47b95a9fda78925b2999407fbc5e5a4c2c690dce"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/vlImport.ts",
+      "sha256": "d5af34c0506e9e3833900f398547ec7dde7a010378595c5443d375da42b220da"
+    },
+    {
+      "path": "packages/graphic-walker/src/models/chat.ts",
+      "sha256": "8fc0d3d91f13e7e25026155c11d04f11648496947bb309520fcc5f6963bf72c9"
+    },
+    {
+      "path": "packages/graphic-walker/src/models/visSpec.ts",
+      "sha256": "9f67def36337316694c28411d2592ce4ccc758b764f53da8aeb9791d872bce4e"
+    },
+    {
+      "path": "packages/graphic-walker/src/renderer/hooks.ts",
+      "sha256": "c579e59b199a8ed946bd5d84072693ba020d08b931e5c7a805bf4e91bce59c29"
+    },
+    {
+      "path": "packages/graphic-walker/src/store/storeStateLib.ts",
+      "sha256": "cf4ca94452ba61149d5e30ce5f86cd10f27ae2ea75f05bd2f753f8b804caf88b"
+    },
+    {
+      "path": "packages/graphic-walker/src/store/visualSpecStore.ts",
+      "sha256": "8cd9dba1b8c1837450b543fd1bbc884037a06e3e804bd1257f79db33c7bf72ef"
+    },
+    {
+      "path": "packages/graphic-walker/src/utils/workflow.ts",
+      "sha256": "7d6ff8867a0896c8f45eb8329e67bdeafc748888f06d301822cc8046a45cbed5"
+    },
+    {
+      "path": "packages/graphic-walker/src/vis/native-renderer.tsx",
+      "sha256": "6d115aed4ffea86b3898654d72b4b80fbaf7e6f2ce2366bf1ef5cca1a8b0f3ef"
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-extended-marks.spec.ts",
+      "sha256": "f672c066f455f11ca1bc72fb4b69d3b443641cb84731d3bae7eefd7d0fed79c2"
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-worksheet.fixture.tsx",
+      "sha256": "bbfd9c8d86b2866376c17b6c74fb8bfbf7c552a949bb5c2c54bd7352ae7d67fb"
+    },
+    {
+      "path": "packages/worksheet-renderer/README.md",
+      "sha256": "4a6696aa8505142be6279059f28607c8b41263e469c67c80567d72a78290cb1a"
+    },
+    {
+      "path": "packages/worksheet-renderer/demo/index.html",
+      "sha256": "480651f26eaf49e045c0a399fde47c50dbaa1dae51d574f9b7a859d737d367e1"
+    },
+    {
+      "path": "packages/worksheet-renderer/demo/main.ts",
+      "sha256": "3a45857b1e1f1c6a6a84e780afa1633086c3667a43c13e3f52710237be4115ae"
+    },
+    {
+      "path": "packages/worksheet-renderer/scripts/test.mjs",
+      "sha256": "78be67c138b835dceadc64fa07640ff32cca980ce3f7ec624048a592c2a8880d"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/backends/canvas.ts",
+      "sha256": "e778685fc8bdc8e554317417e6a3f78aae1130b3f886e6f03053a0b3e394cf2c"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/backends/svg.ts",
+      "sha256": "b45b9bc431ea7456f2079bf5d9bc3f2fd92bcfeddc8e9d5e541d354315e878c4"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/boxplot.ts",
+      "sha256": "78490c824dd8c369b1adef39e11be5f2311172541839de58532d012837be0538"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/capabilities.ts",
+      "sha256": "a23a5e980e64cd36e77f7a98f794d51b97be0ad49fcce0b395443166902f6df0"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/domains.ts",
+      "sha256": "73a8f3e509784b8d529d73d13975892521fef08c4ea2fe08645c1b29046a782d"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/errors.ts",
+      "sha256": "0afafa3a6f57323b2c824d4fc25b300dcc5f327a5f31354a257d727706bdd9fc"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/prepared.ts",
+      "sha256": "fe67bdfd9c8283c8faa22cdb1a51e880d0f8b4c534db1de0051e8c53e92915f1"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/series.ts",
+      "sha256": "8df657313ae99d252b3167394cfd32152e8f34bb95aa9149f20b897b1e2292b7"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/stack.ts",
+      "sha256": "0d9cedd018e4b1775176f340070bf90a6e48acf5e4389c10430b3fb63203e07f"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/types.ts",
+      "sha256": "1a31099196364976639cc09628efee11575732e148a54f350988e4fedc47c02e"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/validateWindow.ts",
+      "sha256": "e50d2547cd6d8c2b5fbefdadf1f33e2f2145fc1993bc4668bdfa9444ab7e8ec4"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/arc.ts",
+      "sha256": "8071cdf397db85870089546720dc6fb0e6ed35cacecbd76609cfabbf94c21095"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/boxplot.ts",
+      "sha256": "3c06d9cb002a6083c7a4112d32d2f45da3f4cd3d847766aef23a4b1988c8728c"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/build.ts",
+      "sha256": "80675fa734a0b07bc5fa8ca7571f4584c8cf1cf8779d5a1730faa1f5bc77abd4"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/cache.ts",
+      "sha256": "79eccd14fa0c9e9d7fc865898fb5d6a0673a15352cc3fafb7b6cb75a59b7d1dd"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/hit.ts",
+      "sha256": "13c32a07d8d20ed8f466fc72ba8e7ae66f4b0519879238b9fb4ef1dce447ae6e"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/marks.ts",
+      "sha256": "0a75e200280d4fec7853729200512f72fc439e1c7a10d35f091a899e68b690f3"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/pane.ts",
+      "sha256": "9db880b859bbc951f4495a2183e46b50704f7de96298ff7ab4ad79e467567263"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/translate.ts",
+      "sha256": "4af2088d1abb76d91ce8c2067c44706f4991eef3c65d4dae553d2531de305122"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/types.ts",
+      "sha256": "82a30c8f29c2838f30c56065d7159fc6d27723d860e7f6211b47acfa16766ab6"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/adapter-s1.test.ts",
+      "sha256": "438ef01c61373919f69d19a832e5c046f606db0cadbd03a87b6125037dab55a4"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/adapter.test.ts",
+      "sha256": "7d343fcc65baec1503da1f6a9f7243bf5192b7a4a63cf1e6b70652c822559943"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/arc-marks.test.ts",
+      "sha256": "54ed45c109e4debc3ee6ef0be37144ba73fef908aef3ba8943e07e2a2d1d54fb"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/boxplot-computation.test.ts",
+      "sha256": "eb3be32816eb1b6acfaabd166c8c7d154753238bdff85a794c6059ca4f786bf4"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/boxplot-marks.test.ts",
+      "sha256": "66b74b7f98e8254430daf175f9e54a32535d8ce04921eb7df813b3524d6c839d"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/extended-contracts.test.ts",
+      "sha256": "dfc761c497863474ccecf89d08505fe5086616c8a046af8a0986fc4665990c50"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/extended-marks.test.ts",
+      "sha256": "b9fb9c36a3f0c1df801ccbdf1e6bc69d3a67ce0246444ba898d6bf9377f7e883"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/native-extended-marks.test.ts",
+      "sha256": "2a0673c594cc7f40a999a25629fd15d893ba499243aaaebed916819b63e1afe6"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/scene-cache.test.ts",
+      "sha256": "ac5ac2e3178017fa0e2eaa43daf0858a22c805ae779d6849f0e332071d379c87"
+    }
+  ]
+}

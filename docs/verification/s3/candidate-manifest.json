@@ -1,0 +1,387 @@
+{
+  "schema": "s3-candidate-manifest-v1",
+  "s2Baseline": "/Users/observedobserver/.codex/worktrees/native-worksheet-renderer/graphic-walker",
+  "fingerprint": "04f08b1acc58d29a9d609e3dcb645b859973a79035fba05eba724289865aa6b6",
+  "files": [
+    {
+      "path": "package.json",
+      "sha256": "c399efb9a047105d44c7fd1a84974dd819783b3e99cdd3d9e8ace423b949fdfb",
+      "s2Sha256": "5906fba0d8d0208e9f8e502e17510639abda0bf84b1b378818ebee372abb55f3"
+    },
+    {
+      "path": "packages/graphic-walker/jest.config.js",
+      "sha256": "236051e4cb9e24397a5780a6958187ea5fa927f536aec5201ed81b8880a70c5b",
+      "s2Sha256": "b2ca43877e6b0bfbbbb08f5e0df0de41ae7619a6e348181691640c294258f6d1"
+    },
+    {
+      "path": "packages/graphic-walker/package.json",
+      "sha256": "a1d0b78483dd072533b164ee0743f058219bc0c07791bdae433568cbbbcc1e4a",
+      "s2Sha256": "9329a27a7245378dfc87fe0de58fdbc15fee9dcdfd076ad96dd0afd0388aefbf"
+    },
+    {
+      "path": "packages/graphic-walker/playwright.config.ts",
+      "sha256": "ca159184bcc8da9e500ac059f4b556d5d4150fa2352b385090c91985dd5ec8d6",
+      "s2Sha256": "9065a7811352114252c6f39204d85bc3ed7efa969fb0a9aa0d16cf8e4f4436b7"
+    },
+    {
+      "path": "packages/graphic-walker/public/tersespec_v1.json",
+      "sha256": "3329d04066b91461150fd7d5d193996a5deb5b0e4a25cea8c60b15b7038e632b",
+      "s2Sha256": "caae65fac95ccdee4d6b32e8abd2a9e780736b334c5c1dcfa137cd7d465e1912"
+    },
+    {
+      "path": "packages/graphic-walker/scripts/create-json-schema.js",
+      "sha256": "d20e5339f192f03165ab0e7bd64bbbe7d492d63d822d9412dfd8790a9dbec7ad",
+      "s2Sha256": "6b0da47b99b53c55c3613a105c28ea2f183568b384c7e56efb97d94d5a6f4bcf"
+    },
+    {
+      "path": "packages/graphic-walker/src/App.tsx",
+      "sha256": "5c42dbd886882e0f075f381de417e7e7af44684431e0cd6f350c43d662f77040",
+      "s2Sha256": "1d9f210e366946605017f295d97689e11fed8e2ec005efba3f4b505a77727f2a"
+    },
+    {
+      "path": "packages/graphic-walker/src/Renderer.tsx",
+      "sha256": "a3c7717d725120d0dcfcc6406c9f8dc0435188d704d0f4332d041a814db84ab6",
+      "s2Sha256": "0d4aabaa6796139dc5714438404404dc784c312daa6f50edc1954a0a523c79e0"
+    },
+    {
+      "path": "packages/graphic-walker/src/components/appRoot.tsx",
+      "sha256": "6c111598cb04260e35c83c41b580bbbc8d8b840366dafd567950dbf3cdb611de",
+      "s2Sha256": "5b88d46205c210dc22ebd1e46a468d152e5599bf86aba87b57e4612cfa69bbf2"
+    },
+    {
+      "path": "packages/graphic-walker/src/components/chat/index.tsx",
+      "sha256": "d59d1f0625952eb7fca9fc146a395dba599d98fe829b418810f28097c50ce5ad",
+      "s2Sha256": "8be1fbc2efc3d6252756289fc5bfea7f851c309de2acde66a835a56c2143f119"
+    },
+    {
+      "path": "packages/graphic-walker/src/components/visualConfig/index.tsx",
+      "sha256": "f00fc39c6d4852651ea53fe1631d24e2effe978fc92a29ec05b279b3b12a2ac3",
+      "s2Sha256": "fc71952323d6bf0d131eaa346c8e61459b390eb37b9b085b01e0a85de5680761"
+    },
+    {
+      "path": "packages/graphic-walker/src/config.ts",
+      "sha256": "2886d6f0295b9368f7cf1bafc6f5b27f9945b81a6e7a17d6bf660c272ad48a72",
+      "s2Sha256": "f31a2160aa62059f0b50c3f433e75ed26db2dbf5678692f88f4c4e760ee1420b"
+    },
+    {
+      "path": "packages/graphic-walker/src/index.tsx",
+      "sha256": "f81e476665d787426e502fdb791a1c6fd449700b7db947bf9767449166be74f5",
+      "s2Sha256": "984192590ffa9b216b70c59ffde1e6767cc0938b975c142029fa835aee3aadeb"
+    },
+    {
+      "path": "packages/graphic-walker/src/interfaces.ts",
+      "sha256": "f7910f8f1b32b1184fbb3ab4d94e7d56cfb0c470e737c5c8ab7cfa58dbc2f958",
+      "s2Sha256": "bcd68e549136ab64a1c4405b6fd33bbd5cd448b8bf67f8e9ccd1fd59973cd53e"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/gog.ts",
+      "sha256": "b140250d4c015fd4ce37fd6437996768b91d4a500915b90af0fbeaddd624dd3d",
+      "s2Sha256": "0bf998f5e0d654103b5d74040b15698c97cef258020a32be6f55380e74dc79fd"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/adapter.ts",
+      "sha256": "6dc1a087a8dec5f7bcef989dc276d50b09a3670d913e0ac3a7dc16c8bb537bb1",
+      "s2Sha256": "a444bc05e009da42146c2c13a0ec7cebb6d28d578858c177262161706a53eaf3"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/events.ts",
+      "sha256": "bee0c106f079bfd9c1c52fa6b90cba945ed653987d8d0580362d636443b13bee",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/identity.ts",
+      "sha256": "276c15d766218a600ede62205e670d270c62055f0c91b30db54693dddc4fcbe9",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/legacyCapabilities.test.ts",
+      "sha256": "c5b794aa91b71c5f311d8424eb70e5e6564a96ef33d21e0a60699d5f22938499",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/legacyCapabilities.ts",
+      "sha256": "671e851b21fc542cf5143f011cc4c38ddbfb6acb5727fd4bbc4c66cb462b0724",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/presentation.ts",
+      "sha256": "28f74c3a8976011f22120980258ec97c55f3e07946195e8d154deb9aea4fce44",
+      "s2Sha256": "6a9ddf90d9bb6f269e7ab4d211b331e8a0fc858d1816bfa4ccef54fee873ec52"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/results.ts",
+      "sha256": "c3143eecef761aab43cc886d1f1e73257f775cb74776e316c0cf5bc283e97efa",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/temporal.ts",
+      "sha256": "bffb1252f4b40150dbfab60484285430d7f836fb3ae110913dbe8accc7c3e7cb",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/theme.ts",
+      "sha256": "35cca6ce864772d254d87483a1852b895ff57d39cd028fc2e264d7556df4caaf",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/native/viewState.ts",
+      "sha256": "04e06b68e7ac9f6c0fa71714bcf3f980d7047df583f4679ccd637c470c430ae4",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/observablePlot.test.ts",
+      "sha256": "49fa8ab468e6f107bd015fd2b33117976b69cc2c26eebfbcee35d16b3441c012",
+      "s2Sha256": "d52fef01561b6424d775ae56eb6310e5b7a7b0ac49d6cb837ba5b995740d02b9"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/observablePlot.ts",
+      "sha256": "04230d4808af6a384abef7655c304af0e300e77c4d3ddbdeb8ef02885941ba1e",
+      "s2Sha256": "857a73793b27aec964866e2a03be9dc8fb57e4589c7a51251fb66feb5a69c526"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/op/fold.ts",
+      "sha256": "e4fa5807fa894e4537128935db854ea16114e4ebec973c9f95f8524ee2f7a9db",
+      "s2Sha256": "67243f3a6786b81a64f5b67f982f9867c0fefc849167c702525bb608b25b7ffe"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/temporalDisplay.test.ts",
+      "sha256": "22db8b8bcde9272ce411f0ae53b96fd6df072cbc4af3f415938ad4352ea30c65",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/temporalDisplay.ts",
+      "sha256": "aadf09b8245271e5ddc45c67650deb8f5052be278b0ed76b9af7f429a65a4341",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/vega.ts",
+      "sha256": "faac18506b65916213a108ae50337b333bab545a660162cefa8bd870a2e28e3c",
+      "s2Sha256": "e0090c39627425ae76b3638c83a63f56a2b9834ed0fc1481a1f2e52d7ae4647d"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/vl2gw.ts",
+      "sha256": "a7643485a3e9dbfe92dc3681d2a545b33a5106f6f2a5d2714bc2a52f2ff3f680",
+      "s2Sha256": "c12abf73b13d7b183ee65b7ab3a00ff07ed72fbeb3a66fa57135a14351a6d978"
+    },
+    {
+      "path": "packages/graphic-walker/src/lib/vlImport.ts",
+      "sha256": "cb4105ef885f0e262a704e9860e52304474d448d070110783e084cbd13b43ebf",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/models/chat.ts",
+      "sha256": "26a62ec59a59a07b3066c61a0848819dc6db872bd6dfda30c0df8eac73028c4f",
+      "s2Sha256": "47e8220e121b24fffddfba0427f6423f1151398c9cfb4edfd78c2e85be9a5262"
+    },
+    {
+      "path": "packages/graphic-walker/src/models/nativeCanonical.test.ts",
+      "sha256": "04e6e9210fe98cb7e6cc33bce2f5bdb6268947374f552fe1d1380c17880a64a3",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/models/normalize.test.ts",
+      "sha256": "b88474c824c3d3082d11f6cda26744b6aa4cba096f93839bf523cc34de5a876c",
+      "s2Sha256": "a8d4158f7a01ff72edefbd3431943fb509045d22a36efe2965a58c981c4af0cf"
+    },
+    {
+      "path": "packages/graphic-walker/src/models/normalize.ts",
+      "sha256": "6b63760597f9280fdbb8dc08c6233ae46879c17ef473e52b36eb70d78ae01be4",
+      "s2Sha256": "991f9c59ad8f69faf5836f746ec81d33ba734e09f567a8596f56c407fbc2b649"
+    },
+    {
+      "path": "packages/graphic-walker/src/models/vlImport.test.ts",
+      "sha256": "3d8f4b68d0296a6df3a5532039fa8cbc7d6179a2711f6009fa2d8dd0903ecde7",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/renderer/hooks.ts",
+      "sha256": "3d72237c142f5a513b714bc34270a39944e98aa7fdc62480cc1541cb1b1d1331",
+      "s2Sha256": "ff031df83bb53c0ca3eac650caa74a4121abab3eafb0d27177818097d1ad8add"
+    },
+    {
+      "path": "packages/graphic-walker/src/renderer/index.tsx",
+      "sha256": "c9288704b0764a73f787535bf9589f7b5331c3fd680d0294f484cfe472ba4898",
+      "s2Sha256": "a99ea57d9f076c7e6c7f35e085ecf9da5faf3c6d253fd08991d1f93a3893330b"
+    },
+    {
+      "path": "packages/graphic-walker/src/renderer/pureRenderer.tsx",
+      "sha256": "83f9bef70ca4ad941b7ba9478180b05a0d4c0e26be9a15f9c2bb7a5b9f994d94",
+      "s2Sha256": "172c0994c3d36b5f62c5afa74f335560c0f8bbc47afdb145ce60e1dad4439878"
+    },
+    {
+      "path": "packages/graphic-walker/src/renderer/specRenderer.tsx",
+      "sha256": "044313edc8eb0f024f8475f7939bef7d05e7b171632b1f580ebb56f373ccd63a",
+      "s2Sha256": "8ad373a1b32994c2d46d8f9b86f26ceb613e72aaba95120a79bc041293982fc6"
+    },
+    {
+      "path": "packages/graphic-walker/src/store/index.tsx",
+      "sha256": "a7e166d8a11d97b040a857dd5f67ad7decf77ec237efec89c8a402eac6fbb6b1",
+      "s2Sha256": "ec1256d7682580a40492dc0f9950f7c7645f90beb2a4a87224e7c7516468fb5e"
+    },
+    {
+      "path": "packages/graphic-walker/src/utils/computationOwnership.test.ts",
+      "sha256": "aad02e4dc3a41a3873d5d4b256b4092b55e55e9499771be1f8ff690e008f2b47",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/utils/computationOwnership.ts",
+      "sha256": "f19a98907ed86c543ac686ef7cd0b4cf40bbc7bdbdc7cb53c066a22c83120e77",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/utils/nativeApiExport.ts",
+      "sha256": "6c205cd674c137a7cd11f170fec1530dde6b0f6e212b16a35446eef0da3ad575",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/utils/vegaApiExport.ts",
+      "sha256": "bf2ee843b582dc0394efb9dec2b2680f33d675ee68214e10a128860da429b761",
+      "s2Sha256": "f47425271e472f44558445fdb6776c47d7aa2dc1400e96b1bdd650834b46afa9"
+    },
+    {
+      "path": "packages/graphic-walker/src/vis/native-renderer.tsx",
+      "sha256": "19762230e0e6dc65c81d5c4c2f06e77bb64b306d4fb303b82b13fb47a328f43f",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/src/vis/react-vega.tsx",
+      "sha256": "5b990ea18ab8bcd75216828d648dda7be2e6df5ba291476c70ee5b229ddc5015",
+      "s2Sha256": "36482f617dc5474a92c426441eb387654718f4365e9f6922cfb9897ccb640376"
+    },
+    {
+      "path": "packages/graphic-walker/src/vis/spec/view.ts",
+      "sha256": "55a37289f8a5f1a52afdc544996a9d70862d220e0974e0be7b1f683bef509d3f",
+      "s2Sha256": "49b90e8141104d4eff8821edde0c05c930b97dc2a4920b01c75f38707d5a1a69"
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-computation-errors.spec.ts",
+      "sha256": "069d1c8fdafe9d3fe86028e5a182a486d77f288768c6a4ab67c1a6e370a8996f",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-renderer.fixture.tsx",
+      "sha256": "a9f20200f82452bd3e67dafe1d95350f5d2559c7faf68b92e8d11a34013d0a16",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-renderer.html",
+      "sha256": "73f3eb34fac08da97b1ce2c0fb2ed67e15fab02df5d8784b6d16c63ebb4a12b8",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-renderer.spec.ts",
+      "sha256": "9fc1782df633120c60d480b63cb44b7667ecca2030dd0811d6354a75dafad82a",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-worksheet.fixture.tsx",
+      "sha256": "70398b961657238c8a26f88ed3ba86b77811fe5efb80cac0d9b892f7e9440113",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-worksheet.html",
+      "sha256": "97f601997f8028310d70ee85f19c3e276e81435d4250046b2c787e011ee37545",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/native-worksheet.spec.ts",
+      "sha256": "853f78b8a8442196c4ffa6367ef2ce4bd2c8859575922a5a099da18b69da1736",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/graphic-walker/tests/e2e/vite.config.ts",
+      "sha256": "b3f258c723dcbfa55d098fa5bd6815fc933d612e7d1bc32c6ed38dd798cf5043",
+      "s2Sha256": "d93f62fa4606bc88b8178400124f695309a069b18b17c3918e8287723e74d995"
+    },
+    {
+      "path": "packages/playground/public/tersespec_v1.json",
+      "sha256": "3329d04066b91461150fd7d5d193996a5deb5b0e4a25cea8c60b15b7038e632b",
+      "s2Sha256": "caae65fac95ccdee4d6b32e8abd2a9e780736b334c5c1dcfa137cd7d465e1912"
+    },
+    {
+      "path": "packages/worksheet-renderer/README.md",
+      "sha256": "abbe01775011fa1f8bdd222de62323205fc5d8d812ecba16dbb5ebb7dab6739a",
+      "s2Sha256": "218cf953d2129174373d8a285140ca6f27cfbdf00a37b718aee87b130bd736e7"
+    },
+    {
+      "path": "packages/worksheet-renderer/package.json",
+      "sha256": "97f8e46961d0a5f1829885f9d6d8c85380d996a8cce83d0fa9fc77b476f89d26",
+      "s2Sha256": "c9b34ca7e88fdcfad19e9d8ab7353b278f1ef6e475a4327ab813671a1ba3eb4c"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/capabilities.ts",
+      "sha256": "a455d1bd191641b4efdd009c18e7110f9809aa2b674775dcddf3528d2bb8b87a",
+      "s2Sha256": "b09810aca8252f7023f6c200b902f3f98e666e4a6a96f9b3208a58e319ff8895"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/keys.ts",
+      "sha256": "bd3a39ef086f97709ab4c8727e04f5b8dfe44ddd030eaa43b0ff0fb3d47b99b3",
+      "s2Sha256": "f78b45dfd9def848846546816520c36c158c6910778e73adbb0924ae2c177de2"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/prepared.ts",
+      "sha256": "2286d5b13321eae172e7aec855c3dcd9a62ea2ca93e2961cbe0ab82c7c86a062",
+      "s2Sha256": "93fb8b3561fe5bb9f44d8385ea435f0633a9c248f47391403197cfbf75480cf6"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/core/types.ts",
+      "sha256": "52df31496b46f302a9f9610cf3ff5dc0589b8923fc80ab1e22c52860a94124f3",
+      "s2Sha256": "50116550ca741f447fbad379b1934e8ef78e59bba19172238ea1c75b4fb9c404"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/index.ts",
+      "sha256": "d79ce1ab566bd4e9d5178a5f5e96b3e2d678ddfe760438b7d2be2cd04bdf1b35",
+      "s2Sha256": "ccb2ea539b08ad7f65e5597feb0e0ec0fb6900c3360dd8afacffc43b21644764"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/runtime/semantic.ts",
+      "sha256": "64829e5ea4d2660eca7c5862619590fb3b7b7294fce21aba4efc59c56a81707d",
+      "s2Sha256": "b0b151badb961cc3674a33d447f542d3de6903f5243d759a698c9cda9baabde0"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/runtime/worksheet.ts",
+      "sha256": "f9be23ea17a09ebed4dc39457e041a632f967c76cb45ff4d9cc75fe02bfba269",
+      "s2Sha256": "ca0782cd9af96efb2e2fb0a17e06af530425db4c72c2d11d60abf71752f7ea64"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/build.ts",
+      "sha256": "64b4ba3185b6f48a84dba7d9d71ba0022fa0847685dc1a9101eb0ba8a927b20f",
+      "s2Sha256": "aed835c08869fc4540fe6bc49e77ea92021dceaba6cd312931c702887e716ea4"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/marks.ts",
+      "sha256": "81d1786f4deac3bea6bd634c7236cbb005fe9811fd36a8e7717ad63a02d51f13",
+      "s2Sha256": "96ca94c3e62be20ba8808e8cebe6146a1fc1f1bdcfbcd267d44d00dc55b3cad3"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/pane.ts",
+      "sha256": "4d0e846963648276a044558aaaeb340090a79be05c9a9ce51627f138338234d3",
+      "s2Sha256": "12a7fbb15e27746f26a2afac30b053d89227eeae3d7aa99de1140720c93118b8"
+    },
+    {
+      "path": "packages/worksheet-renderer/src/scene/types.ts",
+      "sha256": "745f0b45610342b787d3c0309650aa772ae8bb49632c237364090c1f003a876c",
+      "s2Sha256": "3b574a47428426c8136f9d98ffd544269cb63f161ccd4551af009cc2c1c07e34"
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/labels.test.ts",
+      "sha256": "8f43b3fdac84340a1ab36db3618616a1a7356bef29ac8f05a89e7e981be17b77",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/native-display.test.ts",
+      "sha256": "ea401a813c6d1be90dbcb9ded367c62ef912719b94270deaf0d99db9fd681ff8",
+      "s2Sha256": null
+    },
+    {
+      "path": "packages/worksheet-renderer/tests/native-results.test.ts",
+      "sha256": "ac996c87c0eaa25dc9ab8523f48cc4ba763ec72b0f83d90ff39704db2fcdee1e",
+      "s2Sha256": null
+    },
+    {
+      "path": "scripts/consumer-smoke-test.mjs",
+      "sha256": "3918b98aeb86346616f94b70e11004b3ea662649e10c79bb3f236c7d7098c894",
+      "s2Sha256": "be4bca245949ba00ed13fcd0bcc82251ab4348315e9e318d50511a87c41eef0d"
+    }
+  ]
+}

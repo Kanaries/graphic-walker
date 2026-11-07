@@ -1,12 +1,17 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { unstable_batchedUpdates } from 'react-dom';
-import type { IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import type { IChart, IFilterField, IRow, IViewField, IDataQueryWorkflowStep, IComputationFunction } from '../interfaces';
+import type { ReadVersion } from '@kanaries/worksheet-renderer';
 import { useAppRootContext } from '../components/appRoot';
 import { toWorkflow } from '../utils/workflow';
 import { dataQuery } from '../computation';
 import { fold2 } from '../lib/op/fold';
+import { prepareNativeResults, type NativeResultSnapshot } from '../lib/native/results';
+import type { NativeGetRowKey } from '../lib/native/identity';
+import { runOwnedComputation } from '../utils/computationOwnership';
+import { computeBoxplotStatistics, planBoxplotComputation, type BoxplotComputationPlan, type BoxplotComputationResult } from '../computation/boxplot';
 
 interface UseRendererProps {
+    chart?: IChart;
     allFields: IViewField[];
     viewDimensions: IViewField[];
     viewMeasures: IViewField[];
@@ -19,70 +24,124 @@ interface UseRendererProps {
     timezoneDisplayOffset?: number;
 }
 
-interface UseRendererResult {
+interface QueryRequest {
+    readonly source: IComputationFunction;
+    readonly sourceId: string;
+    readonly workflow: IDataQueryWorkflowStep[];
+    readonly limit?: number;
+    readonly boxplot?: BoxplotComputationPlan;
+}
+interface QueryResult {
+    readonly request: QueryRequest;
+    readonly queryRows: IRow[];
+    readonly version: ReadVersion;
+    readonly boxplot?: BoxplotComputationResult;
+    readonly error?: unknown;
+}
+export interface UseRendererResult {
     viewData: IRow[];
     loading: boolean;
-    parsed: {
-        workflow: IDataQueryWorkflowStep[];
-    };
+    error?: unknown;
+    /** Only completed results for the current query can cross the renderer boundary. */
+    query?: QueryResult;
+    parsed: { workflow: IDataQueryWorkflowStep[] };
 }
 
+const sourceIds = new WeakMap<IComputationFunction, number>();
+let nextSourceId = 0;
+let nextSnapshotId = 0;
+const emptyRows: IRow[] = [];
+const emptyWorkflow: IDataQueryWorkflowStep[] = [];
+
 export const useRenderer = (props: UseRendererProps): UseRendererResult => {
-    const { allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds, timezoneDisplayOffset } = props;
-    const [computing, setComputing] = useState(false);
-    const taskIdRef = useRef(0);
-
-    const workflow = useMemo(() => {
-        return toWorkflow(filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit > 0 ? limit : undefined, timezoneDisplayOffset);
-    }, [filters, allFields, viewDimensions, viewMeasures, defaultAggregated, sort, folds, limit]);
-
-    const [viewData, setViewData] = useState<IRow[]>([]);
-    const [parsedWorkflow, setParsedWorkflow] = useState<IDataQueryWorkflowStep[]>([]);
-
+    const { chart, allFields, viewDimensions, viewMeasures, filters, defaultAggregated, sort, limit, computationFunction, folds, timezoneDisplayOffset } =
+        props;
+    const boxplot = chart?.layout.renderer === 'native' ? planBoxplotComputation(chart) : undefined;
+    const boxplotKey = JSON.stringify(boxplot);
+    const effectiveAggregated = boxplot ? false : defaultAggregated;
+    // Statistics need the entire filtered raw sample, never the first N provider rows.
+    const queryLimit = boxplot ? undefined : limit > 0 ? limit : undefined;
+    const workflow = useMemo(
+        () =>
+            toWorkflow(filters, allFields, viewDimensions, viewMeasures, effectiveAggregated, sort, folds, queryLimit, timezoneDisplayOffset),
+        [filters, allFields, viewDimensions, viewMeasures, effectiveAggregated, sort, folds, queryLimit, timezoneDisplayOffset],
+    );
+    // A renderer, style or header-label edit can create new arrays without changing the query.
+    // Compare the serializable existing workflow, not IChart or display configuration.
+    const workflowKey = JSON.stringify(workflow);
+    const request = useMemo<QueryRequest>(() => {
+        let sourceId = sourceIds.get(computationFunction);
+        if (sourceId === undefined) sourceIds.set(computationFunction, (sourceId = ++nextSourceId));
+        return { source: computationFunction, sourceId: `gw:${sourceId}:${chart?.visId ?? 'view'}`, workflow, limit: queryLimit, boxplot };
+    }, [computationFunction, chart?.visId, workflowKey, queryLimit, boxplotKey]);
+    const [settled, setSettled] = useState<QueryResult>();
     const appRef = useAppRootContext();
+    const committedRequest = useRef<QueryRequest | undefined>(undefined);
+    useLayoutEffect(() => {
+        committedRequest.current = request;
+        return () => {
+            if (committedRequest.current === request) committedRequest.current = undefined;
+        };
+    }, [request]);
 
     useEffect(() => {
-        const taskId = ++taskIdRef.current;
+        let active = true;
+        // Invalidate on commit, before an old rejection can beat passive cleanup.
+        // A speculative render must not revoke the still-committed request.
+        const isCurrent = () => active && committedRequest.current === request;
+        const snapshotId = String(++nextSnapshotId);
         appRef.current?.updateRenderStatus('computing');
-        setComputing(true);
-        dataQuery(computationFunction, workflow, limit > 0 ? limit : undefined)
-            .then((res) => fold2(res, defaultAggregated, allFields, viewMeasures, viewDimensions, folds))
-            .then((data) => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
+        // Calling through a promise also catches synchronous host computation failures.
+        Promise.resolve()
+            .then(() =>
+                isCurrent() ? dataQuery((payload) => runOwnedComputation(request.source, payload, isCurrent), request.workflow, request.limit) : undefined,
+            )
+            .then((queryRows) => {
+                if (!isCurrent()) return;
+                if (!Array.isArray(queryRows)) throw new TypeError('The computation result must be an array of rows.');
+                const boxplot = request.boxplot ? computeBoxplotStatistics(queryRows, request.boxplot, request.workflow) : undefined;
                 appRef.current?.updateRenderStatus('rendering');
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData(data);
-                    setParsedWorkflow(workflow);
-                });
+                setSettled({ request, queryRows, boxplot, version: { sourceId: request.sourceId, snapshotId, presentationId: 'query' } });
             })
-            .catch((err) => {
-                if (taskId !== taskIdRef.current) {
-                    return;
-                }
+            .catch((error: unknown) => {
+                if (!isCurrent()) return;
                 appRef.current?.updateRenderStatus('error');
-                console.error(err);
-                unstable_batchedUpdates(() => {
-                    setComputing(false);
-                    setViewData([]);
-                    setParsedWorkflow([]);
+                setSettled({
+                    request,
+                    queryRows: [],
+                    version: { sourceId: request.sourceId, snapshotId, presentationId: 'query' },
+                    error: error ?? new Error('Query failed'),
                 });
             });
-    }, [computationFunction, workflow]);
-
-    const parseResult = useMemo(() => {
-        return {
-            workflow: parsedWorkflow,
+        return () => {
+            active = false;
         };
-    }, [parsedWorkflow]);
+    }, [request]);
 
-    return useMemo(() => {
-        return {
-            viewData,
-            loading: computing,
-            parsed: parseResult,
-        };
-    }, [viewData, computing]);
+    // This comparison is synchronous, before effects, so a new chart never receives old rows.
+    const current = settled?.request === request ? settled : undefined;
+    const query = current && current.error === undefined ? current : undefined;
+    const viewData = useMemo(
+        () => (query ? (fold2(query.queryRows, effectiveAggregated, allFields, viewMeasures, viewDimensions, folds) as IRow[]) : emptyRows),
+        [query, effectiveAggregated, allFields, viewMeasures, viewDimensions, folds],
+    );
+    return { viewData, loading: !current, error: current?.error, query, parsed: { workflow: query?.request.workflow ?? emptyWorkflow } };
 };
+
+/** Display preparation stays outside the chart package and never runs a query. */
+export function useNativeResult(chart: IChart, query: UseRendererResult['query'], getRowKey?: NativeGetRowKey): NativeResultSnapshot | undefined {
+    const revision = useRef(0);
+    const semantics = JSON.stringify({ encodings: chart.encodings, config: chart.config });
+    const enabled = chart.layout.renderer === 'native' && chart.config.coordSystem !== 'geographic' && chart.config.geoms[0] !== 'table';
+    return useMemo(() => {
+        if (!enabled || !query) return undefined;
+        return prepareNativeResults({
+            chart,
+            queryRows: query.queryRows,
+            workflow: query.request.workflow,
+            getRowKey,
+            boxplot: query.boxplot,
+            version: { ...query.version, presentationId: String(++revision.current) },
+        });
+    }, [enabled, semantics, query, getRowKey]);
+}

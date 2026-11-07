@@ -150,7 +150,7 @@ describe('normalize', () => {
         expect(result.$schema).toBe(IChartSchemaUrl);
     });
 
-    test('applies algebraLint: dimensions first, at most 2 cross dimensions for non-table geoms', () => {
+    test('applies algebraLint: stable dimensions first without discarding deep ordinary axes', () => {
         const result = normalize(
             {
                 config: { geoms: ['bar'], defaultAggregated: true, limit: -1 },
@@ -158,7 +158,7 @@ describe('normalize', () => {
             },
             META,
         );
-        expect(result.encodings.rows.map((f) => f.fid)).toEqual(['category', 'region', 'sales']);
+        expect(result.encodings.rows.map((f) => f.fid)).toEqual(['category', 'region', 'city', 'sales']);
     });
 
     test('algebraLint keeps all dimensions for table geom', () => {

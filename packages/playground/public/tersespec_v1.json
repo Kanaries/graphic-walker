@@ -262,12 +262,11 @@
                     "type": "boolean"
                 },
                 "renderer": {
-                    "type": "string",
-                    "enum": [
-                        "vega-lite",
-                        "observable-plot"
-                    ],
+                    "$ref": "#/definitions/IRendererType",
                     "default": "vega-lite"
+                },
+                "worksheet": {
+                    "$ref": "#/definitions/IWorksheetLayout"
                 }
             },
             "additionalProperties": false
@@ -883,6 +882,90 @@
                 "url"
             ],
             "additionalProperties": false
+        },
+        "IRendererType": {
+            "type": "string",
+            "enum": [
+                "vega-lite",
+                "observable-plot",
+                "native"
+            ]
+        },
+        "IWorksheetLayout": {
+            "type": "object",
+            "properties": {
+                "scaleScopes": {
+                    "type": "object",
+                    "properties": {
+                        "x": {
+                            "$ref": "#/definitions/IWorksheetScaleScope"
+                        },
+                        "y": {
+                            "$ref": "#/definitions/IWorksheetScaleScope"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "barLayout": {
+                    "type": "string",
+                    "const": "grouped"
+                }
+            },
+            "additionalProperties": false
+        },
+        "IWorksheetScaleScope": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "mode": {
+                            "type": "string",
+                            "const": "shared"
+                        }
+                    },
+                    "required": [
+                        "mode"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "mode": {
+                            "type": "string",
+                            "const": "pane"
+                        }
+                    },
+                    "required": [
+                        "mode"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "mode": {
+                            "type": "string",
+                            "const": "prefix"
+                        },
+                        "rowDepth": {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        "columnDepth": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "mode",
+                        "rowDepth",
+                        "columnDepth"
+                    ],
+                    "additionalProperties": false
+                }
+            ],
+            "description": "Display-domain scope; prefix depths count enclosing facet fields on each axis."
         }
     }
 }

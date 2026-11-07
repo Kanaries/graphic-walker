@@ -1,5 +1,5 @@
-import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, type ComponentType, type RefObject } from "react";
-import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from "../interfaces";
+import React, { createContext, forwardRef, useImperativeHandle, type ForwardedRef, useContext, useRef, type ComponentType, type RefObject } from 'react';
+import type { IChartExportResult, IGWHandler, IGWHandlerInsider, IRenderStatus } from '../interfaces';
 
 const AppRootContext = createContext<ForwardedRef<IGWHandlerInsider>>(null);
 
@@ -17,10 +17,10 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
     useImperativeHandle(ref, () => {
         let renderStatus: IRenderStatus = 'idle';
         let onRenderStatusChangeHandlers: ((status: IRenderStatus) => void)[] = [];
-        const addRenderStatusChangeListener = (cb: typeof onRenderStatusChangeHandlers[number]): (() => void) => {
+        const addRenderStatusChangeListener = (cb: (typeof onRenderStatusChangeHandlers)[number]): (() => void) => {
             onRenderStatusChangeHandlers.push(cb);
             const dispose = () => {
-                onRenderStatusChangeHandlers = onRenderStatusChangeHandlers.filter(which => which !== cb);
+                onRenderStatusChangeHandlers = onRenderStatusChangeHandlers.filter((which) => which !== cb);
             };
             return dispose;
         };
@@ -29,7 +29,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                 return;
             }
             renderStatus = status;
-            onRenderStatusChangeHandlers.forEach(cb => cb(renderStatus));
+            onRenderStatusChangeHandlers.forEach((cb) => cb(renderStatus));
         };
         return {
             get renderStatus() {
@@ -50,7 +50,7 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                     container: () => null,
                 };
             }) as IGWHandler['exportChart'],
-            exportChartList: (async function * exportChartList (mode: IChartExportResult['mode'] = 'svg') {
+            exportChartList: async function* exportChartList(mode: IChartExportResult['mode'] = 'svg') {
                 yield {
                     mode,
                     total: 1,
@@ -66,25 +66,22 @@ const AppRoot = forwardRef<IGWHandlerInsider, { children: any }>(({ children }, 
                     },
                     hasNext: false,
                 };
-            }) as IGWHandler['exportChartList'],
+            } as IGWHandler['exportChartList'],
         };
     }, []);
 
-    return (
-        <AppRootContext.Provider value={ref}>
-            {children}
-        </AppRootContext.Provider>
-    );
+    return <AppRootContext.Provider value={ref}>{children}</AppRootContext.Provider>;
 });
 
-export const withAppRoot = <P extends object>(Component: ComponentType<any>) => {
-    return (props: P) => {
+export const withAppRoot = <P extends object, R = unknown>(Component: ComponentType<any>) => {
+    return forwardRef<R, P>((props, ref) => {
+        const appRef = useRef<IGWHandlerInsider>(null);
         return (
-            <AppRoot>
-                <Component {...props} />
+            <AppRoot ref={appRef}>
+                <Component {...props} ref={ref} />
             </AppRoot>
         );
-    };
+    });
 };
 
 export default AppRoot;

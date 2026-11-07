@@ -1,3 +1,4 @@
+import { getLegacyRendererDiagnostics } from '@/lib/native/legacyCapabilities';
 import { toVegaSpec } from '@/lib/vega';
 import { Methods, PropsMap, VisActionOf, VisSpecWithHistory, reducer } from './visSpecHistory';
 import type { IAggregator, IChart, IChatMessage, IFilterField, IViewField } from '@/interfaces';
@@ -30,13 +31,19 @@ function transformFilter(filter: IFilterField) {
 }
 
 export function toVegaSimplified(chart: IChart) {
+    const diagnostics = getLegacyRendererDiagnostics(chart);
+    if (diagnostics.length) {
+        // Chat keeps a lossless canonical summary instead of pretending a truncated
+        // legacy plot is an equivalent specification. This is not a Vega-Lite spec.
+        return { reportType: 'graphic-walker-chart', renderer: chart.layout.renderer ?? 'vega-lite', status: 'unsupported-renderer', diagnostics, chart };
+    }
     const { defaultAggregated, geoms, folds } = chart.config;
     const { stack } = chart.layout;
     const { rows, columns, color, details, opacity, radius, shape, size, text, theta, filters, dimensions, measures } = chart.encodings;
 
     const fieldNames = new Map(dimensions.concat(measures).map((f) => [f.fid, f.name]));
 
-    const viewEncodingFields = viewEncodingKeys(geoms[0] ?? 'auto').flatMap<IViewField>((k) => chart.encodings?.[k] ?? []);
+    const viewEncodingFields = viewEncodingKeys(geoms[0] ?? 'auto', chart.layout.renderer).flatMap<IViewField>((k) => chart.encodings?.[k] ?? []);
 
     const viewDimensions = viewEncodingFields.filter((x) => x.analyticType === 'dimension');
     const viewMeasures = viewEncodingFields.filter((x) => x.analyticType === 'measure');
@@ -67,6 +74,8 @@ export function toVegaSimplified(chart: IChart) {
         size: size[0],
         text: text[0],
         theta: theta[0],
+        worksheet: chart.layout.worksheet,
+        coordSystem: chart.config.coordSystem,
     }).map((spec) => {
         const newSpec = { ...spec };
         if (newSpec['data']) delete newSpec['data'];
@@ -311,7 +320,7 @@ export function toChatMessage(history: VisSpecWithHistory): IChatMessage[] {
             if (now.config.geoms[0] === 'auto') {
                 message += `\nChange the geom type to ${autoMark(now.encodings.rows.concat(now.encodings.columns).map((x) => x.semanticType))}.`;
             }
-            const viewEncodingFields = viewEncodingKeys(now.config.geoms[0] ?? 'auto').flatMap<IViewField>((k) => now.encodings?.[k] ?? []);
+            const viewEncodingFields = viewEncodingKeys(now.config.geoms[0] ?? 'auto', now.layout.renderer).flatMap<IViewField>((k) => now.encodings?.[k] ?? []);
             const isEmptyChart = viewEncodingFields.length === 0;
             if (!isEmptyChart) {
                 result.push({ role: 'user', content: message, type: 'generated' });

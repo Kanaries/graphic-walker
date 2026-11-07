@@ -29,3 +29,5 @@ export type {
     IPivotTablePathItem,
     PivotTableValue,
 } from './components/pivotTable';
+
+export type { NativeSelectionEvent, NativeSelectionTarget, NativeSelectionValue } from './lib/native/events';

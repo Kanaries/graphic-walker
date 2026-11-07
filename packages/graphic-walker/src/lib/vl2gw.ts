@@ -1,5 +1,8 @@
+import { prepareVegaLiteImport, VegaLiteImportError } from './vlImport';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../constants';
+export { VegaLiteImportError } from './vlImport';
 import { nanoid } from 'nanoid';
-import { IChart, IFilterFiledSimple, IViewField, IVisualConfig } from '../interfaces';
+import { IChart, IViewField, IVisualConfig } from '../interfaces';
 import { fillChart } from '../models/visSpecHistory';
 
 type markType =
@@ -8,6 +11,7 @@ type markType =
     | 'arc'
     | 'circle'
     | 'line'
+    | 'trail'
     | 'point'
     | 'rect'
     | 'rule'
@@ -26,8 +30,39 @@ type markChannel =
 
 type GWGeoms = 'auto' | 'bar' | 'line' | 'area' | 'trail' | 'point' | 'circle' | 'tick' | 'rect' | 'arc' | 'text' | 'boxplot' | 'table';
 
-type EncodingChannels = 'column' | 'row' | 'color' | 'opacity' | 'shape' | 'size' | 'details' | 'theta' | 'x' | 'y' | 'facet' | 'order' | 'radius';
-const encodingChannels = new Set(['column', 'row', 'color', 'opacity', 'shape', 'size', 'details', 'theta', 'x', 'y', 'facet', 'order', 'radius']);
+type EncodingChannels =
+    | 'column'
+    | 'row'
+    | 'color'
+    | 'opacity'
+    | 'shape'
+    | 'size'
+    | 'details'
+    | 'detail'
+    | 'text'
+    | 'theta'
+    | 'x'
+    | 'y'
+    | 'facet'
+    | 'order'
+    | 'radius';
+const encodingChannels = new Set([
+    'column',
+    'row',
+    'color',
+    'opacity',
+    'shape',
+    'size',
+    'details',
+    'detail',
+    'text',
+    'theta',
+    'x',
+    'y',
+    'facet',
+    'order',
+    'radius',
+]);
 const isSupportedChannel = (channelName: string): channelName is EncodingChannels => encodingChannels.has(channelName);
 type AggregateName = 'sum' | 'count' | 'max' | 'min' | 'mean' | 'median' | 'variance' | 'stdev';
 const aggNames = new Set(['sum', 'count', 'max', 'min', 'mean', 'median', 'variance', 'stdev']);
@@ -95,6 +130,7 @@ const dimensionTypeMap = {
     radius: 'radius',
     theta: 'theta',
     details: 'details',
+    detail: 'details',
     text: 'text',
     color: 'color',
 } as const;
@@ -129,14 +165,13 @@ function encodingToDimension(name: EncodingChannels, encoding: any, dict: Map<st
                 sort: sortValueTransform(encoding.sort),
             };
         default:
-            const analogChannel = analogChannels.has(name);
-            const dictField = dict.get(encoding.field) ?? countField;
-            const field = encoding.bin ? createBinField(dictField) : dictField;
-            const aggregate = field === countField ? 'count' : isValidAggregate(encoding.aggregate) && analogChannel ? encoding.aggregate : undefined;
+            const dictField = encoding.field === undefined ? countField : (dict.get(encoding.field) ?? countField);
+            const field = encoding.bin ? createBinField(dictField) : { ...dictField, ...(encoding.type ? { semanticType: encoding.type } : {}) };
+            const aggregate = dictField === countField ? 'count' : isValidAggregate(encoding.aggregate) ? encoding.aggregate : undefined;
             let analyticType: 'auto' | 'measure' | 'dimension';
-            if (field === countField || aggregate) {
+            if (dictField === countField || aggregate) {
                 analyticType = 'measure';
-            } else if (field.analyticType === 'measure' && analogChannels.has(name)) {
+            } else if (field.analyticType === 'measure' && analogChannels.has(name) && !['nominal', 'ordinal', 'temporal'].includes(encoding.type)) {
                 analyticType = 'auto';
             } else {
                 analyticType = 'dimension';
@@ -163,6 +198,8 @@ function getGeom(mark: markChannel): GWGeoms {
                 return 'bar';
             case 'line':
                 return 'line';
+            case 'trail':
+                return 'trail';
             case 'boxplot':
                 return 'boxplot';
             case 'area':
@@ -177,6 +214,8 @@ function getGeom(mark: markChannel): GWGeoms {
                 return 'circle';
             case 'rect':
                 return 'rect';
+            case 'text':
+                return 'text';
             case 'tick':
             default:
                 return 'tick';
@@ -187,30 +226,6 @@ function getGeom(mark: markChannel): GWGeoms {
     }
     return mapper(mark.type);
 }
-
-const encodeOP = (op: string) => {
-    switch (op) {
-        case '==':
-        case '===':
-        case 'equal':
-        case 'oneOf':
-            return 'one of';
-        case '!=':
-        case '!==':
-            return 'not in';
-        case '>':
-        case '>=':
-        case '<':
-        case '<=':
-        case 'lt':
-        case 'lte':
-        case 'gt':
-        case 'gte':
-        case 'range':
-            return 'range';
-    }
-    return 'one of';
-};
 
 function deduper<T>(arr: T[], keyFunction: (item: T) => string) {
     const set = new Set<string>();
@@ -227,6 +242,7 @@ function deduper<T>(arr: T[], keyFunction: (item: T) => string) {
 }
 
 export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, name: string): IChart {
+    const imported = prepareVegaLiteImport(vl, allFields);
     let geom: GWGeoms = 'tick';
     const encodings: {
         name: string;
@@ -247,105 +263,17 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
             encodings.push(...entries(vl.spec.encoding));
         }
     }
-    vl.concat &&
-        vl.concat.forEach((v) => {
-            geom = getGeom(v.mark);
-            if (v.encoding) {
-                encodings.push(...entries(v.encoding));
-            }
-        });
-    vl.hconcat &&
-        vl.hconcat.forEach((v) => {
-            geom = getGeom(v.mark);
-            if (v.encoding) {
-                encodings.push(...entries(v.encoding));
-            }
-        });
-    vl.vconcat &&
-        vl.vconcat.forEach((v) => {
-            geom = getGeom(v.mark);
-            if (v.encoding) {
-                encodings.push(...entries(v.encoding));
-            }
-        });
-    const config: Partial<IVisualConfig> = {};
-    const rules = new Map<string, { field: string; rule: 'one of' | 'not in' | 'range'; value: any[] }>();
-    const dict = new Map<string, IViewField>();
-    allFields.forEach((v) => {
-        dict.set(v.name, v);
-    });
-    const addRule = (field: string, op: string, value: any) => {
-        const key = `${field}|${encodeOP(op)}`;
-        if (!rules.has(key)) {
-            rules.set(key, { field, rule: encodeOP(op), value: [] });
-        }
-        if (op.startsWith('>') || op.startsWith('gt')) {
-            rules.get(key)!.value = [value, rules.get(key)!.value[1] ?? null];
-        } else if (op.startsWith('<') || op.startsWith('lt')) {
-            rules.get(key)!.value = [rules.get(key)!.value[0] ?? null, value];
-        } else if (op === 'range') {
-            rules.get(key)!.value = value;
-        } else if (op === 'oneOf') {
-            rules.get(key)!.value.push(...value);
-        } else {
-            rules.get(key)!.value.push(value);
-        }
-    };
-    if (vl.transform) {
-        vl.transform.forEach((t) => {
-            if (t.fold) {
-                config.folds = t.fold.map((name) => dict.get(name)?.fid ?? name);
-            }
-            if (t.filter) {
-                if (typeof t.filter === 'string') {
-                    const filters = (t.filter as string).split(/[\&\&|\|\|]/g);
-                    filters.forEach((f) => {
-                        const result = /datum(\.[A-z_]+|\[['"][A-z\s_]+['"]\])\s*((\!=|==|>|<)=?)\s*(.*)/.exec(f);
-                        if (result) {
-                            const field = /(?:\.|\[["'])([A-z\s_]*)(?:["']\])?/.exec(result[1]);
-                            const value = /["'](.*)["']/.exec(result[4]);
-                            if (!field || !value) {
-                                return;
-                            }
-                            const op = result[2];
-                            addRule(field[1], op, value[1]);
-                        }
-                    });
-                }
-                if (typeof t.filter === 'object') {
-                    if (t.filter.field === 'rank') {
-                        if (t.filter.lte) {
-                            config.limit = t.filter.lte;
-                        } else if (t.filter.lt) {
-                            config.limit = Math.floor(t.filter.lt);
-                            if (config.limit == t.filter.lt) {
-                                config.limit -= 1;
-                            }
-                        }
-                    } else {
-                        const op = Object.keys(t.filter).find((k) => ['equal', 'oneOf', 'lt', 'lte', 'gt', 'gte', 'range'].includes(k));
-                        op && addRule(t.filter.field, op, t.filter[op]);
-                    }
-                }
-            }
-        });
-    }
-    const filterFields = Array.from(rules.values()).map(({ field, rule, value }): IFilterFiledSimple => {
-        return {
-            fid: field,
-            rule: {
-                type: rule,
-                value: value as any,
-            },
-        };
-    });
-    const results = encodings.flatMap(({ name, value }) => (isSupportedChannel(name) ? [encodingToDimension(name, value, dict)] : []));
+    const config: Partial<IVisualConfig> = imported.folds ? { folds: imported.folds } : {};
+    const dict = imported.fields;
+    const results = encodings.flatMap(({ name, value }) =>
+        isSupportedChannel(name) ? (Array.isArray(value) ? value : [value]).map((item) => encodingToDimension(name, item, dict)) : [],
+    );
     const defaultAggregated = results.reduce((x, y) => x || !!y.aggregate, false);
-    const sort = results.reduce((x: 'none' | 'descending' | 'ascending', y) => y.sort ?? x, 'none' as const);
+    const sort = encodings.find((item) => item.name === 'order')?.value?.sort;
     const stack = results.reduce((x: 'none' | 'stack' | 'normalize' | 'center', y) => y.stack ?? x, ['bar', 'area', 'arc'].includes(geom) ? 'stack' : 'none');
     const binFields = results.reduce(
         (x, y) => (y.binDimension && !x.has(y.binDimension.name) ? x.set(y.binDimension.name, y.binDimension) : x),
-        new Map<string, IViewField>()
+        new Map<string, IViewField>(),
     );
 
     const resultFields = results.flatMap((x) => {
@@ -370,9 +298,9 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
                                   aggName: x.aggregate,
                               }
                             : {}),
-                        ...(sort && sort !== 'none' && (x.dimensionType === 'column' || x.dimensionType === 'row') && analyticType === 'dimension'
+                        ...((x.sort ?? sort) && (x.dimensionType === 'column' || x.dimensionType === 'row') && analyticType === 'dimension'
                             ? {
-                                  sort,
+                                  sort: x.sort ?? sort,
                               }
                             : {}),
                     },
@@ -382,6 +310,35 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
         return [];
     });
 
+    if (imported.folds) {
+        const index = vl.transform.findIndex((item: { fold?: unknown }) => item.fold !== undefined);
+        const rejectFold = (message: string): never => {
+            throw new VegaLiteImportError([{ code: 'unsupported-vega-lite', severity: 'error', configRef: `transform[${index}].fold`, message }]);
+        };
+        const keys = resultFields.filter((item) => item.value.fid === MEA_KEY_ID);
+        const values = resultFields.filter((item) => item.value.fid === MEA_VAL_ID);
+        if (
+            !keys.length ||
+            !values.length ||
+            keys.some((item) => item.value.analyticType !== 'dimension') ||
+            values.some((item) => item.value.analyticType !== 'measure')
+        ) {
+            rejectFold(
+                'Every encoded fold key must be a dimension and every encoded fold value must be a measure, with both outputs present; the existing GW fold workflow cannot preserve other roles.',
+            );
+        }
+        if (defaultAggregated && new Set(values.map((item) => item.value.aggName ?? 'sum')).size > 1) {
+            rejectFold(
+                'The existing GW fold workflow uses one aggregation for its value output; multiple different fold-value aggregations cannot be imported faithfully.',
+            );
+        }
+        if (resultFields.some((item) => imported.folds!.includes(item.value.fid))) {
+            rejectFold(
+                'The existing GW fold projection removes original folded source columns; encoding them alongside fold outputs cannot be imported faithfully.',
+            );
+        }
+    }
+
     const is = (v: string) => (x: { name: string }) => x.name === v;
     const get = <T>(x: { value: T }) => x.value;
 
@@ -389,22 +346,18 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
 
     return fillChart({
         visId,
-        name,
+        name: typeof vl.title === 'string' ? vl.title : name,
         encodings: {
             dimensions: allFields.filter((x) => x.analyticType === 'dimension').concat(...binFields.values()),
             measures: allFields.filter((x) => x.analyticType === 'measure' && x.fid !== countField.fid).concat(countField),
-            columns: deduperFields(
-                resultFields
-                    .filter(is('facetX'))
-                    .concat(resultFields.filter(is('column')))
-                    .map(get)
-            ),
-            rows: deduperFields(
-                resultFields
-                    .filter(is('facetY'))
-                    .concat(resultFields.filter(is('row')))
-                    .map(get)
-            ),
+            columns: resultFields
+                .filter(is('facetX'))
+                .concat(resultFields.filter(is('column')))
+                .map(get),
+            rows: resultFields
+                .filter(is('facetY'))
+                .concat(resultFields.filter(is('row')))
+                .map(get),
             details: deduperFields(resultFields.filter(is('details')).map(get)),
             opacity: deduperFields(resultFields.filter(is('opacity')).map(get)),
             radius: deduperFields(resultFields.filter(is('radius')).map(get)),
@@ -413,18 +366,10 @@ export function VegaliteMapper(vl: any, allFields: IViewField[], visId: string, 
             text: deduperFields(resultFields.filter(is('text')).map(get)),
             theta: deduperFields(resultFields.filter(is('theta')).map(get)),
             color: deduperFields(resultFields.filter(is('color')).map(get)),
-            filters: deduper(
-                filterFields.map((f) => {
-                    const originalField = dict.get(f.fid)!;
-                    return {
-                        ...originalField,
-                        rule: f.rule,
-                    };
-                }),
-                (f) => `${f.fid}_${f.rule?.type}`
-            ),
+            filters: imported.filters,
         },
         layout: {
+            ...imported.layout,
             stack,
         },
         config: {

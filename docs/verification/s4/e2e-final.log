@@ -1,0 +1,178 @@
+
+Running 162 tests using 1 worker
+
+(node:37623) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/162] [chromium] › tests/e2e/issue-501-shadow-interactions.spec.ts:24:5 › ActionMenu and drag/drop keep their nearer FieldsContext coordinates
+[2/162] [chromium] › tests/e2e/issue-501-shadow-interactions.spec.ts:126:5 › full-viewport layout preserves the viewport baseline
+[3/162] [chromium] › tests/e2e/issue-501-shadow-interactions.spec.ts:140:5 › the toolbar-sized DataSource host keeps its dialog viewport-relative
+[4/162] [chromium] › tests/e2e/issue-501-shadow-interactions.spec.ts:165:5 › caller style.contain can opt a GraphicWalker host out
+[5/162] [chromium] › tests/e2e/issue-501-shadow-interactions.spec.ts:179:5 › GraphicRenderer forwards its public className and style to the shadow host
+[6/162] [chromium] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 1
+[7/162] [chromium] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 0.8
+[8/162] [chromium] › tests/e2e/issue-501-shadow-overlays.spec.ts:63:5 › narrow host keeps real filter and visual-config dialogs bounded, scrollable, and closable
+[9/162] [chromium] › tests/e2e/issue-501-shadow-overlays.spec.ts:166:5 › a host taller than the viewport keeps its dialog reachable by page scroll
+[10/162] [chromium] › tests/e2e/issue-501-shadow-primitives.spec.ts:10:5 › all shared fixed-position UI primitives use the scaled shadow-host coordinates
+[11/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:22:13 › editor › sample switch does not report a superseded bin query against fold data
+[12/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:52:13 › editor › an already running old computation cannot report over a newer completed chart
+[13/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:72:13 › editor › the current computation error remains reportable after a display-only chart update
+[14/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:22:13 › viewer › sample switch does not report a superseded bin query against fold data
+[15/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:52:13 › viewer › an already running old computation cannot report over a newer completed chart
+[16/162] [chromium] › tests/e2e/native-computation-errors.spec.ts:72:13 › viewer › the current computation error remains reportable after a display-only chart update
+[17/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[18/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[19/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[20/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[21/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[22/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[23/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[24/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[25/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[26/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[27/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[28/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[29/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[30/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[31/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[32/162] [chromium] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+[33/162] [chromium] › tests/e2e/native-renderer.spec.ts:13:5 › StrictMode keeps one bounded controller and complete viewport export refs
+[34/162] [chromium] › tests/e2e/native-renderer.spec.ts:40:5 › backend and static theme changes preserve the controller, scroll and prepared presentation
+[35/162] [chromium] › tests/e2e/native-renderer.spec.ts:77:5 › pending and failed query snapshots block every legacy export and recover with a new version
+[36/162] [chromium] › tests/e2e/native-renderer.spec.ts:109:5 › actual pointer clicks retain coordinates and original values; keyboard and brush do not inherit them
+[37/162] [chromium] › tests/e2e/native-renderer.spec.ts:139:5 › unmount removes the controller and restores only the export handlers it owns
+[38/162] [chromium] › tests/e2e/native-renderer.spec.ts:151:5 › header collapse and sorting commit a new prepared presentation without combining child values
+[39/162] [chromium] › tests/e2e/native-worksheet.spec.ts:60:5 › PureRenderer exposes all four public export methods with actual SVG/PNG downloads
+[40/162] [chromium] › tests/e2e/native-worksheet.spec.ts:81:5 › Canvas/SVG, theme and static color updates preserve the completed computation result
+[41/162] [chromium] › tests/e2e/native-worksheet.spec.ts:116:9 › deep vega-lite input keeps every field and requires an explicit native choice
+[42/162] [chromium] › tests/e2e/native-worksheet.spec.ts:116:9 › deep observable-plot input keeps every field and requires an explicit native choice
+[43/162] [chromium] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW bin sample computes standard ordinal fields before native rendering
+[44/162] [chromium] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW binCount sample computes standard ordinal fields before native rendering
+[45/162] [chromium] › tests/e2e/native-worksheet.spec.ts:189:5 › same-name measure fold sample uses real aggregate rows and keeps branch identities distinct
+[46/162] [chromium] › tests/e2e/native-worksheet.spec.ts:226:5 › temporal raw sample keeps source strings and null through GW with stable selected record identities
+[47/162] [chromium] › tests/e2e/native-worksheet.spec.ts:271:5 › mixed temporal coordinates agree across actual native, Vega and Plot marks and Vega clicks retain raw values
+[48/162] [chromium] › tests/e2e/native-worksheet.spec.ts:319:5 › held queries reject stale exports and an older completion cannot replace the latest input
+[49/162] [chromium] › tests/e2e/native-worksheet.spec.ts:344:5 › a failed replacement query cannot export the old viewport and a later success recovers
+[50/162] [chromium] › tests/e2e/native-worksheet.spec.ts:366:5 › public native selection callbacks retain original field references and raw values
+[51/162] [chromium] › tests/e2e/native-worksheet.spec.ts:385:5 › real editor field/filter/history/save reload flow keeps deep IChart bindings and public export metadata
+[52/162] [chromium] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted vega-lite editor hands public app exports to native without stale cleanup
+[53/162] [chromium] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted observable-plot editor hands public app exports to native without stale cleanup
+[54/162] [chromium] › tests/e2e/native-worksheet.spec.ts:498:5 › controlled Vega-Lite import succeeds and rejected transforms preserve the current chart and history
+(node:38318) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[55/162] [firefox] › tests/e2e/issue-501-shadow-interactions.spec.ts:24:5 › ActionMenu and drag/drop keep their nearer FieldsContext coordinates
+[56/162] [firefox] › tests/e2e/issue-501-shadow-interactions.spec.ts:126:5 › full-viewport layout preserves the viewport baseline
+[57/162] [firefox] › tests/e2e/issue-501-shadow-interactions.spec.ts:140:5 › the toolbar-sized DataSource host keeps its dialog viewport-relative
+[58/162] [firefox] › tests/e2e/issue-501-shadow-interactions.spec.ts:165:5 › caller style.contain can opt a GraphicWalker host out
+[59/162] [firefox] › tests/e2e/issue-501-shadow-interactions.spec.ts:179:5 › GraphicRenderer forwards its public className and style to the shadow host
+[60/162] [firefox] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 1
+[61/162] [firefox] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 0.8
+[62/162] [firefox] › tests/e2e/issue-501-shadow-overlays.spec.ts:63:5 › narrow host keeps real filter and visual-config dialogs bounded, scrollable, and closable
+[63/162] [firefox] › tests/e2e/issue-501-shadow-overlays.spec.ts:166:5 › a host taller than the viewport keeps its dialog reachable by page scroll
+[64/162] [firefox] › tests/e2e/issue-501-shadow-primitives.spec.ts:10:5 › all shared fixed-position UI primitives use the scaled shadow-host coordinates
+[65/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:22:13 › editor › sample switch does not report a superseded bin query against fold data
+[66/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:52:13 › editor › an already running old computation cannot report over a newer completed chart
+[67/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:72:13 › editor › the current computation error remains reportable after a display-only chart update
+[68/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:22:13 › viewer › sample switch does not report a superseded bin query against fold data
+[69/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:52:13 › viewer › an already running old computation cannot report over a newer completed chart
+[70/162] [firefox] › tests/e2e/native-computation-errors.spec.ts:72:13 › viewer › the current computation error remains reportable after a display-only chart update
+[71/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[72/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[73/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[74/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[75/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[76/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[77/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[78/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[79/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[80/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[81/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[82/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[83/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[84/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[85/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[86/162] [firefox] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+[87/162] [firefox] › tests/e2e/native-renderer.spec.ts:13:5 › StrictMode keeps one bounded controller and complete viewport export refs
+[88/162] [firefox] › tests/e2e/native-renderer.spec.ts:40:5 › backend and static theme changes preserve the controller, scroll and prepared presentation
+[89/162] [firefox] › tests/e2e/native-renderer.spec.ts:77:5 › pending and failed query snapshots block every legacy export and recover with a new version
+[90/162] [firefox] › tests/e2e/native-renderer.spec.ts:109:5 › actual pointer clicks retain coordinates and original values; keyboard and brush do not inherit them
+[91/162] [firefox] › tests/e2e/native-renderer.spec.ts:139:5 › unmount removes the controller and restores only the export handlers it owns
+[92/162] [firefox] › tests/e2e/native-renderer.spec.ts:151:5 › header collapse and sorting commit a new prepared presentation without combining child values
+[93/162] [firefox] › tests/e2e/native-worksheet.spec.ts:60:5 › PureRenderer exposes all four public export methods with actual SVG/PNG downloads
+[94/162] [firefox] › tests/e2e/native-worksheet.spec.ts:81:5 › Canvas/SVG, theme and static color updates preserve the completed computation result
+[95/162] [firefox] › tests/e2e/native-worksheet.spec.ts:116:9 › deep vega-lite input keeps every field and requires an explicit native choice
+[96/162] [firefox] › tests/e2e/native-worksheet.spec.ts:116:9 › deep observable-plot input keeps every field and requires an explicit native choice
+[97/162] [firefox] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW bin sample computes standard ordinal fields before native rendering
+[98/162] [firefox] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW binCount sample computes standard ordinal fields before native rendering
+[99/162] [firefox] › tests/e2e/native-worksheet.spec.ts:189:5 › same-name measure fold sample uses real aggregate rows and keeps branch identities distinct
+[100/162] [firefox] › tests/e2e/native-worksheet.spec.ts:226:5 › temporal raw sample keeps source strings and null through GW with stable selected record identities
+[101/162] [firefox] › tests/e2e/native-worksheet.spec.ts:271:5 › mixed temporal coordinates agree across actual native, Vega and Plot marks and Vega clicks retain raw values
+[102/162] [firefox] › tests/e2e/native-worksheet.spec.ts:319:5 › held queries reject stale exports and an older completion cannot replace the latest input
+[103/162] [firefox] › tests/e2e/native-worksheet.spec.ts:344:5 › a failed replacement query cannot export the old viewport and a later success recovers
+[104/162] [firefox] › tests/e2e/native-worksheet.spec.ts:366:5 › public native selection callbacks retain original field references and raw values
+[105/162] [firefox] › tests/e2e/native-worksheet.spec.ts:385:5 › real editor field/filter/history/save reload flow keeps deep IChart bindings and public export metadata
+[106/162] [firefox] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted vega-lite editor hands public app exports to native without stale cleanup
+[107/162] [firefox] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted observable-plot editor hands public app exports to native without stale cleanup
+[108/162] [firefox] › tests/e2e/native-worksheet.spec.ts:498:5 › controlled Vega-Lite import succeeds and rejected transforms preserve the current chart and history
+(node:40270) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[109/162] [webkit] › tests/e2e/issue-501-shadow-interactions.spec.ts:24:5 › ActionMenu and drag/drop keep their nearer FieldsContext coordinates
+[110/162] [webkit] › tests/e2e/issue-501-shadow-interactions.spec.ts:126:5 › full-viewport layout preserves the viewport baseline
+[111/162] [webkit] › tests/e2e/issue-501-shadow-interactions.spec.ts:140:5 › the toolbar-sized DataSource host keeps its dialog viewport-relative
+[112/162] [webkit] › tests/e2e/issue-501-shadow-interactions.spec.ts:165:5 › caller style.contain can opt a GraphicWalker host out
+[113/162] [webkit] › tests/e2e/issue-501-shadow-interactions.spec.ts:179:5 › GraphicRenderer forwards its public className and style to the shadow host
+[114/162] [webkit] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 1
+[115/162] [webkit] › tests/e2e/issue-501-shadow-overlays.spec.ts:13:9 › dialog, dropdown, and open-dialog scrolling stay in the shadow host at scale 0.8
+[116/162] [webkit] › tests/e2e/issue-501-shadow-overlays.spec.ts:63:5 › narrow host keeps real filter and visual-config dialogs bounded, scrollable, and closable
+[117/162] [webkit] › tests/e2e/issue-501-shadow-overlays.spec.ts:166:5 › a host taller than the viewport keeps its dialog reachable by page scroll
+[118/162] [webkit] › tests/e2e/issue-501-shadow-primitives.spec.ts:10:5 › all shared fixed-position UI primitives use the scaled shadow-host coordinates
+[119/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:22:13 › editor › sample switch does not report a superseded bin query against fold data
+[120/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:52:13 › editor › an already running old computation cannot report over a newer completed chart
+[121/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:72:13 › editor › the current computation error remains reportable after a display-only chart update
+[122/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:22:13 › viewer › sample switch does not report a superseded bin query against fold data
+[123/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:52:13 › viewer › an already running old computation cannot report over a newer completed chart
+[124/162] [webkit] › tests/e2e/native-computation-errors.spec.ts:72:13 › viewer › the current computation error remains reportable after a display-only chart update
+[125/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[126/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[127/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[128/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[129/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[130/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[131/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[132/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[133/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[134/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[135/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[136/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[137/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[138/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[139/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[140/162] [webkit] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+[141/162] [webkit] › tests/e2e/native-renderer.spec.ts:13:5 › StrictMode keeps one bounded controller and complete viewport export refs
+[142/162] [webkit] › tests/e2e/native-renderer.spec.ts:40:5 › backend and static theme changes preserve the controller, scroll and prepared presentation
+[143/162] [webkit] › tests/e2e/native-renderer.spec.ts:77:5 › pending and failed query snapshots block every legacy export and recover with a new version
+[144/162] [webkit] › tests/e2e/native-renderer.spec.ts:109:5 › actual pointer clicks retain coordinates and original values; keyboard and brush do not inherit them
+[145/162] [webkit] › tests/e2e/native-renderer.spec.ts:139:5 › unmount removes the controller and restores only the export handlers it owns
+[146/162] [webkit] › tests/e2e/native-renderer.spec.ts:151:5 › header collapse and sorting commit a new prepared presentation without combining child values
+[147/162] [webkit] › tests/e2e/native-worksheet.spec.ts:60:5 › PureRenderer exposes all four public export methods with actual SVG/PNG downloads
+[148/162] [webkit] › tests/e2e/native-worksheet.spec.ts:81:5 › Canvas/SVG, theme and static color updates preserve the completed computation result
+[149/162] [webkit] › tests/e2e/native-worksheet.spec.ts:116:9 › deep vega-lite input keeps every field and requires an explicit native choice
+[150/162] [webkit] › tests/e2e/native-worksheet.spec.ts:116:9 › deep observable-plot input keeps every field and requires an explicit native choice
+[151/162] [webkit] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW bin sample computes standard ordinal fields before native rendering
+[152/162] [webkit] › tests/e2e/native-worksheet.spec.ts:141:9 › real GW binCount sample computes standard ordinal fields before native rendering
+[153/162] [webkit] › tests/e2e/native-worksheet.spec.ts:189:5 › same-name measure fold sample uses real aggregate rows and keeps branch identities distinct
+[154/162] [webkit] › tests/e2e/native-worksheet.spec.ts:226:5 › temporal raw sample keeps source strings and null through GW with stable selected record identities
+[155/162] [webkit] › tests/e2e/native-worksheet.spec.ts:271:5 › mixed temporal coordinates agree across actual native, Vega and Plot marks and Vega clicks retain raw values
+[156/162] [webkit] › tests/e2e/native-worksheet.spec.ts:319:5 › held queries reject stale exports and an older completion cannot replace the latest input
+[157/162] [webkit] › tests/e2e/native-worksheet.spec.ts:344:5 › a failed replacement query cannot export the old viewport and a later success recovers
+[158/162] [webkit] › tests/e2e/native-worksheet.spec.ts:366:5 › public native selection callbacks retain original field references and raw values
+[159/162] [webkit] › tests/e2e/native-worksheet.spec.ts:385:5 › real editor field/filter/history/save reload flow keeps deep IChart bindings and public export metadata
+[160/162] [webkit] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted vega-lite editor hands public app exports to native without stale cleanup
+[161/162] [webkit] › tests/e2e/native-worksheet.spec.ts:444:9 › a mounted observable-plot editor hands public app exports to native without stale cleanup
+[162/162] [webkit] › tests/e2e/native-worksheet.spec.ts:498:5 › controlled Vega-Lite import succeeds and rejected transforms preserve the current chart and history
+  162 passed (3.6m)

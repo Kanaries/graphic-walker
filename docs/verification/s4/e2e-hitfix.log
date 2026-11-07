@@ -1,0 +1,64 @@
+
+Running 48 tests using 1 worker
+
+(node:41516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[2/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[3/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[4/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[5/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[6/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[7/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[8/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[9/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[10/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[11/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[12/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[13/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[14/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[15/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[16/48] [chromium] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+(node:41816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[17/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[18/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[19/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[20/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[21/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[22/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[23/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[24/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[25/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[26/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[27/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[28/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[29/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[30/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[31/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[32/48] [firefox] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+(node:42813) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[33/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › circle renders through the real query and retains pointer identity across SVG/Canvas
+[34/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › tick renders through the real query and retains pointer identity across SVG/Canvas
+[35/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › auto-tick renders through the real query and retains pointer identity across SVG/Canvas
+[36/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area renders through the real query and retains pointer identity across SVG/Canvas
+[37/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › trail renders through the real query and retains pointer identity across SVG/Canvas
+[38/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie renders through the real query and retains pointer identity across SVG/Canvas
+[39/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › donut renders through the real query and retains pointer identity across SVG/Canvas
+[40/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › pie-size renders through the real query and retains pointer identity across SVG/Canvas
+[41/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[42/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › bar-center renders through the real query and retains pointer identity across SVG/Canvas
+[43/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-normalize renders through the real query and retains pointer identity across SVG/Canvas
+[44/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › area-center renders through the real query and retains pointer identity across SVG/Canvas
+[45/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:134:9 › boxplot renders through the real query and retains pointer identity across SVG/Canvas
+[46/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:174:5 › nested pie facets survive the real query and both scroll axes without multiplying Canvas elements
+[47/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:206:5 › donut center is empty for hover and pointer selection in both backends
+[48/48] [webkit] › tests/e2e/native-extended-marks.spec.ts:230:5 › boxplot distinguishes computed summary values from the original outlier record
+  48 passed (56.3s)

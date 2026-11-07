@@ -1,10 +1,10 @@
 import { Resizable } from 're-resizable';
-import React, { forwardRef, useMemo, useContext } from 'react';
+import React, { forwardRef, useMemo, useContext, useEffect } from 'react';
 
 import { PivotTableCore } from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
 import ReactVega, { IReactVegaHandler } from '../vis/react-vega';
-import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales } from '../interfaces';
+import { DraggableFieldState, IRow, IThemeKey, IVisualConfigNew, IVisualLayout, VegaGlobalConfig, IChannelScales, IChart, IRendererType } from '../interfaces';
 import { getTheme } from '../utils/useTheme';
 import { GWGlobalConfig } from '../vis/theme';
 import { uiThemeContext, themeContext } from '@/store/theme';
@@ -12,15 +12,25 @@ import { parseColorToHex } from '@/utils/colors';
 import ObservablePlotRenderer from '@/vis/observable-plot-renderer';
 import { useCompututaion } from '@/store';
 import { useAppRootContext } from '@/components/appRoot';
+import NativeRenderer from '../vis/native-renderer';
+import type { NativeResultSnapshot } from '../lib/native/results';
+import type { NativeSelectionEvent } from '../lib/native/events';
+import { getLegacyRendererDiagnostics } from '../lib/native/legacyCapabilities';
 
 interface SpecRendererProps {
+    chart?: IChart;
+    nativeResult?: NativeResultSnapshot;
+    loading?: boolean;
+    error?: unknown;
+    onNativeSelection?: (event: NativeSelectionEvent) => void;
+    onRendererChange?: (renderer: IRendererType) => void;
     name?: string;
     vizThemeConfig?: IThemeKey | GWGlobalConfig;
     data: IRow[];
     draggableFieldState: DraggableFieldState;
     visualConfig: IVisualConfigNew;
     layout: IVisualLayout;
-    onGeomClick?: ((values: any, e: any) => void) | undefined;
+    onGeomClick?: ((values: any, e: any, rawFieldsByDisplay?: Readonly<Record<string, string>>) => void) | undefined;
     onChartResize?: ((width: number, height: number) => void) | undefined;
     locale?: string;
     scales?: IChannelScales;
@@ -32,8 +42,27 @@ interface SpecRendererProps {
  * This is a pure component, which means it will not depend on any global state.
  */
 const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
-    { name, layout, data, draggableFieldState, visualConfig, onGeomClick, onChartResize, locale, onReportSpec, vizThemeConfig, scales, disableCollapse },
-    ref
+    {
+        name,
+        layout,
+        data,
+        draggableFieldState,
+        visualConfig,
+        onGeomClick,
+        onChartResize,
+        locale,
+        onReportSpec,
+        vizThemeConfig,
+        scales,
+        disableCollapse,
+        chart,
+        nativeResult,
+        loading,
+        error,
+        onNativeSelection,
+        onRendererChange,
+    },
+    ref,
 ) {
     // const { draggableFieldState, visualConfig } = vizStore;
     const { geoms, defaultAggregated, coordSystem, timezoneDisplayOffset } = visualConfig;
@@ -57,7 +86,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const columns = draggableFieldState.columns;
     const pivotFields = useMemo(
         () => [...draggableFieldState.dimensions, ...draggableFieldState.measures],
-        [draggableFieldState.dimensions, draggableFieldState.measures]
+        [draggableFieldState.dimensions, draggableFieldState.measures],
     );
     const color = draggableFieldState.color;
     const opacity = draggableFieldState.opacity;
@@ -76,12 +105,10 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const enableResize = size.mode === 'fixed' && Boolean(onChartResize);
     const mediaTheme = useContext(themeContext);
     const uiTheme = useContext(uiThemeContext);
-    const themeConfig = getTheme({
-        vizThemeConfig,
-        mediaTheme,
-        primaryColor,
-        colorPalette,
-    });
+    const themeConfig = useMemo(
+        () => getTheme({ vizThemeConfig, mediaTheme, primaryColor, colorPalette }),
+        [vizThemeConfig, mediaTheme, primaryColor, colorPalette],
+    );
 
     const vegaConfig = useMemo<VegaGlobalConfig>(() => {
         const config: VegaGlobalConfig = {
@@ -117,6 +144,31 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         return config;
     }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
+    const nativeThemeConfig = useMemo<VegaGlobalConfig>(() => ({ ...themeConfig, background: vegaConfig.background }), [themeConfig, vegaConfig.background]);
+    const nativeChart = useMemo<IChart>(
+        () => ({
+            visId: chart?.visId ?? 'renderer',
+            name: name ?? chart?.name ?? 'Chart',
+            encodings: draggableFieldState,
+            config: visualConfig,
+            layout,
+        }),
+        [chart?.visId, chart?.name, name, draggableFieldState, visualConfig, layout],
+    );
+    const legacyDiagnostics = useMemo(
+        () => (layout.renderer === 'native' ? [] : getLegacyRendererDiagnostics(nativeChart, layout.renderer ?? 'vega-lite')),
+        [nativeChart],
+    );
+    const unsupportedReport = legacyDiagnostics.length
+        ? JSON.stringify({ reportType: 'graphic-walker-chart', status: 'unsupported-renderer', diagnostics: legacyDiagnostics, chart: nativeChart })
+        : undefined;
+    useEffect(() => {
+        if (unsupportedReport) {
+            appRootRef.current?.updateRenderStatus('error');
+            onReportSpec?.(unsupportedReport);
+        }
+    }, [unsupportedReport]);
+
     if (isPivotTable) {
         return (
             <PivotTableCore
@@ -136,6 +188,35 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 onRenderStatusChange={(status) => appRootRef.current?.updateRenderStatus(status)}
                 onError={(error) => console.error(error)}
             />
+        );
+    }
+
+    if (legacyDiagnostics.length) {
+        return (
+            <div role="alert" className="p-4 space-y-3">
+                <p>This renderer cannot display all fields in this chart.</p>
+                <ul>
+                    {legacyDiagnostics.map((diagnostic) => (
+                        <li key={diagnostic.configRef}>
+                            {diagnostic.configRef}: {diagnostic.message}
+                        </li>
+                    ))}
+                </ul>
+                {onRendererChange ? (
+                    <button type="button" className="border rounded px-3 py-1" onClick={() => onRendererChange('native')}>
+                        Use Native Worksheet
+                    </button>
+                ) : (
+                    <p>Select Native Worksheet in the chart renderer setting.</p>
+                )}
+            </div>
+        );
+    }
+    if (error !== undefined && layout.renderer !== 'native') {
+        return (
+            <div role="alert" className="p-4">
+                {error instanceof Error ? error.message : String(error)}
+            </div>
         );
     }
 
@@ -170,16 +251,16 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                           height: size.height + 'px',
                       }
                     : size.mode === 'full'
-                    ? {
-                          width: '100%',
-                          height: '100%',
-                      }
-                    : isSpatial
-                    ? {
-                          width: LEAFLET_DEFAULT_WIDTH + 'px',
-                          height: LEAFLET_DEFAULT_HEIGHT + 'px',
-                      }
-                    : { width: 'auto', height: 'auto' }
+                      ? {
+                            width: '100%',
+                            height: '100%',
+                        }
+                      : isSpatial
+                        ? {
+                              width: LEAFLET_DEFAULT_WIDTH + 'px',
+                              height: LEAFLET_DEFAULT_HEIGHT + 'px',
+                          }
+                        : { width: 'auto', height: 'auto' }
             }
         >
             {isSpatial && (
@@ -192,6 +273,21 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     vegaConfig={vegaConfig}
                     scales={scales}
                     scale={scale}
+                />
+            )}
+            {!isSpatial && layout.renderer === 'native' && (
+                <NativeRenderer
+                    ref={ref}
+                    chart={nativeChart}
+                    result={nativeResult}
+                    loading={loading}
+                    error={error}
+                    vegaConfig={nativeThemeConfig}
+                    mediaTheme={mediaTheme}
+                    scales={scales}
+                    onSelectionChange={onNativeSelection}
+                    onReportSpec={onReportSpec}
+                    disableCollapse={disableCollapse}
                 />
             )}
             {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (

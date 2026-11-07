@@ -8,34 +8,31 @@ import {
     IComputationFunction,
     IVisualConfigNew,
     IChannelScales,
-    IViewField,
     IVisualLayout,
+    INativeRendererOptions,
 } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
 import { runInAction } from 'mobx';
 import { useVizStore } from '../store';
 import { IReactVegaHandler } from '../vis/react-vega';
-import { unstable_batchedUpdates } from 'react-dom';
-import { useRenderer } from './hooks';
+import { useRenderer, useNativeResult } from './hooks';
+import type { NativeSelectionEvent } from '../lib/native/events';
 import { download } from '../utils/save';
 import { useChartIndexControl } from '../utils/chartIndexControl';
 import { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
-import { emptyEncodings, emptyVisualConfig } from '../utils/save';
 import { getMeaAggKey, getMeaAggName } from '../utils';
 import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
-import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
-import { getTimeFormat } from '@/lib/inferMeta';
-import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
 
 interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
     computationFunction: IComputationFunction;
     scales?: IChannelScales;
+    nativeRenderer?: INativeRendererOptions;
     csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
 }
@@ -65,18 +62,20 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             ...layout,
             ...(overrideSize ? { size: overrideSize } : {}),
         }),
-        [layout, overrideSize]
+        [layout, overrideSize],
     );
 
     const draggableFieldState = chart.encodings;
 
     const { i18n } = useTranslation();
 
-    const [viewConfig, setViewConfig] = useState<IVisualConfigNew>(emptyVisualConfig);
-    const [encodings, setEncodings] = useState<DraggableFieldState>(emptyEncodings);
-    const [viewData, setViewData] = useState<IRow[]>([]);
-
-    const { viewData: data, loading: waiting } = useRenderer({
+    const {
+        viewData: data,
+        loading: waiting,
+        error,
+        query,
+    } = useRenderer({
+        chart,
         allFields,
         viewDimensions,
         viewMeasures,
@@ -88,6 +87,10 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         computationFunction,
         timezoneDisplayOffset: visualConfig.timezoneDisplayOffset,
     });
+
+    const viewData = data;
+    const encodings = draggableFieldState;
+    const viewConfig = visualConfig;
 
     useEffect(() => {
         if (csvRef) {
@@ -115,27 +118,35 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         }
     }, [chart.name, csvRef, data, viewDimensions, viewMeasures, viewConfig.defaultAggregated]);
 
-    // Dependencies that should not trigger effect individually
-    const latestFromRef = useRef({
-        data,
-        draggableFieldState: draggableFieldState,
-        visualConfig: visualConfig,
-    });
-    latestFromRef.current = {
-        data,
-        draggableFieldState: draggableFieldState,
-        visualConfig: visualConfig,
-    };
+    const nativeResult = useNativeResult(chart, query, props.nativeRenderer?.getResultRowKey);
 
-    useEffect(() => {
-        if (waiting === false) {
-            unstable_batchedUpdates(() => {
-                setViewData(latestFromRef.current.data);
-                setEncodings(latestFromRef.current.draggableFieldState);
-                setViewConfig(latestFromRef.current.visualConfig);
+    const handleNativeSelection = useCallback(
+        (event: NativeSelectionEvent) => {
+            props.nativeRenderer?.onSelectionChange?.(event);
+            // Legacy menus consume one raw record. Multi-tuples and line endpoints stay
+            // in the structured public callback; never flatten them into Cartesian filters.
+            if (!event.interaction || event.targets.length !== 1 || event.targets[0].datumKeys.length !== 1) {
+                vizStore.closeEmbededMenu();
+                return;
+            }
+            const selected: Record<string, string | number | undefined> = {};
+            const filters: Record<string, unknown[]> = {};
+            for (const value of event.targets[0].values) {
+                const key = value.field.fid;
+                if (typeof value.raw !== 'string' && typeof value.raw !== 'number') continue;
+                if (Object.prototype.hasOwnProperty.call(selected, key) && selected[key] !== value.raw) return;
+                selected[key] = value.raw;
+                filters[key] = [value.raw];
+            }
+            if (!Object.keys(filters).length || !GLOBAL_CONFIG.EMBEDED_MENU_LIST.length) return;
+            runInAction(() => {
+                vizStore.setFilters(filters);
+                vizStore.updateSelectedMarkObject(selected);
+                vizStore.showEmbededMenu([event.interaction!.clientX, event.interaction!.clientY]);
             });
-        }
-    }, [waiting, data, vizStore]);
+        },
+        [props.nativeRenderer?.onSelectionChange, vizStore],
+    );
 
     useChartIndexControl({
         count: visLength,
@@ -144,7 +155,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     });
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (values: any, e: MouseEvent & { item: Item }, rawFieldsByDisplay?: Readonly<Record<string, string>>) => {
             e.stopPropagation();
             if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
@@ -153,41 +164,19 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 });
                 const { vlPoint, ...datums } = values;
                 const selectedMarkObject = Object.fromEntries(Object.entries(datums).map(([k, vs]) => [k, vs instanceof Array ? vs[0] : undefined]));
-                // check selected fields include temporal, and return temporal timestamp to original data
-                const allFields = viewEncodingKeys(visualConfig.geoms[0]).flatMap((k) => encodings[k] as IViewField[]);
-                const selectedTemporalFields = Object.keys(selectedMarkObject)
-                    .map((k) => allFields.find((x) => x.fid === k))
-                    .filter((x): x is IViewField => !!x && x.semanticType === 'temporal');
-                if (selectedTemporalFields.length > 0) {
-                    const displayOffset = visualConfig.timezoneDisplayOffset ?? new Date().getTimezoneOffset();
-                    selectedTemporalFields.forEach((f) => {
-                        const offset = f.offset ?? new Date().getTimezoneOffset();
-                        const set = new Set(viewData.map((x) => x[f.fid] as string | number));
-                        selectedMarkObject[f.fid] = Array.from(set).find((x) => {
-                            const format = getTimeFormat(x);
-                            let offsetTime = displayOffset * -60000;
-                            if (format !== 'timestamp') {
-                                offsetTime += offset * 60000;
-                                if (!unexceptedUTCParsedPatternFormats.includes(format)) {
-                                    // the raw data will be parsed as local timezone, so reduce the offset with the local time zone.
-                                    offsetTime -= new Date().getTimezoneOffset() * 60000;
-                                }
-                            }
-                            const time = new Date(x).getTime() + offsetTime;
-                            return time === selectedMarkObject[f.fid];
-                        });
-                    });
-                }
+                // The legacy specs keep original fields for point-selection parameters;
+                // temporal display coordinates live in separate columns. Values here
+                // are already raw, including null and numeric timestamps.
                 if (e.item.mark.marktype === 'line') {
                     // use the filter in mark group
-                    const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}));
+                    const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}).map((key) => rawFieldsByDisplay?.[key] ?? key));
                     vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries<string | number>(selectedMarkObject).filter(([k]) => keys.has(k))));
                 } else {
                     vizStore.updateSelectedMarkObject(selectedMarkObject);
                 }
             }
         },
-        [vizStore, viewData, encodings, visualConfig]
+        [vizStore],
     );
 
     const handleChartResize = useCallback(
@@ -198,7 +187,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 height,
             });
         },
-        [vizStore]
+        [vizStore],
     );
 
     const isSpatial = viewConfig.coordSystem === 'geographic';
@@ -229,6 +218,12 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 <SpecRenderer
                     name={chart?.name}
                     data={viewData}
+                    chart={chart}
+                    nativeResult={nativeResult}
+                    loading={waiting}
+                    error={error}
+                    onNativeSelection={handleNativeSelection}
+                    onRendererChange={(renderer) => vizStore.setVisualLayout('renderer', renderer)}
                     ref={ref}
                     vizThemeConfig={vizThemeConfig}
                     locale={i18n.language}

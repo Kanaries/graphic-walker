@@ -59,7 +59,9 @@ jest.mock('@observablehq/plot', () => {
 });
 
 import * as Plot from '@observablehq/plot';
-import { __test__vegaLiteToPlot } from './observablePlot';
+import { format as numberFormat } from 'd3-format';
+import { __test__vegaLiteToPlot, toObservablePlotSpec } from './observablePlot';
+import type { IViewField } from '../interfaces';
 
 const expectNoStack = () => {
     expect(Plot.stackX).not.toHaveBeenCalled();
@@ -90,6 +92,42 @@ describe('vegaLiteToPlot', () => {
         expect(mark.channels.y1.value.label).toBe('b');
         expect(plot.x.type).toBeUndefined();
         expect(plot.y.type).toBeUndefined();
+        expect(plot.x.tickFormat).toBeUndefined();
+        expect(plot.y.tickFormat).toBeUndefined();
+    });
+
+    test('existing GW numberFormat reaches the aggregated Sales axis without changing categorical ticks', () => {
+        const region: IViewField = { fid: 'Region', name: 'Region', semanticType: 'nominal', analyticType: 'dimension' };
+        const sales: IViewField = { fid: 'Sales', name: 'Sales', semanticType: 'quantitative', analyticType: 'measure', aggName: 'sum' };
+        const [plot] = toObservablePlotSpec({ rows: [region], columns: [sales], dataSource: [{ Region: 'East', Sales_sum: 100 }, { Region: 'West', Sales_sum: 200 }],
+            defaultAggregated: true, geomType: 'bar', stack: 'none', interactiveScale: false, layoutMode: 'fixed', width: 600, height: 400,
+            mediaTheme: 'light', vegaConfig: { numberFormat: '.1f' } });
+        expect(plot.x.tickFormat).toBe('.1f');
+        expect([0, 100, 200].map(numberFormat(plot.x.tickFormat))).toEqual(['0.0', '100.0', '200.0']);
+        expect(plot.y.tickFormat).toBeUndefined();
+        expect(plot.marks[0].options.x2).toBe('Sales_sum');
+        expect(plot.marks[0].data).toEqual([{ Region: 'East', Sales_sum: 100 }, { Region: 'West', Sales_sum: 200 }]);
+    });
+
+    test('axis and encoding formats override the global format on either numerical axis', () => {
+        const plot = __test__vegaLiteToPlot({ mark: 'point', encoding: {
+            x: { field: 'x', type: 'quantitative', axis: { format: '.0%' } },
+            y: { field: 'y', type: 'quantitative', format: ',.2f' },
+        } }, { numberFormat: '.1f' });
+        expect(numberFormat(plot.x.tickFormat)(0.25)).toBe('25%');
+        expect(numberFormat(plot.y.tickFormat)(1000)).toBe('1,000.00');
+    });
+
+    test.each(['line', 'bar', 'tick'])('configured UTC time formatting works for %s continuous or categorical dates', (mark) => {
+        const plot = __test__vegaLiteToPlot({ mark, encoding: {
+            x: { field: 'date', type: 'temporal' }, y: { field: 'value', type: 'quantitative' },
+        } }, { timeFormat: '%Y-%m-%d %H:%M', numberFormat: '.1f' });
+        expect(plot.x.type).toBe(mark === 'line' ? 'utc' : 'band');
+        for (const value of ['2024-01-02T03:04:00Z', new Date('2024-01-02T03:04:00Z'), Date.UTC(2024, 0, 2, 3, 4)]) {
+            expect(plot.x.tickFormat(value)).toBe('2024-01-02 03:04');
+        }
+        expect(plot.x.tickFormat(null)).toBe('');
+        expect(plot.y.tickFormat).toBe('.1f');
     });
 
     test('line chart with color stays unstacked and grouped', () => {

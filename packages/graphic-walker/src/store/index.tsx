@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, createContext } from 'react';
 import { VizSpecStore } from './visualSpecStore';
-import { IComputationFunction, IDefaultConfig, IDefaultUIConfig, IMutField, IRow, ISegmentKey } from '../interfaces';
+import { IComputationFunction, IDefaultConfig, IDefaultUIConfig, IMutField, IRow, ISegmentKey, IRendererType } from '../interfaces';
 
 function createKeepAliveContext<T, U extends any[]>(create: (...args: U) => T) {
     const dict: Record<string, T> = {};
@@ -40,7 +40,7 @@ interface VizStoreWrapperProps {
     defaultConfig?: IDefaultConfig;
     defaultUIConfig?: IDefaultUIConfig;
     defaultTab?: 'data' | 'visualization';
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: IRendererType;
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {

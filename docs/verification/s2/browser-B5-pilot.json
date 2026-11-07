@@ -1,0 +1,2099 @@
+{
+  "schema": "worksheet-browser-benchmark-v1",
+  "case": "B5",
+  "backend": "svg",
+  "profile": "quick",
+  "environment": {
+    "timestamp": "2026-11-06T23:01:01.408Z",
+    "node": "v24.11.1",
+    "v8": "13.6.233.10-node.28",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "cpuModel": "Apple M4 Max",
+    "logicalCPUs": 16,
+    "totalMemoryBytes": 68719476736,
+    "gitCommit": "6534b263dce565d08324aeab97620a35310ded85",
+    "gitDirty": true,
+    "bundleSha256": "b4b950397559448227d9eabade2e7542089eda26e2cffddbec82085a489cad3e",
+    "builtAt": "2026-11-06T23:19:02.730Z",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/132.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 16,
+    "deviceMemoryGiB": 8,
+    "seed": 1592598566,
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "dpr": 2
+    },
+    "actualDevicePixelRatio": 2,
+    "font": "Arial, \"Noto Sans CJK SC\", sans-serif",
+    "fontChecks": {
+      "Arial": true,
+      "NotoSansCJK": true
+    },
+    "longTaskObserverSupported": true
+  },
+  "manifest": {
+    "version": {
+      "sourceId": "B5",
+      "snapshotId": "1592598566",
+      "presentationId": "1"
+    },
+    "domainPlanKey": "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}",
+    "rowLeafCount": 100,
+    "columnLeafCount": 100,
+    "recordCount": 200000,
+    "nonEmptyPaneCount": 10000,
+    "status": "complete",
+    "identityScope": "stable",
+    "capabilities": {
+      "randomAxisAccess": true,
+      "locateByKey": true,
+      "maxAxisWindow": 100000,
+      "maxPaneWindows": 64,
+      "domainPlanKeys": [
+        "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}"
+      ]
+    }
+  },
+  "preparation": {
+    "inputMs": 88.39999985694885,
+    "adapterMs": 0.10000014305114746,
+    "indexMs": 240.70000004768372,
+    "manifestMs": 0,
+    "totalMs": 329.2000000476837
+  },
+  "cold": {
+    "commitMs": {
+      "n": 3,
+      "p50": 44.90000009536743,
+      "p95": 47.40000009536743,
+      "maximum": 47.40000009536743
+    },
+    "presentedMs": {
+      "n": 3,
+      "p50": 83.5,
+      "p95": 83.70000004768372,
+      "maximum": 83.70000004768372
+    },
+    "samples": [
+      {
+        "commitMs": 47.40000009536743,
+        "presentedMs": 83.5,
+        "state": {
+          "fixture": "B5",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 3
+          },
+          "canvasCount": 0,
+          "svgNodes": 1832,
+          "domNodes": 1846,
+          "memory": {
+            "usedJSHeapSize": 100009404,
+            "totalJSHeapSize": 114717536,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 16,
+          "metrics": 2,
+          "diagnostics": []
+        }
+      },
+      {
+        "commitMs": 43.700000047683716,
+        "presentedMs": 83.40000009536743,
+        "state": {
+          "fixture": "B5",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 3
+          },
+          "canvasCount": 0,
+          "svgNodes": 1832,
+          "domNodes": 1846,
+          "memory": {
+            "usedJSHeapSize": 104876749,
+            "totalJSHeapSize": 124162637,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 24,
+          "metrics": 3,
+          "diagnostics": []
+        }
+      },
+      {
+        "commitMs": 44.90000009536743,
+        "presentedMs": 83.70000004768372,
+        "state": {
+          "fixture": "B5",
+          "view": {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 1,
+            "displayedFrameId": 1,
+            "scrollX": 0,
+            "scrollY": 0,
+            "loading": false,
+            "cacheWindows": 3
+          },
+          "canvasCount": 0,
+          "svgNodes": 1832,
+          "domNodes": 1846,
+          "memory": {
+            "usedJSHeapSize": 118207191,
+            "totalJSHeapSize": 133607707,
+            "jsHeapSizeLimit": 4294705152
+          },
+          "reads": 32,
+          "metrics": 4,
+          "diagnostics": []
+        }
+      }
+    ]
+  },
+  "scroll": {
+    "combinedCommitMs": {
+      "n": 30,
+      "p50": 22.299999952316284,
+      "p95": 25.700000047683716,
+      "maximum": 29.700000047683716
+    },
+    "combinedRafIntervalMs": {
+      "n": 59,
+      "p50": 15.200000000000728,
+      "p95": 17.200000000000728,
+      "maximum": 25
+    },
+    "rounds": [
+      {
+        "round": 0,
+        "commitMs": {
+          "n": 30,
+          "p50": 22.299999952316284,
+          "p95": 25.700000047683716,
+          "maximum": 29.700000047683716
+        },
+        "runtimeCpuMs": {
+          "n": 30,
+          "p50": 17.700000047683716,
+          "p95": 21.700000047683716,
+          "maximum": 24.100000143051147
+        },
+        "runtimeSceneMs": {
+          "n": 30,
+          "p50": 3.5,
+          "p95": 4.1000001430511475,
+          "maximum": 5.5
+        },
+        "runtimeSubmitMs": {
+          "n": 30,
+          "p50": 5.8999998569488525,
+          "p95": 8.299999952316284,
+          "maximum": 8.5
+        },
+        "runtimeReadMs": {
+          "n": 30,
+          "p50": 0.2999999523162842,
+          "p95": 0.5999999046325684,
+          "maximum": 1.3999998569488525
+        },
+        "rafIntervalMs": {
+          "n": 59,
+          "p50": 15.200000000000728,
+          "p95": 17.200000000000728,
+          "maximum": 25
+        },
+        "frameIds": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "commitSamplesMs": [
+          25.700000047683716,
+          23.59999990463257,
+          21.59999990463257,
+          23,
+          25.299999952316284,
+          22.699999809265137,
+          22,
+          20.5,
+          23,
+          21.200000047683716,
+          20.5,
+          23.59999990463257,
+          19.800000190734863,
+          21.799999952316284,
+          23,
+          19.899999856948853,
+          22.700000047683716,
+          22.299999952316284,
+          20.40000009536743,
+          22.800000190734863,
+          19.100000143051147,
+          23.40000009536743,
+          22.799999952316284,
+          19.700000047683716,
+          23.09999990463257,
+          29.700000047683716,
+          21.59999990463257,
+          23.699999809265137,
+          22.200000047683716,
+          20.700000047683716
+        ],
+        "rafIntervalsMs": [
+          15.200000000000728,
+          9.600000000002183,
+          16.899999999997817,
+          8.400000000001455,
+          16.599999999998545,
+          8.299999999999272,
+          25,
+          8.400000000001455,
+          16.700000000000728,
+          8.299999999999272,
+          15.599999999998545,
+          9.600000000002183,
+          16.5,
+          8.299999999999272,
+          17,
+          7.900000000001455,
+          16.69999999999709,
+          8.400000000001455,
+          16.599999999998545,
+          8.400000000001455,
+          16.700000000000728,
+          8.299999999999272,
+          16.700000000000728,
+          8.299999999999272,
+          15.700000000000728,
+          8.799999999999272,
+          17.200000000000728,
+          8.299999999999272,
+          16.099999999998545,
+          9,
+          16.600000000002183,
+          8.299999999999272,
+          16.700000000000728,
+          8.299999999999272,
+          16,
+          9.099999999998545,
+          16.600000000002183,
+          8.299999999999272,
+          16.599999999998545,
+          7.900000000001455,
+          17.099999999998545,
+          8.400000000001455,
+          16.700000000000728,
+          8.299999999999272,
+          16.599999999998545,
+          8.400000000001455,
+          15.299999999999272,
+          9.600000000002183,
+          16.799999999999272,
+          8.299999999999272,
+          24.900000000001455,
+          8.5,
+          16.599999999998545,
+          8,
+          17,
+          8.400000000001455,
+          16.099999999998545,
+          8.900000000001455,
+          16.599999999998545
+        ],
+        "sourceReadCount": 0,
+        "metrics": [
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 6,
+            "renderMs": 16.799999952316284,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.6000001430511475,
+            "submitMs": 5.3999998569488525,
+            "cpuMs": 16.799999952316284,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 81,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113617780,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 7,
+            "renderMs": 19.399999856948853,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 3.5,
+            "submitMs": 7.300000190734863,
+            "cpuMs": 19.299999952316284,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 83,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113713612,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 8,
+            "renderMs": 19.399999856948853,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.19999980926513672,
+            "sceneMs": 3.8999998569488525,
+            "submitMs": 5.8999998569488525,
+            "cpuMs": 19.399999856948853,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 85,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 9,
+            "renderMs": 21.700000047683716,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 4.1000001430511475,
+            "submitMs": 8.5,
+            "cpuMs": 21.700000047683716,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 87,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 10,
+            "renderMs": 17.200000047683716,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.5,
+            "submitMs": 5.299999952316284,
+            "cpuMs": 17,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 89,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 11,
+            "renderMs": 18.100000143051147,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.8999998569488525,
+            "submitMs": 5.799999952316284,
+            "cpuMs": 18.100000143051147,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 91,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 12,
+            "renderMs": 18.5,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.4000000953674316,
+            "submitMs": 7,
+            "cpuMs": 18.5,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 93,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 13,
+            "renderMs": 17.5,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.3000001907348633,
+            "sceneMs": 3.5,
+            "submitMs": 5.5,
+            "cpuMs": 17.399999856948853,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 95,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 14,
+            "renderMs": 18.5,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 4.099999904632568,
+            "submitMs": 6.599999904632568,
+            "cpuMs": 18.40000009536743,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 97,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 15,
+            "renderMs": 18,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.5,
+            "submitMs": 6.5,
+            "cpuMs": 17.90000009536743,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 99,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 16,
+            "renderMs": 16.799999952316284,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 3.5,
+            "submitMs": 5,
+            "cpuMs": 16.59999990463257,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 101,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 17,
+            "renderMs": 19.09999990463257,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.5999999046325684,
+            "submitMs": 7.900000095367432,
+            "cpuMs": 19.09999990463257,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 103,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 18,
+            "renderMs": 17.09999990463257,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.20000004768371582,
+            "sceneMs": 3.6000001430511475,
+            "submitMs": 5.200000047683716,
+            "cpuMs": 16.99999976158142,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 105,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 19,
+            "renderMs": 17.5,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.8000001907348633,
+            "submitMs": 5.599999904632568,
+            "cpuMs": 17.40000009536743,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 107,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 20,
+            "renderMs": 18.59999990463257,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 3.4000000953674316,
+            "submitMs": 7.3999998569488525,
+            "cpuMs": 18.59999990463257,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 109,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 21,
+            "renderMs": 16.600000143051147,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.3000001907348633,
+            "submitMs": 5.200000047683716,
+            "cpuMs": 16.50000023841858,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 111,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 22,
+            "renderMs": 17.700000047683716,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.799999952316284,
+            "submitMs": 6.099999904632568,
+            "cpuMs": 17.700000047683716,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 113,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 23,
+            "renderMs": 18.300000190734863,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.5,
+            "submitMs": 6.700000047683716,
+            "cpuMs": 18.300000190734863,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 115,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 24,
+            "renderMs": 16.90000009536743,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.5,
+            "sceneMs": 3.6000001430511475,
+            "submitMs": 5.200000047683716,
+            "cpuMs": 16.799999952316284,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 117,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 25,
+            "renderMs": 18.5,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.5,
+            "submitMs": 7.5,
+            "cpuMs": 18.5,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 119,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 26,
+            "renderMs": 16.5,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.4000000953674316,
+            "submitMs": 5.099999904632568,
+            "cpuMs": 16.5,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 121,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 27,
+            "renderMs": 17.299999952316284,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.20000004768371582,
+            "sceneMs": 4,
+            "submitMs": 5.6000001430511475,
+            "cpuMs": 17.200000047683716,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 123,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 28,
+            "renderMs": 18.5,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.4000000953674316,
+            "submitMs": 6.8999998569488525,
+            "cpuMs": 18.5,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 125,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 29,
+            "renderMs": 16.5,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.3999998569488525,
+            "submitMs": 5.099999904632568,
+            "cpuMs": 16.40000009536743,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 127,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 30,
+            "renderMs": 17.59999990463257,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.8999998569488525,
+            "submitMs": 6.299999952316284,
+            "cpuMs": 17.5,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 129,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 31,
+            "renderMs": 24.299999952316284,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.5999999046325684,
+            "sceneMs": 5.5,
+            "submitMs": 8.299999952316284,
+            "cpuMs": 24.100000143051147,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 131,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 32,
+            "renderMs": 17.700000047683716,
+            "marks": 874,
+            "commands": 1709,
+            "readMs": 1.3999998569488525,
+            "sceneMs": 3.5999999046325684,
+            "submitMs": 5.400000095367432,
+            "cpuMs": 16.700000286102295,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 133,
+              "evictions": 0,
+              "bytes": 88332600,
+              "reservedBytes": 32223236,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88332600,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 33,
+            "renderMs": 18.200000047683716,
+            "marks": 867,
+            "commands": 1707,
+            "readMs": 0.39999985694885254,
+            "sceneMs": 3.4000000953674316,
+            "submitMs": 6.800000190734863,
+            "cpuMs": 18.100000143051147,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 135,
+              "evictions": 0,
+              "bytes": 88204784,
+              "reservedBytes": 32095420,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88204784,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 34,
+            "renderMs": 16.800000190734863,
+            "marks": 864,
+            "commands": 1707,
+            "readMs": 0.40000009536743164,
+            "sceneMs": 3.5,
+            "submitMs": 5.099999904632568,
+            "cpuMs": 16.700000286102295,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 137,
+              "evictions": 0,
+              "bytes": 88136896,
+              "reservedBytes": 32027532,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88136896,
+                "export": 0
+              }
+            }
+          },
+          {
+            "inputRevision": 1,
+            "version": {
+              "sourceId": "B5",
+              "snapshotId": "1592598566",
+              "presentationId": "1"
+            },
+            "frameId": 35,
+            "renderMs": 19,
+            "marks": 872,
+            "commands": 1709,
+            "readMs": 0.2999999523162842,
+            "sceneMs": 3.5999999046325684,
+            "submitMs": 7.6000001430511475,
+            "cpuMs": 18.90000009536743,
+            "cacheWindows": 8,
+            "resources": {
+              "active": 0,
+              "queued": 0,
+              "consumers": 0,
+              "reads": 10,
+              "deduplicated": 0,
+              "cacheHits": 139,
+              "evictions": 0,
+              "bytes": 88289438,
+              "reservedBytes": 32180074,
+              "maxBytes": 134217728,
+              "peakBytes": 113896526,
+              "layers": {
+                "metadata": {
+                  "entries": 1,
+                  "bytes": 13996
+                },
+                "members": {
+                  "entries": 5,
+                  "bytes": 173682
+                },
+                "domains": {
+                  "entries": 2,
+                  "bytes": 1744
+                },
+                "data": {
+                  "entries": 8,
+                  "bytes": 55919942
+                },
+                "geometry": {
+                  "entries": 0,
+                  "bytes": 0
+                }
+              },
+              "partitions": {
+                "display": 88289438,
+                "export": 0
+              }
+            }
+          }
+        ],
+        "longTasks": [],
+        "droppedFrameIntervals": 0,
+        "state": {
+          "canvasCount": 0,
+          "svgNodes": 1836,
+          "domNodes": 1850,
+          "memory": {
+            "usedJSHeapSize": 108134069,
+            "totalJSHeapSize": 154068345,
+            "jsHeapSizeLimit": 4294705152
+          }
+        }
+      }
+    ]
+  },
+  "sourceReads": {
+    "count": 54,
+    "syncCallMs": {
+      "n": 54,
+      "p50": 0,
+      "p95": 5,
+      "maximum": 5.3999998569488525
+    },
+    "awaitMs": {
+      "n": 54,
+      "p50": 0,
+      "p95": 0,
+      "maximum": 0
+    },
+    "wallMs": {
+      "n": 54,
+      "p50": 0,
+      "p95": 5,
+      "maximum": 5.3999998569488525
+    }
+  },
+  "lifecycle": {
+    "count": 3,
+    "maximumDomNodes": 1846,
+    "finalDomNodes": 0,
+    "gcAvailable": true,
+    "before": {
+      "usedJSHeapSize": 81545952,
+      "totalJSHeapSize": 114245116,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "after": {
+      "usedJSHeapSize": 84020516,
+      "totalJSHeapSize": 116424188,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "retainedHeapGrowthFraction": 0.03034563873875677
+  },
+  "diagnostics": [],
+  "limitations": [
+    "Automated scrolling uses the public controller API and actual browser painting. Native wheel, keyboard, pointer and selection acceptance are separate interactive checks.",
+    "Provider syncCallMs is synchronous time before its promise returns, not a CPU profiler. awaitMs includes asynchronous work as well as waiting.",
+    "Browser heap includes fixture records, complete-source index and library state; it is not an isolated 128 MiB runtime measurement.",
+    "Font checks report availability requested by the browser and do not identify fallback glyph fonts."
+  ]
+}

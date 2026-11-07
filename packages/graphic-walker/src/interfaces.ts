@@ -1,3 +1,4 @@
+import type { NativeSelectionEvent } from './lib/native/events';
 import { Config as VgConfig, View } from 'vega';
 import { Config as VlConfig } from 'vega-lite';
 import type { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
@@ -394,6 +395,27 @@ export interface IConfigScaleSet {
     theta?: IConfigScale;
 }
 
+export type IRendererType = 'vega-lite' | 'observable-plot' | 'native';
+
+/** Display-domain scope; prefix depths count enclosing facet fields on each axis. */
+export type IWorksheetScaleScope =
+    | { mode: 'shared' }
+    | { mode: 'pane' }
+    | {
+          mode: 'prefix';
+          /** @asType integer
+           * @minimum 0 */
+          rowDepth: number;
+          /** @asType integer
+           * @minimum 0 */
+          columnDepth: number;
+      };
+
+export interface IWorksheetLayout {
+    scaleScopes?: { x?: IWorksheetScaleScope; y?: IWorksheetScaleScope };
+    barLayout?: 'grouped';
+}
+
 export interface IVisualLayout {
     showTableSummary: boolean;
     format: {
@@ -431,7 +453,8 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
     /** @default "vega-lite" */
-    renderer?: 'vega-lite' | 'observable-plot';
+    renderer?: IRendererType;
+    worksheet?: IWorksheetLayout;
 }
 
 export interface IVisualConfigNew {
@@ -974,7 +997,15 @@ export interface IAssistantChatMessage {
 }
 
 export type IChatMessage = IUserChatMessage | IAssistantChatMessage;
+/** Host-only options; these functions are never stored in IChart. */
+export interface INativeRendererOptions {
+    /** Stable raw-query row identity. Aggregated results use their existing group keys. */
+    getResultRowKey?: (row: Readonly<IRow>, index: number) => string | number;
+    onSelectionChange?: (event: NativeSelectionEvent) => void;
+}
+
 export interface IVizProps {
+    nativeRenderer?: INativeRendererOptions;
     /** @deprecated use vizThemeConfig instead */
     themeKey?: IThemeKey;
     /** @deprecated use vizThemeConfig instead */
@@ -1038,7 +1069,7 @@ export interface IVizStoreProps {
     defaultConfig?: IDefaultConfig;
     /** Initial UI defaults. Changes do not override user actions or a reused keepAlive store. */
     defaultUIConfig?: IDefaultUIConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: IRendererType;
 }
 
 export interface ILocalComputationProps {

@@ -1,0 +1,1085 @@
+{
+  "heatmap": {
+    "commands": [
+      {
+        "tag": "rect",
+        "w": "4.107919181288746",
+        "h": "3.894915964481181",
+        "fontSize": null,
+        "text": "",
+        "x": "68.44604040935563",
+        "y": "126.71920868442606"
+      },
+      {
+        "tag": "rect",
+        "w": "6.3155651874051335",
+        "h": "5.988091436947089",
+        "fontSize": null,
+        "text": "",
+        "x": "112.34221740629744",
+        "y": "83.00595428152646"
+      },
+      {
+        "tag": "rect",
+        "w": "7.9308087401429175",
+        "h": "7.519581620283654",
+        "fontSize": null,
+        "text": "",
+        "x": "156.53459562992853",
+        "y": "39.5735425231915"
+      },
+      {
+        "tag": "rect",
+        "w": "9.26871570979987",
+        "h": "8.788115635958395",
+        "fontSize": null,
+        "text": "",
+        "x": "200.86564214510005",
+        "y": "124.27260884868745"
+      },
+      {
+        "tag": "rect",
+        "w": "10.436496277269233",
+        "h": "9.895344618447865",
+        "fontSize": null,
+        "text": "",
+        "x": "65.28175186136538",
+        "y": "81.05232769077607"
+      },
+      {
+        "tag": "rect",
+        "w": "11.486157677039706",
+        "h": "10.890579130822832",
+        "fontSize": null,
+        "text": "",
+        "x": "109.75692116148015",
+        "y": "37.888043767921914"
+      },
+      {
+        "tag": "rect",
+        "w": "12.447617515740987",
+        "h": "11.802185496406269",
+        "fontSize": null,
+        "text": "",
+        "x": "154.2761912421295",
+        "y": "122.76557391846352"
+      },
+      {
+        "tag": "rect",
+        "w": "13.339960474249743",
+        "h": "12.648258820029385",
+        "fontSize": null,
+        "text": "",
+        "x": "198.83001976287514",
+        "y": "79.67587058998531"
+      },
+      {
+        "tag": "rect",
+        "w": "14.1762445341109",
+        "h": "13.441180002712557",
+        "fontSize": null,
+        "text": "",
+        "x": "63.411877732944546",
+        "y": "36.61274333197705"
+      },
+      {
+        "tag": "rect",
+        "w": "14.96587026294404",
+        "h": "14.189862175235831",
+        "fontSize": null,
+        "text": "",
+        "x": "108.01706486852798",
+        "y": "121.57173557904875"
+      },
+      {
+        "tag": "rect",
+        "w": "15.715872115909965",
+        "h": "14.900975043233153",
+        "fontSize": null,
+        "text": "",
+        "x": "152.642063942045",
+        "y": "78.54951247838342"
+      },
+      {
+        "tag": "rect",
+        "w": "16.431676725154983",
+        "h": "15.579663857924723",
+        "fontSize": null,
+        "text": "",
+        "x": "197.2841616374225",
+        "y": "35.543501404370964"
+      }
+    ],
+    "text": "C0C1C2C3ABCGroup / CatCatWorksheetGroup (color)ABCArea (size)1065120"
+  },
+  "text": {
+    "commands": [
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "8",
+        "text": "1",
+        "x": "63",
+        "y": "131.46666666666667"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "9.454545454545455",
+        "text": "2",
+        "x": "78",
+        "y": "89.30909090909091"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "10.90909090909091",
+        "text": "3",
+        "x": "93",
+        "y": "47.15151515151515"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "12.363636363636363",
+        "text": "4",
+        "x": "108",
+        "y": "132.99393939393937"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "13.818181818181818",
+        "text": "5",
+        "x": "123",
+        "y": "90.83636363636364"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "15.272727272727273",
+        "text": "6",
+        "x": "138",
+        "y": "48.67878787878787"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "16.727272727272727",
+        "text": "7",
+        "x": "153",
+        "y": "134.5212121212121"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "18.18181818181818",
+        "text": "8",
+        "x": "168",
+        "y": "92.36363636363636"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "19.636363636363637",
+        "text": "9",
+        "x": "183",
+        "y": "50.2060606060606"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "21.090909090909093",
+        "text": "10",
+        "x": "198",
+        "y": "136.04848484848483"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "22.545454545454547",
+        "text": "11",
+        "x": "213",
+        "y": "93.89090909090909"
+      },
+      {
+        "tag": "text",
+        "w": null,
+        "h": null,
+        "fontSize": "24",
+        "text": "12",
+        "x": "228",
+        "y": "51.73333333333333"
+      }
+    ],
+    "text": "0612ABCGroup / Value123456789101112ValueWorksheetGroup (color)ABCArea (size)A10A65A120"
+  },
+  "trail": {
+    "pair": {
+      "inside": {
+        "x": 232,
+        "y": 256
+      },
+      "outside": {
+        "x": 232,
+        "y": 254
+      },
+      "id": "[\"segment\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Central\\\\\\\"]],[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Local\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"2023\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"pane-series\\\",\\\"[\\\\\\\"pane\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Central\\\\\\\\\\\\\\\"]],[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Local\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"2023\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"series\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Series\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"New\\\\\\\"]]]]\\\"]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",192]\\\",null]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",193]\\\",null]\"]",
+      "d": "M64.50130211605867,150.8992174132643 L95.03194780551475,102.35898416781629 L90.96805219448525,97.46710278870546 L61.498697883941325,149.1007825867357 Z"
+    },
+    "inside": {
+      "renderer": "native",
+      "inputRevision": 1,
+      "frameId": 2,
+      "version": {
+        "sourceId": "gw:1:_r_0_",
+        "snapshotId": "1",
+        "presentationId": "1:gw-native:1"
+      },
+      "source": "pointer",
+      "operation": "replace",
+      "targets": [
+        {
+          "kind": "segment",
+          "markId": "[\"segment\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Central\\\\\\\"]],[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Local\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"2023\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"pane-series\\\",\\\"[\\\\\\\"pane\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Central\\\\\\\\\\\\\\\"]],[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Local\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"2023\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"series\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Series\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"New\\\\\\\"]]]]\\\"]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",192]\\\",null]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",193]\\\",null]\"]",
+          "paneKey": "[\"pane\",\"[\\\"leaf\\\",\\\"row\\\",[[\\\"gw-field:[\\\\\\\"Region\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Central\\\"]],[\\\"gw-field:[\\\\\\\"District\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Local\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"row\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\",\"[\\\"leaf\\\",\\\"column\\\",[[\\\"gw-field:[\\\\\\\"Year\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"2023\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"column\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\"]",
+          "slotId": "[\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\",\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Step\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"ordinal\\\\\\\",null,null]:0\\\"]\"]",
+          "datumKeys": [
+            "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+            "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]"
+          ],
+          "seriesKey": "[\"pane-series\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Central\\\\\\\"]],[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Local\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"2023\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"series\\\",[[\\\"gw-field:[\\\\\\\"Series\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"New\\\"]]]]\"]",
+          "hitPoint": {
+            "x": 220,
+            "y": 199
+          },
+          "rowKey": "[\"leaf\",\"row\",[[\"gw-field:[\\\"Region\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"Central\"]],[\"gw-field:[\\\"District\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"Local\"]]],\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]",
+          "columnKey": "[\"leaf\",\"column\",[[\"gw-field:[\\\"Year\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"2023\"]]],\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Step\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"ordinal\\\\\\\",null,null]:0\\\"]\"]",
+          "values": [
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Central",
+              "raw": "Central",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Local",
+              "raw": "Local",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "District",
+                "name": "District",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 0,
+              "raw": 0,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[2]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "2023",
+              "raw": "2023",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Year",
+                "name": "Year",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+              "value": "1",
+              "raw": "1",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Step",
+                "name": "Step",
+                "analyticType": "dimension",
+                "semanticType": "ordinal"
+              },
+              "configRef": "encodings.columns[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "New",
+              "raw": "New",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Series",
+                "name": "Series",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.color[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 2,
+              "raw": 2,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Width",
+                "name": "Width",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.size[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Central",
+              "raw": "Central",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Local",
+              "raw": "Local",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "District",
+                "name": "District",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 18,
+              "raw": 18,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[2]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "2023",
+              "raw": "2023",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Year",
+                "name": "Year",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+              "value": "2",
+              "raw": "2",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Step",
+                "name": "Step",
+                "analyticType": "dimension",
+                "semanticType": "ordinal"
+              },
+              "configRef": "encodings.columns[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "New",
+              "raw": "New",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Series",
+                "name": "Series",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.color[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 4,
+              "raw": 4,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Width",
+                "name": "Width",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.size[0]"
+            }
+          ],
+          "endpoints": [
+            {
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Central",
+                  "raw": "Central",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Local",
+                  "raw": "Local",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "District",
+                    "name": "District",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 0,
+                  "raw": 0,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[2]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "2023",
+                  "raw": "2023",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Year",
+                    "name": "Year",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+                  "value": "1",
+                  "raw": "1",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Step",
+                    "name": "Step",
+                    "analyticType": "dimension",
+                    "semanticType": "ordinal"
+                  },
+                  "configRef": "encodings.columns[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "New",
+                  "raw": "New",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Series",
+                    "name": "Series",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.color[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 2,
+                  "raw": 2,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Width",
+                    "name": "Width",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.size[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Central",
+                  "raw": "Central",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Local",
+                  "raw": "Local",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "District",
+                    "name": "District",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 18,
+                  "raw": 18,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[2]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "2023",
+                  "raw": "2023",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Year",
+                    "name": "Year",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+                  "value": "2",
+                  "raw": "2",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Step",
+                    "name": "Step",
+                    "analyticType": "dimension",
+                    "semanticType": "ordinal"
+                  },
+                  "configRef": "encodings.columns[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "New",
+                  "raw": "New",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Series",
+                    "name": "Series",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.color[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 4,
+                  "raw": 4,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Width",
+                    "name": "Width",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.size[0]"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "interaction": {
+        "clientX": 232,
+        "clientY": 256
+      }
+    },
+    "outside": {
+      "renderer": "native",
+      "inputRevision": 1,
+      "frameId": 3,
+      "version": {
+        "sourceId": "gw:1:_r_0_",
+        "snapshotId": "1",
+        "presentationId": "1:gw-native:1"
+      },
+      "source": "pointer",
+      "operation": "replace",
+      "targets": [
+        {
+          "kind": "segment",
+          "markId": "[\"segment\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Central\\\\\\\"]],[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Local\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"2023\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"pane-series\\\",\\\"[\\\\\\\"pane\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Central\\\\\\\\\\\\\\\"]],[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"Local\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\",\\\\\\\"[\\\\\\\\\\\\\\\"leaf\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",[[\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\",[\\\\\\\\\\\\\\\"string\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"2023\\\\\\\\\\\\\\\"]]],\\\\\\\\\\\\\\\"[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"]\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"series\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Series\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"New\\\\\\\"]]]]\\\"]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",192]\\\",null]\",\"[\\\"[\\\\\\\"gw-result\\\\\\\",\\\\\\\"gw:1:_r_0_\\\\\\\",\\\\\\\"snapshot\\\\\\\",\\\\\\\"1\\\\\\\",193]\\\",null]\"]",
+          "paneKey": "[\"pane\",\"[\\\"leaf\\\",\\\"row\\\",[[\\\"gw-field:[\\\\\\\"Region\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Central\\\"]],[\\\"gw-field:[\\\\\\\"District\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Local\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"row\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\",\"[\\\"leaf\\\",\\\"column\\\",[[\\\"gw-field:[\\\\\\\"Year\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"2023\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"column\\\\\\\",\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\"]\\\"]\"]",
+          "slotId": "[\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\",\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Step\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"ordinal\\\\\\\",null,null]:0\\\"]\"]",
+          "datumKeys": [
+            "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+            "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]"
+          ],
+          "seriesKey": "[\"pane-series\",\"[\\\"pane\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"row\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Region\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Central\\\\\\\"]],[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"District\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"Local\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"row\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Value\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sum\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"measure\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"quantitative\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\",\\\"[\\\\\\\"leaf\\\\\\\",\\\\\\\"column\\\\\\\",[[\\\\\\\"gw-field:[\\\\\\\\\\\\\\\"Year\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"nominal\\\\\\\\\\\\\\\",null,null]:0\\\\\\\",[\\\\\\\"string\\\\\\\",\\\\\\\"2023\\\\\\\"]]],\\\\\\\"[\\\\\\\\\\\\\\\"slot\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"column\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"gw-field:[\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Step\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dimension\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ordinal\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",null,null]:0\\\\\\\\\\\\\\\"]\\\\\\\"]\\\"]\",\"[\\\"series\\\",[[\\\"gw-field:[\\\\\\\"Series\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"New\\\"]]]]\"]",
+          "hitPoint": {
+            "x": 220,
+            "y": 197
+          },
+          "rowKey": "[\"leaf\",\"row\",[[\"gw-field:[\\\"Region\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"Central\"]],[\"gw-field:[\\\"District\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"Local\"]]],\"[\\\"slot\\\",\\\"row\\\",\\\"gw-field:[\\\\\\\"Value\\\\\\\",\\\\\\\"sum\\\\\\\",\\\\\\\"measure\\\\\\\",\\\\\\\"quantitative\\\\\\\",null,null]:0\\\"]\"]",
+          "columnKey": "[\"leaf\",\"column\",[[\"gw-field:[\\\"Year\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",[\"string\",\"2023\"]]],\"[\\\"slot\\\",\\\"column\\\",\\\"gw-field:[\\\\\\\"Step\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"ordinal\\\\\\\",null,null]:0\\\"]\"]",
+          "values": [
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Central",
+              "raw": "Central",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Local",
+              "raw": "Local",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "District",
+                "name": "District",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 0,
+              "raw": 0,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[2]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "2023",
+              "raw": "2023",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Year",
+                "name": "Year",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+              "value": "1",
+              "raw": "1",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Step",
+                "name": "Step",
+                "analyticType": "dimension",
+                "semanticType": "ordinal"
+              },
+              "configRef": "encodings.columns[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "New",
+              "raw": "New",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Series",
+                "name": "Series",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.color[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 2,
+              "raw": 2,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "field": {
+                "fid": "Width",
+                "name": "Width",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.size[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Central",
+              "raw": "Central",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Region",
+                "name": "Region",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "Local",
+              "raw": "Local",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "District",
+                "name": "District",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.rows[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 18,
+              "raw": 18,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Value",
+                "name": "Value",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.rows[2]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "2023",
+              "raw": "2023",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Year",
+                "name": "Year",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.columns[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+              "value": "2",
+              "raw": "2",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Step",
+                "name": "Step",
+                "analyticType": "dimension",
+                "semanticType": "ordinal"
+              },
+              "configRef": "encodings.columns[1]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+              "value": "New",
+              "raw": "New",
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Series",
+                "name": "Series",
+                "analyticType": "dimension",
+                "semanticType": "nominal"
+              },
+              "configRef": "encodings.color[0]"
+            },
+            {
+              "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+              "value": 4,
+              "raw": 4,
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "field": {
+                "fid": "Width",
+                "name": "Width",
+                "analyticType": "measure",
+                "semanticType": "quantitative",
+                "aggName": "sum"
+              },
+              "configRef": "encodings.size[0]"
+            }
+          ],
+          "endpoints": [
+            {
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Central",
+                  "raw": "Central",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Local",
+                  "raw": "Local",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "District",
+                    "name": "District",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 0,
+                  "raw": 0,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[2]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "2023",
+                  "raw": "2023",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Year",
+                    "name": "Year",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+                  "value": "1",
+                  "raw": "1",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Step",
+                    "name": "Step",
+                    "analyticType": "dimension",
+                    "semanticType": "ordinal"
+                  },
+                  "configRef": "encodings.columns[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "New",
+                  "raw": "New",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Series",
+                    "name": "Series",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.color[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 2,
+                  "raw": 2,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",192]\",null]",
+                  "field": {
+                    "fid": "Width",
+                    "name": "Width",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.size[0]"
+                }
+              ]
+            },
+            {
+              "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+              "values": [
+                {
+                  "fieldRef": "gw-field:[\"Region\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Central",
+                  "raw": "Central",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Region",
+                    "name": "Region",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"District\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "Local",
+                  "raw": "Local",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "District",
+                    "name": "District",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.rows[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Value\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 18,
+                  "raw": 18,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Value",
+                    "name": "Value",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.rows[2]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Year\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "2023",
+                  "raw": "2023",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Year",
+                    "name": "Year",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.columns[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Step\",null,\"dimension\",\"ordinal\",null,null]:0",
+                  "value": "2",
+                  "raw": "2",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Step",
+                    "name": "Step",
+                    "analyticType": "dimension",
+                    "semanticType": "ordinal"
+                  },
+                  "configRef": "encodings.columns[1]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Series\",null,\"dimension\",\"nominal\",null,null]:0",
+                  "value": "New",
+                  "raw": "New",
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Series",
+                    "name": "Series",
+                    "analyticType": "dimension",
+                    "semanticType": "nominal"
+                  },
+                  "configRef": "encodings.color[0]"
+                },
+                {
+                  "fieldRef": "gw-field:[\"Width\",\"sum\",\"measure\",\"quantitative\",null,null]:0",
+                  "value": 4,
+                  "raw": 4,
+                  "datumKey": "[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",193]\",null]",
+                  "field": {
+                    "fid": "Width",
+                    "name": "Width",
+                    "analyticType": "measure",
+                    "semanticType": "quantitative",
+                    "aggName": "sum"
+                  },
+                  "configRef": "encodings.size[0]"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "interaction": {
+        "clientX": 232,
+        "clientY": 254
+      }
+    },
+    "tooltipVisible": true
+  }
+}

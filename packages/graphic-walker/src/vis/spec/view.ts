@@ -2,12 +2,12 @@ import { IChannelScales, IField, IFieldInfos, IRow, ISemanticType, IStackMode, I
 import { autoMark } from './mark';
 import { NULL_FIELD } from './field';
 import { channelAggregate } from './aggregate';
-import { IEncodeProps, channelEncode, encodeFid } from './encode';
+import { IEncodeProps, availableChannels, channelEncode } from './encode';
 import { channelStack } from './stack';
 import { addTooltipEncode } from './tooltip';
-import { getTimeFormat } from '../../lib/inferMeta';
-import { unexceptedUTCParsedPatternFormats } from '../../lib/op/offset';
+import { prepareTemporalColumns } from '../../lib/temporalDisplay';
 import { addBinStep } from './bin';
+import { viewEncodingKeys } from '../../models/visSpec';
 
 export interface SingleViewProps extends IEncodeProps {
     defaultAggregated: boolean;
@@ -15,11 +15,6 @@ export interface SingleViewProps extends IEncodeProps {
     hasLegend?: boolean;
     hideLegend?: boolean;
     dataSource: readonly IRow[];
-}
-
-function formatOffset(offset: number) {
-    if (offset === 0) return '';
-    return `${offset > 0 ? '+' : '-'}${Math.abs(offset)}`;
 }
 
 export function getSingleView(props: SingleViewProps) {
@@ -71,55 +66,41 @@ export function getSingleView(props: SingleViewProps) {
         markType = autoMark(types, defaultAggregated);
     }
 
-    const transform = fields
-        .filter((f) => f.semanticType === 'temporal')
-        .map((f) => {
-            let offsetTime = (displayOffset ?? new Date().getTimezoneOffset()) * -60000;
-            const fid = encodeFid(f.fid);
-            const sample = dataSource[0]?.[f.fid];
-            if (sample) {
-                const format = getTimeFormat(sample);
-                if (format !== 'timestamp') {
-                    offsetTime += (f.offset ?? new Date().getTimezoneOffset()) * 60000;
-                    if (!unexceptedUTCParsedPatternFormats.includes(format)) {
-                        // the raw data will be parsed as local timezone, so reduce the offset with the local time zone.
-                        offsetTime -= new Date().getTimezoneOffset() * 60000;
-                    }
-                    if (offsetTime === 0) {
-                        return null;
-                    }
-                    return {
-                        calculate: `datum[${JSON.stringify(fid)}]!==null?(toDate(datum[${JSON.stringify(fid)}])${formatOffset(offsetTime)}):null`,
-                        as: fid,
-                    };
-                }
-            }
-            if (offsetTime === 0) {
-                return null;
-            }
-            return {
-                calculate: `datum[${JSON.stringify(fid)}]!==null?(datum[${JSON.stringify(fid)}]${formatOffset(offsetTime)}):null`,
-                as: fid,
-            };
-        })
-        .filter(Boolean);
+    // A chart can retain encodings from an earlier mark. Prepare only fields that
+    // this mark consumes and its query requested; absent inactive columns are valid.
+    const queriedChannels = new Set<string>(viewEncodingKeys(geomType));
+    const consumedChannels = availableChannels(markType);
+    const channelFields = { x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text };
+    const queryChannel = (channel: string) =>
+        ['x', 'column', 'xOffset'].includes(channel) ? 'columns' : ['y', 'row', 'yOffset'].includes(channel) ? 'rows' : channel;
+    const activeDetails = queriedChannels.has('details') ? details : [];
+    const sourceFields = [
+        ...Object.entries(channelFields)
+            .filter(([channel]) => consumedChannels.has(channel) && queriedChannels.has(queryChannel(channel)))
+            .map(([, field]) => field),
+        ...activeDetails,
+    ];
+    const prepared = prepareTemporalColumns({ dataSource, fields: sourceFields, displayOffset });
+    const displayFields = new Map(sourceFields.map((field, index) => [field, prepared.fields[index]]));
+    const display = (field: IViewField) => displayFields.get(field) ?? field;
+    const displayDetails = activeDetails.map(display);
 
     let encoding = channelEncode({
         geomType: markType,
-        x,
-        y,
-        color,
-        opacity,
-        size,
-        shape,
-        row,
-        column,
-        xOffset,
-        yOffset,
-        theta,
-        radius,
-        details,
-        text,
+        x: display(x),
+        y: display(y),
+        color: display(color),
+        opacity: display(opacity),
+        size: display(size),
+        shape: display(shape),
+        row: display(row),
+        column: display(column),
+        xOffset: display(xOffset),
+        yOffset: display(yOffset),
+        theta: display(theta),
+        radius: display(radius),
+        details: displayDetails,
+        text: display(text),
         displayOffset,
         vegaConfig,
     });
@@ -127,7 +108,7 @@ export function getSingleView(props: SingleViewProps) {
         channelAggregate(encoding, fields);
     }
     addBinStep(encoding, dataSource);
-    addTooltipEncode(encoding, details, defaultAggregated);
+    addTooltipEncode(encoding, displayDetails, defaultAggregated);
     channelStack(encoding, stack);
     const mark = {
         type: markType,
@@ -136,9 +117,11 @@ export function getSingleView(props: SingleViewProps) {
     };
     return {
         config,
-        transform,
+        transform: [],
         mark,
         encoding,
+        dataSource: prepared.dataSource,
+        rawFieldsByDisplay: prepared.rawFieldsByDisplay,
     };
 }
 
@@ -160,13 +143,20 @@ export function resolveScale<T extends Object>(
     return scale;
 }
 
-export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {
+export function resolveScales(
+    scale: IChannelScales,
+    view: any,
+    data: readonly IRow[],
+    theme: 'dark' | 'light',
+    rawFieldsByDisplay?: ReadonlyMap<string, string>,
+) {
     const newEncoding = { ...view.encoding };
     function addScale(c: string, encodingName?: string) {
         encodingName = encodingName ?? c;
         if (scale[c] && newEncoding[encodingName]) {
             if (typeof scale[c] === 'function') {
-                const field = newEncoding[encodingName].field;
+                const encodedField = newEncoding[encodingName].field;
+                const field = rawFieldsByDisplay?.get(encodedField) ?? encodedField;
                 const values = data.map((x) => x[field]);
                 newEncoding[encodingName].scale = scale[c]({
                     semanticType: newEncoding[encodingName].type,

@@ -19,12 +19,12 @@ export default defineConfig({
         outDir: path.resolve(workspaceRoot, 'node_modules/.cache/graphic-walker-e2e'),
         emptyOutDir: true,
         rollupOptions: {
-            input: path.resolve(__dirname, 'issue-501.html'),
+            input: [path.resolve(__dirname, 'issue-501.html'), path.resolve(__dirname, 'native-worksheet.html'), path.resolve(__dirname, 'native-renderer.html')],
         },
     },
     preview: {
         host: '127.0.0.1',
-        port: 4175,
+        port: Number(process.env.GW_E2E_PORT ?? 4175),
         strictPort: true,
     },
 });

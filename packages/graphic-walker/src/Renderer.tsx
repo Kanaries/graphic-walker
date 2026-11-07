@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,10 +14,12 @@ import {
     IFilterRule,
     IFilterField,
     IVisualLayout,
+    IDataQueryPayload,
 } from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import ReactiveRenderer from './renderer/index';
-import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withErrorReport, withTimeout } from './store';
+import { ComputationContext, VizStoreWrapper, useCompututaion, useVizStore, withTimeout } from './store';
+import { isCurrentComputation } from './utils/computationOwnership';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import { renderSpec } from './store/visualSpecStore';
 import { guardDataKeys } from './utils/dataPrep';
@@ -103,19 +105,28 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
         }
     }, [chart, vizStore]);
 
+    const vlImportFields = vizStore.meta;
+    const vlImportErrorHandler = useRef(onError);
+    vlImportErrorHandler.current = onError;
     useEffect(() => {
         if (vlSpec) {
-            const emptyChart = newChart(vizStore.meta, '');
-            vizStore.replaceNow(
-                VegaliteMapper(
-                    spec,
+            try {
+                const emptyChart = newChart(vlImportFields, '');
+                const imported = VegaliteMapper(
+                    vlSpec,
                     [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
-                    vizStore.currentVis.name ?? 'Chart 1',
-                    vizStore.currentVis.visId
-                )
-            );
+                    vizStore.currentVis.visId,
+                    vizStore.currentVis.name ?? 'Chart 1'
+                );
+                vizStore.replaceNow(imported);
+            } catch (error) {
+                // A rejected import leaves the current chart and history intact.
+                const diagnostic = error instanceof Error ? error : new Error(String(error));
+                console.error(diagnostic);
+                vlImportErrorHandler.current?.(diagnostic);
+            }
         }
-    }, [vlSpec, vizStore]);
+    }, [vlSpec, vizStore, vlImportFields]);
 
     const reportError = useCallback(
         (msg: string, code?: number) => {
@@ -129,10 +140,18 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
         [vizStore, onError]
     );
 
-    const wrappedComputation = useMemo(
-        () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
-        [reportError, computation, computationTimeout]
-    );
+    const wrappedComputation = useMemo(() => {
+        if (!computation) return async () => [];
+        const timedComputation = withTimeout(computation, computationTimeout);
+        return async (payload: IDataQueryPayload) => {
+            try {
+                return await timedComputation(payload);
+            } catch (error) {
+                if (isCurrentComputation(payload)) reportError(parseErrorMessage(error), 501);
+                throw error;
+            }
+        };
+    }, [reportError, computation, computationTimeout]);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
@@ -155,6 +174,7 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                                         computationFunction={wrappedComputation}
                                         // @TODO remove channelScales
                                         scales={props.scales ?? props.channelScales}
+                                        nativeRenderer={props.nativeRenderer}
                                         overrideSize={props.overrideSize}
                                     />
                                 )}

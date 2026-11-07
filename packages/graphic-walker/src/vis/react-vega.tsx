@@ -2,14 +2,14 @@ import React, { useEffect, useState, useMemo, forwardRef, useRef, useContext } f
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
-import { expressionFunction, type ScenegraphEvent } from 'vega';
+import { expressionFunction, type ScenegraphEvent, type View, type Item } from 'vega';
 import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScaleSet } from '../interfaces';
 import { getVegaTimeFormatRules } from './temporalFormat';
 import canvasSize from 'canvas-size';
 import { Errors, useReporter } from '../utils/reportError';
-import { toVegaSpec } from '../lib/vega';
+import { getVegaTemporalFieldMap, toVegaSpec } from '../lib/vega';
 import { useResizeDetector } from 'react-resize-detector';
 import { startTask } from '../utils';
 import { themeContext } from '@/store/theme';
@@ -84,7 +84,7 @@ interface ReactVegaProps {
     layoutMode: string;
     width: number;
     height: number;
-    onGeomClick?: (values: any, e: any) => void;
+    onGeomClick?: (values: any, e: any, rawFieldsByDisplay?: Readonly<Record<string, string>>) => void;
     vegaConfig: VegaGlobalConfig;
     /** @default "en-US" */
     locale?: string;
@@ -95,18 +95,6 @@ interface ReactVegaProps {
     onReportSpec?: (spec: string) => void;
     displayOffset?: number;
 }
-
-const click$ = new Subject<ScenegraphEvent>();
-const selection$ = new Subject<any>();
-const geomClick$ = selection$.pipe(
-    op.withLatestFrom(click$),
-    op.filter(([values, _]) => {
-        if (Object.keys(values).length > 0) {
-            return true;
-        }
-        return false;
-    })
-);
 
 const BRUSH_SIGNAL_NAME = '__gw_brush__';
 const POINT_SIGNAL_NAME = '__gw_point__';
@@ -185,16 +173,8 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     //   return config;
     // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
-    useEffect(() => {
-        const clickSub = geomClick$.subscribe(([values, e]) => {
-            if (onGeomClick) {
-                onGeomClick(values, e);
-            }
-        });
-        return () => {
-            clickSub.unsubscribe();
-        };
-    }, [onGeomClick]);
+    const geomClickHandler = useRef(onGeomClick);
+    geomClickHandler.current = onGeomClick;
     const guardedRows = useMemo(() => rows.filter((x) => defaultAggregate || x.aggName !== 'expr'), [rows, defaultAggregate]);
     const guardedCols = useMemo(() => columns.filter((x) => defaultAggregate || x.aggName !== 'expr'), [columns, defaultAggregate]);
     const rowDims = useMemo(() => guardedRows.filter((f) => f.analyticType === 'dimension'), [guardedRows]);
@@ -295,6 +275,27 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
 
     // Render
     useEffect(() => {
+        let active = true;
+        const handleClick = (view: View, event: ScenegraphEvent, spec: object, item?: Item | null) => {
+            if (!active || geomType === 'boxplot' || !geomClickHandler.current) return;
+            let selection: any;
+            // The event's own pulse can be queued behind another update. Capture
+            // its selection inside postrun, before a later click changes the signal.
+            // Vega Dataflow accepts callbacks omitted by the published View types.
+            const run = view.runAsync as (encode?: string, prerun?: () => void, postrun?: () => void) => Promise<View>;
+            void run.call(view, undefined, undefined, () => {
+                if (!active) return;
+                const clickedItem = item ?? ('item' in event ? event.item : undefined);
+                if (!clickedItem) return;
+                Object.assign(event, { item: clickedItem });
+                const values = view.signal(SELECTION_NAME);
+                if (values && Object.keys(values).length) selection = structuredClone(values);
+            }).then(() => {
+                if (active && selection) geomClickHandler.current?.(selection, event, getVegaTemporalFieldMap(spec));
+            }).catch((error) => {
+                if (active) console.warn('Chart selection failed', error);
+            });
+        };
         props.onReportSpec?.(
             JSON.stringify(
                 specs.map((x) => ({
@@ -366,15 +367,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         },
                     ];
                     try {
-                        res.view.addEventListener('click', (e) => {
-                            click$.next(e);
-                        });
-                        // boxplot don't support selection
-                        if (geomType !== 'boxplot') {
-                            res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                selection$.next(values);
-                            });
-                        }
+                        res.view.addEventListener('click', (event, item) => handleClick(res.view, event, specs[0], item));
                     } catch (error) {
                         console.warn(error);
                     }
@@ -508,15 +501,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         setCrossFilterTriggerIdx(sourceId);
                                     }
                                 });
-                                res.view.addEventListener('click', (e) => {
-                                    click$.next(e);
-                                });
-                                // boxplot don't support selection
-                                if (geomType !== 'boxplot') {
-                                    res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                        selection$.next(values);
-                                    });
-                                }
+                                res.view.addEventListener('click', (event, item) => handleClick(res.view, event, ans, item));
                             } catch (error) {
                                 console.warn(error);
                             }
@@ -526,11 +511,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                 }
             }
             return () => {
+                active = false;
                 subscriptions.forEach((sub) => sub.unsubscribe());
                 props.onReportSpec?.('');
             };
         }
         return () => {
+            active = false;
             vegaRefs.current = [];
             renderTaskRefs.current = [];
             props.onReportSpec?.('');

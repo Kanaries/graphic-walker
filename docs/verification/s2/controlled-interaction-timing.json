@@ -1,0 +1,56 @@
+{
+  "collapse_update_to_two_raf_ms": [
+    15.2,
+    12.6,
+    8.4,
+    13.8,
+    12.3,
+    12,
+    11.2,
+    12.7,
+    12.1,
+    10.9
+  ],
+  "sort_update_to_two_raf_ms": [
+    11.3,
+    12.9,
+    12.9,
+    12.2,
+    11,
+    13.1,
+    11.8,
+    14.1,
+    12.2,
+    13
+  ],
+  "collapse_wait_dom_ms": [
+    0.2,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.2,
+    0.2,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1
+  ],
+  "sort_wait_dom_ms": [
+    0.8,
+    0.2,
+    0,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.2,
+    0.1,
+    0.1
+  ],
+  "method": "Chromium; 4178 controlled scenario; keydown to waiting DOM mutation; view.update call to committed receipt plus two requestAnimationFrame callbacks. Host accepts after 550ms, excluded from update interval. Separate sequential samples.",
+  "notes": "Timings transcribed from live browser console; bounded functional sample, not performance reference machine."
+}

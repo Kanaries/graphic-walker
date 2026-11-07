@@ -1,0 +1,223 @@
+[
+  {
+    "name": "circle",
+    "svg": {
+      "summary": "circle. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 1,
+      "commands": 42,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "circle. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "tick",
+    "svg": {
+      "summary": "tick. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 1,
+      "commands": 35,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "tick. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "auto-tick",
+    "svg": {
+      "summary": "auto-tick. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 1,
+      "commands": 31,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "auto-tick. 1 row positions, 1 column positions. Visible rows start at 1, columns at 1. 11 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "area",
+    "svg": {
+      "summary": "area. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 84 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 248,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "area. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 84 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "trail",
+    "svg": {
+      "summary": "trail. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 90 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 255,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "trail. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 90 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "pie",
+    "svg": {
+      "summary": "pie. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 36 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 102,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "pie. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 36 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "donut",
+    "svg": {
+      "summary": "donut. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 36 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 102,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "donut. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 36 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "pie-size",
+    "svg": {
+      "summary": "pie-size. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 30 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 109,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "pie-size. 8 row positions, 6 column positions. Visible rows start at 1, columns at 1. 30 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "bar-normalize",
+    "svg": {
+      "summary": "bar-normalize. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 27 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 3,
+      "commands": 77,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "bar-normalize. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 27 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "bar-center",
+    "svg": {
+      "summary": "bar-center. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 27 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 3,
+      "commands": 77,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "bar-center. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 27 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "area-normalize",
+    "svg": {
+      "summary": "area-normalize. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 87 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 248,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "area-normalize. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 87 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "area-center",
+    "svg": {
+      "summary": "area-center. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 87 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 12,
+      "commands": 248,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "area-center. 6 row positions, 4 column positions. Visible rows start at 1, columns at 1. 87 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  },
+  {
+    "name": "boxplot",
+    "svg": {
+      "summary": "boxplot. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 18 visible chart items. complete. ",
+      "svg": 1,
+      "canvas": 0,
+      "panes": 3,
+      "commands": 141,
+      "alerts": []
+    },
+    "canvas": {
+      "summary": "boxplot. 3 row positions, 1 column positions. Visible rows start at 1, columns at 1. 18 visible chart items. complete. ",
+      "svg": 0,
+      "canvas": 1,
+      "alerts": []
+    }
+  }
+]

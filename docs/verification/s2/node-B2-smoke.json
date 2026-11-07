@@ -1,0 +1,1074 @@
+{
+  "schema": "worksheet-node-benchmark-v1",
+  "case": "B2-smoke",
+  "profile": "quick",
+  "environment": {
+    "timestamp": "2026-11-06T22:46:01.029Z",
+    "node": "v24.11.1",
+    "v8": "13.6.233.10-node.28",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "cpuModel": "Apple M4 Max",
+    "logicalCPUs": 16,
+    "totalMemoryBytes": 68719476736,
+    "gitCommit": "6534b263dce565d08324aeab97620a35310ded85",
+    "gitDirty": true,
+    "bundleSha256": "c5edecda06175b979a57345276640fb2d23b458264d2682d68e56eabf235ca96",
+    "seed": 1592598566,
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "dpr": 2
+    },
+    "font": "Arial, \"Noto Sans CJK SC\", sans-serif",
+    "fontMeasurement": "Node deterministic fallback; no browser font or paint measurement",
+    "gcAvailable": true,
+    "execArgv": [
+      "--expose-gc"
+    ]
+  },
+  "preparation": {
+    "inputMs": 5.847750000000001,
+    "adapterMs": 1.0309589999999993,
+    "indexMs": 105.767416,
+    "manifestMs": 0.23783399999999233,
+    "totalMs": 112.883959
+  },
+  "phases": [
+    {
+      "name": "before-input",
+      "memory": {
+        "rss": 51675136,
+        "heapTotal": 7225344,
+        "heapUsed": 4762048,
+        "external": 2142035,
+        "arrayBuffers": 10475,
+        "maxRssBytes": 51675136
+      },
+      "cpu": {
+        "user": 25401,
+        "system": 4267
+      }
+    },
+    {
+      "name": "after-input",
+      "memory": {
+        "rss": 62537728,
+        "heapTotal": 15351808,
+        "heapUsed": 8173432,
+        "external": 1834283,
+        "arrayBuffers": 10491,
+        "maxRssBytes": 62537728
+      },
+      "cpu": {
+        "user": 34617,
+        "system": 5160
+      }
+    },
+    {
+      "name": "after-adapter",
+      "memory": {
+        "rss": 63193088,
+        "heapTotal": 15613952,
+        "heapUsed": 8393336,
+        "external": 1834283,
+        "arrayBuffers": 10491,
+        "maxRssBytes": 63193088
+      },
+      "cpu": {
+        "user": 36696,
+        "system": 5225
+      }
+    },
+    {
+      "name": "after-index",
+      "memory": {
+        "rss": 112082944,
+        "heapTotal": 55803904,
+        "heapUsed": 24014512,
+        "external": 2090447,
+        "arrayBuffers": 266655,
+        "maxRssBytes": 112082944
+      },
+      "cpu": {
+        "user": 200704,
+        "system": 10998
+      }
+    },
+    {
+      "name": "after-manifest",
+      "memory": {
+        "rss": 112099328,
+        "heapTotal": 55803904,
+        "heapUsed": 24046968,
+        "external": 2090447,
+        "arrayBuffers": 266655,
+        "maxRssBytes": 112099328
+      },
+      "cpu": {
+        "user": 201045,
+        "system": 11013
+      }
+    }
+  ],
+  "manifest": {
+    "version": {
+      "sourceId": "B2-smoke",
+      "snapshotId": "1592598566",
+      "presentationId": "1"
+    },
+    "domainPlanKey": "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}",
+    "rowLeafCount": 20,
+    "columnLeafCount": 20,
+    "recordCount": 8000,
+    "nonEmptyPaneCount": 400,
+    "status": "complete",
+    "identityScope": "stable",
+    "capabilities": {
+      "randomAxisAccess": true,
+      "locateByKey": true,
+      "maxAxisWindow": 100000,
+      "maxPaneWindows": 64,
+      "domainPlanKeys": [
+        "gw-domain:{\"barLayout\":\"overlap\",\"bindings\":[{\"bindingId\":\"gw-binding:[\\\"r0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"r5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"y\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c0\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c1\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c2\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c3\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c4\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"c5\\\",\\\"string\\\",\\\"band\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"},{\"bindingId\":\"gw-binding:[\\\"x\\\",\\\"number\\\",\\\"linear\\\",null,null]\",\"fieldRef\":\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"}],\"channels\":{},\"columns\":{\"facets\":[\"gw-field:[\\\"c0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"c5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"mark\":\"point\",\"rows\":{\"facets\":[\"gw-field:[\\\"r0\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r1\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r2\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r3\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r4\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\",\"gw-field:[\\\"r5\\\",null,\\\"dimension\\\",\\\"nominal\\\",null,null]:0\"],\"positions\":[\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\"]},\"scales\":{\"gw-field:[\\\"x\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false},\"gw-field:[\\\"y\\\",null,\\\"measure\\\",\\\"quantitative\\\",null,null]:0\":{\"scope\":{\"mode\":\"shared\"},\"zero\":false}},\"stack\":\"none\"}"
+      ]
+    }
+  },
+  "expected": {
+    "rowLeaves": 20,
+    "columnLeaves": 20,
+    "logicalSlots": 400,
+    "records": 8000,
+    "nonEmptyPanes": 400,
+    "rowDepth": 6,
+    "columnDepth": 6,
+    "maxRecordsPerPane": 20
+  },
+  "cold": {
+    "wallMs": {
+      "n": 3,
+      "p50": 16.070249999999987,
+      "p95": 30.47758300000001,
+      "maximum": 30.47758300000001
+    },
+    "cpuMs": {
+      "n": 3,
+      "p50": 23.515,
+      "p95": 37.51,
+      "maximum": 37.51
+    },
+    "readWallMs": {
+      "n": 3,
+      "p50": 4.260583999999994,
+      "p95": 5.309665999999993,
+      "maximum": 5.309665999999993
+    },
+    "validationMs": {
+      "n": 3,
+      "p50": 9.734291000000013,
+      "p95": 11.534625000000005,
+      "maximum": 11.534625000000005
+    },
+    "sceneMs": {
+      "n": 3,
+      "p50": 2.730209000000002,
+      "p95": 13.519334000000015,
+      "maximum": 13.519334000000015
+    },
+    "loadedRecords": {
+      "n": 3,
+      "p50": 1600,
+      "p95": 1600,
+      "maximum": 1600
+    },
+    "loadedPanes": {
+      "n": 3,
+      "p50": 80,
+      "p95": 80,
+      "maximum": 80
+    },
+    "visibleMarks": {
+      "n": 3,
+      "p50": 874,
+      "p95": 876,
+      "maximum": 876
+    },
+    "commands": {
+      "n": 3,
+      "p50": 1715,
+      "p95": 1719,
+      "maximum": 1719
+    }
+  },
+  "scroll": {
+    "combined": {
+      "wallMs": {
+        "n": 30,
+        "p50": 14.232790999999963,
+        "p95": 15.640916000000004,
+        "maximum": 15.950124999999957
+      },
+      "cpuMs": {
+        "n": 30,
+        "p50": 16.443,
+        "p95": 26.305,
+        "maximum": 28.608
+      },
+      "readWallMs": {
+        "n": 30,
+        "p50": 3.6882499999999254,
+        "p95": 4.369332999999983,
+        "maximum": 4.372582999999963
+      },
+      "validationMs": {
+        "n": 30,
+        "p50": 8.476541999999995,
+        "p95": 9.73379200000005,
+        "maximum": 10.156999999999982
+      },
+      "sceneMs": {
+        "n": 30,
+        "p50": 1.769958000000031,
+        "p95": 2.287542000000002,
+        "maximum": 2.763542000000001
+      },
+      "loadedRecords": {
+        "n": 30,
+        "p50": 1600,
+        "p95": 1600,
+        "maximum": 1600
+      },
+      "loadedPanes": {
+        "n": 30,
+        "p50": 80,
+        "p95": 80,
+        "maximum": 80
+      },
+      "visibleMarks": {
+        "n": 30,
+        "p50": 870,
+        "p95": 879,
+        "maximum": 879
+      },
+      "commands": {
+        "n": 30,
+        "p50": 1717,
+        "p95": 1721,
+        "maximum": 1721
+      }
+    },
+    "rounds": [
+      {
+        "wallMs": {
+          "n": 30,
+          "p50": 14.232790999999963,
+          "p95": 15.640916000000004,
+          "maximum": 15.950124999999957
+        },
+        "cpuMs": {
+          "n": 30,
+          "p50": 16.443,
+          "p95": 26.305,
+          "maximum": 28.608
+        },
+        "readWallMs": {
+          "n": 30,
+          "p50": 3.6882499999999254,
+          "p95": 4.369332999999983,
+          "maximum": 4.372582999999963
+        },
+        "validationMs": {
+          "n": 30,
+          "p50": 8.476541999999995,
+          "p95": 9.73379200000005,
+          "maximum": 10.156999999999982
+        },
+        "sceneMs": {
+          "n": 30,
+          "p50": 1.769958000000031,
+          "p95": 2.287542000000002,
+          "maximum": 2.763542000000001
+        },
+        "loadedRecords": {
+          "n": 30,
+          "p50": 1600,
+          "p95": 1600,
+          "maximum": 1600
+        },
+        "loadedPanes": {
+          "n": 30,
+          "p50": 80,
+          "p95": 80,
+          "maximum": 80
+        },
+        "visibleMarks": {
+          "n": 30,
+          "p50": 870,
+          "p95": 879,
+          "maximum": 879
+        },
+        "commands": {
+          "n": 30,
+          "p50": 1717,
+          "p95": 1721,
+          "maximum": 1721
+        }
+      }
+    ]
+  },
+  "memory": {
+    "beforeScroll": {
+      "rss": 157974528,
+      "heapTotal": 88834048,
+      "heapUsed": 11162792,
+      "external": 2090447,
+      "arrayBuffers": 234655,
+      "maxRssBytes": 157974528
+    },
+    "afterScroll": {
+      "rss": 285016064,
+      "heapTotal": 165642240,
+      "heapUsed": 11551584,
+      "external": 2058447,
+      "arrayBuffers": 234655,
+      "maxRssBytes": 285343744
+    },
+    "heapRetainedDeltaBytes": 388792,
+    "includesPreparedInputAndIndex": true
+  },
+  "limitations": [
+    "Node measures actual source reads, contract validation and Scene construction. It does not paint Canvas/SVG or measure browser frames, input latency, long tasks or SVG DOM nodes.",
+    "Source indexing occurs once and is reported separately. Cold samples are fresh reads/scenes from the prepared source, not full independent browser-controller first frames.",
+    "Full input and source index remain resident. These memory totals are not the runtime-only 128 MiB metric.",
+    "No renderer cache is used in this Node pipeline. Browser hot-cache and scheduler metrics require the browser harness."
+  ],
+  "samples": [
+    {
+      "phase": "cold-read-scene",
+      "round": 0,
+      "sample": 0,
+      "cpuMs": 37.51,
+      "wallMs": 30.47758300000001,
+      "timing": {
+        "readMs": 5.309665999999993,
+        "validationMs": 11.534625000000005,
+        "sceneMs": 13.519334000000015,
+        "totalMs": 30.363625000000013
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 876,
+        "commands": 1719,
+        "rowHeaders": 20,
+        "columnHeaders": 24
+      }
+    },
+    {
+      "phase": "cold-read-scene",
+      "round": 0,
+      "sample": 1,
+      "cpuMs": 23.515,
+      "wallMs": 16.070249999999987,
+      "timing": {
+        "readMs": 3.5795420000000036,
+        "validationMs": 9.734291000000013,
+        "sceneMs": 2.730209000000002,
+        "totalMs": 16.04404200000002
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 874,
+        "commands": 1715,
+        "rowHeaders": 18,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "cold-read-scene",
+      "round": 0,
+      "sample": 2,
+      "cpuMs": 19.4,
+      "wallMs": 15.819333999999998,
+      "timing": {
+        "readMs": 4.260583999999994,
+        "validationMs": 9.159625000000005,
+        "sceneMs": 2.378332999999998,
+        "totalMs": 15.798541999999998
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 869,
+        "commands": 1711,
+        "rowHeaders": 22,
+        "columnHeaders": 21
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 0,
+      "cpuMs": 19.363,
+      "wallMs": 15.640916000000004,
+      "timing": {
+        "readMs": 4.287791999999996,
+        "validationMs": 8.563707999999991,
+        "sceneMs": 2.763542000000001,
+        "totalMs": 15.615041999999988
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 876,
+        "commands": 1719,
+        "rowHeaders": 20,
+        "columnHeaders": 24
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 1,
+      "cpuMs": 17.466,
+      "wallMs": 14.974874999999997,
+      "timing": {
+        "readMs": 4.303291999999999,
+        "validationMs": 8.365624999999994,
+        "sceneMs": 2.287542000000002,
+        "totalMs": 14.956458999999995
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 874,
+        "commands": 1715,
+        "rowHeaders": 18,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 2,
+      "cpuMs": 16.489,
+      "wallMs": 14.557874999999996,
+      "timing": {
+        "readMs": 3.591458000000017,
+        "validationMs": 8.853083999999996,
+        "sceneMs": 2.0934579999999983,
+        "totalMs": 14.538000000000011
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 869,
+        "commands": 1711,
+        "rowHeaders": 22,
+        "columnHeaders": 21
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 3,
+      "cpuMs": 16.861,
+      "wallMs": 14.183583999999996,
+      "timing": {
+        "readMs": 3.606332999999978,
+        "validationMs": 8.569084000000004,
+        "sceneMs": 1.985749999999996,
+        "totalMs": 14.161166999999978
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 862,
+        "commands": 1713,
+        "rowHeaders": 18,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 4,
+      "cpuMs": 15.125,
+      "wallMs": 14.150250000000028,
+      "timing": {
+        "readMs": 3.8142500000000155,
+        "validationMs": 8.367124999999987,
+        "sceneMs": 1.9437090000000126,
+        "totalMs": 14.125084000000015
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 872,
+        "commands": 1713,
+        "rowHeaders": 18,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 5,
+      "cpuMs": 16.664,
+      "wallMs": 15.176375000000007,
+      "timing": {
+        "readMs": 3.4512079999999514,
+        "validationMs": 9.73379200000005,
+        "sceneMs": 1.9586249999999836,
+        "totalMs": 15.143624999999986
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 876,
+        "commands": 1719,
+        "rowHeaders": 22,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 6,
+      "cpuMs": 14.315,
+      "wallMs": 13.742041000000029,
+      "timing": {
+        "readMs": 3.348833999999954,
+        "validationMs": 8.36141600000002,
+        "sceneMs": 2.0099589999999807,
+        "totalMs": 13.720208999999954
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 879,
+        "commands": 1719,
+        "rowHeaders": 21,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 7,
+      "cpuMs": 16.232,
+      "wallMs": 15.099125000000015,
+      "timing": {
+        "readMs": 3.6580829999999764,
+        "validationMs": 9.316874999999982,
+        "sceneMs": 2.1071249999999964,
+        "totalMs": 15.082082999999955
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 857,
+        "commands": 1713,
+        "rowHeaders": 22,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 8,
+      "cpuMs": 16.456,
+      "wallMs": 14.600999999999999,
+      "timing": {
+        "readMs": 4.288333000000023,
+        "validationMs": 8.349582999999996,
+        "sceneMs": 1.952875000000006,
+        "totalMs": 14.590791000000024
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 868,
+        "commands": 1721,
+        "rowHeaders": 21,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 9,
+      "cpuMs": 15.317,
+      "wallMs": 15.161958999999968,
+      "timing": {
+        "readMs": 3.763750000000016,
+        "validationMs": 9.28716700000001,
+        "sceneMs": 2.1011669999999754,
+        "totalMs": 15.152084000000002
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 866,
+        "commands": 1717,
+        "rowHeaders": 21,
+        "columnHeaders": 23
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 10,
+      "cpuMs": 17.715,
+      "wallMs": 14.763040999999987,
+      "timing": {
+        "readMs": 3.8287920000000213,
+        "validationMs": 9.158792000000005,
+        "sceneMs": 1.7648750000000177,
+        "totalMs": 14.752459000000044
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 868,
+        "commands": 1721,
+        "rowHeaders": 23,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 11,
+      "cpuMs": 14.67,
+      "wallMs": 13.517417000000023,
+      "timing": {
+        "readMs": 3.5003340000000094,
+        "validationMs": 8.24408299999999,
+        "sceneMs": 1.7609580000000165,
+        "totalMs": 13.505375000000015
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 877,
+        "commands": 1717,
+        "rowHeaders": 18,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 12,
+      "cpuMs": 16.669,
+      "wallMs": 14.267124999999965,
+      "timing": {
+        "readMs": 3.4936250000000086,
+        "validationMs": 9.036125000000027,
+        "sceneMs": 1.7257089999999948,
+        "totalMs": 14.25545900000003
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 871,
+        "commands": 1719,
+        "rowHeaders": 21,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 13,
+      "cpuMs": 14.978,
+      "wallMs": 13.842874999999992,
+      "timing": {
+        "readMs": 3.6370000000000005,
+        "validationMs": 8.425042000000019,
+        "sceneMs": 1.769958000000031,
+        "totalMs": 13.83200000000005
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 868,
+        "commands": 1721,
+        "rowHeaders": 23,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 14,
+      "cpuMs": 28.608,
+      "wallMs": 15.950124999999957,
+      "timing": {
+        "readMs": 3.5682500000000346,
+        "validationMs": 10.156999999999982,
+        "sceneMs": 2.21470800000003,
+        "totalMs": 15.939958000000047
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 864,
+        "commands": 1715,
+        "rowHeaders": 22,
+        "columnHeaders": 26
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 15,
+      "cpuMs": 16.261,
+      "wallMs": 14.108249999999998,
+      "timing": {
+        "readMs": 3.6011250000000246,
+        "validationMs": 8.454624999999965,
+        "sceneMs": 2.036375000000021,
+        "totalMs": 14.09212500000001
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 869,
+        "commands": 1717,
+        "rowHeaders": 19,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 16,
+      "cpuMs": 14.129,
+      "wallMs": 13.922750000000008,
+      "timing": {
+        "readMs": 3.613375000000019,
+        "validationMs": 8.449957999999981,
+        "sceneMs": 1.8526669999999967,
+        "totalMs": 13.915999999999997
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 860,
+        "commands": 1717,
+        "rowHeaders": 23,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 17,
+      "cpuMs": 18.023,
+      "wallMs": 14.092333999999994,
+      "timing": {
+        "readMs": 3.591875000000016,
+        "validationMs": 8.50383400000004,
+        "sceneMs": 1.9846659999999474,
+        "totalMs": 14.080375000000004
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 874,
+        "commands": 1717,
+        "rowHeaders": 20,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 18,
+      "cpuMs": 16.443,
+      "wallMs": 13.706542000000013,
+      "timing": {
+        "readMs": 3.8755409999999983,
+        "validationMs": 8.104583999999988,
+        "sceneMs": 1.7156659999999988,
+        "totalMs": 13.695790999999986
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 873,
+        "commands": 1709,
+        "rowHeaders": 19,
+        "columnHeaders": 21
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 19,
+      "cpuMs": 17.515,
+      "wallMs": 15.110290999999961,
+      "timing": {
+        "readMs": 4.369332999999983,
+        "validationMs": 9.010291999999993,
+        "sceneMs": 1.719000000000051,
+        "totalMs": 15.098625000000027
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 879,
+        "commands": 1719,
+        "rowHeaders": 21,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 20,
+      "cpuMs": 15.135,
+      "wallMs": 14.232790999999963,
+      "timing": {
+        "readMs": 4.009375000000034,
+        "validationMs": 8.393957999999998,
+        "sceneMs": 1.8199999999999932,
+        "totalMs": 14.223333000000025
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 872,
+        "commands": 1721,
+        "rowHeaders": 22,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 21,
+      "cpuMs": 20.76,
+      "wallMs": 14.649457999999925,
+      "timing": {
+        "readMs": 4.0124589999999785,
+        "validationMs": 8.979040999999995,
+        "sceneMs": 1.6493749999999636,
+        "totalMs": 14.640874999999937
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 872,
+        "commands": 1713,
+        "rowHeaders": 18,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 22,
+      "cpuMs": 14.103,
+      "wallMs": 14.104041999999936,
+      "timing": {
+        "readMs": 4.004500000000007,
+        "validationMs": 8.48720800000001,
+        "sceneMs": 1.604832999999985,
+        "totalMs": 14.096541000000002
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 870,
+        "commands": 1713,
+        "rowHeaders": 20,
+        "columnHeaders": 21
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 23,
+      "cpuMs": 14,
+      "wallMs": 13.75508400000001,
+      "timing": {
+        "readMs": 3.6882499999999254,
+        "validationMs": 8.476541999999995,
+        "sceneMs": 1.583750000000009,
+        "totalMs": 13.74854199999993
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 863,
+        "commands": 1719,
+        "rowHeaders": 22,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 24,
+      "cpuMs": 16.889,
+      "wallMs": 14.371082999999999,
+      "timing": {
+        "readMs": 4.372582999999963,
+        "validationMs": 8.337208000000032,
+        "sceneMs": 1.6539589999999862,
+        "totalMs": 14.363749999999982
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 879,
+        "commands": 1717,
+        "rowHeaders": 19,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 25,
+      "cpuMs": 15.385,
+      "wallMs": 13.986541999999986,
+      "timing": {
+        "readMs": 4.043125000000032,
+        "validationMs": 8.360458999999992,
+        "sceneMs": 1.5760000000000218,
+        "totalMs": 13.979584000000045
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 878,
+        "commands": 1717,
+        "rowHeaders": 19,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 26,
+      "cpuMs": 26.305,
+      "wallMs": 14.679624999999987,
+      "timing": {
+        "readMs": 3.5829159999999547,
+        "validationMs": 9.51258400000006,
+        "sceneMs": 1.5768749999999727,
+        "totalMs": 14.672374999999988
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 869,
+        "commands": 1721,
+        "rowHeaders": 20,
+        "columnHeaders": 25
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 27,
+      "cpuMs": 15.605,
+      "wallMs": 13.721291999999949,
+      "timing": {
+        "readMs": 3.6838749999999436,
+        "validationMs": 8.381250000000023,
+        "sceneMs": 1.6487079999999423,
+        "totalMs": 13.713832999999909
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 866,
+        "commands": 1715,
+        "rowHeaders": 19,
+        "columnHeaders": 24
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 28,
+      "cpuMs": 18.334,
+      "wallMs": 14.732541999999967,
+      "timing": {
+        "readMs": 4.05966699999999,
+        "validationMs": 9.06737499999997,
+        "sceneMs": 1.5949580000000196,
+        "totalMs": 14.72199999999998
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 868,
+        "commands": 1711,
+        "rowHeaders": 19,
+        "columnHeaders": 23
+      }
+    },
+    {
+      "phase": "scroll-read-scene",
+      "round": 0,
+      "sample": 29,
+      "cpuMs": 14.218,
+      "wallMs": 13.739332999999988,
+      "timing": {
+        "readMs": 3.960916999999995,
+        "validationMs": 8.11754099999996,
+        "sceneMs": 1.650209000000018,
+        "totalMs": 13.728666999999973
+      },
+      "counts": {
+        "logicalPanes": 80,
+        "loadedPanes": 80,
+        "loadedRecords": 1600,
+        "marks": 876,
+        "commands": 1717,
+        "rowHeaders": 21,
+        "columnHeaders": 25
+      }
+    }
+  ]
+}

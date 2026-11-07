@@ -1,0 +1,855 @@
+{
+  "build": {
+    "bundleSha256": "4aaf7eb289f940b68444c2523782eae18ee838e6242456ad4c8bdd3f9ae8cfe9",
+    "builtAt": "2026-11-06T23:36:05.601Z"
+  },
+  "expected": {
+    "rowLeaves": 100,
+    "columnLeaves": 100,
+    "logicalSlots": 10000,
+    "records": 203000,
+    "nonEmptyPanes": 10000,
+    "rowDepth": 6,
+    "columnDepth": 6,
+    "maxRecordsPerPane": 50
+  },
+  "samples": [
+    {
+      "i": 1,
+      "elapsedMs": 74.29999995231628,
+      "result": {
+        "commitMs": 74.10000014305115,
+        "frameId": 2
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 2,
+          "displayedFrameId": 2,
+          "scrollX": 1,
+          "scrollY": 1,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 123034169,
+          "totalJSHeapSize": 143650961,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 8,
+        "metrics": 2,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 2,
+      "elapsedMs": 167.29999995231628,
+      "result": {
+        "commitMs": 167.19999980926514,
+        "frameId": 3
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 3,
+          "displayedFrameId": 3,
+          "scrollX": 2,
+          "scrollY": 2,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 160964837,
+          "totalJSHeapSize": 172912921,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 13,
+        "metrics": 3,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 3,
+      "elapsedMs": 179.5,
+      "result": {
+        "commitMs": 179.09999990463257,
+        "frameId": 4
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 4,
+          "displayedFrameId": 4,
+          "scrollX": 3,
+          "scrollY": 3,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 158344833,
+          "totalJSHeapSize": 189106413,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 18,
+        "metrics": 4,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 4,
+      "elapsedMs": 169.20000004768372,
+      "result": {
+        "commitMs": 169,
+        "frameId": 5
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 5,
+          "displayedFrameId": 5,
+          "scrollX": 4,
+          "scrollY": 4,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 191930007,
+          "totalJSHeapSize": 211552687,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 23,
+        "metrics": 5,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 5,
+      "elapsedMs": 173,
+      "result": {
+        "commitMs": 172.79999995231628,
+        "frameId": 6
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 6,
+          "displayedFrameId": 6,
+          "scrollX": 5,
+          "scrollY": 5,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 188353407,
+          "totalJSHeapSize": 206255979,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 28,
+        "metrics": 6,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 6,
+      "elapsedMs": 159.90000009536743,
+      "result": {
+        "commitMs": 159.79999995231628,
+        "frameId": 7
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 7,
+          "displayedFrameId": 7,
+          "scrollX": 6,
+          "scrollY": 6,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 221240767,
+          "totalJSHeapSize": 237615139,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 33,
+        "metrics": 7,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 7,
+      "elapsedMs": 163.5,
+      "result": {
+        "commitMs": 163.39999985694885,
+        "frameId": 8
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 8,
+          "displayedFrameId": 8,
+          "scrollX": 7,
+          "scrollY": 7,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 254178605,
+          "totalJSHeapSize": 270547157,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 38,
+        "metrics": 8,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 8,
+      "elapsedMs": 159,
+      "result": {
+        "commitMs": 158.89999985694885,
+        "frameId": 9
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 9,
+          "displayedFrameId": 9,
+          "scrollX": 8,
+          "scrollY": 8,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 287280484,
+          "totalJSHeapSize": 303479188,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 43,
+        "metrics": 9,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 9,
+      "elapsedMs": 164.90000009536743,
+      "result": {
+        "commitMs": 164.70000004768372,
+        "frameId": 10
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 10,
+          "displayedFrameId": 10,
+          "scrollX": 9,
+          "scrollY": 9,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 320356265,
+          "totalJSHeapSize": 336673369,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 48,
+        "metrics": 10,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 10,
+      "elapsedMs": 162.09999990463257,
+      "result": {
+        "commitMs": 161.90000009536743,
+        "frameId": 11
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 11,
+          "displayedFrameId": 11,
+          "scrollX": 10,
+          "scrollY": 10,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 353538731,
+          "totalJSHeapSize": 369867543,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 53,
+        "metrics": 11,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 11,
+      "elapsedMs": 163.40000009536743,
+      "result": {
+        "commitMs": 163.20000004768372,
+        "frameId": 12
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 12,
+          "displayedFrameId": 12,
+          "scrollX": 11,
+          "scrollY": 11,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 386647045,
+          "totalJSHeapSize": 402799573,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 58,
+        "metrics": 12,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 12,
+      "elapsedMs": 172.89999985694885,
+      "result": {
+        "commitMs": 172.79999995231628,
+        "frameId": 13
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 13,
+          "displayedFrameId": 13,
+          "scrollX": 12,
+          "scrollY": 12,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 419574958,
+          "totalJSHeapSize": 435993742,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 63,
+        "metrics": 13,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 13,
+      "elapsedMs": 162.79999995231628,
+      "result": {
+        "commitMs": 162.59999990463257,
+        "frameId": 14
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 14,
+          "displayedFrameId": 14,
+          "scrollX": 13,
+          "scrollY": 13,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 452480475,
+          "totalJSHeapSize": 468663595,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 68,
+        "metrics": 14,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 14,
+      "elapsedMs": 163.5,
+      "result": {
+        "commitMs": 163.29999995231628,
+        "frameId": 15
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 15,
+          "displayedFrameId": 15,
+          "scrollX": 14,
+          "scrollY": 14,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 485582480,
+          "totalJSHeapSize": 502119880,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 73,
+        "metrics": 15,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 15,
+      "elapsedMs": 165.20000004768372,
+      "result": {
+        "commitMs": 165,
+        "frameId": 16
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 16,
+          "displayedFrameId": 16,
+          "scrollX": 15,
+          "scrollY": 15,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 518754412,
+          "totalJSHeapSize": 535314020,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 78,
+        "metrics": 16,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 16,
+      "elapsedMs": 165.5,
+      "result": {
+        "commitMs": 165.39999985694885,
+        "frameId": 17
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 17,
+          "displayedFrameId": 17,
+          "scrollX": 16,
+          "scrollY": 16,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 551756033,
+          "totalJSHeapSize": 568246017,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 83,
+        "metrics": 17,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 17,
+      "elapsedMs": 194.40000009536743,
+      "result": {
+        "commitMs": 194.30000019073486,
+        "frameId": 18
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 18,
+          "displayedFrameId": 18,
+          "scrollX": 17,
+          "scrollY": 17,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 179186874,
+          "totalJSHeapSize": 264977162,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 88,
+        "metrics": 18,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 18,
+      "elapsedMs": 169.69999980926514,
+      "result": {
+        "commitMs": 169.59999990463257,
+        "frameId": 19
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 19,
+          "displayedFrameId": 19,
+          "scrollX": 18,
+          "scrollY": 18,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 207671096,
+          "totalJSHeapSize": 265223084,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 93,
+        "metrics": 19,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 19,
+      "elapsedMs": 165.29999995231628,
+      "result": {
+        "commitMs": 165.20000004768372,
+        "frameId": 20
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 20,
+          "displayedFrameId": 20,
+          "scrollX": 19,
+          "scrollY": 19,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 240861226,
+          "totalJSHeapSize": 265649230,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 98,
+        "metrics": 20,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 20,
+      "elapsedMs": 159,
+      "result": {
+        "commitMs": 158.79999995231628,
+        "frameId": 21
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 21,
+          "displayedFrameId": 21,
+          "scrollX": 20,
+          "scrollY": 20,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 273880049,
+          "totalJSHeapSize": 290192633,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 103,
+        "metrics": 21,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 21,
+      "elapsedMs": 164.20000004768372,
+      "result": {
+        "commitMs": 164.10000014305115,
+        "frameId": 22
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 22,
+          "displayedFrameId": 22,
+          "scrollX": 21,
+          "scrollY": 21,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 306914991,
+          "totalJSHeapSize": 323386843,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 108,
+        "metrics": 22,
+        "diagnostics": []
+      }
+    },
+    {
+      "i": 22,
+      "elapsedMs": 166.20000004768372,
+      "result": {
+        "commitMs": 166.09999990463257,
+        "frameId": 23
+      },
+      "state": {
+        "fixture": "B5-stress",
+        "view": {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 23,
+          "displayedFrameId": 23,
+          "scrollX": 22,
+          "scrollY": 22,
+          "loading": false,
+          "cacheWindows": 0
+        },
+        "canvasCount": 0,
+        "svgNodes": 6490,
+        "domNodes": 6504,
+        "memory": {
+          "usedJSHeapSize": 339893376,
+          "totalJSHeapSize": 356318860,
+          "jsHeapSizeLimit": 4294705152
+        },
+        "reads": 113,
+        "metrics": 23,
+        "diagnostics": []
+      }
+    }
+  ],
+  "err": {
+    "i": 23,
+    "error": "Error: {\"inputRevision\":1,\"version\":{\"sourceId\":\"B5-stress\",\"snapshotId\":\"1592598566\",\"presentationId\":\"1\"},\"frameId\":23,\"code\":\"resource-limit\",\"message\":\"resource-limit: SVG exceeds 5,000 marks or 10,000 elements\",\"severity\":\"error\",\"recoverable\":true}",
+    "state": {
+      "fixture": "B5-stress",
+      "view": {
+        "inputRevision": 1,
+        "version": {
+          "sourceId": "B5-stress",
+          "snapshotId": "1592598566",
+          "presentationId": "1"
+        },
+        "displayedFrameId": 23,
+        "scrollX": 23,
+        "scrollY": 23,
+        "loading": false,
+        "cacheWindows": 0
+      },
+      "canvasCount": 0,
+      "svgNodes": 6490,
+      "domNodes": 6504,
+      "memory": {
+        "usedJSHeapSize": 365801812,
+        "totalJSHeapSize": 377192076,
+        "jsHeapSizeLimit": 4294705152
+      },
+      "reads": 118,
+      "metrics": 23,
+      "diagnostics": [
+        {
+          "inputRevision": 1,
+          "version": {
+            "sourceId": "B5-stress",
+            "snapshotId": "1592598566",
+            "presentationId": "1"
+          },
+          "frameId": 23,
+          "code": "resource-limit",
+          "message": "resource-limit: SVG exceeds 5,000 marks or 10,000 elements",
+          "severity": "error",
+          "recoverable": true
+        }
+      ]
+    }
+  }
+}

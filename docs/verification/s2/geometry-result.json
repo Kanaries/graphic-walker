@@ -1,0 +1,147 @@
+[
+  {
+    "example": "nested",
+    "commands": 157,
+    "canvasDraw": 157,
+    "svgNodes": 157,
+    "canvasHits": 24,
+    "svgHits": 24,
+    "sameHits": true,
+    "compared": 1090,
+    "maxError": 0,
+    "worst": [
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      },
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  },
+  {
+    "example": "line",
+    "commands": 60,
+    "canvasDraw": 60,
+    "svgNodes": 60,
+    "canvasHits": 24,
+    "svgHits": 24,
+    "sameHits": true,
+    "compared": 438,
+    "maxError": 0,
+    "worst": [
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      },
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  },
+  {
+    "example": "heatmap",
+    "commands": 61,
+    "canvasDraw": 61,
+    "svgNodes": 61,
+    "canvasHits": 12,
+    "svgHits": 12,
+    "sameHits": true,
+    "compared": 460,
+    "maxError": 0,
+    "worst": [
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      },
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  },
+  {
+    "example": "text",
+    "commands": 61,
+    "canvasDraw": 61,
+    "svgNodes": 61,
+    "canvasHits": 12,
+    "svgHits": 12,
+    "sameHits": true,
+    "compared": 436,
+    "maxError": 0,
+    "worst": [
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      },
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  },
+  {
+    "example": "scatter",
+    "commands": 57,
+    "canvasDraw": 57,
+    "svgNodes": 57,
+    "canvasHits": 12,
+    "svgHits": 12,
+    "sameHits": true,
+    "compared": 438,
+    "maxError": 0,
+    "worst": [
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      },
+      {
+        "d": 0,
+        "name": "clip",
+        "a": 0,
+        "b": 0,
+        "current": "background"
+      }
+    ],
+    "errors": [],
+    "errorCount": 0
+  }
+]

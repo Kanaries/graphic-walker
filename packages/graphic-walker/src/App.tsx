@@ -11,6 +11,7 @@ import {
     IComputationContextProps,
     IComputationProps,
     IThemeKey,
+    IDataQueryPayload,
 } from './interfaces';
 import { GWGlobalConfig } from './vis/theme';
 import type { IReactVegaHandler } from './vis/react-vega';
@@ -19,7 +20,7 @@ import PosFields from './fields/posFields';
 import AestheticFields from './fields/aestheticFields';
 import DatasetFields from './fields/datasetFields/index';
 import ReactiveRenderer from './renderer/index';
-import { VizStoreWrapper, useVizStore, withErrorReport, withTimeout } from './store';
+import { VizStoreWrapper, useVizStore, withTimeout } from './store';
 import VisNav from './segments/visNav';
 import { mergeLocaleRes, setLocaleLanguage } from './locales/i18n';
 import FilterField from './fields/filterField';
@@ -54,6 +55,7 @@ import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { ChartPieIcon, CircleStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { TabsContent } from '@radix-ui/react-tabs';
 import { VegaliteChat } from './components/chat';
+import { isCurrentComputation } from './utils/computationOwnership';
 
 export type BaseVizProps = IAppI18nProps &
     IVizProps &
@@ -119,19 +121,28 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
         }
     }, [chart, vizStore]);
 
+    const vlImportFields = vizStore.meta;
+    const vlImportErrorHandler = useRef(onError);
+    vlImportErrorHandler.current = onError;
     useEffect(() => {
         if (vlSpec) {
-            const emptyChart = newChart(vizStore.meta, '');
-            vizStore.replaceNow(
-                VegaliteMapper(
+            try {
+                const emptyChart = newChart(vlImportFields, '');
+                const imported = VegaliteMapper(
                     vlSpec,
                     [...emptyChart.encodings.dimensions, ...emptyChart.encodings.measures],
                     vizStore.currentVis.visId,
                     vizStore.currentVis.name ?? 'Chart 1'
-                )
-            );
+                );
+                vizStore.replaceNow(imported);
+            } catch (error) {
+                // A rejected import leaves the current chart and history intact.
+                const diagnostic = error instanceof Error ? error : new Error(String(error));
+                console.error(diagnostic);
+                vlImportErrorHandler.current?.(diagnostic);
+            }
         }
-    }, [vlSpec, vizStore]);
+    }, [vlSpec, vizStore, vlImportFields]);
 
     const rendererRef = useRef<IReactVegaHandler>(null);
 
@@ -154,10 +165,18 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
     const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey;
     const appliedThemeConfig = typeof currentTheme === 'object' ? currentTheme : themeConfig;
 
-    const wrappedComputation = useMemo(
-        () => (computation ? withErrorReport(withTimeout(computation, computationTimeout), (err) => reportError(parseErrorMessage(err), 501)) : async () => []),
-        [reportError, computation, computationTimeout]
-    );
+    const wrappedComputation = useMemo(() => {
+        if (!computation) return async () => [];
+        const timedComputation = withTimeout(computation, computationTimeout);
+        return async (payload: IDataQueryPayload) => {
+            try {
+                return await timedComputation(payload);
+            } catch (error) {
+                if (isCurrentComputation(payload)) reportError(parseErrorMessage(error), 501);
+                throw error;
+            }
+        };
+    }, [reportError, computation, computationTimeout]);
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     return (
@@ -277,6 +296,7 @@ export const VizApp = observer(function VizApp(props: BaseVizProps) {
                                                                 computationFunction={wrappedComputation}
                                                                 // @TODO remove channelScales
                                                                 scales={props.scales ?? props.channelScales}
+                                        nativeRenderer={props.nativeRenderer}
                                                             />
                                                         )}
                                                         <VizEmbedMenu />

@@ -1,0 +1,12 @@
+import {createWorksheet} from '../../../packages/worksheet-renderer/src/runtime/worksheet';
+import {createPreparedDataSource} from '../../../packages/worksheet-renderer/src/core/prepared';
+import {adaptChartToRenderPlan} from '../../../packages/graphic-walker/src/lib/native/adapter';
+import {toTypedValue} from '../../../packages/worksheet-renderer/src/core/keys';
+import {createB1Fixtures} from '../../../packages/worksheet-renderer/bench/fixtures';
+const f=createB1Fixtures().find(x=>x.id==='exact-selection-tuples')!;
+const adapted=adaptChartToRenderPlan(f.chart,{columns:f.columns});
+const plan={...adapted.plan!,layout:{rowHeight:180,columnWidth:200,rowHeaderWidth:100,columnHeaderHeight:70}};
+const source=createPreparedDataSource({plan,records:f.records,version:{sourceId:'A07',snapshotId:'1',presentationId:'1'},getDatumKey:f.getDatumKey});
+const v=createWorksheet(document.querySelector('#host')!,{plan,source,backend:'canvas'},{autoResize:false,width:400,height:300,dpr:1});
+const events:any[]=[];v.on('selectionChange',e=>events.push(e));
+(window as any).a07={v,plan,source,events,sort: async()=>{const sorted=createPreparedDataSource({plan,records:f.records,version:{sourceId:'A07',snapshotId:'1',presentationId:'2'},getDatumKey:f.getDatumKey,memberOrder:[{axis:'row',parent:[],fieldRef:plan.rows.facets[0],values:['West','East'].map(toTypedValue)}]});return v.update({plan,source:sorted,backend:'svg'});}};

@@ -1,0 +1,185 @@
+{
+  "point": {
+    "x": 294,
+    "y": 157,
+    "id": "[\"pane\",\"[\\\"leaf\\\",\\\"row\\\",[[\\\"gw-field:[\\\\\\\"Region\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Central\\\"]],[\\\"gw-field:[\\\\\\\"District\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Local\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"row\\\\\\\",null]\\\"]\",\"[\\\"leaf\\\",\\\"column\\\",[[\\\"gw-field:[\\\\\\\"Year\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"2024\\\"]],[\\\"gw-field:[\\\\\\\"Quarter\\\\\\\",null,\\\\\\\"dimension\\\\\\\",\\\\\\\"nominal\\\\\\\",null,null]:0\\\",[\\\"string\\\",\\\"Q1\\\"]]],\\\"[\\\\\\\"slot\\\\\\\",\\\\\\\"column\\\\\\\",null]\\\"]\"]:[\"[\\\"gw-result\\\",\\\"gw:1:_r_0_\\\",\\\"snapshot\\\",\\\"1\\\",120]\",null]"
+  },
+  "selected": "#ea580c",
+  "retained": "#ea580c",
+  "start": {
+    "elements": 18,
+    "canvas": 1
+  },
+  "end": {
+    "left": 738,
+    "top": 846,
+    "width": 1764,
+    "height": 1522
+  },
+  "maxElements": 18,
+  "maxCanvas": 1,
+  "query": 1,
+  "final": 1,
+  "measurements": [
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    },
+    {
+      "elements": 18,
+      "canvas": 1
+    }
+  ]
+}
