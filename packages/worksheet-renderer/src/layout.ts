@@ -1,10 +1,14 @@
-import { compareValue, pathKey, valueKey } from './keys';
-import type { AxisBranch, AxisGroup, AxisLayout, AxisLeaf, AxisScale, HeaderSpan, PathPart, WorksheetSpec } from './types';
+import { pathKey, valueKey } from './keys';
+import type { AxisBranch, AxisGroup, AxisLayout, AxisLeaf, AxisScale, HeaderSpan, PathPart, Value, WorksheetSpec } from './types';
 
 /** The only place layout sizes are defined. CSS px. */
 export const metrics = {
     bandWidth: 28,
     bandHeight: 24,
+    /** Member width when the marks are numbers rather than shapes. */
+    textCellWidth: 76,
+    legendMinWidth: 96,
+    legendMaxWidth: 190,
     slotWidth: 200,
     slotHeight: 160,
     headerHeight: 24,
@@ -26,7 +30,7 @@ export interface LeafSizes { band: number; continuous: number }
 export function leafSizes(spec: WorksheetSpec): { row: LeafSizes; column: LeafSizes } {
     return {
         row: { band: Math.max(12, spec.band?.height ?? metrics.bandHeight), continuous: Math.max(60, spec.pane?.height ?? metrics.slotHeight) },
-        column: { band: Math.max(12, spec.band?.width ?? metrics.bandWidth), continuous: Math.max(80, spec.pane?.width ?? metrics.slotWidth) },
+        column: { band: Math.max(12, spec.band?.width ?? (spec.mark === 'text' ? metrics.textCellWidth : metrics.bandWidth)), continuous: Math.max(80, spec.pane?.width ?? metrics.slotWidth) },
     };
 }
 
@@ -96,7 +100,8 @@ export interface LeafDraft {
 // Orders leaves as a tree walk. Children of a node are bucketed by field, buckets follow
 // branch order, members inside a bucket follow value order. This is a total order for any
 // mix of concatenated branches, and it keeps the leaves under one header contiguous.
-function orderLeaves(drafts: LeafDraft[], direction: number): LeafDraft[] {
+export type MemberCompare = (instanceId: string, a: Value, b: Value) => number;
+function orderLeaves(drafts: LeafDraft[], compare: MemberCompare): LeafDraft[] {
     const visit = (items: LeafDraft[], level: number): LeafDraft[] => {
         const buckets = new Map<string, { rank: number; terminal: boolean; items: LeafDraft[] }>();
         for (const item of items) {
@@ -118,17 +123,18 @@ function orderLeaves(drafts: LeafDraft[], direction: number): LeafDraft[] {
                 list.push(item);
                 members.set(key, list);
             }
-            return [...members.values()].sort((a, b) => compareValue(a[0].path[level].value, b[0].path[level].value) * direction).flatMap(list => visit(list, level + 1));
+            const field = bucket.items[0].path[level].instanceId;
+            return [...members.values()].sort((a, b) => compare(field, a[0].path[level].value, b[0].path[level].value)).flatMap(list => visit(list, level + 1));
         });
     };
     return visit(drafts, 0);
 }
 
-export function buildAxis(axis: 'row' | 'column', drafts: Iterable<LeafDraft>, direction: number, sizes: LeafSizes, instances: WorksheetSpec['instances']): AxisLayout {
+export function buildAxis(axis: 'row' | 'column', drafts: Iterable<LeafDraft>, compare: MemberCompare, sizes: LeafSizes, instances: WorksheetSpec['instances']): AxisLayout {
     const leaves: AxisLeaf[] = [];
     const groups: AxisGroup[] = [];
     let offset = 0;
-    for (const draft of orderLeaves([...drafts], direction)) {
+    for (const draft of orderLeaves([...drafts], compare)) {
         const size = draft.kind === 'continuous' ? sizes.continuous : sizes.band;
         let group = groups[groups.length - 1];
         if (!group || group.id !== draft.groupId) {

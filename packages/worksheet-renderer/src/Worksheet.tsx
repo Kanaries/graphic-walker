@@ -1,10 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { parse, View } from 'vega';
 import { compileWorksheet, executePlan } from './compiler';
-import { displayValue, valueKey } from './keys';
 import { setTextMeasure } from './layout';
 import { buildModel } from './model';
-import { buildScene, palette, type Primitive, type Scene } from './scene';
+import { buildScene, type Primitive, type Scene } from './scene';
 import { sceneData, sceneToSVG, vegaSpec } from './vegaBackend';
 import type { Computation, Row, Selection, WorksheetSpec } from './types';
 
@@ -151,7 +150,6 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     return <div style={{ color: '#263248', fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>
         <div aria-live="polite" data-testid="worksheet-status" style={{ display: 'flex', gap: 16, padding: '10px 0', flexWrap: 'wrap' }}>
             {loading ? 'Querying…' : model ? `${model.panes.length} panes · ${scene.visiblePanes} visible · ${model.rows.leaves.length} × ${model.columns.leaves.length} positions · ${model.plan.tasks.length} query tasks · ${model.panes.reduce((n, p) => n + p.records.length, 0)} marks` : 'Worksheet'}
-            {model?.colors.map((c, i) => <span key={valueKey(c)}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: palette[i % palette.length], marginRight: 5 }} />{displayValue(c)}</span>)}
         </div>
         {error ? <p role="alert" style={{ color: '#b42318' }}>{error}</p> : null}
         {!loading && model && !model.panes.length ? <p>No data matches these filters.</p> : null}

@@ -10,7 +10,7 @@ export const instances: Record<string, FieldInstance> = Object.fromEntries([
 export const dimensions = Object.values(instances).filter(f => f.display === 'discrete').map(f => f.id);
 export const measures = ['sales', 'profit', 'orders'];
 export const regions = ['Central', 'East', 'South', 'West'];
-export interface Shelves { rows: string[]; columns: string[]; rowMeasures: string[]; columnMeasures: string[]; mark: WorksheetSpec['mark']; color?: string }
+export interface Shelves { rows: string[]; columns: string[]; rowMeasures: string[]; columnMeasures: string[]; mark: WorksheetSpec['mark']; color?: string; text?: string }
 export const presets: Record<string, Shelves & { label: string }> = {
     nested: { label: 'Nested bars', rows: ['Region', 'Category', 'Subcategory'], columns: ['Year'], rowMeasures: [], columnMeasures: ['sales', 'profit'], mark: 'bar', color: 'Segment' },
     line: { label: 'Monthly lines', rows: ['Region'], columns: ['Year', 'Month'], rowMeasures: ['sales'], columnMeasures: [], mark: 'line', color: 'Segment' },
@@ -18,8 +18,10 @@ export const presets: Record<string, Shelves & { label: string }> = {
     deep: { label: 'Five-level hierarchy', rows: ['Country', 'Region', 'Category', 'Subcategory', 'Segment'], columns: ['Year'], rowMeasures: [], columnMeasures: ['sales', 'profit', 'orders'], mark: 'bar', color: 'Segment' },
     // The three Tableau reference views the layout is checked against.
     ref1: { label: 'Ref 1 · Year / Category / Sub-Category', rows: [], columns: ['Year', 'Category', 'Subcategory'], rowMeasures: ['sales'], columnMeasures: [], mark: 'bar' },
-    ref2: { label: 'Ref 2 · Category / Sub-Category × Region', rows: ['Category', 'Subcategory'], columns: ['Region'], rowMeasures: [], columnMeasures: ['sales'], mark: 'bar' },
+    ref2: { label: 'Ref 2 · Category / Sub-Category × Region', rows: ['Category', 'Subcategory'], columns: ['Region'], rowMeasures: [], columnMeasures: ['sales'], mark: 'bar', color: 'profit' },
     ref3: { label: 'Ref 3 · Category / Segment × Year', rows: ['Category', 'Segment'], columns: ['Year'], rowMeasures: [], columnMeasures: ['sales'], mark: 'bar', color: 'Segment' },
+    heat: { label: 'Heat map', rows: ['Category', 'Subcategory'], columns: ['Year', 'Month'], rowMeasures: [], columnMeasures: [], mark: 'rect', color: 'profit' },
+    crosstab: { label: 'Crosstab', rows: ['Category', 'Subcategory'], columns: ['Region'], rowMeasures: [], columnMeasures: [], mark: 'text', text: 'sales' },
 };
 export function axis(dims: string[], metrics: string[]) {
     const items = dims.map(field);

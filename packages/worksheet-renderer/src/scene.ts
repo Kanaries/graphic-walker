@@ -1,3 +1,4 @@
+import { continuousColor, fillOf, palette } from './color';
 import { displayValue, valueKey } from './keys';
 import { branchFields } from './compiler';
 import { fitText, formatTick, formatValue, leafRange, metrics, spansIn, textWidth } from './layout';
@@ -8,9 +9,11 @@ export interface Viewport { x: number; y: number; width: number; height: number 
 /**
  * Painted in this order. The body scrolls both ways, row headers and the value axis on
  * the left scroll vertically, column headers and the bottom axis scroll horizontally,
- * corners stay put. Each later layer has an opaque background and covers what is below.
+ * corners and the legend stay put. Each later layer has an opaque background and covers
+ * what is below. The xAxis layer is the strip under the body: the value axis of the
+ * columns, or the innermost column headers when those are placed at the bottom.
  */
-export const layers = ['body', 'rowHeader', 'columnHeader', 'xAxis', 'corner'] as const;
+export const layers = ['body', 'rowHeader', 'columnHeader', 'xAxis', 'corner', 'legend'] as const;
 export type Layer = typeof layers[number];
 export interface Primitive {
     kind: 'rect' | 'symbol' | 'path' | 'text';
@@ -21,7 +24,6 @@ export interface Primitive {
     selection?: Selection; tooltip?: string;
 }
 export interface Scene { width: number; height: number; items: Primitive[]; visiblePanes: number }
-export const palette = ['#4263eb', '#e88739', '#169b8d', '#b46bd0', '#dc6275', '#809432', '#3689ab', '#8c6a52'];
 const ink = { text: '#344054', muted: '#667085', line: '#d9dfe9', grid: '#eef1f6', zero: '#c2c9d6', paper: '#ffffff' };
 const numeric = (value: unknown) => value == null ? NaN : Number(value);
 /** Opacity of marks outside a non-empty selection. */
@@ -40,7 +42,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     const pad = metrics.headerPadding;
     // Screen rectangle of the body. The bottom axis sits under the last row, or on the window edge when the sheet is taller.
     const axisY = Math.max(top, Math.min(viewport.height - frame.bottom, top + rows.size - viewport.y));
-    const bodyRight = Math.max(left, Math.min(viewport.width, left + columns.size - viewport.x));
+    const bodyRight = Math.max(left, Math.min(viewport.width - frame.right, left + columns.size - viewport.x));
     const [c0, c1] = leafRange(columns, viewport.x, viewport.x + bodyRight - left);
     const [r0, r1] = leafRange(rows, viewport.y, viewport.y + axisY - top);
     const sx = (logical: number) => left + logical - viewport.x;
@@ -60,8 +62,11 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     const py = (leaf: AxisLeaf, value: number) => sy(leaf.offset + leaf.size - along(leaf, value));
 
     const colorField = spec.color ? spec.instances[spec.color] : undefined;
-    const colorMap = new Map(model.colors.map((c, i) => [valueKey(c), palette[i % palette.length]]));
-    const seriesFields = [spec.color, ...(spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => spec.instances[id]);
+    const fill = fillOf(colorField, model.colors, model.colorScale);
+    const textField = spec.mark === 'text' && spec.text ? spec.instances[spec.text] : undefined;
+    const encodingFields = [spec.color, ...(spec.detail ?? []), textField?.id].filter((id): id is string => Boolean(id)).map(id => spec.instances[id]);
+    // Dimensions on color and detail divide a pane into series; a measure on color does not.
+    const seriesFields = encodingFields.filter(f => !f.aggregate && f !== textField);
     const selecting = Boolean(state.selected?.size);
     // Labels of members squeezed below one line of text are thinned out, the members themselves stay.
     const stride = (size: number, room: number) => Math.max(1, Math.ceil(room / size));
@@ -97,14 +102,14 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     function drawMarks(pane: Pane) {
         const xField = pane.column.branch.position, yField = pane.row.branch.position;
         const xContinuous = xField?.display === 'continuous', yContinuous = yField?.display === 'continuous';
-        const used = [...branchFields(pane.row.branch), ...branchFields(pane.column.branch), ...seriesFields];
+        const used = [...branchFields(pane.row.branch), ...branchFields(pane.column.branch), ...encodingFields];
         const dimensions = [...new Map(used.filter(f => !f.aggregate).map(f => [f.field, f])).values()];
         const described = [...new Map(used.map(f => [f.id, f])).values()];
         const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
         const isLine = spec.mark === 'line';
         // A line runs along x unless x is the only value axis.
         const alongY = xContinuous && !yContinuous;
-        const lines = new Map<string, { selected: boolean; points: { order: number; x: number; y: number; missing: boolean; fill: string }[] }>();
+        const lines = new Map<string, { selected: boolean; points: { order: number; x: number; y: number; missing: boolean; color: string }[] }>();
         for (const mark of pane.marks) {
             // Points of a line outside the window still shape the visible segments.
             if (!isLine && (mark.row < r0 || mark.row >= r1 || mark.column < c0 || mark.column >= c1)) continue;
@@ -115,7 +120,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             const missing = !Number.isFinite(xValue) || !Number.isFinite(yValue);
             const x = xContinuous ? px(columnLeaf, xValue) : sx(columnLeaf.offset + columnLeaf.size / 2);
             const y = yContinuous ? py(rowLeaf, yValue) : sy(rowLeaf.offset + rowLeaf.size / 2);
-            const fill = colorField ? colorMap.get(valueKey(record[colorField.field]))! : palette[0];
+            const color = fill(record);
             const id = JSON.stringify([pane.row.branch.order, pane.column.branch.order, ...dimensions.map(f => valueKey(record[f.field]))]);
             const selected = selecting && state.selected!.has(id);
             if (isLine) {
@@ -123,7 +128,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 if (Number.isFinite(order)) {
                     const key = JSON.stringify(seriesFields.map(f => valueKey(record[f.field])));
                     const line = lines.get(key) ?? { selected: false, points: [] };
-                    line.points.push({ order, x, y, missing, fill });
+                    line.points.push({ order, x, y, missing, color });
                     line.selected ||= selected;
                     lines.set(key, line);
                 }
@@ -137,20 +142,24 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 if (!Number.isFinite(mark.start) || !Number.isFinite(mark.end)) continue;
                 if (xContinuous) {
                     const a = px(columnLeaf, mark.start), b = px(columnLeaf, mark.end), thickness = Math.max(1, rowLeaf.size * metrics.barFill);
-                    rect('body', Math.min(a, b), y - thickness / 2, Math.max(.5, Math.abs(b - a)), thickness, fill, extra);
+                    rect('body', Math.min(a, b), y - thickness / 2, Math.max(.5, Math.abs(b - a)), thickness, color, extra);
                 } else {
                     const a = py(rowLeaf, mark.start), b = py(rowLeaf, mark.end), thickness = Math.max(1, columnLeaf.size * metrics.barFill);
-                    rect('body', x - thickness / 2, Math.min(a, b), thickness, Math.max(.5, Math.abs(b - a)), fill, extra);
+                    rect('body', x - thickness / 2, Math.min(a, b), thickness, Math.max(.5, Math.abs(b - a)), color, extra);
                 }
             } else if (spec.mark === 'text') {
-                const f = xField?.aggregate ? xField : yField?.aggregate ? yField : undefined;
-                text('body', x, y + 4, f ? formatTick(Number(record[resultKey(f)])) : '•', { align: 'center', fill, ...extra });
+                // In a cell the number is written in full; along a value axis it is abbreviated like a tick.
+                const f = textField ?? (xField?.aggregate ? xField : yField?.aggregate ? yField : undefined);
+                const raw = f ? record[resultKey(f)] : undefined;
+                const cell = !xContinuous && !yContinuous;
+                const label = !f ? '•' : raw == null ? '' : typeof raw !== 'number' ? displayValue(raw as Value) : cell ? formatValue(raw) : formatTick(raw);
+                text('body', x, y + 4, cell ? fitText(label, columnLeaf.size - 6) : label, { align: 'center', fill: colorField ? color : ink.text, ...extra });
             } else if (spec.mark === 'rect') {
                 // A cell mark fills its member step; on a value axis it stays a small square.
                 const width = xContinuous ? 10 : columnLeaf.size - 1, height = yContinuous ? 10 : rowLeaf.size - 1;
-                rect('body', x - width / 2, y - height / 2, width, height, fill, extra);
+                rect('body', x - width / 2, y - height / 2, width, height, color, extra);
             } else {
-                items.push({ kind: 'symbol', layer: 'body', x, y, size: isLine ? 22 : 44, fill, ...extra });
+                items.push({ kind: 'symbol', layer: 'body', x, y, size: isLine ? 22 : 44, fill: color, ...extra });
             }
         }
         for (const { points, selected } of lines.values()) {
@@ -163,7 +172,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 path += `${open ? 'L' : `${path ? ' ' : ''}M`}${point.x.toFixed(1)},${point.y.toFixed(1)}`;
                 open = true;
             }
-            if (path) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path, stroke: points[0].fill, ...(selecting && !selected ? { opacity: dimmed } : {}) });
+            // A line has one stroke. With a measure on color only its points are tinted.
+            if (path) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path, stroke: model.colorScale ? palette[0] : points[0].color, ...(selecting && !selected ? { opacity: dimmed } : {}) });
         }
     }
 
@@ -212,6 +222,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     columns.levels.forEach((spans, level) => {
         const height = frame.columnHeaderHeights[level];
         const rotated = frame.rotateColumnLabels && level === columns.levels.length - 1;
+        if (frame.bottomHeaderHeight && level === columns.levels.length - 1) return bottomHeaders(spans, height, rotated);
         for (const span of spansIn(spans, c0, c1)) {
             const first = columns.leaves[span.start], last = columns.leaves[span.end - 1];
             const x0 = sx(first.offset), x1 = sx(last.offset + last.size);
@@ -232,10 +243,28 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     });
     rect('columnHeader', left, top - 1, viewport.width - left, 1, ink.line);
 
-    // ---- value axis under the body
+    // ---- strip under the body: member names of the innermost column field, or the value axis
+    function bottomHeaders(spans: typeof columns.levels[number], height: number, rotated: boolean) {
+        for (const span of spansIn(spans, c0, c1)) {
+            const leaf = columns.leaves[span.start];
+            if (span.start % stride(leaf.size, rotated ? 12 : 1)) continue;
+            const center = sx(leaf.offset + leaf.size / 2);
+            if (center < left || center > bodyRight) continue;
+            const label = displayValue(span.part.value);
+            const tooltip = `${spec.instances[span.part.instanceId].label}: ${label}`;
+            // Vertical names hang from the axis line and read upwards.
+            if (rotated) text('xAxis', center + 4, axisY + 6, fitText(label, height - 8), { angle: 270, align: 'right', tooltip });
+            else text('xAxis', center, axisY + 16, fitText(label, leaf.size - 4), { align: 'center', tooltip });
+        }
+    }
     if (frame.bottom) {
         rect('xAxis', left, axisY, viewport.width - left, frame.bottom, ink.paper);
         rect('xAxis', left, axisY, bodyRight - left, 1, ink.line);
+        // Group dividers run on through the strip.
+        if (frame.bottomHeaderHeight && c1 > c0) for (let g = columns.leaves[c0].group; g <= columns.leaves[c1 - 1].group; g++) {
+            const x = sx(columns.groups[g].offset);
+            if (x >= left && columns.groups[g].offset > 0) rect('xAxis', x, axisY, 1, frame.bottom, ink.line);
+        }
         for (let i = c0; i < c1; i++) {
             const leaf = columns.leaves[i];
             if (!leaf.scale) continue;
@@ -268,6 +297,29 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     if (frame.bottom) {
         rect('corner', 0, axisY, left, frame.bottom, ink.paper);
         rect('corner', 0, axisY, left, 1, ink.line);
+    }
+
+    // ---- legend, right after the body or on the window edge when the sheet is wider
+    if (frame.right && colorField) {
+        const x = bodyRight, inner = frame.right - 24;
+        rect('legend', x, 0, Math.max(frame.right, viewport.width - x), viewport.height, ink.paper);
+        rect('legend', x, 0, 1, Math.min(viewport.height, axisY + frame.bottom), ink.line);
+        text('legend', x + 12, 17, fitText(colorField.label, inner, metrics.fontSize, 600), { fontWeight: 600, tooltip: colorField.label });
+        if (model.colorScale) {
+            const [low, high] = model.colorScale.domain, steps = 40;
+            for (let i = 0; i < steps; i++) rect('legend', x + 12 + i * inner / steps, 28, inner / steps + .5, 10, continuousColor(model.colorScale, low + (high - low) * (i + .5) / steps));
+            text('legend', x + 12, 52, formatTick(low), { fontSize: 10, fill: ink.muted });
+            text('legend', x + 12 + inner, 52, formatTick(high), { fontSize: 10, fill: ink.muted, align: 'right' });
+        } else {
+            // A list longer than the window ends with a count instead of running off it.
+            const room = Math.max(1, Math.floor((viewport.height - 30) / 18));
+            const shown = model.colors.length > room ? room - 1 : model.colors.length;
+            model.colors.slice(0, shown).forEach((value, i) => {
+                rect('legend', x + 12, 28 + i * 18, 10, 10, palette[i % palette.length]);
+                text('legend', x + 28, 37 + i * 18, fitText(displayValue(value), inner - 16), { tooltip: displayValue(value) });
+            });
+            if (shown < model.colors.length) text('legend', x + 12, 37 + shown * 18, `+${model.colors.length - shown} more`, { fill: ink.muted });
+        }
     }
     return { width: viewport.width, height: viewport.height, items, visiblePanes };
 }

@@ -1,6 +1,6 @@
 import { compareValue, displayValue, pathKey, valueKey } from './keys';
-import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft } from './layout';
-import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel } from './types';
+import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel, type WorksheetSpec } from './types';
 
 function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDraft {
     const facets = branch.facets.map(f => ({ instanceId: f.id, value: record[f.field] as Value }));
@@ -20,7 +20,8 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
     const x = columnBranch.position;
     const y = rowBranch.position;
     const measure = x?.display === 'continuous' ? x : y?.display === 'continuous' ? y : undefined;
-    const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]);
+    // Only dimensions split a pane into series. A measure on color tints the marks without dividing them.
+    const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => !f.aggregate);
     const sorted = [...items].sort((a, b) => {
         for (const f of series) {
             const cmp = compareValue(a.record[f.field], b.record[f.field]);
@@ -82,7 +83,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     }
 }
 
-function buildFrame(rows: AxisLayout, columns: AxisLayout): Frame {
+function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, colors: Value[], colorScale?: ColorScale): Frame {
     const pad = metrics.headerPadding * 2;
     const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(displayValue(span.part.value))));
     const rowHeaderWidths = rows.levels.map((_, level) => Math.min(metrics.headerMaxWidth,
@@ -95,11 +96,23 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout): Frame {
     const rotateColumnLabels = Boolean(member) && innerWidth + 8 > member!.size;
     const columnHeaderHeights = columns.levels.map((_, level) => rotateColumnLabels && level === inner ? Math.ceil(Math.min(innerWidth, metrics.rotatedLabelMax)) + 10 : metrics.headerHeight);
     const columnCaptionHeight = columns.levels.length ? metrics.captionHeight : 0;
-    const top = Math.max(rows.levels.length ? metrics.captionHeight : 0, columnCaptionHeight + columnHeaderHeights.reduce((a, b) => a + b, 0));
+    // With a value axis on the rows, the member names of the innermost column field read better under the marks.
+    const valueAxisOnRows = rows.leaves.some(leaf => leaf.kind === 'continuous');
+    const membersOnly = columns.leaves.length > 0 && columns.leaves.every(leaf => leaf.kind === 'band' && leaf.path.length === inner + 1);
+    const atBottom = membersOnly && (spec.innerColumnHeader ? spec.innerColumnHeader === 'bottom' : valueAxisOnRows);
+    const bottomHeaderHeight = atBottom ? columnHeaderHeights[inner] : 0;
+    const top = Math.max(rows.levels.length ? metrics.captionHeight : 0, columnCaptionHeight + columnHeaderHeights.reduce((a, b) => a + b, 0) - bottomHeaderHeight);
+    let right = 0;
+    if (spec.color) {
+        const title = textWidth(spec.instances[spec.color].label, metrics.fontSize, 600);
+        const widestItem = colorScale ? 110 : Math.max(0, ...colors.map(c => textWidth(displayValue(c)))) + 18;
+        right = Math.ceil(Math.min(metrics.legendMaxWidth, Math.max(metrics.legendMinWidth, Math.max(title, widestItem) + 24)));
+    }
     return {
         left: rowHeaderWidths.reduce((a, b) => a + b, 0) + yAxisWidth,
         top,
-        bottom: columns.leaves.some(leaf => leaf.kind === 'continuous') ? metrics.xAxisHeight : 0,
+        bottom: columns.leaves.some(leaf => leaf.kind === 'continuous') ? metrics.xAxisHeight : bottomHeaderHeight,
+        right, bottomHeaderHeight,
         rowHeaderWidths, columnHeaderHeights, rotateColumnLabels, columnCaptionHeight, yAxisWidth,
     };
 }
@@ -128,9 +141,19 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         }
     }
     const direction = spec.sort === 'descending' ? -1 : 1;
+    const ranks = new Map(Object.entries(spec.order ?? {}).filter(([, order]) => Array.isArray(order))
+        .map(([id, order]) => [id, new Map((order as Value[]).map((value, index) => [valueKey(value), index]))]));
+    const compare: MemberCompare = (id, a, b) => {
+        const order = spec.order?.[id];
+        const rank = ranks.get(id);
+        if (!rank) return compareValue(a, b) * (order ? (order === 'descending' ? -1 : 1) : direction);
+        // Listed members come first in list order, the rest follow by value.
+        const ra = rank.get(valueKey(a)), rb = rank.get(valueKey(b));
+        return ra !== undefined && rb !== undefined ? ra - rb : ra !== undefined ? -1 : rb !== undefined ? 1 : compareValue(a, b);
+    };
     const sizes = leafSizes(spec);
-    const rows = buildAxis('row', rowDrafts.values(), direction, sizes.row, spec.instances);
-    const columns = buildAxis('column', columnDrafts.values(), direction, sizes.column, spec.instances);
+    const rows = buildAxis('row', rowDrafts.values(), compare, sizes.row, spec.instances);
+    const columns = buildAxis('column', columnDrafts.values(), compare, sizes.column, spec.instances);
     const rowIndex = new Map(rows.leaves.map(leaf => [leaf.id, leaf.index]));
     const columnIndex = new Map(columns.leaves.map(leaf => [leaf.id, leaf.index]));
     const rowGroups = new Map(rows.groups.map(group => [group.id, group]));
@@ -140,32 +163,44 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     const paneIndex = new Map<string, Pane>();
     const colors = new Map<string, Value>();
     const color = spec.color ? spec.instances[spec.color] : undefined;
+    const extent: [number, number] = [Infinity, -Infinity];
     for (const [id, cell] of cells) {
         const row = rowGroups.get(cell.row)!;
         const column = columnGroups.get(cell.column)!;
         const marks = paneMarks(cell.items, row.branch, column.branch, plan, rowIndex, columnIndex);
         const pane: Pane = { id, row, column, records: marks.map(mark => mark.record), marks, xDomain: [0, 1], yDomain: [0, 1] };
-        if (color) for (const record of pane.records) colors.set(valueKey(record[color.field]), record[color.field]);
+        if (color && !color.aggregate) for (const record of pane.records) colors.set(valueKey(record[color.field]), record[color.field]);
+        if (color?.aggregate) for (const record of pane.records) {
+            const raw = record[resultKey(color)];
+            if (raw != null && Number.isFinite(Number(raw))) { extent[0] = Math.min(extent[0], Number(raw)); extent[1] = Math.max(extent[1], Number(raw)); }
+        }
         panes.push(pane);
         paneIndex.set(id, pane);
     }
     const scales = () => { assignScales(columns, 'x', panes, plan); assignScales(rows, 'y', panes, plan); };
     scales();
-    let frame = buildFrame(rows, columns);
+    const palette = [...colors.values()].sort(compareValue);
+    // A color range comes from the complete result, like an axis range.
+    const colorScale: ColorScale | undefined = color?.aggregate
+        ? { field: color, domain: extent[0] <= extent[1] ? extent : [0, 1], diverging: extent[0] < 0 && extent[1] > 0 } : undefined;
+    const measure = () => buildFrame(rows, columns, spec, palette, colorScale);
+    let frame = measure();
     const fitWidth = target && (spec.fit === 'width' || spec.fit === 'both') && columns.size > 0;
     const fitHeight = target && (spec.fit === 'height' || spec.fit === 'both') && rows.size > 0;
     // Header and axis sizes depend on the steps and the steps on what the headers leave over.
     // Two rounds settle it; the frame of the first round is kept so the second fits it exactly.
     if (fitWidth || fitHeight) for (let round = 0; round < 2; round++) {
-        if (fitWidth) scaleAxis(columns, Math.max(1, target!.width - frame.left) / columns.size);
+        if (fitWidth) scaleAxis(columns, Math.max(1, target!.width - frame.left - frame.right) / columns.size);
         if (fitHeight) scaleAxis(rows, Math.max(1, target!.height - frame.top - frame.bottom) / rows.size);
         scales();
-        if (round === 0) frame = buildFrame(rows, columns);
+        if (round === 0) frame = measure();
     }
     for (const pane of panes) {
         pane.xDomain = columns.leaves[pane.column.start].scale?.domain ?? [0, 1];
         pane.yDomain = rows.leaves[pane.row.start].scale?.domain ?? [0, 1];
     }
-    return { plan, rows, columns, panes, paneIndex, frame, width: frame.left + columns.size, height: frame.top + rows.size + frame.bottom,
-        colors: [...colors.values()].sort(compareValue) };
+    // A short table still leaves room for its legend.
+    const legendHeight = colorScale ? 64 : spec.color ? 30 + Math.min(palette.length, 16) * 18 : 0;
+    return { plan, rows, columns, panes, paneIndex, frame, width: frame.left + columns.size + frame.right,
+        height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale };
 }

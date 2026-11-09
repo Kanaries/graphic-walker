@@ -29,6 +29,7 @@ export default function WorksheetRendererPage() {
     const [scaleScope, setScaleScope] = useState<WorksheetSpec['scaleScope']>('shared');
     const [color, setColor] = useState(presets.nested.color ?? '');
     const [detail, setDetail] = useState('');
+    const [text, setText] = useState('sales');
     const [stack, setStack] = useState(true);
     const [sort, setSort] = useState<WorksheetSpec['sort']>('ascending');
     const [region, setRegion] = useState('');
@@ -40,12 +41,12 @@ export default function WorksheetRendererPage() {
     const spec = useMemo<WorksheetSpec>(() => ({
         kind: 'worksheet', specVersion: 2, instances,
         rows: axis(shelves.rows, shelves.rowMeasures), columns: axis(shelves.columns, shelves.columnMeasures),
-        mark: shelves.mark, color: color || undefined, detail: detail ? [detail] : [],
-        stack, scaleScope, sort, pane: { width: slot, height: Math.round(slot * .8) }, band: { width: step + 4, height: step }, fit: fit || undefined,
+        mark: shelves.mark, color: color || undefined, detail: detail ? [detail] : [], text: shelves.mark === 'text' ? text : undefined,
+        stack, scaleScope, sort, pane: { width: slot, height: Math.round(slot * .8) }, band: { width: shelves.mark === 'text' ? undefined : step + 4, height: step }, fit: fit || undefined,
         filters: region ? [{ field: 'Region', values: [region] }] : [],
-    }), [shelves, color, detail, stack, scaleScope, sort, slot, step, fit, region]);
+    }), [shelves, color, detail, text, stack, scaleScope, sort, slot, step, fit, region]);
     const diagnostic = useMemo(() => { try { return compileWorksheet(spec).tasks; } catch { return []; } }, [spec]);
-    const updateShelf = (key: keyof Omit<Shelves, 'mark' | 'color'>, values: string[]) => setShelves(s => ({ ...s, [key]: values }));
+    const updateShelf = (key: keyof Omit<Shelves, 'mark' | 'color' | 'text'>, values: string[]) => setShelves(s => ({ ...s, [key]: values }));
     return <section className="worksheet-lab">
         <div className="ws-heading"><div><p className="ws-eyebrow">INTERNAL RENDERER · V0</p><h1>Nested worksheets</h1>
             <p>多层嵌套、度量并列和分面。每个成员占一个等宽的格子，数值轴画在表格边缘，表头和轴在滚动时固定。点击标记选中，按住 Ctrl 或 Cmd 加选，Esc 清空。</p></div>
@@ -56,7 +57,7 @@ export default function WorksheetRendererPage() {
         </div>
         <div className="ws-presets" aria-label="Worksheet presets">
             {Object.entries(presets).map(([key, preset]) =>
-                <button type="button" key={key} onClick={() => { setShelves(preset); setColor(preset.color ?? ''); setDetail(''); setStack(true); }}>{preset.label}</button>)}
+                <button type="button" key={key} onClick={() => { setShelves(preset); setColor(preset.color ?? ''); setText(preset.text ?? 'sales'); setDetail(''); setStack(true); }}>{preset.label}</button>)}
         </div>
         <div className="ws-shelves">
             <Shelf name="Rows" values={shelves.rows} options={dimensions} onChange={v => updateShelf('rows', v)} />
@@ -69,7 +70,8 @@ export default function WorksheetRendererPage() {
             <label>Axis range<select value={scaleScope} onChange={e => setScaleScope(e.target.value as WorksheetSpec['scaleScope'])}>
                 <option value="shared">Uniform per measure</option><option value="prefix">Per outer header</option><option value="independent">Independent per row / column</option>
             </select></label>
-            <label>Color<select value={color} onChange={e => setColor(e.target.value)}><option value="">None</option>{dimensions.map(id => <option key={id}>{id}</option>)}</select></label>
+            <label>Color<select value={color} onChange={e => setColor(e.target.value)}><option value="">None</option>{[...dimensions, ...measures].map(id => <option key={id} value={id}>{instances[id].label}</option>)}</select></label>
+            <label>Text<select value={text} disabled={shelves.mark !== 'text'} onChange={e => setText(e.target.value)}>{measures.map(id => <option key={id} value={id}>{instances[id].label}</option>)}</select></label>
             <label>Detail<select value={detail} onChange={e => setDetail(e.target.value)}><option value="">None</option>{dimensions.map(id => <option key={id}>{id}</option>)}</select></label>
             <label>Region filter<select value={region} onChange={e => setRegion(e.target.value)}><option value="">All regions</option>{regions.map(r => <option key={r}>{r}</option>)}</select></label>
             <label>Order<select value={sort} onChange={e => setSort(e.target.value as WorksheetSpec['sort'])}><option value="ascending">Ascending</option><option value="descending">Descending</option></select></label>
@@ -85,6 +87,6 @@ export default function WorksheetRendererPage() {
             <button type="button" onClick={() => download('worksheet.json', JSON.stringify(spec, null, 2), 'application/json')}>Download spec</button>
             <div className="ws-code-columns"><pre>{JSON.stringify({ ...spec, instances: undefined }, null, 2)}</pre><pre>{JSON.stringify(diagnostic.map(t => t.payload), null, 2)}</pre></div>
         </details>
-        <p className="ws-note">V0 独立实验入口。尚未接入旧编辑器的历史记录，没有折叠、双轴、LOD 或表计算，颜色只支持离散维度。</p>
+        <p className="ws-note">V0 独立实验入口。尚未接入旧编辑器的历史记录，没有折叠、双轴、LOD 或表计算。</p>
     </section>;
 }

@@ -27,12 +27,22 @@ export interface WorksheetSpec {
     rows: AxisExpr;
     columns: AxisExpr;
     mark: 'bar' | 'point' | 'line' | 'rect' | 'text';
+    /** A discrete dimension gives one color per member. An aggregated measure gives a continuous scale. */
     color?: string;
     detail?: string[];
+    /** The value written by text marks. Without it a text mark shows the measure it is positioned by. */
+    text?: string;
     /** Bars stack unless this is false. Unstacked bars overlap from the zero line. */
     stack?: boolean;
     scaleScope?: ScaleScope;
     sort?: 'ascending' | 'descending';
+    /**
+     * Member order per field instance, overriding sort. A list gives the order outright,
+     * as a host that has computed a ranking would; members it omits follow in value order.
+     */
+    order?: Record<string, 'ascending' | 'descending' | Value[]>;
+    /** Where the innermost column headers go. By default at the bottom when rows carry a value axis, as in Tableau. */
+    innerColumnHeader?: 'top' | 'bottom';
     filters?: { field: string; values: Value[] }[];
     /** Extent of one continuous axis slot. */
     pane?: { width?: number; height?: number };
@@ -150,10 +160,15 @@ export interface Pane {
     yDomain: [number, number];
 }
 /** Fixed chrome around the scrolling body, in CSS px. */
+export interface ColorScale { field: FieldInstance; domain: [number, number]; diverging: boolean }
 export interface Frame {
     left: number;
     top: number;
     bottom: number;
+    /** Width of the legend strip, 0 without a color field. */
+    right: number;
+    /** Height of the innermost column header level when it is drawn under the body, else 0. */
+    bottomHeaderHeight: number;
     rowHeaderWidths: number[];
     columnHeaderHeights: number[];
     /** The innermost column header level is drawn vertically. */
@@ -171,6 +186,7 @@ export interface WorksheetModel {
     width: number;
     height: number;
     colors: Value[];
+    colorScale?: ColorScale;
 }
 export const field = (instanceId: string): AxisExpr => ({ kind: 'field', instanceId });
 export const nest = (...items: AxisExpr[]): AxisExpr => ({ kind: 'nest', items });

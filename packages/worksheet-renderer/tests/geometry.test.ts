@@ -179,3 +179,76 @@ test('member labels thin out when the step is smaller than a line of text', asyn
     assert.ok(labels.length > 0 && labels.length < 34);
     assert.ok(labels.slice(1).every((y, i) => y - labels[i] >= 11 || near(y - labels[i], 11)));
 });
+
+// ---- color, text cells, bottom headers, member order
+const rgb = (color: string) => color.match(/\d+/g)!.map(Number);
+test('a measure on color tints the marks on a continuous scale without splitting them', async () => {
+    const spec: WorksheetSpec = { ...base, instances: sales, rows: nest(field('category'), field('sub')), columns: field('sum'), mark: 'bar', color: 'mean' };
+    const rowsOf = (region: string) => nested.filter(r => r.region === region && r.year === 2024);
+    const m = await model(spec, rowsOf('East'));
+    assert.equal(m.plan.tasks.length, 1);
+    assert.deepEqual(m.plan.tasks[0].groupBy, ['category', 'sub']);
+    assert.equal(m.colorScale!.diverging, false);
+    const scene = fullScene(m);
+    const bars = scene.items.filter(p => p.selection);
+    assert.equal(bars.length, 17, 'one bar per member');
+    const byValue = [...bars].sort((a, b) => a.selection!.values.__ws_mean - b.selection!.values.__ws_mean);
+    assert.deepEqual(m.colorScale!.domain, [byValue[0].selection!.values.__ws_mean, byValue[16].selection!.values.__ws_mean]);
+    const blue = byValue.map(b => rgb(b.fill!)[0]);
+    assert.ok(blue.every((v, i) => i === 0 || v <= blue[i - 1]) && blue[0] > blue[16], 'larger values are darker');
+    const legend = scene.items.filter(p => p.layer === 'legend');
+    assert.ok(legend.filter(p => p.kind === 'rect' && p.height === 10).length >= 40, 'gradient');
+    assert.deepEqual(legend.filter(p => p.kind === 'text').map(p => p.text), ['MEAN', '3K', '11K']);
+});
+test('a color range that crosses zero diverges around it', async () => {
+    const rows: Row[] = [-40, -5, 0, 5, 80].map((value, i) => ({ product: `p${i}`, value }));
+    const m = await model({ ...base, rows: field('product'), columns: field('sum'), mark: 'bar', color: 'sum' }, rows);
+    assert.equal(m.colorScale!.diverging, true);
+    const fills = fullScene(m).items.filter(p => p.selection).sort((a, b) => a.selection!.values.__ws_sum - b.selection!.values.__ws_sum).map(p => rgb(p.fill!));
+    assert.ok(fills[0][0] > fills[0][2], 'negative is warm');
+    assert.ok(fills[4][2] > fills[4][0], 'positive is cool');
+    assert.ok(Math.abs(fills[2][0] - fills[2][2]) < 8, 'zero is neutral');
+    assert.ok(fills[0][0] - fills[0][2] < fills[4][2] - fills[4][0], '-40 is weaker than +80');
+});
+test('the legend is part of the sheet and lists each color member once', async () => {
+    const m = await model({ ...twoMeasures, color: 'segment' }, nested);
+    assert.ok(m.frame.right > 0);
+    assert.ok(near(m.width, m.frame.left + m.columns.size + m.frame.right));
+    const scene = buildScene(m, { x: 0, y: 200, width: 600, height: 300 });
+    const legend = scene.items.filter(p => p.layer === 'legend');
+    assert.deepEqual(legend.filter(p => p.kind === 'text').map(p => p.text), ['segment', 'a', 'b']);
+    assert.ok(legend.every(p => p.x >= 600 - m.frame.right), 'pinned to the window edge while the body scrolls');
+    assert.ok(scene.items.filter(p => p.layer === 'body' && p.selection).every(p => p.x < 600 - m.frame.right));
+    assert.equal((await model(twoMeasures, nested)).frame.right, 0);
+});
+test('text marks fill a crosstab with full numbers', async () => {
+    const m = await model({ ...base, instances: sales, rows: nest(field('category'), field('sub')), columns: field('year'), mark: 'text', text: 'sum' }, nested);
+    assert.equal(m.columns.leaves[0].size, metrics.textCellWidth);
+    const cells = fullScene(m).items.filter(p => p.layer === 'body' && p.kind === 'text');
+    assert.equal(cells.length, 17 * 2);
+    const first = cells.find(p => p.selection!.values.sub === 'F0' && p.selection!.values.year === 2024)!;
+    assert.equal(first.text, '6,048');
+    assert.ok(near(first.x, m.frame.left + m.columns.leaves[0].size / 2) && first.align === 'center');
+});
+test('with a value axis on the rows, the innermost column members are named under the body', async () => {
+    const spec: WorksheetSpec = { ...base, columns: nest(field('category'), field('sub')), rows: field('sum'), mark: 'bar' };
+    const m = await model(spec, unequal);
+    assert.ok(m.frame.bottomHeaderHeight > 0 && m.frame.bottom === m.frame.bottomHeaderHeight);
+    const scene = fullScene(m);
+    const axisY = m.frame.top + m.rows.size;
+    const members = scene.items.filter(p => p.kind === 'text' && /^[FOT]\d$/.test(p.text!));
+    assert.equal(members.length, 17);
+    assert.ok(members.every(p => p.layer === 'xAxis' && p.y >= axisY));
+    assert.ok(scene.items.some(p => p.layer === 'columnHeader' && p.text === 'Furniture'), 'outer levels stay on top');
+    const onTop = fullScene(await model({ ...spec, innerColumnHeader: 'top' }, unequal));
+    assert.ok(onTop.items.filter(p => /^[FOT]\d$/.test(p.text ?? '')).every(p => p.layer === 'columnHeader'));
+    const horizontal = await model({ ...base, rows: nest(field('category'), field('sub')), columns: field('sum'), mark: 'bar' }, unequal);
+    assert.equal(horizontal.frame.bottomHeaderHeight, 0);
+});
+test('member order can be set per field, by direction or by an explicit list', async () => {
+    const spec: WorksheetSpec = { ...base, rows: nest(field('category'), field('sub')), columns: field('sum'), mark: 'bar' };
+    const names = async (order: WorksheetSpec['order'], sort?: WorksheetSpec['sort']) => (await model({ ...spec, order, sort }, unequal)).rows.leaves.map(leaf => leaf.path[1].value);
+    assert.deepEqual((await names({ category: 'descending' })).slice(0, 5), ['T0', 'T1', 'T2', 'T3', 'O0']);
+    assert.deepEqual((await names({ sub: ['O7', 'O2'] })).slice(4, 8), ['O7', 'O2', 'O0', 'O1']);
+    assert.deepEqual((await names({ sub: 'ascending' }, 'descending')).slice(0, 2), ['T0', 'T1'], 'a field without its own order follows sort');
+});

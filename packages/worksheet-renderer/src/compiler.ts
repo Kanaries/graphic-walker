@@ -43,18 +43,30 @@ export function compileWorksheet(spec: WorksheetSpec): Plan {
     if (spec.kind !== 'worksheet' || spec.specVersion !== 2) throw new Error('Expected WorksheetSpec version 2.');
     const rows = compileAxis(spec.rows, spec.instances, 'row');
     const columns = compileAxis(spec.columns, spec.instances, 'column');
-    const details = [spec.color, ...(spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => {
+    const instance = (id: string, role: string) => {
         const f = spec.instances[id];
-        if (!f || f.aggregate || f.display !== 'discrete') throw new Error('Color and Detail require discrete, unaggregated field instances in V0.');
+        if (!f) throw new Error(`Unknown field instance on ${role}: ${id}`);
+        return f;
+    };
+    const details = (spec.detail ?? []).map(id => {
+        const f = instance(id, 'Detail');
+        if (f.aggregate || f.display !== 'discrete') throw new Error('Detail requires discrete, unaggregated field instances.');
         return f;
     });
+    const encodings = [...details];
+    if (spec.color) {
+        const f = instance(spec.color, 'Color');
+        if (f.aggregate ? f.display !== 'continuous' : f.display !== 'discrete') throw new Error('Color takes a discrete dimension or an aggregated measure.');
+        encodings.unshift(f);
+    }
+    if (spec.text && spec.mark === 'text') encodings.push(instance(spec.text, 'Text'));
     const tasks = new Map<string, QueryTask>();
     const bindings: Binding[] = [];
     for (const row of rows) for (const column of columns) {
         if (spec.mark === 'bar' && Number(row.position?.display === 'continuous') + Number(column.position?.display === 'continuous') !== 1) {
             throw new Error('Bar marks require exactly one continuous positional field.');
         }
-        const used = [...branchFields(row), ...branchFields(column), ...details];
+        const used = [...branchFields(row), ...branchFields(column), ...encodings];
         const groupBy = [...new Set(used.filter(f => !f.aggregate).map(f => f.field))].sort();
         const id = JSON.stringify(groupBy);
         let task = tasks.get(id);
