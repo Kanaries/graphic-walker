@@ -1,0 +1,30 @@
+.worksheet-lab { color: #263248; font-family: system-ui, sans-serif; max-width: 1600px; }
+.ws-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.ws-heading h1 { font-size: 28px; font-weight: 650; letter-spacing: -.7px; margin: 5px 0 8px; }
+.ws-heading p { color: #667085; font-size: 13px; }
+.ws-heading .ws-eyebrow { color: #4263eb; font-size: 10px; letter-spacing: 1.8px; font-weight: 700; }
+.worksheet-lab button, .worksheet-lab select { font: inherit; font-size: 12px; border-radius: 5px; }
+.worksheet-lab button { cursor: pointer; }
+.worksheet-lab button:disabled { cursor: default; opacity: .45; }
+.worksheet-lab button:focus-visible, .worksheet-lab select:focus-visible { outline: 2px solid #4263eb; outline-offset: 2px; }
+.ws-export, .ws-presets button, .ws-toolbar > button, .ws-diagnostics > button { border: 1px solid #d5dce7; padding: 7px 11px; background: white; }
+.ws-export { white-space: nowrap; }
+.ws-presets { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+.ws-presets button:hover { background: #eef2ff; border-color: #a3b3ef; }
+.ws-shelves { background: #fafbfe; border: 1px solid #e0e6ef; border-radius: 8px; overflow: hidden; }
+.ws-shelf { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 9px 12px; min-height: 44px; border-bottom: 1px solid #e8ecf3; }
+.ws-shelf:last-child { border-bottom: 0; }
+.ws-shelf-label { width: 110px; color: #667085; font-size: 12px; }
+.ws-pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 9px; border-radius: 5px; background: #e5edff; color: #284c9d; font-size: 12px; }
+.ws-pill.ws-measure { background: #e1f2ec; color: #25654f; }
+.ws-pill button { padding: 0 2px; background: transparent; font-size: 15px; line-height: 1; }
+.ws-shelf select { background: transparent; border: 0; color: #667085; padding: 5px; max-width: 140px; }
+.ws-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.ws-toolbar label { display: flex; flex-direction: column; gap: 5px; color: #667085; font-size: 11px; }
+.ws-toolbar select { background: white; border: 1px solid #d5dce7; padding: 6px 8px; color: #263248; }
+.ws-toolbar .ws-check { flex-direction: row; align-items: center; padding-bottom: 7px; }
+.ws-note { font-size: 12px; color: #778195; line-height: 1.7; margin: 16px 0 4px; }
+.ws-diagnostics { margin-top: 20px; border-top: 1px solid #e0e6ef; padding-top: 14px; font-size: 12px; }
+.ws-diagnostics summary { cursor: pointer; margin-bottom: 10px; }
+.ws-code-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ws-code-columns pre { padding: 14px; background: #f5f7fb; overflow: auto; max-height: 420px; font-size: 11px; }

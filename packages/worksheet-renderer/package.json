@@ -1,0 +1,11 @@
+{
+  "name": "@kanaries/worksheet-renderer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit", "test": "node tests/run.mjs" },
+  "dependencies": { "vega": "^5.22.1" },
+  "peerDependencies": { "react": ">=19" },
+  "devDependencies": { "typescript": "^5.2.2", "@types/react": "^19.2.17", "esbuild": "^0.18.10" }
+}
