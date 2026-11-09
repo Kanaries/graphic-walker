@@ -5,12 +5,16 @@ export const instances: Record<string, FieldInstance> = Object.fromEntries([
     { id: 'sales', field: 'Sales', label: 'SUM(Sales)', display: 'continuous' as const, aggregate: 'sum' as const },
     { id: 'profit', field: 'Profit', label: 'AVG(Profit)', display: 'continuous' as const, aggregate: 'mean' as const },
     { id: 'orders', field: 'OrderId', label: 'COUNTD(Order)', display: 'continuous' as const, aggregate: 'distinctCount' as const },
+    // A continuous date: it makes a time axis instead of one header per month.
+    { id: 'date', field: 'OrderMonth', label: 'Order month', display: 'continuous' as const, scale: 'time' as const },
 ].map(f => [f.id, f]));
 
 export const dimensions = Object.values(instances).filter(f => f.display === 'discrete').map(f => f.id);
 export const measures = ['sales', 'profit', 'orders'];
+/** Fields that end an axis branch with a continuous axis. */
+export const axisFields = [...measures, 'date'];
 export const regions = ['Central', 'East', 'South', 'West'];
-export interface Shelves { rows: string[]; columns: string[]; rowMeasures: string[]; columnMeasures: string[]; mark: WorksheetSpec['mark']; color?: string; text?: string }
+export interface Shelves { rows: string[]; columns: string[]; rowMeasures: string[]; columnMeasures: string[]; mark: WorksheetSpec['mark']; color?: string; text?: string; fit?: WorksheetSpec['fit'] }
 export const presets: Record<string, Shelves & { label: string }> = {
     nested: { label: 'Nested bars', rows: ['Region', 'Category', 'Subcategory'], columns: ['Year'], rowMeasures: [], columnMeasures: ['sales', 'profit'], mark: 'bar', color: 'Segment' },
     line: { label: 'Monthly lines', rows: ['Region'], columns: ['Year', 'Month'], rowMeasures: ['sales'], columnMeasures: [], mark: 'line', color: 'Segment' },
@@ -20,6 +24,8 @@ export const presets: Record<string, Shelves & { label: string }> = {
     ref1: { label: 'Ref 1 · Year / Category / Sub-Category', rows: [], columns: ['Year', 'Category', 'Subcategory'], rowMeasures: ['sales'], columnMeasures: [], mark: 'bar' },
     ref2: { label: 'Ref 2 · Category / Sub-Category × Region', rows: ['Category', 'Subcategory'], columns: ['Region'], rowMeasures: [], columnMeasures: ['sales'], mark: 'bar', color: 'profit' },
     ref3: { label: 'Ref 3 · Category / Segment × Year', rows: ['Category', 'Segment'], columns: ['Year'], rowMeasures: [], columnMeasures: ['sales'], mark: 'bar', color: 'Segment' },
+    time: { label: 'Time series', rows: ['Region'], columns: [], rowMeasures: ['sales'], columnMeasures: ['date'], mark: 'line', color: 'Segment', fit: 'width' },
+    timeBars: { label: 'Bars over time', rows: ['Category'], columns: [], rowMeasures: ['sales'], columnMeasures: ['date'], mark: 'bar', color: 'Segment', fit: 'width' },
     heat: { label: 'Heat map', rows: ['Category', 'Subcategory'], columns: ['Year', 'Month'], rowMeasures: [], columnMeasures: [], mark: 'rect', color: 'profit' },
     crosstab: { label: 'Crosstab', rows: ['Category', 'Subcategory'], columns: ['Region'], rowMeasures: [], columnMeasures: [], mark: 'text', text: 'sales' },
 };
@@ -49,6 +55,6 @@ for (const Country of ['Canada', 'US']) for (const Region of regions)
             for (let i = 0; i < count; i++) {
                 const Sales = Math.round((30 + random() * 400) * (Category === 'Technology' ? 2.2 : 1) * (Year === 2025 ? 1.3 : 1) * (1 + Month / 24) * (Subcategory === 'Fasteners' ? .15 : 1));
                 const Profit = Math.round(Sales * (random() * .45 - .12));
-                orders.push({ Country, Region, Category, Subcategory, Year, Month, Segment, Sales, Profit, OrderId: `order-${Math.floor(orders.length / 2)}` });
+                orders.push({ Country, Region, Category, Subcategory, Year, Month, OrderMonth: `${Year}-${String(Month).padStart(2, '0')}-01`, Segment, Sales, Profit, OrderId: `order-${Math.floor(orders.length / 2)}` });
             }
         }

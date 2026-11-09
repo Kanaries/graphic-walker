@@ -1,14 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
 import { getComputation } from '@kanaries/graphic-walker';
 import { Worksheet, compileWorksheet, type WorksheetHandle, type WorksheetSpec } from '@kanaries/worksheet-renderer';
-import { axis, dimensions, instances, measures, orders, presets, regions, type Shelves } from './worksheetRenderer.data';
+import { axis, axisFields, dimensions, instances, measures, orders, presets, regions, type Shelves } from './worksheetRenderer.data';
 import './worksheetRenderer.css';
 
 const computation = getComputation(orders);
 function Shelf({ name, values, options, onChange }: { name: string; values: string[]; options: string[]; onChange: (value: string[]) => void }) {
     return <div className="ws-shelf">
         <span className="ws-shelf-label">{name}</span>
-        {values.map((id, i) => <span className={`ws-pill ${instances[id].aggregate ? 'ws-measure' : ''}`} key={id}>
+        {values.map((id, i) => <span className={`ws-pill ${instances[id].display === 'continuous' ? 'ws-measure' : ''}`} key={id}>
             {instances[id].label}
             {i > 0 ? <button type="button" aria-label={`Move ${name} ${id} left`} title="Move left" onClick={() => { const next = [...values]; [next[i - 1], next[i]] = [next[i], next[i - 1]]; onChange(next); }}>‹</button> : null}
             <button type="button" aria-label={`Remove ${name} ${id}`} title="Remove field" onClick={() => onChange(values.filter(v => v !== id))}>×</button>
@@ -46,7 +46,7 @@ export default function WorksheetRendererPage() {
         filters: region ? [{ field: 'Region', values: [region] }] : [],
     }), [shelves, color, detail, text, stack, scaleScope, sort, slot, step, fit, region]);
     const diagnostic = useMemo(() => { try { return compileWorksheet(spec).tasks; } catch { return []; } }, [spec]);
-    const updateShelf = (key: keyof Omit<Shelves, 'mark' | 'color' | 'text'>, values: string[]) => setShelves(s => ({ ...s, [key]: values }));
+    const updateShelf = (key: keyof Omit<Shelves, 'mark' | 'color' | 'text' | 'fit'>, values: string[]) => setShelves(s => ({ ...s, [key]: values }));
     return <section className="worksheet-lab">
         <div className="ws-heading"><div><p className="ws-eyebrow">INTERNAL RENDERER · V0</p><h1>Nested worksheets</h1>
             <p>多层嵌套、度量并列和分面。每个成员占一个等宽的格子，数值轴画在表格边缘，表头和轴在滚动时固定。点击标记选中，按住 Ctrl 或 Cmd 加选，Esc 清空。</p></div>
@@ -57,13 +57,13 @@ export default function WorksheetRendererPage() {
         </div>
         <div className="ws-presets" aria-label="Worksheet presets">
             {Object.entries(presets).map(([key, preset]) =>
-                <button type="button" key={key} onClick={() => { setShelves(preset); setColor(preset.color ?? ''); setText(preset.text ?? 'sales'); setDetail(''); setStack(true); }}>{preset.label}</button>)}
+                <button type="button" key={key} onClick={() => { setShelves(preset); setColor(preset.color ?? ''); setText(preset.text ?? 'sales'); setFit(preset.fit ?? ''); setDetail(''); setStack(true); }}>{preset.label}</button>)}
         </div>
         <div className="ws-shelves">
             <Shelf name="Rows" values={shelves.rows} options={dimensions} onChange={v => updateShelf('rows', v)} />
-            <Shelf name="Row measures" values={shelves.rowMeasures} options={measures} onChange={v => updateShelf('rowMeasures', v)} />
+            <Shelf name="Row axis" values={shelves.rowMeasures} options={axisFields} onChange={v => updateShelf('rowMeasures', v)} />
             <Shelf name="Columns" values={shelves.columns} options={dimensions} onChange={v => updateShelf('columns', v)} />
-            <Shelf name="Column measures" values={shelves.columnMeasures} options={measures} onChange={v => updateShelf('columnMeasures', v)} />
+            <Shelf name="Column axis" values={shelves.columnMeasures} options={axisFields} onChange={v => updateShelf('columnMeasures', v)} />
         </div>
         <div className="ws-toolbar">
             <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'line', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>

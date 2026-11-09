@@ -1,5 +1,7 @@
 import { compareValue, displayValue, pathKey, valueKey } from './keys';
 import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { positionValue, timeScale } from './time';
+import { valueAxis } from './compiler';
 import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel, type WorksheetSpec } from './types';
 
 function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDraft {
@@ -19,7 +21,11 @@ interface CellItem { record: Row; row: string; column: string }
 function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisBranch, plan: Plan, rowIndex: Map<string, number>, columnIndex: Map<string, number>): PaneMark[] {
     const x = columnBranch.position;
     const y = rowBranch.position;
-    const measure = x?.display === 'continuous' ? x : y?.display === 'continuous' ? y : undefined;
+    const axis = valueAxis(x, y);
+    const measure = axis === 'x' ? x : axis === 'y' ? y : undefined;
+    // Bars placed along a continuous field stack per position, not per pane.
+    const other = axis === 'x' ? y : x;
+    const along = other?.display === 'continuous' ? other : undefined;
     // Only dimensions split a pane into series. A measure on color tints the marks without dividing them.
     const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => !f.aggregate);
     const sorted = [...items].sort((a, b) => {
@@ -33,11 +39,10 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
     const stack = stacked(plan);
     return sorted.map(({ record, row, column }) => {
         const leaves = { record, row: rowIndex.get(row)!, column: columnIndex.get(column)! };
-        const raw = measure ? record[resultKey(measure)] : 0;
-        const value = raw == null ? NaN : Number(raw);
+        const value = measure ? positionValue(measure, record) : 0;
         if (!Number.isFinite(value)) return { ...leaves, start: NaN, end: NaN };
         if (!stack) return { ...leaves, start: 0, end: value };
-        const key = measure === x ? row : column;
+        const key = (axis === 'x' ? row : column) + (along ? `|${positionValue(along, record)}` : '');
         const total = totals.get(key) ?? [0, 0];
         const sign = value >= 0 ? 0 : 1;
         const start = total[sign];
@@ -57,29 +62,46 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         return scope === 'independent' ? leaf.id : scope === 'prefix' ? JSON.stringify([id, pathKey(layout.axis, leaf.path.slice(0, 1))]) : id;
     };
     const extents = new Map<string, [number, number]>();
+    const positions = new Map<string, Set<number>>();
     const stack = stacked(plan);
+    const bars = plan.spec.mark === 'bar';
     for (const pane of panes) {
         const group = axis === 'x' ? pane.column : pane.row;
         const f = group.branch.position;
         if (!f || f.display !== 'continuous') continue;
         const key = keyOf(layout.leaves[group.start]);
-        const extent = extents.get(key) ?? [0, 0];
+        const time = f.scale === 'time';
+        // A value axis starts from zero. A date axis has no zero worth showing.
+        const extent = extents.get(key) ?? (time ? [Infinity, -Infinity] : [0, 0]);
+        const carriesValue = valueAxis(pane.column.branch.position, pane.row.branch.position) === axis;
+        const distinct = bars && !carriesValue ? positions.get(key) ?? new Set<number>() : undefined;
         for (const mark of pane.marks) {
             const raw = mark.record[resultKey(f)];
-            if (raw != null && (typeof raw !== 'number' || !Number.isFinite(raw))) {
-                throw new Error(`Continuous field ${f.label} returned a non-finite or non-numeric value. Transform it before rendering.`);
+            const value = positionValue(f, mark.record);
+            if (raw != null && (time ? Number.isNaN(value) : typeof raw !== 'number' || !Number.isFinite(raw))) {
+                throw new Error(time ? `Time field ${f.label} returned a value that is not a date: ${String(raw)}`
+                    : `Continuous field ${f.label} returned a non-finite or non-numeric value. Transform it before rendering.`);
             }
-            for (const v of stack ? [mark.start, mark.end] : raw == null ? [] : [raw as number]) {
+            if (Number.isFinite(value)) distinct?.add(value);
+            for (const v of stack && carriesValue ? [mark.start, mark.end] : [value]) {
                 if (Number.isFinite(v)) { extent[0] = Math.min(extent[0], v); extent[1] = Math.max(extent[1], v); }
             }
         }
         extents.set(key, extent);
+        if (distinct) positions.set(key, distinct);
     }
     for (const leaf of layout.leaves) {
         if (leaf.kind !== 'continuous') continue;
-        const [min, max] = extents.get(keyOf(leaf)) ?? [0, 1];
+        const key = keyOf(leaf);
+        const time = leaf.branch.position!.scale === 'time';
+        let [min, max] = extents.get(key) ?? [0, 1];
+        if (min > max) [min, max] = time ? [0, 86_400_000] : [0, 1];
+        // Bars along this axis need half a step of room at both ends, or the outer ones are cut in half.
+        const sorted = [...positions.get(key) ?? []].sort((a, b) => a - b);
+        const step = sorted.length > 1 ? Math.min(...sorted.slice(1).map((v, i) => v - sorted[i])) : undefined;
+        if (step) { min -= step / 2; max += step / 2; }
         const pixels = leaf.size - metrics.scalePadStart - metrics.scalePadEnd;
-        leaf.scale = tickScale(min, max, pixels, axis === 'x' ? 46 : 30);
+        leaf.scale = { ...(time ? timeScale(min, max, pixels, axis === 'x' ? 62 : 30) : tickScale(min, max, pixels, axis === 'x' ? 46 : 30)), step };
     }
 }
 
@@ -88,7 +110,7 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
     const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(displayValue(span.part.value))));
     const rowHeaderWidths = rows.levels.map((_, level) => Math.min(metrics.headerMaxWidth,
         Math.max(metrics.headerMinWidth, Math.ceil(Math.max(widest(rows, level), textWidth(rows.captions[level], metrics.fontSize, 600)) + pad))));
-    const tickWidth = Math.max(0, ...rows.leaves.flatMap(leaf => leaf.scale ? leaf.scale.ticks.map(t => textWidth(formatTick(t), 10)) : []));
+    const tickWidth = Math.max(0, ...rows.leaves.flatMap(leaf => leaf.scale ? leaf.scale.ticks.map((t, i) => textWidth(leaf.scale!.labels?.[i] ?? formatTick(t), 10)) : []));
     const yAxisWidth = rows.leaves.some(leaf => leaf.kind === 'continuous') ? Math.ceil(tickWidth) + 30 : 0;
     const inner = columns.levels.length - 1;
     const innerWidth = inner >= 0 ? widest(columns, inner) : 0;

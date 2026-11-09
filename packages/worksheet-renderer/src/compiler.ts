@@ -37,6 +37,15 @@ export function compileAxis(expr: AxisExpr, instances: WorksheetSpec['instances'
 export function branchFields(branch: AxisBranch): FieldInstance[] {
     return branch.position ? [...branch.facets, branch.position] : branch.facets;
 }
+/**
+ * The axis that carries a bar's length. With two continuous fields it is the aggregated
+ * one; the other is a position along which bars are placed, such as a date.
+ */
+export function valueAxis(x?: FieldInstance, y?: FieldInstance): 'x' | 'y' | undefined {
+    const xContinuous = x?.display === 'continuous', yContinuous = y?.display === 'continuous';
+    if (xContinuous && yContinuous) return y!.aggregate && !x!.aggregate ? 'y' : 'x';
+    return xContinuous ? 'x' : yContinuous ? 'y' : undefined;
+}
 
 /** Query tasks are deduplicated by grain, never by pane. No dependency on Vega. */
 export function compileWorksheet(spec: WorksheetSpec): Plan {
@@ -63,8 +72,11 @@ export function compileWorksheet(spec: WorksheetSpec): Plan {
     const tasks = new Map<string, QueryTask>();
     const bindings: Binding[] = [];
     for (const row of rows) for (const column of columns) {
-        if (spec.mark === 'bar' && Number(row.position?.display === 'continuous') + Number(column.position?.display === 'continuous') !== 1) {
-            throw new Error('Bar marks require exactly one continuous positional field.');
+        if (spec.mark === 'bar') {
+            const continuous = [row.position, column.position].filter(f => f?.display === 'continuous');
+            if (!continuous.length || (continuous.length === 2 && continuous.filter(f => f!.aggregate).length !== 1)) {
+                throw new Error('Bar marks need one measure axis. The other axis can be discrete, or an unaggregated continuous field such as a date.');
+            }
         }
         const used = [...branchFields(row), ...branchFields(column), ...encodings];
         const groupBy = [...new Set(used.filter(f => !f.aggregate).map(f => f.field))].sort();

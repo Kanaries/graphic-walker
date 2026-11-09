@@ -1,7 +1,8 @@
 import { continuousColor, fillOf, palette } from './color';
 import { displayValue, valueKey } from './keys';
-import { branchFields } from './compiler';
+import { branchFields, valueAxis } from './compiler';
 import { fitText, formatTick, formatValue, leafRange, metrics, spansIn, textWidth } from './layout';
+import { formatTime, positionValue, timeValue } from './time';
 import { resultKey, type AxisGroup, type AxisLeaf, type FieldInstance, type Pane, type Selection, type Value, type WorksheetModel } from './types';
 
 /** x and y are the scroll offsets, width and height the size of the visible window. */
@@ -25,7 +26,6 @@ export interface Primitive {
 }
 export interface Scene { width: number; height: number; items: Primitive[]; visiblePanes: number }
 const ink = { text: '#344054', muted: '#667085', line: '#d9dfe9', grid: '#eef1f6', zero: '#c2c9d6', paper: '#ffffff' };
-const numeric = (value: unknown) => value == null ? NaN : Number(value);
 /** Opacity of marks outside a non-empty selection. */
 const dimmed = 0.25;
 export interface SceneState {
@@ -60,6 +60,14 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     };
     const px = (leaf: AxisLeaf, value: number) => sx(leaf.offset + along(leaf, value));
     const py = (leaf: AxisLeaf, value: number) => sy(leaf.offset + leaf.size - along(leaf, value));
+    const tickLabel = (leaf: AxisLeaf, index: number) => leaf.scale!.labels?.[index] ?? formatTick(leaf.scale!.ticks[index]);
+    // Width of a bar placed at a continuous position: a share of the smallest gap between positions, so
+    // neighbours never touch and every pane on the same scale gets the same width.
+    const barAt = (leaf: AxisLeaf) => {
+        const { step, domain } = leaf.scale!;
+        if (!step) return 12;
+        return Math.min(28, Math.max(1, step / (domain[1] - domain[0]) * (leaf.size - metrics.scalePadStart - metrics.scalePadEnd) * metrics.barFill));
+    };
 
     const colorField = spec.color ? spec.instances[spec.color] : undefined;
     const fill = fillOf(colorField, model.colors, model.colorScale);
@@ -105,7 +113,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         const used = [...branchFields(pane.row.branch), ...branchFields(pane.column.branch), ...encodingFields];
         const dimensions = [...new Map(used.filter(f => !f.aggregate).map(f => [f.field, f])).values()];
         const described = [...new Map(used.map(f => [f.id, f])).values()];
-        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
+        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${f.scale === 'time' && f.display === 'continuous' ? formatTime(timeValue(value)) : typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
+        const lengthAxis = valueAxis(xField, yField);
         const isLine = spec.mark === 'line';
         // A line runs along x unless x is the only value axis.
         const alongY = xContinuous && !yContinuous;
@@ -115,8 +124,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             if (!isLine && (mark.row < r0 || mark.row >= r1 || mark.column < c0 || mark.column >= c1)) continue;
             const { record } = mark;
             const rowLeaf = rows.leaves[mark.row], columnLeaf = columns.leaves[mark.column];
-            const xValue = xContinuous ? numeric(record[resultKey(xField!)]) : 0;
-            const yValue = yContinuous ? numeric(record[resultKey(yField!)]) : 0;
+            const xValue = xContinuous ? positionValue(xField!, record) : 0;
+            const yValue = yContinuous ? positionValue(yField!, record) : 0;
             const missing = !Number.isFinite(xValue) || !Number.isFinite(yValue);
             const x = xContinuous ? px(columnLeaf, xValue) : sx(columnLeaf.offset + columnLeaf.size / 2);
             const y = yContinuous ? py(rowLeaf, yValue) : sy(rowLeaf.offset + rowLeaf.size / 2);
@@ -140,11 +149,11 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             if (selecting && !selected) extra.opacity = dimmed;
             if (spec.mark === 'bar') {
                 if (!Number.isFinite(mark.start) || !Number.isFinite(mark.end)) continue;
-                if (xContinuous) {
-                    const a = px(columnLeaf, mark.start), b = px(columnLeaf, mark.end), thickness = Math.max(1, rowLeaf.size * metrics.barFill);
+                if (lengthAxis === 'x') {
+                    const a = px(columnLeaf, mark.start), b = px(columnLeaf, mark.end), thickness = yContinuous ? barAt(rowLeaf) : Math.max(1, rowLeaf.size * metrics.barFill);
                     rect('body', Math.min(a, b), y - thickness / 2, Math.max(.5, Math.abs(b - a)), thickness, color, extra);
                 } else {
-                    const a = py(rowLeaf, mark.start), b = py(rowLeaf, mark.end), thickness = Math.max(1, columnLeaf.size * metrics.barFill);
+                    const a = py(rowLeaf, mark.start), b = py(rowLeaf, mark.end), thickness = xContinuous ? barAt(columnLeaf) : Math.max(1, columnLeaf.size * metrics.barFill);
                     rect('body', x - thickness / 2, Math.min(a, b), thickness, Math.max(.5, Math.abs(b - a)), color, extra);
                 }
             } else if (spec.mark === 'text') {
@@ -200,12 +209,12 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     for (let i = r0; i < r1; i++) {
         const leaf = rows.leaves[i];
         if (!leaf.scale) continue;
-        for (const tick of leaf.scale.ticks) {
+        leaf.scale.ticks.forEach((tick, index) => {
             const y = Math.round(py(leaf, tick));
-            if (y < top || y > axisY) continue;
+            if (y < top || y > axisY) return;
             rect('rowHeader', left - 4, y, 4, 1, ink.line);
-            text('rowHeader', left - 7, y + 3.5, formatTick(tick), { align: 'right', fontSize: 10, fill: ink.muted });
-        }
+            text('rowHeader', left - 7, y + 3.5, tickLabel(leaf, index), { align: 'right', fontSize: 10, fill: ink.muted });
+        });
         const y0 = Math.max(sy(leaf.offset), top), y1 = Math.min(sy(leaf.offset + leaf.size), axisY);
         const title = leaf.branch.position!.label;
         if (y1 - y0 > 40) text('rowHeader', left - frame.yAxisWidth + 11, (y0 + y1) / 2, fitText(title, y1 - y0 - 8, 10, 600), { angle: 270, align: 'center', fontSize: 10, fontWeight: 600, tooltip: title });
@@ -270,14 +279,14 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             if (!leaf.scale) continue;
             const s0 = sx(leaf.offset), s1 = s0 + leaf.size;
             if (s0 >= left && leaf.offset > 0) rect('xAxis', s0, axisY, 1, frame.bottom, ink.line);
-            for (const tick of leaf.scale.ticks) {
+            leaf.scale.ticks.forEach((tick, index) => {
                 const x = Math.round(px(leaf, tick));
-                if (x < left || x > bodyRight) continue;
-                const label = formatTick(tick);
+                if (x < left || x > bodyRight) return;
+                const label = tickLabel(leaf, index);
                 const half = textWidth(label, 10) / 2;
                 rect('xAxis', x, axisY, 1, 4, ink.line);
                 text('xAxis', x, axisY + 15, label, { align: x - half < s0 + 2 ? 'left' : x + half > s1 - 2 ? 'right' : 'center', fontSize: 10, fill: ink.muted });
-            }
+            });
             const v0 = Math.max(s0, left), v1 = Math.min(s1, bodyRight);
             const title = leaf.branch.position!.label;
             if (v1 - v0 > 40) text('xAxis', (v0 + v1) / 2, axisY + 31, fitText(title, v1 - v0 - 8, 10, 600), { align: 'center', fontSize: 10, fontWeight: 600, tooltip: title });

@@ -1,4 +1,4 @@
-export type Value = string | number | boolean | null | undefined;
+export type Value = string | number | boolean | Date | null | undefined;
 export type Row = Record<string, any>;
 export type Aggregate = 'sum' | 'mean' | 'min' | 'max' | 'count' | 'distinctCount';
 export interface FieldInstance {
@@ -6,6 +6,8 @@ export interface FieldInstance {
     field: string;
     label: string;
     display: 'discrete' | 'continuous';
+    /** For a continuous field. 'time' reads Dates, ISO strings or epoch milliseconds and draws a calendar axis. */
+    scale?: 'linear' | 'time';
     aggregate?: Aggregate;
 }
 export type AxisExpr =
@@ -85,7 +87,14 @@ export interface Plan {
     bindings: Binding[];
 }
 export interface PathPart { instanceId: string; value: Value }
-export interface AxisScale { domain: [number, number]; ticks: number[] }
+export interface AxisScale {
+    domain: [number, number];
+    ticks: number[];
+    /** Tick labels when they are not plain numbers, as on a time axis. */
+    labels?: string[];
+    /** Smallest distance between two positions on this axis, in domain units. Sizes bars drawn at continuous positions. */
+    step?: number;
+}
 /**
  * One layout position along an axis. A discrete terminal field contributes one leaf per
  * member, a continuous terminal field one leaf per axis slot.
