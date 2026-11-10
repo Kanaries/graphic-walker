@@ -52,8 +52,10 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  * builder; only the grouping step comes from the worksheet, which asks for one result
  * per grain it draws.
  */
-function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsupported, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
+function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onUnsupported, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
+    // In the fixed and full layout modes the sheet is scaled to the box the editor gives it.
+    const spec = useMemo(() => adapted.spec && (fill ? { ...adapted.spec, fit: 'both' as const } : adapted.spec), [adapted.spec, fill]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
     const before = useMemo(() => {
@@ -116,15 +118,16 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsuppo
     const [height, setHeight] = useState(520);
     useEffect(() => {
         const element = host.current!;
-        const observer = new ResizeObserver(() => setHeight(Math.max(160, element.clientHeight - 16)));
+        // A box the viewer sized is taken as it is; otherwise the sheet keeps a height worth scrolling in.
+        const observer = new ResizeObserver(() => setHeight(Math.max(fill ? 60 : 160, element.clientHeight - 16)));
         observer.observe(element);
         return () => observer.disconnect();
-    }, []);
+    }, [fill]);
     // Nothing but the chart is drawn here. What the adapter left out is listed in adapted.notes
     // and covered by the adapter tests; the editor has no place for it next to the chart yet.
     return (
         <div ref={host} style={{ height: '100%', padding: 8, color: theme.text, overflow: 'hidden', boxSizing: 'border-box' }}>
-            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} formats={written.formats} compact
+            {spec ? <Worksheet ref={sheet} spec={spec} computation={run} height={height} theme={theme} formats={written.formats} compact zoomable={chart.layout.interactiveScale}
                 onError={(message) => { if (message) onUnsupported(message); }}
                 // The worksheet's own words for where it stands, in the editor's.
                 onStatusChange={(status) => onStatusChange?.(status === 'querying' ? 'computing' : status === 'drawing' ? 'rendering' : status)}

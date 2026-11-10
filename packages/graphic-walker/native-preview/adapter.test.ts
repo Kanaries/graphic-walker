@@ -197,7 +197,7 @@ describe('chartToWorksheet', () => {
             { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
         expect(settings.notes).toEqual([
             'Trail is drawn as a line of one width.', 'Scale settings are not applied.',
-            'Independent legends are not drawn.', 'Axes cannot be zoomed or panned.', 'The chart size setting is not applied; the sheet takes the space it needs.', 'The sheet is always drawn on a canvas.',
+            'Independent legends are not drawn.', 'The sheet is always drawn on a canvas.',
         ]);
         // A chart with default settings drops nothing.
         expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] })).notes).toEqual([]);

@@ -27,6 +27,7 @@ import { COUNT_FIELD_ID } from '../constants';
 import { GWGlobalConfig } from '../vis/theme';
 import { GLOBAL_CONFIG } from '../config';
 import { Item } from 'vega';
+import { Resizable } from 're-resizable';
 import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
@@ -383,20 +384,42 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
 
     if (drawsNative) {
         const Native = native!.component;
+        // Auto: the chart takes the size its content needs and scrolls inside the chart area.
+        // Fixed: it fills a box of the chosen size, which the viewer can drag to resize.
+        // Full: it fills the chart area.
+        const size = props.overrideSize ?? chart.layout.size;
+        const drawn = (
+            <Native
+                chart={chart}
+                fields={vizStore.allFields}
+                computation={props.computationFunction}
+                colors={colors}
+                locale={i18n.language}
+                fill={size.mode !== 'auto'}
+                onUnsupported={onUnsupported}
+                handle={nativeHandle}
+                onStatusChange={onStatusChange}
+                onMarkClick={onMarkClick}
+            />
+        );
         return (
-            <div className="w-full h-full relative" ref={container}>
+            <div className={size.mode === 'fixed' ? 'w-full h-full relative overflow-auto' : 'w-full h-full relative'} ref={container}>
                 {status === 'computing' && <LoadingLayer />}
-                <Native
-                    chart={chart}
-                    fields={vizStore.allFields}
-                    computation={props.computationFunction}
-                    colors={colors}
-                    locale={i18n.language}
-                    onUnsupported={onUnsupported}
-                    handle={nativeHandle}
-                    onStatusChange={onStatusChange}
-                    onMarkClick={onMarkClick}
-                />
+                {size.mode === 'fixed' ? (
+                    <Resizable
+                        className="border-primary border-2 max-h-screen max-w-[100vw]"
+                        size={{ width: `${size.width}px`, height: `${size.height}px` }}
+                        minWidth={120}
+                        minHeight={120}
+                        onResizeStop={(_event, _direction, _element, delta) => {
+                            vizStore.setVisualLayout('size', { mode: 'fixed', width: size.width + delta.width, height: size.height + delta.height });
+                        }}
+                    >
+                        {drawn}
+                    </Resizable>
+                ) : (
+                    drawn
+                )}
             </div>
         );
     }

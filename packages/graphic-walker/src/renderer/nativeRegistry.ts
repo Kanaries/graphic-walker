@@ -18,6 +18,11 @@ export interface NativeRendererProps {
     /** The editor's interface language, such as 'en-US' or 'zh-CN'. */
     locale: string;
     /**
+     * Whether the chart fills the box it is given, which the editor sizes, or takes the size its
+     * content needs and scrolls inside the box. True for the fixed and full layout modes.
+     */
+    fill: boolean;
+    /**
      * Report that this chart cannot be drawn after all, for a reason `canDraw` could not see
      * in the chart alone, such as a query that fails or values of a kind the renderer does
      * not handle. The editor then draws the chart with its own renderer.

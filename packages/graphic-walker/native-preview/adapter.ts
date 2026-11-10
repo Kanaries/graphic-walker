@@ -207,8 +207,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     // the gap table of the plan document; a setting that starts to work is removed here and there.
     if (layout.scale && Object.values(layout.scale).some((scale) => scale && Object.keys(scale).length > 0)) notes.push('Scale settings are not applied.');
     if (layout.resolve?.color || layout.resolve?.opacity || layout.resolve?.shape || layout.resolve?.size) notes.push('Independent legends are not drawn.');
-    if (layout.interactiveScale) notes.push('Axes cannot be zoomed or panned.');
-    if (layout.size.mode !== 'auto') notes.push('The chart size setting is not applied; the sheet takes the space it needs.');
     if (layout.useSvg) notes.push('The sheet is always drawn on a canvas.');
 
     const spec: WorksheetSpec = {
