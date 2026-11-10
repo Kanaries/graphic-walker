@@ -125,6 +125,13 @@ export interface WorksheetSpec {
     band?: { width?: number; height?: number };
     /** Scale the steps so the sheet fills the available width, height or both. */
     fit?: 'width' | 'height' | 'both';
+    /**
+     * Lets the continuous axis slots share the room the window leaves over, in width, height or
+     * both. Member steps keep their size, so three bars stay three narrow bars in a wide window.
+     * A sheet that does not fit with every slot at its least size scrolls. Pies grow as squares,
+     * and only with 'both'. Where `fit` is set too, `fit` wins.
+     */
+    stretch?: 'width' | 'height' | 'both';
 }
 /**
  * Orders the members of a dimension by an aggregated measure. The measure is computed per

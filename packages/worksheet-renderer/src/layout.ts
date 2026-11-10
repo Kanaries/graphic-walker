@@ -3,7 +3,7 @@ import type { AxisBranch, AxisGroup, AxisLayout, AxisLeaf, AxisScale, HeaderSpan
 
 /** The only place layout sizes are defined. CSS px. */
 export const metrics = {
-    bandWidth: 28,
+    bandWidth: 40,
     bandHeight: 24,
     /** Member width when the marks are numbers rather than shapes. */
     textCellWidth: 76,
@@ -11,8 +11,13 @@ export const metrics = {
     legendMaxWidth: 190,
     slotWidth: 200,
     slotHeight: 160,
+    /** The least a continuous axis slot gets, whatever a host asks for and however little room there is. */
+    slotMinWidth: 80,
+    slotMinHeight: 60,
     /** Side of the cell that holds one pie. */
     pieSize: 160,
+    /** The least a pie gets when the sheet is stretched to its window. */
+    pieMinSize: 96,
     headerHeight: 24,
     captionHeight: 22,
     xAxisHeight: 40,
@@ -36,9 +41,20 @@ export function leafSizes(spec: WorksheetSpec): { row: LeafSizes; column: LeafSi
         return { row: { band: height, continuous: height }, column: { band: width, continuous: width } };
     }
     return {
-        row: { band: Math.max(12, spec.band?.height ?? metrics.bandHeight), continuous: Math.max(60, spec.pane?.height ?? metrics.slotHeight) },
-        column: { band: Math.max(12, spec.band?.width ?? (spec.mark === 'text' ? metrics.textCellWidth : metrics.bandWidth)), continuous: Math.max(80, spec.pane?.width ?? metrics.slotWidth) },
+        row: { band: Math.max(12, spec.band?.height ?? metrics.bandHeight), continuous: Math.max(metrics.slotMinHeight, spec.pane?.height ?? metrics.slotHeight) },
+        column: { band: Math.max(12, spec.band?.width ?? (spec.mark === 'text' ? metrics.textCellWidth : metrics.bandWidth)), continuous: Math.max(metrics.slotMinWidth, spec.pane?.width ?? metrics.slotWidth) },
     };
+}
+/**
+ * The least a stretched slot gets before the sheet scrolls instead. A pane size the host set is
+ * that least size; without one a slot may get smaller than it is in a sheet that is not stretched.
+ */
+export function leafFloors(spec: WorksheetSpec): { row: number; column: number } {
+    if (spec.mark === 'arc') {
+        const side = Math.max(48, Math.min(spec.pane?.width ?? metrics.pieMinSize, spec.pane?.height ?? metrics.pieMinSize));
+        return { row: side, column: side };
+    }
+    return { row: Math.max(metrics.slotMinHeight, spec.pane?.height ?? 0), column: Math.max(metrics.slotMinWidth, spec.pane?.width ?? 0) };
 }
 
 export type TextMeasure = (text: string, fontSize: number, fontWeight: number, font: string) => number;
@@ -179,20 +195,40 @@ export function buildAxis(axis: 'row' | 'column', drafts: Iterable<LeafDraft>, c
     return { axis, leaves, groups, levels, captions, size: offset };
 }
 
-/** Stretches or squeezes every leaf by the same factor, so members keep one shared step. */
-export function scaleAxis(layout: AxisLayout, factor: number) {
+/** Gives every leaf the size `sizeOf` returns and moves the leaves and groups after it along. */
+export function resizeAxis(layout: AxisLayout, sizeOf: (leaf: AxisLeaf) => number) {
     let offset = 0;
     for (const group of layout.groups) {
         group.offset = offset;
         for (let i = group.start; i < group.end; i++) {
             const leaf = layout.leaves[i];
             leaf.offset = offset;
-            leaf.size *= factor;
+            leaf.size = sizeOf(leaf);
             offset += leaf.size;
         }
         group.size = offset - group.offset;
     }
     layout.size = offset;
+}
+/** Stretches or squeezes every leaf by the same factor, so members keep one shared step. */
+export function scaleAxis(layout: AxisLayout, factor: number) {
+    resizeAxis(layout, leaf => leaf.size * factor);
+}
+/** What the axis measures with every continuous slot at `floor`: the least room it can be stretched into. */
+export function leastSize(layout: AxisLayout, floor: number): number {
+    return layout.leaves.reduce((sum, leaf) => sum + (leaf.kind === 'continuous' ? floor : leaf.size), 0);
+}
+/**
+ * Shares `room` among the continuous slots, after the member steps have taken theirs. The steps
+ * keep their size whatever the room is. No slot gets less than `floor`, so an axis that does not
+ * fit comes out longer than the room.
+ */
+export function stretchAxis(layout: AxisLayout, room: number, floor: number) {
+    let fixed = 0, slots = 0;
+    for (const leaf of layout.leaves) { if (leaf.kind === 'continuous') slots++; else fixed += leaf.size; }
+    if (!slots) return;
+    const size = Math.max(floor, (room - fixed) / slots);
+    resizeAxis(layout, leaf => leaf.kind === 'continuous' ? size : leaf.size);
 }
 
 function lowerBound(length: number, before: (index: number) => boolean): number {

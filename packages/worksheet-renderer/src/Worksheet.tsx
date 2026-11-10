@@ -36,7 +36,10 @@ const maxCanvasSide = 16_000, maxCanvasArea = 64_000_000;
 export interface WorksheetProps {
     spec: WorksheetSpec;
     computation: Computation;
-    /** Upper bound of the scroll window. A shorter worksheet takes only the height it needs. */
+    /**
+     * Upper bound of the scroll window. A shorter worksheet takes only the height it needs. A sheet
+     * that is fitted or stretched in height takes all of it.
+     */
     height?: number;
     /** Called with every selected mark. Click selects one, Ctrl or Cmd click adds or removes, a click on empty space or Escape clears. */
     onSelectionChange?: (selections: Selection[]) => void;
@@ -168,18 +171,22 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         return () => controller.abort();
     }, [queryKey, computation]);
     const scrollHost = useRef<HTMLDivElement>(null);
-    const [viewport, setViewport] = useState({ x: 0, y: 0, width: 800, height });
-    // Only a fitted axis makes the layout depend on the window size.
+    // `outer` is the width of the window with a vertical scroll bar counted in, `bar` how thick a scroll bar is.
+    const [viewport, setViewport] = useState({ x: 0, y: 0, width: 800, height, outer: 800, bar: 0 });
+    // Only a fitted or stretched axis makes the layout depend on the window size.
     const fit = compiled.plan?.spec.fit;
-    const targetWidth = fit === 'width' || fit === 'both' ? viewport.width : 0;
-    const targetHeight = fit === 'height' || fit === 'both' ? height - 2 : 0;
+    const stretch = fit ? undefined : compiled.plan?.spec.stretch;
+    // A stretched sheet decides for itself where scroll bars come, so it is told the window without them.
+    const targetWidth = stretch ? viewport.outer : fit === 'width' || fit === 'both' ? viewport.width : 0;
+    const targetHeight = stretch ? height - (compact ? 0 : 2) : fit === 'height' || fit === 'both' ? height - 2 : 0;
+    const scrollbar = stretch ? viewport.bar : 0;
     // Row headers get at most 40% of the window. Rounded so that dragging a window edge does not rebuild the layout on every pixel.
     const headerWidth = Math.max(96, Math.round(viewport.width * 0.4 / 24) * 24);
     const built = useMemo(() => {
         if (!compiled.plan || result?.key !== queryKey || !result.data) return undefined;
-        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth, font: theme.font }, formats, zoom), error: '' }; }
+        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth, font: theme.font, scrollbar }, formats, zoom), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
-    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats, zoom, theme.font]);
+    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, scrollbar, headerWidth, formats, zoom, theme.font]);
     const fresh = built?.model;
     // While the next result is on its way the last sheet stays up, so a change of fields does not blank the chart.
     const last = useRef(fresh);
@@ -189,9 +196,15 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const hostHeight = model ? Math.min(height, model.height + 18) : height;
     useEffect(() => {
         const host = scrollHost.current!;
+        // The thickness of a scroll bar here, read off a box that always shows one. Zero where bars lie over the content.
+        const probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;visibility:hidden;width:80px;height:80px;overflow:scroll';
+        host.parentNode!.appendChild(probe);
+        const bar = probe.offsetWidth - probe.clientWidth;
+        probe.remove();
         const read = () => setViewport(v => {
-            const next = { x: host.scrollLeft, y: host.scrollTop, width: host.clientWidth, height: host.clientHeight };
-            return next.x === v.x && next.y === v.y && next.width === v.width && next.height === v.height ? v : next;
+            const next = { x: host.scrollLeft, y: host.scrollTop, width: host.clientWidth, height: host.clientHeight, outer: host.offsetWidth - host.clientLeft * 2, bar };
+            return next.x === v.x && next.y === v.y && next.width === v.width && next.height === v.height && next.outer === v.outer && next.bar === v.bar ? v : next;
         });
         const observer = new ResizeObserver(read);
         observer.observe(host);

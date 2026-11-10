@@ -1,6 +1,6 @@
 import { compareValue, pathKey, typed, valueKey } from './keys';
 import { resolveFormats, type Format, type Formats } from './formats';
-import { buildAxis, leafSizes, metrics, scaleAxis, setFont, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { buildAxis, leafFloors, leafSizes, leastSize, metrics, resizeAxis, scaleAxis, setFont, stretchAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
 import { logTicks, position } from './warp';
 import { memberLabel, positionValue, timeScale } from './time';
 import { branchFields, valueAxis } from './compiler';
@@ -136,7 +136,9 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
 // Ranges come from the complete result, never from the visible window. A range is keyed
 // by measure and by a scope along the axis itself, so every pane in one row or column
 // shares it and the axis can be drawn once on the table edge.
-function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format, zoom?: Zoom) {
+// The ranges are read from the records once. What comes back places the ticks for the sizes the
+// slots have at that moment, and is called again whenever the slots are resized.
+function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format, zoom?: Zoom): () => void {
     const scope = plan.spec.scaleScope ?? 'shared';
     const keyOf = (leaf: AxisLeaf) => {
         const id = leaf.branch.position!.id;
@@ -181,7 +183,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         if (shares && carriesValue) shared.add(key);
         if (distinct) positions.set(key, distinct);
     }
-    for (const leaf of layout.leaves) {
+    return () => { for (const leaf of layout.leaves) {
         if (leaf.kind !== 'continuous') continue;
         const key = keyOf(leaf);
         const time = leaf.branch.position!.scale === 'time';
@@ -239,7 +241,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
             });
         }
         leaf.scale = { ...scale, step, key: id, full, ...(type && type !== 'linear' ? { type } : {}), ...(fixed ? { fixed } : {}) };
-    }
+    } };
 }
 
 // The range of a continuous channel: the extent of the data, with the ends set by hand in their place.
@@ -329,6 +331,9 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
  * what occurs anywhere along the other axis, so a pane without a record for some member
  * still leaves that member's slot empty. Absent intersections allocate no pane.
  * With spec.fit and a target size, leaf steps are scaled so the sheet fills the target.
+ * With spec.stretch, the target is the window the sheet scrolls in: continuous slots share what the
+ * member steps leave of it, and target.scrollbar is the thickness of a scroll bar, which takes
+ * its room from the other direction when the sheet does not fit.
  * target.headerWidth caps the total width of the row headers. target.font is the font texts are measured in.
  * formats says how numbers, dates and the sheet's own words are written; the labels built here already follow it.
  * zoom replaces the range of the axes it names; marks outside a zoomed range are cut off at the edge of their pane.
@@ -336,7 +341,7 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
 /** Ranges that replace what the data asks for, by the key of the axis scale. */
 export type Zoom = Readonly<Record<string, readonly [number, number]>>;
 
-export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number; font?: string }, formats?: Formats, zoom?: Zoom): WorksheetModel {
+export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number; font?: string; scrollbar?: number }, formats?: Formats, zoom?: Zoom): WorksheetModel {
     const { spec } = plan;
     setFont(target?.font);
     const format = resolveFormats(formats);
@@ -438,7 +443,8 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         panes.push(pane);
         paneIndex.set(id, pane);
     }
-    const scales = () => { assignScales(columns, 'x', panes, plan, format, zoom); assignScales(rows, 'y', panes, plan, format, zoom); };
+    const scaleColumns = assignScales(columns, 'x', panes, plan, format, zoom), scaleRows = assignScales(rows, 'y', panes, plan, format, zoom);
+    const scales = () => { scaleColumns(); scaleRows(); };
     scales();
     // A color range comes from the complete result, like an axis range.
     const colorRange = continuousRange(extent, spec.scales?.color);
@@ -472,12 +478,61 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         scales();
         if (round === 0) frame = measure();
     }
+    // A short table still leaves room for its legend.
+    const legendHeight = legends.reduce((sum, block) => sum + Math.min(block.height, legendTitleHeight + 16 * block.step + 6), 0);
+    const stretch = target && !spec.fit ? spec.stretch : undefined;
+    if (target && stretch && columns.leaves.length && rows.leaves.length) {
+        const { width: windowWidth, height: windowHeight } = target;
+        const pie = spec.mark === 'arc', wide = stretch !== 'height', tall = stretch !== 'width';
+        const floors = leafFloors(spec);
+        // Pies are squares, so they only grow when both directions may.
+        const grows = pie ? stretch === 'both' : true;
+        const least = {
+            width: pie ? (grows ? columns.leaves.length * floors.column : columns.size) : wide ? leastSize(columns, floors.column) : columns.size,
+            height: pie ? (grows ? rows.leaves.length * floors.row : rows.size) : tall ? leastSize(rows, floors.row) : rows.size,
+        };
+        // A sheet that does not fit one way gets a scroll bar, which takes room from the other way.
+        // Whether it fits is decided on the least size, and a bar that came never goes, so this settles.
+        const bar = target.scrollbar ?? 0;
+        let across = false, down = false;
+        const bars = () => {
+            let changed = false;
+            for (let pass = 0; pass < 2; pass++) {
+                if (!across && frame.left + least.width + frame.right > windowWidth - (down ? bar : 0) + .5) across = changed = true;
+                if (!down && windowHeight > 0 && Math.max(frame.top + least.height + frame.bottom, legendHeight) > windowHeight - (across ? bar : 0) + .5) down = changed = true;
+            }
+            return changed;
+        };
+        const place = () => {
+            const roomX = windowWidth - (down ? bar : 0) - frame.left - frame.right, roomY = windowHeight - (across ? bar : 0) - frame.top - frame.bottom;
+            if (pie) {
+                if (!grows) return;
+                const side = Math.max(floors.column, Math.min(roomX / columns.leaves.length, roomY / rows.leaves.length));
+                resizeAxis(columns, () => side);
+                resizeAxis(rows, () => side);
+            } else {
+                if (wide) stretchAxis(columns, roomX, floors.column);
+                if (tall) stretchAxis(rows, roomY, floors.row);
+            }
+            scales();
+        };
+        // The axis labels depend on the slot sizes and the slot sizes on the room the labels leave.
+        let settled = false;
+        for (let round = 0; round < 3 && !settled; round++) {
+            bars();
+            place();
+            const next = measure();
+            settled = next.left === frame.left && next.right === frame.right && next.top === frame.top && next.bottom === frame.bottom;
+            frame = next;
+            if (settled) settled = !bars();
+        }
+        // The last frame is kept and the slots are fitted to it exactly.
+        if (!settled) place();
+    }
     for (const pane of panes) {
         pane.xDomain = columns.leaves[pane.column.start].scale?.domain ?? [0, 1];
         pane.yDomain = rows.leaves[pane.row.start].scale?.domain ?? [0, 1];
     }
-    // A short table still leaves room for its legend.
-    const legendHeight = legends.reduce((sum, block) => sum + Math.min(block.height, legendTitleHeight + 16 * block.step + 6), 0);
     return { plan, rows, columns, panes, paneIndex, frame, width: frame.left + columns.size + frame.right,
         height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale, channels, legends, format };
 }
