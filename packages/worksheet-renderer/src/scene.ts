@@ -1,6 +1,7 @@
 import { continuousColor, fillOf, lightTheme, type Theme } from './color';
 import { displayValue, valueKey } from './keys';
 import { branchFields, valueAxis } from './compiler';
+import { stackMode } from './model';
 import { fitText, formatTick, formatValue, leafRange, metrics, spansIn, textWidth } from './layout';
 import { fieldTime, formatTime, memberLabel, positionValue } from './time';
 import { resultKey, type AxisGroup, type AxisLeaf, type FieldInstance, type Pane, type Selection, type Value, type WorksheetModel } from './types';
@@ -139,31 +140,39 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         const described = [...new Map(used.map(f => [f.id, f])).values()];
         const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${f.scale === 'time' ? (f.display === 'continuous' ? formatTime(fieldTime(f, value)) : memberLabel(f, value as Value)) : typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
         const lengthAxis = valueAxis(xField, yField);
-        const isLine = spec.mark === 'line';
-        // A line runs along x unless x is the only value axis.
-        const alongY = xContinuous && !yContinuous;
-        const lines = new Map<string, { selected: boolean; points: { order: number; x: number; y: number; missing: boolean; color: string }[] }>();
+        const isLine = spec.mark === 'line', isArea = spec.mark === 'area', joined = isLine || isArea;
+        // A line runs along x unless x is the only value axis. An area runs across its value axis.
+        const alongY = isArea ? lengthAxis === 'x' : xContinuous && !yContinuous;
+        // x and y are where the mark is; for an area that is its upper edge, and bx and by its lower edge.
+        const lines = new Map<string, { selected: boolean; points: { order: number; x: number; y: number; bx: number; by: number; missing: boolean; color: string }[] }>();
         for (const mark of pane.marks) {
             // Points of a line outside the window still shape the visible segments.
-            if (!isLine && (mark.row < r0 || mark.row >= r1 || mark.column < c0 || mark.column >= c1)) continue;
+            if (!joined && (mark.row < r0 || mark.row >= r1 || mark.column < c0 || mark.column >= c1)) continue;
             const { record } = mark;
             const rowLeaf = rows.leaves[mark.row], columnLeaf = columns.leaves[mark.column];
             const xValue = xContinuous ? positionValue(xField!, record) : 0;
             const yValue = yContinuous ? positionValue(yField!, record) : 0;
-            const missing = !Number.isFinite(xValue) || !Number.isFinite(yValue);
-            const x = xContinuous ? px(columnLeaf, xValue) : sx(columnLeaf.offset + columnLeaf.size / 2);
-            const y = yContinuous ? py(rowLeaf, yValue) : sy(rowLeaf.offset + rowLeaf.size / 2);
+            let missing = !Number.isFinite(xValue) || !Number.isFinite(yValue);
+            let x = xContinuous ? px(columnLeaf, xValue) : sx(columnLeaf.offset + columnLeaf.size / 2);
+            let y = yContinuous ? py(rowLeaf, yValue) : sy(rowLeaf.offset + rowLeaf.size / 2);
+            let bx = x, by = y;
+            if (isArea) {
+                // The edges are where the mark's interval starts and ends, which under a stack is not its own value.
+                missing ||= !Number.isFinite(mark.start) || !Number.isFinite(mark.end);
+                if (lengthAxis === 'x') { bx = px(columnLeaf, mark.start); x = px(columnLeaf, mark.end); }
+                else { by = py(rowLeaf, mark.start); y = py(rowLeaf, mark.end); }
+            }
             const color = fill(record);
             // A box stands for all its records, so only its dimensions identify it.
             const keys = mark.box ? dimensions.filter(f => f.display === 'discrete') : dimensions;
             const id = JSON.stringify([pane.row.branch.order, pane.column.branch.order, ...keys.map(f => valueKey(record[f.field]))]);
             const selected = selecting && state.selected!.has(id);
-            if (isLine) {
+            if (joined) {
                 const order = alongY ? (yContinuous ? y : mark.row) : (xContinuous ? x : mark.column);
                 if (Number.isFinite(order)) {
                     const key = JSON.stringify(seriesFields.map(f => valueKey(record[f.field])));
                     const line = lines.get(key) ?? { selected: false, points: [] };
-                    line.points.push({ order, x, y, missing, color });
+                    line.points.push({ order, x, y, bx, by, missing, color });
                     line.selected ||= selected;
                     lines.set(key, line);
                 }
@@ -172,6 +181,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             const selection: Selection = { id, paneId: pane.id, rowPath: rowLeaf.path, columnPath: columnLeaf.path,
                 predicates: keys.map(f => ({ field: f.field, value: record[f.field] as Value })), values: mark.box ? { ...record, ...mark.box } : record };
             const extra: Partial<Primitive> = { selection, tooltip: described.map(f => describe(f, record[resultKey(f)])).join('\n') };
+            if (mark.share !== undefined) extra.tooltip += `\nShare: ${formatValue(mark.share * 100)}%`;
             if (selecting && !selected) extra.opacity = dimmed;
             if (spec.mark === 'arc') {
                 if (!Number.isFinite(mark.start)) continue;
@@ -234,6 +244,10 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 // A cell mark fills its member step; on a value axis it stays a small square.
                 const width = xContinuous ? 10 : columnLeaf.size - 1, height = yContinuous ? 10 : rowLeaf.size - 1;
                 rect('body', x - width / 2, y - height / 2, width, height, color, extra);
+            } else if (isArea) {
+                // The area itself is drawn per series below. Each of its points keeps an unseen spot on the
+                // upper edge that answers the pointer.
+                items.push({ kind: 'symbol', layer: 'body', x, y, size: 64, fill: 'transparent', ...extra });
             } else if (spec.mark === 'point') {
                 // Hollow, with a transparent fill so the inside still takes the pointer.
                 items.push({ kind: 'symbol', layer: 'body', x, y, size: 44, fill: 'transparent', stroke: color, strokeWidth: 1.5, ...extra });
@@ -241,18 +255,34 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 items.push({ kind: 'symbol', layer: 'body', x, y, size: isLine ? 22 : 44, fill: color, ...extra });
             }
         }
+        // Areas that pile up do not cover each other and can be solid; areas that overlap must let the others show through.
+        const areaOpacity = stackMode(model.plan) ? 0.85 : 0.5;
         for (const { points, selected } of lines.values()) {
             points.sort((a, b) => a.order - b.order);
             // A missing value ends the current segment; the next valid point starts a new one.
-            let path = '';
-            let open = false;
+            type Point = typeof points[number];
+            const segments: Point[][] = [];
+            let open: Point[] | undefined;
             for (const point of points) {
-                if (point.missing) { open = false; continue; }
-                path += `${open ? 'L' : `${path ? ' ' : ''}M`}${point.x.toFixed(1)},${point.y.toFixed(1)}`;
-                open = true;
+                if (point.missing) { open = undefined; continue; }
+                if (!open) segments.push(open = []);
+                open.push(point);
             }
-            // A line has one stroke. With a measure on color only its points are tinted.
-            if (path) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path, stroke: model.colorScale ? ink.mark : points[0].color, ...(selecting && !selected ? { opacity: dimmed } : {}) });
+            if (!segments.length) continue;
+            // A line or an area has one color. With a measure on color only its points are tinted.
+            const color = model.colorScale ? ink.mark : points[0].color;
+            const faded = selecting && !selected ? dimmed : 1;
+            const at = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
+            if (isArea) for (const segment of segments) {
+                const [only] = segment;
+                // One point has no extent along the axis, so it is drawn as a thin bar from edge to edge.
+                if (segment.length === 1) rect('body', Math.min(only.x, only.bx) - (alongY ? 0 : 1.5), Math.min(only.y, only.by) - (alongY ? 1.5 : 0),
+                    alongY ? Math.max(1, Math.abs(only.x - only.bx)) : 3, alongY ? 3 : Math.max(1, Math.abs(only.y - only.by)), color, { opacity: faded * areaOpacity });
+                // Out along the upper edge and back along the lower one.
+                else items.push({ kind: 'shape', layer: 'body', x: 0, y: 0, fill: color, opacity: faded * areaOpacity,
+                    path: `M${segment.map(p => at(p.x, p.y)).join('L')}L${[...segment].reverse().map(p => at(p.bx, p.by)).join('L')}Z` });
+            }
+            items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path: segments.map(segment => `M${segment.map(p => at(p.x, p.y)).join('L')}`).join(' '), stroke: color, ...(faded < 1 ? { opacity: faded } : {}) });
         }
     }
 

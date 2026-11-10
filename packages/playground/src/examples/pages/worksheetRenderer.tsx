@@ -66,7 +66,7 @@ export default function WorksheetRendererPage() {
             <Shelf name="Column axis" values={shelves.columnMeasures} options={axisFields} onChange={v => updateShelf('columnMeasures', v)} />
         </div>
         <div className="ws-toolbar">
-            <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'circle', 'tick', 'line', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>
+            <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'circle', 'tick', 'line', 'area', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>
             <label>Axis range<select value={scaleScope} onChange={e => setScaleScope(e.target.value as WorksheetSpec['scaleScope'])}>
                 <option value="shared">Uniform per measure</option><option value="prefix">Per outer header</option><option value="independent">Independent per row / column</option>
             </select></label>
@@ -78,7 +78,7 @@ export default function WorksheetRendererPage() {
             <label>Member step<select value={step} onChange={e => setStep(Number(e.target.value))}><option value="18">Compact</option><option value="24">Default</option><option value="32">Roomy</option></select></label>
             <label>Axis slot<select value={slot} onChange={e => setSlot(Number(e.target.value))}><option value="150">Compact</option><option value="200">Default</option><option value="280">Wide</option></select></label>
             <label>Fit<select value={fit} onChange={e => setFit(e.target.value as WorksheetSpec['fit'] | '')}><option value="">Standard</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="both">Entire view</option></select></label>
-            <label className="ws-check"><input type="checkbox" checked={stack} disabled={shelves.mark !== 'bar'} onChange={e => setStack(e.target.checked)} /> Stack bars</label>
+            <label className="ws-check"><input type="checkbox" checked={stack} disabled={shelves.mark !== 'bar' && shelves.mark !== 'area'} onChange={e => setStack(e.target.checked)} /> Stack bars</label>
         </div>
         <p className="ws-note">{orders.length.toLocaleString()} synthetic order lines · SUM(Sales), AVG(Profit), COUNTD(Order) 保留独立聚合。三个 Category 分别有 4、9、4 个 Subcategory，Fasteners 在 South 没有记录。导出包含整张工作表。</p>
         {exportError ? <p role="alert">{exportError}</p> : null}

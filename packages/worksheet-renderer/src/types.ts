@@ -44,10 +44,11 @@ export interface WorksheetSpec {
     columns: AxisExpr;
     /**
      * point is a hollow circle, circle a filled one, tick a short line across the value axis.
+     * area fills from the start of each mark's interval to its end, joined along the other axis.
      * arc draws one pie per cell of the table; rows and columns then take dimensions only.
      * boxplot summarises the records of each member along the one continuous axis.
      */
-    mark: 'bar' | 'point' | 'circle' | 'tick' | 'line' | 'rect' | 'text' | 'arc' | 'boxplot';
+    mark: 'bar' | 'point' | 'circle' | 'tick' | 'line' | 'area' | 'rect' | 'text' | 'arc' | 'boxplot';
     /** A discrete field gives one color per member. A continuous field, aggregated or not, gives a continuous scale. */
     color?: string;
     /**
@@ -59,8 +60,13 @@ export interface WorksheetSpec {
     angle?: string;
     /** The value written by text marks. Without it a text mark shows the measure it is positioned by. */
     text?: string;
-    /** Bars stack unless this is false. Unstacked bars overlap from the zero line. */
-    stack?: boolean;
+    /**
+     * How bars and areas that share a position pile up. They stack end to end unless this is
+     * false, in which case they overlap from the zero line. 'normalize' stacks their shares of
+     * the pile, so every pile runs from 0 to 100%. 'center' stacks them end to end with the
+     * pile centered on zero. Both of those pile magnitudes, whatever the sign.
+     */
+    stack?: boolean | 'normalize' | 'center';
     scaleScope?: ScaleScope;
     sort?: 'ascending' | 'descending';
     /**
@@ -217,6 +223,8 @@ export interface PaneMark {
      */
     start: number;
     end: number;
+    /** Under a normalized stack: the mark's share of its pile, between 0 and 1. */
+    share?: number;
     /** Set on the one mark that stands for a whole box. Its record holds the dimensions and the median. */
     box?: BoxSummary;
     /** A record outside the whiskers of its box, drawn on its own. */

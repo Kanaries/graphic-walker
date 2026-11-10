@@ -79,8 +79,8 @@ export function compileWorksheet(spec: WorksheetSpec): Plan {
     const bindings: Binding[] = [];
     for (const row of rows) for (const column of columns) {
         const continuous = [row.position, column.position].filter(f => f?.display === 'continuous');
-        if (spec.mark === 'bar' && (!continuous.length || (continuous.length === 2 && continuous.filter(f => f!.aggregate).length !== 1))) {
-            throw new Error('Bar marks need one measure axis. The other axis can be discrete, or an unaggregated continuous field such as a date.');
+        if ((spec.mark === 'bar' || spec.mark === 'area') && (!continuous.length || (continuous.length === 2 && continuous.filter(f => f!.aggregate).length !== 1))) {
+            throw new Error(`${spec.mark === 'bar' ? 'Bar' : 'Area'} marks need one measure axis. The other axis can be discrete, or an unaggregated continuous field such as a date.`);
         }
         if (spec.mark === 'arc' && continuous.length) throw new Error('Arc marks take dimensions on rows and columns. The measure goes on angle.');
         if (spec.mark === 'boxplot' && (continuous.length !== 1 || continuous[0]!.scale === 'time')) {

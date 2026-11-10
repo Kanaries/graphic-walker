@@ -12,7 +12,12 @@ function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDra
     return { id: JSON.stringify([branch.id, pathKey(axis, path)]), groupId, branch, path, kind: 'band' };
 }
 
-export const stacked = (plan: Plan) => plan.spec.mark === 'bar' && plan.spec.stack !== false;
+/** How marks that share a position pile up. Only bars and areas do. */
+export function stackMode(plan: Plan): false | 'stack' | 'normalize' | 'center' {
+    const { mark, stack } = plan.spec;
+    if ((mark !== 'bar' && mark !== 'area') || stack === false) return false;
+    return stack === 'normalize' || stack === 'center' ? stack : 'stack';
+}
 
 interface CellItem { record: Row; row: string; column: string }
 /** Value at share p of an ascending list, interpolated between neighbours. */
@@ -85,15 +90,33 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
         }
         return marks;
     }
+    const mode = stackMode(plan);
+    // Marks pile up where they share a member, or a position along a continuous field.
+    const pile = (item: CellItem) => (axis === 'x' ? item.row : item.column) + (along ? `|${positionValue(along, item.record)}` : '');
+    const valueOf = (item: CellItem) => measure ? positionValue(measure, item.record) : 0;
+    if (mode === 'normalize' || mode === 'center') {
+        // Both pile magnitudes in one direction, so a negative value takes room like a positive one.
+        const sums = new Map<string, number>();
+        for (const item of sorted) { const value = valueOf(item); if (Number.isFinite(value)) sums.set(pile(item), (sums.get(pile(item)) ?? 0) + Math.abs(value)); }
+        const reached = new Map<string, number>();
+        return sorted.map(item => {
+            const value = valueOf(item), key = pile(item), sum = sums.get(key) ?? 0;
+            // A pile that adds up to nothing has no shares to show.
+            if (!Number.isFinite(value) || (mode === 'normalize' && !(sum > 0))) return { ...place(item), start: NaN, end: NaN };
+            const size = mode === 'normalize' ? Math.abs(value) / sum : Math.abs(value);
+            const start = reached.get(key) ?? (mode === 'center' ? -sum / 2 : 0);
+            reached.set(key, start + size);
+            return { ...place(item), start, end: start + size, ...(mode === 'normalize' ? { share: size } : {}) };
+        });
+    }
     const totals = new Map<string, [number, number]>();
-    const stack = stacked(plan);
-    return sorted.map(item => {
-        const { record, row, column } = item;
+    const stack = Boolean(mode);
+    const marks = sorted.map(item => {
         const leaves = place(item);
-        const value = measure ? positionValue(measure, record) : 0;
+        const value = valueOf(item);
         if (!Number.isFinite(value)) return { ...leaves, start: NaN, end: NaN };
         if (!stack) return { ...leaves, start: 0, end: value };
-        const key = (axis === 'x' ? row : column) + (along ? `|${positionValue(along, record)}` : '');
+        const key = pile(item);
         const total = totals.get(key) ?? [0, 0];
         const sign = value >= 0 ? 0 : 1;
         const start = total[sign];
@@ -101,6 +124,9 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
         totals.set(key, total);
         return { ...leaves, start, end: total[sign] };
     });
+    // Bars that overlap are painted longest first, so a short one is not hidden behind a long one.
+    if (!stack && plan.spec.mark === 'bar') marks.sort((a, b) => (Math.abs(b.end) || 0) - (Math.abs(a.end) || 0));
+    return marks;
 }
 
 // Ranges come from the complete result, never from the visible window. A range is keyed
@@ -114,9 +140,12 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     };
     const extents = new Map<string, [number, number]>();
     const positions = new Map<string, Set<number>>();
-    // Stacked bars and boxes reach beyond the value of any single record.
-    const spans = stacked(plan) || plan.spec.mark === 'boxplot';
+    // Bars and areas run from where their pile has reached to where they end, boxes from whisker to
+    // whisker. Their axis covers those intervals, not the values of single records.
+    const spans = plan.spec.mark === 'bar' || plan.spec.mark === 'area' || plan.spec.mark === 'boxplot';
     const bars = plan.spec.mark === 'bar';
+    const shares = stackMode(plan) === 'normalize';
+    const shared = new Set<string>();
     for (const pane of panes) {
         const group = axis === 'x' ? pane.column : pane.row;
         const f = group.branch.position;
@@ -142,6 +171,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
             }
         }
         extents.set(key, extent);
+        if (shares && carriesValue) shared.add(key);
         if (distinct) positions.set(key, distinct);
     }
     for (const leaf of layout.leaves) {
@@ -156,6 +186,8 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         if (step) { min -= step / 2; max += step / 2; }
         const pixels = leaf.size - metrics.scalePadStart - metrics.scalePadEnd;
         leaf.scale = { ...(time ? timeScale(min, max, pixels, axis === 'x' ? 62 : 30) : tickScale(min, max, pixels, axis === 'x' ? 46 : 30)), step };
+        // An axis of shares reads in percent.
+        if (shared.has(key)) leaf.scale.labels = leaf.scale.ticks.map(tick => `${Math.round(tick * 100)}%`);
     }
 }
 
