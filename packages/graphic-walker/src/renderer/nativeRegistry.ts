@@ -1,5 +1,5 @@
 import { useSyncExternalStore, type ComponentType, type Ref } from 'react';
-import type { IChart, IComputationFunction, IViewField } from '../interfaces';
+import type { IChart, IComputationFunction, IRenderStatus, IViewField } from '../interfaces';
 
 /**
  * What the editor hands to the native worksheet renderer: the chart as stored, every
@@ -25,6 +25,13 @@ export interface NativeRendererProps {
     onUnsupported: (reason: string) => void;
     /** Where the renderer puts its export functions, for the toolbar's image and CSV buttons. */
     handle?: Ref<NativeRendererHandle>;
+    /** Where the chart stands: querying, painting, done, or failed. Drives the loading layer and the host's render status. */
+    onStatusChange?: (status: IRenderStatus) => void;
+    /**
+     * A mark was clicked. `mark` holds the value of every dimension that identifies it, by field id,
+     * as stored in the data. The editor opens its menu at the event's position.
+     */
+    onMarkClick?: (mark: Record<string, unknown>, event: MouseEvent) => void;
 }
 
 /** Each function rejects or throws while the chart is still loading. */
@@ -35,6 +42,8 @@ export interface NativeRendererHandle {
     exportPNG(): Promise<string>;
     /** The records behind the marks as comma-separated text with a header line. */
     exportCSV(): string;
+    /** Size of the whole chart in CSS px. */
+    size(): { width: number; height: number };
 }
 
 export interface NativeRendererColors {

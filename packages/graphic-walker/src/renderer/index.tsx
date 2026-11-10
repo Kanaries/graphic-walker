@@ -33,6 +33,9 @@ import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
 import { useNativeRenderer, type NativeRendererColors, type NativeRendererHandle } from './nativeRegistry';
 import { getColor, getTheme } from '../utils/useTheme';
+import { installNativeExport } from './nativeHostExport';
+import { useAppRootContext } from '@/components/appRoot';
+import type { IRenderStatus } from '../interfaces';
 import { themeContext } from '@/store/theme';
 
 interface RendererProps {
@@ -341,11 +344,59 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
         };
     }, [drawsNative, csvRef, chartName]);
 
+    // Where the native chart stands, for the loading layer here and for the host's render status.
+    const appRoot = useAppRootContext();
+    const [status, setStatus] = useState<IRenderStatus>('idle');
+    const onStatusChange = useCallback(
+        (next: IRenderStatus) => {
+            setStatus(next);
+            appRoot.current?.updateRenderStatus(next);
+        },
+        [appRoot]
+    );
+    const container = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!drawsNative) return;
+        const ctx = appRoot.current;
+        const uninstall = ctx ? installNativeExport(ctx, { handle: nativeHandle, container, title: chartName ?? '' }) : undefined;
+        return () => {
+            uninstall?.();
+            // Whichever renderer comes next starts from a clean state.
+            setStatus('idle');
+            appRoot.current?.updateRenderStatus('idle');
+        };
+    }, [drawsNative, appRoot, chartName]);
+    // A click on a mark opens the editor's menu there, with the mark's dimension values as what the menu's
+    // actions work on. The click must not reach the chart area, whose own handler closes the menu.
+    const onMarkClick = useCallback(
+        (mark: Record<string, unknown>, event: MouseEvent) => {
+            if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length === 0) return;
+            event.stopPropagation();
+            runInAction(() => {
+                vizStore.showEmbededMenu([event.clientX, event.clientY]);
+                vizStore.setFilters(Object.fromEntries(Object.entries(mark).map(([fid, value]) => [fid, [value]])));
+                vizStore.updateSelectedMarkObject(mark as Record<string, string | number | undefined>);
+            });
+        },
+        [vizStore]
+    );
+
     if (drawsNative) {
         const Native = native!.component;
         return (
-            <div className="w-full h-full">
-                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} locale={i18n.language} onUnsupported={onUnsupported} handle={nativeHandle} />
+            <div className="w-full h-full relative" ref={container}>
+                {status === 'computing' && <LoadingLayer />}
+                <Native
+                    chart={chart}
+                    fields={vizStore.allFields}
+                    computation={props.computationFunction}
+                    colors={colors}
+                    locale={i18n.language}
+                    onUnsupported={onUnsupported}
+                    handle={nativeHandle}
+                    onStatusChange={onStatusChange}
+                    onMarkClick={onMarkClick}
+                />
             </div>
         );
     }

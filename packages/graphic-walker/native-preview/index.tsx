@@ -52,7 +52,7 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  * builder; only the grouping step comes from the worksheet, which asks for one result
  * per grain it draws.
  */
-function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsupported, handle }: NativeRendererProps) {
+function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsupported, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
@@ -89,6 +89,7 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsuppo
             exportSVG: async () => ready().exportSVG(),
             exportPNG: async () => ready().exportPNG(),
             exportCSV: () => ready().exportRecords().map(tableToCSV).join('\n\n'),
+            size: () => ready().size(),
         };
     }, []);
     // Number and time formats from the chart settings, and the editor's language for everything they leave open.
@@ -123,7 +124,13 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsuppo
     // and covered by the adapter tests; the editor has no place for it next to the chart yet.
     return (
         <div ref={host} style={{ height: '100%', padding: 8, color: theme.text, overflow: 'hidden', boxSizing: 'border-box' }}>
-            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} formats={written.formats} compact onError={(message) => { if (message) onUnsupported(message); }} /> : null}
+            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} formats={written.formats} compact
+                onError={(message) => { if (message) onUnsupported(message); }}
+                // The worksheet's own words for where it stands, in the editor's.
+                onStatusChange={(status) => onStatusChange?.(status === 'querying' ? 'computing' : status === 'drawing' ? 'rendering' : status)}
+                // What identifies the mark: its dimension values, as stored. Measures are left out, as an aggregated value is not a filter on rows.
+                onMarkClick={(selection, event) => onMarkClick?.(Object.fromEntries(selection.predicates.map((p) => [p.field, p.value])), event)}
+            /> : null}
         </div>
     );
 }
