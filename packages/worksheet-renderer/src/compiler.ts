@@ -69,7 +69,18 @@ export function compileWorksheet(spec: WorksheetSpec): Plan {
         if (spec.mark === 'boxplot' && f.display !== 'discrete') throw new Error('A box plot takes a dimension on color.');
         encodings.unshift(f);
     }
-    if (spec.text && spec.mark === 'text') encodings.push(instance(spec.text, 'Text'));
+    if (spec.text) encodings.push(instance(spec.text, 'Text'));
+    for (const [id, role] of [[spec.size, 'Size'], [spec.opacity, 'Opacity']] as const) {
+        if (!id) continue;
+        const f = instance(id, role);
+        if (f.scale === 'time' && f.display === 'continuous') throw new Error(`${role} takes a dimension or a measure, not a date axis.`);
+        encodings.push(f);
+    }
+    if (spec.shape) {
+        const f = instance(spec.shape, 'Shape');
+        if (f.aggregate || f.display !== 'discrete') throw new Error('Shape takes a dimension.');
+        encodings.push(f);
+    }
     if (spec.angle && spec.mark === 'arc') {
         const f = instance(spec.angle, 'Angle');
         if (f.display !== 'continuous' || f.scale === 'time') throw new Error('Angle takes a measure.');

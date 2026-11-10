@@ -31,10 +31,10 @@ export function vegaSpec(scene: Scene): Spec {
                     opacity: { field: 'opacity' }, cursor: pointer,
                 } } },
                 { type: 'path' as const, from: { data: dataName(layer, 'path') }, interactive: false, encode: { update: {
-                    x: { field: 'x' }, y: { field: 'y' }, path: { field: 'path' }, stroke: { field: 'stroke' }, strokeWidth: { value: 1.8 }, opacity: { field: 'opacity' },
+                    x: { field: 'x' }, y: { field: 'y' }, path: { field: 'path' }, stroke: { field: 'stroke' }, strokeWidth: { signal: 'datum.strokeWidth || 1.8' }, opacity: { field: 'opacity' },
                 } } },
                 { type: 'symbol' as const, from: { data: dataName(layer, 'symbol') }, encode: { update: {
-                    x: { field: 'x' }, y: { field: 'y' }, size: { field: 'size' }, fill: { field: 'fill' }, stroke: { field: 'stroke' }, strokeWidth: { field: 'strokeWidth' },
+                    x: { field: 'x' }, y: { field: 'y' }, size: { field: 'size' }, shape: { signal: "datum.symbol || 'circle'" }, fill: { field: 'fill' }, stroke: { field: 'stroke' }, strokeWidth: { field: 'strokeWidth' },
                     opacity: { field: 'opacity' }, cursor: pointer,
                 } } },
                 { type: 'text' as const, from: { data: dataName(layer, 'text') }, encode: { update: {

@@ -2,6 +2,7 @@ import { compareValue, pathKey, typed, valueKey } from './keys';
 import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
 import { memberLabel, positionValue, timeScale } from './time';
 import { branchFields, valueAxis } from './compiler';
+import { legendTitleHeight, levelOf, type ChannelScale, type LegendBlock } from './channels';
 import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel, type WorksheetSpec } from './types';
 
 function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDraft {
@@ -38,7 +39,8 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
     const other = axis === 'x' ? y : x;
     const along = other?.display === 'continuous' ? other : undefined;
     // Only dimensions split a pane into series. A measure on color tints the marks without dividing them.
-    const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => f.display === 'discrete');
+    const series = [plan.spec.color, ...(plan.spec.detail ?? []), plan.spec.size, plan.spec.opacity, plan.spec.shape, plan.spec.text]
+        .filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => f.display === 'discrete');
     const sorted = [...items].sort((a, b) => {
         for (const f of series) {
             const cmp = compareValue(a.record[f.field], b.record[f.field]);
@@ -191,7 +193,37 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     }
 }
 
-function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, colors: Value[], colorScale?: ColorScale, headerBudget?: number): Frame {
+// What explains each channel, in the order the strip shows it: color, size, opacity, shape.
+function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorScale | undefined, channels: WorksheetModel['channels']): LegendBlock[] {
+    const blocks: LegendBlock[] = [];
+    const list = (channel: LegendBlock['channel'], title: string, entries: LegendBlock['entries'], step = 18) =>
+        blocks.push({ channel, title, kind: 'list', entries, step, height: legendTitleHeight + entries.length * step + 6 });
+    const color = spec.color ? spec.instances[spec.color] : undefined;
+    if (color && colorScale) blocks.push({ channel: 'color', title: color.label, kind: 'ramp', step: 0, height: 64,
+        entries: colorScale.domain.map((value, i) => ({ label: formatTick(value), level: i })) });
+    else if (color) list('color', color.label, colors.map((value, i) => ({ label: memberLabel(color, value), level: i })));
+    for (const channel of ['size', 'opacity', 'shape'] as const) {
+        const scale = channels[channel];
+        if (!scale) continue;
+        if (scale.members) {
+            list(channel, scale.field.label, scale.members.map((value, i) => ({ label: memberLabel(scale.field, value), level: channel === 'shape' ? i : (i + 1) / scale.members!.length })), channel === 'size' ? 22 : 18);
+        } else if (scale.domain) {
+            // The ends of the range and the middle are enough to read a size or an opacity against.
+            const [low, high] = scale.domain;
+            const samples = low === high ? [low] : [low, (low + high) / 2, high];
+            list(channel, scale.field.label, samples.map(value => ({ label: formatTick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
+        }
+    }
+    return blocks;
+}
+function legendWidth(blocks: LegendBlock[]): number {
+    if (!blocks.length) return 0;
+    const widest = Math.max(...blocks.map(block => Math.max(textWidth(block.title, metrics.fontSize, 600),
+        block.kind === 'ramp' ? 110 : Math.max(0, ...block.entries.map(entry => textWidth(entry.label))) + (block.channel === 'size' ? 26 : 18))));
+    return Math.ceil(Math.min(metrics.legendMaxWidth, Math.max(metrics.legendMinWidth, widest + 24)));
+}
+
+function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, right: number, headerBudget?: number): Frame {
     const pad = metrics.headerPadding * 2;
     const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(memberLabel(spec.instances[span.part.instanceId], span.part.value))));
     const rowHeaderWidths = rows.levels.map((_, level) => Math.min(metrics.headerMaxWidth,
@@ -218,12 +250,6 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
     const atBottom = membersOnly && (spec.innerColumnHeader ? spec.innerColumnHeader === 'bottom' : valueAxisOnRows);
     const bottomHeaderHeight = atBottom ? columnHeaderHeights[inner] : 0;
     const top = Math.max(rows.levels.length ? metrics.captionHeight : 0, columnCaptionHeight + columnHeaderHeights.reduce((a, b) => a + b, 0) - bottomHeaderHeight);
-    let right = 0;
-    if (spec.color) {
-        const title = textWidth(spec.instances[spec.color].label, metrics.fontSize, 600);
-        const widestItem = colorScale ? 110 : Math.max(0, ...colors.map(c => textWidth(memberLabel(spec.instances[spec.color!], c)))) + 18;
-        right = Math.ceil(Math.min(metrics.legendMaxWidth, Math.max(metrics.legendMinWidth, Math.max(title, widestItem) + 24)));
-    }
     return {
         left: rowHeaderWidths.reduce((a, b) => a + b, 0) + yAxisWidth,
         top,
@@ -300,7 +326,20 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     const colors = new Map<string, Value>();
     const color = spec.color ? spec.instances[spec.color] : undefined;
     const extent: [number, number] = [Infinity, -Infinity];
+    // Size, opacity and shape span the complete result too, so a mark keeps its look when the window moves.
+    const channels: WorksheetModel['channels'] = {};
+    const spans = (['size', 'opacity', 'shape'] as const).flatMap(channel => {
+        const field = spec[channel] ? spec.instances[spec[channel]!] : undefined;
+        return field ? [{ channel, field, members: new Map<string, Value>(), domain: [Infinity, -Infinity] as [number, number] }] : [];
+    });
     for (const cell of cells.values()) for (const { record } of cell.items) {
+        for (const span of spans) {
+            if (span.field.display === 'discrete') span.members.set(valueKey(record[span.field.field]), record[span.field.field]);
+            else {
+                const raw = record[resultKey(span.field)];
+                if (typeof raw === 'number' && Number.isFinite(raw)) { span.domain[0] = Math.min(span.domain[0], raw); span.domain[1] = Math.max(span.domain[1], raw); }
+            }
+        }
         if (color?.display === 'discrete') colors.set(valueKey(record[color.field]), record[color.field]);
         if (color?.display === 'continuous') {
             const raw = record[resultKey(color)];
@@ -308,6 +347,11 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         }
     }
     const palette = [...colors.values()].sort(compareValue);
+    for (const span of spans) {
+        const scale: ChannelScale = span.field.display === 'discrete' ? { field: span.field, members: [...span.members.values()].sort(compareValue) }
+            : { field: span.field, domain: span.domain[0] <= span.domain[1] ? span.domain : undefined };
+        if (scale.members?.length || scale.domain) channels[span.channel] = scale;
+    }
     // Boxes of different colors stand side by side in a member step, in legend order and in the same
     // place in every pane. A color field that already heads the members has one box per step anyway.
     const onAxis = color && [...plan.rows, ...plan.columns].some(branch => branchFields(branch).some(f => f.field === color.field));
@@ -325,7 +369,8 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     // A color range comes from the complete result, like an axis range.
     const colorScale: ColorScale | undefined = color?.display === 'continuous'
         ? { field: color, domain: extent[0] <= extent[1] ? extent : [0, 1], diverging: extent[0] < 0 && extent[1] > 0 } : undefined;
-    const measure = () => buildFrame(rows, columns, spec, palette, colorScale, target?.headerWidth);
+    const legends = buildLegends(spec, palette, colorScale, channels);
+    const measure = () => buildFrame(rows, columns, spec, legendWidth(legends), target?.headerWidth);
     let frame = measure();
     const fitWidth = target && (spec.fit === 'width' || spec.fit === 'both') && columns.size > 0;
     const fitHeight = target && (spec.fit === 'height' || spec.fit === 'both') && rows.size > 0;
@@ -342,7 +387,7 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         pane.yDomain = rows.leaves[pane.row.start].scale?.domain ?? [0, 1];
     }
     // A short table still leaves room for its legend.
-    const legendHeight = colorScale ? 64 : spec.color ? 30 + Math.min(palette.length, 16) * 18 : 0;
+    const legendHeight = legends.reduce((sum, block) => sum + Math.min(block.height, legendTitleHeight + 16 * block.step + 6), 0);
     return { plan, rows, columns, panes, paneIndex, frame, width: frame.left + columns.size + frame.right,
-        height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale };
+        height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale, channels, legends };
 }

@@ -58,8 +58,22 @@ export interface WorksheetSpec {
     detail?: string[];
     /** The measure that sizes the slices of arc marks. Without it every slice gets the same share. */
     angle?: string;
-    /** The value written by text marks. Without it a text mark shows the measure it is positioned by. */
+    /**
+     * The value written by text marks; without it a text mark shows the measure it is positioned
+     * by. On any other mark it is a label written next to the mark, or inside it where it fits.
+     * Labels that would run into each other are left out.
+     */
     text?: string;
+    /**
+     * Sizes marks by a field: the area of points, the thickness of bars, the length of ticks, the
+     * width of lines, the font size of text, the side of heat map cells. A measure sizes from
+     * zero; a dimension gives each member its own step.
+     */
+    size?: string;
+    /** Makes marks more or less opaque by a field. A dimension gives each member its own step. */
+    opacity?: string;
+    /** Gives each member of a dimension its own symbol. Only point and circle marks have one. */
+    shape?: string;
     /**
      * How bars and areas that share a position pile up. They stack end to end unless this is
      * false, in which case they overlap from the zero line. 'normalize' stacks their shares of
@@ -261,6 +275,10 @@ export interface Frame {
     yAxisWidth: number;
 }
 export interface WorksheetModel {
+    /** The spans of the fields on size and opacity, and the members of the field on shape. */
+    channels: { size?: import('./channels').ChannelScale; opacity?: import('./channels').ChannelScale; shape?: import('./channels').ChannelScale };
+    /** What the legend strip shows, top to bottom. */
+    legends: import('./channels').LegendBlock[];
     plan: Plan;
     rows: AxisLayout;
     columns: AxisLayout;
