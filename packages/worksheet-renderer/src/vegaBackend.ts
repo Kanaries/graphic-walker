@@ -47,6 +47,16 @@ export function vegaSpec(scene: Scene): Spec {
     };
 }
 
+/**
+ * The scene as a PNG data URL, `scale` device pixels per CSS pixel. Needs a canvas, so it
+ * works in a browser and not in plain Node.
+ */
+export async function sceneToPNG(scene: Scene, scale = 2): Promise<string> {
+    const view = new View(parse(vegaSpec(scene)), { renderer: 'none' });
+    try { await view.runAsync(); return (await view.toCanvas(scale)).toDataURL('image/png'); }
+    finally { view.finalize(); }
+}
+
 export async function sceneToSVG(scene: Scene): Promise<string> {
     const view = new View(parse(vegaSpec(scene)), { renderer: 'none' });
     try { await view.runAsync(); return await view.toSVG(); }

@@ -7,10 +7,23 @@ import { formatTick, setTextMeasure } from './layout';
 import { memberLabel } from './time';
 import { buildModel } from './model';
 import { buildScene, type Primitive, type Scene } from './scene';
-import { sceneData, sceneToSVG, vegaSpec } from './vegaBackend';
+import { sceneData, sceneToPNG, sceneToSVG, vegaSpec } from './vegaBackend';
+import { resultTables, type ResultTable } from './export';
 import type { Computation, Row, Selection, WorksheetSpec } from './types';
 
-export interface WorksheetHandle { exportSVG(): Promise<string> }
+export interface WorksheetHandle {
+    /** The whole sheet, not only the part in the window, with headers, axes and legend. */
+    exportSVG(): Promise<string>;
+    /**
+     * The whole sheet as a PNG data URL, at `scale` device pixels per CSS pixel. A sheet too
+     * large for a canvas at that scale is drawn at the largest scale that fits.
+     */
+    exportPNG(scale?: number): Promise<string>;
+    /** The records behind the marks, one table per query that is drawn. */
+    exportRecords(): ResultTable[];
+}
+// The canvas limits that hold across current browsers.
+const maxCanvasSide = 16_000, maxCanvasArea = 64_000_000;
 export interface WorksheetProps {
     spec: WorksheetSpec;
     computation: Computation;
@@ -160,13 +173,29 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     }, [model, hostHeight]);
     const selected = useMemo(() => new Set(selection.keys()), [selection]);
     const scene = useMemo(() => model ? buildScene(model, viewport, { selected, theme }) : emptyScene(theme.paper), [model, viewport, selected, theme]);
-    useImperativeHandle(ref, () => ({
-        async exportSVG() {
+    useImperativeHandle(ref, () => {
+        const whole = () => {
             if (!model || loading) throw new Error('Wait for the worksheet query to finish.');
-            if (model.width * model.height > 100_000_000) throw new Error('Full export exceeds the V0 size limit. Filter the worksheet first.');
-            return sceneToSVG(buildScene(model, { x: 0, y: 0, width: model.width, height: model.height }, { theme }));
-        },
-    }), [model, loading, theme]);
+            return buildScene(model, { x: 0, y: 0, width: model.width, height: model.height }, { theme });
+        };
+        return {
+            async exportSVG() {
+                const scene = whole();
+                if (scene.width * scene.height > 100_000_000) throw new Error('Full export exceeds the V0 size limit. Filter the worksheet first.');
+                return sceneToSVG(scene);
+            },
+            async exportPNG(scale = 2) {
+                const scene = whole();
+                const fit = Math.min(scale, maxCanvasSide / scene.width, maxCanvasSide / scene.height, Math.sqrt(maxCanvasArea / (scene.width * scene.height)));
+                if (fit < 0.25) throw new Error('The worksheet is too large for an image. Filter it first, or export SVG.');
+                return sceneToPNG(scene, fit);
+            },
+            exportRecords() {
+                if (!compiled.plan || loading || result?.key !== queryKey || !result.data) throw new Error('Wait for the worksheet query to finish.');
+                return resultTables(compiled.plan, result.data);
+            },
+        };
+    }, [model, loading, theme, compiled.plan, result, queryKey]);
     const error = compiled.error || built?.error || (result?.key === queryKey ? result.error : '');
     const colorField = model?.plan.spec.color ? model.plan.spec.instances[model.plan.spec.color] : undefined;
     const report = useRef(onError);
