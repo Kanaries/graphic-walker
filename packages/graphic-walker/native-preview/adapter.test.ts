@@ -171,6 +171,29 @@ describe('chartToWorksheet', () => {
         const computed = chartToWorksheet(chart({ rows: [dim('Derived', 'temporal', { computed: true }), mea('Sales')], columns: [dim('Region')] })).spec!;
         expect(computed.instances[ids(computed.rows)[0]].scale).toBeUndefined();
     });
+    test('scale settings map to the axes of a shelf and to the color, size and opacity channels', () => {
+        const shelves = { rows: [dim('Region')], columns: [mea('Sales')], color: [mea('Profit')], size: [mea('Quantity')], opacity: [dim('Segment')] };
+        const { spec, notes } = chartToWorksheet(chart(shelves, { geoms: ['point'] }, {
+            scale: {
+                column: { type: 'log', domainMin: 1 }, row: { type: 'pow' }, color: { domainMin: -5, domainMax: 5, type: 'symlog' },
+                size: { rangeMin: 4, rangeMax: 80 }, opacity: { rangeMin: 0.3, rangeMax: 0.9, type: 'sqrt' }, theta: { domainMax: 10 },
+            },
+            resolve: { ...emptyVisualLayout.resolve, color: true, size: true, opacity: true, shape: true },
+        }));
+        expect(spec!.scales).toEqual({
+            columns: { type: 'log', min: 1 },
+            color: { type: 'symlog', min: -5, max: 5, independent: true },
+            size: { range: [4, 80], independent: true },
+            // Opacity is on a dimension: its range applies, a scale type and independence do not.
+            opacity: { range: [0.3, 0.9] },
+        });
+        expect(notes).toEqual([
+            'The opacity scale type and domain apply to a measure, not to a dimension.',
+            'An independent opacity scale applies to a measure; each member of a dimension keeps its opacity in every pane.',
+            'The theta scale is not applied.',
+        ]);
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] })).spec!.scales).toBeUndefined();
+    });
     test('layout options carry over', () => {
         const base = { rows: [dim('Region')], columns: [mea('Sales')] };
         expect(chartToWorksheet(chart(base, {}, { stack: 'none' })).spec!.stack).toBe(false);
@@ -196,8 +219,7 @@ describe('chartToWorksheet', () => {
         const settings = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 10, geoms: ['trail'] },
             { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
         expect(settings.notes).toEqual([
-            'Trail is drawn as a line of one width.', 'Scale settings are not applied.',
-            'Independent legends are not drawn.', 'The sheet is always drawn on a canvas.',
+            'Trail is drawn as a line of one width.', 'The sheet is always drawn on a canvas.',
         ]);
         // A chart with default settings drops nothing.
         expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] })).notes).toEqual([]);

@@ -65,6 +65,27 @@ export interface NativeRendererColors {
     heatmap?: string[];
     /** The chart's own background, when the user set one. */
     background?: string;
+    /**
+     * What the theme says about everything that is not a mark, each where the theme sets it:
+     * header and legend text, axis labels, the borders between panes, grid lines.
+     */
+    text?: string;
+    muted?: string;
+    line?: string;
+    grid?: string;
+    /** The theme's settings that are not colors, each where the theme sets it. */
+    style: {
+        font?: string;
+        /** Dash and gap of grid lines in px. */
+        gridDash?: [number, number];
+        /** Stroke width of line marks and of the outline of point marks, in px. */
+        lineWidth?: number;
+        pointStrokeWidth?: number;
+        /** Point marks are drawn filled. */
+        pointFilled?: boolean;
+        /** Radius of the far end of bars, in px. */
+        barRadius?: number;
+    };
 }
 
 export interface NativeRenderer {

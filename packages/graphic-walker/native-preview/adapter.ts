@@ -1,4 +1,4 @@
-import type { Aggregate, AxisExpr, FieldInstance, WorksheetSpec } from '@kanaries/worksheet-renderer';
+import type { Aggregate, AxisExpr, FieldInstance, ScaleOptions, WorksheetSpec } from '@kanaries/worksheet-renderer';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../src/constants';
 import type { IChart, IViewField } from '../src/interfaces';
 import { viewEncodingKeys } from '../src/models/visSpec';
@@ -20,6 +20,7 @@ const marks: Record<string, WorksheetSpec['mark'] | undefined> = {
     arc: 'arc', boxplot: 'boxplot',
 };
 const isMeasure = (f: IViewField) => f.analyticType === 'measure';
+const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
 /**
  * Maps a stored chart to the worksheet renderer's input. The chart stays the source of
@@ -205,8 +206,32 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     if (encodings.filters.some((f) => f.enableAgg)) notes.push('Filters on aggregated values are not applied.');
     // Settings the editor offers that this renderer does not read yet. Every one of them is listed in
     // the gap table of the plan document; a setting that starts to work is removed here and there.
-    if (layout.scale && Object.values(layout.scale).some((scale) => scale && Object.keys(scale).length > 0)) notes.push('Scale settings are not applied.');
-    if (layout.resolve?.color || layout.resolve?.opacity || layout.resolve?.shape || layout.resolve?.size) notes.push('Independent legends are not drawn.');
+    // Scale settings: the axes of each shelf, and the color, size and opacity channels. The editor's
+    // 'pow' has no exponent setting and is a linear scale, as in its other renderers.
+    const scales: NonNullable<WorksheetSpec['scales']> = {};
+    const continuous = (id?: string) => Boolean(id && instances[id].display === 'continuous');
+    for (const [from, to, id] of [['row', 'rows', undefined], ['column', 'columns', undefined], ['color', 'color', color], ['size', 'size', channels.size], ['opacity', 'opacity', channels.opacity]] as const) {
+        const set = layout.scale?.[from];
+        const channel = to !== 'rows' && to !== 'columns';
+        const options: ScaleOptions = {};
+        if (set?.type && set.type !== 'linear' && set.type !== 'pow') options.type = set.type;
+        if (isNumber(set?.domainMin)) options.min = set!.domainMin;
+        if (isNumber(set?.domainMax)) options.max = set!.domainMax;
+        if (channel && to !== 'color' && isNumber(set?.rangeMin) && isNumber(set?.rangeMax)) options.range = [set!.rangeMin!, set!.rangeMax!];
+        if (channel && Object.keys(options).length && id && !continuous(id)) {
+            // A dimension has members, not a range; only what the levels turn into applies to it.
+            if (options.type || options.min !== undefined || options.max !== undefined) notes.push(`The ${to} scale type and domain apply to a measure, not to a dimension.`);
+            delete options.type; delete options.min; delete options.max;
+        }
+        // Independent: every pane ranges over its own values. A dimension keeps one look per member everywhere.
+        if (channel && layout.resolve?.[to]) {
+            if (continuous(id)) options.independent = true;
+            else if (id) notes.push(`An independent ${to} scale applies to a measure; each member of a dimension keeps its ${to} in every pane.`);
+        }
+        if (Object.keys(options).length) scales[to] = options;
+    }
+    if (layout.resolve?.shape && channels.shape) notes.push('An independent shape scale is not applied; each member keeps its symbol in every pane.');
+    for (const unused of ['theta', 'radius'] as const) if (layout.scale?.[unused] && Object.keys(layout.scale[unused]!).length) notes.push(`The ${unused} scale is not applied.`);
     if (layout.useSvg) notes.push('The sheet is always drawn on a canvas.');
 
     const spec: WorksheetSpec = {
@@ -216,6 +241,7 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         // 'zero' is the editor's older name for a plain stack. Only bars and areas pile up.
         stack: layout.stack === 'none' ? false : layout.stack === 'normalize' || layout.stack === 'center' ? layout.stack : true,
         order,
+        ...(Object.keys(scales).length ? { scales } : {}),
         // The editor's limit cuts the query result, after ordering it by the sort measure when a sort is on.
         limit: config.limit > 0 ? { rows: config.limit, ...ranked } : undefined,
         scaleScope: layout.resolve?.x || layout.resolve?.y ? 'independent' : 'shared',

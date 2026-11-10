@@ -106,13 +106,22 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
     // Text and rules follow how bright that is; marks follow the editor's theme, primary color and palette.
     const theme = useMemo<Theme>(() => {
         const paper = over(colors.background, surface);
-        const base = isDark(paper) ? darkTheme : lightTheme;
+        const dark = isDark(paper);
+        const base = dark ? darkTheme : lightTheme;
+        // The theme's text and rule colors are made for the editor's own surface. On a background the user
+        // set that is the other way round, light on dark or dark on light, they would not read, and the standard ones stay.
+        const fits = dark === colors.dark;
         return {
             ...base, paper, mark: colors.primary,
             category: colors.category.length ? colors.category : base.category,
             ramp: colors.ramp.length ? colors.ramp : base.ramp,
             diverging: colors.diverging?.length ? colors.diverging : base.diverging,
             heatmap: colors.heatmap,
+            ...(fits && colors.text ? { text: colors.text } : {}),
+            ...(fits && colors.muted ? { muted: colors.muted } : {}),
+            ...(fits && colors.line ? { line: colors.line } : {}),
+            ...(fits && colors.grid ? { grid: colors.grid } : {}),
+            ...colors.style,
         };
     }, [surface, colors]);
     const [height, setHeight] = useState(520);

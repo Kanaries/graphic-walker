@@ -280,7 +280,13 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
     const mediaTheme = useContext(themeContext);
     const { primaryColor, colorPalette, background } = chart.layout;
     const colors = useMemo<NativeRendererColors>(() => {
-        const resolved = getColor(getTheme({ vizThemeConfig: props.vizThemeConfig, mediaTheme, primaryColor, colorPalette }));
+        // The theme is a Vega config. What the native renderer can use of it is read out here, so that it
+        // does not need to know that format. A setting that is not a plain color or number is left out.
+        const config: any = getTheme({ vizThemeConfig: props.vizThemeConfig, mediaTheme, primaryColor, colorPalette });
+        const resolved = getColor(config);
+        const plain = (value: unknown) => (typeof value === 'string' && value !== 'transparent' ? value : undefined);
+        const amount = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : undefined);
+        const dash = config.axis?.gridDash;
         return {
             dark: mediaTheme === 'dark',
             primary: resolved.primaryColor,
@@ -289,6 +295,18 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
             diverging: resolved.divergingPalette,
             heatmap: resolved.heatmapPalette,
             background: background || undefined,
+            text: plain(config.header?.labelColor) ?? plain(config.legend?.labelColor) ?? plain(config.text?.color),
+            muted: plain(config.axis?.labelColor),
+            line: plain(config.view?.stroke),
+            grid: plain(config.axis?.gridColor),
+            style: {
+                font: plain(config.font),
+                gridDash: Array.isArray(dash) && dash.length === 2 && dash.every((n: unknown) => typeof n === 'number') ? [dash[0], dash[1]] : undefined,
+                lineWidth: amount(config.line?.strokeWidth),
+                pointStrokeWidth: amount(config.point?.strokeWidth),
+                pointFilled: config.point?.filled === true ? true : undefined,
+                barRadius: amount(config.bar?.cornerRadiusEnd),
+            },
         };
     }, [props.vizThemeConfig, mediaTheme, primaryColor, colorPalette, background]);
     // A chart the native renderer gave up on while drawing stays with the old renderers until its
