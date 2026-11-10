@@ -68,13 +68,21 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         // timestamp. It is shifted to the display time zone, as the editor's other renderers do, and
         // its members are named after the period.
         const drilled = f.semanticType === 'temporal' && f.computed && f.timeUnit;
-        const period = drilled ? { scale: 'time' as const, timeUnit: f.timeUnit, timeOffset: (config.timezoneDisplayOffset ?? new Date().getTimezoneOffset()) * -60000 } : {};
+        // A date field as stored. Its values are shifted to the display time zone by the same rule the
+        // editor's other renderers use: a timestamp by the display offset alone; text also by the offset
+        // the field was recorded in, less the machine's own zone where the text is read in that zone.
+        const stored = f.semanticType === 'temporal' && !f.computed;
+        const local = new Date().getTimezoneOffset() * 60000;
+        const display = (config.timezoneDisplayOffset ?? new Date().getTimezoneOffset()) * -60000;
+        const recorded = f.offset === undefined ? local : f.offset * 60000;
+        const time = drilled ? { scale: 'time' as const, timeUnit: f.timeUnit, timeOffset: display }
+            : stored ? { scale: 'time' as const, timeOffset: { epoch: display, date: display + recorded, dateTime: display + recorded - local } } : undefined;
         // A dimension becomes an axis only where it ends a shelf that has no measure.
-        const temporal = f.semanticType === 'temporal' && (!f.computed || drilled);
-        if (position === 'terminal' && !headersOnly && (f.semanticType === 'quantitative' || temporal)) {
-            return (instances[id] = { id, field: f.fid, label: f.name, display: 'continuous', scale: temporal ? 'time' : 'linear', zero: false, ...(drilled ? { timeOffset: period.timeOffset } : {}) });
+        if (position === 'terminal' && !headersOnly && (f.semanticType === 'quantitative' || time)) {
+            return (instances[id] = { id, field: f.fid, label: f.name, display: 'continuous', scale: time ? 'time' : 'linear', zero: false, ...(time ? { timeOffset: time.timeOffset } : {}) });
         }
-        return (instances[id] = { id, field: f.fid, label: f.name, display: 'discrete', ...period });
+        // As a header a stored date is written as a date, a drilled one as its period.
+        return (instances[id] = { id, field: f.fid, label: f.name, display: 'discrete', ...time });
     }
 
     interface Shelf { expr: AxisExpr; measures: number; terminal?: FieldInstance; values: FieldInstance[]; sorted: { id: string; direction: 'ascending' | 'descending' }[] }
@@ -197,7 +205,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     if (encodings.filters.some((f) => f.enableAgg)) notes.push('Filters on aggregated values are not applied.');
     // Settings the editor offers that this renderer does not read yet. Every one of them is listed in
     // the gap table of the plan document; a setting that starts to work is removed here and there.
-    if (layout.format?.numberFormat || layout.format?.timeFormat || layout.format?.normalizedNumberFormat) notes.push('Number and time formats are not applied.');
     if (layout.scale && Object.values(layout.scale).some((scale) => scale && Object.keys(scale).length > 0)) notes.push('Scale settings are not applied.');
     if (layout.resolve?.color || layout.resolve?.opacity || layout.resolve?.shape || layout.resolve?.size) notes.push('Independent legends are not drawn.');
     if (layout.interactiveScale) notes.push('Axes cannot be zoomed or panned.');

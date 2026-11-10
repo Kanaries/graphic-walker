@@ -271,6 +271,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
     const vizStore = useVizStore();
     const native = useNativeRenderer();
     const chart = vizStore.currentVis;
+    const { i18n } = useTranslation();
     // The same resolution the Vega path does: theme preset, then the chart's primary color and palette on top.
     const mediaTheme = useContext(themeContext);
     const { primaryColor, colorPalette, background } = chart.layout;
@@ -344,7 +345,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
         const Native = native!.component;
         return (
             <div className="w-full h-full">
-                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} onUnsupported={onUnsupported} handle={nativeHandle} />
+                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} locale={i18n.language} onUnsupported={onUnsupported} handle={nativeHandle} />
             </div>
         );
     }

@@ -4,6 +4,7 @@ import type { IChart, IDataQueryWorkflowStep } from '../src/interfaces';
 import { registerNativeRenderer, type NativeRendererProps } from '../src/renderer/nativeRegistry';
 import { toWorkflow } from '../src/utils/workflow';
 import { chartToWorksheet } from './adapter';
+import { chartFormats } from './formats';
 
 /** Red, green, blue and alpha of a CSS rgb(), rgba() or #rrggbb color. Alpha is 1 where the color names none. */
 function channels(color: string): [number, number, number, number] {
@@ -51,7 +52,7 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  * builder; only the grouping step comes from the worksheet, which asks for one result
  * per grain it draws.
  */
-function NativeWorksheet({ chart, fields, computation, colors, onUnsupported, handle }: NativeRendererProps) {
+function NativeWorksheet({ chart, fields, computation, colors, locale, onUnsupported, handle }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
@@ -90,8 +91,11 @@ function NativeWorksheet({ chart, fields, computation, colors, onUnsupported, ha
             exportCSV: () => ready().exportRecords().map(tableToCSV).join('\n\n'),
         };
     }, []);
+    // Number and time formats from the chart settings, and the editor's language for everything they leave open.
+    const { numberFormat, timeFormat, normalizedNumberFormat } = chart.layout.format ?? {};
+    const written = useMemo(() => chartFormats({ numberFormat, timeFormat, normalizedNumberFormat }, locale), [numberFormat, timeFormat, normalizedNumberFormat, locale]);
     // The chart area shows nothing but the chart, so what was left out goes to the console.
-    const dropped = adapted.notes.join(' ');
+    const dropped = [...adapted.notes, ...written.problems].join(' ');
     useEffect(() => { if (dropped) console.info(`[worksheet renderer] ${dropped}`); }, [dropped]);
     const host = useRef<HTMLDivElement>(null);
     const surface = useSurface(host, colors.dark ? darkTheme.paper : lightTheme.paper);
@@ -119,7 +123,7 @@ function NativeWorksheet({ chart, fields, computation, colors, onUnsupported, ha
     // and covered by the adapter tests; the editor has no place for it next to the chart yet.
     return (
         <div ref={host} style={{ height: '100%', padding: 8, color: theme.text, overflow: 'hidden', boxSizing: 'border-box' }}>
-            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} compact onError={(message) => { if (message) onUnsupported(message); }} /> : null}
+            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} formats={written.formats} compact onError={(message) => { if (message) onUnsupported(message); }} /> : null}
         </div>
     );
 }

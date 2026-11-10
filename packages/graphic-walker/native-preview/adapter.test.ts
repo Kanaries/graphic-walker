@@ -40,12 +40,14 @@ describe('chartToWorksheet', () => {
             { field: 'Region', display: 'discrete' },
             { field: 'Order Date', display: 'continuous', scale: 'time' },
         ]);
+        // No unit: the axis shows moments, not periods.
+        expect(spec!.instances[ids(spec!.columns)[1]].timeUnit).toBeUndefined();
         expect(spec!.mark).toBe('line');
         const numeric = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Age', 'quantitative')] })).spec!;
         expect(numeric.instances[ids(numeric.columns)[0]]).toMatchObject({ display: 'continuous', scale: 'linear', zero: false });
         // A date that is not last on its shelf, or shares the shelf with a measure, stays a header.
         const header = chartToWorksheet(chart({ rows: [dim('Order Date', 'temporal'), mea('Sales')], columns: [dim('Region')] })).spec!;
-        expect(header.instances[ids(header.rows)[0]].display).toBe('discrete');
+        expect(header.instances[ids(header.rows)[0]]).toMatchObject({ display: 'discrete', scale: 'time' });
     });
     test('automatic mark follows the shelves', () => {
         const mark = (encodings: Partial<IChart['encodings']>) => chartToWorksheet(chart(encodings)).spec!.mark;
@@ -157,6 +159,18 @@ describe('chartToWorksheet', () => {
         expect(chartToWorksheet(chart({ ...shelves, shape: [mea('Profit')] }, { geoms: ['circle'] })).notes).toEqual(['Profit on Shape is ignored: only a dimension picks symbols.']);
         expect(chartToWorksheet(chart({ color: [dim('Segment')], theta: [mea('Sales')], radius: [mea('Profit')] }, { geoms: ['arc'] })).notes).toEqual(['Not drawn yet: radius.']);
     });
+    test('a stored date is shifted to the display time zone by the kind of value it holds', () => {
+        const local = new Date().getTimezoneOffset() * 60000;
+        // Display eight hours east of UTC; the field was recorded five hours west.
+        const { spec } = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Order Date', 'temporal', { offset: 300 })] }, { timezoneDisplayOffset: -480 }));
+        expect(spec!.instances[ids(spec!.columns)[0]].timeOffset).toEqual({ epoch: 480 * 60000, date: (480 + 300) * 60000, dateTime: (480 + 300) * 60000 - local });
+        // With nothing set, a day written as text stays that day.
+        const plain = chartToWorksheet(chart({ rows: [dim('Order Date', 'temporal'), mea('Sales')], columns: [dim('Region')] })).spec!;
+        expect(plain.instances[ids(plain.rows)[0]].timeOffset).toMatchObject({ date: 0, epoch: -local });
+        // A computed date field that is not a drill is left as a plain dimension.
+        const computed = chartToWorksheet(chart({ rows: [dim('Derived', 'temporal', { computed: true }), mea('Sales')], columns: [dim('Region')] })).spec!;
+        expect(computed.instances[ids(computed.rows)[0]].scale).toBeUndefined();
+    });
     test('layout options carry over', () => {
         const base = { rows: [dim('Region')], columns: [mea('Sales')] };
         expect(chartToWorksheet(chart(base, {}, { stack: 'none' })).spec!.stack).toBe(false);
@@ -182,7 +196,7 @@ describe('chartToWorksheet', () => {
         const settings = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 10, geoms: ['trail'] },
             { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
         expect(settings.notes).toEqual([
-            'Trail is drawn as a line of one width.', 'Number and time formats are not applied.', 'Scale settings are not applied.',
+            'Trail is drawn as a line of one width.', 'Scale settings are not applied.',
             'Independent legends are not drawn.', 'Axes cannot be zoomed or panned.', 'The chart size setting is not applied; the sheet takes the space it needs.', 'The sheet is always drawn on a canvas.',
         ]);
         // A chart with default settings drops nothing.

@@ -15,6 +15,8 @@ export interface NativeRendererProps {
      * with the chart's own primary color and palette applied, for the current light or dark mode.
      */
     colors: NativeRendererColors;
+    /** The editor's interface language, such as 'en-US' or 'zh-CN'. */
+    locale: string;
     /**
      * Report that this chart cannot be drawn after all, for a reason `canDraw` could not see
      * in the chart alone, such as a query that fails or values of a kind the renderer does
