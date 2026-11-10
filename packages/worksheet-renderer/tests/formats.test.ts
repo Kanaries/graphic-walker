@@ -40,6 +40,10 @@ test('a number format reaches axis ticks, tooltips, labels, cells and legends al
     const leaf = long.m.columns.leaves[0];
     const spacing = (leaf.scale!.ticks[1] - leaf.scale!.ticks[0]) / (leaf.scale!.domain[1] - leaf.scale!.domain[0]) * (leaf.size - 14);
     assert.ok(bottom.every(p => p.text!.length * 10 * 0.58 + 10 <= spacing), 'every label fits between two ticks');
+    // In a slot too narrow for even two labels, the ones that would collide are blank and their ticks stay.
+    const narrow = await scene({ ...base, rows: field('product'), columns: field('sum'), mark: 'bar', pane: { width: 80 } }, sales, { number: value => value.toFixed(2) + ' dollars' });
+    const squeezed = narrow.m.columns.leaves[0].scale!;
+    assert.ok(squeezed.ticks.length >= 2 && squeezed.labels!.filter(Boolean).length === 1, 'labels are ' + JSON.stringify(squeezed.labels));
     const cells = await scene({ ...base, rows: field('product'), columns: field('segment'), mark: 'text', text: 'sum' }, sales, money);
     assert.deepEqual(cells.items.filter(p => p.layer === 'body' && p.kind === 'text').map(p => p.text).sort(), ['USD 1234.5', 'USD 2500.0', 'USD 8765.5']);
 });

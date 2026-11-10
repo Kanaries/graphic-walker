@@ -135,7 +135,7 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
 // Ranges come from the complete result, never from the visible window. A range is keyed
 // by measure and by a scope along the axis itself, so every pane in one row or column
 // shares it and the axis can be drawn once on the table edge.
-function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format) {
+function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format, zoom?: Zoom) {
     const scope = plan.spec.scaleScope ?? 'shared';
     const keyOf = (leaf: AxisLeaf) => {
         const id = leaf.branch.position!.id;
@@ -195,6 +195,11 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
             return scale;
         };
         let gap = axis === 'x' ? (time ? 62 : 46) : 30;
+        // The range the data asks for, and in its place the one the viewer zoomed or panned to.
+        const id = `${axis}|${key}`;
+        const full = make(gap).domain;
+        const zoomed = zoom?.[id];
+        if (zoomed && zoomed[0] < zoomed[1] && zoomed.every(Number.isFinite)) [min, max] = zoomed;
         let scale = make(gap);
         // Labels along a horizontal axis must not run into each other. A format that writes long labels gets fewer ticks.
         for (let round = 0; axis === 'x' && round < 3 && scale.ticks.length > 1; round++) {
@@ -204,7 +209,17 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
             // Where even two steps are too many, one step keeps a label at each end of the range.
             scale = make(gap = Math.max(gap * 1.5, widest + 14), 1);
         }
-        leaf.scale = { ...scale, step };
+        // In a slot too narrow even for that, a label that would run into the one before it is left blank. Its tick stays.
+        if (axis === 'x' && scale.labels) {
+            let free = -Infinity;
+            scale.labels = scale.labels.map((label, i) => {
+                const at = (scale.ticks[i] - scale.domain[0]) / (scale.domain[1] - scale.domain[0]) * pixels, half = textWidth(label, 10) / 2;
+                if (at - half < free) return '';
+                free = at + half + 6;
+                return label;
+            });
+        }
+        leaf.scale = { ...scale, step, key: id, full };
     }
 }
 
@@ -281,8 +296,12 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
  * With spec.fit and a target size, leaf steps are scaled so the sheet fills the target.
  * target.headerWidth caps the total width of the row headers.
  * formats says how numbers, dates and the sheet's own words are written; the labels built here already follow it.
+ * zoom replaces the range of the axes it names; marks outside a zoomed range are cut off at the edge of their pane.
  */
-export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }, formats?: Formats): WorksheetModel {
+/** Ranges that replace what the data asks for, by the key of the axis scale. */
+export type Zoom = Readonly<Record<string, readonly [number, number]>>;
+
+export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }, formats?: Formats, zoom?: Zoom): WorksheetModel {
     const { spec } = plan;
     const format = resolveFormats(formats);
     const rowDrafts = new Map<string, LeafDraft>();
@@ -381,7 +400,7 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         panes.push(pane);
         paneIndex.set(id, pane);
     }
-    const scales = () => { assignScales(columns, 'x', panes, plan, format); assignScales(rows, 'y', panes, plan, format); };
+    const scales = () => { assignScales(columns, 'x', panes, plan, format, zoom); assignScales(rows, 'y', panes, plan, format, zoom); };
     scales();
     // A color range comes from the complete result, like an axis range.
     const colorScale: ColorScale | undefined = color?.display === 'continuous'

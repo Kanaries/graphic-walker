@@ -174,6 +174,10 @@ export interface AxisScale {
     labels?: string[];
     /** Smallest distance between two positions on this axis, in domain units. Sizes bars drawn at continuous positions. */
     step?: number;
+    /** Names the range this axis shows. Every leaf that shares the range has the same key; a zoom is stored under it. */
+    key?: string;
+    /** The range the data asks for. It differs from `domain` while the axis is zoomed or panned. */
+    full?: [number, number];
 }
 /**
  * One layout position along an axis. A discrete terminal field contributes one leaf per

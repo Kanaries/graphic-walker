@@ -2,6 +2,7 @@ export * from './types';
 export { compileAxis, compileWorksheet, executePlan } from './compiler';
 export { metrics, setTextMeasure, tickScale } from './layout';
 export { buildModel } from './model';
+export type { Zoom } from './model';
 export { darkTheme, lightTheme } from './color';
 export { englishWords, resolveFormats } from './formats';
 export type { Formats, Words } from './formats';

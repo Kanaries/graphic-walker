@@ -1,6 +1,7 @@
 import { continuousColor, fillOf, lightTheme, rgb, type Theme } from './color';
 import { legendTitleHeight, level, memberIndex, opacityAt, pointArea, shapes, thicknessShare } from './channels';
 import { valueKey } from './keys';
+import { clipLine, clipPolygon, clipRect, inside, type Box } from './clip';
 import { branchFields, valueAxis } from './compiler';
 import { stackMode } from './model';
 import { fitText, leafRange, metrics, spansIn, textWidth } from './layout';
@@ -35,6 +36,8 @@ export interface Scene {
     background: string;
     /** 'omitted' when the window is too narrow for the legend strip; the host should show the colors some other way. */
     legend: 'none' | 'side' | 'omitted';
+    /** Screen rectangle of the scrolling body, where the marks are. */
+    body: Box;
 }
 /** Opacity of marks outside a non-empty selection. */
 const dimmed = 0.25;
@@ -162,6 +165,15 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         // x and y are where the mark is; for an area that is its upper edge, and bx and by its lower edge.
         const lines = new Map<string, { selected: boolean; points: { order: number; x: number; y: number; bx: number; by: number; missing: boolean; color: string; size: number; alpha: number }[] }>();
         const box = { x0: sx(pane.column.offset), x1: sx(pane.column.offset + pane.column.size), y0: sy(pane.row.offset), y1: sy(pane.row.offset + pane.row.size) };
+        // On a zoomed or panned axis some marks lie outside the pane. They are cut off at its edge.
+        const moved = (leaf: AxisLeaf) => Boolean(leaf.scale?.full && (leaf.scale.domain[0] !== leaf.scale.full[0] || leaf.scale.domain[1] !== leaf.scale.full[1]));
+        const clip: Box | undefined = moved(columns.leaves[pane.column.start]) || moved(rows.leaves[pane.row.start]) ? box : undefined;
+        const bar = (x: number, y: number, width: number, height: number, fill: string, extra: Partial<Primitive>) => {
+            const cut = clip ? clipRect(clip, x, y, width, height) : [x, y, width, height] as const;
+            if (cut) rect('body', cut[0], cut[1], cut[2], cut[3], fill, extra);
+        };
+        // Marks drawn at one point are either in or out; bars, boxes, ticks and cells are cut to what is inside.
+        const pointLike = spec.mark !== 'bar' && spec.mark !== 'boxplot' && spec.mark !== 'tick' && spec.mark !== 'rect';
         type Spot = { x: number; y: number; align: 'left' | 'center' | 'right'; fill?: string };
         // Writes a label at the first spot that lies inside its pane and clear of the labels already written.
         const write = (value: string, width: number, spots: (Spot | false)[]) => {
@@ -224,6 +236,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 }
             }
             if (missing) continue;
+            if (clip && pointLike && !inside(clip, x, y)) continue;
             const selection: Selection = { id, paneId: pane.id, rowPath: rowLeaf.path, columnPath: columnLeaf.path,
                 predicates: keys.map(f => ({ field: f.field, value: record[f.field] as Value })), values: mark.box ? { ...record, ...mark.box } : record };
             const extra: Partial<Primitive> = { selection, tooltip: described.map(f => describe(f, record[resultKey(f)])).join('\n') };
@@ -248,7 +261,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 const center = (flat ? y : x) + (index - (count - 1) / 2) * room;
                 const at = (value: number) => flat ? px(columnLeaf, value) : py(rowLeaf, value);
                 if (mark.outlier) {
-                    items.push({ kind: 'symbol', layer: 'body', x: flat ? at(mark.start) : center, y: flat ? center : at(mark.start), size: 18, fill: 'transparent', stroke: color, strokeWidth: 1, ...extra });
+                    const ox = flat ? at(mark.start) : center, oy = flat ? center : at(mark.start);
+                    if (!clip || inside(clip, ox, oy)) items.push({ kind: 'symbol', layer: 'body', x: ox, y: oy, size: 18, fill: 'transparent', stroke: color, strokeWidth: 1, ...extra });
                     continue;
                 }
                 const box = mark.box!, measure = flat ? xField! : yField!;
@@ -259,8 +273,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 const stretch = (from: number, to: number, across: number, color: string, least = 1) => {
                     const a = Math.min(at(from), at(to)), length = Math.max(least, Math.abs(at(to) - at(from)));
                     const start = Math.abs(at(to) - at(from)) < least ? a - least / 2 : a;
-                    if (flat) rect('body', start, center - across / 2, length, across, color, { ...extra, tooltip });
-                    else rect('body', center - across / 2, start, across, length, color, { ...extra, tooltip });
+                    if (flat) bar(start, center - across / 2, length, across, color, { ...extra, tooltip });
+                    else bar(center - across / 2, start, across, length, color, { ...extra, tooltip });
                 };
                 stretch(box.low, box.high, 1, color);
                 stretch(box.low, box.low, thickness / 2, color);
@@ -272,8 +286,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             } else if (spec.mark === 'tick') {
                 // A tick is a short line across its value axis. Between two value axes it stands upright.
                 const length = (leafSize: number, continuous: boolean) => (continuous ? 14 : Math.max(3, leafSize * metrics.barFill)) * (sized ? thicknessShare(sizeLevel) : 1);
-                if (xContinuous) { const h = length(rowLeaf.size, yContinuous); rect('body', Math.round(x) - 1, y - h / 2, 2, h, color, extra); }
-                else { const w = length(columnLeaf.size, false); rect('body', x - w / 2, Math.round(y) - 1, w, 2, color, extra); }
+                if (xContinuous) { const h = length(rowLeaf.size, yContinuous); bar(Math.round(x) - 1, y - h / 2, 2, h, color, extra); }
+                else { const w = length(columnLeaf.size, false); bar(x - w / 2, Math.round(y) - 1, w, 2, color, extra); }
                 if (label) write(label, labelWidth, xContinuous ? [{ x: x + 5, y: y + 4, align: 'left' }, { x: x - 5, y: y + 4, align: 'right' }] : [{ x, y: y - 5, align: 'center' }, { x, y: y + 14, align: 'center' }]);
             } else if (spec.mark === 'bar') {
                 if (!Number.isFinite(mark.start) || !Number.isFinite(mark.end)) continue;
@@ -284,13 +298,13 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 const forward = mark.end >= mark.start;
                 if (lengthAxis === 'x') {
                     const a = px(columnLeaf, mark.start), b = px(columnLeaf, mark.end), thickness = (yContinuous ? barAt(rowLeaf) : Math.max(1, rowLeaf.size * metrics.barFill)) * slim;
-                    rect('body', Math.min(a, b), y - thickness / 2, Math.max(.5, Math.abs(b - a)), thickness, color, extra);
+                    bar(Math.min(a, b), y - thickness / 2, Math.max(.5, Math.abs(b - a)), thickness, color, extra);
                     const end = forward ? Math.max(a, b) : Math.min(a, b), out = forward ? 1 : -1, fits = Math.abs(b - a) >= labelWidth + 8 && thickness >= 11;
                     if (label) write(label, labelWidth, piled ? [fits && { x: (a + b) / 2, y: y + 4, align: 'center', fill: inkOn(color) }]
                         : [{ x: end + out * 4, y: y + 4, align: forward ? 'left' : 'right' }, fits && { x: end - out * 4, y: y + 4, align: forward ? 'right' : 'left', fill: inkOn(color) }]);
                 } else {
                     const a = py(rowLeaf, mark.start), b = py(rowLeaf, mark.end), thickness = (xContinuous ? barAt(columnLeaf) : Math.max(1, columnLeaf.size * metrics.barFill)) * slim;
-                    rect('body', x - thickness / 2, Math.min(a, b), thickness, Math.max(.5, Math.abs(b - a)), color, extra);
+                    bar(x - thickness / 2, Math.min(a, b), thickness, Math.max(.5, Math.abs(b - a)), color, extra);
                     const end = forward ? Math.min(a, b) : Math.max(a, b), fits = Math.abs(b - a) >= 14 && thickness >= labelWidth + 2;
                     if (label) write(label, labelWidth, piled ? [fits && { x, y: (a + b) / 2 + 4, align: 'center', fill: inkOn(color) }]
                         : [{ x, y: forward ? end - 4 : end + 12, align: 'center' }, fits && { x, y: forward ? end + 12 : end - 4, align: 'center', fill: inkOn(color) }]);
@@ -308,7 +322,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 // Sized cells keep their place in the grid and shrink towards their center.
                 const share = sized ? 0.3 + 0.7 * sizeLevel : 1;
                 const width = (xContinuous ? 10 : columnLeaf.size - 1) * share, height = (yContinuous ? 10 : rowLeaf.size - 1) * share;
-                rect('body', x - width / 2, y - height / 2, width, height, color, extra);
+                bar(x - width / 2, y - height / 2, width, height, color, extra);
                 if (label) write(label, labelWidth, [width >= labelWidth + 4 && height >= 12 && { x, y: y + 4, align: 'center', fill: inkOn(color) }]);
             } else if (isArea) {
                 // The area itself is drawn per series below. Each of its points keeps an unseen spot on the
@@ -351,13 +365,15 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             if (isArea) for (const segment of segments) {
                 const [only] = segment;
                 // One point has no extent along the axis, so it is drawn as a thin bar from edge to edge.
-                if (segment.length === 1) rect('body', Math.min(only.x, only.bx) - (alongY ? 0 : 1.5), Math.min(only.y, only.by) - (alongY ? 1.5 : 0),
-                    alongY ? Math.max(1, Math.abs(only.x - only.bx)) : 3, alongY ? 3 : Math.max(1, Math.abs(only.y - only.by)), color, { opacity: faded * areaOpacity });
+                if (segment.length === 1) { bar(Math.min(only.x, only.bx) - (alongY ? 0 : 1.5), Math.min(only.y, only.by) - (alongY ? 1.5 : 0),
+                    alongY ? Math.max(1, Math.abs(only.x - only.bx)) : 3, alongY ? 3 : Math.max(1, Math.abs(only.y - only.by)), color, { opacity: faded * areaOpacity }); continue; }
                 // Out along the upper edge and back along the lower one.
-                else items.push({ kind: 'shape', layer: 'body', x: 0, y: 0, fill: color, opacity: faded * areaOpacity,
-                    path: `M${segment.map(p => at(p.x, p.y)).join('L')}L${[...segment].reverse().map(p => at(p.bx, p.by)).join('L')}Z` });
+                const outline: [number, number][] = [...segment.map(p => [p.x, p.y] as [number, number]), ...[...segment].reverse().map(p => [p.bx, p.by] as [number, number])];
+                const shown = clip ? clipPolygon(clip, outline) : outline;
+                if (shown.length > 2) items.push({ kind: 'shape', layer: 'body', x: 0, y: 0, fill: color, opacity: faded * areaOpacity, path: `M${shown.map(p => at(p[0], p[1])).join('L')}Z` });
             }
-            items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path: segments.map(segment => `M${segment.map(p => at(p.x, p.y)).join('L')}`).join(' '), stroke: color,
+            const strokes = segments.flatMap(segment => { const line = segment.map(p => [p.x, p.y] as [number, number]); return clip ? clipLine(clip, line) : [line]; });
+            if (strokes.length) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path: strokes.map(line => `M${line.map(p => at(p[0], p[1])).join('L')}`).join(' '), stroke: color,
                 ...(isLine && Number.isFinite(sizeLevel) ? { strokeWidth: 1 + 5 * sizeLevel } : {}), ...(faded < 1 ? { opacity: faded } : {}) });
         }
     }
@@ -520,5 +536,6 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             y += legendTitleHeight + Math.min(block.entries.length, shown + (shown < block.entries.length ? 1 : 0)) * block.step + 6;
         }
     }
-    return { width: viewport.width, height: viewport.height, items, visiblePanes, background: ink.paper, legend: !model.legends.length ? 'none' : right ? 'side' : 'omitted' };
+    return { width: viewport.width, height: viewport.height, items, visiblePanes, background: ink.paper, legend: !model.legends.length ? 'none' : right ? 'side' : 'omitted',
+        body: { x0: left, y0: top, x1: bodyRight, y1: axisY } };
 }

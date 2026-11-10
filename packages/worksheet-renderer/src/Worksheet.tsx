@@ -6,7 +6,8 @@ import { valueKey } from './keys';
 import { setTextMeasure } from './layout';
 import type { Formats } from './formats';
 import { memberLabel } from './time';
-import { buildModel } from './model';
+import { buildModel, type Zoom } from './model';
+import { axesAt, panned, withRange, zoomed } from './zoom';
 import { buildScene, type Primitive, type Scene } from './scene';
 import { sceneData, sceneToPNG, sceneToSVG, vegaSpec } from './vegaBackend';
 import { resultTables, type ResultTable } from './export';
@@ -45,6 +46,12 @@ export interface WorksheetProps {
      */
     onMarkClick?: (selection: Selection, event: MouseEvent) => void;
     onStatusChange?: (status: WorksheetStatus) => void;
+    /**
+     * Lets the viewer zoom and pan the value axes: the wheel zooms around the pointer, a drag
+     * pans, a double click returns every axis to the range the data asks for. Every pane that
+     * shares an axis range moves together. Over a zoomable pane the wheel no longer scrolls.
+     */
+    zoomable?: boolean;
     /** How numbers, dates and the sheet's own words are written. Keep the object the same between renders while nothing in it changes. */
     formats?: Formats;
     /**
@@ -68,7 +75,7 @@ if (typeof document !== 'undefined') {
         return context.measureText(text).width;
     });
 }
-const emptyScene = (background: string): Scene => ({ width: 1, height: 1, items: [], visiblePanes: 0, background, legend: 'none' });
+const emptyScene = (background: string): Scene => ({ width: 1, height: 1, items: [], visiblePanes: 0, background, legend: 'none', body: { x0: 0, y0: 0, x1: 0, y1: 0 } });
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
 function VegaViewport({ scene, onClick, onPainted }: { scene: Scene; onClick: (item: Primitive | undefined, additive: boolean, event: MouseEvent) => void; onPainted?: () => void }) {
@@ -124,7 +131,7 @@ function VegaViewport({ scene, onClick, onPainted }: { scene: Scene; onClick: (i
     </div>;
 }
 
-export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onMarkClick, onStatusChange, onError, formats, theme: themeProp = 'light', compact = false }, ref) {
+export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onMarkClick, onStatusChange, onError, formats, zoomable = false, theme: themeProp = 'light', compact = false }, ref) {
     const theme = useMemo<Theme>(() => themeProp === 'light' ? lightTheme : themeProp === 'dark' ? darkTheme : themeProp,
         [typeof themeProp === 'string' ? themeProp : JSON.stringify(themeProp)]);
     const compiled = useMemo(() => {
@@ -142,6 +149,10 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const current = useRef(selection);
     current.current = selection;
     const select = (next: ReadonlyMap<string, Selection>) => { setSelection(next); notify.current?.([...next.values()]); };
+    // Axis ranges the viewer zoomed or panned to. They belong to one set of queries and go when it changes.
+    const [zoom, setZoom] = useState<Zoom>({});
+    useEffect(() => setZoom({}), [queryKey]);
+    useEffect(() => { if (!zoomable) setZoom({}); }, [zoomable]);
     useEffect(() => {
         const plan = latestPlan.current;
         if (!plan) { setLoading(false); setResult(undefined); return; }
@@ -166,9 +177,9 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const headerWidth = Math.max(96, Math.round(viewport.width * 0.4 / 24) * 24);
     const built = useMemo(() => {
         if (!compiled.plan || result?.key !== queryKey || !result.data) return undefined;
-        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }, formats), error: '' }; }
+        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }, formats, zoom), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
-    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats]);
+    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats, zoom]);
     const fresh = built?.model;
     // While the next result is on its way the last sheet stays up, so a change of fields does not blank the chart.
     const last = useRef(fresh);
@@ -232,6 +243,85 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     useEffect(() => { reportStatus.current?.(status); }, [status]);
     const markClick = useRef(onMarkClick);
     markClick.current = onMarkClick;
+
+    // Zooming and panning. The listeners read the latest sheet through a ref, so they are attached once.
+    const surface = useRef<HTMLDivElement>(null);
+    const live = useRef({ model, scene, viewport, zoom });
+    live.current = { model, scene, viewport, zoom };
+    useEffect(() => {
+        const element = surface.current;
+        if (!zoomable || !element) return;
+        const at = (event: MouseEvent) => {
+            const { model, scene, viewport } = live.current;
+            if (!model) return {};
+            const area = element.getBoundingClientRect();
+            return axesAt(model, scene.body, viewport, event.clientX - area.left, event.clientY - area.top);
+        };
+        // Several wheel or move events between two frames are folded into one rebuild of the sheet.
+        let pending: Zoom | undefined, frame = 0;
+        const apply = (change: (zoom: Zoom) => Zoom) => {
+            pending = change(pending ?? live.current.zoom);
+            if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (pending) setZoom(pending); pending = undefined; });
+        };
+        const wheel = (event: WheelEvent) => {
+            const axes = at(event);
+            if (!axes.x && !axes.y) return;
+            // The wheel belongs to the axes here; elsewhere it still scrolls the sheet.
+            event.preventDefault();
+            const factor = Math.exp(event.deltaY * (event.deltaMode === 1 ? 0.05 : 0.0015));
+            apply(zoom => {
+                let next = zoom;
+                for (const axis of [axes.x, axes.y]) {
+                    if (!axis) continue;
+                    // An axis without an entry shows the range the data asks for.
+                    const { key, full, domain } = axis.leaf.scale!;
+                    next = withRange(next, axis.leaf, zoomed(axis.leaf, next[key!] ?? full ?? domain, axis.t, factor));
+                }
+                return next;
+            });
+        };
+        let drag: { x: number; y: number; axes: ReturnType<typeof at>; from: { x?: readonly [number, number]; y?: readonly [number, number] }; moved: boolean } | undefined;
+        let swallow = false;
+        const down = (event: PointerEvent) => {
+            if (event.button !== 0) return;
+            const axes = at(event);
+            swallow = false;
+            if (axes.x || axes.y) drag = { x: event.clientX, y: event.clientY, axes, from: { x: axes.x?.leaf.scale!.domain, y: axes.y?.leaf.scale!.domain }, moved: false };
+        };
+        const move = (event: PointerEvent) => {
+            if (!drag) return;
+            const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+            if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+            drag.moved = true;
+            const { axes, from } = drag;
+            apply(zoom => {
+                let next = zoom;
+                if (axes.x && from.x) next = withRange(next, axes.x.leaf, panned(axes.x.leaf, from.x, dx));
+                // Screen y runs down, values run up.
+                if (axes.y && from.y) next = withRange(next, axes.y.leaf, panned(axes.y.leaf, from.y, -dy));
+                return next;
+            });
+        };
+        const up = () => { swallow = Boolean(drag?.moved); drag = undefined; };
+        // The click that ends a drag must not select the mark under it.
+        const click = (event: MouseEvent) => { if (swallow) { event.stopPropagation(); swallow = false; } };
+        const reset = (event: MouseEvent) => { const axes = at(event); if ((axes.x || axes.y) && Object.keys(live.current.zoom).length) setZoom({}); };
+        element.addEventListener('wheel', wheel, { passive: false });
+        element.addEventListener('pointerdown', down);
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+        element.addEventListener('click', click, true);
+        element.addEventListener('dblclick', reset);
+        return () => {
+            cancelAnimationFrame(frame);
+            element.removeEventListener('wheel', wheel);
+            element.removeEventListener('pointerdown', down);
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            element.removeEventListener('click', click, true);
+            element.removeEventListener('dblclick', reset);
+        };
+    }, [zoomable]);
     const colorField = model?.plan.spec.color ? model.plan.spec.instances[model.plan.spec.color] : undefined;
     const report = useRef(onError);
     report.current = onError;
@@ -254,7 +344,7 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         {!loading && model && !model.panes.length ? <p>{model.format.words.empty}</p> : null}
         <div ref={scrollHost} data-testid="worksheet-scroll" aria-label="Scrollable worksheet" tabIndex={0} onKeyDown={event => { if (event.key === 'Escape' && selection.size) select(new Map()); }} style={{ position: 'relative', overflow: 'auto', height: hostHeight, background: theme.paper, ...(compact ? {} : { border: `1px solid ${theme.line}`, borderRadius: 8 }) }}>
             <div style={{ width: model?.width ?? 1, height: model?.height ?? 1, position: 'relative' }}>
-                <div style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: error ? 'hidden' : 'visible', ...(loading ? { opacity: 0.5, pointerEvents: 'none' as const } : {}) }}>
+                <div ref={surface} style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: error ? 'hidden' : 'visible', ...(loading ? { opacity: 0.5, pointerEvents: 'none' as const } : {}) }}>
                     <VegaViewport scene={scene} onPainted={() => setPainted(fresh)} onClick={(item, additive, event) => {
                         const hit = item?.selection;
                         if (!hit) { if (!additive && selection.size && (!item || item.layer === 'body')) select(new Map()); return; }
