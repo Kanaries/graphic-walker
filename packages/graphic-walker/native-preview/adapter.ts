@@ -1,6 +1,7 @@
 import type { Aggregate, AxisExpr, FieldInstance, WorksheetSpec } from '@kanaries/worksheet-renderer';
 import { MEA_KEY_ID, MEA_VAL_ID } from '../src/constants';
 import type { IChart, IViewField } from '../src/interfaces';
+import { viewEncodingKeys } from '../src/models/visSpec';
 
 export interface AdaptedChart {
     /** Absent when the worksheet renderer cannot draw the chart; `error` says why. */
@@ -135,11 +136,33 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     if (!mark) return result({ error: `The mark type "${geom}" is not drawn by the worksheet renderer yet.` });
     if (geom === 'trail') notes.push('Trail is drawn as a line of one width.');
 
+    // A shelf the editor hides for this mark type may still hold a field from an earlier mark type.
+    // Such a field is not part of the chart, as in the editor's own renderers.
+    const shown = new Set<string>(viewEncodingKeys(geom));
     let text: string | undefined;
-    if (mark === 'text' && encodings.text[0]) {
-        const made = instance('text', encodings.text[0], 'encoding');
-        if (typeof made === 'string') return result({ error: made });
-        text = made.id;
+    // On a text mark the text field is what is written; on other marks it labels them.
+    if (encodings.text[0] && (mark === 'text' || shown.has('text'))) {
+        if (mark === 'boxplot') notes.push('Labels are not drawn on box plots.');
+        else {
+            const made = instance('text', encodings.text[0], 'encoding');
+            if (typeof made === 'string') return result({ error: made });
+            text = made.id;
+        }
+    }
+    const channels: { size?: string; opacity?: string; shape?: string } = {};
+    const unsized = mark === 'area' || mark === 'arc' || mark === 'boxplot';
+    for (const channel of ['size', 'opacity', 'shape'] as const) {
+        const f = encodings[channel][0];
+        if (!f || !shown.has(channel)) continue;
+        if (channel === 'size' && unsized) notes.push(`Size is not drawn on ${mark === 'boxplot' ? 'box plot' : mark} marks.`);
+        else if (channel === 'opacity' && mark === 'boxplot') notes.push('Opacity is not drawn on box plots.');
+        else if (channel === 'shape' && mark !== 'point' && mark !== 'circle') notes.push(`Shape is not drawn on ${mark} marks.`);
+        else if (channel === 'shape' && isMeasure(f)) notes.push(`${f.name} on Shape is ignored: only a dimension picks symbols.`);
+        else {
+            const made = instance(channel, f, 'encoding');
+            if (typeof made === 'string') return result({ error: made });
+            channels[channel] = made.id;
+        }
     }
 
     let angle: string | undefined;
@@ -154,9 +177,7 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     const empty = rows.expr.kind === 'empty' && columns.expr.kind === 'empty';
     if (empty && !(mark === 'arc' && (angle || color))) return result({ error: 'There is nothing on rows or columns to draw yet.' });
 
-    const ignored = (['size', 'shape', 'opacity', 'theta', 'radius'] as const).filter((channel) => encodings[channel].length > 0 && !(channel === 'theta' && mark === 'arc'));
-    if (ignored.length) notes.push(`Not drawn yet: ${ignored.join(', ')}.`);
-    if (mark !== 'text' && encodings.text.length) notes.push('Text labels on marks are not drawn yet.');
+    if (shown.has('radius') && encodings.radius.length) notes.push('Not drawn yet: radius.');
     // The editor's sort orders a dimension by the measure across from it, the first one where there are
     // several, as Tableau's toolbar sort takes the leftmost. Each parent header is ordered on its own.
     // A measure that is drawn per record still orders the members by one number per member: its sum,
@@ -186,7 +207,7 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     const spec: WorksheetSpec = {
         kind: 'worksheet', specVersion: 2, instances,
         rows: rows.expr, columns: columns.expr,
-        mark, color, detail, text, angle,
+        mark, color, detail, text, angle, ...channels,
         // 'zero' is the editor's older name for a plain stack. Only bars and areas pile up.
         stack: layout.stack === 'none' ? false : layout.stack === 'normalize' || layout.stack === 'center' ? layout.stack : true,
         order,

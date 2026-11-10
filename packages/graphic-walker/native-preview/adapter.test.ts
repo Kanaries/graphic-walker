@@ -135,6 +135,28 @@ describe('chartToWorksheet', () => {
         const box = chartToWorksheet(chart({ columns: [dim('Region', 'nominal', { sort: 'ascending' })], rows: [mea('Sales')] }, { defaultAggregated: false, geoms: ['boxplot'] })).spec!;
         expect(box.instances.order).toMatchObject({ field: 'Sales', aggregate: 'median' });
     });
+    test('size, opacity, shape and labels map from the shelves the mark type shows', () => {
+        const shelves = { rows: [mea('Sales')], columns: [dim('Region')], size: [mea('Profit', 'mean')], opacity: [dim('Segment')], shape: [dim('Ship Mode')], text: [mea('Quantity')] };
+        const point = chartToWorksheet(chart(shelves, { geoms: ['point'] }));
+        expect(point.spec!.instances[point.spec!.size!]).toMatchObject({ field: 'Profit', display: 'continuous', aggregate: 'mean' });
+        expect(point.spec!.instances[point.spec!.opacity!]).toMatchObject({ field: 'Segment', display: 'discrete' });
+        expect(point.spec!.instances[point.spec!.shape!]).toMatchObject({ field: 'Ship Mode', display: 'discrete' });
+        // The editor hides the Text shelf for points, so a field left on it is not part of the chart.
+        expect(point.spec!.text).toBeUndefined();
+        expect(point.viewMeasures.map((f) => f.fid)).toEqual(['Sales', 'Profit']);
+        expect(point.notes).toEqual([]);
+        // Bars show Text and hide Shape.
+        const bar = chartToWorksheet(chart(shelves, { geoms: ['bar'] }));
+        expect(bar.spec!.instances[bar.spec!.text!]).toMatchObject({ field: 'Quantity', aggregate: 'sum' });
+        expect(bar.spec!.shape).toBeUndefined();
+        expect(bar.spec!.size).toBeDefined();
+        expect(bar.notes).toEqual([]);
+        const box = chartToWorksheet(chart({ ...shelves, size: [dim('Segment')], text: [dim('Segment')] }, { geoms: ['boxplot'], defaultAggregated: false }));
+        expect([box.spec!.size, box.spec!.opacity, box.spec!.text]).toEqual([undefined, undefined, undefined]);
+        expect(box.notes).toEqual(['Labels are not drawn on box plots.', 'Size is not drawn on box plot marks.', 'Opacity is not drawn on box plots.']);
+        expect(chartToWorksheet(chart({ ...shelves, shape: [mea('Profit')] }, { geoms: ['circle'] })).notes).toEqual(['Profit on Shape is ignored: only a dimension picks symbols.']);
+        expect(chartToWorksheet(chart({ color: [dim('Segment')], theta: [mea('Sales')], radius: [mea('Profit')] }, { geoms: ['arc'] })).notes).toEqual(['Not drawn yet: radius.']);
+    });
     test('layout options carry over', () => {
         const base = { rows: [dim('Region')], columns: [mea('Sales')] };
         expect(chartToWorksheet(chart(base, {}, { stack: 'none' })).spec!.stack).toBe(false);
@@ -154,9 +176,9 @@ describe('chartToWorksheet', () => {
         expect(chartToWorksheet(chart({}, { coordSystem: 'geographic' })).error).toMatch(/Maps/);
         expect(chartToWorksheet(chart({})).error).toMatch(/nothing on rows or columns/);
         expect(chartToWorksheet(chart({ color: [dim('Segment')] })).error).toMatch(/nothing on rows or columns/);
-        const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], size: [mea('Profit')], details: [mea('Quantity')] }, {}, { stack: 'normalize' }));
+        const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], size: [mea('Profit')], details: [mea('Quantity')] }, { geoms: ['area'] }));
         expect(spec).toBeDefined();
-        expect(notes).toEqual(['Quantity on Details is ignored: only dimensions split marks.', 'Not drawn yet: size.']);
+        expect(notes).toEqual(['Quantity on Details is ignored: only dimensions split marks.', 'Size is not drawn on area marks.']);
         const settings = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 10, geoms: ['trail'] },
             { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
         expect(settings.notes).toEqual([
