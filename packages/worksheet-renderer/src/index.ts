@@ -12,4 +12,4 @@ export { sceneToPNG, sceneToSVG } from './vegaBackend';
 export { resultTables, tableToCSV } from './export';
 export type { ResultTable } from './export';
 export { Worksheet } from './Worksheet';
-export type { WorksheetHandle, WorksheetProps } from './Worksheet';
+export type { WorksheetHandle, WorksheetProps, WorksheetStatus } from './Worksheet';

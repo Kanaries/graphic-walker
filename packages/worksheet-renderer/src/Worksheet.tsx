@@ -22,7 +22,14 @@ export interface WorksheetHandle {
     exportPNG(scale?: number): Promise<string>;
     /** The records behind the marks, one table per query that is drawn. */
     exportRecords(): ResultTable[];
+    /** Size of the whole sheet in CSS px, which is the size of an exported SVG. */
+    size(): { width: number; height: number };
 }
+/**
+ * querying: results are on their way; the last sheet stays on screen, faded and inert.
+ * drawing: results are in and the sheet is being painted. idle: what is on screen is current.
+ */
+export type WorksheetStatus = 'querying' | 'drawing' | 'idle' | 'error';
 // The canvas limits that hold across current browsers.
 const maxCanvasSide = 16_000, maxCanvasArea = 64_000_000;
 export interface WorksheetProps {
@@ -32,6 +39,12 @@ export interface WorksheetProps {
     height?: number;
     /** Called with every selected mark. Click selects one, Ctrl or Cmd click adds or removes, a click on empty space or Escape clears. */
     onSelectionChange?: (selections: Selection[]) => void;
+    /**
+     * Called with the mark under a plain click, after the sheet's own selection, and with the DOM
+     * event, whose position places a menu and whose propagation the host may stop.
+     */
+    onMarkClick?: (selection: Selection, event: MouseEvent) => void;
+    onStatusChange?: (status: WorksheetStatus) => void;
     /** How numbers, dates and the sheet's own words are written. Keep the object the same between renders while nothing in it changes. */
     formats?: Formats;
     /**
@@ -58,19 +71,21 @@ if (typeof document !== 'undefined') {
 const emptyScene = (background: string): Scene => ({ width: 1, height: 1, items: [], visiblePanes: 0, background, legend: 'none' });
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
-function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primitive | undefined, additive: boolean) => void }) {
+function VegaViewport({ scene, onClick, onPainted }: { scene: Scene; onClick: (item: Primitive | undefined, additive: boolean, event: MouseEvent) => void; onPainted?: () => void }) {
     const host = useRef<HTMLDivElement>(null);
     const tip = useRef<HTMLDivElement>(null);
     const instance = useRef<View | null>(null);
     const click = useRef(onClick);
     click.current = onClick;
+    const painted = useRef(onPainted);
+    painted.current = onPainted;
     const [error, setError] = useState('');
     useEffect(() => {
         const view = new View(parse(vegaSpec(emptyScene(scene.background))), { renderer: 'canvas' }).initialize(host.current!);
         instance.current = view;
         view.addEventListener('click', (event, item) => {
             const mouse = event as MouseEvent;
-            click.current(item?.datum as Primitive | undefined, mouse.ctrlKey || mouse.metaKey);
+            click.current(item?.datum as Primitive | undefined, mouse.ctrlKey || mouse.metaKey, mouse);
         });
         // The tooltip follows the pointer and is moved without a React render.
         const hide = () => { if (tip.current) tip.current.style.visibility = 'hidden'; };
@@ -96,7 +111,9 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
         if (view) {
             view.width(scene.width).height(scene.height).background(scene.background);
             for (const [name, values] of sceneData(scene)) view.data(name, values);
-            void view.runAsync().then(() => { if (active) setError(''); }, reason => { if (active) setError(message(reason)); });
+            // The callback of the render this scene came from, so a host learns which sheet is now on screen.
+            const notify = painted.current;
+            void view.runAsync().then(() => { if (active) { setError(''); notify?.(); } }, reason => { if (active) setError(message(reason)); });
         }
         return () => { active = false; };
     }, [scene]);
@@ -107,7 +124,7 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
     </div>;
 }
 
-export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onError, formats, theme: themeProp = 'light', compact = false }, ref) {
+export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onMarkClick, onStatusChange, onError, formats, theme: themeProp = 'light', compact = false }, ref) {
     const theme = useMemo<Theme>(() => themeProp === 'light' ? lightTheme : themeProp === 'dark' ? darkTheme : themeProp,
         [typeof themeProp === 'string' ? themeProp : JSON.stringify(themeProp)]);
     const compiled = useMemo(() => {
@@ -152,7 +169,11 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }, formats), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
     }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats]);
-    const model = built?.model;
+    const fresh = built?.model;
+    // While the next result is on its way the last sheet stays up, so a change of fields does not blank the chart.
+    const last = useRef(fresh);
+    if (fresh) last.current = fresh;
+    const model = fresh ?? (loading ? last.current : undefined);
     // Room for a horizontal scroll bar, so a short worksheet does not gain a vertical one.
     const hostHeight = model ? Math.min(height, model.height + 18) : height;
     useEffect(() => {
@@ -197,9 +218,20 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
                 if (!compiled.plan || loading || result?.key !== queryKey || !result.data) throw new Error('Wait for the worksheet query to finish.');
                 return resultTables(compiled.plan, result.data);
             },
+            size() {
+                const scene = whole();
+                return { width: scene.width, height: scene.height };
+            },
         };
     }, [model, loading, theme, compiled.plan, result, queryKey]);
     const error = compiled.error || built?.error || (result?.key === queryKey ? result.error : '');
+    const [painted, setPainted] = useState<typeof fresh>();
+    const status: WorksheetStatus = error ? 'error' : loading ? 'querying' : fresh && painted !== fresh ? 'drawing' : 'idle';
+    const reportStatus = useRef(onStatusChange);
+    reportStatus.current = onStatusChange;
+    useEffect(() => { reportStatus.current?.(status); }, [status]);
+    const markClick = useRef(onMarkClick);
+    markClick.current = onMarkClick;
     const colorField = model?.plan.spec.color ? model.plan.spec.instances[model.plan.spec.color] : undefined;
     const report = useRef(onError);
     report.current = onError;
@@ -222,13 +254,14 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         {!loading && model && !model.panes.length ? <p>{model.format.words.empty}</p> : null}
         <div ref={scrollHost} data-testid="worksheet-scroll" aria-label="Scrollable worksheet" tabIndex={0} onKeyDown={event => { if (event.key === 'Escape' && selection.size) select(new Map()); }} style={{ position: 'relative', overflow: 'auto', height: hostHeight, background: theme.paper, ...(compact ? {} : { border: `1px solid ${theme.line}`, borderRadius: 8 }) }}>
             <div style={{ width: model?.width ?? 1, height: model?.height ?? 1, position: 'relative' }}>
-                <div style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: loading || error ? 'hidden' : 'visible' }}>
-                    <VegaViewport scene={scene} onClick={(item, additive) => {
+                <div style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: error ? 'hidden' : 'visible', ...(loading ? { opacity: 0.5, pointerEvents: 'none' as const } : {}) }}>
+                    <VegaViewport scene={scene} onPainted={() => setPainted(fresh)} onClick={(item, additive, event) => {
                         const hit = item?.selection;
                         if (!hit) { if (!additive && selection.size && (!item || item.layer === 'body')) select(new Map()); return; }
                         const next = new Map(additive ? selection : []);
                         if (additive && next.has(hit.id)) next.delete(hit.id); else next.set(hit.id, hit);
                         select(next);
+                        if (!additive) markClick.current?.(hit, event);
                     }} />
                 </div>
             </div>
