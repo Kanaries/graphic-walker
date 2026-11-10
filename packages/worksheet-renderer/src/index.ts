@@ -3,6 +3,8 @@ export { compileAxis, compileWorksheet, executePlan } from './compiler';
 export { metrics, setTextMeasure, tickScale } from './layout';
 export { buildModel } from './model';
 export { darkTheme, lightTheme } from './color';
+export { englishWords, resolveFormats } from './formats';
+export type { Formats, Words } from './formats';
 export type { Theme } from './color';
 export { buildScene, layers } from './scene';
 export type { Layer, Primitive, Scene, SceneState, Viewport } from './scene';

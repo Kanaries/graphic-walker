@@ -3,7 +3,8 @@ import { parse, View } from 'vega';
 import { continuousColor, darkTheme, lightTheme, type Theme } from './color';
 import { compileWorksheet, executePlan } from './compiler';
 import { valueKey } from './keys';
-import { formatTick, setTextMeasure } from './layout';
+import { setTextMeasure } from './layout';
+import type { Formats } from './formats';
 import { memberLabel } from './time';
 import { buildModel } from './model';
 import { buildScene, type Primitive, type Scene } from './scene';
@@ -31,6 +32,8 @@ export interface WorksheetProps {
     height?: number;
     /** Called with every selected mark. Click selects one, Ctrl or Cmd click adds or removes, a click on empty space or Escape clears. */
     onSelectionChange?: (selections: Selection[]) => void;
+    /** How numbers, dates and the sheet's own words are written. Keep the object the same between renders while nothing in it changes. */
+    formats?: Formats;
     /**
      * Called when the sheet cannot be drawn: the spec does not compile, a query fails, or the data
      * does not fit, with the message shown in its place. Called with '' once it draws again.
@@ -104,7 +107,7 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
     </div>;
 }
 
-export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onError, theme: themeProp = 'light', compact = false }, ref) {
+export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onError, formats, theme: themeProp = 'light', compact = false }, ref) {
     const theme = useMemo<Theme>(() => themeProp === 'light' ? lightTheme : themeProp === 'dark' ? darkTheme : themeProp,
         [typeof themeProp === 'string' ? themeProp : JSON.stringify(themeProp)]);
     const compiled = useMemo(() => {
@@ -146,9 +149,9 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const headerWidth = Math.max(96, Math.round(viewport.width * 0.4 / 24) * 24);
     const built = useMemo(() => {
         if (!compiled.plan || result?.key !== queryKey || !result.data) return undefined;
-        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }), error: '' }; }
+        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }, formats), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
-    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth]);
+    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats]);
     const model = built?.model;
     // Room for a horizontal scroll bar, so a short worksheet does not gain a vertical one.
     const hostHeight = model ? Math.min(height, model.height + 18) : height;
@@ -212,11 +215,11 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         {model && colorField && scene.legend === 'omitted' ? <div data-testid="worksheet-legend" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingBottom: 6, fontSize: 11 }}>
             <strong>{colorField.label}</strong>
             {model.colorScale
-                ? <><span>{formatTick(model.colorScale.domain[0])}</span><span style={{ width: 72, height: 8, borderRadius: 2, background: `linear-gradient(to right, ${[0, .25, .5, .75, 1].map(t => continuousColor(model.colorScale!, model.colorScale!.domain[0] + (model.colorScale!.domain[1] - model.colorScale!.domain[0]) * t, theme, model.plan.spec.mark === 'rect')).join(', ')})` }} /><span>{formatTick(model.colorScale.domain[1])}</span></>
-                : <>{model.colors.slice(0, 12).map((c, i) => <span key={valueKey(c)}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: theme.category[i % theme.category.length], marginRight: 4 }} />{memberLabel(colorField, c)}</span>)}{model.colors.length > 12 ? <span>+{model.colors.length - 12} more</span> : null}</>}
+                ? <><span>{model.format.tick(model.colorScale.domain[0])}</span><span style={{ width: 72, height: 8, borderRadius: 2, background: `linear-gradient(to right, ${[0, .25, .5, .75, 1].map(t => continuousColor(model.colorScale!, model.colorScale!.domain[0] + (model.colorScale!.domain[1] - model.colorScale!.domain[0]) * t, theme, model.plan.spec.mark === 'rect')).join(', ')})` }} /><span>{model.format.tick(model.colorScale.domain[1])}</span></>
+                : <>{model.colors.slice(0, 12).map((c, i) => <span key={valueKey(c)}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: theme.category[i % theme.category.length], marginRight: 4 }} />{memberLabel(colorField, c, model.format)}</span>)}{model.colors.length > 12 ? <span>{model.format.words.more(model.colors.length - 12)}</span> : null}</>}
         </div> : null}
         {error ? <p role="alert" style={{ color: '#d92d20' }}>{error}</p> : null}
-        {!loading && model && !model.panes.length ? <p>No data matches these filters.</p> : null}
+        {!loading && model && !model.panes.length ? <p>{model.format.words.empty}</p> : null}
         <div ref={scrollHost} data-testid="worksheet-scroll" aria-label="Scrollable worksheet" tabIndex={0} onKeyDown={event => { if (event.key === 'Escape' && selection.size) select(new Map()); }} style={{ position: 'relative', overflow: 'auto', height: hostHeight, background: theme.paper, ...(compact ? {} : { border: `1px solid ${theme.line}`, borderRadius: 8 }) }}>
             <div style={{ width: model?.width ?? 1, height: model?.height ?? 1, position: 'relative' }}>
                 <div style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: loading || error ? 'hidden' : 'visible' }}>

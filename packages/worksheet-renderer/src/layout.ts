@@ -75,18 +75,15 @@ export function fitText(text: string, width: number, fontSize = metrics.fontSize
     }
     return result ? `${result}…` : '';
 }
-const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const plain = new Intl.NumberFormat('en', { maximumFractionDigits: 2 });
-export const formatTick = (value: number) => compact.format(value);
-export const formatValue = (value: number) => plain.format(value);
 
 /**
  * Ticks at multiples of 1, 2 or 5 times a power of ten. The domain stays the data range,
  * so marks use the whole slot and the last tick may sit below the maximum.
  */
-export function tickScale(min: number, max: number, pixels: number, gap: number): AxisScale {
+export function tickScale(min: number, max: number, pixels: number, gap: number, least = 2): AxisScale {
     if (min === max) { if (min > 0) min = 0; else if (min < 0) max = 0; else max = 1; }
-    const raw = (max - min) / Math.max(2, Math.floor(pixels / gap));
+    // At least `least` steps across the range, however little room there is.
+    const raw = (max - min) / Math.max(least, Math.floor(pixels / gap));
     const power = 10 ** Math.floor(Math.log10(raw));
     const unit = raw / power;
     // Geometric midpoints between 1, 2, 5 and 10 pick the step nearest to the wanted spacing.

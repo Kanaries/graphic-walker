@@ -1,5 +1,6 @@
 import { compareValue, pathKey, typed, valueKey } from './keys';
-import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { resolveFormats, type Format, type Formats } from './formats';
+import { buildAxis, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
 import { memberLabel, positionValue, timeScale } from './time';
 import { branchFields, valueAxis } from './compiler';
 import { legendTitleHeight, levelOf, type ChannelScale, type LegendBlock } from './channels';
@@ -134,7 +135,7 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
 // Ranges come from the complete result, never from the visible window. A range is keyed
 // by measure and by a scope along the axis itself, so every pane in one row or column
 // shares it and the axis can be drawn once on the table edge.
-function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan) {
+function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format) {
     const scope = plan.spec.scaleScope ?? 'shared';
     const keyOf = (leaf: AxisLeaf) => {
         const id = leaf.branch.position!.id;
@@ -187,31 +188,45 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         const step = sorted.length > 1 ? Math.min(...sorted.slice(1).map((v, i) => v - sorted[i])) : undefined;
         if (step) { min -= step / 2; max += step / 2; }
         const pixels = leaf.size - metrics.scalePadStart - metrics.scalePadEnd;
-        leaf.scale = { ...(time ? timeScale(min, max, pixels, axis === 'x' ? 62 : 30) : tickScale(min, max, pixels, axis === 'x' ? 46 : 30)), step };
-        // An axis of shares reads in percent.
-        if (shared.has(key)) leaf.scale.labels = leaf.scale.ticks.map(tick => `${Math.round(tick * 100)}%`);
+        // Every axis carries its labels: dates from the time scale, shares in percent, other numbers as ticks.
+        const make = (gap: number, least = 2) => {
+            const scale = time ? timeScale(min, max, pixels, gap, format) : tickScale(min, max, pixels, gap, least);
+            if (!time) scale.labels = scale.ticks.map(shared.has(key) ? format.share : format.tick);
+            return scale;
+        };
+        let gap = axis === 'x' ? (time ? 62 : 46) : 30;
+        let scale = make(gap);
+        // Labels along a horizontal axis must not run into each other. A format that writes long labels gets fewer ticks.
+        for (let round = 0; axis === 'x' && round < 3 && scale.ticks.length > 1; round++) {
+            const widest = Math.max(...scale.labels!.map(label => textWidth(label, 10)));
+            const spacing = (scale.ticks[1] - scale.ticks[0]) / (scale.domain[1] - scale.domain[0]) * pixels;
+            if (widest + 10 <= spacing) break;
+            // Where even two steps are too many, one step keeps a label at each end of the range.
+            scale = make(gap = Math.max(gap * 1.5, widest + 14), 1);
+        }
+        leaf.scale = { ...scale, step };
     }
 }
 
 // What explains each channel, in the order the strip shows it: color, size, opacity, shape.
-function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorScale | undefined, channels: WorksheetModel['channels']): LegendBlock[] {
+function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorScale | undefined, channels: WorksheetModel['channels'], format: Format): LegendBlock[] {
     const blocks: LegendBlock[] = [];
     const list = (channel: LegendBlock['channel'], title: string, entries: LegendBlock['entries'], step = 18) =>
         blocks.push({ channel, title, kind: 'list', entries, step, height: legendTitleHeight + entries.length * step + 6 });
     const color = spec.color ? spec.instances[spec.color] : undefined;
     if (color && colorScale) blocks.push({ channel: 'color', title: color.label, kind: 'ramp', step: 0, height: 64,
-        entries: colorScale.domain.map((value, i) => ({ label: formatTick(value), level: i })) });
-    else if (color) list('color', color.label, colors.map((value, i) => ({ label: memberLabel(color, value), level: i })));
+        entries: colorScale.domain.map((value, i) => ({ label: format.tick(value), level: i })) });
+    else if (color) list('color', color.label, colors.map((value, i) => ({ label: memberLabel(color, value, format), level: i })));
     for (const channel of ['size', 'opacity', 'shape'] as const) {
         const scale = channels[channel];
         if (!scale) continue;
         if (scale.members) {
-            list(channel, scale.field.label, scale.members.map((value, i) => ({ label: memberLabel(scale.field, value), level: channel === 'shape' ? i : (i + 1) / scale.members!.length })), channel === 'size' ? 22 : 18);
+            list(channel, scale.field.label, scale.members.map((value, i) => ({ label: memberLabel(scale.field, value, format), level: channel === 'shape' ? i : (i + 1) / scale.members!.length })), channel === 'size' ? 22 : 18);
         } else if (scale.domain) {
             // The ends of the range and the middle are enough to read a size or an opacity against.
             const [low, high] = scale.domain;
             const samples = low === high ? [low] : [low, (low + high) / 2, high];
-            list(channel, scale.field.label, samples.map(value => ({ label: formatTick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
+            list(channel, scale.field.label, samples.map(value => ({ label: format.tick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
         }
     }
     return blocks;
@@ -223,9 +238,9 @@ function legendWidth(blocks: LegendBlock[]): number {
     return Math.ceil(Math.min(metrics.legendMaxWidth, Math.max(metrics.legendMinWidth, widest + 24)));
 }
 
-function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, right: number, headerBudget?: number): Frame {
+function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, right: number, format: Format, headerBudget?: number): Frame {
     const pad = metrics.headerPadding * 2;
-    const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(memberLabel(spec.instances[span.part.instanceId], span.part.value))));
+    const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(memberLabel(spec.instances[span.part.instanceId], span.part.value, format))));
     const rowHeaderWidths = rows.levels.map((_, level) => Math.min(metrics.headerMaxWidth,
         Math.max(metrics.headerMinWidth, Math.ceil(Math.max(widest(rows, level), textWidth(rows.captions[level], metrics.fontSize, 600)) + pad))));
     // Deep row headers must not push the marks out of a narrow window. Over budget, every level
@@ -236,7 +251,7 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
         const scale = Math.max(headerBudget, floor * rowHeaderWidths.length) / headerTotal;
         rowHeaderWidths.forEach((width, level) => { rowHeaderWidths[level] = Math.max(floor, Math.floor(width * scale)); });
     }
-    const tickWidth = Math.max(0, ...rows.leaves.flatMap(leaf => leaf.scale ? leaf.scale.ticks.map((t, i) => textWidth(leaf.scale!.labels?.[i] ?? formatTick(t), 10)) : []));
+    const tickWidth = Math.max(0, ...rows.leaves.flatMap(leaf => leaf.scale ? leaf.scale.ticks.map((t, i) => textWidth(leaf.scale!.labels?.[i] ?? format.tick(t), 10)) : []));
     const yAxisWidth = rows.leaves.some(leaf => leaf.kind === 'continuous') ? Math.ceil(tickWidth) + 30 : 0;
     const inner = columns.levels.length - 1;
     const innerWidth = inner >= 0 ? widest(columns, inner) : 0;
@@ -265,9 +280,11 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
  * still leaves that member's slot empty. Absent intersections allocate no pane.
  * With spec.fit and a target size, leaf steps are scaled so the sheet fills the target.
  * target.headerWidth caps the total width of the row headers.
+ * formats says how numbers, dates and the sheet's own words are written; the labels built here already follow it.
  */
-export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }): WorksheetModel {
+export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }, formats?: Formats): WorksheetModel {
     const { spec } = plan;
+    const format = resolveFormats(formats);
     const rowDrafts = new Map<string, LeafDraft>();
     const columnDrafts = new Map<string, LeafDraft>();
     const cells = new Map<string, { row: string; column: string; items: CellItem[] }>();
@@ -364,13 +381,13 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
         panes.push(pane);
         paneIndex.set(id, pane);
     }
-    const scales = () => { assignScales(columns, 'x', panes, plan); assignScales(rows, 'y', panes, plan); };
+    const scales = () => { assignScales(columns, 'x', panes, plan, format); assignScales(rows, 'y', panes, plan, format); };
     scales();
     // A color range comes from the complete result, like an axis range.
     const colorScale: ColorScale | undefined = color?.display === 'continuous'
         ? { field: color, domain: extent[0] <= extent[1] ? extent : [0, 1], diverging: extent[0] < 0 && extent[1] > 0 } : undefined;
-    const legends = buildLegends(spec, palette, colorScale, channels);
-    const measure = () => buildFrame(rows, columns, spec, legendWidth(legends), target?.headerWidth);
+    const legends = buildLegends(spec, palette, colorScale, channels, format);
+    const measure = () => buildFrame(rows, columns, spec, legendWidth(legends), format, target?.headerWidth);
     let frame = measure();
     const fitWidth = target && (spec.fit === 'width' || spec.fit === 'both') && columns.size > 0;
     const fitHeight = target && (spec.fit === 'height' || spec.fit === 'both') && rows.size > 0;
@@ -389,5 +406,5 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     // A short table still leaves room for its legend.
     const legendHeight = legends.reduce((sum, block) => sum + Math.min(block.height, legendTitleHeight + 16 * block.step + 6), 0);
     return { plan, rows, columns, panes, paneIndex, frame, width: frame.left + columns.size + frame.right,
-        height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale, channels, legends };
+        height: Math.max(frame.top + rows.size + frame.bottom, legendHeight), colors: palette, colorScale, channels, legends, format };
 }

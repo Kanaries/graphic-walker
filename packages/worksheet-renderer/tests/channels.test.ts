@@ -78,6 +78,7 @@ test('a bar on its own is labelled past its end, or just inside the end when the
     assert.ok(labels[2].align === 'right' && near(labels[2].x, bars[2].x + bars[2].width! - 4));
     assert.equal(labels[2].fill, '#ffffff');
     assert.ok(labels.every(p => !p.selection), 'labels do not take the pointer');
+    assert.equal(bars[0].tooltip, 'product: a\nSUM: 10', 'the measure that is both the axis and the label is described once');
 });
 test('bars in a pile are labelled inside, and only where the label fits', async () => {
     const data: Row[] = [{ product: 'p', segment: 'a', value: 1 }, { product: 'p', segment: 'b', value: 500 }, { product: 'p', segment: 'c', value: 499 }];

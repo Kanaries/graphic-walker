@@ -17,8 +17,12 @@ export interface FieldInstance {
     /**
      * Milliseconds added to every time of this field before it is placed or labelled. Labels are
      * written in UTC, so a host that wants another zone passes that zone's offset here.
+     * Stored times come in three kinds that a host may need to shift differently: `epoch` for
+     * numbers and Dates, `date` for text that names a day, month or year only, which is read
+     * as UTC, and `dateTime` for any other text, which is read in the machine's own zone
+     * unless it names one.
      */
-    timeOffset?: number;
+    timeOffset?: number | { epoch: number; date: number; dateTime: number };
     /** Whether a linear axis for this field starts from zero. Defaults to true; a time axis never does. */
     zero?: boolean;
     aggregate?: Aggregate;
@@ -275,6 +279,8 @@ export interface Frame {
     yAxisWidth: number;
 }
 export interface WorksheetModel {
+    /** How numbers, dates and the sheet's own words are written. */
+    format: import('./formats').Format;
     /** The spans of the fields on size and opacity, and the members of the field on shape. */
     channels: { size?: import('./channels').ChannelScale; opacity?: import('./channels').ChannelScale; shape?: import('./channels').ChannelScale };
     /** What the legend strip shows, top to bottom. */

@@ -11,6 +11,7 @@ export function typed(value: Value): [string, string | number | boolean | null] 
 }
 export const valueKey = (value: Value) => JSON.stringify(typed(value));
 export const pathKey = (axis: 'row' | 'column', path: PathPart[]) => JSON.stringify([axis, path.map(p => [p.instanceId, typed(p.value)])]);
+// Without a sheet's formats to go by, as in an error message.
 const rangeNumber = new Intl.NumberFormat('en', { maximumFractionDigits: 2 });
 /** A bin, as binned fields return it: the lower and upper bound of the member. */
 export function isRange(value: unknown): value is readonly number[] {

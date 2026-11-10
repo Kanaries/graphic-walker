@@ -1,10 +1,10 @@
 import { continuousColor, fillOf, lightTheme, rgb, type Theme } from './color';
 import { legendTitleHeight, level, memberIndex, opacityAt, pointArea, shapes, thicknessShare } from './channels';
-import { displayValue, valueKey } from './keys';
+import { valueKey } from './keys';
 import { branchFields, valueAxis } from './compiler';
 import { stackMode } from './model';
-import { fitText, formatTick, formatValue, leafRange, metrics, spansIn, textWidth } from './layout';
-import { fieldTime, formatTime, memberLabel, positionValue } from './time';
+import { fitText, leafRange, metrics, spansIn, textWidth } from './layout';
+import { fieldTime, memberLabel as labelMember, positionValue } from './time';
 import { resultKey, type AxisGroup, type AxisLeaf, type FieldInstance, type Pane, type Selection, type Value, type WorksheetModel } from './types';
 
 /** x and y are the scroll offsets, width and height the size of the visible window. */
@@ -60,6 +60,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     const { rows, columns, frame } = model;
     const { left, top } = frame;
     const ink = state.theme ?? lightTheme;
+    const { format } = model, { words } = format;
+    const memberLabel = (field: FieldInstance | undefined, value: Value) => labelMember(field, value, format);
     const pad = metrics.headerPadding;
     // The legend strip is drawn when the whole sheet fits, or when the body still keeps a usable
     // share of a window narrower than the sheet. Otherwise it is left out.
@@ -85,7 +87,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     };
     const px = (leaf: AxisLeaf, value: number) => sx(leaf.offset + along(leaf, value));
     const py = (leaf: AxisLeaf, value: number) => sy(leaf.offset + leaf.size - along(leaf, value));
-    const tickLabel = (leaf: AxisLeaf, index: number) => leaf.scale!.labels?.[index] ?? formatTick(leaf.scale!.ticks[index]);
+    const tickLabel = (leaf: AxisLeaf, index: number) => leaf.scale!.labels?.[index] ?? format.tick(leaf.scale!.ticks[index]);
     // Width of a bar placed at a continuous position: a share of the smallest gap between positions, so
     // neighbours never touch and every pane on the same scale gets the same width.
     const barAt = (leaf: AxisLeaf) => {
@@ -147,8 +149,12 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         const xContinuous = xField?.display === 'continuous', yContinuous = yField?.display === 'continuous';
         const used = [...branchFields(pane.row.branch), ...branchFields(pane.column.branch), ...encodingFields];
         const dimensions = [...new Map(used.filter(f => !f.aggregate).map(f => [f.field, f])).values()];
-        const described = [...new Map(used.map(f => [f.id, f])).values()];
-        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${f.scale === 'time' ? (f.display === 'continuous' ? formatTime(fieldTime(f, value)) : memberLabel(f, value as Value)) : typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
+        // A field that is on a shelf twice, such as a measure that is both the axis and the label, is described once.
+        const described = used.filter((f, i) => used.findIndex(g => g.field === f.field && g.aggregate === f.aggregate) === i);
+        // What a value of a field reads as: a moment or a period for a time field, a number for a continuous one, the member's name otherwise.
+        const read = (f: FieldInstance, value: unknown): string => f.display === 'continuous' && f.scale === 'time' ? format.time(fieldTime(f, value))
+            : f.display === 'continuous' && typeof value === 'number' ? format.number(value) : memberLabel(f, value as Value);
+        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${read(f, value)}`;
         const lengthAxis = valueAxis(xField, yField);
         const isLine = spec.mark === 'line', isArea = spec.mark === 'area', joined = isLine || isArea;
         // A line runs along x unless x is the only value axis. An area runs across its value axis.
@@ -174,8 +180,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         const labelOf = (record: Record<string, unknown>) => {
             const raw = record[resultKey(labelField!)];
             if (raw == null) return '';
-            if (labelField!.scale === 'time') return labelField!.display === 'continuous' ? formatTime(fieldTime(labelField!, raw)) : memberLabel(labelField!, raw as Value);
-            return typeof raw === 'number' ? formatValue(raw) : displayValue(raw as Value);
+            return read(labelField!, raw);
         };
         for (const mark of pane.marks) {
             // Points of a line outside the window still shape the visible segments.
@@ -222,13 +227,13 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             const selection: Selection = { id, paneId: pane.id, rowPath: rowLeaf.path, columnPath: columnLeaf.path,
                 predicates: keys.map(f => ({ field: f.field, value: record[f.field] as Value })), values: mark.box ? { ...record, ...mark.box } : record };
             const extra: Partial<Primitive> = { selection, tooltip: described.map(f => describe(f, record[resultKey(f)])).join('\n') };
-            if (mark.share !== undefined) extra.tooltip += `\nShare: ${formatValue(mark.share * 100)}%`;
+            if (mark.share !== undefined) extra.tooltip += `\n${words.share}: ${format.share(mark.share)}`;
             const fade = alpha * (selecting && !selected ? dimmed : 1);
             if (fade < 1) extra.opacity = fade;
             if (spec.mark === 'arc') {
                 if (!Number.isFinite(mark.start)) continue;
                 const radius = Math.max(4, Math.min(columnLeaf.size, rowLeaf.size) / 2 - 10);
-                const share = `Share: ${formatValue((mark.end - mark.start) * 100)}%`;
+                const share = `${words.share}: ${format.share(mark.end - mark.start)}`;
                 items.push({ kind: 'shape', layer: 'body', x, y, path: slice(radius, mark.start, mark.end), fill: color, stroke: ink.paper, strokeWidth: 1, ...extra, tooltip: `${extra.tooltip}\n${share}` });
                 // Inside the slice, where it is wide enough to hold the text.
                 const middle = (mark.start + mark.end) * Math.PI;
@@ -248,8 +253,8 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 }
                 const box = mark.box!, measure = flat ? xField! : yField!;
                 const tooltip = [...keys.map(f => describe(f, record[f.field])), measure.label,
-                    ...([['Upper whisker', box.high], ['Upper quartile', box.q3], ['Median', box.median], ['Lower quartile', box.q1], ['Lower whisker', box.low]] as const).map(([name, value]) => `${name}: ${formatValue(value)}`),
-                    `Records: ${box.count}`].join('\n');
+                    ...([[words.upperWhisker, box.high], [words.upperQuartile, box.q3], [words.median, box.median], [words.lowerQuartile, box.q1], [words.lowerWhisker, box.low]] as const).map(([name, value]) => `${name}: ${format.number(value)}`),
+                    `${words.records}: ${box.count}`].join('\n');
                 // A stretch along the value axis, `across` px wide and at least `least` px long.
                 const stretch = (from: number, to: number, across: number, color: string, least = 1) => {
                     const a = Math.min(at(from), at(to)), length = Math.max(least, Math.abs(at(to) - at(from)));
@@ -295,7 +300,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 const f = textField ?? (xField?.aggregate ? xField : yField?.aggregate ? yField : undefined);
                 const raw = f ? record[resultKey(f)] : undefined;
                 const cell = !xContinuous && !yContinuous;
-                const shown = !f ? '•' : raw == null ? '' : typeof raw !== 'number' ? displayValue(raw as Value) : cell ? formatValue(raw) : formatTick(raw);
+                const shown = !f ? '•' : raw == null ? '' : typeof raw !== 'number' || f.display !== 'continuous' ? read(f, raw) : cell ? format.number(raw) : format.tick(raw);
                 const fontSize = sized ? Math.round(9 + 15 * sizeLevel) : metrics.fontSize;
                 text('body', x, y + fontSize * 0.36, cell ? fitText(shown, columnLeaf.size - 6, fontSize) : shown, { align: 'center', fill: colorField ? color : ink.text, fontSize, ...extra });
             } else if (spec.mark === 'rect') {
@@ -511,7 +516,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 else items.push({ kind: 'symbol', layer: 'legend', x: x + 17, y: middle, size: 60, symbol: shapes[entry.level % shapes.length], ...(spec.mark === 'point' ? { fill: 'transparent', stroke: ink.text, strokeWidth: 1.5 } : { fill: ink.text }) });
                 text('legend', x + 12 + gutter, middle + 4, fitText(entry.label, inner - gutter), { tooltip: entry.label });
             });
-            if (shown < block.entries.length) text('legend', x + 12, y + legendTitleHeight + shown * block.step + block.step / 2, `+${block.entries.length - shown} more`, { fill: ink.muted });
+            if (shown < block.entries.length) text('legend', x + 12, y + legendTitleHeight + shown * block.step + block.step / 2, words.more(block.entries.length - shown), { fill: ink.muted });
             y += legendTitleHeight + Math.min(block.entries.length, shown + (shown < block.entries.length ? 1 : 0)) * block.step + 6;
         }
     }
