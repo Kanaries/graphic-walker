@@ -61,8 +61,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
         config: visualConfig,
         layout,
         currentVis: chart,
-        visIndex,
-        visLength,
         sort,
         limit,
     } = vizStore;
@@ -143,12 +141,6 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
             });
         }
     }, [waiting, data, vizStore]);
-
-    useChartIndexControl({
-        count: visLength,
-        index: visIndex,
-        onChange: (idx) => vizStore.selectVisualization(idx),
-    });
 
     const handleGeomClick = useCallback(
         (values: any, e: MouseEvent & { item: Item }) => {
@@ -276,6 +268,13 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
     const native = useNativeRenderer();
     const chart = vizStore.currentVis;
     const { i18n } = useTranslation();
+    // The host's chart count, chart index and openChart. They are registered here, above both renderers,
+    // so they stay in place whichever one draws and while one is swapped for the other.
+    useChartIndexControl({
+        count: vizStore.visLength,
+        index: vizStore.visIndex,
+        onChange: (idx) => vizStore.selectVisualization(idx),
+    });
     // The same resolution the Vega path does: theme preset, then the chart's primary color and palette on top.
     const mediaTheme = useContext(themeContext);
     const { primaryColor, colorPalette, background } = chart.layout;

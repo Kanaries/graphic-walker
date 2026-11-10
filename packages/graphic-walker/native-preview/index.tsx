@@ -4,6 +4,7 @@ import type { IChart, IDataQueryWorkflowStep } from '../src/interfaces';
 import { registerNativeRenderer, type NativeRendererProps } from '../src/renderer/nativeRegistry';
 import { toWorkflow } from '../src/utils/workflow';
 import { chartToWorksheet } from './adapter';
+import { composeWorkflow, drawnAtGrain, splitWorkflow, type Having } from './having';
 import { chartFormats } from './formats';
 
 /** Red, green, blue and alpha of a CSS rgb(), rgba() or #rrggbb color. Alpha is 1 where the color names none. */
@@ -58,30 +59,20 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
     // mode only the value axes take up the room of the chart area, and a sheet that is too large scrolls.
     const spec = useMemo(() => adapted.spec && (fill ? { ...adapted.spec, fit: 'both' as const } : { ...adapted.spec, stretch: 'both' as const }), [adapted.spec, fill]);
     const aggregated = chart.config.defaultAggregated;
-    // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
-    const before = useMemo(() => {
-        const steps = toWorkflow(chart.encodings.filters, fields, adapted.viewDimensions, adapted.viewMeasures, aggregated, 'none', chart.config.folds, undefined, chart.config.timezoneDisplayOffset);
-        const view = steps.findIndex((step) => step.type === 'view');
-        return JSON.stringify(view < 0 ? [] : steps.slice(0, view));
-    }, [chart, fields, adapted, aggregated]);
-    // `before` is compared as text so that an unrelated store update does not restart the queries.
+    // Everything the editor would run before its own view step: row filters, computed fields, filters on
+    // those. And what it would run after: filters on aggregated values, which go into the worksheet's queries.
+    const around = useMemo(
+        () => JSON.stringify(splitWorkflow(toWorkflow(chart.encodings.filters, fields, adapted.viewDimensions, adapted.viewMeasures, aggregated, 'none', chart.config.folds, undefined, chart.config.timezoneDisplayOffset))),
+        [chart, fields, adapted, aggregated]
+    );
+    // `around` is compared as text so that an unrelated store update does not restart the queries.
     const run = useMemo<Computation>(() => {
-        const steps: IDataQueryWorkflowStep[] = JSON.parse(before);
+        const { before, having }: { before: IDataQueryWorkflowStep[]; having?: Having } = JSON.parse(around);
         return (payload) => {
-            const view = payload.workflow.find((step) => step.type === 'view');
-            const query = view && view.type === 'view' ? view.query[0] : undefined;
-            if (!query) return Promise.resolve([]);
-            // What the worksheet wants done with the result: put it in order and keep the first rows.
-            const after = payload.workflow.filter((step): step is Extract<typeof step, { type: 'sort' }> => step.type === 'sort');
-            // Without aggregation every source row is a mark, duplicates included, as in the other renderers.
-            const step: IDataQueryWorkflowStep = query.op === 'raw'
-                ? { type: 'view', query: [{ op: 'raw', fields: query.fields }] }
-                : !aggregated && query.measures.length === 0
-                ? { type: 'view', query: [{ op: 'raw', fields: query.groupBy }] }
-                : { type: 'view', query: [{ op: 'aggregate', groupBy: query.groupBy, measures: query.measures }] };
-            return computation({ workflow: [...steps, step, ...after], limit: payload.limit });
+            const workflow = composeWorkflow(before, having, aggregated, payload);
+            return workflow.length ? computation({ workflow, limit: payload.limit }) : Promise.resolve([]);
         };
-    }, [before, aggregated, computation]);
+    }, [around, aggregated, computation]);
 
     // Exports are of the whole sheet, not only the part scrolled into view. The CSV holds the query
     // result the marks are drawn from, with the values as stored.
@@ -152,8 +143,15 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
 // such as a table, a map or bars between two measures, never reaches this component: the editor
 // keeps it on its own renderers instead of showing an error.
 function canDraw(chart: IChart): boolean {
-    const { spec } = chartToWorksheet(chart);
+    const { spec, viewDimensions, viewMeasures } = chartToWorksheet(chart);
     if (!spec) return false;
-    try { compileWorksheet(spec); return true; } catch { return false; }
+    try {
+        const plan = compileWorksheet(spec);
+        // A filter on an aggregated value holds at the grain of the editor's one query. A sheet that draws
+        // from another grain, such as a box plot of source rows, would show marks the filter should have
+        // removed, so it stays with the renderer that applies the filter.
+        const { having } = splitWorkflow(toWorkflow(chart.encodings.filters, [], viewDimensions, viewMeasures, chart.config.defaultAggregated, 'none', chart.config.folds));
+        return !having || drawnAtGrain(plan, having.groupBy);
+    } catch { return false; }
 }
 registerNativeRenderer({ component: NativeWorksheet, canDraw });

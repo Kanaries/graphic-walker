@@ -201,8 +201,12 @@ describe('chartToWorksheet', () => {
         expect(chartToWorksheet(chart(base, {}, { stack: 'zero' })).spec!.stack).toBe(true);
         expect(chartToWorksheet(chart(base, {}, { stack: 'normalize' })).spec!.stack).toBe('normalize');
         expect(chartToWorksheet(chart(base, {}, { stack: 'center' })).spec!.stack).toBe('center');
-        const independent = chartToWorksheet(chart(base, {}, { resolve: { ...emptyVisualLayout.resolve, x: true } })).spec!;
-        expect(independent.scaleScope).toBe('independent');
+        // Each direction is set on its own: x is the columns shelf, y the rows shelf.
+        const scope = (resolve: Partial<IChart['layout']['resolve']>) => chartToWorksheet(chart(base, {}, { resolve: { ...emptyVisualLayout.resolve, ...resolve } })).spec!.scaleScope;
+        expect(scope({})).toEqual({ columns: 'shared', rows: 'shared' });
+        expect(scope({ x: true })).toEqual({ columns: 'independent', rows: 'shared' });
+        expect(scope({ y: true })).toEqual({ columns: 'shared', rows: 'independent' });
+        expect(scope({ x: true, y: true })).toEqual({ columns: 'independent', rows: 'independent' });
         const noZero = chartToWorksheet(chart(base, {}, { zeroScale: false })).spec!;
         expect(noZero.instances[ids(noZero.columns)[0]].zero).toBe(false);
     });

@@ -203,7 +203,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         if (!by.aggregate) by = instances.order = { id: 'order', field: by.field, label: by.label, display: 'continuous', aggregate: geom === 'boxplot' ? 'median' : 'sum' };
         for (const { id, direction } of own.sorted) order[id] = { by: by.id, direction };
     }
-    if (encodings.filters.some((f) => f.enableAgg)) notes.push('Filters on aggregated values are not applied.');
     // Settings the editor offers that this renderer does not read yet. Every one of them is listed in
     // the gap table of the plan document; a setting that starts to work is removed here and there.
     // Scale settings: the axes of each shelf, and the color, size and opacity channels. The editor's
@@ -244,7 +243,8 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         ...(Object.keys(scales).length ? { scales } : {}),
         // The editor's limit cuts the query result, after ordering it by the sort measure when a sort is on.
         limit: config.limit > 0 ? { rows: config.limit, ...ranked } : undefined,
-        scaleScope: layout.resolve?.x || layout.resolve?.y ? 'independent' : 'shared',
+        // The editor's switches are per direction: x is the axes along the columns, y the axes along the rows.
+        scaleScope: { columns: layout.resolve?.x ? 'independent' : 'shared', rows: layout.resolve?.y ? 'independent' : 'shared' },
     };
     return result({ spec });
 }
