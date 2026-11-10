@@ -1,5 +1,5 @@
 import { Resizable } from 're-resizable';
-import React, { forwardRef, useMemo, useContext } from 'react';
+import React, { forwardRef, useMemo, useContext, useState } from 'react';
 
 import { PivotTableCore } from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
@@ -70,6 +70,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
     const format = _format;
 
     const isPivotTable = geoms[0] === 'table';
+    // Why the table could not be built, shown in its place. Without this a failed table is a blank area.
+    const [tableError, setTableError] = useState('');
     const computation = useCompututaion();
     const appRootRef = useAppRootContext();
 
@@ -133,8 +135,21 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 showTableSummary={layout.showTableSummary}
                 numberFormat={layout.format.numberFormat}
                 disableCollapse={disableCollapse}
-                onRenderStatusChange={(status) => appRootRef.current?.updateRenderStatus(status)}
-                onError={(error) => console.error(error)}
+                onRenderStatusChange={(status) => {
+                    if (status === 'computing') setTableError('');
+                    appRootRef.current?.updateRenderStatus(status);
+                }}
+                onError={(error) => {
+                    console.error(error);
+                    setTableError(error.message);
+                }}
+                emptyContent={
+                    tableError ? (
+                        <div role="alert" className="p-4 text-sm text-muted-foreground" data-testid="pivot-table-error">
+                            {tableError}
+                        </div>
+                    ) : null
+                }
             />
         );
     }
@@ -194,7 +209,8 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {!isSpatial && (!layout.renderer || layout.renderer === 'vega-lite') && (
+            {/* 'native' reaches this component only where the native renderer is not registered; Vega draws it then. */}
+            {!isSpatial && layout.renderer !== 'observable-plot' && (
                 <ReactVega
                     name={name}
                     vegaConfig={vegaConfig}

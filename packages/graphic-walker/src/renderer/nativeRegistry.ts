@@ -1,0 +1,68 @@
+import { useSyncExternalStore, type ComponentType } from 'react';
+import type { IChart, IComputationFunction, IViewField } from '../interfaces';
+
+/**
+ * What the editor hands to the native worksheet renderer: the chart as stored, every
+ * field of the dataset including computed ones, and the function that runs queries.
+ * The renderer plans its own queries, so it gets no prepared view data.
+ */
+export interface NativeRendererProps {
+    chart: IChart;
+    fields: IViewField[];
+    computation: IComputationFunction;
+    /**
+     * The chart colors the editor's other renderers would use for this chart: its theme preset
+     * with the chart's own primary color and palette applied, for the current light or dark mode.
+     */
+    colors: NativeRendererColors;
+    /**
+     * Report that this chart cannot be drawn after all, for a reason `canDraw` could not see
+     * in the chart alone, such as a query that fails or values of a kind the renderer does
+     * not handle. The editor then draws the chart with its own renderer.
+     */
+    onUnsupported: (reason: string) => void;
+}
+
+export interface NativeRendererColors {
+    dark: boolean;
+    /** Color of marks without a color field. */
+    primary: string;
+    /** Colors for the members of a dimension on color. */
+    category: string[];
+    /** Stops for a measure on color. */
+    ramp: string[];
+    /** Stops for a measure on color whose range crosses zero, when the theme has them. */
+    diverging?: string[];
+    /** Stops for heat map cells, when the theme has them. */
+    heatmap?: string[];
+    /** The chart's own background, when the user set one. */
+    background?: string;
+}
+
+export interface NativeRenderer {
+    component: ComponentType<NativeRendererProps>;
+    /**
+     * Whether the renderer can draw this chart. A chart it cannot draw, such as a text
+     * table or a pie, goes to the renderers that already handle it instead of showing an error.
+     */
+    canDraw(chart: IChart): boolean;
+}
+
+// The native renderer is a preview that lives outside this package's sources. Whoever
+// hosts the editor registers it; until then `layout.renderer: 'native'` is not offered
+// and charts that ask for it fall back to the default renderer.
+let registered: NativeRenderer | undefined;
+const listeners = new Set<() => void>();
+
+export function registerNativeRenderer(renderer: NativeRenderer | undefined) {
+    registered = renderer;
+    listeners.forEach((listener) => listener());
+}
+const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+    };
+};
+const current = () => registered;
+export const useNativeRenderer = () => useSyncExternalStore(subscribe, current, current);

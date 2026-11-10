@@ -76,6 +76,8 @@ export default defineConfig({
     dedupe: modulesNotToBundle,
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Used only by native-preview/, which the dev server loads. Nothing under src imports it.
+      "@kanaries/worksheet-renderer": path.resolve(__dirname, "../worksheet-renderer/src/index.ts"),
     },
   },
   build: {

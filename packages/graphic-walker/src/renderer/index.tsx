@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo, useContext } from 'react';
 import {
     DraggableFieldState,
     IDarkMode,
@@ -31,6 +31,9 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
+import { useNativeRenderer, type NativeRendererColors } from './nativeRegistry';
+import { getColor, getTheme } from '../utils/useTheme';
+import { themeContext } from '@/store/theme';
 
 interface RendererProps {
     vizThemeConfig: IThemeKey | GWGlobalConfig;
@@ -247,4 +250,51 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     );
 });
 
-export default observer(Renderer);
+const ObservedRenderer = observer(Renderer);
+
+/**
+ * Routes a chart to the native worksheet renderer when the chart asks for it and a host
+ * has registered one. That renderer plans its own queries from the chart, so the query
+ * and Vega pipeline above is not mounted for it. Charts it cannot draw, such as text tables,
+ * pies and maps, keep going to the renderers that already handle them.
+ */
+const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
+    const vizStore = useVizStore();
+    const native = useNativeRenderer();
+    const chart = vizStore.currentVis;
+    // The same resolution the Vega path does: theme preset, then the chart's primary color and palette on top.
+    const mediaTheme = useContext(themeContext);
+    const { primaryColor, colorPalette, background } = chart.layout;
+    const colors = useMemo<NativeRendererColors>(() => {
+        const resolved = getColor(getTheme({ vizThemeConfig: props.vizThemeConfig, mediaTheme, primaryColor, colorPalette }));
+        return {
+            dark: mediaTheme === 'dark',
+            primary: resolved.primaryColor,
+            category: resolved.nominalPalette,
+            ramp: resolved.quantitativePalette,
+            diverging: resolved.divergingPalette,
+            heatmap: resolved.heatmapPalette,
+            background: background || undefined,
+        };
+    }, [props.vizThemeConfig, mediaTheme, primaryColor, colorPalette, background]);
+    // A chart the native renderer gave up on while drawing stays with the old renderers until its
+    // fields, mark type or aggregation change. Size and color changes do not bring the failure back.
+    const { encodings, config } = chart;
+    const shape = useMemo(() => JSON.stringify([encodings, config]), [encodings, config]);
+    const [failed, setFailed] = useState<{ shape: string; reason: string }>();
+    const onUnsupported = useCallback((reason: string) => {
+        console.warn(`[worksheet renderer] fell back to the default renderer: ${reason}`);
+        setFailed({ shape, reason });
+    }, [shape]);
+    if (native && chart.layout.renderer === 'native' && failed?.shape !== shape && native.canDraw(chart)) {
+        const Native = native.component;
+        return (
+            <div className="w-full h-full">
+                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} onUnsupported={onUnsupported} />
+            </div>
+        );
+    }
+    return <ObservedRenderer {...props} ref={ref} />;
+});
+
+export default observer(RendererSwitch);

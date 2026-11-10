@@ -167,7 +167,7 @@ export function normalize(input: IChart | IVisSpec | PartialChart | TerseSpec | 
     // so normalized output matches what the UI would converge to for the same spec.
     const encodings: DraggableFieldState = {
         ...filled.encodings,
-        ...algebraLint(geom, filled.encodings),
+        ...algebraLint(geom, filled.encodings, { unlimitedCross: filled.layout.renderer === 'native' }),
         ...lintExtraFields(filled.encodings),
     };
     return {

@@ -430,8 +430,12 @@ export interface IVisualLayout {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
-    /** @default "vega-lite" */
-    renderer?: 'vega-lite' | 'observable-plot';
+    /**
+     * 'native' is the worksheet renderer preview. It draws only where a host has registered it;
+     * elsewhere such a chart is drawn by the default renderer.
+     * @default "vega-lite"
+     */
+    renderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export interface IVisualConfigNew {

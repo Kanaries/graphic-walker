@@ -22,6 +22,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@kanaries/worksheet-renderer": [
+        "../worksheet-renderer/src/index.ts"
       ]
     },
     "plugins": [
