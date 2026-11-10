@@ -3,7 +3,7 @@ import { parse, View } from 'vega';
 import { continuousColor, darkTheme, lightTheme, type Theme } from './color';
 import { compileWorksheet, executePlan } from './compiler';
 import { valueKey } from './keys';
-import { setTextMeasure } from './layout';
+import { defaultFont, setTextMeasure } from './layout';
 import type { Formats } from './formats';
 import { memberLabel } from './time';
 import { buildModel, type Zoom } from './model';
@@ -70,8 +70,8 @@ export interface WorksheetProps {
 // Header widths and label truncation use the same font the canvas draws with.
 if (typeof document !== 'undefined') {
     const context = document.createElement('canvas').getContext('2d');
-    if (context) setTextMeasure((text, fontSize, fontWeight) => {
-        context.font = `${fontWeight} ${fontSize}px system-ui, sans-serif`;
+    if (context) setTextMeasure((text, fontSize, fontWeight, font) => {
+        context.font = `${fontWeight} ${fontSize}px ${font || defaultFont}`;
         return context.measureText(text).width;
     });
 }
@@ -177,9 +177,9 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const headerWidth = Math.max(96, Math.round(viewport.width * 0.4 / 24) * 24);
     const built = useMemo(() => {
         if (!compiled.plan || result?.key !== queryKey || !result.data) return undefined;
-        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }, formats, zoom), error: '' }; }
+        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth, font: theme.font }, formats, zoom), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
-    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats, zoom]);
+    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth, formats, zoom, theme.font]);
     const fresh = built?.model;
     // While the next result is on its way the last sheet stays up, so a change of fields does not blank the chart.
     const last = useRef(fresh);

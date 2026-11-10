@@ -3,6 +3,8 @@ export interface Words {
     share: string;
     upperWhisker: string; upperQuartile: string; median: string; lowerQuartile: string; lowerWhisker: string;
     records: string;
+    /** The ends of a legend whose range differs from pane to pane. */
+    low: string; high: string;
     /** What stands for a missing member. */
     missing: string;
     /** The end of a legend list that does not fit, for `count` entries left out. */
@@ -44,7 +46,7 @@ export interface Format {
 }
 export const englishWords: Words = {
     share: 'Share', upperWhisker: 'Upper whisker', upperQuartile: 'Upper quartile', median: 'Median', lowerQuartile: 'Lower quartile', lowerWhisker: 'Lower whisker',
-    records: 'Records', missing: '(null)', more: count => `+${count} more`, empty: 'No data matches these filters.',
+    records: 'Records', low: 'Low', high: 'High', missing: '(null)', more: count => `+${count} more`, empty: 'No data matches these filters.',
 };
 const day = 86_400_000;
 const resolved = new WeakMap<Formats, Format>();

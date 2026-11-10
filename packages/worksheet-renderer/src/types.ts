@@ -27,6 +27,23 @@ export interface FieldInstance {
     zero?: boolean;
     aggregate?: Aggregate;
 }
+/**
+ * Settings of the value axes on one shelf, or of one channel. What is left out follows the data.
+ */
+export interface ScaleOptions {
+    type?: import('./warp').ScaleType;
+    /** Fixed ends of the range. Marks outside a fixed axis range are cut off at the edge of their pane. */
+    min?: number;
+    max?: number;
+    /**
+     * Channels only: what the lowest and the highest value turn into. For opacity, two numbers
+     * between 0 and 1. For size, px: the area of a point in square px, the thickness of a bar,
+     * the length of a tick, the width of a line, the font size of text.
+     */
+    range?: [number, number];
+    /** Channels with a continuous field only: every pane ranges over its own values, and the legend names no numbers. */
+    independent?: boolean;
+}
 export type TimeUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'iso_year' | 'iso_week';
 export type AxisExpr =
     | { kind: 'empty' }
@@ -78,6 +95,8 @@ export interface WorksheetSpec {
     opacity?: string;
     /** Gives each member of a dimension its own symbol. Only point and circle marks have one. */
     shape?: string;
+    /** `rows` and `columns` apply to every value axis on that shelf, time axes excepted. */
+    scales?: { rows?: ScaleOptions; columns?: ScaleOptions; color?: ScaleOptions; size?: ScaleOptions; opacity?: ScaleOptions };
     /**
      * How bars and areas that share a position pile up. They stack end to end unless this is
      * false, in which case they overlap from the zero line. 'normalize' stacks their shares of
@@ -176,8 +195,12 @@ export interface AxisScale {
     step?: number;
     /** Names the range this axis shows. Every leaf that shares the range has the same key; a zoom is stored under it. */
     key?: string;
-    /** The range the data asks for. It differs from `domain` while the axis is zoomed or panned. */
+    /** The range the data and the axis settings ask for. It differs from `domain` while the axis is zoomed or panned. */
     full?: [number, number];
+    /** How values are spread along the axis. Linear when absent. */
+    type?: import('./warp').ScaleType;
+    /** An end of the range was set by hand, so some marks may lie outside it. */
+    fixed?: boolean;
 }
 /**
  * One layout position along an axis. A discrete terminal field contributes one leaf per
@@ -264,9 +287,11 @@ export interface Pane {
     marks: PaneMark[];
     xDomain: [number, number];
     yDomain: [number, number];
+    /** The pane's own range on a channel that is set to range independently. */
+    domains?: { color?: [number, number]; size?: [number, number]; opacity?: [number, number] };
 }
 /** Fixed chrome around the scrolling body, in CSS px. */
-export interface ColorScale { field: FieldInstance; domain: [number, number]; diverging: boolean }
+export interface ColorScale { field: FieldInstance; domain: [number, number]; diverging: boolean; type?: import('./warp').ScaleType }
 export interface Frame {
     left: number;
     top: number;

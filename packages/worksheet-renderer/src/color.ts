@@ -1,5 +1,6 @@
 import { valueKey } from './keys';
 import { resultKey, type ColorScale, type FieldInstance, type Row, type Value } from './types';
+import { position } from './warp';
 
 /**
  * Every color the sheet paints. The first six are the surface, text and rules; the rest
@@ -17,6 +18,18 @@ export interface Theme {
     diverging: string[];
     /** Stops for the cells of a heat map, when they differ from `ramp`. */
     heatmap?: string[];
+    /** Font family of every text. The system font when absent. */
+    font?: string;
+    /** Dash and gap of grid lines in px. Solid when absent. The zero line is always solid. */
+    gridDash?: [number, number];
+    /** Width of line marks in px, where no field is on size. */
+    lineWidth?: number;
+    /** Width of the outline of point marks in px. */
+    pointStrokeWidth?: number;
+    /** Draws point marks filled, like circle marks. */
+    pointFilled?: boolean;
+    /** Rounds the far end of bars by this many px. */
+    barRadius?: number;
 }
 const marks = {
     mark: '#4263eb',
@@ -63,7 +76,9 @@ export function continuousColor(scale: ColorScale, value: number, theme: Theme =
         const reach = Math.max(Math.abs(low), Math.abs(high));
         return along(theme.diverging, .5 + value / reach / 2);
     }
-    const t = high === low ? 1 : (value - low) / (high - low);
+    const t = high === low ? 1 : position(scale.domain, value, scale.type);
+    // A value with no place on the scale, such as zero on a log scale, has no color either.
+    if (Number.isNaN(t)) return missing;
     return along(cells && theme.heatmap?.length ? theme.heatmap : theme.ramp, high <= 0 ? 1 - t : t);
 }
 

@@ -101,3 +101,14 @@ test('members of a discrete time field are named after their period, in the zone
     assert.deepEqual(scene.items.filter(p => p.layer === 'rowHeader' && p.tooltip?.startsWith('Year')).map(p => p.text), ['2024', '2025']);
     assert.deepEqual(scene.items.filter(p => p.selection).sort((a, b) => a.y - b.y).map(p => p.tooltip), ['Year: 2024\nSUM: 1', 'Year: 2025\nSUM: 2']);
 });
+
+test('a date axis that passes the start of 1970 draws no zero line there', async () => {
+    const rows: Row[] = [{ date: '1969-01-01', value: 3 }, { date: '1970-01-01', value: 5 }, { date: '1971-01-01', value: 4 }];
+    const m = await model({ ...base, rows: field('sum'), columns: field('date'), mark: 'line' }, rows);
+    assert.ok(m.columns.leaves[0].scale!.ticks.includes(0), 'the axis has a tick at the start of 1970');
+    const scene = fullScene(m);
+    const { lightTheme } = await import('../src/color');
+    // The value axis starts at zero and keeps its zero line; it is the only one.
+    const zero = scene.items.filter(p => p.kind === 'rect' && p.fill === lightTheme.zero);
+    assert.ok(zero.length === 1 && zero[0].height === 1, `zero lines: ${JSON.stringify(zero.map(p => [p.width, p.height]))}`);
+});

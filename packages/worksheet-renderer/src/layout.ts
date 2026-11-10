@@ -41,8 +41,15 @@ export function leafSizes(spec: WorksheetSpec): { row: LeafSizes; column: LeafSi
     };
 }
 
-export type TextMeasure = (text: string, fontSize: number, fontWeight: number) => number;
+export type TextMeasure = (text: string, fontSize: number, fontWeight: number, font: string) => number;
+export const defaultFont = 'system-ui, sans-serif';
 let measure: TextMeasure | undefined;
+let font = defaultFont;
+/**
+ * The font every width is measured in until the next call. Layout and scene building are
+ * synchronous and each sets it on entry, so two sheets with different fonts do not mix.
+ */
+export function setFont(next?: string) { font = next || defaultFont; }
 const measured = new Map<string, number>();
 /**
  * Installs a real text measurer, for example a canvas context in the browser. Layout and
@@ -52,11 +59,11 @@ const measured = new Map<string, number>();
 export function setTextMeasure(next?: TextMeasure) { measure = next; measured.clear(); }
 export function textWidth(text: string, fontSize = metrics.fontSize, fontWeight = 400): number {
     if (measure) {
-        const key = `${fontWeight}|${fontSize}|${text}`;
+        const key = `${font}|${fontWeight}|${fontSize}|${text}`;
         let width = measured.get(key);
         if (width === undefined) {
             if (measured.size > 50_000) measured.clear();
-            measured.set(key, width = measure(text, fontSize, fontWeight));
+            measured.set(key, width = measure(text, fontSize, fontWeight, font));
         }
         return width;
     }

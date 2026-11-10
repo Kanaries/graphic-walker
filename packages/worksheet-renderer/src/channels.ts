@@ -1,5 +1,6 @@
 import { valueKey } from './keys';
 import { resultKey, type FieldInstance, type Row, type Value } from './types';
+import { position, type ScaleType } from './warp';
 
 /**
  * What a field on size or opacity spans. A dimension has members, ranked in value order; a
@@ -9,6 +10,11 @@ export interface ChannelScale {
     field: FieldInstance;
     members?: Value[];
     domain?: [number, number];
+    type?: ScaleType;
+    /** An end of the range was set by hand; a size then no longer measures from zero on its own. */
+    fixed?: boolean;
+    /** What the lowest and the highest level turn into, in place of the built-in steps. */
+    range?: [number, number];
 }
 /** One block of the legend strip: a title and what explains one channel. */
 export interface LegendBlock {
@@ -41,10 +47,13 @@ export function level(scale: ChannelScale, record: Row, fromZero = false): numbe
 export function levelOf(scale: ChannelScale, value: number, fromZero = false): number {
     if (!Number.isFinite(value) || !scale.domain) return NaN;
     let [low, high] = scale.domain;
-    if (fromZero && low >= 0) low = 0;
-    else if (fromZero && high <= 0) [low, high] = [0, low];
+    // A log scale has no zero to measure from.
+    if (fromZero && !scale.fixed && scale.type !== 'log') {
+        if (low >= 0) low = 0;
+        else if (high <= 0) [low, high] = [0, low];
+    }
     // A range of one value puts everything at the top.
-    return high === low ? 1 : Math.min(1, Math.max(0, (value - low) / (high - low)));
+    return high === low ? 1 : Math.min(1, Math.max(0, position([low, high], value, scale.type)));
 }
 const indices = new WeakMap<ChannelScale, Map<string, number>>();
 export function memberIndex(scale: ChannelScale, value: Value): number {
@@ -61,3 +70,5 @@ export const pointArea = (t: number) => 12 + t * 244;
 export const thicknessShare = (t: number) => 0.25 + 0.75 * t;
 /** Opacity at an opacity level. The faintest mark stays readable. */
 export const opacityAt = (t: number) => 0.25 + 0.75 * t;
+/** The value at a level of a range set by hand. */
+export const inRange = (range: [number, number], t: number) => range[0] + (range[1] - range[0]) * t;

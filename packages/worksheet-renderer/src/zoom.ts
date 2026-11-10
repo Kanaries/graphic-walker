@@ -3,6 +3,7 @@ import { leafRange, metrics } from './layout';
 import type { Zoom } from './model';
 import type { Viewport } from './scene';
 import type { AxisLeaf, WorksheetModel } from './types';
+import { warp } from './warp';
 
 /** The continuous axes under a point of the window, each with how far along its range the point is, from 0 to 1. */
 export interface AxesAt { x?: { leaf: AxisLeaf; t: number }; y?: { leaf: AxisLeaf; t: number } }
@@ -30,16 +31,19 @@ const closest = 1e-4, widest = 20;
 
 /** The range after zooming `from` by `factor` around the point at share `t` of it. Below 1 zooms in. */
 export function zoomed(leaf: AxisLeaf, from: readonly [number, number], t: number, factor: number): [number, number] {
-    const [low, high] = from, [fullLow, fullHigh] = leaf.scale!.full ?? leaf.scale!.domain;
+    // On an axis that is not linear the zoom works where its values are spread evenly, so the point under the pointer stays put.
+    const { to, from: back } = warp(leaf.scale!.type);
+    const low = to(from[0]), high = to(from[1]), [fullLow, fullHigh] = (leaf.scale!.full ?? leaf.scale!.domain).map(to);
     const span = high - low, whole = fullHigh - fullLow;
     const next = Math.min(whole * widest, Math.max(whole * closest, span * factor));
     const at = low + span * t;
-    return [at - next * t, at + next * (1 - t)];
+    return [back(at - next * t), back(at + next * (1 - t))];
 }
 /** The range after moving the axis by `pixels` on screen, in the direction its values grow. */
 export function panned(leaf: AxisLeaf, from: readonly [number, number], pixels: number): [number, number] {
-    const shift = -pixels / inner(leaf) * (from[1] - from[0]);
-    return [from[0] + shift, from[1] + shift];
+    const { to, from: back } = warp(leaf.scale!.type);
+    const low = to(from[0]), high = to(from[1]), shift = -pixels / inner(leaf) * (high - low);
+    return [back(low + shift), back(high + shift)];
 }
 /** `zoom` with the range of one axis replaced. Returning to the range the data asks for drops the entry. */
 export function withRange(zoom: Zoom, leaf: AxisLeaf, range: [number, number]): Zoom {

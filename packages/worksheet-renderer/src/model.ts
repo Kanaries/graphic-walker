@@ -1,10 +1,11 @@
 import { compareValue, pathKey, typed, valueKey } from './keys';
 import { resolveFormats, type Format, type Formats } from './formats';
-import { buildAxis, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { buildAxis, leafSizes, metrics, scaleAxis, setFont, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
+import { logTicks, position } from './warp';
 import { memberLabel, positionValue, timeScale } from './time';
 import { branchFields, valueAxis } from './compiler';
 import { legendTitleHeight, levelOf, type ChannelScale, type LegendBlock } from './channels';
-import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel, type WorksheetSpec } from './types';
+import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type ScaleOptions, type Value, type WorksheetModel, type WorksheetSpec } from './types';
 
 function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDraft {
     const facets = branch.facets.map(f => ({ instanceId: f.id, value: record[f.field] as Value }));
@@ -149,14 +150,17 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     const bars = plan.spec.mark === 'bar';
     const shares = stackMode(plan) === 'normalize';
     const shared = new Set<string>();
+    // The axis settings of this shelf. They do not apply to time axes.
+    const options = plan.spec.scales?.[axis === 'x' ? 'columns' : 'rows'];
     for (const pane of panes) {
         const group = axis === 'x' ? pane.column : pane.row;
         const f = group.branch.position;
         if (!f || f.display !== 'continuous') continue;
         const key = keyOf(layout.leaves[group.start]);
         const time = f.scale === 'time';
-        // A value axis starts from zero. A date axis has no zero worth showing.
-        const extent = extents.get(key) ?? (time || f.zero === false ? [Infinity, -Infinity] : [0, 0]);
+        const log = !time && options?.type === 'log';
+        // A value axis starts from zero. A date axis has no zero worth showing, and a log axis has no zero at all.
+        const extent = extents.get(key) ?? (time || log || f.zero === false ? [Infinity, -Infinity] : [0, 0]);
         const carriesValue = valueAxis(pane.column.branch.position, pane.row.branch.position) === axis;
         const distinct = bars && !carriesValue ? positions.get(key) ?? new Set<number>() : undefined;
         for (const mark of pane.marks) {
@@ -170,7 +174,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
             }
             if (Number.isFinite(value)) distinct?.add(value);
             for (const v of spans && carriesValue ? [mark.start, mark.end] : [value]) {
-                if (Number.isFinite(v)) { extent[0] = Math.min(extent[0], v); extent[1] = Math.max(extent[1], v); }
+                if (Number.isFinite(v) && !(log && v <= 0)) { extent[0] = Math.min(extent[0], v); extent[1] = Math.max(extent[1], v); }
             }
         }
         extents.set(key, extent);
@@ -187,13 +191,26 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         const sorted = [...positions.get(key) ?? []].sort((a, b) => a - b);
         const step = sorted.length > 1 ? Math.min(...sorted.slice(1).map((v, i) => v - sorted[i])) : undefined;
         if (step) { min -= step / 2; max += step / 2; }
+        const type = time ? undefined : options?.type;
+        // Ends of the range set by hand win over the data.
+        const fixed = !time && (options?.min !== undefined || options?.max !== undefined);
+        if (!time && options?.min !== undefined) min = options.min;
+        if (!time && options?.max !== undefined) max = options.max;
+        if (type === 'log') {
+            // Only positive values have a place. A range that reaches zero starts three powers of ten below its end.
+            if (!(max > 0)) max = 1;
+            if (!(min > 0) || min >= max) min = min === max && min > 0 ? min / 10 : max / 1000;
+            if (min === max) max = min * 10;
+        } else if (!time && min >= max && fixed) max = min + 1;
         const pixels = leaf.size - metrics.scalePadStart - metrics.scalePadEnd;
         // Every axis carries its labels: dates from the time scale, shares in percent, other numbers as ticks.
         const make = (gap: number, least = 2) => {
             const scale = time ? timeScale(min, max, pixels, gap, format) : tickScale(min, max, pixels, gap, least);
+            if (type === 'log') scale.ticks = logTicks(min, max, Math.max(2, Math.floor(pixels / gap))) ?? scale.ticks;
             if (!time) scale.labels = scale.ticks.map(shared.has(key) ? format.share : format.tick);
             return scale;
         };
+        const at = (scale: { domain: [number, number] }, tick: number) => position(scale.domain, tick, type) * pixels;
         let gap = axis === 'x' ? (time ? 62 : 46) : 30;
         // The range the data asks for, and in its place the one the viewer zoomed or panned to.
         const id = `${axis}|${key}`;
@@ -204,23 +221,37 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         // Labels along a horizontal axis must not run into each other. A format that writes long labels gets fewer ticks.
         for (let round = 0; axis === 'x' && round < 3 && scale.ticks.length > 1; round++) {
             const widest = Math.max(...scale.labels!.map(label => textWidth(label, 10)));
-            const spacing = (scale.ticks[1] - scale.ticks[0]) / (scale.domain[1] - scale.domain[0]) * pixels;
+            // The two closest ticks decide; on an axis that is not linear they are not the first two.
+            const spacing = Math.min(...scale.ticks.slice(1).map((tick, i) => at(scale, tick) - at(scale, scale.ticks[i])));
             if (widest + 10 <= spacing) break;
             // Where even two steps are too many, one step keeps a label at each end of the range.
             scale = make(gap = Math.max(gap * 1.5, widest + 14), 1);
         }
         // In a slot too narrow even for that, a label that would run into the one before it is left blank. Its tick stays.
-        if (axis === 'x' && scale.labels) {
+        // The same goes for a vertical axis whose ticks crowd together, as near the start of a square root axis.
+        if (scale.labels && (axis === 'x' || type)) {
             let free = -Infinity;
             scale.labels = scale.labels.map((label, i) => {
-                const at = (scale.ticks[i] - scale.domain[0]) / (scale.domain[1] - scale.domain[0]) * pixels, half = textWidth(label, 10) / 2;
-                if (at - half < free) return '';
-                free = at + half + 6;
+                const center = at(scale, scale.ticks[i]), half = axis === 'x' ? textWidth(label, 10) / 2 : 5;
+                if (center - half < free) return '';
+                free = center + half + (axis === 'x' ? 6 : 2);
                 return label;
             });
         }
-        leaf.scale = { ...scale, step, key: id, full };
+        leaf.scale = { ...scale, step, key: id, full, ...(type && type !== 'linear' ? { type } : {}), ...(fixed ? { fixed } : {}) };
     }
+}
+
+// The range of a continuous channel: the extent of the data, with the ends set by hand in their place.
+function continuousRange(extent: [number, number], options?: ScaleOptions): { domain?: [number, number]; type?: ScaleOptions['type']; fixed?: boolean } {
+    const fixed = options?.min !== undefined || options?.max !== undefined;
+    let [low, high] = extent[0] <= extent[1] ? extent : [NaN, NaN];
+    if (options?.min !== undefined) low = options.min;
+    if (options?.max !== undefined) high = options.max;
+    const type = options?.type && options.type !== 'linear' ? options.type : undefined;
+    // A log range needs a positive start.
+    if (type === 'log' && !(low > 0) && high > 0) low = high / 1000;
+    return { domain: Number.isFinite(low) && Number.isFinite(high) && low <= high ? [low, high] : undefined, ...(type ? { type } : {}), ...(fixed ? { fixed } : {}) };
 }
 
 // What explains each channel, in the order the strip shows it: color, size, opacity, shape.
@@ -229,8 +260,10 @@ function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorSca
     const list = (channel: LegendBlock['channel'], title: string, entries: LegendBlock['entries'], step = 18) =>
         blocks.push({ channel, title, kind: 'list', entries, step, height: legendTitleHeight + entries.length * step + 6 });
     const color = spec.color ? spec.instances[spec.color] : undefined;
+    // A channel whose range differs from pane to pane has no numbers to show, only which end is which.
+    const ends = [format.words.low, format.words.high];
     if (color && colorScale) blocks.push({ channel: 'color', title: color.label, kind: 'ramp', step: 0, height: 64,
-        entries: colorScale.domain.map((value, i) => ({ label: format.tick(value), level: i })) });
+        entries: colorScale.domain.map((value, i) => ({ label: spec.scales?.color?.independent ? ends[i] : format.tick(value), level: i })) });
     else if (color) list('color', color.label, colors.map((value, i) => ({ label: memberLabel(color, value, format), level: i })));
     for (const channel of ['size', 'opacity', 'shape'] as const) {
         const scale = channels[channel];
@@ -240,8 +273,10 @@ function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorSca
         } else if (scale.domain) {
             // The ends of the range and the middle are enough to read a size or an opacity against.
             const [low, high] = scale.domain;
-            const samples = low === high ? [low] : [low, (low + high) / 2, high];
-            list(channel, scale.field.label, samples.map(value => ({ label: format.tick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
+            const own = spec.scales?.[channel as 'size' | 'opacity']?.independent;
+            const samples = own ? [0, 1] : low === high ? [low] : [low, (low + high) / 2, high];
+            list(channel, scale.field.label, own ? samples.map((level, i) => ({ label: ends[i], level }))
+                : samples.map(value => ({ label: format.tick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
         }
     }
     return blocks;
@@ -294,15 +329,16 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
  * what occurs anywhere along the other axis, so a pane without a record for some member
  * still leaves that member's slot empty. Absent intersections allocate no pane.
  * With spec.fit and a target size, leaf steps are scaled so the sheet fills the target.
- * target.headerWidth caps the total width of the row headers.
+ * target.headerWidth caps the total width of the row headers. target.font is the font texts are measured in.
  * formats says how numbers, dates and the sheet's own words are written; the labels built here already follow it.
  * zoom replaces the range of the axes it names; marks outside a zoomed range are cut off at the edge of their pane.
  */
 /** Ranges that replace what the data asks for, by the key of the axis scale. */
 export type Zoom = Readonly<Record<string, readonly [number, number]>>;
 
-export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }, formats?: Formats, zoom?: Zoom): WorksheetModel {
+export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number; font?: string }, formats?: Formats, zoom?: Zoom): WorksheetModel {
     const { spec } = plan;
+    setFont(target?.font);
     const format = resolveFormats(formats);
     const rowDrafts = new Map<string, LeafDraft>();
     const columnDrafts = new Map<string, LeafDraft>();
@@ -384,8 +420,10 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     }
     const palette = [...colors.values()].sort(compareValue);
     for (const span of spans) {
+        const options = span.channel === 'shape' ? undefined : spec.scales?.[span.channel];
         const scale: ChannelScale = span.field.display === 'discrete' ? { field: span.field, members: [...span.members.values()].sort(compareValue) }
-            : { field: span.field, domain: span.domain[0] <= span.domain[1] ? span.domain : undefined };
+            : { field: span.field, ...continuousRange(span.domain, options) };
+        if (options?.range) scale.range = options.range;
         if (scale.members?.length || scale.domain) channels[span.channel] = scale;
     }
     // Boxes of different colors stand side by side in a member step, in legend order and in the same
@@ -403,8 +441,24 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     const scales = () => { assignScales(columns, 'x', panes, plan, format, zoom); assignScales(rows, 'y', panes, plan, format, zoom); };
     scales();
     // A color range comes from the complete result, like an axis range.
+    const colorRange = continuousRange(extent, spec.scales?.color);
+    // A range across zero diverges from it, unless its ends or its spread were set by hand.
     const colorScale: ColorScale | undefined = color?.display === 'continuous'
-        ? { field: color, domain: extent[0] <= extent[1] ? extent : [0, 1], diverging: extent[0] < 0 && extent[1] > 0 } : undefined;
+        ? { field: color, domain: colorRange.domain ?? [0, 1], type: colorRange.type, diverging: !colorRange.fixed && !colorRange.type && extent[0] < 0 && extent[1] > 0 } : undefined;
+    // Channels set to range independently: every pane gets the extent of its own records.
+    for (const channel of ['color', 'size', 'opacity'] as const) {
+        const field = spec[channel] ? spec.instances[spec[channel]!] : undefined;
+        if (!spec.scales?.[channel]?.independent || field?.display !== 'continuous') continue;
+        for (const pane of panes) {
+            const own: [number, number] = [Infinity, -Infinity];
+            for (const record of pane.records) {
+                const raw = record[resultKey(field)];
+                if (typeof raw === 'number' && Number.isFinite(raw)) { own[0] = Math.min(own[0], raw); own[1] = Math.max(own[1], raw); }
+            }
+            const range = continuousRange(own, spec.scales[channel]).domain;
+            if (range) (pane.domains ??= {})[channel] = range;
+        }
+    }
     const legends = buildLegends(spec, palette, colorScale, channels, format);
     const measure = () => buildFrame(rows, columns, spec, legendWidth(legends), format, target?.headerWidth);
     let frame = measure();
