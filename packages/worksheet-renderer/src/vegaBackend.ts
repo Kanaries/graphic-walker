@@ -1,7 +1,7 @@
 import { parse, View, type Spec } from 'vega';
 import { layers, type Layer, type Primitive, type Scene } from './scene';
 
-const kinds = ['rect', 'path', 'symbol', 'text'] as const;
+const kinds = ['rect', 'shape', 'path', 'symbol', 'text'] as const;
 export const dataName = (layer: Layer, kind: Primitive['kind']) => `${layer}_${kind}`;
 export function sceneData(scene: Scene): Map<string, Primitive[]> {
     const data = new Map<string, Primitive[]>(layers.flatMap(layer => kinds.map(kind => [dataName(layer, kind), []] as [string, Primitive[]])));
@@ -16,7 +16,7 @@ export function vegaSpec(scene: Scene): Spec {
     const pointer = { signal: "datum.selection ? 'pointer' : 'default'" };
     return {
         $schema: 'https://vega.github.io/schema/vega/v5.json',
-        width: scene.width, height: scene.height, padding: 0, autosize: 'none', background: '#ffffff',
+        width: scene.width, height: scene.height, padding: 0, autosize: 'none', background: scene.background,
         data: [...data].map(([name, values]) => ({ name, values })),
         marks: layers.map(layer => ({
             type: 'group' as const,
@@ -26,11 +26,16 @@ export function vegaSpec(scene: Scene): Spec {
                     x: { field: 'x' }, y: { field: 'y' }, width: { field: 'width' }, height: { field: 'height' },
                     fill: { field: 'fill' }, stroke: { field: 'stroke' }, opacity: { field: 'opacity' }, cursor: pointer,
                 } } },
+                { type: 'path' as const, from: { data: dataName(layer, 'shape') }, encode: { update: {
+                    x: { field: 'x' }, y: { field: 'y' }, path: { field: 'path' }, fill: { field: 'fill' }, stroke: { field: 'stroke' }, strokeWidth: { field: 'strokeWidth' },
+                    opacity: { field: 'opacity' }, cursor: pointer,
+                } } },
                 { type: 'path' as const, from: { data: dataName(layer, 'path') }, interactive: false, encode: { update: {
                     x: { field: 'x' }, y: { field: 'y' }, path: { field: 'path' }, stroke: { field: 'stroke' }, strokeWidth: { value: 1.8 }, opacity: { field: 'opacity' },
                 } } },
                 { type: 'symbol' as const, from: { data: dataName(layer, 'symbol') }, encode: { update: {
-                    x: { field: 'x' }, y: { field: 'y' }, size: { field: 'size' }, fill: { field: 'fill' }, opacity: { field: 'opacity' }, cursor: pointer,
+                    x: { field: 'x' }, y: { field: 'y' }, size: { field: 'size' }, fill: { field: 'fill' }, stroke: { field: 'stroke' }, strokeWidth: { field: 'strokeWidth' },
+                    opacity: { field: 'opacity' }, cursor: pointer,
                 } } },
                 { type: 'text' as const, from: { data: dataName(layer, 'text') }, encode: { update: {
                     x: { field: 'x' }, y: { field: 'y' }, text: { field: 'text' }, fill: { field: 'fill' }, align: { field: 'align' },

@@ -1,7 +1,7 @@
-import { compareValue, displayValue, pathKey, valueKey } from './keys';
+import { compareValue, pathKey, typed, valueKey } from './keys';
 import { buildAxis, formatTick, leafSizes, metrics, scaleAxis, tickScale, textWidth, type LeafDraft, type MemberCompare } from './layout';
-import { positionValue, timeScale } from './time';
-import { valueAxis } from './compiler';
+import { memberLabel, positionValue, timeScale } from './time';
+import { branchFields, valueAxis } from './compiler';
 import { resultKey, type AxisBranch, type AxisLayout, type AxisLeaf, type ColorScale, type Frame, type Pane, type PaneMark, type Plan, type Row, type Value, type WorksheetModel, type WorksheetSpec } from './types';
 
 function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDraft {
@@ -15,10 +15,16 @@ function draft(axis: 'row' | 'column', branch: AxisBranch, record: Row): LeafDra
 export const stacked = (plan: Plan) => plan.spec.mark === 'bar' && plan.spec.stack !== false;
 
 interface CellItem { record: Row; row: string; column: string }
+/** Value at share p of an ascending list, interpolated between neighbours. */
+const quantile = (sorted: number[], p: number) => {
+    const at = (sorted.length - 1) * p, i = Math.floor(at);
+    return sorted[i] + (sorted[Math.min(i + 1, sorted.length - 1)] - sorted[i]) * (at - i);
+};
 
 // Orders the records of one pane by series and gives each its interval on the measure axis.
 // Stacking accumulates per member, positive and negative values apart.
-function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisBranch, plan: Plan, rowIndex: Map<string, number>, columnIndex: Map<string, number>): PaneMark[] {
+// slots places the members of the color field side by side inside a member step; box plots use it.
+function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisBranch, plan: Plan, rowIndex: Map<string, number>, columnIndex: Map<string, number>, slots?: Map<string, number>): PaneMark[] {
     const x = columnBranch.position;
     const y = rowBranch.position;
     const axis = valueAxis(x, y);
@@ -27,7 +33,7 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
     const other = axis === 'x' ? y : x;
     const along = other?.display === 'continuous' ? other : undefined;
     // Only dimensions split a pane into series. A measure on color tints the marks without dividing them.
-    const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => !f.aggregate);
+    const series = [plan.spec.color, ...(plan.spec.detail ?? [])].filter((id): id is string => Boolean(id)).map(id => plan.spec.instances[id]).filter(f => f.display === 'discrete');
     const sorted = [...items].sort((a, b) => {
         for (const f of series) {
             const cmp = compareValue(a.record[f.field], b.record[f.field]);
@@ -35,10 +41,55 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
         }
         return 0;
     });
+    const place = (item: CellItem) => ({ record: item.record, row: rowIndex.get(item.row)!, column: columnIndex.get(item.column)! });
+    if (plan.spec.mark === 'arc') {
+        // One pie per cell. A slice is its share of the cell's total; a record without a positive value gets none.
+        const angle = plan.spec.angle ? plan.spec.instances[plan.spec.angle] : undefined;
+        const share = (record: Row) => { const value = angle ? positionValue(angle, record) : 1; return value > 0 ? value : NaN; };
+        const cell = (item: CellItem) => `${item.row}\n${item.column}`;
+        const sums = new Map<string, number>();
+        for (const item of sorted) { const value = share(item.record); if (value > 0) sums.set(cell(item), (sums.get(cell(item)) ?? 0) + value); }
+        const turned = new Map<string, number>();
+        return sorted.map(item => {
+            const value = share(item.record), key = cell(item);
+            if (!(value > 0)) return { ...place(item), start: NaN, end: NaN };
+            const start = turned.get(key) ?? 0, end = start + value / sums.get(key)!;
+            turned.set(key, end);
+            return { ...place(item), start, end };
+        });
+    }
+    if (plan.spec.mark === 'boxplot') {
+        // One box per member and color. Detail fields only decide what one record is.
+        const color = series.find(f => f.id === plan.spec.color);
+        const kept = [...branchFields(rowBranch), ...branchFields(columnBranch), ...(color ? [color] : [])].filter(f => f.display === 'discrete');
+        const boxes = new Map<string, CellItem[]>();
+        for (const item of sorted) {
+            const key = JSON.stringify([item.row, item.column, color ? valueKey(item.record[color.field]) : '']);
+            const box = boxes.get(key) ?? [];
+            box.push(item);
+            boxes.set(key, box);
+        }
+        const marks: PaneMark[] = [];
+        for (const box of boxes.values()) {
+            const values = box.map(item => positionValue(measure!, item.record));
+            const finite = values.filter(Number.isFinite).sort((a, b) => a - b);
+            if (!finite.length) continue;
+            const q1 = quantile(finite, .25), median = quantile(finite, .5), q3 = quantile(finite, .75), reach = 1.5 * (q3 - q1);
+            const low = finite.find(v => v >= q1 - reach)!, high = finite.filter(v => v <= q3 + reach).pop()!;
+            const slot: [number, number] | undefined = color && slots ? [slots.get(valueKey(box[0].record[color.field])) ?? 0, slots.size] : undefined;
+            const record = { ...Object.fromEntries(kept.map(f => [f.field, box[0].record[f.field]])), [resultKey(measure!)]: median };
+            marks.push({ ...place(box[0]), record, start: low, end: high, box: { low, q1, median, q3, high, count: finite.length }, slot });
+            box.forEach((item, index) => {
+                if (values[index] < low || values[index] > high) marks.push({ ...place(item), start: values[index], end: values[index], outlier: true, slot });
+            });
+        }
+        return marks;
+    }
     const totals = new Map<string, [number, number]>();
     const stack = stacked(plan);
-    return sorted.map(({ record, row, column }) => {
-        const leaves = { record, row: rowIndex.get(row)!, column: columnIndex.get(column)! };
+    return sorted.map(item => {
+        const { record, row, column } = item;
+        const leaves = place(item);
         const value = measure ? positionValue(measure, record) : 0;
         if (!Number.isFinite(value)) return { ...leaves, start: NaN, end: NaN };
         if (!stack) return { ...leaves, start: 0, end: value };
@@ -63,7 +114,8 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     };
     const extents = new Map<string, [number, number]>();
     const positions = new Map<string, Set<number>>();
-    const stack = stacked(plan);
+    // Stacked bars and boxes reach beyond the value of any single record.
+    const spans = stacked(plan) || plan.spec.mark === 'boxplot';
     const bars = plan.spec.mark === 'bar';
     for (const pane of panes) {
         const group = axis === 'x' ? pane.column : pane.row;
@@ -72,18 +124,20 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         const key = keyOf(layout.leaves[group.start]);
         const time = f.scale === 'time';
         // A value axis starts from zero. A date axis has no zero worth showing.
-        const extent = extents.get(key) ?? (time ? [Infinity, -Infinity] : [0, 0]);
+        const extent = extents.get(key) ?? (time || f.zero === false ? [Infinity, -Infinity] : [0, 0]);
         const carriesValue = valueAxis(pane.column.branch.position, pane.row.branch.position) === axis;
         const distinct = bars && !carriesValue ? positions.get(key) ?? new Set<number>() : undefined;
         for (const mark of pane.marks) {
             const raw = mark.record[resultKey(f)];
             const value = positionValue(f, mark.record);
-            if (raw != null && (time ? Number.isNaN(value) : typeof raw !== 'number' || !Number.isFinite(raw))) {
+            // A number that is not finite, such as the logarithm of zero, is a missing value and leaves no mark.
+            // Anything that is not a number at all means the field is not continuous, which is the caller's mistake.
+            if (raw != null && (time ? Number.isNaN(value) : typeof raw !== 'number')) {
                 throw new Error(time ? `Time field ${f.label} returned a value that is not a date: ${String(raw)}`
-                    : `Continuous field ${f.label} returned a non-finite or non-numeric value. Transform it before rendering.`);
+                    : `Continuous field ${f.label} returned a value that is not a number: ${String(raw)}`);
             }
             if (Number.isFinite(value)) distinct?.add(value);
-            for (const v of stack && carriesValue ? [mark.start, mark.end] : [value]) {
+            for (const v of spans && carriesValue ? [mark.start, mark.end] : [value]) {
                 if (Number.isFinite(v)) { extent[0] = Math.min(extent[0], v); extent[1] = Math.max(extent[1], v); }
             }
         }
@@ -105,11 +159,19 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
     }
 }
 
-function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, colors: Value[], colorScale?: ColorScale): Frame {
+function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, colors: Value[], colorScale?: ColorScale, headerBudget?: number): Frame {
     const pad = metrics.headerPadding * 2;
-    const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(displayValue(span.part.value))));
+    const widest = (layout: AxisLayout, level: number) => Math.max(0, ...layout.levels[level].map(span => textWidth(memberLabel(spec.instances[span.part.instanceId], span.part.value))));
     const rowHeaderWidths = rows.levels.map((_, level) => Math.min(metrics.headerMaxWidth,
         Math.max(metrics.headerMinWidth, Math.ceil(Math.max(widest(rows, level), textWidth(rows.captions[level], metrics.fontSize, 600)) + pad))));
+    // Deep row headers must not push the marks out of a narrow window. Over budget, every level
+    // gives up width in proportion and its labels are cut with an ellipsis; no level is dropped.
+    const headerTotal = rowHeaderWidths.reduce((a, b) => a + b, 0);
+    if (headerBudget && headerTotal > headerBudget) {
+        const floor = metrics.headerMinWidth / 2;
+        const scale = Math.max(headerBudget, floor * rowHeaderWidths.length) / headerTotal;
+        rowHeaderWidths.forEach((width, level) => { rowHeaderWidths[level] = Math.max(floor, Math.floor(width * scale)); });
+    }
     const tickWidth = Math.max(0, ...rows.leaves.flatMap(leaf => leaf.scale ? leaf.scale.ticks.map((t, i) => textWidth(leaf.scale!.labels?.[i] ?? formatTick(t), 10)) : []));
     const yAxisWidth = rows.leaves.some(leaf => leaf.kind === 'continuous') ? Math.ceil(tickWidth) + 30 : 0;
     const inner = columns.levels.length - 1;
@@ -127,7 +189,7 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
     let right = 0;
     if (spec.color) {
         const title = textWidth(spec.instances[spec.color].label, metrics.fontSize, 600);
-        const widestItem = colorScale ? 110 : Math.max(0, ...colors.map(c => textWidth(displayValue(c)))) + 18;
+        const widestItem = colorScale ? 110 : Math.max(0, ...colors.map(c => textWidth(memberLabel(spec.instances[spec.color!], c)))) + 18;
         right = Math.ceil(Math.min(metrics.legendMaxWidth, Math.max(metrics.legendMinWidth, Math.max(title, widestItem) + 24)));
     }
     return {
@@ -144,8 +206,9 @@ function buildFrame(rows: AxisLayout, columns: AxisLayout, spec: WorksheetSpec, 
  * what occurs anywhere along the other axis, so a pane without a record for some member
  * still leaves that member's slot empty. Absent intersections allocate no pane.
  * With spec.fit and a target size, leaf steps are scaled so the sheet fills the target.
+ * target.headerWidth caps the total width of the row headers.
  */
-export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number }): WorksheetModel {
+export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { width: number; height: number; headerWidth?: number }): WorksheetModel {
     const { spec } = plan;
     const rowDrafts = new Map<string, LeafDraft>();
     const columnDrafts = new Map<string, LeafDraft>();
@@ -165,7 +228,26 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     const direction = spec.sort === 'descending' ? -1 : 1;
     const ranks = new Map(Object.entries(spec.order ?? {}).filter(([, order]) => Array.isArray(order))
         .map(([id, order]) => [id, new Map((order as Value[]).map((value, index) => [valueKey(value), index]))]));
-    const compare: MemberCompare = (id, a, b) => {
+    // Values that order members by a measure, per field and per parent path.
+    const parentKey = (id: string, parent: { instanceId: string; value: Value }[]) => JSON.stringify([id, parent.map(p => [p.instanceId, typed(p.value)])]);
+    const measured = new Map<string, Map<string, number>>();
+    for (const ranking of plan.rankings) for (const record of results.get(ranking.taskId) ?? []) {
+        const key = parentKey(ranking.instanceId, ranking.parents.map(p => ({ instanceId: p.id, value: record[p.field] as Value })));
+        const raw = record[resultKey(ranking.by)];
+        let values = measured.get(key);
+        if (!values) measured.set(key, values = new Map());
+        if (typeof raw === 'number' && Number.isFinite(raw)) values.set(valueKey(record[spec.instances[ranking.instanceId].field]), raw);
+    }
+    const byMeasure = new Map(plan.rankings.map(r => [r.instanceId, r.direction === 'descending' ? -1 : 1]));
+    const compare: MemberCompare = (id, a, b, parent) => {
+        const sign = byMeasure.get(id);
+        if (sign) {
+            const values = measured.get(parentKey(id, parent));
+            const va = values?.get(valueKey(a)), vb = values?.get(valueKey(b));
+            // A member without a value comes last whichever way the rest runs. Equal values fall back to value order.
+            if (va === undefined || vb === undefined) return va !== undefined ? -1 : vb !== undefined ? 1 : compareValue(a, b);
+            return (va - vb) * sign || compareValue(a, b);
+        }
         const order = spec.order?.[id];
         const rank = ranks.get(id);
         if (!rank) return compareValue(a, b) * (order ? (order === 'descending' ? -1 : 1) : direction);
@@ -186,26 +268,32 @@ export function buildModel(plan: Plan, results: Map<string, Row[]>, target?: { w
     const colors = new Map<string, Value>();
     const color = spec.color ? spec.instances[spec.color] : undefined;
     const extent: [number, number] = [Infinity, -Infinity];
-    for (const [id, cell] of cells) {
-        const row = rowGroups.get(cell.row)!;
-        const column = columnGroups.get(cell.column)!;
-        const marks = paneMarks(cell.items, row.branch, column.branch, plan, rowIndex, columnIndex);
-        const pane: Pane = { id, row, column, records: marks.map(mark => mark.record), marks, xDomain: [0, 1], yDomain: [0, 1] };
-        if (color && !color.aggregate) for (const record of pane.records) colors.set(valueKey(record[color.field]), record[color.field]);
-        if (color?.aggregate) for (const record of pane.records) {
+    for (const cell of cells.values()) for (const { record } of cell.items) {
+        if (color?.display === 'discrete') colors.set(valueKey(record[color.field]), record[color.field]);
+        if (color?.display === 'continuous') {
             const raw = record[resultKey(color)];
             if (raw != null && Number.isFinite(Number(raw))) { extent[0] = Math.min(extent[0], Number(raw)); extent[1] = Math.max(extent[1], Number(raw)); }
         }
+    }
+    const palette = [...colors.values()].sort(compareValue);
+    // Boxes of different colors stand side by side in a member step, in legend order and in the same
+    // place in every pane. A color field that already heads the members has one box per step anyway.
+    const onAxis = color && [...plan.rows, ...plan.columns].some(branch => branchFields(branch).some(f => f.field === color.field));
+    const slots = spec.mark === 'boxplot' && color && !onAxis ? new Map(palette.map((value, index) => [valueKey(value), index])) : undefined;
+    for (const [id, cell] of cells) {
+        const row = rowGroups.get(cell.row)!;
+        const column = columnGroups.get(cell.column)!;
+        const marks = paneMarks(cell.items, row.branch, column.branch, plan, rowIndex, columnIndex, slots);
+        const pane: Pane = { id, row, column, records: marks.map(mark => mark.record), marks, xDomain: [0, 1], yDomain: [0, 1] };
         panes.push(pane);
         paneIndex.set(id, pane);
     }
     const scales = () => { assignScales(columns, 'x', panes, plan); assignScales(rows, 'y', panes, plan); };
     scales();
-    const palette = [...colors.values()].sort(compareValue);
     // A color range comes from the complete result, like an axis range.
-    const colorScale: ColorScale | undefined = color?.aggregate
+    const colorScale: ColorScale | undefined = color?.display === 'continuous'
         ? { field: color, domain: extent[0] <= extent[1] ? extent : [0, 1], diverging: extent[0] < 0 && extent[1] > 0 } : undefined;
-    const measure = () => buildFrame(rows, columns, spec, palette, colorScale);
+    const measure = () => buildFrame(rows, columns, spec, palette, colorScale, target?.headerWidth);
     let frame = measure();
     const fitWidth = target && (spec.fit === 'width' || spec.fit === 'both') && columns.size > 0;
     const fitHeight = target && (spec.fit === 'height' || spec.fit === 'both') && rows.size > 0;

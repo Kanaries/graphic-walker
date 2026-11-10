@@ -1,7 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { parse, View } from 'vega';
+import { continuousColor, darkTheme, lightTheme, type Theme } from './color';
 import { compileWorksheet, executePlan } from './compiler';
-import { setTextMeasure } from './layout';
+import { valueKey } from './keys';
+import { formatTick, setTextMeasure } from './layout';
+import { memberLabel } from './time';
 import { buildModel } from './model';
 import { buildScene, type Primitive, type Scene } from './scene';
 import { sceneData, sceneToSVG, vegaSpec } from './vegaBackend';
@@ -15,6 +18,18 @@ export interface WorksheetProps {
     height?: number;
     /** Called with every selected mark. Click selects one, Ctrl or Cmd click adds or removes, a click on empty space or Escape clears. */
     onSelectionChange?: (selections: Selection[]) => void;
+    /**
+     * Called when the sheet cannot be drawn: the spec does not compile, a query fails, or the data
+     * does not fit, with the message shown in its place. Called with '' once it draws again.
+     */
+    onError?: (message: string) => void;
+    /** Surface, text, rule and mark colors. Pass the host's own surface color as `paper` so the sheet blends in, and its palette so marks match its other charts. */
+    theme?: 'light' | 'dark' | Theme;
+    /**
+     * Draws nothing but the chart: no status line, no frame around the scroll area and no
+     * panel listing the selected records. For hosts that already provide that chrome.
+     */
+    compact?: boolean;
 }
 // Header widths and label truncation use the same font the canvas draws with.
 if (typeof document !== 'undefined') {
@@ -24,7 +39,7 @@ if (typeof document !== 'undefined') {
         return context.measureText(text).width;
     });
 }
-const emptyScene: Scene = { width: 1, height: 1, items: [], visiblePanes: 0 };
+const emptyScene = (background: string): Scene => ({ width: 1, height: 1, items: [], visiblePanes: 0, background, legend: 'none' });
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
 function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primitive | undefined, additive: boolean) => void }) {
@@ -35,7 +50,7 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
     click.current = onClick;
     const [error, setError] = useState('');
     useEffect(() => {
-        const view = new View(parse(vegaSpec(emptyScene)), { renderer: 'canvas' }).initialize(host.current!);
+        const view = new View(parse(vegaSpec(emptyScene(scene.background))), { renderer: 'canvas' }).initialize(host.current!);
         instance.current = view;
         view.addEventListener('click', (event, item) => {
             const mouse = event as MouseEvent;
@@ -60,8 +75,10 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
     useEffect(() => {
         let active = true;
         const view = instance.current;
+        // What was under the pointer may have moved or gone; the next pointer move brings the tooltip back.
+        if (tip.current) tip.current.style.visibility = 'hidden';
         if (view) {
-            view.width(scene.width).height(scene.height);
+            view.width(scene.width).height(scene.height).background(scene.background);
             for (const [name, values] of sceneData(scene)) view.data(name, values);
             void view.runAsync().then(() => { if (active) setError(''); }, reason => { if (active) setError(message(reason)); });
         }
@@ -74,7 +91,9 @@ function VegaViewport({ scene, onClick }: { scene: Scene; onClick: (item: Primit
     </div>;
 }
 
-export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange }, ref) {
+export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Worksheet({ spec, computation, height = 570, onSelectionChange, onError, theme: themeProp = 'light', compact = false }, ref) {
+    const theme = useMemo<Theme>(() => themeProp === 'light' ? lightTheme : themeProp === 'dark' ? darkTheme : themeProp,
+        [typeof themeProp === 'string' ? themeProp : JSON.stringify(themeProp)]);
     const compiled = useMemo(() => {
         try { return { plan: compileWorksheet(spec), error: '' }; }
         catch (error) { return { plan: undefined, error: message(error) }; }
@@ -110,11 +129,13 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     const fit = compiled.plan?.spec.fit;
     const targetWidth = fit === 'width' || fit === 'both' ? viewport.width : 0;
     const targetHeight = fit === 'height' || fit === 'both' ? height - 2 : 0;
+    // Row headers get at most 40% of the window. Rounded so that dragging a window edge does not rebuild the layout on every pixel.
+    const headerWidth = Math.max(96, Math.round(viewport.width * 0.4 / 24) * 24);
     const built = useMemo(() => {
         if (!compiled.plan || result?.key !== queryKey || !result.data) return undefined;
-        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight }), error: '' }; }
+        try { return { model: buildModel(compiled.plan, result.data, { width: targetWidth, height: targetHeight, headerWidth }), error: '' }; }
         catch (error) { return { model: undefined, error: message(error) }; }
-    }, [compiled.plan, result, queryKey, targetWidth, targetHeight]);
+    }, [compiled.plan, result, queryKey, targetWidth, targetHeight, headerWidth]);
     const model = built?.model;
     // Room for a horizontal scroll bar, so a short worksheet does not gain a vertical one.
     const hostHeight = model ? Math.min(height, model.height + 18) : height;
@@ -138,22 +159,36 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         setViewport(v => v.x === host.scrollLeft && v.y === host.scrollTop ? v : { ...v, x: host.scrollLeft, y: host.scrollTop });
     }, [model, hostHeight]);
     const selected = useMemo(() => new Set(selection.keys()), [selection]);
-    const scene = useMemo(() => model ? buildScene(model, viewport, { selected }) : emptyScene, [model, viewport, selected]);
+    const scene = useMemo(() => model ? buildScene(model, viewport, { selected, theme }) : emptyScene(theme.paper), [model, viewport, selected, theme]);
     useImperativeHandle(ref, () => ({
         async exportSVG() {
             if (!model || loading) throw new Error('Wait for the worksheet query to finish.');
             if (model.width * model.height > 100_000_000) throw new Error('Full export exceeds the V0 size limit. Filter the worksheet first.');
-            return sceneToSVG(buildScene(model, { x: 0, y: 0, width: model.width, height: model.height }));
+            return sceneToSVG(buildScene(model, { x: 0, y: 0, width: model.width, height: model.height }, { theme }));
         },
-    }), [model, loading]);
+    }), [model, loading, theme]);
     const error = compiled.error || built?.error || (result?.key === queryKey ? result.error : '');
-    return <div style={{ color: '#263248', fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>
-        <div aria-live="polite" data-testid="worksheet-status" style={{ display: 'flex', gap: 16, padding: '10px 0', flexWrap: 'wrap' }}>
+    const colorField = model?.plan.spec.color ? model.plan.spec.instances[model.plan.spec.color] : undefined;
+    const report = useRef(onError);
+    report.current = onError;
+    useEffect(() => { report.current?.(error || ''); }, [error]);
+    return <div style={{ position: 'relative', color: theme.text, fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>
+        {/* Compact hosts still get the status, for screen readers and tests, without it taking space. */}
+        <div aria-live="polite" data-testid="worksheet-status" style={compact
+            ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' }
+            : { display: 'flex', gap: 16, padding: '10px 0', flexWrap: 'wrap', color: theme.muted }}>
             {loading ? 'Querying…' : model ? `${model.panes.length} panes · ${scene.visiblePanes} visible · ${model.rows.leaves.length} × ${model.columns.leaves.length} positions · ${model.plan.tasks.length} query tasks · ${model.panes.reduce((n, p) => n + p.records.length, 0)} marks` : 'Worksheet'}
         </div>
-        {error ? <p role="alert" style={{ color: '#b42318' }}>{error}</p> : null}
+        {/* In a window too narrow for the legend strip the colors are named here instead. */}
+        {model && colorField && scene.legend === 'omitted' ? <div data-testid="worksheet-legend" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingBottom: 6, fontSize: 11 }}>
+            <strong>{colorField.label}</strong>
+            {model.colorScale
+                ? <><span>{formatTick(model.colorScale.domain[0])}</span><span style={{ width: 72, height: 8, borderRadius: 2, background: `linear-gradient(to right, ${[0, .25, .5, .75, 1].map(t => continuousColor(model.colorScale!, model.colorScale!.domain[0] + (model.colorScale!.domain[1] - model.colorScale!.domain[0]) * t, theme, model.plan.spec.mark === 'rect')).join(', ')})` }} /><span>{formatTick(model.colorScale.domain[1])}</span></>
+                : <>{model.colors.slice(0, 12).map((c, i) => <span key={valueKey(c)}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: theme.category[i % theme.category.length], marginRight: 4 }} />{memberLabel(colorField, c)}</span>)}{model.colors.length > 12 ? <span>+{model.colors.length - 12} more</span> : null}</>}
+        </div> : null}
+        {error ? <p role="alert" style={{ color: '#d92d20' }}>{error}</p> : null}
         {!loading && model && !model.panes.length ? <p>No data matches these filters.</p> : null}
-        <div ref={scrollHost} data-testid="worksheet-scroll" aria-label="Scrollable worksheet" tabIndex={0} onKeyDown={event => { if (event.key === 'Escape' && selection.size) select(new Map()); }} style={{ position: 'relative', overflow: 'auto', height: hostHeight, border: '1px solid #dfe5ef', borderRadius: 8, background: 'white' }}>
+        <div ref={scrollHost} data-testid="worksheet-scroll" aria-label="Scrollable worksheet" tabIndex={0} onKeyDown={event => { if (event.key === 'Escape' && selection.size) select(new Map()); }} style={{ position: 'relative', overflow: 'auto', height: hostHeight, background: theme.paper, ...(compact ? {} : { border: `1px solid ${theme.line}`, borderRadius: 8 }) }}>
             <div style={{ width: model?.width ?? 1, height: model?.height ?? 1, position: 'relative' }}>
                 <div style={{ position: 'sticky', top: 0, left: 0, width: viewport.width, height: viewport.height, visibility: loading || error ? 'hidden' : 'visible' }}>
                     <VegaViewport scene={scene} onClick={(item, additive) => {
@@ -166,6 +201,6 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
                 </div>
             </div>
         </div>
-        {selection.size ? <details style={{ marginTop: 12 }}><summary data-testid="worksheet-selection-count">{selection.size} selected · Esc clears</summary><pre data-testid="worksheet-selection" style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify([...selection.values()].map(s => ({ predicates: s.predicates, values: s.values })), null, 2)}</pre></details> : null}
+        {selection.size && !compact ? <details style={{ marginTop: 12 }}><summary data-testid="worksheet-selection-count">{selection.size} selected · Esc clears</summary><pre data-testid="worksheet-selection" style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify([...selection.values()].map(s => ({ predicates: s.predicates, values: s.values })), null, 2)}</pre></details> : null}
     </div>;
 });

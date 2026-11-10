@@ -57,7 +57,11 @@ test('null coordinates produce no mark and nonnumeric continuous data fails expl
         rows: field('product'), columns: field('raw'), color: undefined, mark: 'point' };
     const m = await model(spec, [{ product: 'p', value: null }]);
     assert.equal(buildScene(m, { x: 0, y: 0, width: 800, height: 600 }).items.filter(p => p.selection).length, 0);
-    await assert.rejects(model(spec, [{ product: 'p', value: 'hello' }]), /non-finite or non-numeric/);
+    await assert.rejects(model(spec, [{ product: 'p', value: 'hello' }]), /not a number: hello/);
+    // Infinity and NaN are missing values: no mark, and they do not stretch the axis.
+    const holes = await model(spec, [{ product: 'p', value: -Infinity }, { product: 'q', value: NaN }, { product: 'r', value: 4 }]);
+    assert.equal(buildScene(holes, { x: 0, y: 0, width: 800, height: 600 }).items.filter(p => p.selection).length, 1);
+    assert.deepEqual(holes.columns.leaves[0].scale!.domain, [0, 4]);
 });
 test('monthly line uses month positions inside year panes', async () => {
     const m = await model({ ...base, rows: nest(field('region'), field('sum')), columns: nest(field('year'), field('month')), mark: 'line' });

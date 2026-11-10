@@ -19,7 +19,14 @@ export function reference(data: Row[]): Computation {
         let rows = data;
         for (const step of payload.workflow) {
             if (step.type === 'filter') rows = rows.filter(r => step.filters.every(f => f.rule.value.some(v => valueKey(v) === valueKey(r[f.fid]))));
-            else {
+            else if (step.type === 'sort') {
+                // As the host's own sort step: by the listed result fields in turn, nulls as the smallest value.
+                const sign = step.sort === 'descending' ? -1 : 1;
+                rows = [...rows].sort((x, y) => { for (const f of step.by) { const d = (x[f] ?? -Infinity) - (y[f] ?? -Infinity); if (d) return d * sign; } return 0; });
+            } else if (step.query[0].op === 'raw') {
+                const { fields } = step.query[0];
+                rows = rows.map(row => Object.fromEntries(fields.map(f => [f, row[f]])));
+            } else {
                 const q = step.query[0];
                 const groups = new Map<string, Row[]>();
                 for (const row of rows) {
@@ -38,7 +45,7 @@ export function reference(data: Row[]): Computation {
                 });
             }
         }
-        return rows;
+        return payload.limit ? rows.slice(0, payload.limit) : rows;
     };
 }
 

@@ -1,4 +1,5 @@
-import { resultKey, type AxisScale, type FieldInstance, type Row } from './types';
+import { displayValue } from './keys';
+import { resultKey, type AxisScale, type FieldInstance, type Row, type TimeUnit, type Value } from './types';
 
 /** Milliseconds since the epoch for a Date, an ISO string or a number. NaN for null or anything unreadable. */
 export function timeValue(raw: unknown): number {
@@ -10,8 +11,10 @@ export function timeValue(raw: unknown): number {
 /** The number a continuous field places a record at. NaN when the record has no value. */
 export function positionValue(field: FieldInstance, record: Row): number {
     const raw = record[resultKey(field)];
-    return field.scale === 'time' ? timeValue(raw) : raw == null ? NaN : Number(raw);
+    return field.scale === 'time' ? fieldTime(field, raw) : raw == null ? NaN : Number(raw);
 }
+/** The time a time field stands for, with the field's own offset applied. */
+export const fieldTime = (field: FieldInstance, raw: unknown) => timeValue(raw) + (field.timeOffset ?? 0);
 
 const second = 1000, minute = 60 * second, hour = 60 * minute, day = 24 * hour;
 type Unit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
@@ -39,6 +42,36 @@ const formats = {
 };
 /** A date for tooltips: the day, with the time of day unless it is midnight. */
 export const formatTime = (ms: number) => Number.isFinite(ms) ? (ms % day === 0 ? formats.date : formats.dateTime).format(ms) : '';
+
+const two = (n: number) => String(n).padStart(2, '0');
+// ISO 8601 week: weeks start on Monday and week 1 holds the year's first Thursday.
+function isoWeek(ms: number): [number, number] {
+    const date = new Date(ms);
+    const thursday = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 3 - (date.getUTCDay() + 6) % 7);
+    const year = new Date(thursday).getUTCFullYear();
+    return [year, 1 + Math.round((thursday - Date.UTC(year, 0, 4)) / (7 * day))];
+}
+/** The name of the calendar period that starts at `ms`, such as 2024, 2024 Q3 or 2024-07. */
+export function formatPeriod(ms: number, unit?: TimeUnit): string {
+    if (!Number.isFinite(ms)) return '';
+    if (!unit) return formatTime(ms);
+    const date = new Date(ms), year = date.getUTCFullYear(), ymd = `${year}-${two(date.getUTCMonth() + 1)}-${two(date.getUTCDate())}`;
+    switch (unit) {
+        case 'year': return String(year);
+        case 'quarter': return `${year} Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
+        case 'month': return `${year}-${two(date.getUTCMonth() + 1)}`;
+        case 'week': case 'day': return ymd;
+        case 'hour': case 'minute': return `${ymd} ${two(date.getUTCHours())}:${two(date.getUTCMinutes())}`;
+        case 'second': return `${ymd} ${two(date.getUTCHours())}:${two(date.getUTCMinutes())}:${two(date.getUTCSeconds())}`;
+        case 'iso_year': return String(isoWeek(ms)[0]);
+        case 'iso_week': { const [isoYear, week] = isoWeek(ms); return `${isoYear} W${two(week)}`; }
+    }
+}
+/** What a member of a discrete field is called: a date for a time field, the value itself otherwise. */
+export function memberLabel(field: FieldInstance | undefined, value: Value): string {
+    if (field?.scale !== 'time' || value == null) return displayValue(value);
+    return formatPeriod(fieldTime(field, value), field.timeUnit) || displayValue(value);
+}
 
 /** Calendar ticks for a time range. The domain stays the data range, like tickScale. */
 export function timeScale(min: number, max: number, pixels: number, gap: number): AxisScale {

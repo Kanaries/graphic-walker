@@ -81,3 +81,23 @@ test('bars need exactly one measure axis', () => {
     assert.throws(() => compileWorksheet({ ...base, rows: field('region'), columns: field('segment'), mark: 'bar' }), /one measure axis/);
     assert.doesNotThrow(() => compileWorksheet({ ...base, rows: field('sum'), columns: field('date'), mark: 'bar' }));
 });
+
+test('members of a discrete time field are named after their period, in the zone the offset selects', async () => {
+    const { formatPeriod, memberLabel } = await import('../src/time');
+    const t = Date.UTC(2024, 6, 15, 13, 5, 9);
+    assert.deepEqual((['year', 'quarter', 'month', 'day', 'hour', 'second'] as const).map(unit => formatPeriod(t, unit)),
+        ['2024', '2024 Q3', '2024-07', '2024-07-15', '2024-07-15 13:05', '2024-07-15 13:05:09']);
+    // 30 December 2024 is a Monday and already belongs to the first ISO week of 2025.
+    assert.deepEqual([formatPeriod(Date.UTC(2024, 11, 30), 'iso_week'), formatPeriod(Date.UTC(2024, 11, 30), 'iso_year'), formatPeriod(Date.UTC(2021, 0, 3), 'iso_week')], ['2025 W01', '2025', '2020 W53']);
+    // The start of 2024 in a zone eight hours behind UTC, as a host in that zone stores it.
+    const year = { id: 'y', field: 'y', label: 'Year', display: 'discrete' as const, scale: 'time' as const, timeUnit: 'year' as const, timeOffset: -8 * 3600_000 };
+    assert.equal(memberLabel(year, Date.UTC(2024, 0, 1, 8)), '2024');
+    assert.equal(memberLabel({ ...year, timeOffset: undefined }, Date.UTC(2023, 11, 31, 23)), '2023');
+    assert.equal(memberLabel(year, null), '(null)');
+    const rows = [{ y: Date.UTC(2025, 0, 1, 8), value: 2 }, { y: Date.UTC(2024, 0, 1, 8), value: 1 }];
+    const instances = { y: year, sum: { id: 'sum', field: 'value', label: 'SUM', display: 'continuous' as const, aggregate: 'sum' as const } };
+    const m = await model({ kind: 'worksheet', specVersion: 2, instances, rows: field('y'), columns: field('sum'), mark: 'bar' }, rows);
+    const scene = fullScene(m);
+    assert.deepEqual(scene.items.filter(p => p.layer === 'rowHeader' && p.tooltip?.startsWith('Year')).map(p => p.text), ['2024', '2025']);
+    assert.deepEqual(scene.items.filter(p => p.selection).sort((a, b) => a.y - b.y).map(p => p.tooltip), ['Year: 2024\nSUM: 1', 'Year: 2025\nSUM: 2']);
+});

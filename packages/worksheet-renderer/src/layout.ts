@@ -11,6 +11,8 @@ export const metrics = {
     legendMaxWidth: 190,
     slotWidth: 200,
     slotHeight: 160,
+    /** Side of the cell that holds one pie. */
+    pieSize: 160,
     headerHeight: 24,
     captionHeight: 22,
     xAxisHeight: 40,
@@ -28,6 +30,11 @@ export const metrics = {
 
 export interface LeafSizes { band: number; continuous: number }
 export function leafSizes(spec: WorksheetSpec): { row: LeafSizes; column: LeafSizes } {
+    // A pie fills a cell of its own, so every position is as large as an axis slot.
+    if (spec.mark === 'arc') {
+        const height = Math.max(48, spec.pane?.height ?? metrics.pieSize), width = Math.max(48, spec.pane?.width ?? metrics.pieSize);
+        return { row: { band: height, continuous: height }, column: { band: width, continuous: width } };
+    }
     return {
         row: { band: Math.max(12, spec.band?.height ?? metrics.bandHeight), continuous: Math.max(60, spec.pane?.height ?? metrics.slotHeight) },
         column: { band: Math.max(12, spec.band?.width ?? (spec.mark === 'text' ? metrics.textCellWidth : metrics.bandWidth)), continuous: Math.max(80, spec.pane?.width ?? metrics.slotWidth) },
@@ -100,7 +107,8 @@ export interface LeafDraft {
 // Orders leaves as a tree walk. Children of a node are bucketed by field, buckets follow
 // branch order, members inside a bucket follow value order. This is a total order for any
 // mix of concatenated branches, and it keeps the leaves under one header contiguous.
-export type MemberCompare = (instanceId: string, a: Value, b: Value) => number;
+/** `parent` is the header path above the two members, which a per-parent order needs. */
+export type MemberCompare = (instanceId: string, a: Value, b: Value, parent: PathPart[]) => number;
 function orderLeaves(drafts: LeafDraft[], compare: MemberCompare): LeafDraft[] {
     const visit = (items: LeafDraft[], level: number): LeafDraft[] => {
         const buckets = new Map<string, { rank: number; terminal: boolean; items: LeafDraft[] }>();
@@ -123,8 +131,8 @@ function orderLeaves(drafts: LeafDraft[], compare: MemberCompare): LeafDraft[] {
                 list.push(item);
                 members.set(key, list);
             }
-            const field = bucket.items[0].path[level].instanceId;
-            return [...members.values()].sort((a, b) => compare(field, a[0].path[level].value, b[0].path[level].value)).flatMap(list => visit(list, level + 1));
+            const field = bucket.items[0].path[level].instanceId, parent = bucket.items[0].path.slice(0, level);
+            return [...members.values()].sort((a, b) => compare(field, a[0].path[level].value, b[0].path[level].value, parent)).flatMap(list => visit(list, level + 1));
         });
     };
     return visit(drafts, 0);

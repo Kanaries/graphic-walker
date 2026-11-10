@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { compileWorksheet, executePlan } from '../src/compiler';
 import { buildModel } from '../src/model';
 import { buildScene } from '../src/scene';
+import { darkTheme, lightTheme } from '../src/color';
 import { metrics } from '../src/layout';
 import { concat, field, nest, type Row, type WorksheetSpec } from '../src/types';
 import { fields, fullScene, model, near, reference } from './helpers';
@@ -251,4 +252,54 @@ test('member order can be set per field, by direction or by an explicit list', a
     assert.deepEqual((await names({ category: 'descending' })).slice(0, 5), ['T0', 'T1', 'T2', 'T3', 'O0']);
     assert.deepEqual((await names({ sub: ['O7', 'O2'] })).slice(4, 8), ['O7', 'O2', 'O0', 'O1']);
     assert.deepEqual((await names({ sub: 'ascending' }, 'descending')).slice(0, 2), ['T0', 'T1'], 'a field without its own order follows sort');
+});
+
+// ---- narrow windows and adapter-facing options
+test('row headers stay inside their budget and keep every level', async () => {
+    const plan = compileWorksheet(twoMeasures);
+    const results = await executePlan(plan, reference(nested));
+    const free = buildModel(plan, results);
+    const tight = buildModel(plan, results, { width: 0, height: 0, headerWidth: 120 });
+    const total = (m: typeof free) => m.frame.rowHeaderWidths.reduce((a, b) => a + b, 0);
+    assert.ok(total(free) > 120);
+    assert.ok(total(tight) <= 120);
+    assert.equal(tight.frame.rowHeaderWidths.length, 3);
+    const scene = buildScene(tight, { x: 0, y: 0, width: 260, height: 300 });
+    assert.ok(scene.visiblePanes > 0, 'marks are reachable in a 260 px window');
+    assert.deepEqual(scene.items.filter(p => p.layer === 'corner' && p.kind === 'text').map(p => p.tooltip), ['region', 'category', 'sub']);
+});
+test('a field can opt out of the zero baseline, and a continuous field can color without aggregation', async () => {
+    const instances = { ...sales, raw: { id: 'raw', field: 'value', label: 'value', display: 'continuous' as const, zero: false } };
+    const rows: Row[] = [{ sub: 'a', value: 1000 }, { sub: 'b', value: 1010 }];
+    const m = await model({ kind: 'worksheet', specVersion: 2, instances, rows: field('raw'), columns: field('sub'), mark: 'point', color: 'raw' }, rows);
+    assert.deepEqual(m.rows.leaves[0].scale!.domain, [1000, 1010]);
+    assert.deepEqual(m.colorScale!.domain, [1000, 1010]);
+    assert.deepEqual(m.plan.tasks[0].groupBy, ['sub', 'value']);
+    assert.equal(fullScene(m).items.filter(p => p.selection).length, 2);
+});
+
+// ---- theme and narrow windows
+test('a dark theme recolors surfaces, text and rules, and leaves the marks alone', async () => {
+    const m = await model({ ...twoMeasures, color: 'segment' }, nested);
+    const window = { x: 0, y: 0, width: 900, height: 500 };
+    const light = buildScene(m, window);
+    const dark = buildScene(m, window, { theme: darkTheme });
+    assert.equal(light.background, lightTheme.paper);
+    assert.equal(dark.background, darkTheme.paper);
+    assert.equal(dark.items.length, light.items.length);
+    const lightOnly = new Set(Object.values(lightTheme));
+    const chrome = dark.items.filter(p => !p.selection && !(p.layer === 'legend' && p.kind === 'rect' && p.width === 10));
+    assert.ok(chrome.every(p => !lightOnly.has(p.fill ?? '')), 'no light surface or text color is left');
+    assert.deepEqual(dark.items.filter(p => p.selection).map(p => p.fill), light.items.filter(p => p.selection).map(p => p.fill));
+});
+test('a window too narrow for the legend strip drops it and keeps the marks reachable', async () => {
+    const plan = compileWorksheet({ ...twoMeasures, color: 'segment' });
+    const m = buildModel(plan, await executePlan(plan, reference(nested)), { width: 0, height: 0, headerWidth: 96 });
+    const narrow = buildScene(m, { x: 0, y: 0, width: 230, height: 320 });
+    assert.equal(narrow.legend, 'omitted');
+    assert.equal(narrow.items.filter(p => p.layer === 'legend').length, 0);
+    assert.ok(narrow.visiblePanes > 0 && narrow.items.some(p => p.selection));
+    const wide = buildScene(m, { x: 0, y: 0, width: 900, height: 320 });
+    assert.equal(wide.legend, 'side');
+    assert.equal((await model(twoMeasures, nested).then(plain => buildScene(plain, { x: 0, y: 0, width: 900, height: 320 }))).legend, 'none');
 });

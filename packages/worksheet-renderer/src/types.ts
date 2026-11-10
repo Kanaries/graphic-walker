@@ -1,15 +1,29 @@
-export type Value = string | number | boolean | Date | null | undefined;
+/** A pair of numbers is a bin: the range of values one member of a binned field covers. */
+export type Value = string | number | boolean | Date | null | undefined | readonly number[];
 export type Row = Record<string, any>;
-export type Aggregate = 'sum' | 'mean' | 'min' | 'max' | 'count' | 'distinctCount';
+export type Aggregate = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count' | 'distinctCount' | 'variance' | 'stdev';
 export interface FieldInstance {
     id: string;
     field: string;
     label: string;
     display: 'discrete' | 'continuous';
-    /** For a continuous field. 'time' reads Dates, ISO strings or epoch milliseconds and draws a calendar axis. */
+    /**
+     * 'time' reads Dates, ISO strings or epoch milliseconds. A continuous field then draws a
+     * calendar axis; a discrete one labels its members as dates instead of raw values.
+     */
     scale?: 'linear' | 'time';
+    /** For a discrete time field: the calendar unit its members were truncated to, which picks the label. A full date without it. */
+    timeUnit?: TimeUnit;
+    /**
+     * Milliseconds added to every time of this field before it is placed or labelled. Labels are
+     * written in UTC, so a host that wants another zone passes that zone's offset here.
+     */
+    timeOffset?: number;
+    /** Whether a linear axis for this field starts from zero. Defaults to true; a time axis never does. */
+    zero?: boolean;
     aggregate?: Aggregate;
 }
+export type TimeUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'iso_year' | 'iso_week';
 export type AxisExpr =
     | { kind: 'empty' }
     | { kind: 'field'; instanceId: string }
@@ -28,10 +42,21 @@ export interface WorksheetSpec {
     instances: Record<string, FieldInstance>;
     rows: AxisExpr;
     columns: AxisExpr;
-    mark: 'bar' | 'point' | 'line' | 'rect' | 'text';
-    /** A discrete dimension gives one color per member. An aggregated measure gives a continuous scale. */
+    /**
+     * point is a hollow circle, circle a filled one, tick a short line across the value axis.
+     * arc draws one pie per cell of the table; rows and columns then take dimensions only.
+     * boxplot summarises the records of each member along the one continuous axis.
+     */
+    mark: 'bar' | 'point' | 'circle' | 'tick' | 'line' | 'rect' | 'text' | 'arc' | 'boxplot';
+    /** A discrete field gives one color per member. A continuous field, aggregated or not, gives a continuous scale. */
     color?: string;
+    /**
+     * Dimensions that split marks without coloring them. For a box plot they only set the
+     * grain of the records a box summarises; boxes are split by color alone.
+     */
     detail?: string[];
+    /** The measure that sizes the slices of arc marks. Without it every slice gets the same share. */
+    angle?: string;
     /** The value written by text marks. Without it a text mark shows the measure it is positioned by. */
     text?: string;
     /** Bars stack unless this is false. Unstacked bars overlap from the zero line. */
@@ -39,10 +64,15 @@ export interface WorksheetSpec {
     scaleScope?: ScaleScope;
     sort?: 'ascending' | 'descending';
     /**
-     * Member order per field instance, overriding sort. A list gives the order outright,
-     * as a host that has computed a ranking would; members it omits follow in value order.
+     * Member order per field instance, overriding sort. A list gives the order outright;
+     * members it omits follow in value order. A measure orders the members by its value.
      */
-    order?: Record<string, 'ascending' | 'descending' | Value[]>;
+    order?: Record<string, 'ascending' | 'descending' | Value[] | MeasureOrder>;
+    /**
+     * Keeps only the first `rows` records of each result, as a query limit does. With `by`
+     * the records are first ordered by that field, which makes it a top or bottom N.
+     */
+    limit?: { rows: number; by?: string; direction?: 'ascending' | 'descending' };
     /** Where the innermost column headers go. By default at the bottom when rows carry a value axis, as in Tableau. */
     innerColumnHeader?: 'top' | 'bottom';
     filters?: { field: string; values: Value[] }[];
@@ -53,14 +83,28 @@ export interface WorksheetSpec {
     /** Scale the steps so the sheet fills the available width, height or both. */
     fit?: 'width' | 'height' | 'both';
 }
+/**
+ * Orders the members of a dimension by an aggregated measure. The measure is computed per
+ * member inside its parent headers on the same axis, over everything else in the sheet, so
+ * each parent group is ordered on its own, as Tableau's nested sort is. Members without a
+ * value come last in either direction.
+ */
+export interface MeasureOrder { by: string; direction?: 'ascending' | 'descending' }
 // A structural subset of Graphic Walker's IComputationFunction protocol.
 // Keep the renderer independent of the host's React/store/query implementation.
 export interface QueryPayload {
     workflow: (
         | { type: 'filter'; filters: { fid: string; rule: { type: 'one of'; value: any[] } }[] }
-        | { type: 'view'; query: { op: 'aggregate'; groupBy: string[]; measures: { field: string; agg: Aggregate; asFieldKey: string }[] }[] }
+        | { type: 'view'; query: ViewQuery[] }
+        | { type: 'sort'; by: string[]; sort: 'ascending' | 'descending' }
     )[];
+    /** Number of result rows to return, counted after every step. */
+    limit?: number;
 }
+/** 'raw' returns the listed fields of every source row, duplicates included. Only box plots of an unaggregated field ask for it. */
+export type ViewQuery =
+    | { op: 'aggregate'; groupBy: string[]; measures: { field: string; agg: Aggregate; asFieldKey: string }[] }
+    | { op: 'raw'; fields: string[] };
 export type Computation = (payload: QueryPayload) => Promise<Row[]>;
 export interface AxisBranch {
     id: string;
@@ -72,11 +116,22 @@ export interface QueryTask {
     id: string;
     groupBy: string[];
     measures: FieldInstance[];
+    /** Every source row is wanted, not one row per group. */
+    raw?: boolean;
     payload: QueryPayload;
 }
 export interface Binding {
     row: AxisBranch;
     column: AxisBranch;
+    taskId: string;
+}
+/** Where the values that order the members of one field under one chain of parent fields come from. */
+export interface Ranking {
+    instanceId: string;
+    /** The fields above it on its axis, outermost first. */
+    parents: FieldInstance[];
+    by: FieldInstance;
+    direction: 'ascending' | 'descending';
     taskId: string;
 }
 export interface Plan {
@@ -85,6 +140,7 @@ export interface Plan {
     columns: AxisBranch[];
     tasks: QueryTask[];
     bindings: Binding[];
+    rankings: Ranking[];
 }
 export interface PathPart { instanceId: string; value: Value }
 export interface AxisScale {
@@ -155,10 +211,21 @@ export interface PaneMark {
     /** Leaf indices on each axis. */
     row: number;
     column: number;
-    /** Value interval on the continuous axis. NaN when the record has no value. */
+    /**
+     * Value interval on the continuous axis. NaN when the record has no value.
+     * For an arc, the slice as shares of a full turn. For a box, the whisker ends.
+     */
     start: number;
     end: number;
+    /** Set on the one mark that stands for a whole box. Its record holds the dimensions and the median. */
+    box?: BoxSummary;
+    /** A record outside the whiskers of its box, drawn on its own. */
+    outlier?: boolean;
+    /** Which share of the member step the mark takes when several series sit side by side: index and count. */
+    slot?: [number, number];
 }
+/** Tukey box: quartiles, and whiskers at the furthest records within 1.5 times the box length. */
+export interface BoxSummary { low: number; q1: number; median: number; q3: number; high: number; count: number }
 export interface Pane {
     id: string;
     row: AxisGroup;

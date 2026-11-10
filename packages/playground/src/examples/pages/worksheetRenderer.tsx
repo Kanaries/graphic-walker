@@ -66,7 +66,7 @@ export default function WorksheetRendererPage() {
             <Shelf name="Column axis" values={shelves.columnMeasures} options={axisFields} onChange={v => updateShelf('columnMeasures', v)} />
         </div>
         <div className="ws-toolbar">
-            <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'line', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>
+            <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'circle', 'tick', 'line', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>
             <label>Axis range<select value={scaleScope} onChange={e => setScaleScope(e.target.value as WorksheetSpec['scaleScope'])}>
                 <option value="shared">Uniform per measure</option><option value="prefix">Per outer header</option><option value="independent">Independent per row / column</option>
             </select></label>

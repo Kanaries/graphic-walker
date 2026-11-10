@@ -1,8 +1,8 @@
-import { continuousColor, fillOf, palette } from './color';
+import { continuousColor, fillOf, lightTheme, type Theme } from './color';
 import { displayValue, valueKey } from './keys';
 import { branchFields, valueAxis } from './compiler';
 import { fitText, formatTick, formatValue, leafRange, metrics, spansIn, textWidth } from './layout';
-import { formatTime, positionValue, timeValue } from './time';
+import { fieldTime, formatTime, memberLabel, positionValue } from './time';
 import { resultKey, type AxisGroup, type AxisLeaf, type FieldInstance, type Pane, type Selection, type Value, type WorksheetModel } from './types';
 
 /** x and y are the scroll offsets, width and height the size of the visible window. */
@@ -17,20 +17,36 @@ export interface Viewport { x: number; y: number; width: number; height: number 
 export const layers = ['body', 'rowHeader', 'columnHeader', 'xAxis', 'corner', 'legend'] as const;
 export type Layer = typeof layers[number];
 export interface Primitive {
-    kind: 'rect' | 'symbol' | 'path' | 'text';
+    /** path is an open stroked line. shape is a closed filled outline, such as a pie slice; its path is relative to x and y. */
+    kind: 'rect' | 'symbol' | 'path' | 'shape' | 'text';
     layer: Layer;
     x: number; y: number; width?: number; height?: number;
-    fill?: string; stroke?: string; path?: string; text?: string;
+    fill?: string; stroke?: string; strokeWidth?: number; path?: string; text?: string;
     align?: 'left' | 'center' | 'right'; angle?: number; size?: number; fontSize?: number; fontWeight?: number; opacity?: number;
     selection?: Selection; tooltip?: string;
 }
-export interface Scene { width: number; height: number; items: Primitive[]; visiblePanes: number }
-const ink = { text: '#344054', muted: '#667085', line: '#d9dfe9', grid: '#eef1f6', zero: '#c2c9d6', paper: '#ffffff' };
+export interface Scene {
+    width: number; height: number; items: Primitive[]; visiblePanes: number;
+    /** The surface color. Every layer paints it, so the backend may also clear with it. */
+    background: string;
+    /** 'omitted' when the window is too narrow for the legend strip; the host should show the colors some other way. */
+    legend: 'none' | 'side' | 'omitted';
+}
 /** Opacity of marks outside a non-empty selection. */
 const dimmed = 0.25;
+/** Outline of a pie slice around the origin, from share `start` to share `end` of a turn, clockwise from twelve o'clock. */
+function slice(radius: number, start: number, end: number): string {
+    const point = (share: number) => `${(Math.sin(share * 2 * Math.PI) * radius).toFixed(2)},${(-Math.cos(share * 2 * Math.PI) * radius).toFixed(2)}`;
+    const arc = (to: number, large: boolean) => `A${radius},${radius} 0 ${large ? 1 : 0} 1 ${point(to)}`;
+    // A whole disc cannot be one arc, because its start and end coincide.
+    if (end - start > 1 - 1e-9) return `M${point(0)}${arc(.5, false)}${arc(1, false)}Z`;
+    return `M0,0L${point(start)}${arc(end, end - start > .5)}Z`;
+}
 export interface SceneState {
     /** Selection ids. While any is set, every other mark is dimmed. */
     selected?: ReadonlySet<string>;
+    /** Surface, text and rule colors. Light when absent. */
+    theme?: Theme;
 }
 
 /** Produces pixel geometry for the window. The drawing backend does no grouping, stacking or scaling. */
@@ -39,10 +55,15 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     const { spec } = model.plan;
     const { rows, columns, frame } = model;
     const { left, top } = frame;
+    const ink = state.theme ?? lightTheme;
     const pad = metrics.headerPadding;
+    // The legend strip is drawn when the whole sheet fits, or when the body still keeps a usable
+    // share of a window narrower than the sheet. Otherwise it is left out.
+    const roomy = left + columns.size + frame.right <= viewport.width || viewport.width - left - frame.right >= Math.max(120, viewport.width * 0.3);
+    const right = frame.right && roomy ? frame.right : 0;
     // Screen rectangle of the body. The bottom axis sits under the last row, or on the window edge when the sheet is taller.
     const axisY = Math.max(top, Math.min(viewport.height - frame.bottom, top + rows.size - viewport.y));
-    const bodyRight = Math.max(left, Math.min(viewport.width - frame.right, left + columns.size - viewport.x));
+    const bodyRight = Math.max(left, Math.min(viewport.width - right, left + columns.size - viewport.x));
     const [c0, c1] = leafRange(columns, viewport.x, viewport.x + bodyRight - left);
     const [r0, r1] = leafRange(rows, viewport.y, viewport.y + axisY - top);
     const sx = (logical: number) => left + logical - viewport.x;
@@ -70,11 +91,14 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     };
 
     const colorField = spec.color ? spec.instances[spec.color] : undefined;
-    const fill = fillOf(colorField, model.colors, model.colorScale);
+    // Cells of a heat map take the theme's heat map stops, other marks its ramp.
+    const cells = spec.mark === 'rect';
+    const fill = fillOf(colorField, model.colors, model.colorScale, ink, cells);
     const textField = spec.mark === 'text' && spec.text ? spec.instances[spec.text] : undefined;
-    const encodingFields = [spec.color, ...(spec.detail ?? []), textField?.id].filter((id): id is string => Boolean(id)).map(id => spec.instances[id]);
+    const angleField = spec.mark === 'arc' && spec.angle ? spec.instances[spec.angle] : undefined;
+    const encodingFields = [spec.color, ...(spec.detail ?? []), textField?.id, angleField?.id].filter((id): id is string => Boolean(id)).map(id => spec.instances[id]);
     // Dimensions on color and detail divide a pane into series; a measure on color does not.
-    const seriesFields = encodingFields.filter(f => !f.aggregate && f !== textField);
+    const seriesFields = encodingFields.filter(f => f.display === 'discrete' && f !== textField);
     const selecting = Boolean(state.selected?.size);
     // Labels of members squeezed below one line of text are thinned out, the members themselves stay.
     const stride = (size: number, room: number) => Math.max(1, Math.ceil(room / size));
@@ -113,7 +137,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         const used = [...branchFields(pane.row.branch), ...branchFields(pane.column.branch), ...encodingFields];
         const dimensions = [...new Map(used.filter(f => !f.aggregate).map(f => [f.field, f])).values()];
         const described = [...new Map(used.map(f => [f.id, f])).values()];
-        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${f.scale === 'time' && f.display === 'continuous' ? formatTime(timeValue(value)) : typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
+        const describe = (f: FieldInstance, value: unknown) => `${f.label}: ${f.scale === 'time' ? (f.display === 'continuous' ? formatTime(fieldTime(f, value)) : memberLabel(f, value as Value)) : typeof value === 'number' && f.aggregate ? formatValue(value) : displayValue(value as Value)}`;
         const lengthAxis = valueAxis(xField, yField);
         const isLine = spec.mark === 'line';
         // A line runs along x unless x is the only value axis.
@@ -130,7 +154,9 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             const x = xContinuous ? px(columnLeaf, xValue) : sx(columnLeaf.offset + columnLeaf.size / 2);
             const y = yContinuous ? py(rowLeaf, yValue) : sy(rowLeaf.offset + rowLeaf.size / 2);
             const color = fill(record);
-            const id = JSON.stringify([pane.row.branch.order, pane.column.branch.order, ...dimensions.map(f => valueKey(record[f.field]))]);
+            // A box stands for all its records, so only its dimensions identify it.
+            const keys = mark.box ? dimensions.filter(f => f.display === 'discrete') : dimensions;
+            const id = JSON.stringify([pane.row.branch.order, pane.column.branch.order, ...keys.map(f => valueKey(record[f.field]))]);
             const selected = selecting && state.selected!.has(id);
             if (isLine) {
                 const order = alongY ? (yContinuous ? y : mark.row) : (xContinuous ? x : mark.column);
@@ -144,10 +170,51 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             }
             if (missing) continue;
             const selection: Selection = { id, paneId: pane.id, rowPath: rowLeaf.path, columnPath: columnLeaf.path,
-                predicates: dimensions.map(f => ({ field: f.field, value: record[f.field] as Value })), values: record };
+                predicates: keys.map(f => ({ field: f.field, value: record[f.field] as Value })), values: mark.box ? { ...record, ...mark.box } : record };
             const extra: Partial<Primitive> = { selection, tooltip: described.map(f => describe(f, record[resultKey(f)])).join('\n') };
             if (selecting && !selected) extra.opacity = dimmed;
-            if (spec.mark === 'bar') {
+            if (spec.mark === 'arc') {
+                if (!Number.isFinite(mark.start)) continue;
+                const radius = Math.max(4, Math.min(columnLeaf.size, rowLeaf.size) / 2 - 10);
+                const share = `Share: ${formatValue((mark.end - mark.start) * 100)}%`;
+                items.push({ kind: 'shape', layer: 'body', x, y, path: slice(radius, mark.start, mark.end), fill: color, stroke: ink.paper, strokeWidth: 1, ...extra, tooltip: `${extra.tooltip}\n${share}` });
+            } else if (spec.mark === 'boxplot') {
+                // The box sits in the member step across the value axis. Several colors share the step side by side.
+                const flat = lengthAxis === 'x';
+                const step = flat ? rowLeaf.size : columnLeaf.size;
+                const [index, count] = mark.slot ?? [0, 1];
+                const room = step * metrics.barFill / count;
+                const thickness = Math.max(2, Math.min(28, room - (count > 1 ? 1 : 0)));
+                const center = (flat ? y : x) + (index - (count - 1) / 2) * room;
+                const at = (value: number) => flat ? px(columnLeaf, value) : py(rowLeaf, value);
+                if (mark.outlier) {
+                    items.push({ kind: 'symbol', layer: 'body', x: flat ? at(mark.start) : center, y: flat ? center : at(mark.start), size: 18, fill: 'transparent', stroke: color, strokeWidth: 1, ...extra });
+                    continue;
+                }
+                const box = mark.box!, measure = flat ? xField! : yField!;
+                const tooltip = [...keys.map(f => describe(f, record[f.field])), measure.label,
+                    ...([['Upper whisker', box.high], ['Upper quartile', box.q3], ['Median', box.median], ['Lower quartile', box.q1], ['Lower whisker', box.low]] as const).map(([name, value]) => `${name}: ${formatValue(value)}`),
+                    `Records: ${box.count}`].join('\n');
+                // A stretch along the value axis, `across` px wide and at least `least` px long.
+                const stretch = (from: number, to: number, across: number, color: string, least = 1) => {
+                    const a = Math.min(at(from), at(to)), length = Math.max(least, Math.abs(at(to) - at(from)));
+                    const start = Math.abs(at(to) - at(from)) < least ? a - least / 2 : a;
+                    if (flat) rect('body', start, center - across / 2, length, across, color, { ...extra, tooltip });
+                    else rect('body', center - across / 2, start, across, length, color, { ...extra, tooltip });
+                };
+                stretch(box.low, box.high, 1, color);
+                stretch(box.low, box.low, thickness / 2, color);
+                stretch(box.high, box.high, thickness / 2, color);
+                // A box too short to hold a median line, as when it has a single record, is drawn as a dash.
+                const short = Math.abs(at(box.q3) - at(box.q1)) < 4;
+                stretch(box.q1, box.q3, thickness, color, short ? 2 : 1);
+                if (!short) stretch(box.median, box.median, thickness, ink.paper, 2);
+            } else if (spec.mark === 'tick') {
+                // A tick is a short line across its value axis. Between two value axes it stands upright.
+                const length = (leafSize: number, continuous: boolean) => continuous ? 14 : Math.max(3, leafSize * metrics.barFill);
+                if (xContinuous) { const h = length(rowLeaf.size, yContinuous); rect('body', Math.round(x) - 1, y - h / 2, 2, h, color, extra); }
+                else { const w = length(columnLeaf.size, false); rect('body', x - w / 2, Math.round(y) - 1, w, 2, color, extra); }
+            } else if (spec.mark === 'bar') {
                 if (!Number.isFinite(mark.start) || !Number.isFinite(mark.end)) continue;
                 if (lengthAxis === 'x') {
                     const a = px(columnLeaf, mark.start), b = px(columnLeaf, mark.end), thickness = yContinuous ? barAt(rowLeaf) : Math.max(1, rowLeaf.size * metrics.barFill);
@@ -167,6 +234,9 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 // A cell mark fills its member step; on a value axis it stays a small square.
                 const width = xContinuous ? 10 : columnLeaf.size - 1, height = yContinuous ? 10 : rowLeaf.size - 1;
                 rect('body', x - width / 2, y - height / 2, width, height, color, extra);
+            } else if (spec.mark === 'point') {
+                // Hollow, with a transparent fill so the inside still takes the pointer.
+                items.push({ kind: 'symbol', layer: 'body', x, y, size: 44, fill: 'transparent', stroke: color, strokeWidth: 1.5, ...extra });
             } else {
                 items.push({ kind: 'symbol', layer: 'body', x, y, size: isLine ? 22 : 44, fill: color, ...extra });
             }
@@ -182,7 +252,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 open = true;
             }
             // A line has one stroke. With a measure on color only its points are tinted.
-            if (path) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path, stroke: model.colorScale ? palette[0] : points[0].color, ...(selecting && !selected ? { opacity: dimmed } : {}) });
+            if (path) items.push({ kind: 'path', layer: 'body', x: 0, y: 0, path, stroke: model.colorScale ? ink.mark : points[0].color, ...(selecting && !selected ? { opacity: dimmed } : {}) });
         }
     }
 
@@ -194,7 +264,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         for (const span of spansIn(spans, r0, r1)) {
             const first = rows.leaves[span.start], last = rows.leaves[span.end - 1];
             const y0 = sy(first.offset), y1 = sy(last.offset + last.size);
-            const label = displayValue(span.part.value);
+            const label = memberLabel(spec.instances[span.part.instanceId], span.part.value);
             const tooltip = `${spec.instances[span.part.instanceId].label}: ${label}`;
             // Dividers separate groups, not the members inside a pane.
             const member = first.kind === 'band' && level === first.path.length - 1;
@@ -235,7 +305,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
         for (const span of spansIn(spans, c0, c1)) {
             const first = columns.leaves[span.start], last = columns.leaves[span.end - 1];
             const x0 = sx(first.offset), x1 = sx(last.offset + last.size);
-            const label = displayValue(span.part.value);
+            const label = memberLabel(spec.instances[span.part.instanceId], span.part.value);
             const tooltip = `${spec.instances[span.part.instanceId].label}: ${label}`;
             const member = first.kind === 'band' && level === first.path.length - 1;
             if (!member && x0 >= left && first.offset > 0) rect('columnHeader', x0, headerY, 1, top - headerY, ink.line);
@@ -259,7 +329,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             if (span.start % stride(leaf.size, rotated ? 12 : 1)) continue;
             const center = sx(leaf.offset + leaf.size / 2);
             if (center < left || center > bodyRight) continue;
-            const label = displayValue(span.part.value);
+            const label = memberLabel(spec.instances[span.part.instanceId], span.part.value);
             const tooltip = `${spec.instances[span.part.instanceId].label}: ${label}`;
             // Vertical names hang from the axis line and read upwards.
             if (rotated) text('xAxis', center + 4, axisY + 6, fitText(label, height - 8), { angle: 270, align: 'right', tooltip });
@@ -309,14 +379,14 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
     }
 
     // ---- legend, right after the body or on the window edge when the sheet is wider
-    if (frame.right && colorField) {
-        const x = bodyRight, inner = frame.right - 24;
-        rect('legend', x, 0, Math.max(frame.right, viewport.width - x), viewport.height, ink.paper);
+    if (right && colorField) {
+        const x = bodyRight, inner = right - 24;
+        rect('legend', x, 0, Math.max(right, viewport.width - x), viewport.height, ink.paper);
         rect('legend', x, 0, 1, Math.min(viewport.height, axisY + frame.bottom), ink.line);
         text('legend', x + 12, 17, fitText(colorField.label, inner, metrics.fontSize, 600), { fontWeight: 600, tooltip: colorField.label });
         if (model.colorScale) {
             const [low, high] = model.colorScale.domain, steps = 40;
-            for (let i = 0; i < steps; i++) rect('legend', x + 12 + i * inner / steps, 28, inner / steps + .5, 10, continuousColor(model.colorScale, low + (high - low) * (i + .5) / steps));
+            for (let i = 0; i < steps; i++) rect('legend', x + 12 + i * inner / steps, 28, inner / steps + .5, 10, continuousColor(model.colorScale, low + (high - low) * (i + .5) / steps, ink, cells));
             text('legend', x + 12, 52, formatTick(low), { fontSize: 10, fill: ink.muted });
             text('legend', x + 12 + inner, 52, formatTick(high), { fontSize: 10, fill: ink.muted, align: 'right' });
         } else {
@@ -324,11 +394,11 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
             const room = Math.max(1, Math.floor((viewport.height - 30) / 18));
             const shown = model.colors.length > room ? room - 1 : model.colors.length;
             model.colors.slice(0, shown).forEach((value, i) => {
-                rect('legend', x + 12, 28 + i * 18, 10, 10, palette[i % palette.length]);
-                text('legend', x + 28, 37 + i * 18, fitText(displayValue(value), inner - 16), { tooltip: displayValue(value) });
+                rect('legend', x + 12, 28 + i * 18, 10, 10, ink.category[i % ink.category.length]);
+                text('legend', x + 28, 37 + i * 18, fitText(memberLabel(colorField, value), inner - 16), { tooltip: memberLabel(colorField, value) });
             });
             if (shown < model.colors.length) text('legend', x + 12, 37 + shown * 18, `+${model.colors.length - shown} more`, { fill: ink.muted });
         }
     }
-    return { width: viewport.width, height: viewport.height, items, visiblePanes };
+    return { width: viewport.width, height: viewport.height, items, visiblePanes, background: ink.paper, legend: !colorField ? 'none' : right ? 'side' : 'omitted' };
 }

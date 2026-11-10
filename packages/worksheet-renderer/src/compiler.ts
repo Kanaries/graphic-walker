@@ -1,4 +1,4 @@
-import { resultKey, type AxisBranch, type AxisExpr, type Binding, type Computation, type FieldInstance, type Plan, type QueryTask, type Row, type WorksheetSpec } from './types';
+import { resultKey, type AxisBranch, type AxisExpr, type Binding, type Computation, type FieldInstance, type Plan, type QueryTask, type Ranking, type Row, type WorksheetSpec } from './types';
 
 function expand(expr: AxisExpr): string[][] {
     if (expr.kind === 'empty') return [[]];
@@ -65,40 +65,85 @@ export function compileWorksheet(spec: WorksheetSpec): Plan {
     const encodings = [...details];
     if (spec.color) {
         const f = instance(spec.color, 'Color');
-        if (f.aggregate ? f.display !== 'continuous' : f.display !== 'discrete') throw new Error('Color takes a discrete dimension or an aggregated measure.');
+        if (f.aggregate && f.display !== 'continuous') throw new Error('Color takes a dimension or a continuous field, not a discrete aggregate.');
+        if (spec.mark === 'boxplot' && f.display !== 'discrete') throw new Error('A box plot takes a dimension on color.');
         encodings.unshift(f);
     }
     if (spec.text && spec.mark === 'text') encodings.push(instance(spec.text, 'Text'));
+    if (spec.angle && spec.mark === 'arc') {
+        const f = instance(spec.angle, 'Angle');
+        if (f.display !== 'continuous' || f.scale === 'time') throw new Error('Angle takes a measure.');
+        encodings.push(f);
+    }
     const tasks = new Map<string, QueryTask>();
     const bindings: Binding[] = [];
     for (const row of rows) for (const column of columns) {
-        if (spec.mark === 'bar') {
-            const continuous = [row.position, column.position].filter(f => f?.display === 'continuous');
-            if (!continuous.length || (continuous.length === 2 && continuous.filter(f => f!.aggregate).length !== 1)) {
-                throw new Error('Bar marks need one measure axis. The other axis can be discrete, or an unaggregated continuous field such as a date.');
-            }
+        const continuous = [row.position, column.position].filter(f => f?.display === 'continuous');
+        if (spec.mark === 'bar' && (!continuous.length || (continuous.length === 2 && continuous.filter(f => f!.aggregate).length !== 1))) {
+            throw new Error('Bar marks need one measure axis. The other axis can be discrete, or an unaggregated continuous field such as a date.');
+        }
+        if (spec.mark === 'arc' && continuous.length) throw new Error('Arc marks take dimensions on rows and columns. The measure goes on angle.');
+        if (spec.mark === 'boxplot' && (continuous.length !== 1 || continuous[0]!.scale === 'time')) {
+            throw new Error('A box plot needs exactly one measure axis. The other axis takes dimensions.');
         }
         const used = [...branchFields(row), ...branchFields(column), ...encodings];
         const groupBy = [...new Set(used.filter(f => !f.aggregate).map(f => f.field))].sort();
+        // A box over an unaggregated field summarises source rows, so equal rows must not be merged.
+        const raw = spec.mark === 'boxplot' && !continuous[0]!.aggregate;
         const id = JSON.stringify(groupBy);
         let task = tasks.get(id);
         if (!task) {
-            task = { id, groupBy, measures: [], payload: { workflow: [] } };
+            task = { id, groupBy, measures: [], raw, payload: { workflow: [] } };
             tasks.set(id, task);
         }
         for (const f of used.filter(f => f.aggregate)) if (!task.measures.some(m => m.id === f.id)) task.measures.push(f);
         bindings.push({ row, column, taskId: id });
+    }
+    // A row limit applies to the records that become marks, never to the values that only order members.
+    const limit = spec.limit && spec.limit.rows > 0 ? spec.limit : undefined;
+    const limitBy = limit?.by ? instance(limit.by, 'Limit') : undefined;
+    const limited = new Map<string, FieldInstance | undefined>();
+    if (limit) for (const task of tasks.values()) {
+        // An aggregate joins the query; a plain field can order the rows only where it is part of the grain.
+        if (limitBy?.aggregate && !task.raw && !task.measures.some(m => m.id === limitBy.id)) task.measures.push(limitBy);
+        limited.set(task.id, limitBy && (limitBy.aggregate ? !task.raw : task.groupBy.includes(limitBy.field)) ? limitBy : undefined);
+    }
+    // Members ordered by a measure need that measure per member, at the grain of the member's own
+    // axis path. Where a query of that grain already exists the measure joins it.
+    const rankings: Ranking[] = [];
+    for (const [id, order] of Object.entries(spec.order ?? {})) {
+        if (typeof order !== 'object' || Array.isArray(order)) continue;
+        const { by: byId, direction = 'ascending' } = order as { by: string; direction?: 'ascending' | 'descending' };
+        const f = instance(id, 'Order'), by = instance(byId, 'Order');
+        if (f.display !== 'discrete') throw new Error(`Only the members of a dimension can be ordered by a measure: ${f.label}`);
+        if (!by.aggregate || by.display !== 'continuous') throw new Error(`Members are ordered by an aggregated measure, not by ${by.label}.`);
+        for (const branch of [...rows, ...columns]) {
+            const fields = branchFields(branch), index = fields.indexOf(f);
+            if (index < 0) continue;
+            const parents = fields.slice(0, index);
+            if (rankings.some(r => r.instanceId === id && r.parents.length === parents.length && r.parents.every((p, i) => p === parents[i]))) continue;
+            const groupBy = [...new Set([...parents, f].map(p => p.field))].sort();
+            const taskId = JSON.stringify(groupBy);
+            let task = tasks.get(taskId);
+            // A query that returns source rows or is cut by the limit cannot also carry complete totals.
+            if (task?.raw || (task && limited.has(taskId))) task = undefined;
+            const rankId = task ? taskId : `order:${taskId}`;
+            if (!task && !(task = tasks.get(rankId))) tasks.set(rankId, task = { id: rankId, groupBy, measures: [], payload: { workflow: [] } });
+            if (!task.measures.some(m => m.id === by.id)) task.measures.push(by);
+            rankings.push({ instanceId: id, parents, by, direction, taskId: rankId });
+        }
     }
     for (const task of tasks.values()) {
         // Alias collisions must fail before dispatch rather than overwrite grouped data.
         if (task.measures.some(m => task.groupBy.includes(resultKey(m)))) throw new Error('A source field conflicts with a reserved worksheet result alias.');
         task.payload = { workflow: [
             ...(spec.filters?.length ? [{ type: 'filter' as const, filters: spec.filters.map(f => ({ fid: f.field, rule: { type: 'one of' as const, value: f.values } })) }] : []),
-            { type: 'view', query: [{ op: 'aggregate', groupBy: task.groupBy,
+            { type: 'view', query: [task.raw ? { op: 'raw', fields: task.groupBy } : { op: 'aggregate', groupBy: task.groupBy,
                 measures: task.measures.map(m => ({ field: m.field, agg: m.aggregate!, asFieldKey: resultKey(m) })) }] },
-        ] };
+            ...(limited.get(task.id) ? [{ type: 'sort' as const, by: [resultKey(limited.get(task.id)!)], sort: limit!.direction ?? 'ascending' }] : []),
+        ], ...(limited.has(task.id) ? { limit: limit!.rows } : {}) };
     }
-    return { spec, rows, columns, tasks: [...tasks.values()], bindings };
+    return { spec, rows, columns, tasks: [...tasks.values()], bindings, rankings };
 }
 
 export async function executePlan(plan: Plan, computation: Computation, signal?: AbortSignal): Promise<Map<string, Row[]>> {
