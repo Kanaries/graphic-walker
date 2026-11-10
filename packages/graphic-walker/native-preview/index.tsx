@@ -54,8 +54,9 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  */
 function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onUnsupported, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
-    // In the fixed and full layout modes the sheet is scaled to the box the editor gives it.
-    const spec = useMemo(() => adapted.spec && (fill ? { ...adapted.spec, fit: 'both' as const } : adapted.spec), [adapted.spec, fill]);
+    // In the fixed and full layout modes the whole sheet is scaled to the box the editor gives it. In the auto
+    // mode only the value axes take up the room of the chart area, and a sheet that is too large scrolls.
+    const spec = useMemo(() => adapted.spec && (fill ? { ...adapted.spec, fit: 'both' as const } : { ...adapted.spec, stretch: 'both' as const }), [adapted.spec, fill]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
     const before = useMemo(() => {
@@ -127,7 +128,7 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
     const [height, setHeight] = useState(520);
     useEffect(() => {
         const element = host.current!;
-        // A box the viewer sized is taken as it is; otherwise the sheet keeps a height worth scrolling in.
+        // A box the viewer sized is taken as it is; otherwise the sheet keeps a height worth drawing in.
         const observer = new ResizeObserver(() => setHeight(Math.max(fill ? 60 : 160, element.clientHeight - 16)));
         observer.observe(element);
         return () => observer.disconnect();

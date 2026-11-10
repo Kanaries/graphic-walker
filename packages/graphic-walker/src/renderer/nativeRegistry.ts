@@ -18,8 +18,10 @@ export interface NativeRendererProps {
     /** The editor's interface language, such as 'en-US' or 'zh-CN'. */
     locale: string;
     /**
-     * Whether the chart fills the box it is given, which the editor sizes, or takes the size its
-     * content needs and scrolls inside the box. True for the fixed and full layout modes.
+     * Whether the whole chart is scaled into the box it is given, which the editor sizes. True for
+     * the fixed and full layout modes. In the auto mode it is false: the value axes take the room
+     * the box has, the steps of dimension members keep their size, and a chart that does not fit
+     * scrolls inside the box.
      */
     fill: boolean;
     /**

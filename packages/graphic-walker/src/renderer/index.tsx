@@ -402,7 +402,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
 
     if (drawsNative) {
         const Native = native!.component;
-        // Auto: the chart takes the size its content needs and scrolls inside the chart area.
+        // Auto: value axes take the room the chart area has, member steps keep their size, and what does not fit scrolls.
         // Fixed: it fills a box of the chosen size, which the viewer can drag to resize.
         // Full: it fills the chart area.
         const size = props.overrideSize ?? chart.layout.size;
