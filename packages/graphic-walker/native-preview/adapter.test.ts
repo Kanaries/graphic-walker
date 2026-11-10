@@ -53,7 +53,7 @@ describe('chartToWorksheet', () => {
         expect(mark({ rows: [dim('Region')], columns: [mea('Sales')] })).toBe('bar');
         expect(mark({ rows: [dim('Region')], columns: [dim('Segment')], text: [mea('Sales')] })).toBe('text');
         expect(mark({ rows: [dim('Region')], columns: [dim('Segment')], color: [mea('Sales')] })).toBe('rect');
-        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: ['area'] })).spec!.mark).toBe('line');
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: ['area'] })).spec!.mark).toBe('area');
         // With every record drawn, bars would pile up; the editor's own renderer draws ticks there too.
         expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { defaultAggregated: false })).spec!.mark).toBe('tick');
     });
@@ -139,6 +139,9 @@ describe('chartToWorksheet', () => {
         const base = { rows: [dim('Region')], columns: [mea('Sales')] };
         expect(chartToWorksheet(chart(base, {}, { stack: 'none' })).spec!.stack).toBe(false);
         expect(chartToWorksheet(chart(base, {}, { stack: 'stack' })).spec!.stack).toBe(true);
+        expect(chartToWorksheet(chart(base, {}, { stack: 'zero' })).spec!.stack).toBe(true);
+        expect(chartToWorksheet(chart(base, {}, { stack: 'normalize' })).spec!.stack).toBe('normalize');
+        expect(chartToWorksheet(chart(base, {}, { stack: 'center' })).spec!.stack).toBe('center');
         const independent = chartToWorksheet(chart(base, {}, { resolve: { ...emptyVisualLayout.resolve, x: true } })).spec!;
         expect(independent.scaleScope).toBe('independent');
         const noZero = chartToWorksheet(chart(base, {}, { zeroScale: false })).spec!;
@@ -153,7 +156,7 @@ describe('chartToWorksheet', () => {
         expect(chartToWorksheet(chart({ color: [dim('Segment')] })).error).toMatch(/nothing on rows or columns/);
         const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], size: [mea('Profit')], details: [mea('Quantity')] }, {}, { stack: 'normalize' }));
         expect(spec).toBeDefined();
-        expect(notes).toEqual(['Quantity on Details is ignored: only dimensions split marks.', 'Not drawn yet: size.', 'Stack mode "normalize" is drawn as a plain stack.']);
+        expect(notes).toEqual(['Quantity on Details is ignored: only dimensions split marks.', 'Not drawn yet: size.']);
         const settings = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 10, geoms: ['trail'] },
             { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
         expect(settings.notes).toEqual([

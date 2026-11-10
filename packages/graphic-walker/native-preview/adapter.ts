@@ -15,7 +15,7 @@ export interface AdaptedChart {
 
 const aggregates = new Set<string>(['sum', 'mean', 'median', 'min', 'max', 'count', 'distinctCount', 'variance', 'stdev']);
 const marks: Record<string, WorksheetSpec['mark'] | undefined> = {
-    bar: 'bar', line: 'line', area: 'line', trail: 'line', point: 'point', circle: 'circle', tick: 'tick', rect: 'rect', text: 'text',
+    bar: 'bar', line: 'line', area: 'area', trail: 'line', point: 'point', circle: 'circle', tick: 'tick', rect: 'rect', text: 'text',
     arc: 'arc', boxplot: 'boxplot',
 };
 const isMeasure = (f: IViewField) => f.analyticType === 'measure';
@@ -133,7 +133,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         else mark = encodings.text[0] ? 'text' : color && instances[color].display === 'continuous' ? 'rect' : 'point';
     }
     if (!mark) return result({ error: `The mark type "${geom}" is not drawn by the worksheet renderer yet.` });
-    if (geom === 'area') notes.push('Area is drawn as a line.');
     if (geom === 'trail') notes.push('Trail is drawn as a line of one width.');
 
     let text: string | undefined;
@@ -158,7 +157,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     const ignored = (['size', 'shape', 'opacity', 'theta', 'radius'] as const).filter((channel) => encodings[channel].length > 0 && !(channel === 'theta' && mark === 'arc'));
     if (ignored.length) notes.push(`Not drawn yet: ${ignored.join(', ')}.`);
     if (mark !== 'text' && encodings.text.length) notes.push('Text labels on marks are not drawn yet.');
-    if (layout.stack === 'normalize' || layout.stack === 'center') notes.push(`Stack mode "${layout.stack}" is drawn as a plain stack.`);
     // The editor's sort orders a dimension by the measure across from it, the first one where there are
     // several, as Tableau's toolbar sort takes the leftmost. Each parent header is ordered on its own.
     // A measure that is drawn per record still orders the members by one number per member: its sum,
@@ -189,7 +187,8 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         kind: 'worksheet', specVersion: 2, instances,
         rows: rows.expr, columns: columns.expr,
         mark, color, detail, text, angle,
-        stack: layout.stack !== 'none',
+        // 'zero' is the editor's older name for a plain stack. Only bars and areas pile up.
+        stack: layout.stack === 'none' ? false : layout.stack === 'normalize' || layout.stack === 'center' ? layout.stack : true,
         order,
         // The editor's limit cuts the query result, after ordering it by the sort measure when a sort is on.
         limit: config.limit > 0 ? { rows: config.limit, ...ranked } : undefined,
