@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo, useContext } from 'react';
+import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo, useContext, useImperativeHandle } from 'react';
 import {
     DraggableFieldState,
     IDarkMode,
@@ -31,7 +31,7 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
-import { useNativeRenderer, type NativeRendererColors } from './nativeRegistry';
+import { useNativeRenderer, type NativeRendererColors, type NativeRendererHandle } from './nativeRegistry';
 import { getColor, getTheme } from '../utils/useTheme';
 import { themeContext } from '@/store/theme';
 
@@ -252,6 +252,15 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
 
 const ObservedRenderer = observer(Renderer);
 
+// The same default name the Vega renderer gives its downloads.
+const defaultExportName = () => `gw chart ${Date.now() % 1_000_000}`.padStart(6, '0');
+function saveDataURL(url: string, filename: string) {
+    const anchor = document.createElement('a');
+    anchor.download = filename;
+    anchor.href = url;
+    anchor.click();
+}
+
 /**
  * Routes a chart to the native worksheet renderer when the chart asks for it and a host
  * has registered one. That renderer plans its own queries from the chart, so the query
@@ -286,15 +295,60 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
         console.warn(`[worksheet renderer] fell back to the default renderer: ${reason}`);
         setFailed({ shape, reason });
     }, [shape]);
-    if (native && chart.layout.renderer === 'native' && failed?.shape !== shape && native.canDraw(chart)) {
-        const Native = native.component;
+    const drawsNative = Boolean(native) && chart.layout.renderer === 'native' && failed?.shape !== shape && native!.canDraw(chart);
+
+    // The toolbar's export buttons reach whichever renderer is drawing through this one handle.
+    const nativeHandle = useRef<NativeRendererHandle>(null);
+    const innerHandle = useRef<IReactVegaHandler>(null);
+    const drawing = useRef(drawsNative);
+    drawing.current = drawsNative;
+    useImperativeHandle(ref, () => {
+        // An export that cannot be made, such as one asked for while the chart is loading, saves nothing.
+        const guarded = async (make: () => Promise<string>, save?: (data: string) => void): Promise<string[]> => {
+            try {
+                const data = await make();
+                save?.(data);
+                return [data];
+            } catch (error) {
+                console.error('[worksheet renderer] export failed:', error);
+                return [];
+            }
+        };
+        const fromNative: IReactVegaHandler = {
+            getSVGData: () => guarded(() => nativeHandle.current!.exportSVG()),
+            getCanvasData: () => guarded(() => nativeHandle.current!.exportPNG()),
+            downloadSVG: (filename = defaultExportName()) => guarded(() => nativeHandle.current!.exportSVG(), (svg) => download(svg, `${filename}.svg`, 'image/svg+xml')),
+            downloadPNG: (filename = defaultExportName()) => guarded(() => nativeHandle.current!.exportPNG(), (url) => saveDataURL(url, `${filename}.png`)),
+        };
+        const pick = <K extends keyof IReactVegaHandler>(key: K): IReactVegaHandler[K] =>
+            ((...args: [string?]) => (drawing.current ? fromNative[key](...args) : innerHandle.current?.[key](...args) ?? Promise.resolve([]))) as IReactVegaHandler[K];
+        return { getSVGData: pick('getSVGData'), getCanvasData: pick('getCanvasData'), downloadSVG: pick('downloadSVG'), downloadPNG: pick('downloadPNG') };
+    }, []);
+    // The CSV button reads a slot the drawing renderer fills. The old renderer fills it itself when it mounts.
+    const { csvRef } = props;
+    const chartName = chart.name;
+    useEffect(() => {
+        if (!drawsNative || !csvRef) return;
+        csvRef.current = {
+            download() {
+                try {
+                    download(nativeHandle.current!.exportCSV(), `${chartName}.csv`, 'text/plain');
+                } catch (error) {
+                    console.error('[worksheet renderer] export failed:', error);
+                }
+            },
+        };
+    }, [drawsNative, csvRef, chartName]);
+
+    if (drawsNative) {
+        const Native = native!.component;
         return (
             <div className="w-full h-full">
-                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} onUnsupported={onUnsupported} />
+                <Native chart={chart} fields={vizStore.allFields} computation={props.computationFunction} colors={colors} onUnsupported={onUnsupported} handle={nativeHandle} />
             </div>
         );
     }
-    return <ObservedRenderer {...props} ref={ref} />;
+    return <ObservedRenderer {...props} ref={innerHandle} />;
 });
 
 export default observer(RendererSwitch);

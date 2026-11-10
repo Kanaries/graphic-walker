@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Worksheet, compileWorksheet, darkTheme, lightTheme, type Computation, type Theme } from '@kanaries/worksheet-renderer';
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from 'react';
+import { Worksheet, compileWorksheet, darkTheme, lightTheme, tableToCSV, type Computation, type Theme, type WorksheetHandle } from '@kanaries/worksheet-renderer';
 import type { IChart, IDataQueryWorkflowStep } from '../src/interfaces';
 import { registerNativeRenderer, type NativeRendererProps } from '../src/renderer/nativeRegistry';
 import { toWorkflow } from '../src/utils/workflow';
@@ -51,7 +51,7 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  * builder; only the grouping step comes from the worksheet, which asks for one result
  * per grain it draws.
  */
-function NativeWorksheet({ chart, fields, computation, colors, onUnsupported }: NativeRendererProps) {
+function NativeWorksheet({ chart, fields, computation, colors, onUnsupported, handle }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on those.
@@ -79,6 +79,17 @@ function NativeWorksheet({ chart, fields, computation, colors, onUnsupported }: 
         };
     }, [before, aggregated, computation]);
 
+    // Exports are of the whole sheet, not only the part scrolled into view. The CSV holds the query
+    // result the marks are drawn from, with the values as stored.
+    const sheet = useRef<WorksheetHandle>(null);
+    useImperativeHandle(handle, () => {
+        const ready = () => { if (!sheet.current) throw new Error('The chart is not drawn yet.'); return sheet.current; };
+        return {
+            exportSVG: async () => ready().exportSVG(),
+            exportPNG: async () => ready().exportPNG(),
+            exportCSV: () => ready().exportRecords().map(tableToCSV).join('\n\n'),
+        };
+    }, []);
     // The chart area shows nothing but the chart, so what was left out goes to the console.
     const dropped = adapted.notes.join(' ');
     useEffect(() => { if (dropped) console.info(`[worksheet renderer] ${dropped}`); }, [dropped]);
@@ -108,7 +119,7 @@ function NativeWorksheet({ chart, fields, computation, colors, onUnsupported }: 
     // and covered by the adapter tests; the editor has no place for it next to the chart yet.
     return (
         <div ref={host} style={{ height: '100%', padding: 8, color: theme.text, overflow: 'hidden', boxSizing: 'border-box' }}>
-            {adapted.spec ? <Worksheet spec={adapted.spec} computation={run} height={height} theme={theme} compact onError={(message) => { if (message) onUnsupported(message); }} /> : null}
+            {adapted.spec ? <Worksheet ref={sheet} spec={adapted.spec} computation={run} height={height} theme={theme} compact onError={(message) => { if (message) onUnsupported(message); }} /> : null}
         </div>
     );
 }

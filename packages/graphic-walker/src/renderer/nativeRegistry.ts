@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ComponentType } from 'react';
+import { useSyncExternalStore, type ComponentType, type Ref } from 'react';
 import type { IChart, IComputationFunction, IViewField } from '../interfaces';
 
 /**
@@ -21,6 +21,18 @@ export interface NativeRendererProps {
      * not handle. The editor then draws the chart with its own renderer.
      */
     onUnsupported: (reason: string) => void;
+    /** Where the renderer puts its export functions, for the toolbar's image and CSV buttons. */
+    handle?: Ref<NativeRendererHandle>;
+}
+
+/** Each function rejects or throws while the chart is still loading. */
+export interface NativeRendererHandle {
+    /** The whole chart as SVG text. */
+    exportSVG(): Promise<string>;
+    /** The whole chart as a PNG data URL. */
+    exportPNG(): Promise<string>;
+    /** The records behind the marks as comma-separated text with a header line. */
+    exportCSV(): string;
 }
 
 export interface NativeRendererColors {
