@@ -45,6 +45,12 @@ const LR = {
         };
     },
 };
+/**
+ * How many dimensions the Vega-Lite and Observable Plot renderers take on rows and on columns:
+ * one for the position inside a facet, one for the facet. A shelf with more would be drawn
+ * with levels left out.
+ */
+export const CLASSIC_CROSS_LIMIT = 2;
 type Operator<T> = (value: T) => T;
 function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
     return operators.reduce((currentValue, operator) => operator(currentValue), initialValue);
@@ -59,7 +65,7 @@ function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
  */
 export function algebraLint<T extends Partial<DraggableFieldState>>(geom: string, encodings: T, options: { unlimitedCross?: boolean } = {}): Partial<T> {
     // The native worksheet renderer nests any number of dimensions, like the pivot table does.
-    const crossLimit = geom === 'table' || options.unlimitedCross ? Infinity : 2;
+    const crossLimit = geom === 'table' || options.unlimitedCross ? Infinity : CLASSIC_CROSS_LIMIT;
 
     const result: Partial<T> = {};
     if (encodings.rows && encodings.rows.length > 0) {

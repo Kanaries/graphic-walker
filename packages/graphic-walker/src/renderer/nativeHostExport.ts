@@ -53,14 +53,23 @@ export function installNativeExport(
             return empty(mode);
         }
     };
+    // The editor reports the chart it shows once that chart is mounted. Two seconds is far more than that takes;
+    // after it the export goes on and reports what it finds.
+    const opened = async (index: number) => {
+        const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+        const deadline = Date.now() + 2_000;
+        await tick();
+        while (ctx.chartIndex !== index && Date.now() < deadline) await tick();
+    };
     const exportChartList = async function* (mode: IChartExportResult['mode'] = 'svg') {
         const total = ctx.chartCount;
         const current = ctx.chartIndex;
         for (let index = 0; index < total; index += 1) {
             ctx.openChart(index);
-            // Give the chart that was just opened a moment to mount. It may be drawn by another renderer,
-            // which by then has put its own exportChart in place.
-            await new Promise<void>((resolve) => setTimeout(resolve, 0));
+            // Wait until the editor shows that chart. By then whichever renderer draws it has put its own
+            // exportChart in place and has said that it is at work, so the export waits for this chart
+            // and not for the one that was on screen before.
+            await opened(index);
             yield { mode, total, index, data: await ctx.exportChart(mode), hasNext: index < total - 1 };
         }
         ctx.openChart(current);

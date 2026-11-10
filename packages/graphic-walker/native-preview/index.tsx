@@ -1,10 +1,10 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from 'react';
 import { Worksheet, compileWorksheet, darkTheme, lightTheme, tableToCSV, type Computation, type Theme, type WorksheetHandle } from '@kanaries/worksheet-renderer';
-import type { IChart, IDataQueryWorkflowStep } from '../src/interfaces';
-import { registerNativeRenderer, type NativeRendererProps } from '../src/renderer/nativeRegistry';
+import type { IChart } from '../src/interfaces';
+import { registerNativeRenderer, type NativeRendererProps, type NativeUnsupported } from '../src/renderer/nativeRegistry';
 import { toWorkflow } from '../src/utils/workflow';
 import { chartToWorksheet } from './adapter';
-import { composeWorkflow, drawnAtGrain, splitWorkflow, type Having } from './having';
+import { composeWorkflow, drawnAtGrain, splitWorkflow, type Around } from './having';
 import { chartFormats } from './formats';
 
 /** Red, green, blue and alpha of a CSS rgb(), rgba() or #rrggbb color. Alpha is 1 where the color names none. */
@@ -53,24 +53,26 @@ function useSurface(host: RefObject<HTMLElement | null>, fallback: string): stri
  * builder; only the grouping step comes from the worksheet, which asks for one result
  * per grain it draws.
  */
-function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onUnsupported, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
+function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onError, handle, onStatusChange, onMarkClick }: NativeRendererProps) {
     const adapted = useMemo(() => chartToWorksheet(chart), [chart]);
     // In the fixed and full layout modes the whole sheet is scaled to the box the editor gives it. In the auto
     // mode only the value axes take up the room of the chart area, and a sheet that is too large scrolls.
     const spec = useMemo(() => adapted.spec && (fill ? { ...adapted.spec, fit: 'both' as const } : { ...adapted.spec, stretch: 'both' as const }), [adapted.spec, fill]);
     const aggregated = chart.config.defaultAggregated;
     // Everything the editor would run before its own view step: row filters, computed fields, filters on
-    // those. And what it would run after: filters on aggregated values, which go into the worksheet's queries.
+    // those. The aggregate expressions as it would send them. And what it would run after: filters on
+    // aggregated values, which go into the worksheet's queries.
     const around = useMemo(
         () => JSON.stringify(splitWorkflow(toWorkflow(chart.encodings.filters, fields, adapted.viewDimensions, adapted.viewMeasures, aggregated, 'none', chart.config.folds, undefined, chart.config.timezoneDisplayOffset))),
         [chart, fields, adapted, aggregated]
     );
     // `around` is compared as text so that an unrelated store update does not restart the queries.
+    // Every query goes to the computation the host gave the editor, expressions included. Nothing is worked out here.
     const run = useMemo<Computation>(() => {
-        const { before, having }: { before: IDataQueryWorkflowStep[]; having?: Having } = JSON.parse(around);
-        return (payload) => {
-            const workflow = composeWorkflow(before, having, aggregated, payload);
-            return workflow.length ? computation({ workflow, limit: payload.limit }) : Promise.resolve([]);
+        const parsed: Around = JSON.parse(around);
+        return async (payload) => {
+            const workflow = composeWorkflow(parsed, aggregated, payload);
+            return workflow.length ? computation({ workflow, limit: payload.limit }) : [];
         };
     }, [around, aggregated, computation]);
 
@@ -129,7 +131,7 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
     return (
         <div ref={host} style={{ height: '100%', padding: 8, color: theme.text, overflow: 'hidden', boxSizing: 'border-box' }}>
             {spec ? <Worksheet ref={sheet} spec={spec} computation={run} height={height} theme={theme} formats={written.formats} compact zoomable={chart.layout.interactiveScale}
-                onError={(message) => { if (message) onUnsupported(message); }}
+                onError={(message) => { if (message) onError(message); }}
                 // The worksheet's own words for where it stands, in the editor's.
                 onStatusChange={(status) => onStatusChange?.(status === 'querying' ? 'computing' : status === 'drawing' ? 'rendering' : status)}
                 // What identifies the mark: its dimension values, as stored. Measures are left out, as an aggregated value is not a filter on rows.
@@ -139,19 +141,23 @@ function NativeWorksheet({ chart, fields, computation, colors, locale, fill, onU
     );
 }
 
-// A chart is drawn here only when it maps to a worksheet and that worksheet compiles. Anything else,
-// such as a table, a map or bars between two measures, never reaches this component: the editor
-// keeps it on its own renderers instead of showing an error.
-function canDraw(chart: IChart): boolean {
-    const { spec, viewDimensions, viewMeasures } = chartToWorksheet(chart);
-    if (!spec) return false;
+// Says why a chart cannot be drawn here, before anything is mounted or queried: it does not map to a
+// worksheet, or the worksheet does not compile. The editor shows the reason in the chart area.
+function check(chart: IChart): NativeUnsupported | undefined {
+    const { spec, error, empty, viewDimensions, viewMeasures } = chartToWorksheet(chart);
+    if (!spec) return { reason: error ?? 'The chart does not map to a worksheet.', empty };
     try {
         const plan = compileWorksheet(spec);
         // A filter on an aggregated value holds at the grain of the editor's one query. A sheet that draws
-        // from another grain, such as a box plot of source rows, would show marks the filter should have
-        // removed, so it stays with the renderer that applies the filter.
-        const { having } = splitWorkflow(toWorkflow(chart.encodings.filters, [], viewDimensions, viewMeasures, chart.config.defaultAggregated, 'none', chart.config.folds));
-        return !having || drawnAtGrain(plan, having.groupBy);
-    } catch { return false; }
+        // from another grain would show marks the filter should have removed.
+        const fields = [...chart.encodings.dimensions, ...chart.encodings.measures];
+        const { having } = splitWorkflow(toWorkflow(chart.encodings.filters, fields, viewDimensions, viewMeasures, chart.config.defaultAggregated, 'none', chart.config.folds));
+        if (having && !drawnAtGrain(plan, having.groupBy)) {
+            const names = chart.encodings.filters.filter((f) => f.enableAgg && f.aggName && f.rule).map((f) => f.name);
+            return { reason: `The filter on an aggregated value (${names.join(', ')}) applies to groups of rows, and this chart is not drawn from those groups.` };
+        }
+    } catch (error) {
+        return { reason: error instanceof Error ? error.message : String(error) };
+    }
 }
-registerNativeRenderer({ component: NativeWorksheet, canDraw });
+registerNativeRenderer({ component: NativeWorksheet, check });

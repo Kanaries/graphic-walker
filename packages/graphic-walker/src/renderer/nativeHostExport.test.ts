@@ -22,8 +22,10 @@ function host(initial: IRenderStatus = 'idle') {
         },
         chartCount: 2,
         chartIndex: 1,
+        // As the editor does it: the chart it shows is reported a moment after it was asked for.
         openChart(index: number) {
             opened.push(index);
+            setTimeout(() => (ctx.chartIndex = index), 5);
         },
         exportChart: undefined as unknown,
         exportChartList: undefined as unknown,

@@ -32,7 +32,9 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
-import { useNativeRenderer, type NativeRendererColors, type NativeRendererHandle } from './nativeRegistry';
+import { useNativeRegistry, type NativeRendererColors, type NativeRendererHandle } from './nativeRegistry';
+import { routeChart, type ChartRoute } from './route';
+import ChartNotice from './chartNotice';
 import { getColor, getTheme } from '../utils/useTheme';
 import { installNativeExport } from './nativeHostExport';
 import { useAppRootContext } from '@/components/appRoot';
@@ -258,17 +260,17 @@ function saveDataURL(url: string, filename: string) {
 }
 
 /**
- * Routes a chart to the native worksheet renderer when the chart asks for it and a host
- * has registered one. That renderer plans its own queries from the chart, so the query
- * and Vega pipeline above is not mounted for it. Charts it cannot draw, such as text tables,
- * pies and maps, keep going to the renderers that already handle them.
+ * Draws the current chart with the component that its kind and its renderer setting call for; see
+ * `routeChart`. The worksheet renderer plans its own queries from the chart, so the query and Vega
+ * pipeline above is not mounted for it. No renderer stands in for another: a chart that its renderer
+ * cannot draw, or that failed while it was drawn, leaves a notice in the chart area and stays as saved.
  */
 const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const vizStore = useVizStore();
-    const native = useNativeRenderer();
+    const registry = useNativeRegistry();
     const chart = vizStore.currentVis;
     const { i18n } = useTranslation();
-    // The host's chart count, chart index and openChart. They are registered here, above both renderers,
+    // The host's chart count, chart index and openChart. They are registered here, above every renderer,
     // so they stay in place whichever one draws and while one is swapped for the other.
     useChartIndexControl({
         count: vizStore.visLength,
@@ -308,22 +310,24 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
             },
         };
     }, [props.vizThemeConfig, mediaTheme, primaryColor, colorPalette, background]);
-    // A chart the native renderer gave up on while drawing stays with the old renderers until its
-    // fields, mark type or aggregation change. Size and color changes do not bring the failure back.
+    // A chart that failed while it was queried or drawn shows the error until someone tries again, or until
+    // its fields, filters, mark type, aggregation or data source change. Size and color changes keep the error.
     const { encodings, config } = chart;
     const shape = useMemo(() => JSON.stringify([encodings, config]), [encodings, config]);
     const [failed, setFailed] = useState<{ shape: string; reason: string }>();
-    const onUnsupported = useCallback((reason: string) => {
-        console.warn(`[worksheet renderer] fell back to the default renderer: ${reason}`);
-        setFailed({ shape, reason });
-    }, [shape]);
-    const drawsNative = Boolean(native) && chart.layout.renderer === 'native' && failed?.shape !== shape && native!.canDraw(chart);
+    const onError = useCallback((reason: string) => setFailed({ shape, reason }), [shape]);
+    const retry = useCallback(() => setFailed(undefined), []);
+    useEffect(() => setFailed(undefined), [props.computationFunction]);
+    const planned = useMemo(() => routeChart(chart, registry), [chart, registry]);
+    const route: ChartRoute = planned.to === 'native' && failed?.shape === shape ? { to: 'notice', notice: { state: 'failed', reason: failed.reason } } : planned;
 
-    // The toolbar's export buttons reach whichever renderer is drawing through this one handle.
+    // Who answers the export buttons and the host: the worksheet renderer, the editor's own renderers,
+    // or nobody while a notice or a blank area stands where the chart would be.
+    const drawn: 'native' | 'classic' | 'nothing' = route.to === 'native' ? 'native' : route.to === 'classic' || route.to === 'dedicated' ? 'classic' : 'nothing';
     const nativeHandle = useRef<NativeRendererHandle>(null);
     const innerHandle = useRef<IReactVegaHandler>(null);
-    const drawing = useRef(drawsNative);
-    drawing.current = drawsNative;
+    const drawing = useRef(drawn);
+    drawing.current = drawn;
     useImperativeHandle(ref, () => {
         // An export that cannot be made, such as one asked for while the chart is loading, saves nothing.
         const guarded = async (make: () => Promise<string>, save?: (data: string) => void): Promise<string[]> => {
@@ -342,17 +346,25 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
             downloadSVG: (filename = defaultExportName()) => guarded(() => nativeHandle.current!.exportSVG(), (svg) => download(svg, `${filename}.svg`, 'image/svg+xml')),
             downloadPNG: (filename = defaultExportName()) => guarded(() => nativeHandle.current!.exportPNG(), (url) => saveDataURL(url, `${filename}.png`)),
         };
+        // A chart that is not drawn has nothing to export. In particular it does not hand out what an earlier chart left behind.
         const pick = <K extends keyof IReactVegaHandler>(key: K): IReactVegaHandler[K] =>
-            ((...args: [string?]) => (drawing.current ? fromNative[key](...args) : innerHandle.current?.[key](...args) ?? Promise.resolve([]))) as IReactVegaHandler[K];
+            ((...args: [string?]) =>
+                drawing.current === 'native'
+                    ? fromNative[key](...args)
+                    : drawing.current === 'classic'
+                    ? innerHandle.current?.[key](...args) ?? Promise.resolve([])
+                    : Promise.resolve([])) as IReactVegaHandler[K];
         return { getSVGData: pick('getSVGData'), getCanvasData: pick('getCanvasData'), downloadSVG: pick('downloadSVG'), downloadPNG: pick('downloadPNG') };
     }, []);
-    // The CSV button reads a slot the drawing renderer fills. The old renderer fills it itself when it mounts.
+    // The CSV button reads a slot the drawing renderer fills. The editor's own renderers fill it when they
+    // mount. Otherwise it is filled here, also where nothing is drawn, so that it never holds an earlier chart's data.
     const { csvRef } = props;
     const chartName = chart.name;
     useEffect(() => {
-        if (!drawsNative || !csvRef) return;
+        if (drawn === 'classic' || !csvRef) return;
         csvRef.current = {
             download() {
+                if (drawing.current !== 'native') return console.warn('[chart] There is no data to export: the chart is not drawn.');
                 try {
                     download(nativeHandle.current!.exportCSV(), `${chartName}.csv`, 'text/plain');
                 } catch (error) {
@@ -360,9 +372,9 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
                 }
             },
         };
-    }, [drawsNative, csvRef, chartName]);
+    }, [drawn, csvRef, chartName]);
 
-    // Where the native chart stands, for the loading layer here and for the host's render status.
+    // Where the chart stands, for the loading layer here and for the host's render status.
     const appRoot = useAppRootContext();
     const [status, setStatus] = useState<IRenderStatus>('idle');
     const onStatusChange = useCallback(
@@ -373,17 +385,29 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
         [appRoot]
     );
     const container = useRef<HTMLDivElement>(null);
+    const hosted = drawn !== 'classic';
     useEffect(() => {
-        if (!drawsNative) return;
+        if (!hosted) return;
+        // The host's exportChart is answered from here also while nothing is drawn. It then reports a chart without images.
         const ctx = appRoot.current;
-        const uninstall = ctx ? installNativeExport(ctx, { handle: nativeHandle, container, title: chartName ?? '' }) : undefined;
+        return ctx ? installNativeExport(ctx, { handle: nativeHandle, container, title: chartName ?? '' }) : undefined;
+    }, [hosted, appRoot, chartName]);
+    useEffect(() => {
+        if (!hosted) return;
+        // The editor's own renderers start from a clean state when they take over. Between two charts that are
+        // both answered from here the status is left alone: the sheet goes on reporting it, and a sheet that
+        // was loading one chart and now loads the next has nothing new to say.
         return () => {
-            uninstall?.();
-            // Whichever renderer comes next starts from a clean state.
             setStatus('idle');
             appRoot.current?.updateRenderStatus('idle');
         };
-    }, [drawsNative, appRoot, chartName]);
+    }, [hosted, appRoot]);
+    // A chart that is not drawn says so to the host: an export waits for a renderer that is still loading,
+    // and gets no image from a chart that has no renderer, cannot be drawn or failed.
+    const standing: IRenderStatus | undefined = route.to === 'notice' ? (route.notice.state === 'loading' ? 'computing' : 'error') : route.to === 'blank' ? 'idle' : undefined;
+    useEffect(() => {
+        if (standing) onStatusChange(standing);
+    }, [standing, onStatusChange, chartName]);
     // A click on a mark opens the editor's menu there, with the mark's dimension values as what the menu's
     // actions work on. The click must not reach the chart area, whose own handler closes the menu.
     const onMarkClick = useCallback(
@@ -399,48 +423,54 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
         [vizStore]
     );
 
-    if (drawsNative) {
-        const Native = native!.component;
-        // Auto: value axes take the room the chart area has, member steps keep their size, and what does not fit scrolls.
-        // Fixed: it fills a box of the chosen size, which the viewer can drag to resize.
-        // Full: it fills the chart area.
-        const size = props.overrideSize ?? chart.layout.size;
-        const drawn = (
-            <Native
-                chart={chart}
-                fields={vizStore.allFields}
-                computation={props.computationFunction}
-                colors={colors}
-                locale={i18n.language}
-                fill={size.mode !== 'auto'}
-                onUnsupported={onUnsupported}
-                handle={nativeHandle}
-                onStatusChange={onStatusChange}
-                onMarkClick={onMarkClick}
-            />
-        );
+    if (route.to === 'classic' || route.to === 'dedicated') return <ObservedRenderer {...props} ref={innerHandle} />;
+    if (route.to !== 'native') {
         return (
-            <div className={size.mode === 'fixed' ? 'w-full h-full relative overflow-auto' : 'w-full h-full relative'} ref={container}>
+            <div className="w-full h-full relative overflow-auto" ref={container} data-testid="chart-not-drawn">
                 {status === 'computing' && <LoadingLayer />}
-                {size.mode === 'fixed' ? (
-                    <Resizable
-                        className="border-primary border-2 max-h-screen max-w-[100vw]"
-                        size={{ width: `${size.width}px`, height: `${size.height}px` }}
-                        minWidth={120}
-                        minHeight={120}
-                        onResizeStop={(_event, _direction, _element, delta) => {
-                            vizStore.setVisualLayout('size', { mode: 'fixed', width: size.width + delta.width, height: size.height + delta.height });
-                        }}
-                    >
-                        {drawn}
-                    </Resizable>
-                ) : (
-                    drawn
-                )}
+                {route.to === 'notice' && <ChartNotice notice={route.notice} onRetry={retry} />}
             </div>
         );
     }
-    return <ObservedRenderer {...props} ref={innerHandle} />;
+    const Native = registry.renderer!.component;
+    // Auto: value axes take the room the chart area has, member steps keep their size, and what does not fit scrolls.
+    // Fixed: it fills a box of the chosen size, which the viewer can drag to resize.
+    // Full: it fills the chart area.
+    const size = props.overrideSize ?? chart.layout.size;
+    const sheet = (
+        <Native
+            chart={chart}
+            fields={vizStore.allFields}
+            computation={props.computationFunction}
+            colors={colors}
+            locale={i18n.language}
+            fill={size.mode !== 'auto'}
+            onError={onError}
+            handle={nativeHandle}
+            onStatusChange={onStatusChange}
+            onMarkClick={onMarkClick}
+        />
+    );
+    return (
+        <div className={size.mode === 'fixed' ? 'w-full h-full relative overflow-auto' : 'w-full h-full relative'} ref={container}>
+            {status === 'computing' && <LoadingLayer />}
+            {size.mode === 'fixed' ? (
+                <Resizable
+                    className="border-primary border-2 max-h-screen max-w-[100vw]"
+                    size={{ width: `${size.width}px`, height: `${size.height}px` }}
+                    minWidth={120}
+                    minHeight={120}
+                    onResizeStop={(_event, _direction, _element, delta) => {
+                        vizStore.setVisualLayout('size', { mode: 'fixed', width: size.width + delta.width, height: size.height + delta.height });
+                    }}
+                >
+                    {sheet}
+                </Resizable>
+            ) : (
+                sheet
+            )}
+        </div>
+    );
 });
 
 export default observer(RendererSwitch);

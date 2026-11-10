@@ -431,8 +431,10 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
     /**
-     * 'native' is the worksheet renderer preview. It draws only where a host has registered it;
-     * elsewhere such a chart is drawn by the default renderer.
+     * 'native' is the worksheet renderer preview. It draws only where a host has registered it.
+     * Elsewhere such a chart is not drawn by another renderer in its place: the chart area says
+     * that the renderer is not available. Maps and tables have components of their own and
+     * are drawn by them whatever this is set to.
      * @default "vega-lite"
      */
     renderer?: 'vega-lite' | 'observable-plot' | 'native';

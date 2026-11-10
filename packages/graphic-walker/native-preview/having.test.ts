@@ -1,46 +1,10 @@
-import { compileWorksheet, executePlan } from '../../worksheet-renderer/src/compiler';
-import { buildModel } from '../../worksheet-renderer/src/model';
-import type { Computation } from '../../worksheet-renderer/src/types';
-import { filter } from '../src/lib/filter';
-import { sortBy } from '../src/lib/sort';
-import { queryView } from '../src/lib/viewQuery';
-import type { IChart, IFilterField, IRow, IViewField } from '../src/interfaces';
-import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../src/utils/save';
-import { toWorkflow } from '../src/utils/workflow';
+import { compileWorksheet } from '../../worksheet-renderer/src/compiler';
+import type { IFilterField, IRow, IViewField } from '../src/interfaces';
 import { chartToWorksheet } from './adapter';
-import { composeWorkflow, drawnAtGrain, splitWorkflow } from './having';
+import { drawnAtGrain } from './having';
+import { chart, dim, drawn, mea } from './testing';
 
-const dim = (fid: string): IViewField => ({ fid, name: fid, semanticType: 'nominal', analyticType: 'dimension' });
-const mea = (fid: string, aggName = 'sum'): IViewField => ({ fid, name: fid, semanticType: 'quantitative', analyticType: 'measure', aggName });
 const atLeast = (fid: string, least: number, aggName = 'sum'): IFilterField => ({ ...mea(fid, aggName), enableAgg: true, rule: { type: 'range', value: [least, null] } });
-function chart(encodings: Partial<IChart['encodings']>, config: Partial<IChart['config']> = {}): IChart {
-    return { visId: 'v', name: 'test', encodings: { ...emptyEncodings, ...encodings }, config: { ...emptyVisualConfig, ...config }, layout: { ...emptyVisualLayout, renderer: 'native' } };
-}
-// The editor's local query, step by step, with the functions its workers run.
-function local(data: IRow[], workflow: ReturnType<typeof composeWorkflow>): IRow[] {
-    let rows = data;
-    for (const step of workflow) {
-        if (step.type === 'filter') rows = filter(rows, step.filters);
-        else if (step.type === 'view') for (const query of step.query) rows = queryView(rows, query);
-        else if (step.type === 'sort') rows = sortBy(rows, step.by, step.sort);
-    }
-    return rows;
-}
-// What the native renderer does with a chart, up to the model it draws.
-async function drawn(c: IChart, data: IRow[]) {
-    const adapted = chartToWorksheet(c);
-    const plan = compileWorksheet(adapted.spec!);
-    const { before, having } = splitWorkflow(toWorkflow(c.encodings.filters, [], adapted.viewDimensions, adapted.viewMeasures, c.config.defaultAggregated, 'none'));
-    const sent: ReturnType<typeof composeWorkflow>[] = [];
-    const run: Computation = (payload) => {
-        const workflow = composeWorkflow(before, having, c.config.defaultAggregated, payload);
-        sent.push(workflow);
-        const rows = local(data, workflow);
-        return Promise.resolve(payload.limit ? rows.slice(0, payload.limit) : rows) as ReturnType<Computation>;
-    };
-    const model = buildModel(plan, await executePlan(plan, run));
-    return { plan, having, sent, model, marks: model.panes.flatMap((pane) => pane.records) };
-}
 
 const sales: IRow[] = [
     { Region: 'East', Category: 'A', Sales: 60, Profit: 5 }, { Region: 'East', Category: 'A', Sales: 70, Profit: 5 },
@@ -60,7 +24,7 @@ describe('filters on aggregated values', () => {
         expect(some.having).toMatchObject({ groupBy: ['Region'], measures: [{ field: 'Sales', agg: 'sum', asFieldKey: 'Sales_sum' }] });
         expect(some.marks.map((r) => r.Region)).toEqual(['West']);
         // The filter comes after the grouping and reads the aggregate under its own name.
-        const [workflow] = some.sent;
+        const [{ workflow }] = some.sent;
         expect(workflow.map((step) => step.type)).toEqual(['view', 'filter']);
         expect(workflow[1]).toMatchObject({ filters: [{ fid: 'Sales_sum', rule: { type: 'range', value: [155, null] } }] });
     });
@@ -75,7 +39,7 @@ describe('filters on aggregated values', () => {
         const { marks, sent } = await drawn(chart({ rows: [dim('Region')], columns: [mea('Sales'), mea('Profit')], filters: [atLeast('Profit', 5, 'mean')] }), sales);
         expect(marks.length).toBeGreaterThan(0);
         expect(new Set(marks.map((r) => r.Region))).toEqual(new Set(['East']));
-        for (const workflow of sent) {
+        for (const { workflow } of sent) {
             const view = workflow.find((step) => step.type === 'view')!;
             expect(view.type === 'view' && view.query[0].op === 'aggregate' && view.query[0].measures.map((m) => m.asFieldKey)).toContain('Profit_mean');
             expect(workflow.some((step) => step.type === 'filter')).toBe(true);
@@ -86,7 +50,7 @@ describe('filters on aggregated values', () => {
         const { plan, sent, marks } = await drawn(chart({ rows: [dim('Region'), sorted], columns: [mea('Sales')], filters: [atLeast('Sales', 100)] }), sales);
         expect(plan.rankings.length).toBeGreaterThan(0);
         expect(marks.map((r) => `${r.Region} ${r.Category}`).sort()).toEqual(['East A', 'West B']);
-        const grains = sent.map((workflow) => {
+        const grains = sent.map(({ workflow }) => {
             const view = workflow.find((step) => step.type === 'view')!;
             return { groupBy: view.type === 'view' && view.query[0].op === 'aggregate' ? view.query[0].groupBy.length : -1, filtered: workflow.some((step) => step.type === 'filter') };
         });

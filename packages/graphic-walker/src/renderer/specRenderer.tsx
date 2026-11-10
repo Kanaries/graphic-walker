@@ -1,5 +1,5 @@
 import { Resizable } from 're-resizable';
-import React, { forwardRef, useMemo, useContext, useState } from 'react';
+import React, { forwardRef, useMemo, useContext, useState, useEffect } from 'react';
 
 import { PivotTableCore } from '../components/pivotTable';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT, LEAFLET_DEFAULT_WIDTH } from '../components/leafletRenderer';
@@ -12,6 +12,7 @@ import { parseColorToHex } from '@/utils/colors';
 import ObservablePlotRenderer from '@/vis/observable-plot-renderer';
 import { useCompututaion } from '@/store';
 import { useAppRootContext } from '@/components/appRoot';
+import ChartNotice from './chartNotice';
 
 interface SpecRendererProps {
     name?: string;
@@ -119,6 +120,13 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
         return config;
     }, [themeConfig, mediaTheme, zeroScale, resolve, background, format.normalizedNumberFormat, format.numberFormat, format.timeFormat]);
 
+    // An ordinary chart set to the worksheet renderer, in a place that only has the renderers below.
+    const nativeMissing = !isPivotTable && coordSystem !== 'geographic' && layout.renderer === 'native';
+    useEffect(() => {
+        // Nothing is drawn, so the host must not take the chart for a finished one.
+        if (nativeMissing) appRootRef.current?.updateRenderStatus('error');
+    }, [nativeMissing, data, appRootRef]);
+
     if (isPivotTable) {
         return (
             <PivotTableCore
@@ -209,8 +217,9 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                     scale={scale}
                 />
             )}
-            {/* 'native' reaches this component only where the native renderer is not registered; Vega draws it then. */}
-            {!isSpatial && layout.renderer !== 'observable-plot' && (
+            {/* The worksheet renderer is mounted by the editor's renderer switch, not here. A chart that asks for it is not drawn by another renderer in its place. */}
+            {nativeMissing && <ChartNotice notice={{ state: 'unavailable' }} />}
+            {!isSpatial && layout.renderer !== 'observable-plot' && layout.renderer !== 'native' && (
                 <ReactVega
                     name={name}
                     vegaConfig={vegaConfig}

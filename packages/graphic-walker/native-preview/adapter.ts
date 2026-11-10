@@ -7,6 +7,8 @@ export interface AdaptedChart {
     /** Absent when the worksheet renderer cannot draw the chart; `error` says why. */
     spec?: WorksheetSpec;
     error?: string;
+    /** The chart has nothing on its shelves to draw yet, which is no fault of the chart. */
+    empty?: boolean;
     /** Parts of the chart that were left out or approximated. */
     notes: string[];
     /** The fields the worksheet queries, split the way the editor's workflow builder takes them. */
@@ -15,6 +17,7 @@ export interface AdaptedChart {
 }
 
 const aggregates = new Set<string>(['sum', 'mean', 'median', 'min', 'max', 'count', 'distinctCount', 'variance', 'stdev']);
+const shelves = ['rows', 'columns', 'color', 'details', 'text', 'theta', 'radius', 'size', 'opacity', 'shape'] as const;
 const marks: Record<string, WorksheetSpec['mark'] | undefined> = {
     bar: 'bar', line: 'line', area: 'area', trail: 'line', point: 'point', circle: 'circle', tick: 'tick', rect: 'rect', text: 'text',
     arc: 'arc', boxplot: 'boxplot',
@@ -36,8 +39,16 @@ const isNumber = (value: unknown): value is number => typeof value === 'number' 
  * A box plot has one axis, its measure, so its dimensions are all headers too.
  */
 export function chartToWorksheet(chart: IChart): AdaptedChart {
-    const { encodings, config, layout } = chart;
+    const { config, layout } = chart;
+    const aggregated = config.defaultAggregated;
     const notes: string[] = [];
+    // A measure made from other aggregates, such as sum(Sales) / sum(Cost), has no value per source row.
+    // Without aggregation the editor greys its pill out and no renderer draws it; it is left out here too.
+    const idle = aggregated ? [] : shelves.flatMap((shelf) => chart.encodings[shelf].filter((f) => f.aggName === 'expr'));
+    if (idle.length) notes.push(`${[...new Set(idle.map((f) => f.name))].join(', ')}: an aggregate expression is not drawn while aggregation is off.`);
+    const encodings = { ...chart.encodings, ...Object.fromEntries(shelves.map((shelf) => [shelf, chart.encodings[shelf].filter((f) => !idle.includes(f))])) } as IChart['encodings'];
+    // The dataset's own entry for a field is what the editor's workflow builder reads an expression from.
+    const defined = new Map([...chart.encodings.dimensions, ...chart.encodings.measures].map((f) => [f.fid, f]));
     const used: IViewField[] = [];
     const instances: Record<string, FieldInstance> = {};
     const result = (extra: Partial<AdaptedChart>): AdaptedChart => ({
@@ -53,7 +64,6 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
     if (all.some((f) => f.fid === MEA_KEY_ID || f.fid === MEA_VAL_ID)) {
         return result({ error: 'Measure names and Measure values are not supported yet. Put the measures on the shelf one by one.' });
     }
-    const aggregated = config.defaultAggregated;
     // A box shows where the records lie, so its axis does not reach back to zero.
     const zero = geom !== 'boxplot' && layout.zeroScale !== false;
 
@@ -62,9 +72,18 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         if (isMeasure(f)) {
             if (!aggregated) return (instances[id] = { id, field: f.fid, label: f.name, display: 'continuous', zero });
             const aggregate = f.aggName ?? 'sum';
+            if (aggregate === 'expr') {
+                // The expression stays with the editor: its workflow builder resolves the fields it names and the
+                // data source works it out per group. The sheet asks for it by field id at each grain it draws.
+                if ((defined.get(f.fid) ?? f).expression?.op !== 'expr') return `${f.name} is an aggregate expression, but the dataset has no expression for it.`;
+                return (instances[id] = { id, field: f.fid, label: f.name, display: 'continuous', aggregate: 'expr', zero });
+            }
             if (!aggregates.has(aggregate)) return `${f.name} uses the aggregation "${aggregate}", which is not supported yet.`;
             return (instances[id] = { id, field: f.fid, label: `${aggregate}(${f.name})`, display: 'continuous', aggregate: aggregate as Aggregate, zero });
         }
+        // The editor types an expression by its first operand, and one over fields it cannot resolve comes out as
+        // a dimension. An aggregate has one value per group and no members to group by.
+        if (f.aggName === 'expr') return `${f.name} is an aggregate expression, but it is set as a dimension. An aggregate has a value per group, so it is drawn as a measure only.`;
         // A date drilled to a unit, such as the year of a date, holds the start of each period as a
         // timestamp. It is shifted to the display time zone, as the editor's other renderers do, and
         // its members are named after the period.
@@ -182,9 +201,9 @@ export function chartToWorksheet(chart: IChart): AdaptedChart {
         angle = made.id;
     }
 
-    // An empty chart stays with the editor's own renderer, which shows nothing for it.
+    // A chart with nothing on its shelves is not at fault. The editor leaves the chart area blank for it.
     const empty = rows.expr.kind === 'empty' && columns.expr.kind === 'empty';
-    if (empty && !(mark === 'arc' && (angle || color))) return result({ error: 'There is nothing on rows or columns to draw yet.' });
+    if (empty && !(mark === 'arc' && (angle || color))) return result({ error: 'There is nothing on rows or columns to draw yet.', empty: true });
 
     if (shown.has('radius') && encodings.radius.length) notes.push('Not drawn yet: radius.');
     // The editor's sort orders a dimension by the measure across from it, the first one where there are

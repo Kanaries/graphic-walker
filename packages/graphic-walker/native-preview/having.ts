@@ -15,19 +15,33 @@ export interface Having {
 }
 
 /**
- * Splits the workflow the editor would run into what comes before its view step, which every
- * worksheet query starts with, and the filters on aggregated values that come after it.
+ * What the editor's own workflow says about a chart, for the worksheet's queries to be built around.
+ * - `before`: the steps ahead of the editor's view step, which every worksheet query starts with:
+ *   row filters, computed fields, filters on those.
+ * - `expressions`: the aggregate expressions of the chart by field id, as the editor's workflow
+ *   builder wrote them out, with the fields they name resolved.
+ * - `having`: the filters on aggregated values that come after the view step.
  */
-export function splitWorkflow(steps: IDataQueryWorkflowStep[]): { before: IDataQueryWorkflowStep[]; having?: Having } {
+export interface Around {
+    before: IDataQueryWorkflowStep[];
+    expressions: Record<string, string>;
+    having?: Having;
+}
+
+/** Reads `Around` out of the workflow the editor would run for the chart. */
+export function splitWorkflow(steps: IDataQueryWorkflowStep[]): Around {
     const at = steps.findIndex((step) => step.type === 'view');
-    if (at < 0) return { before: [] };
+    if (at < 0) return { before: [], expressions: {} };
     const before = steps.slice(0, at);
     const view = steps[at];
     const query = view.type === 'view' ? view.query[0] : undefined;
+    if (query?.op !== 'aggregate') return { before, expressions: {} };
+    // Where the dataset has no expression for such a field, the builder leaves the field id in its place.
+    const expressions = Object.fromEntries(query.measures.filter((m) => m.agg === 'expr' && m.field !== m.asFieldKey).map((m) => [m.asFieldKey, m.field]));
     const filters = steps.slice(at + 1).filter((step): step is IFilterWorkflowStep => step.type === 'filter');
-    if (!filters.length || query?.op !== 'aggregate') return { before };
+    if (!filters.length) return { before, expressions };
     const read = new Set(filters.flatMap((step) => step.filters.map((f) => f.fid)));
-    return { before, having: { groupBy: query.groupBy, measures: query.measures.filter((m) => read.has(m.asFieldKey)), filters } };
+    return { before, expressions, having: { groupBy: query.groupBy, measures: query.measures.filter((m) => read.has(m.asFieldKey)), filters } };
 }
 
 const sameFields = (a: string[], b: string[]) => {
@@ -50,8 +64,13 @@ export function drawnAtGrain(plan: Plan, groupBy: string[]): boolean {
  * worksheet's own grouping, the filters on aggregated values where the query is at their grain,
  * and the worksheet's ordering. A query at another grain, which orders members by their totals,
  * is not filtered.
+ *
+ * An aggregate expression is asked for by field id and sent as the editor's expression, to be
+ * worked out by the data source over the rows of each group of this query. So a query that orders
+ * members gets the expression's value for each member as a whole, not one put together from the
+ * values of the marks.
  */
-export function composeWorkflow(before: IDataQueryWorkflowStep[], having: Having | undefined, aggregated: boolean, payload: QueryPayload): IDataQueryWorkflowStep[] {
+export function composeWorkflow({ before, expressions, having }: Around, aggregated: boolean, payload: QueryPayload): IDataQueryWorkflowStep[] {
     const view = payload.workflow.find((step) => step.type === 'view');
     const query = view && view.type === 'view' ? view.query[0] : undefined;
     if (!query) return [];
@@ -61,7 +80,13 @@ export function composeWorkflow(before: IDataQueryWorkflowStep[], having: Having
     if (query.op === 'raw') return [...before, { type: 'view', query: [{ op: 'raw', fields: query.fields }] }, ...after];
     if (!aggregated && query.measures.length === 0) return [...before, { type: 'view', query: [{ op: 'raw', fields: query.groupBy }] }, ...after];
     const filtered = having && sameFields(query.groupBy, having.groupBy) ? having : undefined;
+    const own = query.measures.map((m): Measure => {
+        if (m.agg !== 'expr') return m;
+        const expression = expressions[m.field];
+        if (!expression) throw new Error(`There is no expression for the aggregate field "${m.field}".`);
+        return { ...m, field: expression };
+    });
     // The aggregates the filters read are added under the filters' own names, next to the worksheet's.
-    const measures: Measure[] = [...query.measures, ...(filtered?.measures.filter((m) => !query.measures.some((own) => own.asFieldKey === m.asFieldKey)) ?? [])];
+    const measures: Measure[] = [...own, ...(filtered?.measures.filter((m) => !own.some((mine) => mine.asFieldKey === m.asFieldKey)) ?? [])];
     return [...before, { type: 'view', query: [{ op: 'aggregate', groupBy: query.groupBy, measures }] }, ...(filtered?.filters ?? []), ...after];
 }

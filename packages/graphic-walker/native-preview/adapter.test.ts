@@ -213,9 +213,12 @@ describe('chartToWorksheet', () => {
     test('what cannot be drawn is reported, not dropped silently', () => {
         expect(chartToWorksheet(chart({ rows: [dim(MEA_KEY_ID)], columns: [mea('Sales')] })).error).toMatch(/Measure names/);
         expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: ['table'] })).error).toMatch(/"table"/);
-        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales', 'expr')] })).error).toMatch(/"expr"/);
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales', 'ntile')] })).error).toMatch(/"ntile"/);
+        // An aggregate expression needs its expression; a field that only carries the name of one is not drawn.
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales', 'expr')] })).error).toMatch(/Sales is an aggregate expression, but the dataset has no expression for it/);
         expect(chartToWorksheet(chart({}, { coordSystem: 'geographic' })).error).toMatch(/Maps/);
-        expect(chartToWorksheet(chart({})).error).toMatch(/nothing on rows or columns/);
+        expect(chartToWorksheet(chart({}))).toMatchObject({ error: expect.stringMatching(/nothing on rows or columns/), empty: true });
+        expect(chartToWorksheet(chart({ rows: [dim(MEA_KEY_ID)], columns: [mea('Sales')] })).empty).toBeUndefined();
         expect(chartToWorksheet(chart({ color: [dim('Segment')] })).error).toMatch(/nothing on rows or columns/);
         const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], size: [mea('Profit')], details: [mea('Quantity')] }, { geoms: ['area'] }));
         expect(spec).toBeDefined();

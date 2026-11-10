@@ -25,11 +25,12 @@ export interface NativeRendererProps {
      */
     fill: boolean;
     /**
-     * Report that this chart cannot be drawn after all, for a reason `canDraw` could not see
-     * in the chart alone, such as a query that fails or values of a kind the renderer does
-     * not handle. The editor then draws the chart with its own renderer.
+     * Report that this chart could not be drawn after all, for a reason `check` could not see
+     * in the chart alone, such as a query that fails or an expression the data source rejects.
+     * The editor shows the reason in place of the chart and offers to try again. The chart and
+     * its renderer stay as they are.
      */
-    onUnsupported: (reason: string) => void;
+    onError: (reason: string) => void;
     /** Where the renderer puts its export functions, for the toolbar's image and CSV buttons. */
     handle?: Ref<NativeRendererHandle>;
     /** Where the chart stands: querying, painting, done, or failed. Drives the loading layer and the host's render status. */
@@ -90,24 +91,57 @@ export interface NativeRendererColors {
     };
 }
 
+/** Why the native renderer does not draw a chart. */
+export interface NativeUnsupported {
+    /** For the person looking at the chart. It names the field, calculation or mark type in the way. */
+    reason: string;
+    /** The chart has nothing on its shelves to draw yet. That is not a fault, and the chart area stays blank. */
+    empty?: boolean;
+}
+
 export interface NativeRenderer {
     component: ComponentType<NativeRendererProps>;
     /**
-     * Whether the renderer can draw this chart. A chart it cannot draw, such as a text
-     * table or a pie, goes to the renderers that already handle it instead of showing an error.
+     * Whether the renderer can draw this chart: nothing when it can, the reason when it cannot.
+     * The editor shows the reason in the chart area. It never gives the chart to another renderer.
      */
-    canDraw(chart: IChart): boolean;
+    check(chart: IChart): NativeUnsupported | undefined;
 }
 
-// The native renderer is a preview that lives outside this package's sources. Whoever
-// hosts the editor registers it; until then `layout.renderer: 'native'` is not offered
-// and charts that ask for it fall back to the default renderer.
-let registered: NativeRenderer | undefined;
+/**
+ * The native renderer is a preview that lives outside this package's sources. Whoever hosts the
+ * editor registers it. A chart that asks for it is drawn by it or not at all: while it is on its
+ * way the chart area says so, and where it never comes the chart area says that.
+ */
+export interface NativeRegistry {
+    renderer?: NativeRenderer;
+    /** A renderer was announced with `expectNativeRenderer` and has not registered yet. */
+    loading: boolean;
+}
+let registry: NativeRegistry = { loading: false };
+let expected = 0;
 const listeners = new Set<() => void>();
+function update(next: NativeRegistry) {
+    if (next.renderer === registry.renderer && next.loading === registry.loading) return;
+    registry = next;
+    listeners.forEach((listener) => listener());
+}
 
 export function registerNativeRenderer(renderer: NativeRenderer | undefined) {
-    registered = renderer;
-    listeners.forEach((listener) => listener());
+    update({ renderer, loading: !renderer && expected > 0 });
+}
+/**
+ * Says that a renderer is being fetched, so that charts which ask for it wait instead of
+ * reporting that there is none. Waiting ends when it registers, or when `arrival` settles without it.
+ */
+export function expectNativeRenderer(arrival: Promise<unknown>) {
+    expected += 1;
+    update({ renderer: registry.renderer, loading: !registry.renderer });
+    const settled = () => {
+        expected -= 1;
+        update({ renderer: registry.renderer, loading: !registry.renderer && expected > 0 });
+    };
+    arrival.then(settled, settled);
 }
 const subscribe = (listener: () => void) => {
     listeners.add(listener);
@@ -115,5 +149,6 @@ const subscribe = (listener: () => void) => {
         listeners.delete(listener);
     };
 };
-const current = () => registered;
-export const useNativeRenderer = () => useSyncExternalStore(subscribe, current, current);
+const current = () => registry;
+export const useNativeRegistry = () => useSyncExternalStore(subscribe, current, current);
+export const useNativeRenderer = () => useNativeRegistry().renderer;
