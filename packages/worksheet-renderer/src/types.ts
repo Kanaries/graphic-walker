@@ -1,7 +1,12 @@
 /** A pair of numbers is a bin: the range of values one member of a binned field covers. */
 export type Value = string | number | boolean | Date | null | undefined | readonly number[];
 export type Row = Record<string, any>;
-export type Aggregate = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count' | 'distinctCount' | 'variance' | 'stdev';
+/**
+ * 'expr' is an aggregate the host defines, such as a ratio of two sums. `field` names it; the host's
+ * computation works its value out per group from an expression of its own. The sheet only asks for
+ * it at each grain it draws and reads the result.
+ */
+export type Aggregate = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count' | 'distinctCount' | 'variance' | 'stdev' | 'expr';
 export interface FieldInstance {
     id: string;
     field: string;

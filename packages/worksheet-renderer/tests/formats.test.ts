@@ -56,6 +56,22 @@ test('without a number format ticks are abbreviated and values written in full; 
     assert.ok(ticked.items.some(p => p.layer === 'xAxis' && p.text === '10k'));
     assert.match(ticked.items.find(p => p.selection?.values.product === 'a')!.tooltip!, /SUM: 10,000$/);
 });
+test('small numbers such as ratios keep the digits that tell them apart, on the axis, in the legend, in labels and in tooltips', async () => {
+    const ratios: Row[] = [{ product: 'a', segment: 's', value: 0.0342 }, { product: 'b', segment: 's', value: 0.0291 }, { product: 'c', segment: 's', value: 0.0388 }];
+    const bars = await scene({ ...base, rows: field('product'), columns: field('sum'), mark: 'bar', text: 'sum', color: 'sum' }, ratios);
+    const ticks = bars.items.filter(p => p.layer === 'xAxis' && p.fontSize === 10 && !p.fontWeight).map(p => p.text!).filter(Boolean);
+    // With one decimal every tick of this axis would read 0.
+    assert.ok(ticks.length > 2 && new Set(ticks).size === ticks.length, 'ticks are ' + ticks);
+    assert.deepEqual(ticks.slice(0, 3), ['0', '0.01', '0.02']);
+    assert.deepEqual(bars.items.filter(p => p.layer === 'legend' && p.fontSize === 10).map(p => p.text), ['0.03', '0.04']);
+    assert.deepEqual(bars.items.filter(p => p.layer === 'body' && p.kind === 'text').map(p => p.text).sort(), ['0.0291', '0.0342', '0.0388']);
+    assert.match(bars.items.find(p => p.selection?.values.product === 'a')!.tooltip!, /SUM: 0\.0342$/);
+    // Larger numbers are written as before, and a format of the host's is never second-guessed.
+    const format = resolveFormats();
+    assert.deepEqual(format.ticks([0, 500, 1000, 1500]), ['0', '500', '1K', '1.5K']);
+    assert.deepEqual([format.number(1234.567), format.number(2.7647), format.number(0.5), format.number(0)], ['1,234.57', '2.76', '0.5', '0']);
+    assert.deepEqual(resolveFormats({ number: value => value.toFixed(0) }).ticks([0.01, 0.02]), ['0', '0']);
+});
 test('a share format reaches the axis and tooltips of a normalized stack and the slices of a pie', async () => {
     const stack = await scene({ ...base, rows: field('product'), columns: field('sum'), mark: 'bar', color: 'segment', stack: 'normalize' }, sales, money);
     assert.ok(stack.items.some(p => p.layer === 'xAxis' && p.text === '100.0 pct'));

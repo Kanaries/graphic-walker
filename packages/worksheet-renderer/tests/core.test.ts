@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileWorksheet, executePlan } from '../src/compiler';
+import { buildModel } from '../src/model';
 import { buildScene } from '../src/scene';
 import { sceneToSVG } from '../src/vegaBackend';
 import { concat, field, nest, type Computation, type Row, type WorksheetSpec } from '../src/types';
@@ -151,6 +152,41 @@ test('filter workflows run before aggregation', async () => {
     const m = await model({ ...base, filters: [{ field: 'region', values: ['West'] }] });
     assert.equal(m.panes.length, 12);
     assert.ok(m.panes.every(p => p.row.path[0].value === 'West'));
+});
+test('an aggregate the host defines is asked for by name at every grain, one result column per use', async () => {
+    // The host knows `ratio` as sum(sales) / sum(cost). The sheet passes the name on and reads what comes back.
+    const data = [
+        { region: 'E', city: 'a', sales: 10, cost: 1 }, { region: 'E', city: 'a', sales: 20, cost: 9 },
+        { region: 'E', city: 'b', sales: 8, cost: 4 }, { region: 'W', city: 'c', sales: 9, cost: 3 },
+    ];
+    const asked: { groupBy: string[]; measures: { field: string; agg: string; asFieldKey: string }[] }[] = [];
+    const host: Computation = async payload => {
+        const view = payload.workflow.find(step => step.type === 'view')!;
+        const query = view.type === 'view' ? view.query[0] : undefined;
+        if (query?.op !== 'aggregate') throw new Error('expected an aggregate query');
+        asked.push({ groupBy: query.groupBy, measures: query.measures });
+        const groups = new Map<string, Row[]>();
+        for (const row of data) { const key = query.groupBy.map(f => row[f]).join('|'); groups.set(key, [...(groups.get(key) ?? []), row]); }
+        const sum = (rows: Row[], f: string) => rows.reduce((n, r) => n + r[f], 0);
+        return [...groups.values()].map(rows => ({
+            ...Object.fromEntries(query.groupBy.map(f => [f, rows[0][f]])),
+            ...Object.fromEntries(query.measures.map(m => [m.asFieldKey, m.agg === 'expr' ? sum(rows, 'sales') / sum(rows, 'cost') : sum(rows, m.field)])),
+        }));
+    };
+    const spec: WorksheetSpec = { kind: 'worksheet', specVersion: 2, mark: 'bar',
+        instances: { ...fields(['region', 'city'], { x: ['ratio', 'expr'], shade: ['ratio', 'expr'], total: ['sales', 'sum'] }) },
+        rows: nest(field('region'), field('city')), columns: concat(field('x'), field('total')), color: 'shade',
+        order: { region: { by: 'x', direction: 'descending' } } };
+    const plan = compileWorksheet(spec);
+    const m = buildModel(plan, await executePlan(plan, host));
+    // The marks are at the grain of region and city; the regions are ordered by the ratio of each whole region.
+    const marks = asked.find(q => q.groupBy.length === 2)!, order = asked.find(q => q.groupBy.length === 1)!;
+    assert.deepEqual(marks.measures.filter(q => q.agg === 'expr'), [{ field: 'ratio', agg: 'expr', asFieldKey: '__ws_x' }, { field: 'ratio', agg: 'expr', asFieldKey: '__ws_shade' }]);
+    assert.deepEqual(order.measures, [{ field: 'ratio', agg: 'expr', asFieldKey: '__ws_x' }]);
+    const values = Object.fromEntries(m.panes.flatMap(p => p.records).map(r => [r.city, [r.__ws_x, r.__ws_shade, r.__ws_total]]));
+    assert.deepEqual(values, { a: [3, 3, 30], b: [2, 2, 8], c: [3, 3, 9] });
+    // E is 38 / 14, W is 9 / 3: a ratio of the region's sums, not a sum of its cities' ratios (which would put E first).
+    assert.deepEqual(m.rows.levels[0].map(span => span.part.value), ['W', 'E']);
 });
 test('executor caps concurrency and stops scheduling after cancellation', async () => {
     const plan = compileWorksheet(base);

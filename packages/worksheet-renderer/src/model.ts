@@ -210,7 +210,7 @@ function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: 
         const make = (gap: number, least = 2) => {
             const scale = time ? timeScale(min, max, pixels, gap, format) : tickScale(min, max, pixels, gap, least);
             if (type === 'log') scale.ticks = logTicks(min, max, Math.max(2, Math.floor(pixels / gap))) ?? scale.ticks;
-            if (!time) scale.labels = scale.ticks.map(shared.has(key) ? format.share : format.tick);
+            if (!time) scale.labels = shared.has(key) ? scale.ticks.map(format.share) : format.ticks(scale.ticks);
             return scale;
         };
         const at = (scale: { domain: [number, number] }, tick: number) => position(scale.domain, tick, type) * pixels;
@@ -266,7 +266,7 @@ function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorSca
     // A channel whose range differs from pane to pane has no numbers to show, only which end is which.
     const ends = [format.words.low, format.words.high];
     if (color && colorScale) blocks.push({ channel: 'color', title: color.label, kind: 'ramp', step: 0, height: 64,
-        entries: colorScale.domain.map((value, i) => ({ label: spec.scales?.color?.independent ? ends[i] : format.tick(value), level: i })) });
+        entries: (spec.scales?.color?.independent ? ends : format.ticks(colorScale.domain)).map((label, level) => ({ label, level })) });
     else if (color) list('color', color.label, colors.map((value, i) => ({ label: memberLabel(color, value, format), level: i })));
     for (const channel of ['size', 'opacity', 'shape'] as const) {
         const scale = channels[channel];
@@ -279,7 +279,7 @@ function buildLegends(spec: WorksheetSpec, colors: Value[], colorScale: ColorSca
             const own = spec.scales?.[channel as 'size' | 'opacity']?.independent;
             const samples = own ? [0, 1] : low === high ? [low] : [low, (low + high) / 2, high];
             list(channel, scale.field.label, own ? samples.map((level, i) => ({ label: ends[i], level }))
-                : samples.map(value => ({ label: format.tick(value), level: levelOf(scale, value, channel === 'size') })), channel === 'size' ? 22 : 18);
+                : format.ticks(samples).map((label, i) => ({ label, level: levelOf(scale, samples[i], channel === 'size') })), channel === 'size' ? 22 : 18);
         }
     }
     return blocks;

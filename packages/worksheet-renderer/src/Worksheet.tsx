@@ -250,7 +250,10 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
     }, [model, loading, theme, compiled.plan, result, queryKey]);
     const error = compiled.error || built?.error || (result?.key === queryKey ? result.error : '');
     const [painted, setPainted] = useState<typeof fresh>();
-    const status: WorksheetStatus = error ? 'error' : loading ? 'querying' : fresh && painted !== fresh ? 'drawing' : 'idle';
+    // A sheet whose queries have changed is waiting from that very render on, before the new ones are sent.
+    // A host that looks right after it changed the sheet is not told that the sheet is ready.
+    const waiting = loading || Boolean(compiled.plan && result?.key !== queryKey);
+    const status: WorksheetStatus = error ? 'error' : waiting ? 'querying' : fresh && painted !== fresh ? 'drawing' : 'idle';
     const reportStatus = useRef(onStatusChange);
     reportStatus.current = onStatusChange;
     useEffect(() => { reportStatus.current?.(status); }, [status]);
@@ -350,7 +353,7 @@ export const Worksheet = forwardRef<WorksheetHandle, WorksheetProps>(function Wo
         {model && colorField && scene.legend === 'omitted' ? <div data-testid="worksheet-legend" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingBottom: 6, fontSize: 11 }}>
             <strong>{colorField.label}</strong>
             {model.colorScale
-                ? <><span>{model.format.tick(model.colorScale.domain[0])}</span><span style={{ width: 72, height: 8, borderRadius: 2, background: `linear-gradient(to right, ${[0, .25, .5, .75, 1].map(t => continuousColor(model.colorScale!, model.colorScale!.domain[0] + (model.colorScale!.domain[1] - model.colorScale!.domain[0]) * t, theme, model.plan.spec.mark === 'rect')).join(', ')})` }} /><span>{model.format.tick(model.colorScale.domain[1])}</span></>
+                ? <><span>{model.format.ticks(model.colorScale.domain)[0]}</span><span style={{ width: 72, height: 8, borderRadius: 2, background: `linear-gradient(to right, ${[0, .25, .5, .75, 1].map(t => continuousColor(model.colorScale!, model.colorScale!.domain[0] + (model.colorScale!.domain[1] - model.colorScale!.domain[0]) * t, theme, model.plan.spec.mark === 'rect')).join(', ')})` }} /><span>{model.format.ticks(model.colorScale.domain)[1]}</span></>
                 : <>{model.colors.slice(0, 12).map((c, i) => <span key={valueKey(c)}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: theme.category[i % theme.category.length], marginRight: 4 }} />{memberLabel(colorField, c, model.format)}</span>)}{model.colors.length > 12 ? <span>{model.format.words.more(model.colors.length - 12)}</span> : null}</>}
         </div> : null}
         {error ? <p role="alert" style={{ color: '#d92d20' }}>{error}</p> : null}

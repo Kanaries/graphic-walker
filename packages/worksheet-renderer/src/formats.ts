@@ -38,6 +38,12 @@ export interface Format {
     locale: string;
     number: (value: number) => string;
     tick: (value: number) => string;
+    /**
+     * The ticks of one axis, or the steps of one legend, written so that they can be told apart. The standard
+     * tick keeps one decimal; where that makes two different values read the same, as on an axis of small
+     * ratios, decimals are added. A format of the host's is used as it is.
+     */
+    ticks: (values: number[]) => string[];
     share: (value: number) => string;
     time: (ms: number) => string;
     /** Parts of a date for the ticks of a time axis, in UTC. */
@@ -71,11 +77,26 @@ function build(formats: Formats): Format {
     const dateTime = part({ year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
     // A formatter of the host's must not take the sheet down with it on a value it cannot write.
     const safe = <T>(own: ((value: T) => string) | undefined, standard: (value: T) => string) => own ? (value: T) => { try { return String(own(value)); } catch { return standard(value); } } : standard;
-    const number = safe(formats.number, (value: number) => plain.format(value));
+    // Two decimals say little about a number below one, such as a ratio of 0.0342, so those keep three digits that count.
+    const small = new Intl.NumberFormat(locale, { maximumSignificantDigits: 3 });
+    const number = safe(formats.number, (value: number) => (value !== 0 && Math.abs(value) < 1 ? small : plain).format(value));
+    const tick = safe(formats.tick, formats.number ? number : (value: number) => compact.format(value));
+    const finer: Intl.NumberFormat[] = [];
+    const ticks = (values: number[]) => {
+        const labels = values.map(tick), distinct = new Set(values).size;
+        if (formats.tick || formats.number || new Set(labels).size === distinct) return labels;
+        for (let digits = 2; digits <= 8; digits++) {
+            const format = finer[digits] ??= new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: digits });
+            const next = values.map(value => format.format(value));
+            if (new Set(next).size === distinct) return next;
+        }
+        return labels;
+    };
     return {
         locale,
         number,
-        tick: safe(formats.tick, formats.number ? number : (value: number) => compact.format(value)),
+        tick,
+        ticks,
         share: safe(formats.share, (value: number) => percent.format(value)),
         // The day, with the time of day unless it is midnight.
         time: safe(formats.time, (ms: number) => Number.isFinite(ms) ? (ms % day === 0 ? date : dateTime)(ms) : ''),

@@ -355,7 +355,7 @@ export function buildScene(model: WorksheetModel, viewport: Viewport, state: Sce
                 const f = textField ?? (xField?.aggregate ? xField : yField?.aggregate ? yField : undefined);
                 const raw = f ? record[resultKey(f)] : undefined;
                 const cell = !xContinuous && !yContinuous;
-                const shown = !f ? '•' : raw == null ? '' : typeof raw !== 'number' || f.display !== 'continuous' ? read(f, raw) : cell ? format.number(raw) : format.tick(raw);
+                const shown = !f ? '•' : raw == null ? '' : typeof raw !== 'number' || f.display !== 'continuous' ? read(f, raw) : cell || (raw !== 0 && Math.abs(raw) < 1) ? format.number(raw) : format.tick(raw);
                 const fontSize = !sized ? metrics.fontSize : sizeRange ? Math.max(6, Math.round(inRange(sizeRange, sizeLevel))) : Math.round(9 + 15 * sizeLevel);
                 text('body', x, y + fontSize * 0.36, cell ? fitText(shown, columnLeaf.size - 6, fontSize) : shown, { align: 'center', fill: colorField ? color : ink.text, fontSize, ...extra });
             } else if (spec.mark === 'rect') {
