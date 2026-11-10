@@ -139,7 +139,8 @@ function paneMarks(items: CellItem[], rowBranch: AxisBranch, columnBranch: AxisB
 // The ranges are read from the records once. What comes back places the ticks for the sizes the
 // slots have at that moment, and is called again whenever the slots are resized.
 function assignScales(layout: AxisLayout, axis: 'x' | 'y', panes: Pane[], plan: Plan, format: Format, zoom?: Zoom): () => void {
-    const scope = plan.spec.scaleScope ?? 'shared';
+    const set = plan.spec.scaleScope;
+    const scope = (typeof set === 'object' ? set[axis === 'x' ? 'columns' : 'rows'] : set) ?? 'shared';
     const keyOf = (leaf: AxisLeaf) => {
         const id = leaf.branch.position!.id;
         return scope === 'independent' ? leaf.id : scope === 'prefix' ? JSON.stringify([id, pathKey(layout.axis, leaf.path.slice(0, 1))]) : id;

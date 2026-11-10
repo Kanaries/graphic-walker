@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { getComputation } from '@kanaries/graphic-walker';
-import { Worksheet, compileWorksheet, type WorksheetHandle, type WorksheetSpec } from '@kanaries/worksheet-renderer';
+import { Worksheet, compileWorksheet, type ScaleScope, type WorksheetHandle, type WorksheetSpec } from '@kanaries/worksheet-renderer';
 import { axis, axisFields, dimensions, instances, measures, orders, presets, regions, type Shelves } from './worksheetRenderer.data';
 import './worksheetRenderer.css';
 
@@ -26,7 +26,7 @@ function download(filename: string, contents: string, type: string) {
 
 export default function WorksheetRendererPage() {
     const [shelves, setShelves] = useState<Shelves>(presets.nested);
-    const [scaleScope, setScaleScope] = useState<WorksheetSpec['scaleScope']>('shared');
+    const [scaleScope, setScaleScope] = useState<ScaleScope>('shared');
     const [color, setColor] = useState(presets.nested.color ?? '');
     const [detail, setDetail] = useState('');
     const [text, setText] = useState('sales');
@@ -67,7 +67,7 @@ export default function WorksheetRendererPage() {
         </div>
         <div className="ws-toolbar">
             <label>Mark<select value={shelves.mark} onChange={e => setShelves(s => ({ ...s, mark: e.target.value as Shelves['mark'] }))}>{['bar', 'point', 'circle', 'tick', 'line', 'area', 'rect', 'text'].map(v => <option key={v}>{v}</option>)}</select></label>
-            <label>Axis range<select value={scaleScope} onChange={e => setScaleScope(e.target.value as WorksheetSpec['scaleScope'])}>
+            <label>Axis range<select value={scaleScope} onChange={e => setScaleScope(e.target.value as ScaleScope)}>
                 <option value="shared">Uniform per measure</option><option value="prefix">Per outer header</option><option value="independent">Independent per row / column</option>
             </select></label>
             <label>Color<select value={color} onChange={e => setColor(e.target.value)}><option value="">None</option>{[...dimensions, ...measures].map(id => <option key={id} value={id}>{instances[id].label}</option>)}</select></label>

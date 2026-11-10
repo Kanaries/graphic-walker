@@ -105,6 +105,30 @@ test('a range is shared by the sheet, by an outer header, or by one column of pa
     assert.deepEqual(await maxima('independent'), [10, 20, 100]);
     assert.deepEqual(await maxima('prefix'), [20, 20, 100]);
 });
+test('rows and columns take their scale scope separately', async () => {
+    // A value axis each way, in two regions and two years. Sales differ by region, profit by year.
+    const instances = fields(['region', 'year'], { sales: ['sales', 'sum'], profit: ['profit', 'sum'] });
+    const rows = [
+        { region: 'E', year: 2024, sales: 10, profit: 1 }, { region: 'E', year: 2025, sales: 8, profit: 50 },
+        { region: 'W', year: 2024, sales: 1000, profit: 2 }, { region: 'W', year: 2025, sales: 900, profit: 40 },
+    ];
+    const spec: WorksheetSpec = { kind: 'worksheet', specVersion: 2, instances, rows: nest(field('region'), field('sales')), columns: nest(field('year'), field('profit')), mark: 'point' };
+    const maxima = async (scaleScope?: WorksheetSpec['scaleScope']) => {
+        const m = await model({ ...spec, scaleScope }, rows);
+        return { y: m.rows.leaves.map(leaf => leaf.scale!.domain[1]), x: m.columns.leaves.map(leaf => leaf.scale!.domain[1]) };
+    };
+    assert.deepEqual(await maxima(), { y: [1000, 1000], x: [50, 50] });
+    // Only the axes along the columns: the sales axes stay comparable between the regions.
+    assert.deepEqual(await maxima({ columns: 'independent' }), { y: [1000, 1000], x: [2, 50] });
+    assert.deepEqual(await maxima({ columns: 'independent', rows: 'shared' }), { y: [1000, 1000], x: [2, 50] });
+    // Only the axes along the rows.
+    assert.deepEqual(await maxima({ rows: 'independent' }), { y: [10, 1000], x: [50, 50] });
+    assert.deepEqual(await maxima({ rows: 'independent', columns: 'independent' }), { y: [10, 1000], x: [2, 50] });
+    assert.deepEqual(await maxima('independent'), { y: [10, 1000], x: [2, 50] });
+    // The panes carry the ranges of their axes.
+    const m = await model({ ...spec, scaleScope: { columns: 'independent' } }, rows);
+    assert.deepEqual(m.panes.map(p => p.yDomain[1]), [1000, 1000, 1000, 1000]);
+});
 test('viewport culling never changes global domains or exported pane count', async () => {
     const m = await model();
     const domains = JSON.stringify(m.panes.map(p => p.xDomain));

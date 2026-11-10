@@ -104,7 +104,11 @@ export interface WorksheetSpec {
      * pile centered on zero. Both of those pile magnitudes, whatever the sign.
      */
     stack?: boolean | 'normalize' | 'center';
-    scaleScope?: ScaleScope;
+    /**
+     * How far a value axis range is shared. One value applies to both shelves; `rows` and `columns`
+     * set it for the value axes on each shelf, and a shelf left out shares its ranges across the sheet.
+     */
+    scaleScope?: ScaleScope | { rows?: ScaleScope; columns?: ScaleScope };
     sort?: 'ascending' | 'descending';
     /**
      * Member order per field instance, overriding sort. A list gives the order outright;
