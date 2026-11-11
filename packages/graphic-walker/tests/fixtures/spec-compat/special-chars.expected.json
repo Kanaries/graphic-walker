@@ -75,7 +75,7 @@
             "shape": false,
             "size": false
         },
-        "renderer": "vega-lite"
+        "renderer": "native"
     },
     "visId": "gw-fixture-special",
     "name": "特殊字符 \"图表\"",

@@ -7,11 +7,14 @@ import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
 import OBFieldContainer from '../obComponents/obFContainer';
 
 import { IDraggableViewStateKey } from '../../interfaces';
+import { useNativeRenderer } from '../../renderer/nativeRegistry';
 
 const PosFields: React.FC = (props) => {
     const vizStore = useVizStore();
-    const { config } = vizStore;
+    const { config, layout } = vizStore;
     const { geoms, coordSystem = 'generic' } = config;
+    // The native worksheet renderer draws one pie per cell of the rows and columns, so those shelves stay in view.
+    const facetedPie = Boolean(useNativeRenderer()) && layout.renderer === 'native';
 
     const channels = useMemo(() => {
         if (coordSystem === 'geographic') {
@@ -21,10 +24,10 @@ const PosFields: React.FC = (props) => {
             return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'longitude' || f.id === 'latitude') as IDraggableViewStateKey[];
         }
         if (geoms[0] === 'arc') {
-            return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'radius' || f.id === 'theta') as IDraggableViewStateKey[];
+            return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'radius' || f.id === 'theta' || (facetedPie && (f.id === 'columns' || f.id === 'rows'))) as IDraggableViewStateKey[];
         }
         return DRAGGABLE_STATE_KEYS.filter((f) => f.id === 'columns' || f.id === 'rows') as IDraggableViewStateKey[];
-    }, [geoms[0], coordSystem]);
+    }, [geoms[0], coordSystem, facetedPie]);
     return (
         <div>
             {channels.map((dkey, i) => (

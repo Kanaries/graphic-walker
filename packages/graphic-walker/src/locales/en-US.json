@@ -123,6 +123,21 @@
             "more": "Analyze more fields"
         }
     },
+    "chart_notice": {
+        "loading_title": "Loading the worksheet renderer…",
+        "unavailable_title": "The worksheet renderer is not available here",
+        "unavailable_desc": "This chart is set to be drawn by the worksheet renderer, which this environment does not include. The chart is kept as it is, and no other renderer draws it in its place. Open it where the worksheet renderer is available, or choose another renderer in the chart settings.",
+        "unsupported_title": "The worksheet renderer cannot draw this chart yet",
+        "unsupported_desc": "The chart is kept as it is. Change what the message names, or choose another renderer in the chart settings.",
+        "failed_title": "The chart could not be drawn",
+        "failed_desc": "The chart and its renderer are kept as they are. Try again, or change the chart.",
+        "retry": "Try again",
+        "levels_title": "{{renderer}} cannot show every level of this chart",
+        "levels_reason": "{{shelf}} holds {{count}} dimensions ({{fields}}). {{renderer}} shows two at most.",
+        "levels_desc": "Drawing it would leave levels out, so nothing is drawn. The chart is kept as it is. Take dimensions off the shelf, or choose a renderer that nests them in the chart settings.",
+        "shelf_rows": "Rows",
+        "shelf_columns": "Columns"
+    },
     "constant": {
         "row_count": "Row count",
         "mea_key": "Measure names",

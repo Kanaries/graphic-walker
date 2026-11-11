@@ -532,11 +532,12 @@ type reducerMiddleware<T> = (item: T, original: T) => T;
 const diffLinter: reducerMiddleware<IChart> = (item, original) => {
     const diffs = diffChangedEncodings(original, item);
     const geom = item.config.geoms[0];
+    const lintOptions = { unlimitedCross: item.layout.renderer === 'native' };
     if (Object.keys(diffs).length === 0 && arrayEqual(item.config.geoms, original.config.geoms)) return item;
     if (!arrayEqual(item.config.geoms, original.config.geoms)) {
-        return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, x), ...lintExtraFields(x) }));
+        return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, x, lintOptions), ...lintExtraFields(x) }));
     }
-    return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, diffs), ...lintExtraFields(diffs) }));
+    return mutPath(item, 'encodings', (x) => ({ ...x, ...algebraLint(geom, diffs, lintOptions), ...lintExtraFields(diffs) }));
 };
 
 const reducerMiddleWares: reducerMiddleware<IChart>[] = [diffLinter];

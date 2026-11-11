@@ -165,7 +165,7 @@
             "shape": false,
             "size": false
         },
-        "renderer": "vega-lite",
+        "renderer": "native",
         "colorPalette": "tableau10",
         "primaryColor": "#4e79a7",
         "scaleIncludeUnmatchedChoropleth": false,

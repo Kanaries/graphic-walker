@@ -13,13 +13,15 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(packageRoot, 'src'),
+            // Resolve the bundled worksheet runtime just as the library build does.
+            '@kanaries/worksheet-renderer': path.resolve(packageRoot, '../worksheet-renderer/src/index.ts'),
         },
     },
     build: {
         outDir: path.resolve(workspaceRoot, 'node_modules/.cache/graphic-walker-e2e'),
         emptyOutDir: true,
         rollupOptions: {
-            input: path.resolve(__dirname, 'issue-501.html'),
+            input: [path.resolve(__dirname, 'issue-501.html'), path.resolve(__dirname, 'native-renderer.html')],
         },
     },
     preview: {

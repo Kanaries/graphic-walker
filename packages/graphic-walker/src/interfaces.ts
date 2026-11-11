@@ -430,8 +430,13 @@ export interface IVisualLayout {
     /** @default false */
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
-    /** @default "vega-lite" */
-    renderer?: 'vega-lite' | 'observable-plot';
+    /**
+     * 'native' is the bundled default worksheet renderer. Unsupported charts show a notice;
+     * renderers never replace one another automatically. Maps and tables use their own
+     * components regardless of this setting.
+     * @default "native"
+     */
+    renderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export interface IVisualConfigNew {
@@ -1038,7 +1043,7 @@ export interface IVizStoreProps {
     defaultConfig?: IDefaultConfig;
     /** Initial UI defaults. Changes do not override user actions or a reused keepAlive store. */
     defaultUIConfig?: IDefaultUIConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export interface ILocalComputationProps {

@@ -40,7 +40,7 @@ interface VizStoreWrapperProps {
     defaultConfig?: IDefaultConfig;
     defaultUIConfig?: IDefaultUIConfig;
     defaultTab?: 'data' | 'visualization';
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {

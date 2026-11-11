@@ -578,18 +578,21 @@ export function getSQLItemAnalyticType(item: parser.Expr, fields: IMutField[]) {
     return walk(item);
 }
 
+/**
+ * The fields an expression reads, wherever they stand in it: as operands, as the arguments of a
+ * function such as sum(a), in the branches of a case. The star of count(*) is not a field.
+ */
 export function walkFid(sql: string): string[] {
     const set = new Set<string>();
-    const walk = (i: parser.Expr) => {
-        if (i.type === 'ref') {
-            set.add(i.name);
-        } else {
-            Object.values(i).forEach((x) => {
-                if (x !== null && typeof x === 'object' && 'type' in x) {
-                    walk(x);
-                }
-            });
+    const walk = (node: unknown) => {
+        if (node === null || typeof node !== 'object') return;
+        if (Array.isArray(node)) return node.forEach(walk);
+        if ((node as parser.Expr).type === 'ref') {
+            const { name } = node as parser.ExprRef;
+            if (name !== '*') set.add(name);
+            return;
         }
+        Object.values(node).forEach(walk);
     };
     walk(parseSQLExpr(sql));
     return Array.from(set);

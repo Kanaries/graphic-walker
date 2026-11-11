@@ -173,6 +173,22 @@ export const toWorkflow = (
         };
     }
 
+    // Computed fields that are aggregates themselves, such as sum(a) / sum(b). They are worked out in the view step.
+    const aggergatedComputed = treeShake(
+        allFields
+            .filter((f) => f.computed && f.expression && f.expression.op === 'expr' && f.aggName === 'expr')
+            .map((f) => {
+                return {
+                    key: f.fid,
+                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
+                };
+            }),
+        [...viewKeys]
+    );
+    // A field such an aggregate reads may be computed row by row, and then has to exist before the view step.
+    const aggregatedInputs = new Set<string>();
+    for (const f of aggergatedComputed) walkExpression(f.expression, (field) => aggregatedInputs.add(field));
+
     // Second, to transform the data by rows 1 by 1
     const computedFields = treeShake(
         allFields
@@ -183,7 +199,7 @@ export const toWorkflow = (
                     expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
                 };
             }),
-        [...viewKeys]
+        [...viewKeys, ...aggregatedInputs]
     );
     if (computedFields.length) {
         transformWorkflow = {
@@ -206,17 +222,6 @@ export const toWorkflow = (
     // 1. If any of the measures is aggregated, then we apply the aggregation
     // 2. If there's no measure in the view, then we apply the aggregation
     const aggergatedFilter = viewFilters.filter((f) => f.enableAgg && f.aggName && f.rule);
-    const aggergatedComputed = treeShake(
-        allFields
-            .filter((f) => f.computed && f.expression && f.expression.op === 'expr' && f.aggName === 'expr')
-            .map((f) => {
-                return {
-                    key: f.fid,
-                    expression: processExpression(f.expression!, allFields, { timezoneDisplayOffset }),
-                };
-            }),
-        [...viewKeys]
-    );
     const aggregateOn = viewMeasures
         .filter((f) => f.aggName)
         .map((f) => [f.fid, f.aggName as string])

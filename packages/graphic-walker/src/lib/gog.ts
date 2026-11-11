@@ -45,6 +45,12 @@ const LR = {
         };
     },
 };
+/**
+ * How many dimensions the Vega-Lite and Observable Plot renderers take on rows and on columns:
+ * one for the position inside a facet, one for the facet. A shelf with more would be drawn
+ * with levels left out.
+ */
+export const CLASSIC_CROSS_LIMIT = 2;
 type Operator<T> = (value: T) => T;
 function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
     return operators.reduce((currentValue, operator) => operator(currentValue), initialValue);
@@ -57,14 +63,16 @@ function applyOperations<T>(initialValue: T, operators: Operator<T>[]): T {
  * @param encodings
  * @returns
  */
-export function algebraLint<T extends Partial<DraggableFieldState>>(geom: string, encodings: T): Partial<T> {
+export function algebraLint<T extends Partial<DraggableFieldState>>(geom: string, encodings: T, options: { unlimitedCross?: boolean } = {}): Partial<T> {
+    // The native worksheet renderer nests any number of dimensions, like the pivot table does.
+    const crossLimit = geom === 'table' || options.unlimitedCross ? Infinity : CLASSIC_CROSS_LIMIT;
 
     const result: Partial<T> = {};
     if (encodings.rows && encodings.rows.length > 0) {
-        result.rows = applyOperations(encodings.rows, [LR.measureAfterDimension, LR.crossLimit(geom === 'table' ? Infinity : 2)]);
+        result.rows = applyOperations(encodings.rows, [LR.measureAfterDimension, LR.crossLimit(crossLimit)]);
     }
     if (encodings.columns && encodings.columns.length > 0) {
-        result.columns = applyOperations(encodings.columns, [LR.measureAfterDimension, LR.crossLimit(geom === 'table' ? Infinity : 2)]);
+        result.columns = applyOperations(encodings.columns, [LR.measureAfterDimension, LR.crossLimit(crossLimit)]);
     }
     if (encodings.latitude && encodings.latitude.length > 0) {
         result.latitude = applyOperations(encodings.latitude, [LR.forceAnalyticType('dimension'), LR.forceSemanticType('quantitative'), LR.crossLimit(1)]);

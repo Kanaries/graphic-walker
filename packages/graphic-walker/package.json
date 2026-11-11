@@ -1,12 +1,12 @@
 {
   "name": "@kanaries/graphic-walker",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "scripts": {
     "dev:front_end": "vite --host",
     "dev": "npm run dev:front_end",
     "sync:datasets": "node ../../scripts/demo-datasets.mjs ./public/datasets",
     "gen-schema": "node scripts/create-json-schema.js",
-    "build": "vite build && tspc --build && yarn gen-schema",
+    "build": "vite build && node scripts/build-types.mjs && yarn gen-schema",
     "build:app": "vite build --config vite-app.config.ts",
     "serve": "vite preview",
     "type": "tsc src/lib.ts --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist",

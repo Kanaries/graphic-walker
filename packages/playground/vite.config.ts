@@ -53,6 +53,9 @@ function demoDatasetFallbackPlugin() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: { '@kanaries/worksheet-renderer': path.resolve(__dirname, '../worksheet-renderer/src/index.ts') },
+  },
   plugins: [
     demoDatasetFallbackPlugin(),
     react(),

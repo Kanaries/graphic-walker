@@ -18,6 +18,7 @@ const raw: { group: string; name: string; comp: () => Promise<{ default: React.C
     { group: 'Teasers', comp: () => import('./pages/teaserPie'), name: 'Pie: Car Sales' },
 
     // ── Core ─────────────────────────────────────
+    { group: 'Core', comp: () => import('./pages/worksheetRenderer'), name: 'Worksheet Renderer' },
     { group: 'Core', comp: () => import('./pages/gw'), name: 'GraphicWalker' },
     { group: 'Core', comp: () => import('./pages/pureRenderer'), name: 'PureRenderer' },
     { group: 'Core', comp: () => import('./pages/pivotTable'), name: 'PivotTable' },

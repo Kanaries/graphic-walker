@@ -1,0 +1,234 @@
+import { chartToWorksheet } from './adapter';
+import { MEA_KEY_ID } from '../../constants';
+import type { IChart, IViewField } from '../../interfaces';
+import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../../utils/save';
+
+const dim = (fid: string, semanticType: IViewField['semanticType'] = 'nominal', extra: Partial<IViewField> = {}): IViewField => ({ fid, name: fid, semanticType, analyticType: 'dimension', ...extra });
+const mea = (fid: string, aggName = 'sum'): IViewField => ({ fid, name: fid, semanticType: 'quantitative', analyticType: 'measure', aggName });
+function chart(encodings: Partial<IChart['encodings']>, config: Partial<IChart['config']> = {}, layout: Partial<IChart['layout']> = {}): IChart {
+    return {
+        visId: 'v', name: 'test',
+        encodings: { ...emptyEncodings, ...encodings },
+        config: { ...emptyVisualConfig, ...config },
+        layout: { ...emptyVisualLayout, renderer: 'native', ...layout },
+    };
+}
+const ids = (expr: any): string[] => (expr.kind === 'field' ? [expr.instanceId] : (expr.items ?? []).flatMap(ids));
+
+describe('chartToWorksheet', () => {
+    test('dimensions nest in shelf order and each measure gets its own value axis', () => {
+        const { spec, error, viewDimensions, viewMeasures } = chartToWorksheet(chart({
+            rows: [dim('Region'), dim('Category'), dim('Sub-Category')],
+            columns: [dim('Year', 'ordinal'), mea('Sales'), mea('Profit', 'mean')],
+        }));
+        expect(error).toBeUndefined();
+        expect(ids(spec!.rows).map((id) => spec!.instances[id].field)).toEqual(['Region', 'Category', 'Sub-Category']);
+        expect(spec!.rows).toMatchObject({ kind: 'nest' });
+        expect((spec!.columns as any).items[1]).toMatchObject({ kind: 'concat' });
+        expect(ids(spec!.columns).map((id) => spec!.instances[id])).toMatchObject([
+            { field: 'Year', display: 'discrete' },
+            { field: 'Sales', display: 'continuous', aggregate: 'sum', label: 'sum(Sales)' },
+            { field: 'Profit', display: 'continuous', aggregate: 'mean', label: 'mean(Profit)' },
+        ]);
+        expect(spec!.mark).toBe('bar');
+        expect(viewDimensions.map((f) => f.fid)).toEqual(['Region', 'Category', 'Sub-Category', 'Year']);
+        expect(viewMeasures.map((f) => f.fid)).toEqual(['Sales', 'Profit']);
+    });
+    test('the last dimension of a shelf without measures becomes an axis when it is a date or a number', () => {
+        const { spec } = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Region'), dim('Order Date', 'temporal')] }));
+        expect(ids(spec!.columns).map((id) => spec!.instances[id])).toMatchObject([
+            { field: 'Region', display: 'discrete' },
+            { field: 'Order Date', display: 'continuous', scale: 'time' },
+        ]);
+        // No unit: the axis shows moments, not periods.
+        expect(spec!.instances[ids(spec!.columns)[1]].timeUnit).toBeUndefined();
+        expect(spec!.mark).toBe('line');
+        const numeric = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Age', 'quantitative')] })).spec!;
+        expect(numeric.instances[ids(numeric.columns)[0]]).toMatchObject({ display: 'continuous', scale: 'linear', zero: false });
+        // A date that is not last on its shelf, or shares the shelf with a measure, stays a header.
+        const header = chartToWorksheet(chart({ rows: [dim('Order Date', 'temporal'), mea('Sales')], columns: [dim('Region')] })).spec!;
+        expect(header.instances[ids(header.rows)[0]]).toMatchObject({ display: 'discrete', scale: 'time' });
+    });
+    test('automatic mark follows the shelves', () => {
+        const mark = (encodings: Partial<IChart['encodings']>) => chartToWorksheet(chart(encodings)).spec!.mark;
+        expect(mark({ rows: [mea('Sales')], columns: [mea('Profit')] })).toBe('point');
+        expect(mark({ rows: [dim('Region')], columns: [mea('Sales')] })).toBe('bar');
+        expect(mark({ rows: [dim('Region')], columns: [dim('Segment')], text: [mea('Sales')] })).toBe('text');
+        expect(mark({ rows: [dim('Region')], columns: [dim('Segment')], color: [mea('Sales')] })).toBe('rect');
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: ['area'] })).spec!.mark).toBe('area');
+        // With every record drawn, bars would pile up; the editor's own renderer draws ticks there too.
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { defaultAggregated: false })).spec!.mark).toBe('tick');
+    });
+    test('point, circle and tick stay three different marks', () => {
+        const mark = (geom: string) => chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: [geom] })).spec!.mark;
+        expect(['point', 'circle', 'tick'].map(mark)).toEqual(['point', 'circle', 'tick']);
+    });
+    test('a pie keeps the dimensions on rows and columns as headers and takes its measure from the angle shelf', () => {
+        const { spec, notes, viewMeasures } = chartToWorksheet(chart({
+            rows: [dim('Region'), dim('Order Date', 'temporal'), mea('Sales')], columns: [dim('Category')],
+            theta: [mea('Profit', 'mean')], color: [dim('Segment')], radius: [mea('Quantity')],
+        }, { geoms: ['arc'] }));
+        expect(spec!.mark).toBe('arc');
+        expect(ids(spec!.rows).map((id) => spec!.instances[id])).toMatchObject([{ field: 'Region', display: 'discrete' }, { field: 'Order Date', display: 'discrete' }]);
+        expect(ids(spec!.columns).map((id) => spec!.instances[id].field)).toEqual(['Category']);
+        expect(spec!.instances[spec!.angle!]).toMatchObject({ field: 'Profit', aggregate: 'mean' });
+        expect(viewMeasures.map((f) => f.fid)).toEqual(['Profit']);
+        expect(notes).toEqual(['Measures on the row shelf are not part of a pie. The angle shelf sizes the slices.', 'Not drawn yet: radius.']);
+        expect(chartToWorksheet(chart({ color: [dim('Segment')] }, { geoms: ['arc'] })).spec!.angle).toBeUndefined();
+        expect(chartToWorksheet(chart({ theta: [dim('Segment')] }, { geoms: ['arc'] })).error).toMatch(/Angle is a dimension/);
+    });
+    test('a box plot keeps every dimension as a header and does not start its axis from zero', () => {
+        const { spec, notes } = chartToWorksheet(chart({
+            columns: [dim('Region'), dim('Category'), dim('Age', 'quantitative')], rows: [mea('Sales')], color: [mea('Profit')], details: [dim('Customer')],
+        }, { geoms: ['boxplot'], defaultAggregated: false }));
+        expect(spec!.mark).toBe('boxplot');
+        expect(ids(spec!.columns).map((id) => spec!.instances[id].display)).toEqual(['discrete', 'discrete', 'discrete']);
+        expect(spec!.instances[ids(spec!.rows)[0]]).toMatchObject({ field: 'Sales', display: 'continuous', zero: false });
+        expect(spec!.instances[ids(spec!.rows)[0]].aggregate).toBeUndefined();
+        expect(spec!.color).toBeUndefined();
+        expect(spec!.detail!.map((id) => spec!.instances[id].field)).toEqual(['Customer']);
+        expect(notes).toEqual(['Profit on Color is ignored: a box plot takes a dimension there.']);
+    });
+    test('color takes a dimension as categories and a measure as a continuous scale', () => {
+        const byDimension = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], color: [dim('Segment')], details: [dim('Ship Mode')] })).spec!;
+        expect(byDimension.instances[byDimension.color!]).toMatchObject({ field: 'Segment', display: 'discrete' });
+        expect(byDimension.detail!.map((id) => byDimension.instances[id].field)).toEqual(['Ship Mode']);
+        const byMeasure = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], color: [mea('Profit', 'mean')] })).spec!;
+        expect(byMeasure.instances[byMeasure.color!]).toMatchObject({ field: 'Profit', display: 'continuous', aggregate: 'mean' });
+    });
+    test('without aggregation measures are plain continuous fields', () => {
+        const { spec } = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [mea('Profit')] }, { defaultAggregated: false }));
+        expect(Object.values(spec!.instances).every((f) => f.display === 'continuous' && !f.aggregate)).toBe(true);
+    });
+    test('a date drilled to a unit is labelled by its period in the display time zone', () => {
+        const year = dim('Order Year', 'temporal', { computed: true, timeUnit: 'year' });
+        const header = chartToWorksheet(chart({ rows: [year, mea('Sales')], columns: [dim('Region')] }, { timezoneDisplayOffset: 480 })).spec!;
+        expect(header.instances[ids(header.rows)[0]]).toMatchObject({ display: 'discrete', scale: 'time', timeUnit: 'year', timeOffset: -480 * 60000 });
+        const axis = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [year] }, { timezoneDisplayOffset: 0 })).spec!;
+        expect(axis.instances[ids(axis.columns)[0]]).toMatchObject({ display: 'continuous', scale: 'time', timeOffset: -0 });
+        expect(axis.mark).toBe('line');
+    });
+    test('a sorted dimension is ordered by the measure across from it, and the limit follows that order', () => {
+        const sorted = (extra: Partial<IViewField> = {}) => dim('Sub-Category', 'nominal', { sort: 'descending', ...extra });
+        const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Category'), sorted()], columns: [dim('Year', 'ordinal'), mea('Sales'), mea('Profit', 'mean')] }, { limit: 10 }));
+        const sub = ids(spec!.rows)[1], sales = ids(spec!.columns)[1];
+        expect(spec!.instances[sales]).toMatchObject({ field: 'Sales', aggregate: 'sum' });
+        // The first of several measures decides, as the leftmost does in Tableau.
+        expect(spec!.order).toEqual({ [sub]: { by: sales, direction: 'descending' } });
+        expect(spec!.limit).toEqual({ rows: 10, by: sales, direction: 'descending' });
+        expect(notes).toEqual([]);
+        // Measure on the same shelf as the dimension: the dimension across from it is the one that carries the sort.
+        const across = chartToWorksheet(chart({ rows: [dim('Region'), mea('Sales')], columns: [dim('Year', 'ordinal', { sort: 'ascending' })] })).spec!;
+        expect(across.order).toEqual({ [ids(across.columns)[0]]: { by: ids(across.rows)[1], direction: 'ascending' } });
+        expect(across.limit).toBeUndefined();
+        // A date axis has no members to reorder.
+        expect(chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Order Date', 'temporal', { sort: 'descending' })] })).spec!.order).toEqual({});
+        expect(chartToWorksheet(chart({ rows: [sorted()], columns: [dim('Region')] })).notes).toEqual(['There is no measure to sort by; members are in value order.']);
+        // A limit without a sort keeps the first records as they come.
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 5 })).spec!.limit).toEqual({ rows: 5 });
+    });
+    test('with every record drawn, members are ordered by a total and the limit by the records', () => {
+        const raw = chartToWorksheet(chart({ rows: [dim('Region', 'nominal', { sort: 'descending' })], columns: [mea('Sales')] }, { defaultAggregated: false, limit: 100 })).spec!;
+        const region = ids(raw.rows)[0], sales = ids(raw.columns)[0];
+        expect(raw.instances[sales].aggregate).toBeUndefined();
+        expect(raw.instances.order).toMatchObject({ field: 'Sales', aggregate: 'sum' });
+        expect(raw.order).toEqual({ [region]: { by: 'order', direction: 'descending' } });
+        expect(raw.limit).toEqual({ rows: 100, by: sales, direction: 'descending' });
+        const box = chartToWorksheet(chart({ columns: [dim('Region', 'nominal', { sort: 'ascending' })], rows: [mea('Sales')] }, { defaultAggregated: false, geoms: ['boxplot'] })).spec!;
+        expect(box.instances.order).toMatchObject({ field: 'Sales', aggregate: 'median' });
+    });
+    test('size, opacity, shape and labels map from the shelves the mark type shows', () => {
+        const shelves = { rows: [mea('Sales')], columns: [dim('Region')], size: [mea('Profit', 'mean')], opacity: [dim('Segment')], shape: [dim('Ship Mode')], text: [mea('Quantity')] };
+        const point = chartToWorksheet(chart(shelves, { geoms: ['point'] }));
+        expect(point.spec!.instances[point.spec!.size!]).toMatchObject({ field: 'Profit', display: 'continuous', aggregate: 'mean' });
+        expect(point.spec!.instances[point.spec!.opacity!]).toMatchObject({ field: 'Segment', display: 'discrete' });
+        expect(point.spec!.instances[point.spec!.shape!]).toMatchObject({ field: 'Ship Mode', display: 'discrete' });
+        // The editor hides the Text shelf for points, so a field left on it is not part of the chart.
+        expect(point.spec!.text).toBeUndefined();
+        expect(point.viewMeasures.map((f) => f.fid)).toEqual(['Sales', 'Profit']);
+        expect(point.notes).toEqual([]);
+        // Bars show Text and hide Shape.
+        const bar = chartToWorksheet(chart(shelves, { geoms: ['bar'] }));
+        expect(bar.spec!.instances[bar.spec!.text!]).toMatchObject({ field: 'Quantity', aggregate: 'sum' });
+        expect(bar.spec!.shape).toBeUndefined();
+        expect(bar.spec!.size).toBeDefined();
+        expect(bar.notes).toEqual([]);
+        const box = chartToWorksheet(chart({ ...shelves, size: [dim('Segment')], text: [dim('Segment')] }, { geoms: ['boxplot'], defaultAggregated: false }));
+        expect([box.spec!.size, box.spec!.opacity, box.spec!.text]).toEqual([undefined, undefined, undefined]);
+        expect(box.notes).toEqual(['Labels are not drawn on box plots.', 'Size is not drawn on box plot marks.', 'Opacity is not drawn on box plots.']);
+        expect(chartToWorksheet(chart({ ...shelves, shape: [mea('Profit')] }, { geoms: ['circle'] })).notes).toEqual(['Profit on Shape is ignored: only a dimension picks symbols.']);
+        expect(chartToWorksheet(chart({ color: [dim('Segment')], theta: [mea('Sales')], radius: [mea('Profit')] }, { geoms: ['arc'] })).notes).toEqual(['Not drawn yet: radius.']);
+    });
+    test('a stored date is shifted to the display time zone by the kind of value it holds', () => {
+        const local = new Date().getTimezoneOffset() * 60000;
+        // Display eight hours east of UTC; the field was recorded five hours west.
+        const { spec } = chartToWorksheet(chart({ rows: [mea('Sales')], columns: [dim('Order Date', 'temporal', { offset: 300 })] }, { timezoneDisplayOffset: -480 }));
+        expect(spec!.instances[ids(spec!.columns)[0]].timeOffset).toEqual({ epoch: 480 * 60000, date: (480 + 300) * 60000, dateTime: (480 + 300) * 60000 - local });
+        // With nothing set, a day written as text stays that day.
+        const plain = chartToWorksheet(chart({ rows: [dim('Order Date', 'temporal'), mea('Sales')], columns: [dim('Region')] })).spec!;
+        expect(plain.instances[ids(plain.rows)[0]].timeOffset).toMatchObject({ date: 0, epoch: -local });
+        // A computed date field that is not a drill is left as a plain dimension.
+        const computed = chartToWorksheet(chart({ rows: [dim('Derived', 'temporal', { computed: true }), mea('Sales')], columns: [dim('Region')] })).spec!;
+        expect(computed.instances[ids(computed.rows)[0]].scale).toBeUndefined();
+    });
+    test('scale settings map to the axes of a shelf and to the color, size and opacity channels', () => {
+        const shelves = { rows: [dim('Region')], columns: [mea('Sales')], color: [mea('Profit')], size: [mea('Quantity')], opacity: [dim('Segment')] };
+        const { spec, notes } = chartToWorksheet(chart(shelves, { geoms: ['point'] }, {
+            scale: {
+                column: { type: 'log', domainMin: 1 }, row: { type: 'pow' }, color: { domainMin: -5, domainMax: 5, type: 'symlog' },
+                size: { rangeMin: 4, rangeMax: 80 }, opacity: { rangeMin: 0.3, rangeMax: 0.9, type: 'sqrt' }, theta: { domainMax: 10 },
+            },
+            resolve: { ...emptyVisualLayout.resolve, color: true, size: true, opacity: true, shape: true },
+        }));
+        expect(spec!.scales).toEqual({
+            columns: { type: 'log', min: 1 },
+            color: { type: 'symlog', min: -5, max: 5, independent: true },
+            size: { range: [4, 80], independent: true },
+            // Opacity is on a dimension: its range applies, a scale type and independence do not.
+            opacity: { range: [0.3, 0.9] },
+        });
+        expect(notes).toEqual([
+            'The opacity scale type and domain apply to a measure, not to a dimension.',
+            'An independent opacity scale applies to a measure; each member of a dimension keeps its opacity in every pane.',
+            'The theta scale is not applied.',
+        ]);
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] })).spec!.scales).toBeUndefined();
+    });
+    test('layout options carry over', () => {
+        const base = { rows: [dim('Region')], columns: [mea('Sales')] };
+        expect(chartToWorksheet(chart(base, {}, { stack: 'none' })).spec!.stack).toBe(false);
+        expect(chartToWorksheet(chart(base, {}, { stack: 'stack' })).spec!.stack).toBe(true);
+        expect(chartToWorksheet(chart(base, {}, { stack: 'zero' })).spec!.stack).toBe(true);
+        expect(chartToWorksheet(chart(base, {}, { stack: 'normalize' })).spec!.stack).toBe('normalize');
+        expect(chartToWorksheet(chart(base, {}, { stack: 'center' })).spec!.stack).toBe('center');
+        // Each direction is set on its own: x is the columns shelf, y the rows shelf.
+        const scope = (resolve: Partial<IChart['layout']['resolve']>) => chartToWorksheet(chart(base, {}, { resolve: { ...emptyVisualLayout.resolve, ...resolve } })).spec!.scaleScope;
+        expect(scope({})).toEqual({ columns: 'shared', rows: 'shared' });
+        expect(scope({ x: true })).toEqual({ columns: 'independent', rows: 'shared' });
+        expect(scope({ y: true })).toEqual({ columns: 'shared', rows: 'independent' });
+        expect(scope({ x: true, y: true })).toEqual({ columns: 'independent', rows: 'independent' });
+        const noZero = chartToWorksheet(chart(base, {}, { zeroScale: false })).spec!;
+        expect(noZero.instances[ids(noZero.columns)[0]].zero).toBe(false);
+    });
+    test('what cannot be drawn is reported, not dropped silently', () => {
+        expect(chartToWorksheet(chart({ rows: [dim(MEA_KEY_ID)], columns: [mea('Sales')] })).error).toMatch(/Measure names/);
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { geoms: ['table'] })).error).toMatch(/"table"/);
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales', 'ntile')] })).error).toMatch(/"ntile"/);
+        // An aggregate expression needs its expression; a field that only carries the name of one is not drawn.
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales', 'expr')] })).error).toMatch(/Sales is an aggregate expression, but the dataset has no expression for it/);
+        expect(chartToWorksheet(chart({}, { coordSystem: 'geographic' })).error).toMatch(/Maps/);
+        expect(chartToWorksheet(chart({}))).toMatchObject({ error: expect.stringMatching(/nothing on rows or columns/), empty: true });
+        expect(chartToWorksheet(chart({ rows: [dim(MEA_KEY_ID)], columns: [mea('Sales')] })).empty).toBeUndefined();
+        expect(chartToWorksheet(chart({ color: [dim('Segment')] })).error).toMatch(/nothing on rows or columns/);
+        const { spec, notes } = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')], size: [mea('Profit')], details: [mea('Quantity')] }, { geoms: ['area'] }));
+        expect(spec).toBeDefined();
+        expect(notes).toEqual(['Quantity on Details is ignored: only dimensions split marks.', 'Size is not drawn on area marks.']);
+        const settings = chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] }, { limit: 10, geoms: ['trail'] },
+            { format: { numberFormat: '.2f' }, scale: { opacity: { rangeMax: 1 } }, interactiveScale: true, size: { mode: 'fixed', width: 300, height: 200 }, useSvg: true, resolve: { color: true } }));
+        expect(settings.notes).toEqual([
+            'Trail is drawn as a line of one width.', 'The sheet is always drawn on a canvas.',
+        ]);
+        // A chart with default settings drops nothing.
+        expect(chartToWorksheet(chart({ rows: [dim('Region')], columns: [mea('Sales')] })).notes).toEqual([]);
+    });
+});

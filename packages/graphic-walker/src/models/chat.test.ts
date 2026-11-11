@@ -58,7 +58,7 @@ const createTestChart = (defaultAggregated = true): IChart => {
 		stack: 'stack',
 		showActions: false,
 		zeroScale: true,
-		renderer: 'vega-lite',
+		renderer: 'native',
 	};
 
 	return {

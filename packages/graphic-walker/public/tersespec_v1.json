@@ -265,9 +265,11 @@
                     "type": "string",
                     "enum": [
                         "vega-lite",
-                        "observable-plot"
+                        "observable-plot",
+                        "native"
                     ],
-                    "default": "vega-lite"
+                    "description": "'native' is the bundled default worksheet renderer. Unsupported charts show a notice; renderers never replace one another automatically. Maps and tables use their own components regardless of this setting.",
+                    "default": "native"
                 }
             },
             "additionalProperties": false

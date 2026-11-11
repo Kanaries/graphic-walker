@@ -13,7 +13,7 @@
         "singleQuote": true
     },
     "dependencies": {
-        "@kanaries/graphic-walker": "0.5.3"
+        "@kanaries/graphic-walker": "0.6.0"
     },
     "devDependencies": {
         "@duckdb/duckdb-wasm": "^1.28.0",

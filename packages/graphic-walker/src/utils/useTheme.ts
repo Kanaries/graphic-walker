@@ -67,5 +67,8 @@ export function getColor(theme: VegaGlobalConfig) {
         primaryColor,
         nominalPalette,
         quantitativePalette,
+        /** Undefined where the theme sets none; the renderer then keeps its own. */
+        divergingPalette: parsePalette(theme.range?.diverging),
+        heatmapPalette: parsePalette(theme.range?.heatmap),
     };
 }

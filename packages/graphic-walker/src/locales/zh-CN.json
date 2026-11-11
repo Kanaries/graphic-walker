@@ -122,6 +122,21 @@
             "more": "分析更多字段"
         }
     },
+    "chart_notice": {
+        "loading_title": "正在加载工作表渲染器…",
+        "unavailable_title": "当前环境没有工作表渲染器",
+        "unavailable_desc": "这张图表设置为由工作表渲染器（预览）绘制，当前环境没有提供它。图表配置保持不变，也不会改用其他渲染器绘制。请在提供工作表渲染器的环境中打开，或在图表设置里选择其他渲染器。",
+        "unsupported_title": "工作表渲染器暂时不能绘制这张图表",
+        "unsupported_desc": "图表配置保持不变。请调整上面提到的内容，或在图表设置里选择其他渲染器。",
+        "failed_title": "图表绘制失败",
+        "failed_desc": "图表配置和所选渲染器保持不变。可以重试，或修改图表。",
+        "retry": "重试",
+        "levels_title": "{{renderer}} 无法展示这张图表的全部层级",
+        "levels_reason": "{{shelf}}上有 {{count}} 个维度（{{fields}}），{{renderer}} 最多展示两个。",
+        "levels_desc": "继续绘制会漏掉层级，所以没有绘制。图表配置保持不变。请从该栏移除维度，或在图表设置里选择支持多层嵌套的渲染器。",
+        "shelf_rows": "行",
+        "shelf_columns": "列"
+    },
     "constant": {
         "row_count": "行数",
         "mea_key": "度量名称",

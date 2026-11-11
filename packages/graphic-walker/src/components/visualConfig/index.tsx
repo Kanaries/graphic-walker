@@ -21,6 +21,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { vegaThemeContext } from '../../store/theme';
 import { ColorPickerComponent } from './color-picker';
 import { Switch } from '../ui/switch';
+import { useNativeRenderer } from '../../renderer/nativeRegistry';
 
 function SettingRow(props: { title: React.ReactNode; description?: React.ReactNode; htmlFor?: string; children?: React.ReactNode }) {
     return (
@@ -160,7 +161,8 @@ const VisualConfigPanel: React.FC = () => {
     const [svg, setSvg] = useState<boolean>(layout.useSvg ?? false);
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
-    const [renderer, setRenderer] = useState<'vega-lite' | 'observable-plot'>(layout.renderer ?? 'vega-lite');
+    const [renderer, setRenderer] = useState<NonNullable<IVisualLayout['renderer']>>(layout.renderer ?? 'native');
+    const nativeAvailable = Boolean(useNativeRenderer());
     const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
@@ -189,7 +191,7 @@ const VisualConfigPanel: React.FC = () => {
     useEffect(() => {
         setZeroScale(layout.zeroScale);
         setSvg(layout.useSvg ?? false);
-        setRenderer(layout.renderer ?? 'vega-lite');
+        setRenderer(layout.renderer ?? 'native');
         setBackground(
             extractRGBA(
                 {
@@ -585,18 +587,22 @@ const VisualConfigPanel: React.FC = () => {
                                                     <div>
                                                         <label className="text-xs font-medium leading-6">Renderer</label>
                                                         <p className="text-xs text-gray-500">
-                                                            Choose between VegaLite and Observable Plot renderers
+                                                            Choose between Worksheet, VegaLite and Observable Plot renderers
                                                         </p>
                                                     </div>
                                                     <Combobox
                                                         className="w-40 h-fit"
                                                         popClassName="w-40"
                                                         selectedKey={renderer}
-                                                        onSelect={(value) => setRenderer(value as 'vega-lite' | 'observable-plot')}
-                                                        options={GLOBAL_CONFIG.RENDERER_TYPES.map((type) => ({
-                                                            value: type,
-                                                            label: type === 'vega-lite' ? 'VegaLite' : 'Observable Plot',
-                                                        }))}
+                                                        onSelect={(value) => setRenderer(value as NonNullable<IVisualLayout['renderer']>)}
+                                                        options={[
+                                                            ...GLOBAL_CONFIG.RENDERER_TYPES.map((type) => ({
+                                                                value: type as string,
+                                                                label: type === 'vega-lite' ? 'VegaLite' : 'Observable Plot',
+                                                            })),
+                                                            // Offered only where a host has registered the worksheet renderer.
+                                                            ...(nativeAvailable || renderer === 'native' ? [{ value: 'native', label: 'Worksheet' }] : []),
+                                                        ]}
                                                     />
                                                 </div>
                                             </div>
