@@ -35,11 +35,12 @@ export default defineConfig({
         },
     ],
     webServer: {
+        // Build the published library first: routing tests consume it without test-only registration.
         // Serve a production bundle so every isolated browser context loads a bounded
         // asset set. The dev-server module graph can crash Playwright's WebKit network
         // inspector while it processes hundreds of concurrent module responses.
         command:
-            'yarn vite build --config tests/e2e/vite.config.ts && yarn vite preview --config tests/e2e/vite.config.ts',
+            'yarn build && yarn vite build --config tests/e2e/vite.config.ts && yarn vite preview --config tests/e2e/vite.config.ts',
         url: 'http://127.0.0.1:4175/tests/e2e/issue-501.html',
         reuseExistingServer: !process.env.CI,
         timeout: 300_000,

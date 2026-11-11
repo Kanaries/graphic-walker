@@ -1,6 +1,6 @@
 import type { IGWHandlerInsider, IRenderStatus } from '../interfaces';
 import { installNativeExport } from './nativeHostExport';
-import type { NativeRendererHandle } from './nativeRegistry';
+import type { NativeRendererHandle } from './nativeTypes';
 
 function host(initial: IRenderStatus = 'idle') {
     let status = initial;

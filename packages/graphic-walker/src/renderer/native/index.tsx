@@ -1,7 +1,7 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type RefObject } from 'react';
 import { Worksheet, compileWorksheet, darkTheme, lightTheme, tableToCSV, type Computation, type Theme, type WorksheetHandle } from '@kanaries/worksheet-renderer';
 import type { IChart } from '../../interfaces';
-import { registerNativeRenderer, type NativeRendererProps, type NativeUnsupported } from '../../renderer/nativeRegistry';
+import type { NativeRendererProps, NativeUnsupported } from '../nativeTypes';
 import { toWorkflow } from '../../utils/workflow';
 import { chartToWorksheet } from './adapter';
 import { composeWorkflow, drawnAtGrain, splitWorkflow, type Around } from './having';
@@ -161,4 +161,3 @@ function check(chart: IChart): NativeUnsupported | undefined {
     }
 }
 export const worksheetRenderer = { component: NativeWorksheet, check };
-registerNativeRenderer(worksheetRenderer);

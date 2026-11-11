@@ -5,14 +5,10 @@ import type { ChartNoticeContent } from './route';
 
 // What is shown where the translations are not loaded, as in a renderer mounted without the editor.
 const english = {
-    loading_title: 'Loading the worksheet renderer…',
-    unavailable_title: 'The worksheet renderer is not available here',
-    unavailable_desc:
-        'This chart is set to be drawn by the worksheet renderer, which this environment does not include. The chart is kept as it is, and no other renderer draws it in its place. Open it where the worksheet renderer is available, or choose another renderer in the chart settings.',
-    unsupported_title: 'The worksheet renderer cannot draw this chart yet',
-    unsupported_desc: 'The chart is kept as it is. Change what the message names, or choose another renderer in the chart settings.',
+    unsupported_title: 'This chart configuration is not supported yet',
+    unsupported_desc: 'Adjust the fields or chart type to continue.',
     failed_title: 'The chart could not be drawn',
-    failed_desc: 'The chart and its renderer are kept as they are. Try again, or change the chart.',
+    failed_desc: 'Try again. Your chart settings are saved.',
     retry: 'Try again',
     levels_title: '{{renderer}} cannot show every level of this chart',
     levels_reason: '{{shelf}} holds {{count}} dimensions ({{fields}}). {{renderer}} shows two at most.',
@@ -35,12 +31,12 @@ export default function ChartNotice({ notice, onRetry }: { notice: ChartNoticeCo
     const reasons =
         notice.state === 'levels'
             ? notice.shelves.map((held) => say('levels_reason', { shelf: say(`shelf_${held.shelf}`), count: held.fields.length, fields: held.fields.join(', '), renderer }))
-            : 'reason' in notice
+            : notice.reason
             ? [notice.reason]
             : [];
-    const detail = notice.state === 'loading' ? '' : say(`${notice.state}_desc`);
+    const detail = say(`${notice.state}_desc`);
     return (
-        <div role={notice.state === 'loading' ? 'status' : 'alert'} data-testid="chart-notice" data-state={notice.state} className="flex w-full items-start p-6">
+        <div role="alert" data-testid="chart-notice" data-state={notice.state} className="flex w-full items-start p-6">
             <div className="max-w-xl space-y-2 text-sm">
                 <p className="font-medium text-foreground">{title}</p>
                 {reasons.map((reason) => (

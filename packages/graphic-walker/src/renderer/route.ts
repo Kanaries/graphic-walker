@@ -1,6 +1,6 @@
 import type { IChart } from '../interfaces';
 import { CLASSIC_CROSS_LIMIT } from '../lib/gog';
-import type { NativeRegistry } from './nativeRegistry';
+import type { NativeRenderer } from './nativeTypes';
 
 /** A shelf that holds more dimensions than the chart's renderer shows. */
 export interface ShelfOverflow {
@@ -10,14 +10,11 @@ export interface ShelfOverflow {
 
 /**
  * What the chart area says in place of a chart it does not draw.
- * - loading: the worksheet renderer is being fetched.
- * - unavailable: the chart asks for the worksheet renderer and this environment has none.
  * - unsupported: the worksheet renderer cannot draw the chart; `reason` says what is in the way.
  * - failed: a query or the drawing went wrong; `reason` is the error.
  * - levels: the chart has more dimensions on a shelf than its renderer shows.
  */
 export type ChartNoticeContent =
-    | { state: 'loading' | 'unavailable' }
     | { state: 'unsupported' | 'failed'; reason: string }
     | { state: 'levels'; renderer: 'vega-lite' | 'observable-plot'; shelves: ShelfOverflow[] };
 
@@ -37,13 +34,12 @@ export type ChartRoute = { to: 'dedicated'; kind: 'table' | 'map' } | { to: 'cla
  * the renderer it names, Worksheet where it names none. A renderer that cannot draw the chart is
  * never replaced by another one; the chart area says what is wrong and the chart stays as saved.
  */
-export function routeChart(chart: IChart, registry: NativeRegistry): ChartRoute {
+export function routeChart(chart: IChart, worksheet: NativeRenderer): ChartRoute {
     if (chart.config.geoms[0] === 'table') return { to: 'dedicated', kind: 'table' };
     if (chart.config.coordSystem === 'geographic') return { to: 'dedicated', kind: 'map' };
     const renderer = chart.layout.renderer ?? 'native';
     if (renderer === 'native') {
-        if (!registry.renderer) return { to: 'notice', notice: { state: registry.loading ? 'loading' : 'unavailable' } };
-        const cannot = registry.renderer.check(chart);
+        const cannot = worksheet.check(chart);
         if (!cannot) return { to: 'native' };
         return cannot.empty ? { to: 'blank' } : { to: 'notice', notice: { state: 'unsupported', reason: cannot.reason } };
     }

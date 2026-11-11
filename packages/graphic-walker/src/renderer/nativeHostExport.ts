@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import type { IChartExportResult, IGWHandlerInsider } from '../interfaces';
-import type { NativeRendererHandle } from './nativeRegistry';
+import type { NativeRendererHandle } from './nativeTypes';
 
 const empty = (mode: IChartExportResult['mode']): IChartExportResult => ({ mode, title: '', nCols: 0, nRows: 0, charts: [], chartType: 'worksheet', container: () => null });
 

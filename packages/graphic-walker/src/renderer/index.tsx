@@ -1,4 +1,5 @@
-import './native';
+// A direct dependency: production bundlers must retain the default renderer.
+import { worksheetRenderer } from './native';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo, useContext, useImperativeHandle } from 'react';
 import {
@@ -33,7 +34,7 @@ import { viewEncodingKeys } from '@/models/visSpec';
 import LoadingLayer from '@/components/loadingLayer';
 import { getTimeFormat } from '@/lib/inferMeta';
 import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
-import { useNativeRegistry, type NativeRendererColors, type NativeRendererHandle } from './nativeRegistry';
+import type { NativeRendererColors, NativeRendererHandle } from './nativeTypes';
 import { routeChart, type ChartRoute } from './route';
 import ChartNotice from './chartNotice';
 import { getColor, getTheme } from '../utils/useTheme';
@@ -268,7 +269,6 @@ function saveDataURL(url: string, filename: string) {
  */
 const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
     const vizStore = useVizStore();
-    const registry = useNativeRegistry();
     const chart = vizStore.currentVis;
     const { i18n } = useTranslation();
     // The host's chart count, chart index and openChart. They are registered here, above every renderer,
@@ -319,7 +319,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
     const onError = useCallback((reason: string) => setFailed({ shape, reason }), [shape]);
     const retry = useCallback(() => setFailed(undefined), []);
     useEffect(() => setFailed(undefined), [props.computationFunction]);
-    const planned = useMemo(() => routeChart(chart, registry), [chart, registry]);
+    const planned = useMemo(() => routeChart(chart, worksheetRenderer), [chart]);
     const route: ChartRoute = planned.to === 'native' && failed?.shape === shape ? { to: 'notice', notice: { state: 'failed', reason: failed.reason } } : planned;
 
     // Who answers the export buttons and the host: the worksheet renderer, the editor's own renderers,
@@ -403,9 +403,8 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
             appRoot.current?.updateRenderStatus('idle');
         };
     }, [hosted, appRoot]);
-    // A chart that is not drawn says so to the host: an export waits for a renderer that is still loading,
-    // and gets no image from a chart that has no renderer, cannot be drawn or failed.
-    const standing: IRenderStatus | undefined = route.to === 'notice' ? (route.notice.state === 'loading' ? 'computing' : 'error') : route.to === 'blank' ? 'idle' : undefined;
+    // Empty charts are idle; unsupported or failed charts report an error and export no image.
+    const standing: IRenderStatus | undefined = route.to === 'notice' ? 'error' : route.to === 'blank' ? 'idle' : undefined;
     useEffect(() => {
         if (standing) onStatusChange(standing);
     }, [standing, onStatusChange, chartName]);
@@ -433,7 +432,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
             </div>
         );
     }
-    const Native = registry.renderer!.component;
+    const Native = worksheetRenderer.component;
     // Auto: value axes take the room the chart area has, member steps keep their size, and what does not fit scrolls.
     // Fixed: it fills a box of the chosen size, which the viewer can drag to resize.
     // Full: it fills the chart area.

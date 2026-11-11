@@ -4,14 +4,13 @@ import type { ChartRequest } from './native-renderer.fixture';
 // How a chart finds its renderer, in the mounted editor: an ordinary chart is drawn by the renderer it
 // names or not at all, maps and tables keep their own components, and the host is told the truth.
 
-type Native = 'on' | 'slow' | 'fail' | 'off';
 const bars: ChartRequest = { name: 'Bars', renderer: 'native', rows: ['Region'], columns: ['Sales'] };
 const levels: ChartRequest = { name: 'Levels', renderer: 'native', rows: ['Region', 'Category', 'Subcategory'], columns: ['f_ratio'] };
 const betweenMeasures: ChartRequest = { name: 'Between measures', renderer: 'native', geom: 'bar', rows: ['Sales'], columns: ['Cost'] };
 const renderers = ['vega-lite', 'observable-plot', 'native'] as const;
 
-async function open(page: Page, native: Native, charts: ChartRequest[]) {
-    await page.goto(`/tests/e2e/native-renderer.html?native=${native}`);
+async function open(page: Page, charts: ChartRequest[]) {
+    await page.goto('/tests/e2e/native-renderer.html');
     await expect(page.locator('body')).toHaveAttribute('data-fixture-ready', 'true');
     await page.evaluate((list) => window.gw.load(list), charts);
 }
@@ -39,7 +38,7 @@ async function nothingDrawn(page: Page) {
 }
 
 test('R1: a chart the worksheet renderer cannot draw says why and is not drawn by another renderer', async ({ page }) => {
-    await open(page, 'on', [betweenMeasures]);
+    await open(page, [betweenMeasures]);
     await expect(notice(page)).toHaveAttribute('data-state', 'unsupported');
     await expect(page.getByTestId('chart-notice-reason')).toContainText('Bar marks need one measure axis');
     await nothingDrawn(page);
@@ -57,7 +56,7 @@ test('R1: a chart the worksheet renderer cannot draw says why and is not drawn b
 });
 
 test('R2: a failed query shows the error, no other renderer takes over, and trying again or changing the chart recovers', async ({ page }) => {
-    await open(page, 'on', [bars, { ...bars, name: 'By category', rows: ['Category'] }]);
+    await open(page, [bars, { ...bars, name: 'By category', rows: ['Category'] }]);
     await expect(sheet(page)).toBeVisible();
     await expect.poll(() => status(page)).toBe('idle');
     const first = await page.evaluate(() => window.gw.host.exportChart());
@@ -99,38 +98,8 @@ test('R2: a failed query shows the error, no other renderer takes over, and tryi
     expect(chart.layout.renderer).toBe('native');
 });
 
-test('R3: while the worksheet renderer loads the chart waits for it', async ({ page }) => {
-    await open(page, 'slow', [bars]);
-    await expect(notice(page)).toHaveAttribute('data-state', 'loading');
-    await nothingDrawn(page);
-    expect(await status(page)).toBe('computing');
-    await page.evaluate(() => window.gw.arrive());
-    await expect(sheet(page)).toBeVisible();
-    await expect(notice(page)).toHaveCount(0);
-    await expect.poll(() => status(page)).toBe('idle');
-});
-
-for (const native of ['off', 'fail'] as const) {
-    test(`R3: where the worksheet renderer is missing (${native}) a chart saved for it is not drawn by Vega`, async ({ page }) => {
-        await open(page, native, [bars, { name: 'History', renderer: 'vega-lite', rows: ['Region'], columns: ['Sales'] }]);
-        await expect(notice(page)).toHaveAttribute('data-state', 'unavailable');
-        await nothingDrawn(page);
-        await expect.poll(() => status(page)).toBe('error');
-        expect(await page.evaluate(() => window.gw.host.exportChart())).toMatchObject({ images: 0 });
-        const [chart] = await saved(page);
-        expect(chart.layout.renderer).toBe('native');
-        expect(shelves(chart)).toEqual({ rows: ['Region'], columns: ['Sales'] });
-        // An explicit Vega choice is preserved even when the worksheet renderer is absent.
-        await page.evaluate(() => window.gw.host.openChart(1));
-        await expect(vega(page)).toBeVisible();
-        await expect(notice(page)).toHaveCount(0);
-        // Saving preserves the explicit choice.
-        expect((await saved(page))[1].layout.renderer).toBe('vega-lite');
-    });
-}
-
 test('R4: only the user changes the renderer, and a renderer that cannot show every level draws none of them', async ({ page }) => {
-    await open(page, 'on', [levels]);
+    await open(page, [levels]);
     await expect(sheet(page)).toBeVisible();
     await expect.poll(() => status(page)).toBe('idle');
     // E1 in the mounted editor: the ratio is asked for at the grain of all three levels, through the host's computation.
@@ -167,26 +136,24 @@ test('R4: only the user changes the renderer, and a renderer that cannot show ev
     await expect(vega(page)).toHaveCount(0);
 });
 
-for (const native of ['on', 'off', 'fail'] as const) {
-    test(`M1: a map is drawn by the map component under every renderer setting (worksheet renderer ${native})`, async ({ page }) => {
-        await open(page, native, renderers.map((renderer) => ({ name: `Map ${renderer}`, renderer, map: true })));
-        for (const [index, renderer] of renderers.entries()) {
-            await page.evaluate((to) => window.gw.host.openChart(to), index);
-            await expect(map(page)).toBeVisible();
-            // The points are painted on Leaflet's own canvas, from the map's own query.
-            await expect(map(page).locator('canvas')).toHaveCount(1);
-            await expect(notice(page)).toHaveCount(0);
-            await expect(sheet(page)).toHaveCount(0);
-            await expect(vega(page)).toHaveCount(0);
-            expect((await saved(page))[index].layout.renderer).toBe(renderer);
-        }
-        const fields = await page.evaluate(() => window.gw.queries().flatMap((q) => q.workflow).flatMap((step) => (step.type === 'view' ? step.query : [])).flatMap((query) => (query.op === 'aggregate' ? query.groupBy : query.op === 'raw' ? query.fields : [])));
-        expect(fields).toEqual(expect.arrayContaining(['Lat', 'Lon']));
-    });
-}
+test('M1: a map is drawn by the map component under every renderer setting', async ({ page }) => {
+    await open(page, renderers.map((renderer) => ({ name: `Map ${renderer}`, renderer, map: true })));
+    for (const [index, renderer] of renderers.entries()) {
+        await page.evaluate((to) => window.gw.host.openChart(to), index);
+        await expect(map(page)).toBeVisible();
+        // The points are painted on Leaflet's own canvas, from the map's own query.
+        await expect(map(page).locator('canvas')).toHaveCount(1);
+        await expect(notice(page)).toHaveCount(0);
+        await expect(sheet(page)).toHaveCount(0);
+        await expect(vega(page)).toHaveCount(0);
+        expect((await saved(page))[index].layout.renderer).toBe(renderer);
+    }
+    const fields = await page.evaluate(() => window.gw.queries().flatMap((q) => q.workflow).flatMap((step) => (step.type === 'view' ? step.query : [])).flatMap((query) => (query.op === 'aggregate' ? query.groupBy : query.op === 'raw' ? query.fields : [])));
+    expect(fields).toEqual(expect.arrayContaining(['Lat', 'Lon']));
+});
 
 test('M2: an ordinary chart turned into a map and back keeps its renderer', async ({ page }) => {
-    await open(page, 'on', [bars]);
+    await open(page, [bars]);
     await expect(sheet(page)).toBeVisible();
     await page.evaluate(() => window.gw.setMap(true));
     await expect(map(page)).toBeVisible();
@@ -208,7 +175,7 @@ test('M2: an ordinary chart turned into a map and back keeps its renderer', asyn
 });
 
 test('H1: the host switches and exports charts across renderers, and a chart that is not drawn exports no image', async ({ page }) => {
-    await open(page, 'on', [bars, { name: 'Vega bars', renderer: 'vega-lite', rows: ['Region'], columns: ['Sales'] }, betweenMeasures, levels]);
+    await open(page, [bars, { name: 'Vega bars', renderer: 'vega-lite', rows: ['Region'], columns: ['Sales'] }, betweenMeasures, levels]);
     await expect(sheet(page)).toBeVisible();
     expect(await page.evaluate(() => [window.gw.host.chartCount(), window.gw.host.chartIndex()])).toEqual([4, 0]);
 
@@ -257,4 +224,25 @@ test('release default: PureRenderer renders and exports a worksheet without a re
         catch { return ''; }
     }).toContain('<svg');
     await expect(vega(page)).toHaveCount(0);
+});
+
+
+test('an empty app and cleared shelves stay blank and idle in the production package', async ({ page }) => {
+    await page.goto('/tests/e2e/native-renderer.html?empty=1');
+    await expect(page.locator('body')).toHaveAttribute('data-fixture-ready', 'true');
+    await expect(notice(page)).toHaveCount(0);
+    await expect(sheet(page)).toHaveCount(0);
+    await expect.poll(() => status(page)).toBe('idle');
+    expect(await page.evaluate(() => window.gw.host.exportChart())).toMatchObject({ images: 0 });
+    await page.evaluate((chart) => window.gw.load([chart]), bars);
+    await expect(sheet(page)).toBeVisible();
+    await expect.poll(() => status(page)).toBe('idle');
+    const drawn = await page.evaluate(() => window.gw.host.exportChart());
+    expect(drawn).toMatchObject({ chartType: 'worksheet', images: 1 });
+    expect(drawn.data).toContain('<svg');
+    await page.evaluate(() => window.gw.load([{ name: 'Cleared' }]));
+    await expect(notice(page)).toHaveCount(0);
+    await expect(sheet(page)).toHaveCount(0);
+    await expect.poll(() => status(page)).toBe('idle');
+    expect(await page.evaluate(() => window.gw.host.exportChart())).toMatchObject({ images: 0, data: '' });
 });

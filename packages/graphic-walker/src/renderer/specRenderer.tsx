@@ -218,7 +218,7 @@ const SpecRenderer = forwardRef<IReactVegaHandler, SpecRendererProps>(function (
                 />
             )}
             {/* The worksheet renderer is mounted by the editor's renderer switch, not here. A chart that asks for it is not drawn by another renderer in its place. */}
-            {nativeMissing && <ChartNotice notice={{ state: 'unavailable' }} />}
+            {nativeMissing && <ChartNotice notice={{ state: 'failed', reason: '' }} />}
             {!isSpatial && layout.renderer !== 'observable-plot' && layout.renderer !== 'native' && (
                 <ReactVega
                     name={name}

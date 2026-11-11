@@ -7,14 +7,13 @@ import { DRAGGABLE_STATE_KEYS } from '../fieldsContext';
 import OBFieldContainer from '../obComponents/obFContainer';
 
 import { IDraggableViewStateKey } from '../../interfaces';
-import { useNativeRenderer } from '../../renderer/nativeRegistry';
 
 const PosFields: React.FC = (props) => {
     const vizStore = useVizStore();
     const { config, layout } = vizStore;
     const { geoms, coordSystem = 'generic' } = config;
     // The native worksheet renderer draws one pie per cell of the rows and columns, so those shelves stay in view.
-    const facetedPie = Boolean(useNativeRenderer()) && layout.renderer === 'native';
+    const facetedPie = (layout.renderer ?? 'native') === 'native';
 
     const channels = useMemo(() => {
         if (coordSystem === 'geographic') {

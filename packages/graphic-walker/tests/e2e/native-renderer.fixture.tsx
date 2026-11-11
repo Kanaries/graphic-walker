@@ -1,23 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import PureRenderer from '../../src/renderer/pureRenderer';
+// Use the published entry point, without manually importing or registering a renderer.
+import { GraphicWalker, PureRenderer, getComputation } from '@kanaries/graphic-walker';
 import type { IReactVegaHandler } from '../../src/vis/react-vega';
-import { GraphicWalker } from '../../src/root';
-import { getComputation } from '../../src/computation/clientComputation';
-import { expectNativeRenderer, registerNativeRenderer } from '../../src/renderer/nativeRegistry';
-import { worksheetRenderer } from '../../src/renderer/native';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../../src/utils/save';
 import type { IChart, IChartExportResult, IDataQueryPayload, IGWHandler, IRow, IViewField } from '../../src/interfaces';
 import type { VizSpecStore } from '../../src/store/visualSpecStore';
 
-/**
- * The editor with a data source the tests control and, as the query asks, with or without the
- * worksheet renderer:
- *   ?native=on    it is bundled, as in the published package
- *   ?native=slow  it is announced and arrives when the test calls arrive()
- *   ?native=fail  it is announced and its code never loads
- *   ?native=off   nobody mentions it, as in a host that does not have it
- */
+/** Production-package editor with a controlled data source. */
 export interface ChartRequest {
     name: string;
     renderer?: IChart['layout']['renderer'];
@@ -33,8 +23,6 @@ export interface RendererFixture {
     setRenderer(renderer: NonNullable<IChart['layout']['renderer']>): void;
     setMap(on: boolean): void;
     setGeom(geom: string): void;
-    /** Lets the worksheet renderer through, under ?native=slow. */
-    arrive(): void;
     /** Makes every query fail from now on, or work again. */
     failQueries(on: boolean): void;
     queries(): IDataQueryPayload[];
@@ -91,14 +79,6 @@ function chartOf(request: ChartRequest, index: number): IChart {
 
 const params = new URLSearchParams(window.location.search);
 const pure = params.has('pure');
-const mode = params.get('native') ?? 'on';
-registerNativeRenderer(mode === 'on' ? worksheetRenderer : undefined);
-const preview = async () => { registerNativeRenderer(worksheetRenderer); };
-let arrive = () => {};
-if (mode === 'on') expectNativeRenderer(preview());
-else if (mode === 'slow') expectNativeRenderer(new Promise<void>((resolve) => (arrive = resolve)).then(preview));
-else if (mode === 'fail') expectNativeRenderer(Promise.reject(new Error('The preview could not be fetched.')));
-
 const local = getComputation(data);
 const queries: IDataQueryPayload[] = [];
 let failing = false;
@@ -126,7 +106,6 @@ window.gw = {
     setRenderer: (renderer) => store().setVisualLayout('renderer', renderer),
     setMap: (on) => store().setCoordSystem(on ? 'geographic' : 'generic'),
     setGeom: (geom) => store().setVisualConfig('geoms', [geom]),
-    arrive: () => arrive(),
     failQueries: (on) => void (failing = on),
     queries: () => queries,
     host: {
@@ -151,7 +130,7 @@ const pureChart = chartOf({ name: 'Default worksheet', rows: ['Region', 'Categor
 window.pureExport = () => pureRef.current!.getSVGData();
 
 createRoot(document.getElementById('root')!).render(
-    pure ? <PureRenderer ref={pureRef} rawData={data} visualState={pureChart.encodings} visualConfig={pureChart.config} /> : <GraphicWalker ref={hostRef} storeRef={storeRef} fields={[...dimensions, ...measures]} computation={computation} appearance="light" style={{ width: '100%', height: '100%' }} />
+    pure ? <PureRenderer ref={pureRef} rawData={data} visualState={pureChart.encodings} visualConfig={pureChart.config} /> : <GraphicWalker ref={hostRef} storeRef={storeRef} fields={params.has('empty') ? [] : [...dimensions, ...measures]} computation={computation} appearance="light" style={{ width: '100%', height: '100%' }} />
 );
 
 function ready() {

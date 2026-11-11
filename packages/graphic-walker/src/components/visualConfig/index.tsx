@@ -21,7 +21,6 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { vegaThemeContext } from '../../store/theme';
 import { ColorPickerComponent } from './color-picker';
 import { Switch } from '../ui/switch';
-import { useNativeRenderer } from '../../renderer/nativeRegistry';
 
 function SettingRow(props: { title: React.ReactNode; description?: React.ReactNode; htmlFor?: string; children?: React.ReactNode }) {
     return (
@@ -162,7 +161,6 @@ const VisualConfigPanel: React.FC = () => {
     const [scaleIncludeUnmatchedChoropleth, setScaleIncludeUnmatchedChoropleth] = useState<boolean>(layout.scaleIncludeUnmatchedChoropleth ?? false);
     const [showAllGeoshapeInChoropleth, setShowAllGeoshapeInChoropleth] = useState<boolean>(layout.showAllGeoshapeInChoropleth ?? false);
     const [renderer, setRenderer] = useState<NonNullable<IVisualLayout['renderer']>>(layout.renderer ?? 'native');
-    const nativeAvailable = Boolean(useNativeRenderer());
     const [background, setBackground] = useState({ r: 255, g: 255, b: 255, a: 0 });
     const [defaultColor, setDefaultColor] = useState({ r: 91, g: 143, b: 249, a: 1 });
     const [primaryColorEdited, setPrimaryColorEdited] = useState(false);
@@ -600,8 +598,7 @@ const VisualConfigPanel: React.FC = () => {
                                                                 value: type as string,
                                                                 label: type === 'vega-lite' ? 'VegaLite' : 'Observable Plot',
                                                             })),
-                                                            // Offered only where a host has registered the worksheet renderer.
-                                                            ...(nativeAvailable || renderer === 'native' ? [{ value: 'native', label: 'Worksheet' }] : []),
+                                                            { value: 'native', label: 'Worksheet' },
                                                         ]}
                                                     />
                                                 </div>

@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ComponentType, type Ref } from 'react';
+import type { ComponentType, Ref } from 'react';
 import type { IChart, IComputationFunction, IRenderStatus, IViewField } from '../interfaces';
 
 /**
@@ -108,47 +108,3 @@ export interface NativeRenderer {
     check(chart: IChart): NativeUnsupported | undefined;
 }
 
-/**
- * The bundled worksheet renderer registers when the rendering entry point loads.
- * A chart that asks for it is drawn by it or not at all; custom hosts can also
- * announce loading or replace the registration explicitly.
- */
-export interface NativeRegistry {
-    renderer?: NativeRenderer;
-    /** A renderer was announced with `expectNativeRenderer` and has not registered yet. */
-    loading: boolean;
-}
-let registry: NativeRegistry = { loading: false };
-let expected = 0;
-const listeners = new Set<() => void>();
-function update(next: NativeRegistry) {
-    if (next.renderer === registry.renderer && next.loading === registry.loading) return;
-    registry = next;
-    listeners.forEach((listener) => listener());
-}
-
-export function registerNativeRenderer(renderer: NativeRenderer | undefined) {
-    update({ renderer, loading: !renderer && expected > 0 });
-}
-/**
- * Says that a renderer is being fetched, so that charts which ask for it wait instead of
- * reporting that there is none. Waiting ends when it registers, or when `arrival` settles without it.
- */
-export function expectNativeRenderer(arrival: Promise<unknown>) {
-    expected += 1;
-    update({ renderer: registry.renderer, loading: !registry.renderer });
-    const settled = () => {
-        expected -= 1;
-        update({ renderer: registry.renderer, loading: !registry.renderer && expected > 0 });
-    };
-    arrival.then(settled, settled);
-}
-const subscribe = (listener: () => void) => {
-    listeners.add(listener);
-    return () => {
-        listeners.delete(listener);
-    };
-};
-const current = () => registry;
-export const useNativeRegistry = () => useSyncExternalStore(subscribe, current, current);
-export const useNativeRenderer = () => useNativeRegistry().renderer;
