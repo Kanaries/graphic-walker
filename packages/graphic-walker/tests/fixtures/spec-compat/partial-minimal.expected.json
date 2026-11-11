@@ -61,7 +61,7 @@
             "shape": false,
             "size": false
         },
-        "renderer": "vega-lite"
+        "renderer": "native"
     },
     "visId": "gw_mock-id",
     "name": "Chart",

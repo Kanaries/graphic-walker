@@ -74,7 +74,7 @@ describe('normalize', () => {
         expect(result.name).toBe('Chart');
         expect(result.config).toEqual({ defaultAggregated: true, geoms: ['auto'], coordSystem: 'generic', limit: -1 });
         expect(result.layout.size).toEqual({ mode: 'auto', width: 320, height: 200 });
-        expect(result.layout.renderer).toBe('vega-lite');
+        expect(result.layout.renderer).toBe('native');
         expect(result.encodings.columns).toEqual([dim('category')]);
         expect(result.encodings.rows).toEqual([mea('sales')]);
         expect(result.$schema).toBe(IChartSchemaUrl);
@@ -150,7 +150,7 @@ describe('normalize', () => {
         expect(result.$schema).toBe(IChartSchemaUrl);
     });
 
-    test('applies algebraLint: dimensions first, at most 2 cross dimensions for non-table geoms', () => {
+    test('the default worksheet renderer keeps every dimension, before measures', () => {
         const result = normalize(
             {
                 config: { geoms: ['bar'], defaultAggregated: true, limit: -1 },
@@ -158,7 +158,7 @@ describe('normalize', () => {
             },
             META,
         );
-        expect(result.encodings.rows.map((f) => f.fid)).toEqual(['category', 'region', 'sales']);
+        expect(result.encodings.rows.map((f) => f.fid)).toEqual(['category', 'region', 'city', 'sales']);
     });
 
     test('algebraLint keeps all dimensions for table geom', () => {

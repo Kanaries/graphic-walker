@@ -1,7 +1,7 @@
 import type { Aggregate, AxisExpr, FieldInstance, ScaleOptions, WorksheetSpec } from '@kanaries/worksheet-renderer';
-import { MEA_KEY_ID, MEA_VAL_ID } from '../src/constants';
-import type { IChart, IViewField } from '../src/interfaces';
-import { viewEncodingKeys } from '../src/models/visSpec';
+import { MEA_KEY_ID, MEA_VAL_ID } from '../../constants';
+import type { IChart, IViewField } from '../../interfaces';
+import { viewEncodingKeys } from '../../models/visSpec';
 
 export interface AdaptedChart {
     /** Absent when the worksheet renderer cannot draw the chart; `error` says why. */

@@ -1,18 +1,9 @@
 import { inject } from '@vercel/analytics';
 import { embedGraphicWalker } from './vanilla';
-import { expectNativeRenderer } from './renderer/nativeRegistry';
 import './main.css';
 
 if (!import.meta.env.DEV) {
     inject();
-}
-
-// The native worksheet renderer is a preview kept outside the published sources. The dev
-// server loads it by URL, so neither the library build nor its type check ever sees it.
-if (import.meta.env.DEV) {
-    const preview = '/native-preview/index.tsx';
-    // Charts that ask for it show that it is loading until it registers, and that it is missing if it never does.
-    expectNativeRenderer(import(/* @vite-ignore */ preview).catch((error) => console.error('Native renderer preview failed to load', error)));
 }
 
 // In development `?lang=zh-CN` opens the editor in that language, to check translated output without a host app.

@@ -99,7 +99,7 @@
         "format": {},
         "geoKey": "name",
         "resolve": {},
-        "renderer": "vega-lite",
+        "renderer": "native",
         "geoUrl": {
             "type": "GeoJSON",
             "url": "https://example.com/regions.geo.json"

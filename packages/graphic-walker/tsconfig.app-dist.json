@@ -1,4 +1,5 @@
 {
+    "extends": "./tsconfig.json",
     "compilerOptions": {
       "target": "ESNext",
       "lib": ["DOM", "DOM.Iterable", "ESNext"],
@@ -15,7 +16,7 @@
       "resolveJsonModule": true,
       "isolatedModules": true,
       "noEmit": true,
-      "jsx": "react",
+      "jsx": "react-jsx",
       "declaration": false,
       "sourceMap": false,
       "outDir": "./app-dist",

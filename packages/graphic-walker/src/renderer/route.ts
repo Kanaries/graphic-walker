@@ -34,13 +34,13 @@ export type ChartRoute = { to: 'dedicated'; kind: 'table' | 'map' } | { to: 'cla
 /**
  * Picks the component that draws a chart. The kind of chart comes first: a table or a map goes to
  * its own component and the chart's renderer setting is not looked at. An ordinary chart goes to
- * the renderer it names, Vega-Lite where it names none. A renderer that cannot draw the chart is
+ * the renderer it names, Worksheet where it names none. A renderer that cannot draw the chart is
  * never replaced by another one; the chart area says what is wrong and the chart stays as saved.
  */
 export function routeChart(chart: IChart, registry: NativeRegistry): ChartRoute {
     if (chart.config.geoms[0] === 'table') return { to: 'dedicated', kind: 'table' };
     if (chart.config.coordSystem === 'geographic') return { to: 'dedicated', kind: 'map' };
-    const renderer = chart.layout.renderer ?? 'vega-lite';
+    const renderer = chart.layout.renderer ?? 'native';
     if (renderer === 'native') {
         if (!registry.renderer) return { to: 'notice', notice: { state: registry.loading ? 'loading' : 'unavailable' } };
         const cannot = registry.renderer.check(chart);

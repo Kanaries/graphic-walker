@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@kanaries/worksheet-renderer": [
+        "./dist/worksheet/index.d.ts"
+      ]
+    }
+  },
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/renderer/native/testing.ts"
+  ]
+}

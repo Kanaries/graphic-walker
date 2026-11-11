@@ -1,6 +1,6 @@
-import { buildScene } from '../../worksheet-renderer/src/scene';
-import type { IDataQueryPayload, IFilterField, IRow, IViewField } from '../src/interfaces';
-import { toWorkflow } from '../src/utils/workflow';
+import { buildScene } from '../../../../worksheet-renderer/src/scene';
+import type { IDataQueryPayload, IFilterField, IRow, IViewField } from '../../interfaces';
+import { toWorkflow } from '../../utils/workflow';
 import { chartToWorksheet } from './adapter';
 import { calc, chart, dim, drawn, local, mea } from './testing';
 

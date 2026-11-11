@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import fs from 'node:fs/promises';
 import path from 'path';
 import react from '@vitejs/plugin-react'
-import typescript from '@rollup/plugin-typescript'
 import { peerDependencies } from './package.json'
 import { DEMO_DATASETS, downloadDemoDataset } from '../../scripts/demo-datasets.mjs';
 
@@ -64,19 +63,12 @@ export default defineConfig({
   plugins: [
     demoDatasetFallbackPlugin(),
     react(),
-    // @ts-ignore
-    {
-      ...typescript({
-        tsconfig: path.resolve(__dirname, './tsconfig.json'),
-      }),
-      apply: 'build'
-    }
   ],
   resolve: {
     dedupe: modulesNotToBundle,
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Used only by native-preview/, which the dev server loads. Nothing under src imports it.
+      // Bundle the worksheet runtime into the published library.
       "@kanaries/worksheet-renderer": path.resolve(__dirname, "../worksheet-renderer/src/index.ts"),
     },
   },

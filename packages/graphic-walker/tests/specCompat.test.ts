@@ -6,7 +6,8 @@
  * releases, and the *.expected.json files are explicitly committed, hand-verified
  * canonical outputs. If a change to the spec pipeline breaks any of these assertions,
  * it breaks previously persisted user charts — fix the change, not the fixture,
- * unless a migration path is added deliberately.
+ * unless a migration path is added deliberately. Version 0.6 deliberately defaults
+ * specs without a renderer selection to native; explicit renderer selections stay intact.
  */
 jest.mock('nanoid', () => ({ nanoid: () => 'mock-id' }));
 

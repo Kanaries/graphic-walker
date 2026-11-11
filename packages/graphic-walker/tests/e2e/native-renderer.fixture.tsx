@@ -1,8 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import PureRenderer from '../../src/renderer/pureRenderer';
+import type { IReactVegaHandler } from '../../src/vis/react-vega';
 import { GraphicWalker } from '../../src/root';
 import { getComputation } from '../../src/computation/clientComputation';
-import { expectNativeRenderer } from '../../src/renderer/nativeRegistry';
+import { expectNativeRenderer, registerNativeRenderer } from '../../src/renderer/nativeRegistry';
+import { worksheetRenderer } from '../../src/renderer/native';
 import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../../src/utils/save';
 import type { IChart, IChartExportResult, IDataQueryPayload, IGWHandler, IRow, IViewField } from '../../src/interfaces';
 import type { VizSpecStore } from '../../src/store/visualSpecStore';
@@ -10,7 +13,7 @@ import type { VizSpecStore } from '../../src/store/visualSpecStore';
 /**
  * The editor with a data source the tests control and, as the query asks, with or without the
  * worksheet renderer:
- *   ?native=on    it is loaded, as the dev server loads it
+ *   ?native=on    it is bundled, as in the published package
  *   ?native=slow  it is announced and arrives when the test calls arrive()
  *   ?native=fail  it is announced and its code never loads
  *   ?native=off   nobody mentions it, as in a host that does not have it
@@ -47,6 +50,7 @@ export interface RendererFixture {
 declare global {
     interface Window {
         gw: RendererFixture;
+        pureExport(): Promise<string[]>;
     }
 }
 
@@ -85,8 +89,11 @@ function chartOf(request: ChartRequest, index: number): IChart {
     };
 }
 
-const mode = new URLSearchParams(window.location.search).get('native') ?? 'on';
-const preview = () => import('../../native-preview/index');
+const params = new URLSearchParams(window.location.search);
+const pure = params.has('pure');
+const mode = params.get('native') ?? 'on';
+registerNativeRenderer(mode === 'on' ? worksheetRenderer : undefined);
+const preview = async () => { registerNativeRenderer(worksheetRenderer); };
 let arrive = () => {};
 if (mode === 'on') expectNativeRenderer(preview());
 else if (mode === 'slow') expectNativeRenderer(new Promise<void>((resolve) => (arrive = resolve)).then(preview));
@@ -139,12 +146,16 @@ window.gw = {
     },
 };
 
+const pureRef = React.createRef<IReactVegaHandler>();
+const pureChart = chartOf({ name: 'Default worksheet', rows: ['Region', 'Category', 'Subcategory'], columns: ['Sales'] }, 0);
+window.pureExport = () => pureRef.current!.getSVGData();
+
 createRoot(document.getElementById('root')!).render(
-    <GraphicWalker ref={hostRef} storeRef={storeRef} fields={[...dimensions, ...measures]} computation={computation} appearance="light" style={{ width: '100%', height: '100%' }} />
+    pure ? <PureRenderer ref={pureRef} rawData={data} visualState={pureChart.encodings} visualConfig={pureChart.config} /> : <GraphicWalker ref={hostRef} storeRef={storeRef} fields={[...dimensions, ...measures]} computation={computation} appearance="light" style={{ width: '100%', height: '100%' }} />
 );
 
 function ready() {
-    if (!storeRef.current || !hostRef.current) return void requestAnimationFrame(ready);
+    if (pure ? !pureRef.current : !storeRef.current || !hostRef.current) return void requestAnimationFrame(ready);
     document.body.dataset.fixtureReady = 'true';
 }
 requestAnimationFrame(ready);

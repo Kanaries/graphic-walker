@@ -1,3 +1,4 @@
+import './native';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useEffect, forwardRef, useRef, useCallback, useMemo, useContext, useImperativeHandle } from 'react';
 import {

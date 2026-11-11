@@ -431,11 +431,10 @@ export interface IVisualLayout {
     scaleIncludeUnmatchedChoropleth?: boolean;
     showAllGeoshapeInChoropleth?: boolean;
     /**
-     * 'native' is the worksheet renderer preview. It draws only where a host has registered it.
-     * Elsewhere such a chart is not drawn by another renderer in its place: the chart area says
-     * that the renderer is not available. Maps and tables have components of their own and
-     * are drawn by them whatever this is set to.
-     * @default "vega-lite"
+     * 'native' is the bundled default worksheet renderer. Unsupported charts show a notice;
+     * renderers never replace one another automatically. Maps and tables use their own
+     * components regardless of this setting.
+     * @default "native"
      */
     renderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
@@ -1032,7 +1031,7 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export interface ILocalComputationProps {

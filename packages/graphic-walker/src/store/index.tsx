@@ -38,7 +38,7 @@ interface VizStoreWrapperProps {
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
     defaultTab?: 'data' | 'visualization';
-    defaultRenderer?: 'vega-lite' | 'observable-plot';
+    defaultRenderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
 export const VizStoreWrapper = (props: VizStoreWrapperProps) => {

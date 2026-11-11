@@ -1,5 +1,5 @@
-import { compileWorksheet } from '../../worksheet-renderer/src/compiler';
-import type { IFilterField, IRow, IViewField } from '../src/interfaces';
+import { compileWorksheet } from '../../../../worksheet-renderer/src/compiler';
+import type { IFilterField, IRow, IViewField } from '../../interfaces';
 import { chartToWorksheet } from './adapter';
 import { drawnAtGrain } from './having';
 import { chart, dim, drawn, mea } from './testing';

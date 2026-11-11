@@ -34,14 +34,14 @@ describe('routeChart', () => {
             expect(routeChart(chart(renderer, threeLevels, { geoms: ['table'] }), absent)).toEqual({ to: 'dedicated', kind: 'table' });
         }
     });
-    test('an ordinary chart goes to the renderer it names, and to Vega-Lite where it names none', () => {
+    test('an ordinary chart goes to the renderer it names, and to Worksheet where it names none', () => {
         const { registry, asked } = registered();
-        expect(routeChart(chart(undefined), registry)).toEqual({ to: 'classic' });
+        expect(routeChart(chart(undefined), registry)).toEqual({ to: 'native' });
         expect(routeChart(chart('vega-lite'), registry)).toEqual({ to: 'classic' });
         expect(routeChart(chart('observable-plot'), registry)).toEqual({ to: 'classic' });
-        expect(asked).toEqual([]);
+        expect(asked).toHaveLength(1);
         expect(routeChart(chart('native'), registry)).toEqual({ to: 'native' });
-        expect(asked.length).toBe(1);
+        expect(asked.length).toBe(2);
     });
     test('a chart the worksheet renderer cannot draw is not drawn by another renderer', () => {
         const route = routeChart(chart('native'), registered({ reason: 'Bar marks need one measure axis.' }).registry);
@@ -56,7 +56,7 @@ describe('routeChart', () => {
         expect(routeChart(chart('native', { rows: [dim('Region')] }), absent).to).toBe('notice');
     });
     test('Vega-Lite and Observable Plot do not draw a shelf with more dimensions than they show', () => {
-        for (const renderer of ['vega-lite', 'observable-plot', undefined] as const) {
+        for (const renderer of ['vega-lite', 'observable-plot'] as const) {
             expect(routeChart(chart(renderer, threeLevels), absent)).toEqual({
                 to: 'notice',
                 notice: { state: 'levels', renderer: renderer ?? 'vega-lite', shelves: [{ shelf: 'rows', fields: ['Region', 'Category', 'Subcategory'] }] },

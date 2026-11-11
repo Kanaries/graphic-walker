@@ -112,7 +112,7 @@ test('R3: while the worksheet renderer loads the chart waits for it', async ({ p
 
 for (const native of ['off', 'fail'] as const) {
     test(`R3: where the worksheet renderer is missing (${native}) a chart saved for it is not drawn by Vega`, async ({ page }) => {
-        await open(page, native, [bars, { name: 'History', rows: ['Region'], columns: ['Sales'] }]);
+        await open(page, native, [bars, { name: 'History', renderer: 'vega-lite', rows: ['Region'], columns: ['Sales'] }]);
         await expect(notice(page)).toHaveAttribute('data-state', 'unavailable');
         await nothingDrawn(page);
         await expect.poll(() => status(page)).toBe('error');
@@ -120,11 +120,11 @@ for (const native of ['off', 'fail'] as const) {
         const [chart] = await saved(page);
         expect(chart.layout.renderer).toBe('native');
         expect(shelves(chart)).toEqual({ rows: ['Region'], columns: ['Sales'] });
-        // A chart that names no renderer is drawn by the default one, as it always was.
+        // An explicit Vega choice is preserved even when the worksheet renderer is absent.
         await page.evaluate(() => window.gw.host.openChart(1));
         await expect(vega(page)).toBeVisible();
         await expect(notice(page)).toHaveCount(0);
-        // The editor writes the default out when it loads a chart. It is not the worksheet renderer.
+        // Saving preserves the explicit choice.
         expect((await saved(page))[1].layout.renderer).toBe('vega-lite');
     });
 }
@@ -236,4 +236,25 @@ test('H1: the host switches and exports charts across renderers, and a chart tha
         // The export leaves the editor on the chart it started from.
         expect(await page.evaluate(() => window.gw.host.chartIndex())).toBe(start);
     }
+});
+
+
+test('release default: new and unspecified charts use the bundled worksheet renderer', async ({ page }) => {
+    await page.goto('/tests/e2e/native-renderer.html');
+    await expect(page.locator('body')).toHaveAttribute('data-fixture-ready', 'true');
+    expect((await saved(page))[0].layout.renderer).toBe('native');
+    await page.evaluate(() => window.gw.load([{ name: 'Default', rows: ['Region', 'Category', 'Subcategory'], columns: ['Sales'] }]));
+    await expect(sheet(page)).toBeVisible();
+    await expect.poll(() => status(page)).toBe('idle');
+    expect(await page.evaluate(() => window.gw.host.exportChart())).toMatchObject({ chartType: 'worksheet', images: 1 });
+});
+
+test('release default: PureRenderer renders and exports a worksheet without a renderer setting', async ({ page }) => {
+    await page.goto('/tests/e2e/native-renderer.html?pure=1');
+    await expect(sheet(page)).toBeVisible();
+    await expect.poll(async () => {
+        try { return (await page.evaluate(() => window.pureExport()))[0] ?? ''; }
+        catch { return ''; }
+    }).toContain('<svg');
+    await expect(vega(page)).toHaveCount(0);
 });

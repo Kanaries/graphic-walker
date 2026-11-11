@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useMemo, useRef } from 'react';
+import React, { useState, useEffect, forwardRef, useMemo, useRef, useImperativeHandle } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { observer } from 'mobx-react-lite';
 import { ShadowDom } from '../shadow-dom';
@@ -16,6 +16,7 @@ import type {
     IVisualLayout,
     IChannelScales,
     IUIThemeConfig,
+    IGWHandler,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -26,6 +27,8 @@ import { GWGlobalConfig } from '../vis/theme';
 import { VizAppContext } from '../store/context';
 import { useCurrentMediaTheme } from '../utils/media';
 import LoadingLayer from '@/components/loadingLayer';
+import { GraphicRenderer } from '../root';
+import { emptyVisualConfig, emptyVisualLayout, download } from '../utils/save';
 
 type IPureRendererProps = {
     className?: string;
@@ -69,7 +72,7 @@ export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.Re
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
-const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
+const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
     const {
         name,
         className,
@@ -202,6 +205,48 @@ const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalPr
             </VizAppContext>
         </ShadowDom>
     );
+});
+
+const NativePureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function NativePureRenderer(props, ref) {
+    const host = useRef<IGWHandler>(null);
+    const chart = useMemo(() => [{
+        visId: 'pure-renderer', name: props.name ?? '', encodings: props.visualState,
+        config: { ...emptyVisualConfig, ...props.visualConfig },
+        layout: { ...emptyVisualLayout, ...(props.visualLayout ?? (props.visualConfig as IVisualConfig)), renderer: 'native' as const },
+    }], [props.name, props.visualState, props.visualConfig, props.visualLayout]);
+    useImperativeHandle(ref, () => {
+        const image = async (mode: 'svg' | 'data-url', filename?: string) => {
+            const result = await host.current?.exportChart(mode);
+            const data = result?.combinedData ?? result?.charts[0]?.data;
+            if (!data) return [];
+            if (filename !== undefined) {
+                if (mode === 'svg') download(data, `${filename}.svg`, 'image/svg+xml');
+                else { const anchor = document.createElement('a'); anchor.href = data; anchor.download = `${filename}.png`; anchor.click(); }
+            }
+            return [data];
+        };
+        return {
+            getSVGData: () => image('svg'), getCanvasData: () => image('data-url'),
+            downloadSVG: (name = props.name ?? 'chart') => image('svg', name),
+            downloadPNG: (name = props.name ?? 'chart') => image('data-url', name),
+        };
+    }, [props.name]);
+    return <GraphicRenderer
+        ref={host} chart={chart} fields={[...props.visualState.dimensions, ...props.visualState.measures]}
+        {...(props.type === 'remote' ? { computation: props.computation } : { data: props.rawData })}
+        className={props.className} appearance={props.appearance ?? props.dark}
+        style={(props.overrideSize ?? chart[0].layout.size).mode === 'full' ? { width: '100%', height: '100%' } : undefined}
+        uiTheme={props.uiTheme ?? props.colorConfig} vizThemeConfig={props.vizThemeConfig ?? props.themeConfig ?? props.themeKey}
+        i18nLang={props.locale} overrideSize={props.overrideSize} scales={props.scales ?? props.channelScales}
+    />;
+});
+
+const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
+    const layout = props.visualLayout ?? (props.visualConfig as IVisualConfig & { renderer?: IVisualLayout['renderer'] });
+    const dedicated = props.visualConfig.coordSystem === 'geographic' || props.visualConfig.geoms[0] === 'table';
+    return !dedicated && (layout.renderer ?? 'native') === 'native'
+        ? <NativePureRenderer {...props} ref={ref} />
+        : <LegacyPureRenderer {...props} ref={ref} />;
 });
 
 export default observer(withAppRoot<IPureRendererProps>(PureRenderer)) as {

@@ -109,9 +109,9 @@ export interface NativeRenderer {
 }
 
 /**
- * The native renderer is a preview that lives outside this package's sources. Whoever hosts the
- * editor registers it. A chart that asks for it is drawn by it or not at all: while it is on its
- * way the chart area says so, and where it never comes the chart area says that.
+ * The bundled worksheet renderer registers when the rendering entry point loads.
+ * A chart that asks for it is drawn by it or not at all; custom hosts can also
+ * announce loading or replace the registration explicitly.
  */
 export interface NativeRegistry {
     renderer?: NativeRenderer;

@@ -1,8 +1,8 @@
 import { format as numberFormat } from 'd3-format';
 import { timeFormatLocale, type TimeLocaleDefinition } from 'd3-time-format';
 import type { Formats, Words } from '@kanaries/worksheet-renderer';
-import type { IVisualLayout } from '../src/interfaces';
-import { getVegaTimeFormatRules } from '../src/vis/temporalFormat';
+import type { IVisualLayout } from '../../interfaces';
+import { getVegaTimeFormatRules } from '../../vis/temporalFormat';
 
 // The words the sheet writes itself, for the languages the editor ships, by language without region:
 // the editor may report 'zh' as well as 'zh-CN'. Other languages read English.

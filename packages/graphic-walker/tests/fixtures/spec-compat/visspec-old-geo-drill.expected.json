@@ -150,7 +150,7 @@
             "shape": false,
             "size": false
         },
-        "renderer": "vega-lite",
+        "renderer": "native",
         "geojson": {
             "type": "FeatureCollection",
             "features": [

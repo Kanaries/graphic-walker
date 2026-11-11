@@ -1,5 +1,5 @@
 import type { Plan, QueryPayload } from '@kanaries/worksheet-renderer';
-import type { IDataQueryWorkflowStep, IFilterWorkflowStep, IViewWorkflowStep } from '../src/interfaces';
+import type { IDataQueryWorkflowStep, IFilterWorkflowStep, IViewWorkflowStep } from '../../interfaces';
 
 type Measure = Extract<IViewWorkflowStep['query'][number], { op: 'aggregate' }>['measures'][number];
 

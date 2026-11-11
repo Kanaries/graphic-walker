@@ -25,6 +25,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@kanaries/worksheet-renderer": path.resolve(__dirname, "../worksheet-renderer/src/index.ts"),
     },
   }
 })

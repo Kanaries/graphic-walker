@@ -13,7 +13,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(packageRoot, 'src'),
-            // Read only by native-preview/, which the native renderer fixture loads the way the dev server does.
+            // Resolve the bundled worksheet runtime just as the library build does.
             '@kanaries/worksheet-renderer': path.resolve(packageRoot, '../worksheet-renderer/src/index.ts'),
         },
     },

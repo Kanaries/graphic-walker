@@ -1,7 +1,7 @@
 import { chartToWorksheet } from './adapter';
-import { MEA_KEY_ID } from '../src/constants';
-import type { IChart, IViewField } from '../src/interfaces';
-import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../src/utils/save';
+import { MEA_KEY_ID } from '../../constants';
+import type { IChart, IViewField } from '../../interfaces';
+import { emptyEncodings, emptyVisualConfig, emptyVisualLayout } from '../../utils/save';
 
 const dim = (fid: string, semanticType: IViewField['semanticType'] = 'nominal', extra: Partial<IViewField> = {}): IViewField => ({ fid, name: fid, semanticType, analyticType: 'dimension', ...extra });
 const mea = (fid: string, aggName = 'sum'): IViewField => ({ fid, name: fid, semanticType: 'quantitative', analyticType: 'measure', aggName });

@@ -8,7 +8,7 @@ const english = {
     loading_title: 'Loading the worksheet renderer…',
     unavailable_title: 'The worksheet renderer is not available here',
     unavailable_desc:
-        'This chart is set to be drawn by the worksheet renderer, a preview that this environment does not include. The chart is kept as it is, and no other renderer draws it in its place. Open it where the worksheet renderer is available, or choose another renderer in the chart settings.',
+        'This chart is set to be drawn by the worksheet renderer, which this environment does not include. The chart is kept as it is, and no other renderer draws it in its place. Open it where the worksheet renderer is available, or choose another renderer in the chart settings.',
     unsupported_title: 'The worksheet renderer cannot draw this chart yet',
     unsupported_desc: 'The chart is kept as it is. Change what the message names, or choose another renderer in the chart settings.',
     failed_title: 'The chart could not be drawn',
