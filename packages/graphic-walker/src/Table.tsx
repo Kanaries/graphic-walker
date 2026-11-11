@@ -114,7 +114,7 @@ export const TableApp = observer(function VizApp(props: BaseTableProps) {
 });
 
 export function TableAppWithContext(props: ITableProps & IComputationProps) {
-    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultRenderer, ...rest } = props;
+    const { dark, dataSource, computation, onMetaChange, fieldKeyGuard, keepAlive, storeRef, defaultConfig, defaultUIConfig, defaultRenderer, ...rest } = props;
     // @TODO remove deprecated props
     const appearance = props.appearance ?? props.dark;
     const data = props.data ?? props.dataSource;
@@ -157,7 +157,15 @@ export function TableAppWithContext(props: ITableProps & IComputationProps) {
     const darkMode = useCurrentMediaTheme(appearance);
 
     return (
-        <VizStoreWrapper onMetaChange={safeOnMetaChange} meta={safeMetas} keepAlive={keepAlive} storeRef={storeRef} defaultConfig={defaultConfig} defaultRenderer={defaultRenderer}>
+        <VizStoreWrapper
+            onMetaChange={safeOnMetaChange}
+            meta={safeMetas}
+            keepAlive={keepAlive}
+            storeRef={storeRef}
+            defaultConfig={defaultConfig}
+            defaultUIConfig={defaultUIConfig}
+            defaultRenderer={defaultRenderer}
+        >
             <TableApp darkMode={darkMode} computation={safeComputation} {...rest} />
         </VizStoreWrapper>
     );

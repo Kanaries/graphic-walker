@@ -40,6 +40,7 @@ import {
     IPaintMap,
     IPaintMapV2,
     IDefaultConfig,
+    IDefaultUIConfig,
     FieldIdentifier,
 } from '../interfaces';
 import { GLOBAL_CONFIG } from '../config';
@@ -71,8 +72,8 @@ export class VizSpecStore {
     segmentKey: ISegmentKey = ISegmentKey.vis;
     showInsightBoard: boolean = false;
     showDataBoard: boolean = false;
-    // the Auto Viz dock on the right of the workspace starts expanded; the toolbar toggle collapses it
-    showAutoVizPanel: boolean = true;
+    // Workspace UI state is initialized once and stays outside the chart history.
+    showAutoVizPanel: boolean;
     vizEmbededMenu: { show: boolean; position: [number, number] } = { show: false, position: [0, 0] };
     showDataConfig: boolean = false;
     showCodeExportPanel: boolean = false;
@@ -105,11 +106,13 @@ export class VizSpecStore {
             empty?: boolean;
             onMetaChange?: (fid: string, diffMeta: Partial<IMutField>) => void;
             defaultConfig?: IDefaultConfig;
+            defaultUIConfig?: IDefaultUIConfig;
             initialSegment?: ISegmentKey;
         },
     ) {
         this.meta = meta;
         this.segmentKey = options?.initialSegment ?? ISegmentKey.vis;
+        this.showAutoVizPanel = options?.defaultUIConfig?.panels?.autoViz?.expanded ?? true;
         this.visList = options?.empty ? [] : [fromFields(meta, 'Chart 1', options?.defaultConfig)];
         this.pristineInitialCharts = meta.length === 0 ? new Set(this.visList) : new Set();
         this.createdVis = this.visList.length;

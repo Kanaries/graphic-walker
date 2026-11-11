@@ -1,4 +1,4 @@
-import { ISegmentKey, type IMutField } from '../interfaces';
+import { ISegmentKey, type IDefaultUIConfig, type IMutField } from '../interfaces';
 import { newChart } from '../models/visSpecHistory';
 import { VizSpecStore } from './visualSpecStore';
 
@@ -18,7 +18,7 @@ const metaFieldIds = (store: VizSpecStore) => {
         .filter((fid) => expectedIds.has(fid));
 };
 
-describe('VizSpecStore metadata updates', () => {
+describe('VizSpecStore', () => {
     beforeAll(() => {
         Object.defineProperty(globalThis, 'document', {
             configurable: true,
@@ -174,6 +174,62 @@ describe('VizSpecStore metadata updates', () => {
         store.setMeta(META);
 
         expect(store.currentVis.layout.renderer).toBe('observable-plot');
+    });
+
+    describe('default UI configuration', () => {
+        test.each<[string, IDefaultUIConfig | undefined, boolean]>([
+            ['omitted config', undefined, true],
+            ['empty config', {}, true],
+            ['empty panels', { panels: {} }, true],
+            ['empty Auto Viz defaults', { panels: { autoViz: {} } }, true],
+            ['expanded Auto Viz', { panels: { autoViz: { expanded: true } } }, true],
+            ['collapsed Auto Viz', { panels: { autoViz: { expanded: false } } }, false],
+        ])('initializes %s', (_name, defaultUIConfig, expanded) => {
+            const store = new VizSpecStore(META, { defaultUIConfig });
+
+            expect(store.showAutoVizPanel).toBe(expanded);
+        });
+
+        test('preserves user panel state through metadata hydration and chart operations', () => {
+            const store = new VizSpecStore([], { defaultUIConfig: { panels: { autoViz: { expanded: false } } } });
+
+            store.setShowAutoVizPanel(true);
+            store.setMeta(META);
+            expect(store.showAutoVizPanel).toBe(true);
+
+            store.replaceNow(newChart(META, 'Controlled chart'));
+            expect(store.showAutoVizPanel).toBe(true);
+
+            store.addVisualization();
+            store.selectVisualization(0);
+            expect(store.showAutoVizPanel).toBe(true);
+
+            store.setShowAutoVizPanel(false);
+            store.resetVisualization();
+            expect(store.showAutoVizPanel).toBe(false);
+        });
+
+        test('keeps UI defaults and user toggles outside the chart and its undo history', () => {
+            const store = new VizSpecStore(META, {
+                defaultConfig: { layout: { renderer: 'observable-plot' } },
+                defaultUIConfig: { panels: { autoViz: { expanded: false } } },
+            });
+            const initialChart = store.currentVis;
+
+            expect(initialChart.layout.renderer).toBe('observable-plot');
+            expect(store.canUndo).toBe(false);
+
+            store.setShowAutoVizPanel(true);
+            expect(store.currentVis).toBe(initialChart);
+            expect(store.canUndo).toBe(false);
+
+            store.moveField('dimensions', 0, 'columns', 0);
+            store.setShowAutoVizPanel(false);
+            store.undo();
+
+            expect(store.showAutoVizPanel).toBe(false);
+            expect(store.currentEncodings.columns).toEqual([]);
+        });
     });
 });
 

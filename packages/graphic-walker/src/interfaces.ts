@@ -1023,6 +1023,16 @@ export interface IDefaultConfig {
     layout?: Partial<IVisualLayout>;
 }
 
+/** Initial editor UI state, applied only when a visualization store is created. */
+export interface IDefaultUIConfig {
+    panels?: {
+        autoViz?: {
+            /** Whether the Auto Viz panel starts expanded. The feature remains available when collapsed. @default true */
+            expanded?: boolean;
+        };
+    };
+}
+
 export interface IVizStoreProps {
     storeRef?: React.RefObject<VizSpecStore | null>;
     keepAlive?: boolean | string;
@@ -1031,6 +1041,8 @@ export interface IVizStoreProps {
     fields?: IMutField[];
     onMetaChange?: (fid: string, meta: Partial<IMutField>) => void;
     defaultConfig?: IDefaultConfig;
+    /** Initial UI defaults. Changes do not override user actions or a reused keepAlive store. */
+    defaultUIConfig?: IDefaultUIConfig;
     defaultRenderer?: 'vega-lite' | 'observable-plot' | 'native';
 }
 
