@@ -1,6 +1,6 @@
 <img src="https://ch-resources.oss-cn-shanghai.aliyuncs.com/images/lang-icons/icon128px.png" width="22px" /> English | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
-![graphic-walker-banner](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/graphic-walker-banner202402.png)
+![Graphic Walker editor with nested seasonal facets, two years, and separate registered and casual rental measures](https://github.com/user-attachments/assets/3bc17e10-7b21-4e7f-9e9c-10f9bc7f72d6)
 
 
 # Graphic Walker
@@ -33,52 +33,67 @@ It is extremely easy to embed in your apps just as a React component 🎉! The o
 https://github.com/user-attachments/assets/650517e5-105e-46a5-bc5c-495f40df38a4
 
 
-## Usage for End Users
+## Usage for end users
 
-First, upload your Data(csv/json) file, preview your data, and define the analytic type of columns (dimension or measure).
+[Open the online playground](https://graphic-walker.kanaries.net/) to explore your data without writing code. The examples below follow the Bike Sharing dataset from an initial chart to trends, comparisons, and deeper investigation.
 
-> We are developing more types of data sources. You are welcome to raise an issue telling us the types of sources you are using. If you are a developer, graphic-walker can be used as an embedding component, and you can pass your parsed data source to it. For example, [Rath](https://github.com/Kanaries/Rath) uses graphic-walker as an embedded component, and it supports many common data sources. You can load your data in [Rath](https://github.com/Kanaries/Rath)  and bring the data into graphic-walker. In this way, users can also benefit from data cleaning and transformation features in [Rath](https://github.com/Kanaries/Rath).
+### Load and check your data
 
-![graphic walker dataset upload](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ds-import.png)
+Click **Create Dataset**, drop in a CSV or JSON file, or choose a sample dataset. Review the preview, then click **Use This Dataset**.
 
-When the data is ready, click the 'Submit' button to use the data. On the left-hand side, `Field List` is all of your original columns in the table. You can drag them into visual channels (rows, columns, color, opacity, etc.) and make visualizations.
+![Create a dataset in Graphic Walker by importing a file or choosing a built-in sample](https://github.com/user-attachments/assets/bf971be2-0268-487f-b64f-4ef562917ec7)
 
-![](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-ui.png)
+Open the **Data** tab to inspect the underlying rows. Column headers summarize category frequencies and numeric distributions. Use the column controls to review field types. Dimensions group your data; measures are values you can aggregate. This example shows the Students' Performance sample.
 
-You can also view raw data any time or edit the meta data.
+![Graphic Walker's data table with category frequencies, numeric histograms, and field types](https://github.com/user-attachments/assets/4980828b-684a-4f39-9b51-853e53fcddd6)
 
-![](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-metadata.png)
+### Build a chart with drag and drop
 
+In **Visualization**, drag **month** onto **X-Axis** and **registered** onto **Y-Axis**. Set the measure's aggregation to **mean** to compare average hourly rentals across months. The bars show how registered riders' usage changes through the year.
 
-Visualize your data with drag and drop operation. For measures, you can define the aggregation methods (sum, mean, count etc.)
+![The full Graphic Walker editor showing average registered bike rentals by month](https://github.com/user-attachments/assets/e6c3fcd9-a0de-4f4d-b76f-dc835c7665c7)
 
-![graphic walker bar chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-bar01.png)
+You can also select fields and choose a chart from **Auto Viz**. Hold Ctrl or Cmd to select multiple fields. Add fields to **Color**, **Size**, or **Details** for more context, and use **Filters** to focus on a subset of the data.
 
+### Follow trends and compare groups
 
-You can change the mark type into others to make different charts, for example a line chart.
+Switch to a line chart, put **hour** on X, and add **workingday** to **Color**. Registered riders have distinct morning and evening peaks on working days, while non-working days have a broader daytime peak. In this sample, `1` means a working day and `0` means a non-working day.
 
-![graphic walker line chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-line-02.png)
+![Hourly registered bike rentals as two lines, with the axes and color configuration visible in the editor](https://github.com/user-attachments/assets/c1b50291-bf29-49c1-ba1d-7a819d440f1f)
 
+### Compare multiple measures
 
-To compare different measures, you can create a concat view by adding more than one measure into rows/columns.
+Add **casual** alongside **registered** on Y to give each measure its own panel. This area view shows both measures by hour, stacked by day type. Each measure uses its own numeric range, so check the axes when comparing magnitudes between panels.
 
-![graphic walker area chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-area.png)
+![Two area-chart panels for registered and casual bike rentals in the Graphic Walker editor](https://github.com/user-attachments/assets/803489a0-82a6-405c-bf56-94ac9bd8fc3f)
 
-To make a facet view of several subviews divided by the value in dimension, put dimensions into rows or columns to make a facets view. The rules are similar to Tableau.
+### Explore relationships with facets
 
-![graphic walker scatter chart](https://pub-8e7aa5bf51e049199c78b4bc744533f8.r2.dev/gw-readme-202402%2Fgw-scatter.png)
+To compare casual and registered rentals directly, use a scatter plot with **casual** on X and **registered** on Y. Turn off aggregation to show individual records. Place **workingday** before casual on X to split the chart into two panels, and use **season** for color.
 
-When you finish exploration, you can save the result into a local file, which can be imported next time.
+The same axes across panels make the different relationships on working and non-working days easier to see.
 
-Sometimes you may have further questions, such as why sales in Dec. is high. Graphic Walker provides a data explainer for these cases.
+![The Graphic Walker editor with two scatter-plot facets split by working day and colored by season](https://github.com/user-attachments/assets/7a19677c-13b8-442c-a899-b64832096dd5)
 
-For example, in bike sharing dataset, ask why registered rents in Jan. is lower than expectation, the explainer will try to find some potential explanations: 
+### Add more levels with nested worksheets
 
-![graphic walker explain data button](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-start.png)
+The default Worksheet renderer supports multiple dimensions on both axes. The cover screenshot shows **season → workingday → daytime** nested on rows, with **year** and two measures on columns. That puts morning and afternoon usage, day type, season, and year in one view while keeping registered and casual rentals separate.
 
-(percent of number of working days is less than average)
+Reorder fields to change the hierarchy. Use shared scales to compare facets, or configure independent X and Y scales when you need separate ranges. Headers and axes remain visible while larger worksheets scroll.
 
-![graphic walker explain data result](https://docs-us.oss-us-west-1.aliyuncs.com/images/graphic-walker/explain-data-result.png)
+### Investigate a mark with Explain Data
+
+Click a mark and choose **Interpret Data** to investigate it. Here, January's average registered rentals are lower than those of most other months.
+
+![Selecting January's bar and opening Interpret Data from the chart's menu](https://github.com/user-attachments/assets/fc3e79d2-d49a-4546-b7f1-5ede84395306)
+
+**Explain Data** lets you inspect extreme values, contributing dimensions and measures, and what is unusual about the selected mark. Select a finding to view its supporting comparison. These are statistical clues to investigate, not proof of causation.
+
+![Explain Data showing candidate findings and a temperature comparison for January's registered rentals](https://github.com/user-attachments/assets/42338140-21ee-42af-b2e1-9ba1de4fc39c)
+
+### Save and return to your analysis
+
+Use **+ New** to explore another question in a separate chart. Click **Save As File** to keep your dataset and charts, then use **Import Graphic Walker File** to reopen them later. You can also export a worksheet as an image or export its data. Worksheet exports include content outside the visible scroll area.
 
 ## Deploy, Usage for Developers
 
