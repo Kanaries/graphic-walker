@@ -1,0 +1,22 @@
+// What is shown where the translations are not loaded, as in a renderer mounted without the editor.
+export const GEO_NOTICE_ENGLISH = {
+    no_data_title: 'This map has no shapes yet',
+    no_data_desc: 'Choose or upload a GeoJSON or TopoJSON file in Geography Configuration.',
+    no_field_title: 'No field says which shape a row belongs to',
+    no_field_desc: 'Put the field that names each region on the Geometry ID shelf.',
+    bad_key_title: 'No shape has a "{{key}}" value',
+    bad_key_desc: 'Pick another Feature ID in Geography Configuration.',
+    unmatched_title: '{{matched}} of {{total}} values matched a shape',
+    unmatched_values: 'No shape for: {{values}}',
+    unmatched_more: '{{values}} and {{count}} more',
+    unmatched_key: 'Shapes are matched on "{{key}}", with values such as {{samples}}.',
+    empty_rows: 'Rows with no value to match: {{count}}',
+    load_failed_title: 'The map shapes could not be loaded',
+    error_network: 'The request did not complete. Check the address and the network.',
+    error_http: 'The server answered with status {{detail}}.',
+    error_json: 'The file is not valid JSON.',
+    error_format: 'The file is neither a GeoJSON FeatureCollection nor a TopoJSON topology.',
+    error_object: 'The TopoJSON file has no object of that name. It has: {{detail}}.',
+    retry: 'Try again',
+    dismiss: 'Dismiss',
+};

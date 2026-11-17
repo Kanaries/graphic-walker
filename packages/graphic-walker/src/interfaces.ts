@@ -452,6 +452,8 @@ export interface IVisualConfigNew {
 export interface IGeoUrl {
     type: 'GeoJSON' | 'TopoJSON';
     url: string;
+    /** For TopoJSON: the name of the object to draw. Defaults to the first key of `objects`. */
+    objectKey?: string;
 }
 
 /** @deprecated */
@@ -807,6 +809,8 @@ export type IGeoDataItem = {
     type: 'GeoJSON' | 'TopoJSON';
     name: string;
     url: string;
+    /** For TopoJSON: the name of the object to draw. Defaults to the first key of `objects`. */
+    objectKey?: string;
 };
 
 function toDict<T extends string>(a: readonly T[]) {

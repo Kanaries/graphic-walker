@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { timeFormat as tFormat } from "d3-time-format";
 import { format } from "d3-format";
 import type { Config as VlConfig } from 'vega-lite';
 import type { ISemanticType, VegaGlobalConfig } from "../../interfaces";
 import { useMap } from "react-leaflet";
-import type { LatLngBoundsExpression } from 'leaflet';
+import type { LatLngBounds } from '../../lib/geo/geometry';
 
 const defaultFormatter = (value: unknown): string => `${value}`;
 
@@ -52,8 +52,32 @@ export const useDisplayValueFormatter = (semanticType: ISemanticType, vegaConfig
     return formatter;
 };
 
-export function ChangeView({ bounds }: {bounds: LatLngBoundsExpression}) {
+/**
+ * Moves the map to `bounds` when their values change, and at no other time, so a re-render for an
+ * unrelated reason leaves the user's zoom and pan alone. A map that has no size yet is fitted once
+ * it gets one.
+ */
+export function ChangeView({ bounds }: { bounds: LatLngBounds }) {
     const map = useMap();
-    map.flyToBounds(bounds);
+    const key = bounds.flat().join(',');
+    const shown = useRef<string | null>(null);
+    useEffect(() => {
+        const show = () => {
+            if (shown.current === key) return;
+            const size = map.getSize();
+            if (!size.x || !size.y) return;
+            if (shown.current === null) {
+                map.fitBounds(bounds, { animate: false });
+            } else {
+                map.flyToBounds(bounds);
+            }
+            shown.current = key;
+        };
+        show();
+        map.on('resize', show);
+        return () => {
+            map.off('resize', show);
+        };
+    }, [map, key]);
     return null;
 }

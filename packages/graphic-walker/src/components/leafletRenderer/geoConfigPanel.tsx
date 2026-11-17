@@ -8,11 +8,22 @@ import DropdownSelect from '../dropdownSelect';
 import Dropzone from 'react-dropzone';
 import { GeojsonRenderer } from './geojsonRenderer';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { useGeoData } from '../../hooks/service';
+import { fetchGeoJson, geoDataErrorOf, isTopology, parseGeoText, toFeatureCollection, topologyObjectKeys, type GeoDataErrorCode } from '../../lib/geo/parse';
+import { listFeatureKeys, suggestFeatureKey } from '../../lib/geo/matching';
+import { useGeoErrorText } from './geoNotice';
 
 const emptyList = [];
+
+/** A file or URL the user has loaded in this dialog and not yet confirmed. */
+interface ILoadedSource {
+    json: unknown;
+    /** Where it came from, when it was loaded by URL. */
+    url?: string;
+}
 
 const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) => {
     const vizStore = useVizStore();
@@ -20,15 +31,15 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
     const { geoKey, geojson, geoUrl } = layout;
     const { t: tGlobal } = useTranslation('translation');
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
+    const errorText = useGeoErrorText();
 
     const [dataMode, setDataMode] = useState<'GeoJSON' | 'TopoJSON'>(geoUrl?.type ?? 'GeoJSON');
     const [featureId, setFeatureId] = useState('');
     const [url, setUrl] = useState(geoUrl?.url ?? '');
-    const [geoJSON, setGeoJSON] = useState('');
-    const [topoJSON, setTopoJSON] = useState('');
-    const [topoJSONKey, setTopoJSONKey] = useState('');
-    const [loadedUrl, setLoadedUrl] = useState<IGeoUrl | undefined>(geoUrl);
+    const [source, setSource] = useState<ILoadedSource>();
+    const [objectKey, setObjectKey] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<{ code: GeoDataErrorCode | 'empty'; detail: string }>();
 
     const hasCustomData = url || geojson;
 
@@ -42,83 +53,140 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
 
     const options = useMemo(
         () =>
-            [{ label: 'Select a Geographic Data', value: '-1' }]
+            [{ label: t('geography_settings.selectData'), value: '-1' }]
                 .concat(
                     geoList.map((x, i) => ({
                         label: x.name,
                         value: `${i}`,
                     }))
                 )
-                .concat({ label: 'Manual Configuration', value: '-2' }),
-        [geoList]
+                .concat({ label: t('geography_settings.manual'), value: '-2' }),
+        [geoList, t]
     );
-    const setSelectItem = useMemo(() => (a: string) => setSelectItemR(parseInt(a)), []);
+    const setSelectItem = useMemo(
+        () => (a: string) => {
+            setSelectItemR(parseInt(a));
+            setError(undefined);
+        },
+        []
+    );
 
     const isCustom = (geoList ?? []).length === 0 || selectItem === -2;
 
-    const defaultTopoJSONKey = useMemo(() => {
+    // The shapes the dialog is looking at: a preset, a file loaded here, or what the chart already has.
+    const listItem = !isCustom && selectItem >= 0 ? geoList[selectItem] : undefined;
+    const savedUrl = isCustom && !source && !geojson ? geoUrl : undefined;
+    const remoteUrl = useMemo<IGeoUrl | undefined>(
+        () => (listItem ? { type: listItem.type, url: listItem.url, ...(listItem.objectKey ? { objectKey: listItem.objectKey } : {}) } : savedUrl),
+        [listItem, savedUrl]
+    );
+    const remote = useGeoData(undefined, remoteUrl);
+    const loaded = useMemo(() => {
+        if (!source) return undefined;
         try {
-            const value = JSON.parse(topoJSON) as Topology;
-            return Object.keys(value.objects)[0] || '';
-        } catch (error) {
-            return '';
+            return toFeatureCollection(source.json, objectKey || undefined);
+        } catch {
+            return undefined;
         }
-    }, [topoJSON]);
+    }, [source, objectKey]);
+    const features = isCustom ? loaded ?? (source ? undefined : geojson) ?? remote.data : remote.data;
+
+    const topologyObjects = useMemo(() => (source ? topologyObjectKeys(source.json) : []), [source]);
+    const featureKeys = useMemo(() => (features ? listFeatureKeys(features.features) : []), [features]);
+    const featureKeyOptions = useMemo(
+        () =>
+            featureKeys.map(({ key, samples }) => ({
+                value: key,
+                label: (
+                    <span>
+                        {key}
+                        <span className="ml-2 text-muted-foreground">{t('geography_settings.geoKeySample', { samples: samples.join(', ') })}</span>
+                    </span>
+                ),
+            })),
+        [featureKeys, t]
+    );
 
     useEffect(() => {
         setFeatureId(geoKey || '');
     }, [geoKey]);
 
     useEffect(() => {
-        setGeoJSON(geojson ? JSON.stringify(geojson, null, 2) : '');
-    }, [geojson]);
+        // A key the file does not have would match nothing, so move to one it has.
+        if (featureKeys.length > 0) setFeatureId((current) => suggestFeatureKey(featureKeys, current));
+    }, [featureKeys]);
+
+    /** Takes over a parsed file once it is known to hold shapes. Throws a GeoDataError when it does not. */
+    const acceptSource = (json: unknown, fromUrl?: string) => {
+        toFeatureCollection(json);
+        setSource({ json, url: fromUrl });
+        setObjectKey('');
+        setDataMode(isTopology(json) ? 'TopoJSON' : 'GeoJSON');
+        setError(undefined);
+    };
+
+    const loadUrl = () => {
+        if (!url) return;
+        setLoading(true);
+        setError(undefined);
+        fetchGeoJson(url)
+            .then((json) => acceptSource(json, url))
+            .catch((e) => setError(geoDataErrorOf(e)))
+            .finally(() => setLoading(false));
+    };
+
+    const loadFile = (file: File) => {
+        const reader = new FileReader();
+        reader.addEventListener('load', (event) => {
+            try {
+                acceptSource(parseGeoText(event.target!.result as string));
+            } catch (e) {
+                setError(geoDataErrorOf(e));
+            }
+        });
+        reader.addEventListener('error', () => setError({ code: 'network', detail: '' }));
+        reader.readAsText(file);
+    };
 
     const handleSubmit = () => {
         if (!isCustom) {
-            const item = geoList[selectItem];
-            if (!item) {
+            if (!listItem) {
                 vizStore.clearGeographicData();
                 vizStore.updateGeoKey(featureId);
             } else {
-                vizStore.setVisualLayout('geoUrl', {
-                    type: item.type,
-                    url: item.url,
-                });
+                vizStore.setGeoUrl(remoteUrl!, featureId);
             }
             vizStore.setShowGeoJSONConfigPanel(false);
             return;
         }
-        try {
-            if (!(dataMode === 'GeoJSON' ? geoJSON : topoJSON) && loadedUrl) {
-                vizStore.setShowGeoJSONConfigPanel(false);
+        if (source) {
+            if (!loaded) {
+                setError({ code: 'format', detail: '' });
                 return;
             }
-            const json = JSON.parse(dataMode === 'GeoJSON' ? geoJSON : topoJSON);
-            if (dataMode === 'TopoJSON') {
-                vizStore.setGeographicData(
-                    {
-                        type: 'TopoJSON',
-                        data: json,
-                        objectKey: topoJSONKey || defaultTopoJSONKey,
-                    },
-                    featureId,
-                    loadedUrl?.type === 'TopoJSON' ? loadedUrl : undefined
-                );
-            } else {
-                vizStore.setGeographicData(
-                    {
-                        type: 'GeoJSON',
-                        data: json,
-                    },
-                    featureId,
-                    loadedUrl?.type === 'GeoJSON' ? loadedUrl : undefined
-                );
-            }
-            vizStore.setShowGeoJSONConfigPanel(false);
-        } catch (err) {
-            console.error(err);
+            const topology = isTopology(source.json);
+            const pickedObject = objectKey || topologyObjects[0];
+            const from: IGeoUrl | undefined = source.url
+                ? { type: topology ? 'TopoJSON' : 'GeoJSON', url: source.url, ...(topology && objectKey ? { objectKey } : {}) }
+                : undefined;
+            vizStore.setGeographicData(
+                topology ? { type: 'TopoJSON', data: source.json as Topology, objectKey: pickedObject } : { type: 'GeoJSON', data: loaded },
+                featureId,
+                from
+            );
+        } else if (geojson) {
+            // The shapes are the ones the chart already has. Only the match key can have changed.
+            vizStore.updateGeoKey(featureId);
+        } else if (geoUrl) {
+            vizStore.setGeoUrl(geoUrl, featureId);
+        } else {
+            setError({ code: 'empty', detail: '' });
+            return;
         }
+        vizStore.setShowGeoJSONConfigPanel(false);
     };
+
+    const shownError = error ?? (remote.error ? geoDataErrorOf(remote.error) : undefined);
 
     return (
         <Dialog
@@ -127,24 +195,30 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                 vizStore.setShowGeoJSONConfigPanel(false);
             }}
         >
-            <DialogContent>
-                <h2 className="text-lg mb-4">{t('geography')}</h2>
+            <DialogContent aria-describedby={undefined}>
+                <DialogTitle className="text-lg mb-4 font-normal leading-normal tracking-normal">{t('geography')}</DialogTitle>
                 <div>
                     <div className="my-2">
                         <label className="block text-xs font-medium leading-6">{t('geography_settings.geoKey')}</label>
-                        <div className="mt-1">
-                            <Input type="text" value={featureId} onChange={(e) => setFeatureId(e.target.value)} />
+                        <div className="mt-1" data-testid="geo-config-key">
+                            <DropdownSelect
+                                options={featureKeyOptions}
+                                selectedKey={featureKeys.length > 0 ? featureId : ''}
+                                onSelect={setFeatureId}
+                                disable={featureKeys.length === 0}
+                                placeholder={t('geography_settings.geoKeyEmpty')}
+                            />
                         </div>
                     </div>
                     {geoList.length > 0 && (
                         <div className="my-2">
-                            <label className="block text-xs font-medium leading-6">GeoData</label>
+                            <label className="block text-xs font-medium leading-6">{t('geography_settings.geoData')}</label>
                             <DropdownSelect options={options} selectedKey={`${selectItem}`} onSelect={setSelectItem} />
                         </div>
                     )}
-                    {!isCustom && selectItem >= 0 && (
+                    {listItem && (
                         <div className={`relative justify-center flex w-full h-80 rounded border shadow-sm`}>
-                            <GeojsonRenderer type={geoList[selectItem].type} url={geoList[selectItem]} />
+                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={layout.geoMapTileUrl} />
                         </div>
                     )}
                     {isCustom && (
@@ -179,25 +253,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                             setUrl(e.target.value);
                                         }}
                                     />
-                                    <Button
-                                        className="mr-2 flex-shrink-0"
-                                        disabled={loading}
-                                        onClick={() => {
-                                            if (url) {
-                                                setLoading(true);
-                                                fetch(url)
-                                                    .then((res) => res.json())
-                                                    .then((json) => {
-                                                        (dataMode === 'GeoJSON' ? setGeoJSON : setTopoJSON)(JSON.stringify(json, null, 2));
-                                                        setLoadedUrl({ type: dataMode, url });
-                                                        setLoading(false);
-                                                    })
-                                                    .catch(() => {
-                                                        setLoading(false);
-                                                    });
-                                            }
-                                        }}
-                                    >
+                                    <Button className="mr-2 flex-shrink-0" disabled={loading} onClick={loadUrl}>
                                         {loading && <Spinner />}
                                         {t('geography_settings.load')}
                                     </Button>
@@ -205,15 +261,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                 <Dropzone
                                     onDrop={(acceptedFiles) => {
                                         const f: File = acceptedFiles[0];
-                                        if (f) {
-                                            const reader = new FileReader();
-                                            reader.addEventListener('load', (event) => {
-                                                const data = event.target!.result as string;
-                                                setLoadedUrl(undefined);
-                                                (dataMode === 'GeoJSON' ? setGeoJSON : setTopoJSON)(data);
-                                            });
-                                            reader.readAsText(f);
-                                        }
+                                        if (f) loadFile(f);
                                     }}
                                     noClick
                                 >
@@ -222,29 +270,31 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                             {isDragActive && (
                                                 <div className="absolute items-center justify-center left-0 right-0 top-0 bottom-0 z-20 bg-accent opacity-80" />
                                             )}
-                                            <input {...getInputProps()} />
+                                            <input {...getInputProps()} data-testid="geo-config-file" />
                                             <div onClick={open} className="flex h-full items-center justify-center w-48">
                                                 {t('geography_settings.jsonInputPlaceholder', { format: dataMode.toLowerCase() })}
                                             </div>
-                                            <GeojsonRenderer data={dataMode === 'GeoJSON' ? geoJSON : topoJSON} type={dataMode} url={loadedUrl} />
+                                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={layout.geoMapTileUrl} />
                                         </div>
                                     )}
                                 </Dropzone>
-                                {dataMode === 'TopoJSON' && (
-                                    <div className="flex items-center space-x-2">
+                                {topologyObjects.length > 1 && (
+                                    <div className="flex items-center space-x-2" data-testid="geo-config-object">
                                         <label className="text-xs whitespace-nowrap capitalize">{t('geography_settings.objectKey')}</label>
-                                        <Input
-                                            type="text"
-                                            value={topoJSONKey}
-                                            placeholder={defaultTopoJSONKey}
-                                            onChange={(e) => {
-                                                setTopoJSONKey(e.target.value);
-                                            }}
+                                        <DropdownSelect
+                                            options={topologyObjects.map((name) => ({ label: name, value: name }))}
+                                            selectedKey={objectKey || topologyObjects[0]}
+                                            onSelect={setObjectKey}
                                         />
                                     </div>
                                 )}
                             </div>
                         </div>
+                    )}
+                    {shownError && (
+                        <p role="alert" className="my-2 text-xs text-destructive" data-testid="geo-config-error" data-code={shownError.code}>
+                            {shownError.code === 'empty' ? t('geography_settings.noSource') : errorText({ code: shownError.code, detail: shownError.detail })}
+                        </p>
                     )}
                 </div>
                 <DialogFooter>

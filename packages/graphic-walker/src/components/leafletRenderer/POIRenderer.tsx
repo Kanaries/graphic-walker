@@ -8,6 +8,7 @@ import { TooltipContent } from './tooltip';
 import { useAppRootContext } from '../appRoot';
 import { ChangeView } from './utils';
 import ColorPanel from './color';
+import { WORLD_BOUNDS } from '../../lib/geo/geometry';
 
 export interface IPOIRendererProps {
     name?: string;
@@ -77,13 +78,7 @@ const POIRenderer = forwardRef<IPOIRendererRef, IPOIRendererProps>(function POIR
             return [bounds, [coords[0] / lngLat.length, coords[1] / lngLat.length] as [number, number]];
         }
 
-        return [
-            [
-                [-180, -90],
-                [180, 90],
-            ],
-            [0, 0],
-        ];
+        return [WORLD_BOUNDS, [0, 0]];
     }, [lngLat]);
 
     const mapRef = useRef<Map>(null);
