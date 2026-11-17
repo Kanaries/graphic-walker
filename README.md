@@ -77,7 +77,7 @@ The same axes across panels make the different relationships on working and non-
 
 ### Add more levels with nested worksheets
 
-The default Worksheet renderer supports multiple dimensions on both axes. The cover screenshot shows **season → workingday → daytime** nested on rows, with **year** and two measures on columns. That puts morning and afternoon usage, day type, season, and year in one view while keeping registered and casual rentals separate.
+The default Worksheet renderer supports multiple dimensions on both axes. The screenshot at the top of this README shows **season → workingday → daytime** nested on rows, with **year** and two measures on columns. That puts morning and afternoon usage, day type, season, and year in one view while keeping registered and casual rentals separate.
 
 Reorder fields to change the hierarchy. Use shared scales to compare facets, or configure independent X and Y scales when you need separate ranges. Headers and axes remain visible while larger worksheets scroll.
 
