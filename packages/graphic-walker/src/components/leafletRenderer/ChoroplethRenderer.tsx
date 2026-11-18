@@ -13,7 +13,7 @@ import { ChangeView, useDisplayValueFormatter } from './utils';
 import ColorPanel from './color';
 import { themeContext } from '@/store/theme';
 import { WORLD_BOUNDS, extendBounds, resolveParts, ringCentroid, type GeoPart, type LatLngBounds } from '../../lib/geo/geometry';
-import { featureKeyValue, geoValueText, matchFeatures } from '../../lib/geo/matching';
+import { featureKeyValue, geoValueText, matchFeatures, quoteGeoValue } from '../../lib/geo/matching';
 import { geoDataErrorOf } from '../../lib/geo/parse';
 import { GeoLoadFailed, GeoNotice, type GeoNoticeContent } from './geoNotice';
 
@@ -256,12 +256,12 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         return {
             state: 'match',
             key: geoKey,
-            matched: match.distinctValues - match.unmatchedValues.length,
+            matched: match.matchedValues,
             total: match.distinctValues,
             unmatchedValues: match.unmatchedValues,
             featureSamples: match.unmatchedRows > 0 ? match.featureSamples : [],
             emptyRows: match.emptyRows,
-            sharedValues: match.sharedValues,
+            sharedValues: match.sharedValues.map((group) => group.map(quoteGeoValue)),
             undrawnValues,
         };
     }, [features, localFeatures, featuresUrl, geoId, match, data, geoKey, undrawnValues]);

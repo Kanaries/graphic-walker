@@ -1,5 +1,5 @@
 import type { Geometry } from 'geojson';
-import { WORLD_BOUNDS, extendBounds, resolveParts, ringCentroid, type LatLng } from './geometry';
+import { WORLD_BOUNDS, drawableGeometry, extendBounds, resolveParts, ringCentroid, type LatLng } from './geometry';
 
 // GeoJSON writes [lng, lat]. A 10 by 10 square with a 2 by 2 hole in the middle.
 const outline = [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]];
@@ -60,6 +60,33 @@ describe('resolveParts on files that break the format', () => {
         expect(broken({ type: 'MultiLineString' })).toEqual([]);
         expect(broken({ type: 'GeometryCollection', geometries: null })).toEqual([]);
         expect(resolveParts('Polygon' as unknown as Geometry)).toEqual([]);
+    });
+});
+
+describe('drawableGeometry', () => {
+    it('has nothing for geometry that cannot be drawn', () => {
+        expect(drawableGeometry(null)).toBeNull();
+        expect(drawableGeometry({ type: 'Point', coordinates: [] })).toBeNull();
+        expect(drawableGeometry({ type: 'Polygon', coordinates: [[[0, 0], [1, 1]]] })).toBeNull();
+    });
+    it('keeps what can be drawn, in GeoJSON order, and leaves the rest out', () => {
+        const mixed: Geometry = {
+            type: 'GeometryCollection',
+            geometries: [
+                { type: 'Point', coordinates: [] },
+                { type: 'Point', coordinates: [3, 4] },
+                { type: 'Polygon', coordinates: [outline, hole] },
+                { type: 'MultiLineString', coordinates: [[[0, 0]], [[0, 0], [5, 5]]] },
+            ],
+        };
+        expect(drawableGeometry(mixed)).toEqual({
+            type: 'GeometryCollection',
+            geometries: [
+                { type: 'Point', coordinates: [3, 4] },
+                { type: 'Polygon', coordinates: [outline, hole] },
+                { type: 'LineString', coordinates: [[0, 0], [5, 5]] },
+            ],
+        });
     });
 });
 

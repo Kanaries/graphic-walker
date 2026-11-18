@@ -62,6 +62,25 @@ export function resolveParts(geometry: Geometry | null | undefined): GeoPart[] {
     }
 }
 
+const toPosition = ([lat, lng]: LatLng): Position => [lng, lat];
+
+/**
+ * The geometry as GeoJSON again, holding only what `resolveParts` can draw. Null when nothing is
+ * left. For code that hands geometry to Leaflet itself, which throws on a coordinate it cannot read.
+ */
+export function drawableGeometry(geometry: Geometry | null | undefined): Geometry | null {
+    const parts = resolveParts(geometry);
+    if (parts.length === 0) return null;
+    return {
+        type: 'GeometryCollection',
+        geometries: parts.map((part): Geometry => {
+            if (part.type === 'point') return { type: 'Point', coordinates: toPosition(part.position) };
+            if (part.type === 'line') return { type: 'LineString', coordinates: part.positions.map(toPosition) };
+            return { type: 'Polygon', coordinates: part.rings.map((ring) => ring.map(toPosition)) };
+        }),
+    };
+}
+
 /** The positions that decide how far a part reaches. Holes lie inside the outline, so they are left out. */
 function outerPositions(part: GeoPart): LatLng[] {
     if (part.type === 'point') return [part.position];

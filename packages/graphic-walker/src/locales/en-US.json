@@ -401,7 +401,8 @@
                     "geoData": "Geographic data",
                     "geoKeyEmpty": "Load geographic data to list its properties",
                     "geoKeySample": "e.g. {{samples}}",
-                    "noSource": "Choose a file or load a URL first."
+                    "noSource": "Choose a file or load a URL first.",
+                    "noKeys": "The shapes in this file have no property that data can be matched on. Choose another file."
                 }
             },
             "DatasetFields": {

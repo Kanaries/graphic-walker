@@ -1,5 +1,5 @@
 import type { Feature } from 'geojson';
-import { featureKeyValue, listFeatureKeys, matchFeatures, normalizeGeoValue, suggestFeatureKey } from './matching';
+import { featureKeyValue, listFeatureKeys, matchFeatures, normalizeGeoValue, quoteGeoValue, suggestFeatureKey } from './matching';
 
 const shape = (properties: Record<string, unknown> | null, id?: string | number): Feature => ({
     type: 'Feature',
@@ -97,6 +97,23 @@ describe('matchFeatures', () => {
         expect(match.sharedValues).toEqual([['East', 'EAST', 'east']]);
         expect(match.distinctValues).toBe(4);
         expect(match.unmatchedValues).toEqual(['West']);
+    });
+
+    it('tells values apart as the data has them, so spaces around a value still count', () => {
+        const squares = [shape({ name: 'East' }), shape({ name: 'West' })];
+        // The aggregation groups on the raw value. These are two rows of two groups, drawn on one shape.
+        const match = matchFeatures(['East', ' East '], squares, 'name');
+        expect(match.rowFeatures).toEqual([[0], [0]]);
+        expect(match.sharedValues).toEqual([['East', ' East ']]);
+        expect(match.sharedValues[0].map(quoteGeoValue)).toEqual(['"East"', '" East "']);
+        expect([match.distinctValues, match.matchedValues]).toEqual([2, 2]);
+
+        // A number and its text are two groups as well. Unmatched spellings are listed once.
+        const codes = matchFeatures([1, '1', 'North', ' North'], [shape({ code: 1 })], 'code');
+        expect(codes.sharedValues).toEqual([[1, '1']]);
+        expect(codes.sharedValues[0].map(quoteGeoValue)).toEqual(['1', '"1"']);
+        expect(codes.unmatchedValues).toEqual(['North']);
+        expect([codes.distinctValues, codes.matchedValues, codes.unmatchedRows]).toEqual([4, 2, 2]);
     });
 
     it('does not report one value that reaches several features, or several rows of one value', () => {

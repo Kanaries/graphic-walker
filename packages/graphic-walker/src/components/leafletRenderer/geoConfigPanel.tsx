@@ -123,9 +123,14 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
         if (featureKeys.length > 0) setFeatureId((current) => suggestFeatureKey(featureKeys, current));
     }, [featureKeys]);
 
-    // A preset's keys arrive with its file. Until then the key on show belongs to the shapes before
-    // it, and confirming would save a key the preset may not have.
-    const presetReady = !listItem || (remote.data !== undefined && (featureKeys.length === 0 || featureKeys.some((k) => k.key === featureId)));
+    // Confirming saves the key on show, so the key has to belong to the shapes on show.
+    // - While a preset, a saved address or a typed address is on its way, the key still belongs to
+    //   the shapes before it, and for a typed address the new shapes would not be saved at all.
+    // - Shapes without any property cannot be matched to data, so there is no key to save.
+    // - A preset that failed to load has no shapes to check the key against.
+    const busy = loading || remote.loading;
+    const noKeys = Boolean(features) && featureKeys.length === 0;
+    const canConfirm = !busy && (features ? featureKeys.some((k) => k.key === featureId) : !listItem);
 
     /** Takes over a parsed file once it is known to hold shapes. Throws a GeoDataError when it does not. */
     const acceptSource = (json: unknown, fromUrl?: string) => {
@@ -307,9 +312,14 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                             {shownError.code === 'empty' ? t('geography_settings.noSource') : errorText({ code: shownError.code, detail: shownError.detail })}
                         </p>
                     )}
+                    {!shownError && !busy && noKeys && (
+                        <p role="alert" className="my-2 text-xs text-destructive" data-testid="geo-config-error" data-code="no_keys">
+                            {t('geography_settings.noKeys')}
+                        </p>
+                    )}
                 </div>
                 <DialogFooter>
-                    <Button children={tGlobal('actions.confirm')} onClick={handleSubmit} disabled={!presetReady} data-testid="geo-config-confirm" />
+                    <Button children={tGlobal('actions.confirm')} onClick={handleSubmit} disabled={!canConfirm} data-testid="geo-config-confirm" />
                     <Button
                         children={tGlobal('actions.cancel')}
                         variant="outline"

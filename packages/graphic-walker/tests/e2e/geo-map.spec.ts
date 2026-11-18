@@ -5,7 +5,7 @@ import type { MapRequest } from './geo-map.fixture';
 // East, West and one blank. The shapes are three squares: East (with a hole), West and North.
 // Their names read EAST, Westland and North, and their feature ids read East, West and North.
 
-/** `query` picks what the page fixes at mount: `?clash`, `?presets` or `?theme-no-tiles`. */
+/** `query` picks what the page fixes at mount: `?clash`, `?spaces`, `?presets` or `?theme-no-tiles`. */
 async function load(page: Page, request: MapRequest, query = '') {
     await page.goto(`/tests/e2e/geo-map.html${query}`);
     await expect(page.locator('body')).toHaveAttribute('data-fixture-ready', 'true');
@@ -209,6 +209,17 @@ test('G7: the settings dialog lists the keys of a file, reports what it cannot u
     await expect(error).toHaveText('The file is neither a GeoJSON FeatureCollection nor a TopoJSON topology.');
     await expect(dialog).toBeVisible();
     await expect(key).toContainText('name');
+    // A feature whose coordinates cannot be read is left out of the preview. The dialog stays open
+    // for the user to pick something else.
+    const crashes: string[] = [];
+    page.on('pageerror', (e) => crashes.push(e.message));
+    const noPlace = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { title: 'Nowhere' }, geometry: { type: 'Point', coordinates: [] } }] };
+    await file.setInputFiles({ name: 'nowhere.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(noPlace)) });
+    await expect(key).toContainText('title');
+    await expect(key).toContainText('Nowhere');
+    await expect(error).toHaveCount(0);
+    await expect(dialog.getByTestId('geo-config-preview').locator('.leaflet-container')).toBeVisible();
+    expect(crashes).toEqual([]);
 
     await dialog.getByRole('textbox').fill(files.missingUrl);
     await dialog.getByRole('button', { name: 'Load' }).click();
@@ -280,7 +291,7 @@ test('G9: two spellings of one region are reported, because their numbers are no
     await open(page, { geoKey: 'name', text: 'Sales' }, '?clash');
     await expect(noticeTitle(page)).toHaveText('2 of 3 values matched a shape');
     await expect(notice(page)).toContainText('No shape for: West');
-    await expect(notice(page)).toContainText('Values sharing a shape are drawn on top of each other, not added up: East / EAST');
+    await expect(notice(page)).toContainText('Values sharing a shape are drawn on top of each other, not added up: "East" / "EAST"');
     // Both sums sit on the one shape. Neither is the 30 a reader would expect.
     await expect.poll(async () => (await labels(page).allTextContents()).sort()).toEqual(['10', '20']);
 
@@ -288,8 +299,20 @@ test('G9: two spellings of one region are reported, because their numbers are no
     await setLayout(page, 'geoKey', 'id');
     await expect(notice(page)).toHaveAttribute('data-state', 'shared');
     await expect(noticeTitle(page)).toHaveText('Different values point at the same shape');
-    await expect(notice(page)).toContainText('East / EAST');
+    await expect(notice(page)).toContainText('"East" / "EAST"');
     await expect(notice(page)).not.toContainText('No shape for');
+});
+
+test('G9b: two rows that differ only by spaces around the name are reported as well', async ({ page }) => {
+    // The whole table is East with 10 and " East " with 20. Nothing else is wrong with it.
+    await open(page, { geoKey: 'id', text: 'Sales' }, '?spaces');
+    await expect.poll(async () => (await labels(page).allTextContents()).sort()).toEqual(['10', '20']);
+    await expect(notice(page)).toHaveAttribute('data-state', 'shared');
+    await expect(noticeTitle(page)).toHaveText('Different values point at the same shape');
+    // The quotes show where the spaces are.
+    await expect(page.getByTestId('geo-notice-line')).toHaveText('Values sharing a shape are drawn on top of each other, not added up: "East" / " East "', {
+        useInnerText: true,
+    });
 });
 
 test('G10: a value whose shape has no geometry is reported, since nothing is drawn for it', async ({ page }) => {
@@ -353,4 +376,59 @@ test('G12: the preview in the settings draws no basemap when the host theme turn
     await expect(preview.locator('.leaflet-container')).toBeVisible();
     await expect(preview.locator('.leaflet-overlay-pane path, .leaflet-overlay-pane canvas')).not.toHaveCount(0);
     await expect(page.locator('.leaflet-tile-pane .leaflet-layer')).toHaveCount(0);
+});
+
+test('G13: shapes without any property cannot be confirmed, and the dialog says why', async ({ page }) => {
+    await open(page, { geoKey: 'id' }, '?presets');
+    await page.evaluate(() => window.geo.openSettings());
+    const dialog = page.getByRole('dialog');
+    const key = dialog.getByTestId('geo-config-key').getByRole('combobox');
+    const preset = dialog.getByTestId('geo-config-preset').getByRole('combobox');
+    const confirm = dialog.getByTestId('geo-config-confirm');
+    const error = dialog.getByTestId('geo-config-error');
+    await expect(key).toContainText('id');
+    await expect(confirm).toBeEnabled();
+
+    await preset.click();
+    await page.getByRole('option', { name: 'Bare outlines', exact: true }).click();
+    await expect(dialog.getByTestId('geo-config-preview').locator('.leaflet-container')).toBeVisible();
+    await expect(error).toHaveAttribute('data-code', 'no_keys');
+    await expect(error).toHaveText('The shapes in this file have no property that data can be matched on. Choose another file.');
+    await expect(key).toBeDisabled();
+    await expect(confirm).toBeDisabled();
+
+    // A preset with keys clears the message and can be saved.
+    await preset.click();
+    await page.getByRole('option', { name: 'All squares', exact: true }).click();
+    await expect(key).toContainText('region');
+    await expect(error).toHaveCount(0);
+    await confirm.click();
+    await expect(dialog).toHaveCount(0);
+    expect((await page.evaluate(() => window.geo.saved())).layout.geoKey).toBe('region');
+});
+
+test('G14: an address that is still loading cannot be confirmed, and is saved once it has arrived', async ({ page }) => {
+    await open(page, { geoKey: 'name' });
+    const files = await page.evaluate(() => window.geo.files);
+    await page.evaluate(() => window.geo.openSettings());
+    const dialog = page.getByRole('dialog');
+    const key = dialog.getByTestId('geo-config-key').getByRole('combobox');
+    const confirm = dialog.getByTestId('geo-config-confirm');
+    await expect(confirm).toBeEnabled();
+
+    await page.evaluate(() => window.geo.hold());
+    await dialog.getByRole('textbox').fill(files.topologyUrl);
+    await dialog.getByRole('button', { name: 'Load' }).click();
+    // Confirming now would close the dialog on the old shapes and drop the address.
+    await expect(dialog.getByRole('button', { name: 'Load' })).toBeDisabled();
+    await expect(confirm).toBeDisabled();
+    await page.evaluate(() => window.geo.release());
+    await expect(key).toContainText('label');
+    await expect(confirm).toBeEnabled();
+    await confirm.click();
+    await expect(dialog).toHaveCount(0);
+    const saved = await page.evaluate(() => window.geo.saved());
+    expect(saved.layout.geoUrl).toEqual({ type: 'TopoJSON', url: files.topologyUrl });
+    expect(saved.layout.geojson).toBeUndefined();
+    expect(saved.layout.geoKey).toBe('label');
 });

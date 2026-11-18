@@ -62,6 +62,8 @@ const data: IRow[] = [
 const query = new URLSearchParams(location.search);
 // `?clash` adds a second spelling of East, which the data keeps as a row of its own.
 if (query.has('clash')) data.push({ Region: 'EAST', Note: 'shout', Sales: 20 });
+// `?spaces` is a table of two rows that differ only by the spaces around the name.
+if (query.has('spaces')) data.splice(0, data.length, { Region: 'East', Note: 'bare', Sales: 10 }, { Region: ' East ', Note: 'padded', Sales: 20 });
 
 function chartOf(request: MapRequest): IChart {
     return {
@@ -89,11 +91,14 @@ function chartOf(request: MapRequest): IChart {
 
 // Vite emits the JSON as a file of its own and gives its address on this server.
 const topologyUrl = new URL('./geo-map.topology.json', import.meta.url).href;
+// Two squares with empty properties and no id: outlines that no data can be matched to.
+const bareUrl = new URL('./geo-map.bare.json', import.meta.url).href;
 
 // `?presets` gives the host two maps to choose from. Both are objects of the same file.
 const presets: IGeoDataItem[] = [
     { name: 'Halves', type: 'TopoJSON', url: topologyUrl, objectKey: 'halves' },
     { name: 'All squares', type: 'TopoJSON', url: topologyUrl, objectKey: 'all' },
+    { name: 'Bare outlines', type: 'GeoJSON', url: bareUrl },
 ];
 // `?theme-no-tiles` is a host that turns the basemap off for every chart through its theme.
 const noTiles = { leafletGeoTileUrl: '' };

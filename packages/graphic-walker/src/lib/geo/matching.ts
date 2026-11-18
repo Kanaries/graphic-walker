@@ -9,6 +9,14 @@ export function geoValueText(value: unknown): string {
 }
 
 /**
+ * The value as a reader can tell it apart from another that trims to the same text: text in quotes
+ * with its spaces, anything else as it prints. `East` and ` East ` read `"East"` and `" East "`.
+ */
+export function quoteGeoValue(value: unknown): string {
+    return typeof value === 'string' ? `"${value}"` : String(value);
+}
+
+/**
  * The value with spelling differences that carry no meaning removed: full-width and half-width
  * forms (NFKC), letter case, and extra spaces. `" New  York "`, `"new york"` and `"ＮＥＷ ＹＯＲＫ"` all agree.
  */
@@ -75,15 +83,21 @@ export interface IGeoMatch {
     emptyRows: number;
     /** Rows with a value that no feature carries. */
     unmatchedRows: number;
-    /** How many different non-blank values the rows hold. */
+    /**
+     * How many different non-blank values the rows hold. Values count as the data has them, so
+     * `East` and ` East ` are two: the aggregation upstream keeps them in separate rows.
+     */
     distinctValues: number;
-    /** The distinct values behind `unmatchedRows`, in the order they first appear. */
+    /** How many of those found a feature. */
+    matchedValues: number;
+    /** The distinct values behind `unmatchedRows` as trimmed text, in the order they first appear. */
     unmatchedValues: string[];
     /**
-     * Groups of differently written values that reach the same feature, such as `East` and `EAST`.
-     * The data keeps them as separate rows, so their shapes are drawn on top of each other.
+     * Groups of differently written values that reach the same feature, such as `East`, `EAST`
+     * and ` East `, as the data has them. The data keeps them as separate rows, so their shapes
+     * are drawn on top of each other.
      */
-    sharedValues: string[][];
+    sharedValues: unknown[][];
     /** Features that no row points at. */
     unusedFeatures: number[];
     /** How many features have a value under the key at all. Zero means the key is wrong for this file. */
@@ -124,22 +138,27 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
 
     const used = new Set<number>();
     const unmatched = new Set<string>();
-    /** Each distinct value and the features it reaches, looked up once. */
-    const resolved = new Map<string, number[] | undefined>();
+    // Each distinct value and the features it reaches, looked up once. The key is the value as the
+    // data has it, not its trimmed text, because that is what tells one row's group from another's.
+    const resolved = new Map<unknown, number[] | undefined>();
     const matchedRows: number[] = [];
     let emptyRows = 0;
     let unmatchedRows = 0;
+    let matchedValues = 0;
     const rowFeatures = values.map((value, row) => {
         const text = geoValueText(value);
         if (!text) {
             emptyRows += 1;
             return [];
         }
-        let hit = resolved.get(text);
-        if (hit === undefined && !resolved.has(text)) {
+        let hit = resolved.get(value);
+        if (hit === undefined && !resolved.has(value)) {
             hit = exact.get(text) ?? loose.get(normalizeGeoValue(text));
-            resolved.set(text, hit);
-            if (hit) for (const i of hit) used.add(i);
+            resolved.set(value, hit);
+            if (hit) {
+                matchedValues += 1;
+                for (const i of hit) used.add(i);
+            }
         }
         if (!hit) {
             unmatchedRows += 1;
@@ -150,18 +169,18 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
         return hit;
     });
 
-    const reaching = new Map<number, string[]>();
-    for (const [text, hit] of resolved) {
+    const reaching = new Map<number, unknown[]>();
+    for (const [value, hit] of resolved) {
         if (!hit) continue;
         for (const i of hit) {
             const list = reaching.get(i);
-            if (list) list.push(text);
-            else reaching.set(i, [text]);
+            if (list) list.push(value);
+            else reaching.set(i, [value]);
         }
     }
-    const shared = new Map<string, string[]>();
+    const shared = new Map<string, unknown[]>();
     for (const list of reaching.values()) {
-        if (list.length > 1) shared.set(list.join('\u0000'), list);
+        if (list.length > 1) shared.set(list.map(quoteGeoValue).join('\u0000'), list);
     }
 
     const unusedFeatures: number[] = [];
@@ -174,6 +193,7 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
         emptyRows,
         unmatchedRows,
         distinctValues: resolved.size,
+        matchedValues,
         unmatchedValues: [...unmatched],
         sharedValues: [...shared.values()],
         unusedFeatures,

@@ -400,7 +400,8 @@
                     "geoData": "地理数据",
                     "geoKeyEmpty": "加载地理数据后才能列出属性",
                     "geoKeySample": "例如 {{samples}}",
-                    "noSource": "请先选择文件或加载一个 URL。"
+                    "noSource": "请先选择文件或加载一个 URL。",
+                    "noKeys": "这个文件里的区域没有可用来匹配数据的属性。请换一个文件。"
                 }
             },
             "DatasetFields": {

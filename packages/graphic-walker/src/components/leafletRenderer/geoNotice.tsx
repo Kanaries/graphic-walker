@@ -32,7 +32,7 @@ export type GeoNoticeContent =
           unmatchedValues: string[];
           featureSamples: string[];
           emptyRows: number;
-          /** Groups of differently written values that found the same shape. */
+          /** Groups of differently written values that found the same shape, each in a form that shows its spaces. */
           sharedValues: string[][];
           /** Values whose shape has no geometry. */
           undrawnValues: string[];
@@ -123,7 +123,7 @@ export function GeoNotice({ notice }: { notice: GeoNoticeContent }) {
                 {title}
             </p>
             {lines.map((line) => (
-                <p key={line} className="mt-1 break-words text-muted-foreground" data-testid="geo-notice-line">
+                <p key={line} className="mt-1 whitespace-pre-wrap break-words text-muted-foreground" data-testid="geo-notice-line">
                     {line}
                 </p>
             ))}

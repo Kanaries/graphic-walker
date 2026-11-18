@@ -6,7 +6,7 @@ import ja from '../../locales/ja-JP.json';
 const locales: Record<string, any> = { 'en-US': en, 'zh-CN': zh, 'ja-JP': ja };
 const placeholders = (text: string) => [...text.matchAll(/{{(\w+)}}/g)].map((m) => m[1]).sort();
 // The keys the geography settings dialog asks for on top of the ones it had before.
-const settingsKeys = ['selectData', 'manual', 'geoData', 'geoKeyEmpty', 'geoKeySample', 'noSource'];
+const settingsKeys = ['selectData', 'manual', 'geoData', 'geoKeyEmpty', 'geoKeySample', 'noSource', 'noKeys'];
 
 describe.each(Object.keys(locales))('map messages in %s', (name) => {
     const notice: Record<string, string> = locales[name].geo_notice;
