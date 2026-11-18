@@ -20,8 +20,10 @@ export default defineConfig({
     build: {
         outDir: path.resolve(workspaceRoot, 'node_modules/.cache/graphic-walker-e2e'),
         emptyOutDir: true,
+        // Files a fixture loads by URL stay files, so a test fetches them over HTTP as a user's browser would.
+        assetsInlineLimit: 0,
         rollupOptions: {
-            input: [path.resolve(__dirname, 'issue-501.html'), path.resolve(__dirname, 'native-renderer.html')],
+            input: [path.resolve(__dirname, 'issue-501.html'), path.resolve(__dirname, 'native-renderer.html'), path.resolve(__dirname, 'geo-map.html')],
         },
     },
     preview: {

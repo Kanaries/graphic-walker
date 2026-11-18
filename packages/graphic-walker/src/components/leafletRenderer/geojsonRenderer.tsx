@@ -1,102 +1,66 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { GeoJSON, MapContainer, TileLayer, AttributionControl } from 'react-leaflet';
-import { useGeoJSON } from '../../hooks/service';
-import { IGeoUrl } from '../../interfaces';
-import { FeatureCollection, Geometry } from 'geojson';
-import { feature } from 'topojson-client';
-import { canvas } from 'leaflet';
+import type { FeatureCollection } from 'geojson';
+import { canvas, circleMarker } from 'leaflet';
 import { useTranslation } from 'react-i18next';
+import { WORLD_BOUNDS, drawableGeometry } from '../../lib/geo/geometry';
 
-const resolveCoords = (featureGeom: Geometry): [lat: number, lng: number][][] => {
-    switch (featureGeom.type) {
-        case 'Polygon': {
-            const coords = featureGeom.coordinates[0];
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'Point': {
-            const coords = featureGeom.coordinates;
-            return [[[coords[1], coords[0]]]];
-        }
-        case 'GeometryCollection': {
-            const coords = featureGeom.geometries.map<[lat: number, lng: number][][]>(resolveCoords);
-            return coords.flat();
-        }
-        case 'LineString': {
-            const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'MultiLineString': {
-            const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c.map((c) => [c[1], c[0]]));
-        }
-        case 'MultiPoint': {
-            const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'MultiPolygon': {
-            const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c[0].map((c) => [c[1], c[0]]));
-        }
-        default: {
-            return [];
-        }
-    }
-};
-
-export function GeojsonRenderer(props: { url?: IGeoUrl; data?: string; type?: 'GeoJSON' | 'TopoJSON' }) {
-    const d = useMemo(() => (props.data && props.type ? getGeojson(props.data, props.type) : undefined), [props.data, props.type]);
-    const data = useGeoJSON(d, props.url);
+/**
+ * A preview of the shapes in a file, for the geography settings. `tileUrl` follows the chart's own
+ * setting: undefined draws the default basemap, an empty string draws none.
+ */
+export function GeojsonRenderer(props: { data?: FeatureCollection; loading?: boolean; tileUrl?: string }) {
+    const { data, loading, tileUrl } = props;
     const [k, setK] = useState(0);
+    // Leaflet's GeoJSON layer reads its data once, so new data needs a new layer.
     useEffect(() => setK((x) => x + 1), [data]);
+    // Leaflet throws on a coordinate it cannot read, which would take the whole dialog down. So the
+    // preview gets only the geometry the chart itself would draw.
+    const drawable = useMemo<FeatureCollection | undefined>(() => {
+        if (!data) return undefined;
+        return {
+            type: 'FeatureCollection',
+            features: data.features.flatMap((feature) => {
+                const geometry = drawableGeometry(feature?.geometry);
+                return geometry ? [{ type: 'Feature' as const, properties: {}, geometry }] : [];
+            }),
+        };
+    }, [data]);
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
 
-    if (!d && !props.url) return null;
-    if (!data) {
+    if (loading) {
         return <div className="w-full flex-1 flex items-center justify-center border-l">{t('geography_settings.loading')}</div>;
     }
+    if (!drawable) return null;
     return (
-        <div className="w-full flex-1 relative">
-            <Renderer key={k} data={data} />
+        <div className="w-full flex-1 relative" data-testid="geo-config-preview">
+            <Renderer key={k} data={drawable} tileUrl={tileUrl} />
         </div>
     );
 }
 
-function Renderer(props: { data?: FeatureCollection }) {
+function Renderer(props: { data?: FeatureCollection; tileUrl?: string }) {
     return (
         <MapContainer
             preferCanvas
             attributionControl={false}
             center={[0, 0]}
-            bounds={[
-                [-180, -90],
-                [180, 90],
-            ]}
+            bounds={WORLD_BOUNDS}
             renderer={canvas()}
             zoom={1}
             style={{ width: '100%', height: '100%', zIndex: 1 }}
         >
-            <TileLayer
-                className="map-tile"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            {props.tileUrl === undefined && (
+                <TileLayer
+                    className="map-tile"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+            )}
+            {props.tileUrl && <TileLayer className="map-tile" url={props.tileUrl} />}
             <AttributionControl prefix="Leaflet" />
-            {props.data && <GeoJSON data={props.data} />}
+            {/* Points as small circles, the way the chart draws them. Leaflet's default is an image marker. */}
+            {props.data && <GeoJSON data={props.data} pointToLayer={(_, position) => circleMarker(position, { radius: 3, weight: 1 })} />}
         </MapContainer>
     );
-}
-
-function getGeojson(str: string, type: 'GeoJSON' | 'TopoJSON') {
-    try {
-        const data = JSON.parse(str);
-        const geoJSON = type === 'GeoJSON' ? data : (feature(data, Object.keys(data.objects)[0]) as unknown as FeatureCollection);
-        if (!('features' in geoJSON)) {
-            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
-            return undefined;
-        }
-        return geoJSON;
-    } catch (e) {
-        console.error(e);
-    }
-    return undefined;
 }

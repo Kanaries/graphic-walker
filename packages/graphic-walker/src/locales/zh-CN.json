@@ -134,6 +134,31 @@
         "shelf_rows": "行",
         "shelf_columns": "列"
     },
+    "geo_notice": {
+        "no_data_title": "这张地图还没有区域形状",
+        "no_data_desc": "在“地理信息配置”里选择或上传 GeoJSON 或 TopoJSON 文件。",
+        "no_field_title": "还没有字段指明每行数据属于哪个区域",
+        "no_field_desc": "把表示区域名称或代码的字段拖到“地理 ID”栏。",
+        "bad_key_title": "没有区域带“{{key}}”这个属性",
+        "bad_key_desc": "在“地理信息配置”里换一个地理 ID 属性。",
+        "unmatched_title": "{{total}} 个值里有 {{matched}} 个匹配到区域",
+        "unmatched_values": "没有匹配到区域的值：{{values}}",
+        "unmatched_more": "{{values}}，另有 {{count}} 个",
+        "unmatched_key": "地图按“{{key}}”属性匹配，它的值是这样的：{{samples}}。",
+        "shared_title": "有不同的值指向同一个区域",
+        "shared_values": "指向同一区域的值会叠在一起画，数值不会相加：{{values}}",
+        "no_geometry_title": "有些匹配到的区域没有可画的形状",
+        "no_geometry_values": "文件里这些区域没有几何数据：{{values}}",
+        "empty_rows": "{{count}} 行没有可用来匹配的值。",
+        "load_failed_title": "地图形状加载失败",
+        "error_network": "请求没有完成。请检查地址和网络。",
+        "error_http": "服务器返回了状态码 {{detail}}。",
+        "error_json": "文件不是有效的 JSON。",
+        "error_format": "文件既不是 GeoJSON FeatureCollection，也不是 TopoJSON。",
+        "error_object": "TopoJSON 文件里没有这个名字的对象。文件里有：{{detail}}。",
+        "retry": "重试",
+        "dismiss": "关闭"
+    },
     "constant": {
         "row_count": "行数",
         "mea_key": "度量名称",
@@ -369,7 +394,14 @@
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "输入在线资源地址",
                     "load": "加载",
-                    "loading": "加载地理数据中..."
+                    "loading": "加载地理数据中...",
+                    "selectData": "选择地理数据",
+                    "manual": "手动配置",
+                    "geoData": "地理数据",
+                    "geoKeyEmpty": "加载地理数据后才能列出属性",
+                    "geoKeySample": "例如 {{samples}}",
+                    "noSource": "请先选择文件或加载一个 URL。",
+                    "noKeys": "这个文件里的区域没有可用来匹配数据的属性。请换一个文件。"
                 }
             },
             "DatasetFields": {

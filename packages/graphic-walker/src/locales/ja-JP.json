@@ -134,6 +134,31 @@
         "shelf_rows": "行",
         "shelf_columns": "列"
     },
+    "geo_notice": {
+        "no_data_title": "この地図にはまだ図形がありません",
+        "no_data_desc": "「地理情報設定」で GeoJSON または TopoJSON ファイルを選択するかアップロードしてください。",
+        "no_field_title": "各行がどの地域に属するかを示すフィールドがありません",
+        "no_field_desc": "地域の名前またはコードを持つフィールドを「地理ID」に置いてください。",
+        "bad_key_title": "「{{key}}」の値を持つ図形がありません",
+        "bad_key_desc": "「地理情報設定」で別のフィーチャーIDを選んでください。",
+        "unmatched_title": "{{total}} 件の値のうち {{matched}} 件が図形に一致しました",
+        "unmatched_values": "図形が見つからない値: {{values}}",
+        "unmatched_more": "{{values}} ほか {{count}} 件",
+        "unmatched_key": "図形は「{{key}}」で照合します。値の例: {{samples}}",
+        "shared_title": "異なる値が同じ図形を指しています",
+        "shared_values": "同じ図形を指す値は重ねて描かれ、合算されません: {{values}}",
+        "no_geometry_title": "一致した図形の一部は描画できません",
+        "no_geometry_values": "ファイルにジオメトリがない値: {{values}}",
+        "empty_rows": "{{count}} 行には照合する値がありません。",
+        "load_failed_title": "地図の図形を読み込めませんでした",
+        "error_network": "リクエストが完了しませんでした。URL とネットワークを確認してください。",
+        "error_http": "サーバーがステータス {{detail}} を返しました。",
+        "error_json": "ファイルは有効な JSON ではありません。",
+        "error_format": "ファイルは GeoJSON の FeatureCollection でも TopoJSON でもありません。",
+        "error_object": "TopoJSON ファイルにその名前のオブジェクトがありません。あるのは: {{detail}}",
+        "retry": "再試行",
+        "dismiss": "閉じる"
+    },
     "constant": {
         "row_count": "行数",
         "mea_key": "名",
@@ -363,7 +388,14 @@
                     "href": "{{format}} URL",
                     "hrefPlaceholder": "{{format}} URLを入力",
                     "load": "ロード",
-                    "loading": "地理データを読み込んでいます..."
+                    "loading": "地理データを読み込んでいます...",
+                    "selectData": "地理データを選択",
+                    "manual": "手動設定",
+                    "geoData": "地理データ",
+                    "geoKeyEmpty": "地理データを読み込むとプロパティが表示されます",
+                    "geoKeySample": "例: {{samples}}",
+                    "noSource": "先にファイルを選ぶか URL を読み込んでください。",
+                    "noKeys": "このファイルの図形には、データと照合できるプロパティがありません。別のファイルを選んでください。"
                 }
             },
             "DatasetFields": {

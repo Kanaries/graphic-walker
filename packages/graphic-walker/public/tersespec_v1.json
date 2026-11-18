@@ -878,6 +878,10 @@
                 },
                 "url": {
                     "type": "string"
+                },
+                "objectKey": {
+                    "type": "string",
+                    "description": "For TopoJSON: the name of the object to draw. Defaults to the first key of `objects`."
                 }
             },
             "required": [

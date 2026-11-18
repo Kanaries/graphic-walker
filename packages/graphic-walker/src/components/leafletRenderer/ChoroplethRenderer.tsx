@@ -1,20 +1,21 @@
 import React, { Fragment, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
-import { CircleMarker, MapContainer, Polygon, Marker, TileLayer, Tooltip, AttributionControl } from 'react-leaflet';
+import { CircleMarker, MapContainer, Polygon, Polyline, Marker, TileLayer, Tooltip, AttributionControl } from 'react-leaflet';
 import { type Map, divIcon } from 'leaflet';
 import type { DeepReadonly, IChannelScales, IGeoUrl, IRow, IViewField, VegaGlobalConfig } from '../../interfaces';
-import type { FeatureCollection, Geometry } from 'geojson';
+import type { FeatureCollection } from 'geojson';
 import { getMeaAggKey, getMeaAggName } from '../../utils';
 import { useColorScale, useOpacityScale } from './encodings';
-import { isValidLatLng } from './POIRenderer';
 import { TooltipContent } from './tooltip';
 import { useAppRootContext } from '../appRoot';
-import { useGeoJSON } from '../../hooks/service';
+import { useGeoData } from '../../hooks/service';
 import { useTranslation } from 'react-i18next';
-import { ChangeView } from './utils';
+import { ChangeView, useDisplayValueFormatter } from './utils';
 import ColorPanel from './color';
-import { getColor } from '@/utils/useTheme';
-import { field } from 'vega';
 import { themeContext } from '@/store/theme';
+import { WORLD_BOUNDS, extendBounds, resolveParts, ringCentroid, type GeoPart, type LatLngBounds } from '../../lib/geo/geometry';
+import { featureKeyValue, geoValueText, matchFeatures, quoteGeoValue } from '../../lib/geo/matching';
+import { geoDataErrorOf } from '../../lib/geo/parse';
+import { GeoLoadFailed, GeoNotice, type GeoNoticeContent } from './geoNotice';
 
 export interface IChoroplethRendererProps {
     name?: string;
@@ -38,64 +39,69 @@ export interface IChoroplethRendererProps {
 
 export interface IChoroplethRendererRef {}
 
-const resolveCoords = (featureGeom: Geometry): [lat: number, lng: number][][] => {
-    switch (featureGeom.type) {
-        case 'Polygon': {
-            const coords = featureGeom.coordinates[0];
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'Point': {
-            const coords = featureGeom.coordinates;
-            return [[[coords[1], coords[0]]]];
-        }
-        case 'GeometryCollection': {
-            const coords = featureGeom.geometries.map<[lat: number, lng: number][][]>(resolveCoords);
-            return coords.flat();
-        }
-        case 'LineString': {
-            const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'MultiLineString': {
-            const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c.map<[lat: number, lng: number]>((c) => [c[1], c[0]]));
-        }
-        case 'MultiPoint': {
-            const coords = featureGeom.coordinates;
-            return [coords.map<[lat: number, lng: number]>((c) => [c[1], c[0]])];
-        }
-        case 'MultiPolygon': {
-            const coords = featureGeom.coordinates;
-            return coords.map<[lat: number, lng: number][]>((c) => c[0].map<[lat: number, lng: number]>((c) => [c[1], c[0]]));
-        }
-        default: {
-            return [];
-        }
-    }
+/** A label as a DOM node. The text goes in as text, so markup in the data stays inert. */
+const labelIcon = (label: string) => {
+    const node = document.createElement('div');
+    node.style.cssText = 'font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;';
+    node.textContent = label;
+    return divIcon({ className: '!bg-transparent !border-none', html: node });
 };
 
-const resolveCenter = (coordinates: [lat: number, lng: number][]): [lng: number, lat: number] => {
-    let area = 0;
-    let centroid: [lat: number, lng: number] = [0, 0];
+const fieldKey = (field: DeepReadonly<IViewField>, defaultAggregated: boolean) =>
+    defaultAggregated && field.analyticType === 'measure' && field.aggName ? getMeaAggKey(field.fid, field.aggName) : field.fid;
 
-    for (let i = 0; i < coordinates.length - 1; i++) {
-        let [x1, y1] = coordinates[i];
-        let [x2, y2] = coordinates[i + 1];
+interface IShapeStyle {
+    fill: string;
+    fillOpacity: number;
+    border: string;
+}
 
-        let tempArea = x1 * y2 - x2 * y1;
-        area += tempArea;
-
-        centroid[0] += (x1 + x2) * tempArea;
-        centroid[1] += (y1 + y2) * tempArea;
+/** Draws one piece of a feature. `children` is its tooltip. */
+function GeoShape({ part, style, label, children }: { part: GeoPart; style: IShapeStyle; label?: string; children?: React.ReactNode }) {
+    if (part.type === 'point') {
+        return (
+            <CircleMarker
+                center={part.position}
+                radius={3}
+                opacity={0.8}
+                fillOpacity={style.fillOpacity}
+                fillColor={style.fill}
+                color={style.border}
+                weight={1}
+                stroke
+                fill
+            >
+                {children}
+            </CircleMarker>
+        );
     }
-
-    area /= 2;
-
-    centroid[0] /= 6 * area;
-    centroid[1] /= 6 * area;
-
-    return centroid;
-};
+    if (part.type === 'line') {
+        return (
+            <Polyline positions={part.positions} pathOptions={{ color: style.fill, opacity: Math.max(style.fillOpacity, 0.3), weight: 2 }}>
+                {children}
+            </Polyline>
+        );
+    }
+    const centre = label ? ringCentroid(part.rings[0]) : null;
+    return (
+        <>
+            <Polygon
+                positions={part.rings}
+                pathOptions={{
+                    fillOpacity: style.fillOpacity * 0.8,
+                    fillColor: style.fill,
+                    color: style.border,
+                    weight: 1,
+                    stroke: true,
+                    fill: true,
+                }}
+            >
+                {children}
+            </Polygon>
+            {label && centre && <Marker position={centre} interactive={false} icon={labelIcon(label)} />}
+        </>
+    );
+}
 
 const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendererProps>(function ChoroplethRenderer(props, ref) {
     const {
@@ -122,107 +128,45 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
 
     useImperativeHandle(ref, () => ({}));
 
-    const features = useGeoJSON(localFeatures, featuresUrl);
+    const geo = useGeoData(localFeatures, featuresUrl);
+    const features = geo.data;
     const { t } = useTranslation('translation');
 
-    const geoIndices: string[] = useMemo(() => {
-        if (geoId) {
-            return data.map((row) => row[geoId.fid]);
-        }
-        return [];
-    }, [geoId, data]);
+    const geoValues = useMemo<unknown[]>(() => (geoId ? data.map((row) => row[geoId.fid]) : []), [geoId, data]);
 
-    const [indices, geoShapes] = useMemo<[indices: number[], geoShapes: (FeatureCollection['features'][number] | undefined)[]]>(() => {
-        if (geoIndices.length && geoKey && features) {
-            const indices: number[] = [];
-            const shapes = geoIndices.map((id, i) => {
-                const feature = id ? features.features.find((f) => f.properties && f.properties[geoKey] === id) : undefined;
-                if (feature) {
-                    indices.push(i);
-                }
-                return feature;
-            });
-            return [indices, shapes];
-        }
-        return [[], []];
-    }, [geoIndices, features, geoKey]);
+    const match = useMemo(() => (features ? matchFeatures(geoValues, features.features, geoKey) : undefined), [geoValues, features, geoKey]);
 
-    const missingDataGeoShapes = useMemo(() => {
-        if (showAllGeoshapeInChoropleth && features) {
-            const indices = new Set(geoIndices);
-            return features.features
-                .filter((x) => x.properties)
-                .filter((x) => !indices.has(x.properties![geoKey]))
-                .map((f) => ({ coords: resolveCoords(f.geometry), name: f.properties![geoKey] }));
-        }
-        return [];
-    }, [geoIndices, features, showAllGeoshapeInChoropleth, geoKey]);
+    /** The drawable pieces of a feature, worked out on first use. */
+    const partsOf = useMemo(() => {
+        const cache: GeoPart[][] = [];
+        return (index: number) => (cache[index] ??= resolveParts(features?.features[index]?.geometry));
+    }, [features]);
 
-    useEffect(() => {
-        if (geoShapes.length > 0) {
-            const notMatched = geoShapes.filter((f) => !f);
-            if (notMatched.length) {
-                console.warn(
-                    `Failed to render ${notMatched.length.toLocaleString()} items of ${data.length.toLocaleString()} rows due to missing geojson feature.`
-                );
+    const bounds = useMemo<LatLngBounds>(() => {
+        if (!match) return WORLD_BOUNDS;
+        let found: LatLngBounds | null = null;
+        const seen = new Set<number>();
+        for (const row of match.matchedRows) {
+            for (const index of match.rowFeatures[row]) {
+                if (seen.has(index)) continue;
+                seen.add(index);
+                found = extendBounds(found, partsOf(index));
             }
         }
-    }, [geoShapes]);
-
-    const lngLat = useMemo<[lat: number, lng: number][][][]>(() => {
-        if (geoShapes.length > 0) {
-            return geoShapes.map<[lat: number, lng: number][][]>((feature) => {
-                if (feature) {
-                    return resolveCoords(feature.geometry);
-                }
-                return [];
-            }, []);
+        if (!found && showAllGeoshapeInChoropleth) {
+            for (const index of match.unusedFeatures) {
+                found = extendBounds(found, partsOf(index));
+            }
         }
-        return [];
-    }, [geoShapes]);
-
-    const [bounds, center] = useMemo<[bounds: [[n: number, w: number], [s: number, e: number]], center: [lng: number, lat: number]]>(() => {
-        const allLngLat = lngLat.flat(2);
-        if (allLngLat.length > 0) {
-            const [bounds, coords] = allLngLat.reduce<[bounds: [[w: number, n: number], [e: number, s: number]], center: [lat: number, lng: number]]>(
-                ([bounds, acc], [lat, lng]) => {
-                    if (lat < bounds[0][0]) {
-                        bounds[0][0] = lat;
-                    }
-                    if (lat > bounds[1][0]) {
-                        bounds[1][0] = lat;
-                    }
-                    if (lng < bounds[0][1]) {
-                        bounds[0][1] = lng;
-                    }
-                    if (lng > bounds[1][1]) {
-                        bounds[1][1] = lng;
-                    }
-                    return [bounds, [acc[0] + lng, acc[1] + lat]];
-                },
-                [
-                    [[...allLngLat[0]], [...allLngLat[0]]],
-                    [0, 0],
-                ]
-            );
-            return [bounds, [coords[0] / lngLat.length, coords[1] / lngLat.length] as [number, number]];
-        }
-
-        return [
-            [
-                [-180, -90],
-                [180, 90],
-            ],
-            [0, 0],
-        ];
-    }, [lngLat]);
+        return found ?? WORLD_BOUNDS;
+    }, [match, partsOf, showAllGeoshapeInChoropleth]);
 
     const distribution = useMemo(() => {
-        if (scaleIncludeUnmatchedChoropleth) {
+        if (scaleIncludeUnmatchedChoropleth || !match) {
             return data;
         }
-        return indices.map((i) => data[i]);
-    }, [data, indices, scaleIncludeUnmatchedChoropleth]);
+        return match.matchedRows.map((i) => data[i]);
+    }, [data, match, scaleIncludeUnmatchedChoropleth]);
 
     const opacityScale = useOpacityScale(distribution, opacity, defaultAggregated, scales);
     const { mapper: colorScale, display: colorDisplay } = useColorScale(distribution, color, defaultAggregated, vegaConfig);
@@ -230,9 +174,105 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
     const tooltipFields = useMemo(() => {
         return details.concat([color!, opacity!].filter(Boolean)).map((f) => ({
             ...f,
-            key: defaultAggregated && f.analyticType === 'measure' && f.aggName ? getMeaAggKey(f.fid, f.aggName) : f.fid,
+            key: fieldKey(f, defaultAggregated),
         }));
     }, [defaultAggregated, details, color, opacity]);
+
+    const textKey = text ? fieldKey(text, defaultAggregated) : '';
+    const formatText = useDisplayValueFormatter(text?.semanticType ?? 'nominal', vegaConfig);
+    /** A region without data can still carry its name, when names are what the labels show. */
+    const labelsShowGeoId = Boolean(text && geoId && text.fid === geoId.fid);
+
+    const border = darkMode === 'dark' ? '#fff4' : '#0004';
+
+    const shapes = useMemo(() => {
+        if (!match || !features || !geoId) return null;
+        const labelOf = (row: IRow) => {
+            const value = textKey ? row[textKey] : undefined;
+            return value === undefined || value === null || value === '' ? '' : formatText(value);
+        };
+        return match.matchedRows.flatMap((i) => {
+            const row = data[i];
+            const style: IShapeStyle = { fill: colorScale(row), fillOpacity: opacityScale(row), border };
+            const label = labelOf(row);
+            const header = geoValueText(row[geoId.fid]);
+            return match.rowFeatures[i].flatMap((index) =>
+                partsOf(index).map((part, j) => (
+                    <GeoShape key={`${i}-${index}-${j}-${style.fillOpacity}-${style.fill}`} part={part} style={style} label={label}>
+                        {(part.type !== 'point' || tooltipFields.length > 0) && (
+                            <Tooltip>
+                                <header>{header}</header>
+                                {tooltipFields.map((f, k) => (
+                                    <TooltipContent key={k} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
+                                ))}
+                            </Tooltip>
+                        )}
+                    </GeoShape>
+                ))
+            );
+        });
+    }, [match, features, geoId, data, partsOf, colorScale, opacityScale, border, textKey, formatText, tooltipFields, allFields, vegaConfig]);
+
+    const missingShapes = useMemo(() => {
+        if (!match || !features || !showAllGeoshapeInChoropleth) return null;
+        const style: IShapeStyle = { fill: '#808080', fillOpacity: 0.3, border };
+        return match.unusedFeatures.flatMap((index) => {
+            const name = geoValueText(featureKeyValue(features.features[index], geoKey));
+            return partsOf(index).map((part, j) => (
+                <GeoShape key={`missing-${index}-${j}`} part={part} style={style} label={labelsShowGeoId ? name : ''}>
+                    {(part.type !== 'point' || tooltipFields.length > 0) && (
+                        <Tooltip>
+                            <header>{name}</header>
+                            {tooltipFields.map((f, k) => (
+                                <p key={k}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
+                            ))}
+                        </Tooltip>
+                    )}
+                </GeoShape>
+            ));
+        });
+    }, [match, features, showAllGeoshapeInChoropleth, geoKey, partsOf, border, labelsShowGeoId, tooltipFields]);
+
+    /** Values that found a shape with no geometry, so nothing shows where the reader expects a region. */
+    const undrawnValues = useMemo(() => {
+        if (!match) return [];
+        const seen = new Set<string>();
+        const undrawn: string[] = [];
+        for (const row of match.matchedRows) {
+            const value = geoValueText(geoValues[row]);
+            if (seen.has(value)) continue;
+            seen.add(value);
+            if (match.rowFeatures[row].every((index) => partsOf(index).length === 0)) undrawn.push(value);
+        }
+        return undrawn;
+    }, [match, geoValues, partsOf]);
+
+    const notice = useMemo<GeoNoticeContent | null>(() => {
+        if (!features) return localFeatures || featuresUrl ? null : { state: 'no_data' };
+        if (!geoId) return { state: 'no_field' };
+        if (!match || data.length === 0) return null;
+        if (match.keyedFeatures === 0) return { state: 'bad_key', key: geoKey };
+        if (match.unmatchedRows === 0 && match.emptyRows === 0 && match.sharedValues.length === 0 && undrawnValues.length === 0) return null;
+        return {
+            state: 'match',
+            key: geoKey,
+            matched: match.matchedValues,
+            total: match.distinctValues,
+            unmatchedValues: match.unmatchedValues,
+            featureSamples: match.unmatchedRows > 0 ? match.featureSamples : [],
+            emptyRows: match.emptyRows,
+            sharedValues: match.sharedValues.map((group) => group.map(quoteGeoValue)),
+            undrawnValues,
+        };
+    }, [features, localFeatures, featuresUrl, geoId, match, data, geoKey, undrawnValues]);
+
+    useEffect(() => {
+        if (match && match.unmatchedRows > 0) {
+            console.warn(
+                `Failed to render ${match.unmatchedRows.toLocaleString()} items of ${data.length.toLocaleString()} rows due to missing geojson feature.`
+            );
+        }
+    }, [match]);
 
     const mapRef = useRef<Map>(null);
     useEffect(() => {
@@ -265,22 +305,15 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         }
     }, []);
 
-    if (!features && (localFeatures || featuresUrl)) {
+    if (geo.loading) {
         return <div className="flex items-center justify-center w-full h-full">{t('main.tabpanel.settings.geography_settings.loading')}</div>;
     }
-
-    const border = darkMode === 'dark' ? '#fff4' : '#0004';
+    if (geo.error) {
+        return <GeoLoadFailed error={geoDataErrorOf(geo.error)} onRetry={geo.retry} />;
+    }
 
     return (
-        <MapContainer
-            preferCanvas
-            attributionControl={false}
-            center={center}
-            ref={mapRef}
-            zoom={5}
-            bounds={bounds}
-            style={{ width: '100%', height: '100%', zIndex: 1 }}
-        >
+        <MapContainer preferCanvas attributionControl={false} ref={mapRef} zoom={5} bounds={bounds} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <ChangeView bounds={bounds} />
             {tileUrl === undefined && (
                 <TileLayer
@@ -291,143 +324,10 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
             )}
             {tileUrl && <TileLayer className="map-tile" url={tileUrl} />}
             <AttributionControl prefix="Leaflet" />
-            {lngLat.length > 0 &&
-                data.flatMap((row, i) => {
-                    const coords = lngLat[i];
-                    const opacity = opacityScale(row);
-                    const color = colorScale(row);
-                    return coords.map((coord, j) => {
-                        if (coord.length === 0) {
-                            return null;
-                        }
-                        if (coord.length === 1) {
-                            return (
-                                <CircleMarker
-                                    key={`${i}-${opacity}-${color}-${j}`}
-                                    center={coord[0]}
-                                    radius={3}
-                                    opacity={0.8}
-                                    fillOpacity={opacity}
-                                    fillColor={color}
-                                    color={border}
-                                    weight={1}
-                                    stroke
-                                    fill
-                                >
-                                    {tooltipFields.length > 0 && (
-                                        <Tooltip>
-                                            <header>{data[i][geoId.fid]}</header>
-                                            {tooltipFields.map((f, j) => (
-                                                <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
-                                            ))}
-                                        </Tooltip>
-                                    )}
-                                </CircleMarker>
-                            );
-                        }
-                        const center: [lat: number, lng: number] = text && coord.length >= 3 ? resolveCenter(coord) : [NaN, NaN];
-                        return (
-                            <Fragment key={`${i}-${opacity}-${color}-${j}`}>
-                                <Polygon
-                                    positions={coord}
-                                    pathOptions={{
-                                        fillOpacity: opacity * 0.8,
-                                        fillColor: color,
-                                        color: border,
-                                        weight: 1,
-                                        stroke: true,
-                                        fill: true,
-                                    }}
-                                >
-                                    <Tooltip>
-                                        <header>{data[i][geoId.fid]}</header>
-                                        {tooltipFields.map((f, j) => (
-                                            <TooltipContent key={j} allFields={allFields} vegaConfig={vegaConfig} field={f} value={row[f.key]} />
-                                        ))}
-                                    </Tooltip>
-                                </Polygon>
-                                {text && data[i][text.fid] && isValidLatLng(center[0], center[1]) && (
-                                    <Marker
-                                        position={center}
-                                        interactive={false}
-                                        icon={divIcon({
-                                            className: '!bg-transparent !border-none',
-                                            html: `<div style="font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;">${data[i][text.fid]}</div>`,
-                                        })}
-                                    />
-                                )}
-                            </Fragment>
-                        );
-                    });
-                })}
-            {missingDataGeoShapes.flatMap(({ coords, name }, i) => {
-                const opacity = 0.3;
-                const color = '#808080';
-                return coords.map((coord, j) => {
-                    if (coord.length === 0) {
-                        return null;
-                    }
-                    if (coord.length === 1) {
-                        return (
-                            <CircleMarker
-                                key={`missing-${i}-${j}`}
-                                center={coord[0]}
-                                radius={3}
-                                opacity={0.8}
-                                fillOpacity={opacity}
-                                fillColor={color}
-                                color={border}
-                                weight={1}
-                                stroke
-                                fill
-                            >
-                                {tooltipFields.length > 0 && (
-                                    <Tooltip>
-                                        <header>{name}</header>
-                                        {tooltipFields.map((f, j) => (
-                                            <p key={j}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
-                                        ))}
-                                    </Tooltip>
-                                )}
-                            </CircleMarker>
-                        );
-                    }
-                    const center: [lat: number, lng: number] = text && coord.length >= 3 ? resolveCenter(coord) : [NaN, NaN];
-                    return (
-                        <Fragment key={`missing-${i}-${j}`}>
-                            <Polygon
-                                positions={coord}
-                                pathOptions={{
-                                    fillOpacity: opacity * 0.8,
-                                    fillColor: color,
-                                    color: border,
-                                    weight: 1,
-                                    stroke: true,
-                                    fill: true,
-                                }}
-                            >
-                                <Tooltip>
-                                    <header>{name}</header>
-                                    {tooltipFields.map((f, j) => (
-                                        <p key={j}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
-                                    ))}
-                                </Tooltip>
-                            </Polygon>
-                            {text && data[i][text.fid] && isValidLatLng(center[0], center[1]) && (
-                                <Marker
-                                    position={center}
-                                    interactive={false}
-                                    icon={divIcon({
-                                        className: '!bg-transparent !border-none',
-                                        html: `<div style="font-size: 11px; transform: translate(-50%, -50%); opacity: 0.8;">${data[i][text.fid]}</div>`,
-                                    })}
-                                />
-                            )}
-                        </Fragment>
-                    );
-                });
-            })}
+            {shapes}
+            {missingShapes}
             {colorDisplay && <ColorPanel display={colorDisplay} field={color!} />}
+            {notice && <GeoNotice notice={notice} />}
         </MapContainer>
     );
 });

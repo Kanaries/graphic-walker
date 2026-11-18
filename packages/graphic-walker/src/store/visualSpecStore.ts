@@ -16,7 +16,7 @@ import {
 } from '../models/visSpecHistory';
 import { create } from '../models/withHistory';
 import { emptyEncodings, forwardVisualConfigs, visSpecDecoder } from '../utils/save';
-import { feature } from 'topojson-client';
+import { toFeatureCollection } from '../lib/geo/parse';
 import type { FeatureCollection } from 'geojson';
 import {
     DraggableFieldState,
@@ -771,10 +771,11 @@ export class VizSpecStore {
     }
 
     setGeographicData(data: IGeographicData, geoKey: string, geoUrl?: IGeoUrl) {
-        const geoJSON =
-            data.type === 'GeoJSON' ? data.data : (feature(data.data, data.objectKey || Object.keys(data.data.objects)[0]) as unknown as FeatureCollection);
-        if (!('features' in geoJSON)) {
-            console.error('Invalid GeoJSON: GeoJSON must be a FeatureCollection, but got', geoJSON);
+        let geoJSON: FeatureCollection;
+        try {
+            geoJSON = toFeatureCollection(data.data, data.type === 'TopoJSON' ? data.objectKey : undefined);
+        } catch (error) {
+            console.error('Invalid geographic data: expected a GeoJSON FeatureCollection or a TopoJSON topology.', error);
             return;
         }
         this.localGeoJSON = geoJSON;
@@ -783,6 +784,11 @@ export class VizSpecStore {
         } else {
             this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], geoJSON, geoKey, undefined);
         }
+    }
+
+    /** Points the chart at geometry behind a URL and drops any geometry stored in the chart itself. */
+    setGeoUrl(geoUrl: IGeoUrl, geoKey: string) {
+        this.visList[this.visIndex] = performers.setGeoData(this.visList[this.visIndex], undefined, geoKey, geoUrl);
     }
 
     clearGeographicData() {
