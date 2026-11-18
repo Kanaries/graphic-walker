@@ -23,7 +23,8 @@ export type GeoNoticeContent =
     | { state: 'no_data' | 'no_field' }
     | { state: 'bad_key'; key: string }
     | {
-          state: 'unmatched';
+          /** What matching the data to the shapes left to report. */
+          state: 'match';
           key: string;
           /** Distinct values that found a shape, and distinct values in all. */
           matched: number;
@@ -31,9 +32,14 @@ export type GeoNoticeContent =
           unmatchedValues: string[];
           featureSamples: string[];
           emptyRows: number;
+          /** Groups of differently written values that found the same shape. */
+          sharedValues: string[][];
+          /** Values whose shape has no geometry. */
+          undrawnValues: string[];
       };
 
 const VALUE_LIMIT = 5;
+const GROUP_LIMIT = 3;
 
 /**
  * Says, on the map, why some or all of the data is not drawn. It sits in a corner and can be
@@ -55,20 +61,46 @@ export function GeoNotice({ notice }: { notice: GeoNoticeContent }) {
 
     if (dismissed === signature) return null;
 
+    /** The first few of a list, with a count of the rest. */
+    const some = (items: string[], limit: number, separator = ', ') => {
+        const shown = items.slice(0, limit).join(separator);
+        return items.length > limit ? say('unmatched_more', { values: shown, count: items.length - limit }) : shown;
+    };
+
+    let kind: string = notice.state;
     let title: string;
     const lines: string[] = [];
-    if (notice.state === 'unmatched') {
-        const blank = notice.emptyRows > 0 ? say('empty_rows', { count: notice.emptyRows }) : '';
+    if (notice.state === 'match') {
+        // Each thing to report has a title and a line that reads on its own. The first one gives
+        // the notice its title. The others follow as lines.
+        const issues: { kind: string; title: string; line?: string }[] = [];
         if (notice.unmatchedValues.length > 0) {
-            title = say('unmatched_title', { matched: notice.matched, total: notice.total });
-            const more = notice.unmatchedValues.length - VALUE_LIMIT;
-            const shown = notice.unmatchedValues.slice(0, VALUE_LIMIT).join(', ');
-            lines.push(say('unmatched_values', { values: more > 0 ? say('unmatched_more', { values: shown, count: more }) : shown }));
-            if (blank) lines.push(blank);
-            if (notice.featureSamples.length > 0) lines.push(say('unmatched_key', { key: notice.key, samples: notice.featureSamples.join(', ') }));
-        } else {
-            // Every value found its shape. Only the blank rows are left to mention.
-            title = blank;
+            issues.push({
+                kind: 'unmatched',
+                title: say('unmatched_title', { matched: notice.matched, total: notice.total }),
+                line: say('unmatched_values', { values: some(notice.unmatchedValues, VALUE_LIMIT) }),
+            });
+        }
+        if (notice.sharedValues.length > 0) {
+            const groups = notice.sharedValues.map((group) => some(group, VALUE_LIMIT, ' / '));
+            issues.push({ kind: 'shared', title: say('shared_title'), line: say('shared_values', { values: some(groups, GROUP_LIMIT, '; ') }) });
+        }
+        if (notice.undrawnValues.length > 0) {
+            issues.push({
+                kind: 'no_geometry',
+                title: say('no_geometry_title'),
+                line: say('no_geometry_values', { values: some(notice.undrawnValues, VALUE_LIMIT) }),
+            });
+        }
+        if (notice.emptyRows > 0) issues.push({ kind: 'empty_rows', title: say('empty_rows', { count: notice.emptyRows }) });
+        if (issues.length === 0) return null;
+
+        kind = issues[0].kind;
+        title = issues[0].title;
+        if (issues[0].line) lines.push(issues[0].line);
+        for (const issue of issues.slice(1)) lines.push(issue.line ?? issue.title);
+        if (notice.unmatchedValues.length > 0 && notice.featureSamples.length > 0) {
+            lines.push(say('unmatched_key', { key: notice.key, samples: notice.featureSamples.join(', ') }));
         }
     } else if (notice.state === 'bad_key') {
         title = say('bad_key_title', { key: notice.key });
@@ -83,7 +115,7 @@ export function GeoNotice({ notice }: { notice: GeoNoticeContent }) {
             ref={box}
             role="status"
             data-testid="geo-notice"
-            data-state={notice.state}
+            data-state={kind}
             className="absolute bottom-3 left-3 max-w-sm cursor-default rounded-md border bg-popover p-3 pr-8 text-xs text-popover-foreground shadow-md"
             style={{ zIndex: 999 }}
         >

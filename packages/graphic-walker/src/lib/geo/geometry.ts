@@ -34,7 +34,12 @@ function polygonParts(coords: Position[][]): GeoPart[] {
     return [{ type: 'polygon', rings: [outline, ...holes] }];
 }
 
-/** Turns a GeoJSON geometry into the pieces the map draws. GeoJSON is [lng, lat], the result is [lat, lng]. */
+const listOf = <T>(value: T[] | null | undefined): T[] => (Array.isArray(value) ? value : []);
+
+/**
+ * Turns a GeoJSON geometry into the pieces the map draws. GeoJSON is [lng, lat], the result is
+ * [lat, lng]. A geometry that is missing or malformed gives no pieces.
+ */
 export function resolveParts(geometry: Geometry | null | undefined): GeoPart[] {
     if (!geometry) return [];
     switch (geometry.type) {
@@ -45,13 +50,13 @@ export function resolveParts(geometry: Geometry | null | undefined): GeoPart[] {
         case 'LineString':
             return lineParts(geometry.coordinates);
         case 'MultiLineString':
-            return geometry.coordinates.flatMap(lineParts);
+            return listOf(geometry.coordinates).flatMap(lineParts);
         case 'Polygon':
             return polygonParts(geometry.coordinates);
         case 'MultiPolygon':
-            return geometry.coordinates.flatMap(polygonParts);
+            return listOf(geometry.coordinates).flatMap(polygonParts);
         case 'GeometryCollection':
-            return geometry.geometries.flatMap(resolveParts);
+            return listOf(geometry.geometries).flatMap(resolveParts);
         default:
             return [];
     }

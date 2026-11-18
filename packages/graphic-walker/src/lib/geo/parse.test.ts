@@ -62,6 +62,13 @@ describe('toFeatureCollection', () => {
         expect(codeOf(() => toFeatureCollection(null))).toEqual({ code: 'format', detail: '' });
         expect(codeOf(() => toFeatureCollection('text'))).toEqual({ code: 'format', detail: '' });
     });
+
+    it('rejects a collection whose features are not objects, and keeps a feature without geometry', () => {
+        expect(codeOf(() => toFeatureCollection({ type: 'FeatureCollection', features: [null] }))).toEqual({ code: 'format', detail: 'features' });
+        expect(codeOf(() => toFeatureCollection({ type: 'FeatureCollection', features: [feature, 'text'] }))).toEqual({ code: 'format', detail: 'features' });
+        const bare = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'A' }, geometry: null }] };
+        expect(toFeatureCollection(bare)).toBe(bare);
+    });
 });
 
 describe('parseGeoText', () => {

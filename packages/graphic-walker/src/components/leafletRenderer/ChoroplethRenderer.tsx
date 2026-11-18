@@ -233,22 +233,38 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
         });
     }, [match, features, showAllGeoshapeInChoropleth, geoKey, partsOf, border, labelsShowGeoId, tooltipFields]);
 
+    /** Values that found a shape with no geometry, so nothing shows where the reader expects a region. */
+    const undrawnValues = useMemo(() => {
+        if (!match) return [];
+        const seen = new Set<string>();
+        const undrawn: string[] = [];
+        for (const row of match.matchedRows) {
+            const value = geoValueText(geoValues[row]);
+            if (seen.has(value)) continue;
+            seen.add(value);
+            if (match.rowFeatures[row].every((index) => partsOf(index).length === 0)) undrawn.push(value);
+        }
+        return undrawn;
+    }, [match, geoValues, partsOf]);
+
     const notice = useMemo<GeoNoticeContent | null>(() => {
         if (!features) return localFeatures || featuresUrl ? null : { state: 'no_data' };
         if (!geoId) return { state: 'no_field' };
         if (!match || data.length === 0) return null;
         if (match.keyedFeatures === 0) return { state: 'bad_key', key: geoKey };
-        if (match.unmatchedRows === 0 && match.emptyRows === 0) return null;
+        if (match.unmatchedRows === 0 && match.emptyRows === 0 && match.sharedValues.length === 0 && undrawnValues.length === 0) return null;
         return {
-            state: 'unmatched',
+            state: 'match',
             key: geoKey,
             matched: match.distinctValues - match.unmatchedValues.length,
             total: match.distinctValues,
             unmatchedValues: match.unmatchedValues,
             featureSamples: match.unmatchedRows > 0 ? match.featureSamples : [],
             emptyRows: match.emptyRows,
+            sharedValues: match.sharedValues,
+            undrawnValues,
         };
-    }, [features, localFeatures, featuresUrl, geoId, match, data, geoKey]);
+    }, [features, localFeatures, featuresUrl, geoId, match, data, geoKey, undrawnValues]);
 
     useEffect(() => {
         if (match && match.unmatchedRows > 0) {

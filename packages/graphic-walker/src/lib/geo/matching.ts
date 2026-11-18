@@ -21,9 +21,9 @@ export function normalizeGeoValue(value: unknown): string {
  * feature's own `id`, where many files keep their ISO or FIPS code.
  */
 export function featureKeyValue(feature: Feature, key: string): unknown {
-    const value = feature.properties?.[key];
+    const value = feature?.properties?.[key];
     if (value !== undefined && value !== null) return value;
-    return key === 'id' ? feature.id : undefined;
+    return key === 'id' ? feature?.id : undefined;
 }
 
 export interface IFeatureKey {
@@ -51,9 +51,10 @@ export function listFeatureKeys(features: readonly Feature[]): IFeatureKey[] {
         if (entry.samples.length < SAMPLE_LIMIT && !entry.samples.includes(text)) entry.samples.push(text);
     };
     for (const feature of features) {
-        const properties = feature.properties ?? {};
-        for (const key of Object.keys(properties)) add(key, properties[key]);
-        if (!('id' in properties)) add('id', feature.id);
+        const properties = feature?.properties ?? {};
+        // Read through `featureKeyValue`, so the list offers exactly what matching can use.
+        for (const key of Object.keys(properties)) add(key, featureKeyValue(feature, key));
+        if (!('id' in properties)) add('id', feature?.id);
     }
     return [...found.values()];
 }
@@ -78,6 +79,11 @@ export interface IGeoMatch {
     distinctValues: number;
     /** The distinct values behind `unmatchedRows`, in the order they first appear. */
     unmatchedValues: string[];
+    /**
+     * Groups of differently written values that reach the same feature, such as `East` and `EAST`.
+     * The data keeps them as separate rows, so their shapes are drawn on top of each other.
+     */
+    sharedValues: string[][];
     /** Features that no row points at. */
     unusedFeatures: number[];
     /** How many features have a value under the key at all. Zero means the key is wrong for this file. */
@@ -97,6 +103,10 @@ const push = (index: Map<string, number[]>, key: string, i: number) => {
  * rows plus features. A value is tried as written first and then in its normalized form, so a file
  * whose keys differ only by case still resolves each of them exactly. Several features may share a
  * key, as when each island of a country is its own feature. A row then gets all of them.
+ *
+ * Two values that differ only in spelling reach the same feature. This function does not merge
+ * their rows, because only the aggregation knows how to combine them. It reports them in
+ * `sharedValues` instead.
  */
 export function matchFeatures(values: readonly unknown[], features: readonly Feature[], key: string): IGeoMatch {
     const exact = new Map<string, number[]>();
@@ -114,7 +124,8 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
 
     const used = new Set<number>();
     const unmatched = new Set<string>();
-    const distinct = new Set<string>();
+    /** Each distinct value and the features it reaches, looked up once. */
+    const resolved = new Map<string, number[] | undefined>();
     const matchedRows: number[] = [];
     let emptyRows = 0;
     let unmatchedRows = 0;
@@ -124,17 +135,34 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
             emptyRows += 1;
             return [];
         }
-        distinct.add(text);
-        const hit = exact.get(text) ?? loose.get(normalizeGeoValue(text));
+        let hit = resolved.get(text);
+        if (hit === undefined && !resolved.has(text)) {
+            hit = exact.get(text) ?? loose.get(normalizeGeoValue(text));
+            resolved.set(text, hit);
+            if (hit) for (const i of hit) used.add(i);
+        }
         if (!hit) {
             unmatchedRows += 1;
             unmatched.add(text);
             return [];
         }
         matchedRows.push(row);
-        for (const i of hit) used.add(i);
         return hit;
     });
+
+    const reaching = new Map<number, string[]>();
+    for (const [text, hit] of resolved) {
+        if (!hit) continue;
+        for (const i of hit) {
+            const list = reaching.get(i);
+            if (list) list.push(text);
+            else reaching.set(i, [text]);
+        }
+    }
+    const shared = new Map<string, string[]>();
+    for (const list of reaching.values()) {
+        if (list.length > 1) shared.set(list.join('\u0000'), list);
+    }
 
     const unusedFeatures: number[] = [];
     for (let i = 0; i < features.length; i++) {
@@ -145,8 +173,9 @@ export function matchFeatures(values: readonly unknown[], features: readonly Fea
         matchedRows,
         emptyRows,
         unmatchedRows,
-        distinctValues: distinct.size,
+        distinctValues: resolved.size,
         unmatchedValues: [...unmatched],
+        sharedValues: [...shared.values()],
         unusedFeatures,
         keyedFeatures,
         featureSamples,

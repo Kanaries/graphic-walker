@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../../store';
 import Spinner from '../spinner';
@@ -15,6 +15,8 @@ import { useGeoData } from '../../hooks/service';
 import { fetchGeoJson, geoDataErrorOf, isTopology, parseGeoText, toFeatureCollection, topologyObjectKeys, type GeoDataErrorCode } from '../../lib/geo/parse';
 import { listFeatureKeys, suggestFeatureKey } from '../../lib/geo/matching';
 import { useGeoErrorText } from './geoNotice';
+import { themeContext, vegaThemeContext } from '../../store/theme';
+import { getTheme } from '../../utils/useTheme';
 
 const emptyList = [];
 
@@ -32,6 +34,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
     const { t: tGlobal } = useTranslation('translation');
     const { t } = useTranslation('translation', { keyPrefix: 'main.tabpanel.settings' });
     const errorText = useGeoErrorText();
+    // The preview draws the basemap the chart draws: the chart's own setting, else the host theme's.
+    const { vizThemeConfig } = useContext(vegaThemeContext);
+    const mediaTheme = useContext(themeContext);
+    const tileUrl = layout.geoMapTileUrl ?? getTheme({ vizThemeConfig, mediaTheme })?.leafletGeoTileUrl;
 
     const [dataMode, setDataMode] = useState<'GeoJSON' | 'TopoJSON'>(geoUrl?.type ?? 'GeoJSON');
     const [featureId, setFeatureId] = useState('');
@@ -44,7 +50,8 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
     const hasCustomData = url || geojson;
 
     const [selectItem, setSelectItemR] = useState(() => {
-        const i = geoList.findIndex((x) => x.url === geoUrl?.url && x.type === geoUrl?.type);
+        // Two presets can draw different objects of one TopoJSON file, so the object is part of which preset it is.
+        const i = geoList.findIndex((x) => x.url === geoUrl?.url && x.type === geoUrl?.type && (x.objectKey ?? '') === (geoUrl?.objectKey ?? ''));
         if (i === -1 && hasCustomData) {
             return -2;
         }
@@ -115,6 +122,10 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
         // A key the file does not have would match nothing, so move to one it has.
         if (featureKeys.length > 0) setFeatureId((current) => suggestFeatureKey(featureKeys, current));
     }, [featureKeys]);
+
+    // A preset's keys arrive with its file. Until then the key on show belongs to the shapes before
+    // it, and confirming would save a key the preset may not have.
+    const presetReady = !listItem || (remote.data !== undefined && (featureKeys.length === 0 || featureKeys.some((k) => k.key === featureId)));
 
     /** Takes over a parsed file once it is known to hold shapes. Throws a GeoDataError when it does not. */
     const acceptSource = (json: unknown, fromUrl?: string) => {
@@ -211,14 +222,14 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                         </div>
                     </div>
                     {geoList.length > 0 && (
-                        <div className="my-2">
+                        <div className="my-2" data-testid="geo-config-preset">
                             <label className="block text-xs font-medium leading-6">{t('geography_settings.geoData')}</label>
                             <DropdownSelect options={options} selectedKey={`${selectItem}`} onSelect={setSelectItem} />
                         </div>
                     )}
                     {listItem && (
                         <div className={`relative justify-center flex w-full h-80 rounded border shadow-sm`}>
-                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={layout.geoMapTileUrl} />
+                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={tileUrl} />
                         </div>
                     )}
                     {isCustom && (
@@ -274,7 +285,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                                             <div onClick={open} className="flex h-full items-center justify-center w-48">
                                                 {t('geography_settings.jsonInputPlaceholder', { format: dataMode.toLowerCase() })}
                                             </div>
-                                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={layout.geoMapTileUrl} />
+                                            <GeojsonRenderer data={features} loading={remote.loading} tileUrl={tileUrl} />
                                         </div>
                                     )}
                                 </Dropzone>
@@ -298,7 +309,7 @@ const GeoConfigPanel = ({ geoList = emptyList }: { geoList?: IGeoDataItem[] }) =
                     )}
                 </div>
                 <DialogFooter>
-                    <Button children={tGlobal('actions.confirm')} onClick={handleSubmit} />
+                    <Button children={tGlobal('actions.confirm')} onClick={handleSubmit} disabled={!presetReady} data-testid="geo-config-confirm" />
                     <Button
                         children={tGlobal('actions.cancel')}
                         variant="outline"

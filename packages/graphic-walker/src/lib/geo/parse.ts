@@ -66,6 +66,9 @@ export function toFeatureCollection(json: unknown, objectKey?: string): FeatureC
         return converted.type === 'FeatureCollection' ? converted : { type: 'FeatureCollection', features: [converted] };
     }
     if (Array.isArray(json.features)) {
+        // A null or a bare value among the features would break everything that reads them.
+        // A feature without geometry is valid GeoJSON and passes.
+        if (!json.features.every(isRecord)) throw new GeoDataError('format', 'features');
         return json as unknown as FeatureCollection;
     }
     if (json.type === 'Feature' && 'geometry' in json) {

@@ -53,6 +53,16 @@ describe('resolveParts', () => {
     });
 });
 
+describe('resolveParts on files that break the format', () => {
+    it('returns nothing where coordinates or member geometries are missing', () => {
+        const broken = (geometry: object) => resolveParts(geometry as Geometry);
+        expect(broken({ type: 'MultiPolygon', coordinates: null })).toEqual([]);
+        expect(broken({ type: 'MultiLineString' })).toEqual([]);
+        expect(broken({ type: 'GeometryCollection', geometries: null })).toEqual([]);
+        expect(resolveParts('Polygon' as unknown as Geometry)).toEqual([]);
+    });
+});
+
 describe('extendBounds', () => {
     it('returns south-west and north-east corners, latitude first', () => {
         const parts = [

@@ -89,6 +89,29 @@ describe('matchFeatures', () => {
         expect(match.keyedFeatures).toBe(1);
     });
 
+    it('reports values that are written differently and reach the same feature', () => {
+        const squares = [shape({ name: 'EAST' }), shape({ name: 'Westland' })];
+        const match = matchFeatures(['East', 'EAST', 'east', 'EAST', 'West'], squares, 'name');
+        // The rows stay apart: adding them up is for the aggregation, which knows the measure.
+        expect(match.rowFeatures).toEqual([[0], [0], [0], [0], []]);
+        expect(match.sharedValues).toEqual([['East', 'EAST', 'east']]);
+        expect(match.distinctValues).toBe(4);
+        expect(match.unmatchedValues).toEqual(['West']);
+    });
+
+    it('does not report one value that reaches several features, or several rows of one value', () => {
+        const islands = [shape({ name: 'Japan' }), shape({ name: 'Japan' }), shape({ name: 'Korea' })];
+        expect(matchFeatures(['Japan', 'Japan', 'Korea'], islands, 'name').sharedValues).toEqual([]);
+        // Two spellings that reach the same two features are one group, not one per feature.
+        expect(matchFeatures(['Japan', 'JAPAN'], islands, 'name').sharedValues).toEqual([['Japan', 'JAPAN']]);
+    });
+
+    it('skips an entry that is not a feature', () => {
+        const broken = [null, shape({ name: 'Japan' })] as unknown as Feature[];
+        expect(matchFeatures(['Japan'], broken, 'name').rowFeatures).toEqual([[1]]);
+        expect(listFeatureKeys(broken)).toEqual([{ key: 'name', samples: ['Japan'], count: 1 }]);
+    });
+
     it('looks values up in a table, so many rows against many features stay fast', () => {
         const many = Array.from({ length: 5000 }, (_, i) => shape({ name: `Region ${i}` }));
         const values = Array.from({ length: 100000 }, (_, i) => `region ${i % 6000}`);
@@ -115,6 +138,16 @@ describe('listFeatureKeys', () => {
 
     it('does not list the feature id a second time when a property is called id', () => {
         expect(listFeatureKeys([shape({ id: 'inner' }, 'outer')])).toEqual([{ key: 'id', samples: ['inner'], count: 1 }]);
+    });
+
+    it('offers the feature id when the property called id is empty, as matching reads it', () => {
+        const world = [shape({ id: null, name: 'United States' }, 'USA'), shape({ id: null, name: 'Japan' }, 'JPN')];
+        expect(listFeatureKeys(world)).toEqual([
+            { key: 'id', samples: ['USA', 'JPN'], count: 2 },
+            { key: 'name', samples: ['United States', 'Japan'], count: 2 },
+        ]);
+        expect(suggestFeatureKey(listFeatureKeys(world), 'id')).toBe('id');
+        expect(matchFeatures(['USA'], world, 'id').rowFeatures).toEqual([[0]]);
     });
 
     it('suggests the current key when the file has it, else name, else the first', () => {
