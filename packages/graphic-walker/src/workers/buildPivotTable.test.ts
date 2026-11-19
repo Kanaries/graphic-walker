@@ -87,3 +87,27 @@ test('computes a running total for a window with no dimensions', () => {
     const { metric } = buildPivotTable([], [], [{ sales_sum: 30 }], [], [], false, undefined, [sales]);
     expect(metric[0][0]?.sales_sum__window_running_total).toBe(30);
 });
+
+test('uses Vega ascending ordering for case-sensitive dimension values', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'b', sales_sum: 10 }, { group: 'A', sales_sum: 20 }, { group: 'a', sales_sum: 30 }],
+        [], [], false, undefined, [sales]
+    );
+    expect(Object.fromEntries(metric.map(([cell]) => [cell?.group, cell?.sales_sum__window_running_total]))).toEqual({ A: 20, a: 50, b: 60 });
+});
+
+test('uses the immediate previous row for difference and growth rate when the aggregate is null', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'min', windowAgg: 'difference',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'a', sales_min: 10 }, { group: 'b', sales_min: null }, { group: 'c', sales_min: 30 }],
+        [], [], false, undefined, [sales, { ...sales, windowAgg: 'growth_rate' }]
+    );
+    expect(metric.map(([cell]) => [cell?.sales_min__window_difference, cell?.sales_min__window_growth_rate])).toEqual([
+        [null, null], [null, null], [null, null],
+    ]);
+});

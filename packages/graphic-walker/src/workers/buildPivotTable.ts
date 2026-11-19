@@ -169,12 +169,12 @@ function applyWindowAggregations(
             const av = a[orderKey];
             const bv = b[orderKey];
             if (av === bv) return 0;
-            if (av === null || av === undefined) return 1;
-            if (bv === null || bv === undefined) return -1;
-            // Match Vega-Lite and 0.4.84: the window follows the field values.
-            // Header sort settings only change the display order.
-            if (typeof av === 'number' && typeof bv === 'number') return av - bv;
-            return String(av).localeCompare(String(bv));
+            // Match Vega's ascending window order, independent of header display order.
+            if (av == null) return bv == null ? 0 : -1;
+            if (bv == null) return 1;
+            if (Number.isNaN(av)) return Number.isNaN(bv) ? 0 : -1;
+            if (Number.isNaN(bv)) return 1;
+            return av < bv ? -1 : av > bv ? 1 : 0;
         });
 
         windowMeasures.forEach((measure) => {
@@ -207,7 +207,7 @@ function applyWindowAggregations(
                     } else {
                         targetRow[windowKey] = numericValue - prevValue;
                     }
-                    prevValue = numericValue === null ? prevValue : numericValue;
+                    prevValue = numericValue;
                     return;
                 }
 
@@ -228,7 +228,7 @@ function applyWindowAggregations(
                     } else {
                         targetRow[windowKey] = numericValue / prevValue - 1;
                     }
-                    prevValue = numericValue === null ? prevValue : numericValue;
+                    prevValue = numericValue;
                 }
             });
 
