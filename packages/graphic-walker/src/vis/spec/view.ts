@@ -23,9 +23,9 @@ function formatOffset(offset: number) {
 }
 
 function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode, markType: string) {
-    if (stack === 'none') return {};
+    if (stack === 'none') return undefined;
     const positionChannel = ['x', 'y', 'theta', 'radius'].find((channel) => encoding[channel]?.type === 'quantitative');
-    if (!positionChannel) return {};
+    if (!positionChannel) return undefined;
     const otherAxis = positionChannel === 'x' ? 'y' : 'x';
     const stackFields = ['color', 'opacity', 'size', 'shape']
         .map((channel) => encoding[channel])
@@ -34,7 +34,7 @@ function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode,
         stackFields.length > 0 && encoding[positionChannel].aggregate !== null &&
         encoding[otherAxis]?.type !== 'quantitative' && !encoding.xOffset && !encoding.yOffset;
     const stackValue = encoding[positionChannel].stack ?? (implicitStack && (stack === 'zero' || stack === 'stack') ? true : undefined);
-    if (stackValue === undefined || stackValue === null) return {};
+    if (stackValue === undefined || stackValue === null) return undefined;
     const stackEncoding: Record<string, any> = {
         [positionChannel]: {
             ...encoding[positionChannel],
@@ -44,12 +44,10 @@ function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode,
     const order = stackFields.map(({ field, type }) => ({
         field, type, sort: positionChannel === 'y' ? 'descending' : 'ascending',
     }));
-    if (order.length) {
-        stackEncoding.order = order.length === 1 ? order[0] : order;
-    }
+
     const detail = stackFields.filter((field) => field !== encoding.color).map(({ field, type }) => ({ field, type }));
     if (detail.length) stackEncoding.detail = detail;
-    return stackEncoding;
+    return { encoding: stackEncoding, order };
 }
 
 export function getSingleView(props: SingleViewProps) {
@@ -183,9 +181,28 @@ export function getSingleView(props: SingleViewProps) {
             }
         }
         const labelStack = withTextStackEncoding(encoding, stack, markType);
-        // Give both layers the same stack order, while keeping the label's size and opacity independent.
-        if (labelStack.order) mainLayerEncoding.order = labelStack.order;
-        Object.assign(textLayerEncoding, labelStack);
+        let stackOrderTransform: { window: { op: 'dense_rank'; as: string }[]; sort: { field: string; order: string }[] }[] | undefined;
+        if (labelStack) {
+            Object.assign(textLayerEncoding, labelStack.encoding);
+            const { order } = labelStack;
+            if (order.length > 1) {
+                // Vega-Lite 5 drops array-valued order encodings. Rank the grouping tuple once for both layers.
+                const usedFields = new Set([...fields, ...details].map((field) => encodeFid(field.fid)));
+                let stackOrderField = '__gw_stack_order';
+                while (usedFields.has(stackOrderField) || dataSource.some((row) => Object.prototype.hasOwnProperty.call(row, stackOrderField))) {
+                    stackOrderField += '_';
+                }
+                stackOrderTransform = [
+                    {
+                        window: [{ op: 'dense_rank', as: stackOrderField }],
+                        sort: order.map(({ field, sort }) => ({ field, order: sort })),
+                    },
+                ];
+                mainLayerEncoding.order = textLayerEncoding.order = { field: stackOrderField, type: 'quantitative', sort: 'ascending' };
+            } else if (order.length === 1) {
+                mainLayerEncoding.order = textLayerEncoding.order = order[0];
+            }
+        }
 
         // Build text mark with dx/dy offsets for non-rect marks
         const textMark: any = { type: 'text' };
@@ -208,8 +225,8 @@ export function getSingleView(props: SingleViewProps) {
             transform,
             encoding: sharedEncoding,
             layer: [
-                { mark, encoding: mainLayerEncoding },
-                { mark: textMark, encoding: textLayerEncoding },
+                { mark, encoding: mainLayerEncoding, transform: stackOrderTransform },
+                { mark: textMark, encoding: textLayerEncoding, transform: stackOrderTransform },
             ],
         };
     }

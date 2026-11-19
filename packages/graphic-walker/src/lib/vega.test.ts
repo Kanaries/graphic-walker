@@ -115,3 +115,35 @@ test.each([
         view.finalize();
     }
 });
+
+test('preserves the same stack coordinates when color and opacity both group bars', async () => {
+    const { compile } = require('vega-lite');
+    const { parse, View } = require('vega');
+    const [spec] = toVegaSpec({
+        ...chart,
+        geomType: 'bar',
+        columns: [category],
+        rows: [value],
+        opacity: { ...value, fid: 'sub' },
+        dataSource: [
+            { category: 'A', value: 2, sub: 2, group: 'same' },
+            { category: 'A', value: 3, sub: 1, group: 'same' },
+            { category: 'B', value: 5, sub: 2, group: 'same' },
+            { category: 'B', value: 7, sub: 1, group: 'same' },
+        ],
+    });
+    const view = new View(parse(compile(spec).spec), { renderer: 'none' });
+    try {
+        await view.runAsync();
+        const marks = view.scenegraph().root.items[0].items;
+        const bars = marks.find((mark) => mark.marktype === 'rect' && mark.role === 'mark').items;
+        const labels = marks.find((mark) => mark.marktype === 'text' && mark.role === 'mark').items;
+        expect(bars).toHaveLength(4);
+        for (const bar of bars) {
+            const label = labels.find((item) => String(item.text) === String(bar.datum.value));
+            expect(label.y).toBeCloseTo(bar.y);
+        }
+    } finally {
+        view.finalize();
+    }
+});
