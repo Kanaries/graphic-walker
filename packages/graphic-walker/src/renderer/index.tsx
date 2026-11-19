@@ -12,6 +12,7 @@ import {
     IChannelScales,
     IViewField,
     IVisualLayout,
+    Filters,
 } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
@@ -49,13 +50,14 @@ interface RendererProps {
     scales?: IChannelScales;
     csvRef?: React.RefObject<{ download: () => void }>;
     overrideSize?: IVisualLayout['size'];
+    enableVizEmbedMenu?: boolean;
 }
 /**
  * Renderer of GraphicWalker editor.
  * Depending on global store.
  */
 const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, ref) {
-    const { computationFunction, vizThemeConfig, csvRef, overrideSize } = props;
+    const { computationFunction, vizThemeConfig, csvRef, overrideSize, enableVizEmbedMenu = true } = props;
     const vizStore = useVizStore();
     const {
         allFields,
@@ -147,9 +149,10 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [waiting, data, vizStore]);
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (values: Filters | null, e: MouseEvent & { item?: Item }) => {
+            if (!values || !e.item?.mark) return;
             e.stopPropagation();
-            if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
+            if (enableVizEmbedMenu && GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
                     vizStore.showEmbededMenu([e.clientX, e.clientY]);
                     vizStore.setFilters(values);
@@ -190,7 +193,7 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
                 }
             }
         },
-        [vizStore, viewData, encodings, visualConfig]
+        [enableVizEmbedMenu, vizStore, viewData, encodings, visualConfig]
     );
 
     const handleChartResize = useCallback(
@@ -412,7 +415,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
     // actions work on. The click must not reach the chart area, whose own handler closes the menu.
     const onMarkClick = useCallback(
         (mark: Record<string, unknown>, event: MouseEvent) => {
-            if (GLOBAL_CONFIG.EMBEDED_MENU_LIST.length === 0) return;
+            if (props.enableVizEmbedMenu === false || GLOBAL_CONFIG.EMBEDED_MENU_LIST.length === 0) return;
             event.stopPropagation();
             runInAction(() => {
                 vizStore.showEmbededMenu([event.clientX, event.clientY]);
@@ -420,7 +423,7 @@ const RendererSwitch = forwardRef<IReactVegaHandler, RendererProps>(function (pr
                 vizStore.updateSelectedMarkObject(mark as Record<string, string | number | undefined>);
             });
         },
-        [vizStore]
+        [vizStore, props.enableVizEmbedMenu]
     );
 
     if (route.to === 'classic' || route.to === 'dedicated') return <ObservedRenderer {...props} ref={innerHandle} />;

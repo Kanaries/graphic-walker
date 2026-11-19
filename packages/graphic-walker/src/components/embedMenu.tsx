@@ -17,6 +17,9 @@ export const VizEmbedMenu = observer(function VizEmbedMenu() {
             appear
             show={vizEmbededMenu.show}
             className="absolute inset-0"
+            onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+                if (event.target === event.currentTarget) vizStore.closeEmbededMenu();
+            }}
             enter="transition ease-out duration-100"
             enterFrom="transform opacity-0 scale-95"
             enterTo="transform opacity-100 scale-100"

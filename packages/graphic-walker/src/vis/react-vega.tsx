@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, forwardRef, useRef, useContext } f
 import embed from 'vega-embed';
 import { Subject, Subscription } from 'rxjs';
 import * as op from 'rxjs/operators';
-import { expressionFunction, type ScenegraphEvent } from 'vega';
+import { expressionFunction, type View } from 'vega';
 import styled from 'styled-components';
 import { useVegaExportApi } from '../utils/vegaApiExport';
 import { IViewField, IRow, IStackMode, VegaGlobalConfig, IVegaChartRef, IChannelScales, IDarkMode, IConfigScaleSet } from '../interfaces';
@@ -96,18 +96,6 @@ interface ReactVegaProps {
     displayOffset?: number;
 }
 
-const click$ = new Subject<ScenegraphEvent>();
-const selection$ = new Subject<any>();
-const geomClick$ = selection$.pipe(
-    op.withLatestFrom(click$),
-    op.filter(([values, _]) => {
-        if (Object.keys(values).length > 0) {
-            return true;
-        }
-        return false;
-    })
-);
-
 const BRUSH_SIGNAL_NAME = '__gw_brush__';
 const POINT_SIGNAL_NAME = '__gw_point__';
 
@@ -185,16 +173,19 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     //   return config;
     // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
-    useEffect(() => {
-        const clickSub = geomClick$.subscribe(([values, e]) => {
-            if (onGeomClick) {
-                onGeomClick(values, e);
-            }
+    const onGeomClickRef = useRef(onGeomClick);
+    onGeomClickRef.current = onGeomClick;
+
+    function listenForMarkClicks(view: View) {
+        // Vega updates the selection before notifying view click listeners.
+        if (geomType === 'boxplot') return;
+        view.addEventListener('click', (event, item) => {
+            if (item?.mark.role !== 'mark') return;
+            const values = view.signal(SELECTION_NAME);
+            if (values && Object.keys(values).length > 0) onGeomClickRef.current?.(values, event);
         });
-        return () => {
-            clickSub.unsubscribe();
-        };
-    }, [onGeomClick]);
+    }
+
     const guardedRows = useMemo(() => rows.filter((x) => defaultAggregate || x.aggName !== 'expr'), [rows, defaultAggregate]);
     const guardedCols = useMemo(() => columns.filter((x) => defaultAggregate || x.aggName !== 'expr'), [columns, defaultAggregate]);
     const rowDims = useMemo(() => guardedRows.filter((f) => f.analyticType === 'dimension'), [guardedRows]);
@@ -366,15 +357,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                         },
                     ];
                     try {
-                        res.view.addEventListener('click', (e) => {
-                            click$.next(e);
-                        });
-                        // boxplot don't support selection
-                        if (geomType !== 'boxplot') {
-                            res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                selection$.next(values);
-                            });
-                        }
+                        listenForMarkClicks(res.view);
                     } catch (error) {
                         console.warn(error);
                     }
@@ -508,15 +491,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
                                         setCrossFilterTriggerIdx(sourceId);
                                     }
                                 });
-                                res.view.addEventListener('click', (e) => {
-                                    click$.next(e);
-                                });
-                                // boxplot don't support selection
-                                if (geomType !== 'boxplot') {
-                                    res.view.addSignalListener(SELECTION_NAME, (name: any, values: any) => {
-                                        selection$.next(values);
-                                    });
-                                }
+                                listenForMarkClicks(res.view);
                             } catch (error) {
                                 console.warn(error);
                             }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, forwardRef, useMemo, useRef, useImperativeHandle } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import { observer } from 'mobx-react-lite';
+import { runInAction } from 'mobx';
+import { Item } from 'vega';
 import { ShadowDom } from '../shadow-dom';
 import LeafletRenderer, { LEAFLET_DEFAULT_HEIGHT } from '../components/leafletRenderer';
 import { withAppRoot } from '../components/appRoot';
@@ -14,9 +16,11 @@ import type {
     IVisualConfigNew,
     IComputationFunction,
     IVisualLayout,
+    Filters,
     IChannelScales,
     IUIThemeConfig,
     IGWHandler,
+    IMutField,
 } from '../interfaces';
 import type { IReactVegaHandler } from '../vis/react-vega';
 import SpecRenderer from './specRenderer';
@@ -24,11 +28,19 @@ import { useRenderer } from './hooks';
 import { getComputation } from '../computation/clientComputation';
 import { getSort } from '../utils';
 import { GWGlobalConfig } from '../vis/theme';
+import { GLOBAL_CONFIG } from '../config';
 import { VizAppContext } from '../store/context';
+import { useVizStore, VizStoreWrapper } from '../store';
 import { useCurrentMediaTheme } from '../utils/media';
 import LoadingLayer from '@/components/loadingLayer';
 import { GraphicRenderer } from '../root';
 import { emptyVisualConfig, emptyVisualLayout, download } from '../utils/save';
+import { viewEncodingKeys } from '@/models/visSpec';
+import { getTimeFormat } from '@/lib/inferMeta';
+import { unexceptedUTCParsedPatternFormats } from '@/lib/op/offset';
+import { VizEmbedMenu } from '@/components/embedMenu';
+import DataBoard from '@/components/dataBoard';
+import ExplainData from '@/components/explainData';
 
 type IPureRendererProps = {
     className?: string;
@@ -53,6 +65,7 @@ type IPureRendererProps = {
     scales?: IChannelScales;
     overrideSize?: IVisualLayout['size'];
     disableCollapse?: boolean;
+    enableVizEmbedMenu?: boolean;
 };
 
 type LocalProps = {
@@ -72,7 +85,7 @@ export type ILocalPureRendererProps = IPureRendererProps & LocalProps & React.Re
  * Render a readonly chart with given visualization schema.
  * This is a pure component, which means it will not depend on any global state.
  */
-const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
+const LegacyPureRenderer = observer(forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
     const {
         name,
         className,
@@ -92,7 +105,9 @@ const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (L
         channelScales,
         scales,
         disableCollapse,
+        enableVizEmbedMenu = false,
     } = props;
+    const vizStore = useVizStore();
     const computation = useMemo(() => {
         if (props.type === 'remote') {
             return props.computation;
@@ -168,9 +183,60 @@ const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (L
     const [currentTheme, setCurrentTheme] = useState<IThemeKey | GWGlobalConfig>(
         (vizThemeConfig ?? themeConfig ?? themeKey) as IThemeKey | GWGlobalConfig
     );
+    const appliedThemeKey = typeof currentTheme === 'string' ? currentTheme : themeKey ?? 'vega';
     const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
     // This mount owns a shadow-local portal; its forwarded className remains the light-DOM opt-out hook.
+    const handleGeomClick = React.useCallback(
+        (values: Filters | null, e: MouseEvent & { item?: Item }) => {
+            if (!values || !e.item?.mark) return;
+            e.stopPropagation();
+            if (!enableVizEmbedMenu || !vizStore || GLOBAL_CONFIG.EMBEDED_MENU_LIST.length === 0) {
+                return;
+            }
+
+            runInAction(() => {
+                vizStore.showEmbededMenu([e.clientX, e.clientY]);
+                vizStore.setFilters(values);
+            });
+
+            const { vlPoint, ...datums } = values;
+            const selectedMarkObject = Object.fromEntries(Object.entries(datums).map(([k, vs]) => [k, vs instanceof Array ? vs[0] : undefined]));
+            const encodingFields = viewEncodingKeys(visualConfig.geoms[0]).flatMap((k) => visualState[k] as IViewField[]);
+            const selectedTemporalFields = Object.keys(selectedMarkObject)
+                .map((k) => encodingFields.find((x) => x.fid === k))
+                .filter((x): x is IViewField => !!x && x.semanticType === 'temporal');
+
+            if (selectedTemporalFields.length > 0) {
+                const displayOffset = (visualConfig as IVisualConfigNew).timezoneDisplayOffset ?? new Date().getTimezoneOffset();
+                selectedTemporalFields.forEach((f) => {
+                    const offset = f.offset ?? new Date().getTimezoneOffset();
+                    const set = new Set(viewData.map((x) => x[f.fid] as string | number));
+                    selectedMarkObject[f.fid] = Array.from(set).find((x) => {
+                        const format = getTimeFormat(x);
+                        let offsetTime = displayOffset * -60000;
+                        if (format !== 'timestamp') {
+                            offsetTime += offset * 60000;
+                            if (!unexceptedUTCParsedPatternFormats.includes(format)) {
+                                offsetTime -= new Date().getTimezoneOffset() * 60000;
+                            }
+                        }
+                        const time = new Date(x).getTime() + offsetTime;
+                        return time === selectedMarkObject[f.fid];
+                    });
+                });
+            }
+
+            if (e.item.mark.marktype === 'line') {
+                const keys = new Set(Object.keys(e.item.mark.group.datum ?? {}));
+                vizStore.updateSelectedMarkObject(Object.fromEntries(Object.entries<string | number>(selectedMarkObject).filter(([k]) => keys.has(k))));
+            } else {
+                vizStore.updateSelectedMarkObject(selectedMarkObject);
+            }
+        },
+        [enableVizEmbedMenu, vizStore, viewData, visualConfig, visualState]
+    );
+
     return (
         <ShadowDom style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined} className={className} uiTheme={uiTheme ?? colorConfig}>
             <VizAppContext
@@ -180,7 +246,18 @@ const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (L
                 portalContainerContext={portal}
             >
                 {waiting && <LoadingLayer />}
-                <div className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`} style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}>
+                {enableVizEmbedMenu && <ExplainData themeKey={appliedThemeKey} />}
+                {enableVizEmbedMenu && vizStore?.showDataBoard && <DataBoard />}
+                <div
+                    className={`App relative ${darkMode === 'dark' ? 'dark' : ''}`}
+                    style={sizeMode === 'full' ? { width: '100%', height: '100%' } : undefined}
+                    onMouseLeave={() => {
+                        enableVizEmbedMenu && vizStore?.vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                    }}
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget && enableVizEmbedMenu && vizStore?.vizEmbededMenu.show) vizStore.closeEmbededMenu();
+                    }}
+                >
                     {isSpatial && (
                         <div className="max-w-full" style={{ height: LEAFLET_DEFAULT_HEIGHT, flexGrow: 1 }}>
                             <LeafletRenderer data={data} draggableFieldState={visualState} visualConfig={visualConfig} visualLayout={visualLayout} />
@@ -198,13 +275,53 @@ const LegacyPureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (L
                             scales={scales ?? channelScales}
                             vizThemeConfig={currentTheme}
                             disableCollapse={disableCollapse}
+                            onGeomClick={enableVizEmbedMenu ? handleGeomClick : undefined}
                         />
                     )}
+                    {enableVizEmbedMenu && <VizEmbedMenu />}
                     <div ref={setPortal} />
                 </div>
             </VizAppContext>
         </ShadowDom>
     );
+})
+);
+
+function getPureRendererMetas(visualState: DraggableFieldState): IMutField[] {
+    const fieldMap = new Map<string, IMutField>();
+    for (const field of [...visualState.dimensions, ...visualState.measures]) {
+        if (!fieldMap.has(field.fid)) {
+            fieldMap.set(field.fid, {
+                fid: field.fid,
+                name: field.name,
+                basename: field.basename,
+                semanticType: field.semanticType,
+                analyticType: field.analyticType,
+                offset: field.offset,
+            });
+        }
+    }
+    return Array.from(fieldMap.values());
+}
+
+const PureRendererStoreSync = observer(function PureRendererStoreSync({ children, props }: { children: React.ReactNode; props: IPureRendererProps }) {
+    const vizStore = useVizStore();
+    const chart = useMemo(
+        () => ({
+            visId: 'pure-renderer',
+            name: props.name ?? 'Chart',
+            encodings: props.visualState,
+            config: props.visualConfig,
+            layout: props.visualLayout ?? (props.visualConfig as IVisualConfig),
+        }),
+        [props.name, props.visualState, props.visualConfig, props.visualLayout]
+    );
+
+    useEffect(() => {
+        vizStore.importCode([chart as any]);
+    }, [vizStore, chart]);
+
+    return <>{children}</>;
 });
 
 const NativePureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function NativePureRenderer(props, ref) {
@@ -238,18 +355,34 @@ const NativePureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (L
         style={(props.overrideSize ?? chart[0].layout.size).mode === 'full' ? { width: '100%', height: '100%' } : undefined}
         uiTheme={props.uiTheme ?? props.colorConfig} vizThemeConfig={props.vizThemeConfig ?? props.themeConfig ?? props.themeKey}
         i18nLang={props.locale} overrideSize={props.overrideSize} scales={props.scales ?? props.channelScales}
+        enableVizEmbedMenu={props.enableVizEmbedMenu}
     />;
 });
 
-const PureRenderer = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRenderer(props, ref) {
+function usesNativeRenderer(props: IPureRendererProps) {
     const layout = props.visualLayout ?? (props.visualConfig as IVisualConfig & { renderer?: IVisualLayout['renderer'] });
     const dedicated = props.visualConfig.coordSystem === 'geographic' || props.visualConfig.geoms[0] === 'table';
-    return !dedicated && (layout.renderer ?? 'native') === 'native'
-        ? <NativePureRenderer {...props} ref={ref} />
-        : <LegacyPureRenderer {...props} ref={ref} />;
+    return !dedicated && (layout.renderer ?? 'native') === 'native';
+}
+
+const PureRendererWithOptionalStore = forwardRef<IReactVegaHandler, IPureRendererProps & (LocalProps | RemoteProps)>(function PureRendererWithOptionalStore(props, ref) {
+    if (usesNativeRenderer(props)) {
+        return <NativePureRenderer {...props} ref={ref} />;
+    }
+    if (!props.enableVizEmbedMenu) {
+        return <LegacyPureRenderer {...props} ref={ref} />;
+    }
+
+    return (
+        <VizStoreWrapper meta={getPureRendererMetas(props.visualState)}>
+            <PureRendererStoreSync props={props}>
+                <LegacyPureRenderer {...props} ref={ref} />
+            </PureRendererStoreSync>
+        </VizStoreWrapper>
+    );
 });
 
-export default observer(withAppRoot<IPureRendererProps>(PureRenderer)) as {
+export default observer(withAppRoot<IPureRendererProps>(PureRendererWithOptionalStore)) as {
     (p: ILocalPureRendererProps): React.ReactNode;
     (p: IRemotePureRendererProps): React.ReactNode;
 };
