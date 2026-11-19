@@ -1,4 +1,4 @@
-import type { IRow } from '../../interfaces';
+import type { IRow, IViewField } from '../../interfaces';
 import type { INestNode, IPivotTablePath, PivotTableValue } from './interface';
 
 export function pivotTableValuesEqual(left: unknown, right: unknown): boolean {
@@ -27,6 +27,7 @@ function insertNode(
     nodeData: IRow,
     depth: number,
     collapsedKeySet: ReadonlySet<string>,
+    fields: ReadonlyMap<string, IViewField>,
     sort?: {
         fid: string;
         type: 'ascending' | 'descending';
@@ -54,28 +55,43 @@ function insertNode(
             height: layerKeys.length - depth - 1,
             isCollapsed: collapsedKeySet.has(uniqueKey),
         };
-        const reverse = depth === layerKeys.length - 1 && sort?.type === 'descending';
-        tree.children.splice(binarySearchIndex(tree.children, child.sort, reverse), 0, child);
+        const field = fields.get(child.fieldKey);
+        const comparator = field?.sortType === 'manual' || field?.sortType === 'alphabetical'
+            ? (left: INestNode, right: INestNode) => comparePivotDimension(left.value, right.value, field)
+            : (left: INestNode, right: INestNode) => {
+                  const reverse = depth === layerKeys.length - 1 && sort?.type === 'descending';
+                  return comparePivotValues(left.sort, right.sort) * (reverse ? -1 : 1);
+              };
+        tree.children.splice(binarySearchIndex(tree.children, child, comparator), 0, child);
     }
-    insertNode(child, layerKeys, nodeData, depth + 1, collapsedKeySet, sort);
+    insertNode(child, layerKeys, nodeData, depth + 1, collapsedKeySet, fields, sort);
 }
 
-// Custom binary search function to find appropriate index for insertion.
-function binarySearchIndex(arr: INestNode[], keyVal: PivotTableValue, reverse = false): number {
-    let start = 0,
-        end = arr.length - 1;
+function comparePivotValues(left: PivotTableValue, right: PivotTableValue): number {
+    return typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right));
+}
 
+export function comparePivotDimension(left: PivotTableValue, right: PivotTableValue, field: IViewField): number {
+    if (field.sortType === 'manual' && field.sortList?.length) {
+        const index = (value: PivotTableValue) => {
+            const position = field.sortList!.findIndex((entry) => pivotTableValuesEqual(entry, value));
+            return position < 0 ? field.sortList!.length : position;
+        };
+        return index(left) - index(right) || comparePivotValues(left, right);
+    }
+    if (field.sortType === 'alphabetical') {
+        return String(left).localeCompare(String(right)) * (field.sort === 'descending' ? -1 : 1);
+    }
+    return comparePivotValues(left, right);
+}
+
+function binarySearchIndex(arr: INestNode[], node: INestNode, compare: (left: INestNode, right: INestNode) => number): number {
+    let start = 0;
+    let end = arr.length - 1;
     while (start <= end) {
-        let middle = Math.floor((start + end) / 2);
-        let middleVal = arr[middle].sort;
-        if (typeof middleVal === 'number' && typeof keyVal === 'number') {
-            if (reverse !== middleVal < keyVal) start = middle + 1;
-            else end = middle - 1;
-        } else {
-            let cmp = String(middleVal).localeCompare(String(keyVal));
-            if (reverse !== cmp < 0) start = middle + 1;
-            else end = middle - 1;
-        }
+        const middle = Math.floor((start + end) / 2);
+        if (compare(arr[middle], node) < 0) start = middle + 1;
+        else end = middle - 1;
     }
     return start;
 }
@@ -112,9 +128,11 @@ export function buildNestTree(
         fid: string;
         type: 'ascending' | 'descending';
     },
-    dataWithoutSort?: IRow[]
+    dataWithoutSort?: IRow[],
+    dimensions: IViewField[] = []
 ): INestNode {
     const collapsedKeySet = new Set(collapsedKeyList);
+    const fields = new Map(dimensions.map((field) => [field.fid, field]));
     const tree: INestNode = {
         kind: 'root',
         key: ROOT_KEY,
@@ -128,11 +146,11 @@ export function buildNestTree(
         isCollapsed: false,
     };
     for (let row of data) {
-        insertNode(tree, layerKeys, row, 0, collapsedKeySet, sort);
+        insertNode(tree, layerKeys, row, 0, collapsedKeySet, fields, sort);
     }
     if (dataWithoutSort) {
         for (let row of dataWithoutSort) {
-            insertNode(tree, layerKeys, row, 0, collapsedKeySet, { fid: '', type: sort?.type ?? 'ascending' });
+            insertNode(tree, layerKeys, row, 0, collapsedKeySet, fields, { fid: '', type: sort?.type ?? 'ascending' });
         }
     }
     if (showSummary) {

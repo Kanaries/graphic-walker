@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo } from 'react';
 import { INestNode } from './interface';
-import { IField } from '../../interfaces';
+import { IViewField } from '../../interfaces';
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import { formatDate, getMeaAggName } from '@/utils';
 import { parsedOffsetDate } from '@/lib/op/offset';
@@ -22,7 +22,7 @@ function getChildCount(node: INestNode): number {
  */
 function renderTree(
     node: INestNode,
-    dimsInCol: IField[],
+    dimsInCol: IViewField[],
     depth: number,
     cellRows: ReactNode[][],
     meaNumber: number,
@@ -73,10 +73,10 @@ function renderTree(
 
 export interface TreeProps {
     data: INestNode;
-    dimsInCol: IField[];
-    measInCol: IField[];
-    dimsInRow: IField[];
-    measInRow: IField[];
+    dimsInCol: IViewField[];
+    measInCol: IViewField[];
+    dimsInRow: IViewField[];
+    measInRow: IViewField[];
     onHeaderCollapse: (node: INestNode) => void;
     enableCollapse: boolean;
     defaultAggregated: boolean;
@@ -110,7 +110,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                         scope="col"
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border font-normal text-left"
                     >
-                        {props.defaultAggregated ? getMeaAggName(m.name, m.aggName) : m.name}
+                        {m.titleOverride || (props.defaultAggregated ? getMeaAggName(m.name, m.aggName, m.windowAgg) : m.name)}
                     </th>
                 ))
             )
@@ -142,7 +142,7 @@ const TopTree: React.FC<TreeProps> = (props) => {
                         scope="col"
                         className="bg-secondary text-secondary-foreground p-2 text-xs border whitespace-nowrap font-normal text-left"
                     >
-                        {field.name}
+                        {field.titleOverride || field.name}
                     </th>
                 )),
                 ...(measInRow.length > 0

@@ -162,7 +162,8 @@ export const buildPivotTableService = async (
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    measures?: IViewField[]
 ): Promise<{ lt: INestNode; tt: INestNode; metric: (IRow | null | undefined)[][] }> => {
     const worker = new BuildMetricTableWorker();
     try {
@@ -174,6 +175,7 @@ export const buildPivotTableService = async (
             collapsedKeyList,
             showTableSummary,
             sort,
+            measures,
         });
         return res;
     } catch (error) {

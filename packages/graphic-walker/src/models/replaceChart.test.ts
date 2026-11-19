@@ -1,6 +1,6 @@
 jest.mock('nanoid', () => ({ nanoid: () => 'mock-id' }));
 
-import { exportFullRaw, fromSnapshot, importFull, newChart, performers, redo, undo } from './visSpecHistory';
+import { exportFullRaw, fromSnapshot, importFull, Methods, newChart, performers, redo, resolveChart, undo } from './visSpecHistory';
 
 const FIELDS = [{ fid: 'cat', semanticType: 'nominal', analyticType: 'dimension' }] as const;
 
@@ -40,4 +40,12 @@ describe('Methods.replaceChart (undoable whole-chart replacement)', () => {
         const applied = performers.replaceChart(fromSnapshot(chartA()), { ...chartB(), visId: 'other-vis' });
         expect(applied.now.visId).toBe('vis-1');
     });
+});
+
+test('replays field settings from the 0.4.82 history opcode without renumbering replaceChart', () => {
+    const base = chartA();
+    base.encodings.columns = [base.encodings.dimensions[0]];
+    const legacy = JSON.stringify({ base, timeline: [[Methods.replaceChart, 'columns', 0, { titleOverride: 'Legacy heading' }]] });
+    expect(importFull(legacy).now.encodings.columns[0].titleOverride).toBe('Legacy heading');
+    expect(resolveChart(legacy).encodings.columns[0].titleOverride).toBe('Legacy heading');
 });

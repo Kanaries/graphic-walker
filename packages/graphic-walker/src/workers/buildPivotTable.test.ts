@@ -59,3 +59,23 @@ describe('buildPivotTable', () => {
         expect(result.metric).toEqual([[undefined]]);
     });
 });
+
+test('keeps manual and alphabetical header orders, and computes running totals in each partition', () => {
+    const month: IViewField = { ...dimension('month'), sortType: 'manual', sortList: ['Mar', 'Jan', 'Feb'] };
+    const channel: IViewField = { ...dimension('channel'), sortType: 'alphabetical', sort: 'descending' };
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const data = [
+        { month: 'Jan', channel: 'Online', sales_sum: 6 },
+        { month: 'Feb', channel: 'Online', sales_sum: 9 },
+        { month: 'Mar', channel: 'Online', sales_sum: 2 },
+        { month: 'Jan', channel: 'Retail', sales_sum: 10 },
+        { month: 'Mar', channel: 'Retail', sales_sum: 3 },
+    ];
+    const { lt, tt, metric } = buildPivotTable([month], [channel], data, [], [], false, undefined, [sales]);
+    expect(lt.children.map((node) => node.value)).toEqual(['Mar', 'Jan', 'Feb']);
+    expect(tt.children.map((node) => node.value)).toEqual(['Retail', 'Online']);
+    expect(metric.map((row) => row.map((cell) => cell?.sales_sum__window_running_total))).toEqual([[3, 2], [13, 8], [undefined, 17]]);
+    expect(data[0]).toEqual({ month: 'Jan', channel: 'Online', sales_sum: 6 });
+});

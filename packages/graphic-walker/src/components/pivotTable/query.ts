@@ -39,7 +39,8 @@ export type PivotTableModelBuilder = (
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    measures?: IViewField[]
 ) => Promise<IPivotTableBuildResult>;
 
 const buildPivotTableModelInWorker: PivotTableModelBuilder = async (...args) => {
@@ -123,7 +124,7 @@ function getPivotSort(rows: readonly IViewField[], columns: readonly IViewField[
     const sortedDimensions = mode === 'row' ? rows : columns;
     const sortFieldId = measure
         ? defaultAggregated
-            ? getMeaAggKey(measure.fid, measure.aggName)
+            ? getMeaAggKey(measure.fid, measure.aggName, measure.windowAgg)
             : measure.fid
         : sortedDimensions[sortedDimensions.length - 1]?.fid;
     if (!sortFieldId) return undefined;
@@ -220,7 +221,8 @@ export async function queryPivotTable(
         aggregateResults.flat(),
         collapsedPaths.map(createPivotPathKey),
         showTableSummary,
-        getPivotSort(input.rows, input.columns, input.defaultAggregated)
+        getPivotSort(input.rows, input.columns, input.defaultAggregated),
+        input.defaultAggregated ? viewMeasures : undefined
     );
 
     return {

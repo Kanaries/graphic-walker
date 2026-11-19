@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { INestNode } from './interface';
-import { IField } from '../../interfaces';
+import { IViewField } from '../../interfaces';
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import { formatDate, getMeaAggName } from '@/utils';
 import { parsedOffsetDate } from '@/lib/op/offset';
@@ -22,7 +22,7 @@ function getChildCount(node: INestNode): number {
  */
 function renderTree(
     node: INestNode,
-    dimsInRow: IField[],
+    dimsInRow: IViewField[],
     depth: number,
     cellRows: ReactNode[][],
     meaNumber: number,
@@ -77,8 +77,8 @@ function renderTree(
 
 export interface TreeProps {
     data: INestNode;
-    dimsInRow: IField[];
-    measInRow: IField[];
+    dimsInRow: IViewField[];
+    measInRow: IViewField[];
     onHeaderCollapse: (node: INestNode) => void;
     enableCollapse: boolean;
     defaultAggregated: boolean;
@@ -101,7 +101,7 @@ export function buildLeftTreeRows(props: TreeProps): ReactNode[][] {
                         scope="row"
                         className="bg-secondary text-secondary-foreground whitespace-nowrap p-2 text-xs m-1 border font-normal text-left"
                     >
-                        {props.defaultAggregated ? getMeaAggName(measure.name, measure.aggName) : measure.name}
+                        {measure.titleOverride || (props.defaultAggregated ? getMeaAggName(measure.name, measure.aggName, measure.windowAgg) : measure.name)}
                     </th>,
                 ]);
             }

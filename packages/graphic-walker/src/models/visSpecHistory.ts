@@ -684,16 +684,27 @@ export function importNow(data: IChart) {
     return fromSnapshot(data);
 }
 
+function restoreTimeline(timeline: VisAction[]): VisAction[] {
+    return timeline.map((action) => {
+        const serialized: readonly unknown[] = action;
+        // 0.4.82–0.4.84 used the same numeric slot for editField that main uses for replaceChart.
+        if (serialized[0] === Methods.replaceChart && serialized.length === 4) {
+            return [Methods.editField, ...serialized.slice(1)] as VisActionOf<Methods.editField>;
+        }
+        return action;
+    });
+}
+
 export function importFull(data: string): VisSpecWithHistory {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
     const base = fromSnapshot(result.base);
-    return result.timeline.reduce(perform, base);
+    return restoreTimeline(result.timeline).reduce(perform, base);
 }
 
 export function resolveChart(data: string): IChart {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
     const base = fillChart(result.base);
-    return result.timeline.reduce(reducer, base);
+    return restoreTimeline(result.timeline).reduce(reducer, base);
 }
 
 export function convertChart(data: IVisSpec): IChart {
