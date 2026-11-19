@@ -49,3 +49,21 @@ test('replays field settings from the 0.4.82 history opcode without renumbering 
     expect(importFull(legacy).now.encodings.columns[0].titleOverride).toBe('Legacy heading');
     expect(resolveChart(legacy).encodings.columns[0].titleOverride).toBe('Legacy heading');
 });
+
+test('preserves field resets through a history export and import', () => {
+    const base = chartA();
+    base.encodings.columns = [base.encodings.dimensions[0]];
+    const edited = performers.editField(fromSnapshot(base), 'columns', 0, {
+        titleOverride: 'Old title', customFormat: '.2f', windowAgg: 'running_total',
+    });
+    const cleared = performers.editField(edited, 'columns', 0, {
+        titleOverride: undefined, customFormat: undefined, windowAgg: undefined,
+    });
+    const serialized = exportFullRaw(cleared);
+    for (const result of [importFull(serialized).now, resolveChart(serialized)]) {
+        const field = result.encodings.columns[0];
+        expect(field.titleOverride).toBeUndefined();
+        expect(field.customFormat).toBeUndefined();
+        expect(field.windowAgg).toBeUndefined();
+    }
+});

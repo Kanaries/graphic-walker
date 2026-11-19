@@ -79,3 +79,11 @@ test('keeps manual and alphabetical header orders, and computes running totals i
     expect(metric.map((row) => row.map((cell) => cell?.sales_sum__window_running_total))).toEqual([[13, 17], [10, 15], [undefined, 9]]);
     expect(data[0]).toEqual({ month: 'Jan', channel: 'Online', sales_sum: 6 });
 });
+
+test('computes a running total for a window with no dimensions', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const { metric } = buildPivotTable([], [], [{ sales_sum: 30 }], [], [], false, undefined, [sales]);
+    expect(metric[0][0]?.sales_sum__window_running_total).toBe(30);
+});

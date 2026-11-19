@@ -673,7 +673,13 @@ export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string
         base: data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base,
         timeline: data.timeline.slice(Math.max(0, data.cursor - maxHistory)),
     };
-    return JSON.stringify(result);
+    return JSON.stringify({
+        ...result,
+        // JSON drops undefined object values. Null records an explicit field reset.
+        timeline: result.timeline.map((action) => action[0] === Methods.editField
+            ? [action[0], action[1], action[2], Object.fromEntries(Object.entries(action[3]).map(([key, value]) => [key, value ?? null]))]
+            : action),
+    });
 }
 
 export function exportNow(data: VisSpecWithHistory) {
@@ -689,7 +695,11 @@ function restoreTimeline(timeline: VisAction[]): VisAction[] {
         const serialized: readonly unknown[] = action;
         // 0.4.82–0.4.84 used the same numeric slot for editField that main uses for replaceChart.
         if (serialized[0] === Methods.replaceChart && serialized.length === 4) {
-            return [Methods.editField, ...serialized.slice(1)] as VisActionOf<Methods.editField>;
+            action = [Methods.editField, ...serialized.slice(1)] as VisActionOf<Methods.editField>;
+        }
+        if (action[0] === Methods.editField) {
+            const [method, channel, index, patch] = action;
+            return [method, channel, index, Object.fromEntries(Object.entries(patch).map(([key, value]) => [key, value ?? undefined]))];
         }
         return action;
     });

@@ -3,16 +3,17 @@ import { IViewField } from '../../interfaces';
 import { getMeaAggKey, getMeaAggName } from '../../utils';
 import { encodeFid } from './encode';
 
-export function channelAggregate(encoding: { [key: string]: any }, fields: IViewField[]) {
-    Object.values(encoding).forEach((c) => {
+export function channelAggregate(encoding: { [key: string]: any }, fields: Partial<Record<string, IViewField>>) {
+    Object.entries(encoding).forEach(([channel, c]) => {
         if (c.aggregate === null) return;
-        const targetField = fields.find((f) => encodeFid(f.fid) === c.field && (f.analyticType === 'measure' || f.fid === COUNT_FIELD_ID));
-        if (targetField && targetField.fid === COUNT_FIELD_ID) {
+        const targetField = fields[channel];
+        if (!targetField || encodeFid(targetField.fid) !== c.field || (targetField.analyticType !== 'measure' && targetField.fid !== COUNT_FIELD_ID)) return;
+        if (targetField.fid === COUNT_FIELD_ID) {
             if (!targetField.titleOverride) {
                 c.title = 'Count';
             }
             c.field = encodeFid(getMeaAggKey(targetField.fid, targetField.aggName, targetField.windowAgg));
-        } else if (targetField) {
+        } else {
             if (!targetField.titleOverride) {
                 c.title = getMeaAggName(targetField.name, targetField.aggName, targetField.windowAgg);
             }

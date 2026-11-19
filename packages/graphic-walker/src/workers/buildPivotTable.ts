@@ -145,8 +145,7 @@ function applyWindowAggregations(
     if (windowMeasures.length === 0) return data;
 
     const orderField = dimsInRow.length > 0 ? dimsInRow[dimsInRow.length - 1] : dimsInColumn[dimsInColumn.length - 1];
-    if (!orderField) return data;
-    const orderKey = orderField.fid;
+    const orderKey = orderField?.fid;
     const groupByKeys = [...dimsInRow, ...dimsInColumn].map((field) => field.fid).filter((fid) => fid !== orderKey);
 
     const grouped = new Map<string, IRow[]>();
@@ -166,7 +165,7 @@ function applyWindowAggregations(
     data.forEach((row, index) => rowToResult.set(row, result[index]));
 
     grouped.forEach((rows) => {
-        const orderedRows = rows.slice().sort((a, b) => {
+        const orderedRows = orderKey === undefined ? rows : rows.slice().sort((a, b) => {
             const av = a[orderKey];
             const bv = b[orderKey];
             if (av === bv) return 0;
@@ -239,7 +238,7 @@ function applyWindowAggregations(
                 orderedRows.forEach((row, index) => {
                     const targetRow = rowToResult.get(row);
                     if (!targetRow) return;
-                    const orderValue = row[orderKey];
+                    const orderValue = orderKey === undefined ? 0 : row[orderKey];
                     if (orderValue === null || orderValue === undefined) {
                         targetRow[windowKey] = null;
                         return;
