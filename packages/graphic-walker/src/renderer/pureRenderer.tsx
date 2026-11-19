@@ -16,6 +16,7 @@ import type {
     IVisualConfigNew,
     IComputationFunction,
     IVisualLayout,
+    Filters,
     IChannelScales,
     IUIThemeConfig,
     IGWHandler,
@@ -187,7 +188,8 @@ const LegacyPureRenderer = observer(forwardRef<IReactVegaHandler, IPureRendererP
 
     // This mount owns a shadow-local portal; its forwarded className remains the light-DOM opt-out hook.
     const handleGeomClick = React.useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (values: Filters | null, e: MouseEvent & { item?: Item }) => {
+            if (!values || !e.item?.mark) return;
             e.stopPropagation();
             if (!enableVizEmbedMenu || !vizStore || GLOBAL_CONFIG.EMBEDED_MENU_LIST.length === 0) {
                 return;

@@ -12,6 +12,7 @@ import {
     IChannelScales,
     IViewField,
     IVisualLayout,
+    Filters,
 } from '../interfaces';
 import { useTranslation } from 'react-i18next';
 import SpecRenderer from './specRenderer';
@@ -148,7 +149,8 @@ const Renderer = forwardRef<IReactVegaHandler, RendererProps>(function (props, r
     }, [waiting, data, vizStore]);
 
     const handleGeomClick = useCallback(
-        (values: any, e: MouseEvent & { item: Item }) => {
+        (values: Filters | null, e: MouseEvent & { item?: Item }) => {
+            if (!values || !e.item?.mark) return;
             e.stopPropagation();
             if (enableVizEmbedMenu && GLOBAL_CONFIG.EMBEDED_MENU_LIST.length > 0) {
                 runInAction(() => {
