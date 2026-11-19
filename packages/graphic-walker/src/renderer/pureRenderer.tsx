@@ -252,8 +252,8 @@ const LegacyPureRenderer = observer(forwardRef<IReactVegaHandler, IPureRendererP
                     onMouseLeave={() => {
                         enableVizEmbedMenu && vizStore?.vizEmbededMenu.show && vizStore.closeEmbededMenu();
                     }}
-                    onClick={() => {
-                        enableVizEmbedMenu && vizStore?.vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget && enableVizEmbedMenu && vizStore?.vizEmbededMenu.show) vizStore.closeEmbededMenu();
                     }}
                 >
                     {isSpatial && (

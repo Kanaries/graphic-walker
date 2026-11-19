@@ -163,8 +163,8 @@ export const RendererApp = observer(function VizApp(props: BaseVizProps) {
                                 onMouseLeave={() => {
                                     enableVizEmbedMenu && vizStore.vizEmbededMenu.show && vizStore.closeEmbededMenu();
                                 }}
-                                onClick={() => {
-                                    enableVizEmbedMenu && vizStore.vizEmbededMenu.show && vizStore.closeEmbededMenu();
+                                onClick={(event) => {
+                                    if (event.target === event.currentTarget && enableVizEmbedMenu && vizStore.vizEmbededMenu.show) vizStore.closeEmbededMenu();
                                 }}
                             >
                                 {computation && (

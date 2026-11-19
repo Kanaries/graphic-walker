@@ -96,18 +96,6 @@ interface ReactVegaProps {
     displayOffset?: number;
 }
 
-const click$ = new Subject<ScenegraphEvent>();
-const selection$ = new Subject<any>();
-const geomClick$ = selection$.pipe(
-    op.withLatestFrom(click$),
-    op.filter(([values, _]) => {
-        if (Object.keys(values).length > 0) {
-            return true;
-        }
-        return false;
-    })
-);
-
 const BRUSH_SIGNAL_NAME = '__gw_brush__';
 const POINT_SIGNAL_NAME = '__gw_point__';
 
@@ -185,6 +173,13 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
     //   return config;
     // }, [themeConfig, format.normalizedNumberFormat, format.numberFormat, format.timeFormat])
 
+    const { click$, selection$, geomClick$ } = useMemo(() => {
+        const click$ = new Subject<ScenegraphEvent>();
+        const selection$ = new Subject<Record<string, unknown>>();
+        const geomClick$ = selection$.pipe(op.withLatestFrom(click$), op.filter(([values]) => Object.keys(values).length > 0));
+        return { click$, selection$, geomClick$ };
+    }, []);
+
     useEffect(() => {
         const clickSub = geomClick$.subscribe(([values, e]) => {
             if (onGeomClick) {
@@ -194,7 +189,7 @@ const ReactVega = forwardRef<IReactVegaHandler, ReactVegaProps>(function ReactVe
         return () => {
             clickSub.unsubscribe();
         };
-    }, [onGeomClick]);
+    }, [geomClick$, onGeomClick]);
     const guardedRows = useMemo(() => rows.filter((x) => defaultAggregate || x.aggName !== 'expr'), [rows, defaultAggregate]);
     const guardedCols = useMemo(() => columns.filter((x) => defaultAggregate || x.aggName !== 'expr'), [columns, defaultAggregate]);
     const rowDims = useMemo(() => guardedRows.filter((f) => f.analyticType === 'dimension'), [guardedRows]);
