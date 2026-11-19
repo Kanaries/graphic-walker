@@ -77,3 +77,41 @@ test('keeps the heatmap color off the white label layer', () => {
     expect(spec.layer[0].encoding.color.field).toBe('group');
     expect(spec.layer[1].mark.color).toBe('white');
 });
+
+test.each([
+    ['opacity', false],
+    ['size', false],
+    ['opacity', true],
+    ['size', true],
+])('aligns bar labels with stacks grouped by %s without color (aggregated: %s)', async (channel, defaultAggregated) => {
+    const { compile } = require('vega-lite');
+    const { parse, View } = require('vega');
+    const measure = { ...value, aggName: 'sum' };
+    const grouping = { ...value, fid: 'sub', aggName: 'mean' };
+    const valueKey = defaultAggregated ? 'value_sum' : 'value';
+    const groupKey = defaultAggregated ? 'sub_mean' : 'sub';
+    const [spec] = toVegaSpec({
+        ...chart,
+        geomType: 'bar',
+        columns: [category],
+        rows: [measure],
+        text: measure,
+        color: undefined,
+        defaultAggregated,
+        [channel]: grouping,
+        dataSource: [{ category: 'A', [valueKey]: 2, [groupKey]: 1 }, { category: 'A', [valueKey]: 3, [groupKey]: 2 }],
+    });
+    const view = new View(parse(compile(spec).spec), { renderer: 'none' });
+    try {
+        await view.runAsync();
+        const marks = view.scenegraph().root.items[0].items;
+        const bars = marks.find((mark) => mark.marktype === 'rect' && mark.role === 'mark').items;
+        const labels = marks.find((mark) => mark.marktype === 'text' && mark.role === 'mark').items;
+        for (const bar of bars) {
+            const label = labels.find((item) => String(item.text) === String(bar.datum[valueKey]));
+            expect(label.y).toBeCloseTo(bar.y);
+        }
+    } finally {
+        view.finalize();
+    }
+});

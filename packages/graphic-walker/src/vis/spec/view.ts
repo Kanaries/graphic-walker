@@ -27,8 +27,11 @@ function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode,
     const positionChannel = ['x', 'y', 'theta', 'radius'].find((channel) => encoding[channel]?.type === 'quantitative');
     if (!positionChannel) return {};
     const otherAxis = positionChannel === 'x' ? 'y' : 'x';
+    const stackFields = ['color', 'opacity', 'size', 'shape']
+        .map((channel) => encoding[channel])
+        .filter((channel) => channel?.field && !channel.aggregate && channel.field !== encoding[otherAxis]?.field);
     const implicitStack = (markType === 'bar' || markType === 'area') &&
-        encoding.color?.field && encoding[positionChannel].aggregate !== null &&
+        stackFields.length > 0 && encoding[positionChannel].aggregate !== null &&
         encoding[otherAxis]?.type !== 'quantitative' && !encoding.xOffset && !encoding.yOffset;
     const stackValue = encoding[positionChannel].stack ?? (implicitStack && (stack === 'zero' || stack === 'stack') ? true : undefined);
     if (stackValue === undefined || stackValue === null) return {};
@@ -38,13 +41,14 @@ function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode,
             stack: stackValue,
         },
     };
-    if (encoding.color?.field) {
-        stackEncoding.order = {
-            field: encoding.color.field,
-            type: encoding.color.type,
-            sort: positionChannel === 'y' ? 'descending' : 'ascending',
-        };
+    const order = stackFields.map(({ field, type }) => ({
+        field, type, sort: positionChannel === 'y' ? 'descending' : 'ascending',
+    }));
+    if (order.length) {
+        stackEncoding.order = order.length === 1 ? order[0] : order;
     }
+    const detail = stackFields.filter((field) => field !== encoding.color).map(({ field, type }) => ({ field, type }));
+    if (detail.length) stackEncoding.detail = detail;
     return stackEncoding;
 }
 
@@ -178,7 +182,10 @@ export function getSingleView(props: SingleViewProps) {
                 mainLayerEncoding[key] = value;
             }
         }
-        Object.assign(textLayerEncoding, withTextStackEncoding(sharedEncoding, stack, markType));
+        const labelStack = withTextStackEncoding(encoding, stack, markType);
+        // Give both layers the same stack order, while keeping the label's size and opacity independent.
+        if (labelStack.order) mainLayerEncoding.order = labelStack.order;
+        Object.assign(textLayerEncoding, labelStack);
 
         // Build text mark with dx/dy offsets for non-rect marks
         const textMark: any = { type: 'text' };
