@@ -495,3 +495,21 @@ describe('pivot table query orchestration', () => {
         expect(result.metric.map((row) => row[0]?.sales_sum)).toEqual([100]);
     });
 });
+
+test('computes separate windows for repeated shelf measures after one base aggregate query', async () => {
+    const rows = [region, { ...sales, windowAgg: 'running_total' as const }, { ...sales, windowAgg: 'rank' as const }];
+    const result = await queryPivotTable(
+        {
+            computation: getComputation([{ region: 'East', sales: 10 }, { region: 'West', sales: 7 }]),
+            fields: [region, sales],
+            rows,
+            columns: [],
+            defaultAggregated: true,
+            limit: -1,
+            showTableSummary: false,
+            collapsedPaths: [],
+        },
+        buildModel
+    );
+    expect(result.metric.map(([cell]) => [cell?.sales_sum__window_running_total, cell?.sales_sum__window_rank])).toEqual([[10, 1], [17, 2]]);
+});

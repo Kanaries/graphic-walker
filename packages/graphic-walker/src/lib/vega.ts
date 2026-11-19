@@ -1,10 +1,101 @@
 import { GLOBAL_CONFIG } from '../config';
-import { IChannelScales, IRow, IStackMode, IViewField, VegaGlobalConfig } from '../interfaces';
+import { IChannelScales, IRow, IStackMode, IViewField, IWindowAgg, VegaGlobalConfig } from '../interfaces';
 import { encodeFid } from '../vis/spec/encode';
 import { NULL_FIELD } from '../vis/spec/field';
 import { getSingleView, resolveScales } from '../vis/spec/view';
+import { getMeaAggKey } from '../utils';
 
 const leastOne = (x: number) => Math.max(x, 1);
+
+type WindowTransformContext = {
+    fields: IViewField[];
+    orderField: IViewField | null;
+    groupByFields: IViewField[];
+    defaultAggregated: boolean;
+};
+
+function buildWindowTransforms({ fields, orderField, groupByFields, defaultAggregated }: WindowTransformContext) {
+    if (!defaultAggregated) return [] as any[];
+    const windowFields = fields.filter(
+        (field) =>
+            field.analyticType === 'measure' &&
+            field.semanticType === 'quantitative' &&
+            field.windowAgg &&
+            field.aggName &&
+            field.aggName !== 'expr'
+    );
+    if (windowFields.length === 0) return [] as any[];
+
+    const sortField = orderField ? encodeFid(orderField.fid) : null;
+    const groupBy = Array.from(
+        new Map(
+            groupByFields
+                .filter((field) => field.analyticType === 'dimension')
+                .filter((field) => !orderField || field.fid !== orderField.fid)
+                .map((field) => [field.fid, encodeFid(field.fid)])
+        ).values()
+    );
+
+    const sort = sortField ? [{ field: sortField, order: 'ascending' }] : undefined;
+    const transforms: any[] = [];
+
+    const addWindow = (field: IViewField, windowAgg: IWindowAgg) => {
+        const baseField = encodeFid(getMeaAggKey(field.fid, field.aggName));
+        const windowField = encodeFid(getMeaAggKey(field.fid, field.aggName, windowAgg));
+        if (windowAgg === 'running_total') {
+            transforms.push({
+                window: [{ op: 'sum', field: baseField, as: windowField }],
+                frame: [null, 0],
+                ...(sort ? { sort } : {}),
+                ...(groupBy.length ? { groupby: groupBy } : {}),
+            });
+            return;
+        }
+        if (windowAgg === 'moving_average') {
+            transforms.push({
+                window: [{ op: 'mean', field: baseField, as: windowField }],
+                frame: [-2, 0],
+                ...(sort ? { sort } : {}),
+                ...(groupBy.length ? { groupby: groupBy } : {}),
+            });
+            return;
+        }
+        if (windowAgg === 'rank') {
+            transforms.push({
+                window: [{ op: 'rank', as: windowField }],
+                ...(sort ? { sort } : {}),
+                ...(groupBy.length ? { groupby: groupBy } : {}),
+            });
+            return;
+        }
+        if (windowAgg === 'difference' || windowAgg === 'growth_rate') {
+            const lagField = `${windowField}__lag`;
+            transforms.push({
+                window: [{ op: 'lag', field: baseField, as: lagField }],
+                ...(sort ? { sort } : {}),
+                ...(groupBy.length ? { groupby: groupBy } : {}),
+            });
+            if (windowAgg === 'difference') {
+                transforms.push({
+                    calculate: `datum[${JSON.stringify(baseField)}] === null || datum[${JSON.stringify(lagField)}] === null ? null : datum[${JSON.stringify(
+                        baseField
+                    )}] - datum[${JSON.stringify(lagField)}]`,
+                    as: windowField,
+                });
+            } else {
+                transforms.push({
+                    calculate: `datum[${JSON.stringify(lagField)}] === null || datum[${JSON.stringify(lagField)}] === 0 ? null : (datum[${JSON.stringify(
+                        baseField
+                    )}] / datum[${JSON.stringify(lagField)}]) - 1`,
+                    as: windowField,
+                });
+            }
+        }
+    };
+
+    windowFields.forEach((field) => addWindow(field, field.windowAgg as IWindowAgg));
+    return transforms;
+}
 
 export function toVegaSpec({
     rows: rowsRaw,
@@ -133,7 +224,29 @@ export function toVegaSpec({
             dataSource,
             vegaConfig,
         });
-        const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
+        const orderField = xField !== NULL_FIELD && xField.analyticType === 'dimension' ? xField : yField !== NULL_FIELD && yField.analyticType === 'dimension' ? yField : null;
+        const groupByFields = [
+            ...rows,
+            ...columns,
+            guard(color),
+            guard(opacity),
+            guard(size),
+            guard(shape),
+            guard(theta),
+            guard(radius),
+            guard(text),
+            ...details.map(guard).filter((x) => x !== NULL_FIELD),
+        ].filter((field) => field !== NULL_FIELD) as IViewField[];
+        const windowTransforms = buildWindowTransforms({
+            fields: [xField, yField, guard(color), guard(opacity), guard(size), guard(shape), guard(theta), guard(radius), guard(text), ...details.map(guard)].filter(
+                (field) => field !== NULL_FIELD
+            ) as IViewField[],
+            orderField,
+            groupByFields,
+            defaultAggregated,
+        });
+        const viewWithWindow = windowTransforms.length ? { ...v, transform: [...(v.transform ?? []), ...windowTransforms] } : v;
+        const singleView = scales ? resolveScales(scales, viewWithWindow, dataSource, mediaTheme) : viewWithWindow;
 
         spec.mark = singleView.mark;
         if ('encoding' in singleView) {
@@ -197,7 +310,36 @@ export function toVegaSpec({
                     displayOffset,
                     dataSource,
                 });
-                const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
+                const xFieldLocal = (colRepeatFields[j] || NULL_FIELD) as IViewField;
+                const yFieldLocal = (rowRepeatFields[i] || NULL_FIELD) as IViewField;
+                const orderField =
+                    xFieldLocal !== NULL_FIELD && xFieldLocal.analyticType === 'dimension'
+                        ? xFieldLocal
+                        : yFieldLocal !== NULL_FIELD && yFieldLocal.analyticType === 'dimension'
+                        ? yFieldLocal
+                        : null;
+                const groupByFields = [
+                    ...rows,
+                    ...columns,
+                    guard(color),
+                    guard(opacity),
+                    guard(size),
+                    guard(shape),
+                    guard(theta),
+                    guard(radius),
+                    guard(text),
+                    ...details.map(guard).filter((x) => x !== NULL_FIELD),
+                ].filter((field) => field !== NULL_FIELD) as IViewField[];
+                const windowTransforms = buildWindowTransforms({
+                    fields: [xFieldLocal, yFieldLocal, guard(color), guard(opacity), guard(size), guard(shape), guard(theta), guard(radius), guard(text), ...details.map(guard)].filter(
+                        (field) => field !== NULL_FIELD
+                    ) as IViewField[],
+                    orderField,
+                    groupByFields,
+                    defaultAggregated,
+                });
+                const viewWithWindow = windowTransforms.length ? { ...v, transform: [...(v.transform ?? []), ...windowTransforms] } : v;
+                const singleView = scales ? resolveScales(scales, viewWithWindow, dataSource, mediaTheme) : viewWithWindow;
                 let commonSpec = { ...spec };
 
                 const ans = { ...commonSpec, ...singleView };

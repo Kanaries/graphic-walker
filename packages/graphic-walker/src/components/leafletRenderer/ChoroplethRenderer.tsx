@@ -224,7 +224,9 @@ const ChoroplethRenderer = forwardRef<IChoroplethRendererRef, IChoroplethRendere
                         <Tooltip>
                             <header>{name}</header>
                             {tooltipFields.map((f, k) => (
-                                <p key={k}>{f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name}: Null</p>
+                                <p key={k}>
+                                    {f.titleOverride || (f.analyticType === 'measure' && f.aggName ? getMeaAggName(f.name, f.aggName) : f.name)}: Null
+                                </p>
                             ))}
                         </Tooltip>
                     )}

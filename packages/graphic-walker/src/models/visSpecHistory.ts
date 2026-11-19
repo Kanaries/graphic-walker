@@ -63,6 +63,7 @@ export enum Methods {
     replaceWithNLPQuery,
     // appended at the end: enum values are serialized in exported timelines
     replaceChart,
+    editField,
 }
 export type PropsMap = {
     [Methods.setConfig]: KVTuple<IVisualConfigNew>;
@@ -92,6 +93,7 @@ export type PropsMap = {
     [Methods.editAllField]: [string, Partial<IField>];
     [Methods.replaceWithNLPQuery]: [string, string];
     [Methods.replaceChart]: [PartialChart];
+    [Methods.editField]: [normalKeys, number, Partial<IViewField>];
 };
 // ensure propsMap has all keys of methods
 type assertPropsMap = AssertSameKey<PropsMap, { [a in Methods]: any }>;
@@ -193,10 +195,24 @@ const actions: {
         const yField = rows.length > 0 ? rows[rows.length - 1] : null;
         const xField = columns.length > 0 ? columns[columns.length - 1] : null;
         if (xField !== null && xField.analyticType === 'dimension' && yField !== null && yField.analyticType === 'measure') {
-            return mutPath(data, 'encodings.columns', (cols) => replace(cols, cols.length - 1, (x) => ({ ...x, sort })));
+            return mutPath(data, 'encodings.columns', (cols) =>
+                replace(cols, cols.length - 1, (x) => ({
+                    ...x,
+                    sort,
+                    sortType: 'measure' as const,
+                    sortList: undefined,
+                }))
+            );
         }
         if (xField !== null && xField.analyticType === 'measure' && yField !== null && yField.analyticType === 'dimension') {
-            return mutPath(data, 'encodings.rows', (rows) => replace(rows, rows.length - 1, (x) => ({ ...x, sort })));
+            return mutPath(data, 'encodings.rows', (rows) =>
+                replace(rows, rows.length - 1, (x) => ({
+                    ...x,
+                    sort,
+                    sortType: 'measure' as const,
+                    sortList: undefined,
+                }))
+            );
         }
         return data;
     },
@@ -444,6 +460,20 @@ const actions: {
                 ) as typeof e
         );
     },
+    [Methods.editField]: (data, channel, index, newData) => {
+        return mutPath(data, `encodings.${channel}`, (fields) =>
+            replace(fields, index, (field) => {
+                const nextField = { ...field, ...newData } as IViewField;
+                if ((nextField.sortType ?? 'measure') !== 'manual') {
+                    nextField.sortList = undefined;
+                }
+                if ((nextField.sortType ?? 'measure') === 'measure') {
+                    nextField.sort = nextField.sort ?? 'none';
+                }
+                return nextField;
+            })
+        );
+    },
     [Methods.editAllField]: (data, fid, newData) => {
         if (Object.keys(newData).includes('name')) {
             const originalField = data.encodings.dimensions.concat(data.encodings.measures).find((x) => x.fid === fid);
@@ -643,7 +673,13 @@ export function exportFullRaw(data: VisSpecWithHistory, maxHistory = 30): string
         base: data.cursor > maxHistory ? at(data, data.cursor - maxHistory) : data.base,
         timeline: data.timeline.slice(Math.max(0, data.cursor - maxHistory)),
     };
-    return JSON.stringify(result);
+    return JSON.stringify({
+        ...result,
+        // JSON drops undefined object values. Null records an explicit field reset.
+        timeline: result.timeline.map((action) => action[0] === Methods.editField
+            ? [action[0], action[1], action[2], Object.fromEntries(Object.entries(action[3]).map(([key, value]) => [key, value ?? null]))]
+            : action),
+    });
 }
 
 export function exportNow(data: VisSpecWithHistory) {
@@ -654,16 +690,31 @@ export function importNow(data: IChart) {
     return fromSnapshot(data);
 }
 
+function restoreTimeline(timeline: VisAction[]): VisAction[] {
+    return timeline.map((action) => {
+        const serialized: readonly unknown[] = action;
+        // 0.4.82–0.4.84 used the same numeric slot for editField that main uses for replaceChart.
+        if (serialized[0] === Methods.replaceChart && serialized.length === 4) {
+            action = [Methods.editField, ...serialized.slice(1)] as VisActionOf<Methods.editField>;
+        }
+        if (action[0] === Methods.editField) {
+            const [method, channel, index, patch] = action;
+            return [method, channel, index, Object.fromEntries(Object.entries(patch).map(([key, value]) => [key, value ?? undefined]))];
+        }
+        return action;
+    });
+}
+
 export function importFull(data: string): VisSpecWithHistory {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
     const base = fromSnapshot(result.base);
-    return result.timeline.reduce(perform, base);
+    return restoreTimeline(result.timeline).reduce(perform, base);
 }
 
 export function resolveChart(data: string): IChart {
     const result: VisSpecHistoryInfoForExport = JSON.parse(data);
     const base = fillChart(result.base);
-    return result.timeline.reduce(reducer, base);
+    return restoreTimeline(result.timeline).reduce(reducer, base);
 }
 
 export function convertChart(data: IVisSpec): IChart {

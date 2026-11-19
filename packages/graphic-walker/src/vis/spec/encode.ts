@@ -71,6 +71,28 @@ export function encodeFid(fid: string) {
         .replace(/\r/g, '\\r');
 }
 
+const AXIS_CHANNELS = new Set(['x', 'y', 'xOffset', 'yOffset', 'theta', 'radius']);
+const LEGEND_CHANNELS = new Set(['color', 'size', 'shape', 'opacity']);
+
+function applyCustomFormat(channelKey: string, entry: Record<string, any>, field: IViewField) {
+    if (!field.customFormat || !entry) return;
+    entry.format = field.customFormat;
+    if (channelKey === 'text') {
+        return;
+    }
+    if (channelKey === 'row' || channelKey === 'column') {
+        entry.header = { ...(entry.header ?? {}), format: field.customFormat };
+        return;
+    }
+    if (LEGEND_CHANNELS.has(channelKey)) {
+        entry.legend = { ...(entry.legend ?? {}), format: field.customFormat };
+        return;
+    }
+    if (AXIS_CHANNELS.has(channelKey)) {
+        entry.axis = { ...(entry.axis ?? {}), format: field.customFormat };
+    }
+}
+
 export function channelEncode(props: IEncodeProps) {
     const avcs = availableChannels(props.geomType);
     const encoding: { [key: string]: any } = {};
@@ -81,7 +103,7 @@ export function channelEncode(props: IEncodeProps) {
             if (field !== NULL_FIELD) {
                 encoding[c] = {
                     field: encodeFid(field.fid),
-                    title: field.name,
+                    title: field.titleOverride ?? field.name,
                     type: field.semanticType,
                 };
                 if (field.computed && field.expression?.op === 'bin') {
@@ -126,29 +148,73 @@ export function channelEncode(props: IEncodeProps) {
                         range: colors.map((x) => x.color),
                     };
                 }
+                applyCustomFormat(c, encoding[c], field);
             }
         });
     // FIXME: temporal fix, only for x and y relative order
     if (encoding.x) {
-        encoding.x.axis = { labelOverlap: true };
+        encoding.x.axis = { ...(encoding.x.axis ?? {}), labelOverlap: true };
     }
     if (encoding && encoding.y) {
-        encoding.y.axis = { labelOverlap: true };
+        encoding.y.axis = { ...(encoding.y.axis ?? {}), labelOverlap: true };
     }
-    if (encoding.x && encoding.y) {
-        if ((props.x.sort && props.x.sort) || (props.y && props.y.sort)) {
-            if (props.x.sort !== 'none' && (props.y.sort === 'none' || !Boolean(props.y.sort))) {
-                encoding.x.sort = {
-                    encoding: 'y',
-                    order: props.x.sort,
-                };
-            } else if (props.y.sort && props.y.sort !== 'none' && (props.x.sort === 'none' || !Boolean(props.x.sort))) {
-                encoding.y.sort = {
-                    encoding: 'x',
-                    order: props.y.sort,
-                };
+
+    const applyManualSort = (channelKey: 'x' | 'y' | 'row' | 'column', field: IViewField | undefined, fallback?: 'x' | 'y') => {
+        if (!field || field === NULL_FIELD || field.analyticType !== 'dimension') return;
+        const strategy = field.sortType ?? 'measure';
+        if (!encoding[channelKey]) return;
+        if (strategy === 'manual' && field.sortList && field.sortList.length > 0) {
+            encoding[channelKey].sort = field.sortList;
+            return;
+        }
+        if (strategy === 'alphabetical') {
+            const order = field.sort && field.sort !== 'none' ? field.sort : 'ascending';
+            encoding[channelKey].sort = order;
+            return;
+        }
+        if (strategy === 'measure' && fallback && field.sort && field.sort !== 'none') {
+            encoding[channelKey].sort = {
+                encoding: fallback,
+                order: field.sort,
+            };
+        }
+    };
+
+    const xField = props.x;
+    const yField = props.y;
+
+    if (
+        xField &&
+        yField &&
+        xField !== NULL_FIELD &&
+        yField !== NULL_FIELD &&
+        ((xField.sortType ?? 'measure') === 'manual' || (xField.sortType ?? 'measure') === 'alphabetical' || (yField.sortType ?? 'measure') === 'manual' || (yField.sortType ?? 'measure') === 'alphabetical')
+    ) {
+        // allow alphabetical/manual without requiring measure counterpart
+        applyManualSort('x', xField);
+        applyManualSort('y', yField);
+    } else {
+        if (xField && yField && xField !== NULL_FIELD && yField !== NULL_FIELD) {
+            const xNeedsMeasureSort = xField.analyticType === 'dimension' && yField.analyticType === 'measure';
+            const yNeedsMeasureSort = yField.analyticType === 'dimension' && xField.analyticType === 'measure';
+            if (xNeedsMeasureSort) {
+                applyManualSort('x', xField, 'y');
+            }
+            if (yNeedsMeasureSort) {
+                applyManualSort('y', yField, 'x');
+            }
+        } else {
+            if (xField) {
+                applyManualSort('x', xField);
+            }
+            if (yField) {
+                applyManualSort('y', yField);
             }
         }
     }
+
+    applyManualSort('column', props.column);
+    applyManualSort('row', props.row);
+
     return encoding;
 }

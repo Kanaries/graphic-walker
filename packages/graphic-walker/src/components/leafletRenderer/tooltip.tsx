@@ -11,11 +11,11 @@ export interface ITooltipContentProps {
 }
 
 export const TooltipContent = memo<ITooltipContentProps>(function TooltipContent ({ allFields, vegaConfig, field, value }) {
-    const { fid, analyticType, aggName } = field;
+    const { fid, analyticType, aggName, titleOverride } = field;
     const fieldDisplayLabel = useMemo(() => {
         const name = allFields.find(f => f.fid === fid)?.name ?? fid;
-        return analyticType === 'measure' && aggName ? `${aggName}(${name})` : name;
-    }, [allFields, fid, analyticType, aggName]);
+        return titleOverride || (analyticType === 'measure' && aggName ? `${aggName}(${name})` : name);
+    }, [allFields, fid, analyticType, aggName, titleOverride]);
     const formatter = useDisplayValueFormatter(field.semanticType, vegaConfig);
     
     return (

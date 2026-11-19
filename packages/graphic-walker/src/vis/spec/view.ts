@@ -124,7 +124,7 @@ export function getSingleView(props: SingleViewProps) {
         vegaConfig,
     });
     if (defaultAggregated) {
-        channelAggregate(encoding, fields);
+        channelAggregate(encoding, { x, y, color, opacity, size, shape, row, column, xOffset, yOffset, theta, radius, text });
     }
     addBinStep(encoding, dataSource);
     addTooltipEncode(encoding, details, defaultAggregated);

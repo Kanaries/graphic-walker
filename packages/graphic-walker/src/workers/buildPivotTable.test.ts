@@ -59,3 +59,66 @@ describe('buildPivotTable', () => {
         expect(result.metric).toEqual([[undefined]]);
     });
 });
+
+test('keeps manual and alphabetical header orders, and computes running totals in each partition', () => {
+    const month: IViewField = { ...dimension('month'), sortType: 'manual', sortList: ['Mar', 'Jan', 'Feb'] };
+    const channel: IViewField = { ...dimension('channel'), sortType: 'alphabetical', sort: 'descending' };
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const data = [
+        { month: 'Jan', channel: 'Online', sales_sum: 6 },
+        { month: 'Feb', channel: 'Online', sales_sum: 9 },
+        { month: 'Mar', channel: 'Online', sales_sum: 2 },
+        { month: 'Jan', channel: 'Retail', sales_sum: 10 },
+        { month: 'Mar', channel: 'Retail', sales_sum: 3 },
+    ];
+    const { lt, tt, metric } = buildPivotTable([month], [channel], data, [], [], false, undefined, [sales]);
+    expect(lt.children.map((node) => node.value)).toEqual(['Mar', 'Jan', 'Feb']);
+    expect(tt.children.map((node) => node.value)).toEqual(['Retail', 'Online']);
+    expect(metric.map((row) => row.map((cell) => cell?.sales_sum__window_running_total))).toEqual([[13, 17], [10, 15], [undefined, 9]]);
+    expect(data[0]).toEqual({ month: 'Jan', channel: 'Online', sales_sum: 6 });
+});
+
+test('computes a running total for a window with no dimensions', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const { metric } = buildPivotTable([], [], [{ sales_sum: 30 }], [], [], false, undefined, [sales]);
+    expect(metric[0][0]?.sales_sum__window_running_total).toBe(30);
+});
+
+test('uses Vega ascending ordering for case-sensitive dimension values', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'running_total',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'b', sales_sum: 10 }, { group: 'A', sales_sum: 20 }, { group: 'a', sales_sum: 30 }],
+        [], [], false, undefined, [sales]
+    );
+    expect(Object.fromEntries(metric.map(([cell]) => [cell?.group, cell?.sales_sum__window_running_total]))).toEqual({ A: 20, a: 50, b: 60 });
+});
+
+test('matches Vega running totals, difference and growth rate when an aggregate is null', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'min', windowAgg: 'difference',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'a', sales_min: 10 }, { group: 'b', sales_min: null }, { group: 'c', sales_min: 30 }],
+        [], [], false, undefined, [sales, { ...sales, windowAgg: 'growth_rate' }, { ...sales, windowAgg: 'running_total' }]
+    );
+    expect(metric.map(([cell]) => [cell?.sales_min__window_difference, cell?.sales_min__window_growth_rate, cell?.sales_min__window_running_total])).toEqual([
+        [null, null, 10], [null, -1, 10], [null, null, 40],
+    ]);
+});
+
+test('includes the null dimension in the window rank', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'rank',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'b', sales_sum: 10 }, { group: null, sales_sum: 20 }, { group: 'a', sales_sum: 30 }],
+        [], [], false, undefined, [sales]
+    );
+    expect(Object.fromEntries(metric.map(([cell]) => [String(cell?.group), cell?.sales_sum__window_rank]))).toEqual({ null: 1, a: 2, b: 3 });
+});

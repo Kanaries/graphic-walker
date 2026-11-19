@@ -1,6 +1,8 @@
 import { INestNode } from '../components/pivotTable/interface';
 import { buildMetricTableFromNestTree, buildNestTree, createPivotPathKey, pivotTableValuesEqual } from '../components/pivotTable/utils';
-import { IViewField, IRow } from '../interfaces';
+import { IViewField, IRow, IWindowAgg } from '../interfaces';
+
+import { getMeaAggKey } from '../utils';
 
 const getFirstVisibleValuePath = (item: INestNode): INestNode[] => {
     const child = item.children.find((node) => node.kind === 'value');
@@ -47,8 +49,11 @@ export function buildPivotTable(
         fid: string;
         type: 'ascending' | 'descending';
         mode: 'row' | 'column';
-    }
+    },
+    measures: IViewField[] = []
 ): { lt: INestNode; tt: INestNode; metric: (IRow | null | undefined)[][] } {
+    allData = applyWindowAggregations(allData, dimsInRow, dimsInColumn, measures);
+    aggData = applyWindowAggregations(aggData, dimsInRow, dimsInColumn, measures);
     let lt: INestNode;
     let tt: INestNode;
     if (sort?.mode === 'row') {
@@ -56,7 +61,10 @@ export function buildPivotTable(
             dimsInColumn.map((d) => d.fid),
             allData,
             collapsedKeyList,
-            showTableSummary
+            showTableSummary,
+            undefined,
+            undefined,
+            dimsInColumn
         );
         const firstColumnPath = getFirstVisibleValuePath(tt);
         if (dimsInColumn.length > 0 && firstColumnPath.length > 0) {
@@ -69,7 +77,8 @@ export function buildPivotTable(
                 collapsedKeyList,
                 showTableSummary,
                 sort,
-                rest
+                rest,
+                dimsInRow
             );
         } else {
             lt = buildNestTree(
@@ -77,7 +86,9 @@ export function buildPivotTable(
                 allData,
                 collapsedKeyList,
                 showTableSummary,
-                sort
+                sort,
+                undefined,
+                dimsInRow
             );
         }
     } else {
@@ -85,7 +96,10 @@ export function buildPivotTable(
             dimsInRow.map((d) => d.fid),
             allData,
             collapsedKeyList,
-            showTableSummary
+            showTableSummary,
+            undefined,
+            undefined,
+            dimsInRow
         );
         const firstRowPath = getFirstVisibleValuePath(lt);
         if (sort && dimsInRow.length > 0 && firstRowPath.length > 0) {
@@ -98,7 +112,8 @@ export function buildPivotTable(
                 collapsedKeyList,
                 showTableSummary,
                 sort,
-                rest
+                rest,
+                dimsInColumn
             );
         } else {
             tt = buildNestTree(
@@ -106,11 +121,129 @@ export function buildPivotTable(
                 allData,
                 collapsedKeyList,
                 showTableSummary,
-                sort
+                sort,
+                undefined,
+                dimsInColumn
             );
         }
     }
 
     const metric = buildMetricTableFromNestTree(lt, tt, [...allData, ...aggData]);
     return { lt, tt, metric };
+}
+
+function applyWindowAggregations(
+    data: IRow[],
+    dimsInRow: IViewField[],
+    dimsInColumn: IViewField[],
+    measures: IViewField[]
+): IRow[] {
+    if (data.length === 0) return data;
+    const windowMeasures = measures.filter(
+        (field) => field.analyticType === 'measure' && field.semanticType === 'quantitative' && field.windowAgg && field.aggName && field.aggName !== 'expr'
+    );
+    if (windowMeasures.length === 0) return data;
+
+    const orderField = dimsInRow.length > 0 ? dimsInRow[dimsInRow.length - 1] : dimsInColumn[dimsInColumn.length - 1];
+    const orderKey = orderField?.fid;
+    const groupByKeys = [...dimsInRow, ...dimsInColumn].map((field) => field.fid).filter((fid) => fid !== orderKey);
+
+    const grouped = new Map<string, IRow[]>();
+    const getGroupKey = (row: IRow) => createPivotPathKey(groupByKeys.map((key) => ({ key, value: row[key] })));
+    data.forEach((row) => {
+        const groupKey = getGroupKey(row);
+        const bucket = grouped.get(groupKey);
+        if (bucket) {
+            bucket.push(row);
+        } else {
+            grouped.set(groupKey, [row]);
+        }
+    });
+
+    const result = data.map((row) => ({ ...row }));
+    const rowToResult = new Map<IRow, IRow>();
+    data.forEach((row, index) => rowToResult.set(row, result[index]));
+
+    grouped.forEach((rows) => {
+        const orderedRows = orderKey === undefined ? rows : rows.slice().sort((a, b) => {
+            const av = a[orderKey];
+            const bv = b[orderKey];
+            if (av === bv) return 0;
+            // Match Vega's ascending window order, independent of header display order.
+            if (av == null) return bv == null ? 0 : -1;
+            if (bv == null) return 1;
+            if (Number.isNaN(av)) return Number.isNaN(bv) ? 0 : -1;
+            if (Number.isNaN(bv)) return 1;
+            return av < bv ? -1 : av > bv ? 1 : 0;
+        });
+
+        windowMeasures.forEach((measure) => {
+            const windowAgg = measure.windowAgg as IWindowAgg;
+            const baseKey = getMeaAggKey(measure.fid, measure.aggName);
+            const windowKey = getMeaAggKey(measure.fid, measure.aggName, windowAgg);
+            let runningTotal = 0;
+            let prevValue: number | null = null;
+            const windowValues: number[] = [];
+
+            orderedRows.forEach((row) => {
+                const targetRow = rowToResult.get(row);
+                if (!targetRow) return;
+                const rawValue = row[baseKey];
+                const numericValue = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : null;
+
+                if (windowAgg === 'running_total') {
+                    runningTotal += numericValue ?? 0;
+                    targetRow[windowKey] = runningTotal;
+                    return;
+                }
+
+                if (windowAgg === 'difference') {
+                    if (numericValue === null || prevValue === null) {
+                        targetRow[windowKey] = null;
+                    } else {
+                        targetRow[windowKey] = numericValue - prevValue;
+                    }
+                    prevValue = numericValue;
+                    return;
+                }
+
+                if (windowAgg === 'moving_average') {
+                    if (numericValue !== null) {
+                        windowValues.push(numericValue);
+                    } else {
+                        windowValues.push(NaN);
+                    }
+                    const slice = windowValues.slice(-3).filter((value) => Number.isFinite(value));
+                    targetRow[windowKey] = slice.length ? slice.reduce((sum, val) => sum + val, 0) / slice.length : null;
+                    return;
+                }
+
+                if (windowAgg === 'growth_rate') {
+                    if (prevValue === null || prevValue === 0) {
+                        targetRow[windowKey] = null;
+                    } else {
+                        targetRow[windowKey] = (numericValue ?? 0) / prevValue - 1;
+                    }
+                    prevValue = numericValue;
+                }
+            });
+
+            if (windowAgg === 'rank') {
+                let currentRank = 0;
+                let lastOrderValue: any = undefined;
+                orderedRows.forEach((row, index) => {
+                    const targetRow = rowToResult.get(row);
+                    if (!targetRow) return;
+                    const orderValue = orderKey === undefined ? 0 : row[orderKey] ?? null;
+                    if (index === 0 || !pivotTableValuesEqual(orderValue, lastOrderValue)) {
+                        currentRank = index + 1;
+                    }
+                    targetRow[windowKey] = currentRank;
+                    lastOrderValue = orderValue;
+                });
+            }
+        });
+    });
+
+    return result;
 }
