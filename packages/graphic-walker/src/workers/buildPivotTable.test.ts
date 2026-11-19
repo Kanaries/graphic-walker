@@ -99,15 +99,26 @@ test('uses Vega ascending ordering for case-sensitive dimension values', () => {
     expect(Object.fromEntries(metric.map(([cell]) => [cell?.group, cell?.sales_sum__window_running_total]))).toEqual({ A: 20, a: 50, b: 60 });
 });
 
-test('uses the immediate previous row for difference and growth rate when the aggregate is null', () => {
+test('matches Vega running totals, difference and growth rate when an aggregate is null', () => {
     const sales: IViewField = {
         fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'min', windowAgg: 'difference',
     };
     const { metric } = buildPivotTable(
         [dimension('group')], [], [{ group: 'a', sales_min: 10 }, { group: 'b', sales_min: null }, { group: 'c', sales_min: 30 }],
-        [], [], false, undefined, [sales, { ...sales, windowAgg: 'growth_rate' }]
+        [], [], false, undefined, [sales, { ...sales, windowAgg: 'growth_rate' }, { ...sales, windowAgg: 'running_total' }]
     );
-    expect(metric.map(([cell]) => [cell?.sales_min__window_difference, cell?.sales_min__window_growth_rate])).toEqual([
-        [null, null], [null, null], [null, null],
+    expect(metric.map(([cell]) => [cell?.sales_min__window_difference, cell?.sales_min__window_growth_rate, cell?.sales_min__window_running_total])).toEqual([
+        [null, null, 10], [null, -1, 10], [null, null, 40],
     ]);
+});
+
+test('includes the null dimension in the window rank', () => {
+    const sales: IViewField = {
+        fid: 'sales', name: 'Sales', analyticType: 'measure', semanticType: 'quantitative', aggName: 'sum', windowAgg: 'rank',
+    };
+    const { metric } = buildPivotTable(
+        [dimension('group')], [], [{ group: 'b', sales_sum: 10 }, { group: null, sales_sum: 20 }, { group: 'a', sales_sum: 30 }],
+        [], [], false, undefined, [sales]
+    );
+    expect(Object.fromEntries(metric.map(([cell]) => [String(cell?.group), cell?.sales_sum__window_rank]))).toEqual({ null: 1, a: 2, b: 3 });
 });

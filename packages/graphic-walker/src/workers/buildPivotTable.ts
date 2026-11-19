@@ -192,11 +192,7 @@ function applyWindowAggregations(
                 const numericValue = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : null;
 
                 if (windowAgg === 'running_total') {
-                    if (numericValue === null) {
-                        targetRow[windowKey] = null;
-                        return;
-                    }
-                    runningTotal += numericValue;
+                    runningTotal += numericValue ?? 0;
                     targetRow[windowKey] = runningTotal;
                     return;
                 }
@@ -223,10 +219,10 @@ function applyWindowAggregations(
                 }
 
                 if (windowAgg === 'growth_rate') {
-                    if (numericValue === null || prevValue === null || prevValue === 0) {
+                    if (prevValue === null || prevValue === 0) {
                         targetRow[windowKey] = null;
                     } else {
-                        targetRow[windowKey] = numericValue / prevValue - 1;
+                        targetRow[windowKey] = (numericValue ?? 0) / prevValue - 1;
                     }
                     prevValue = numericValue;
                 }
@@ -238,14 +234,8 @@ function applyWindowAggregations(
                 orderedRows.forEach((row, index) => {
                     const targetRow = rowToResult.get(row);
                     if (!targetRow) return;
-                    const orderValue = orderKey === undefined ? 0 : row[orderKey];
-                    if (orderValue === null || orderValue === undefined) {
-                        targetRow[windowKey] = null;
-                        return;
-                    }
-                    if (index === 0) {
-                        currentRank = 1;
-                    } else if (orderValue !== lastOrderValue) {
+                    const orderValue = orderKey === undefined ? 0 : row[orderKey] ?? null;
+                    if (index === 0 || !pivotTableValuesEqual(orderValue, lastOrderValue)) {
                         currentRank = index + 1;
                     }
                     targetRow[windowKey] = currentRank;
