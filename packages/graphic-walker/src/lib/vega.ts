@@ -135,7 +135,18 @@ export function toVegaSpec({
         });
         const singleView = scales ? resolveScales(scales, v, dataSource, mediaTheme) : v;
 
-        spec.mark = singleView.mark;
+        if ('layer' in singleView && singleView.layer) {
+            // Move params into the first layer to avoid "Duplicate signal name" errors
+            // when Vega-Lite compiles a layered spec with top-level params.
+            if (spec.params) {
+                spec.layer = singleView.layer.map((l: any, i: number) => (i === 0 ? { ...l, params: spec.params } : l));
+                delete spec.params;
+            } else {
+                spec.layer = singleView.layer;
+            }
+        } else {
+            spec.mark = singleView.mark;
+        }
         if ('encoding' in singleView) {
             spec.encoding = singleView.encoding;
         }
@@ -155,7 +166,7 @@ export function toVegaSpec({
                 spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
             }
         }
-        return [spec];
+        return [spec.layer ? makeLayeredSpec(spec) : spec];
     } else {
         if (layoutMode === 'auto') {
         } else if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
@@ -207,6 +218,20 @@ export function toVegaSpec({
                 result[index] = ans;
             }
         }
-        return result;
+        return result.map((chart) => chart.layer ? makeLayeredSpec(chart) : chart);
     }
+}
+
+function makeLayeredSpec(spec: any) {
+    const { params, layer, encoding, ...topLevel } = spec;
+    const { row, column, ...sharedEncoding } = encoding;
+    // A layered selection must belong to one unit, including inside a facet.
+    const layers = params ? [{ ...layer[0], params }, ...layer.slice(1)] : layer;
+    if (!row && !column) return { ...topLevel, encoding, layer: layers };
+    const { width, height, autosize, ...facetSpec } = topLevel;
+    return {
+        ...facetSpec,
+        facet: { ...(row && { row }), ...(column && { column }) },
+        spec: { width, height, autosize, encoding: sharedEncoding, layer: layers },
+    };
 }

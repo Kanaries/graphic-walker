@@ -8,11 +8,15 @@ export const viewEncodingKeys = (geom: string): Exclude<keyof DraggableFieldStat
             return ['longitude', 'latitude', 'color', 'opacity', 'size', 'details'];
         case 'arc':
             return ['radius', 'theta', 'color', 'opacity', 'size', 'details', 'text'];
+        case 'point':
+        case 'circle':
+            return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'shape', 'text'];
         case 'bar':
         case 'tick':
         case 'line':
         case 'area':
         case 'boxplot':
+        case 'rect':
             return ['columns', 'rows', 'color', 'opacity', 'size', 'details', 'text'];
         case 'text':
             return ['columns', 'rows', 'color', 'opacity', 'size', 'text'];

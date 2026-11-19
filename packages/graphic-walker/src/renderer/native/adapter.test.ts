@@ -143,9 +143,8 @@ describe('chartToWorksheet', () => {
         expect(point.spec!.instances[point.spec!.size!]).toMatchObject({ field: 'Profit', display: 'continuous', aggregate: 'mean' });
         expect(point.spec!.instances[point.spec!.opacity!]).toMatchObject({ field: 'Segment', display: 'discrete' });
         expect(point.spec!.instances[point.spec!.shape!]).toMatchObject({ field: 'Ship Mode', display: 'discrete' });
-        // The editor hides the Text shelf for points, so a field left on it is not part of the chart.
-        expect(point.spec!.text).toBeUndefined();
-        expect(point.viewMeasures.map((f) => f.fid)).toEqual(['Sales', 'Profit']);
+        expect(point.spec!.instances[point.spec!.text!]).toMatchObject({ field: 'Quantity', aggregate: 'sum' });
+        expect(point.viewMeasures.map((f) => f.fid)).toEqual(['Sales', 'Quantity', 'Profit']);
         expect(point.notes).toEqual([]);
         // Bars show Text and hide Shape.
         const bar = chartToWorksheet(chart(shelves, { geoms: ['bar'] }));
