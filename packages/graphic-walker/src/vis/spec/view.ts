@@ -22,11 +22,15 @@ function formatOffset(offset: number) {
     return `${offset > 0 ? '+' : '-'}${Math.abs(offset)}`;
 }
 
-function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode) {
+function withTextStackEncoding(encoding: Record<string, any>, stack: IStackMode, markType: string) {
     if (stack === 'none') return {};
     const positionChannel = ['x', 'y', 'theta', 'radius'].find((channel) => encoding[channel]?.type === 'quantitative');
     if (!positionChannel) return {};
-    const stackValue = encoding[positionChannel].stack ?? (stack === 'zero' || stack === 'stack' ? true : undefined);
+    const otherAxis = positionChannel === 'x' ? 'y' : 'x';
+    const implicitStack = (markType === 'bar' || markType === 'area') &&
+        encoding.color?.field && encoding[positionChannel].aggregate !== null &&
+        encoding[otherAxis]?.type !== 'quantitative' && !encoding.xOffset && !encoding.yOffset;
+    const stackValue = encoding[positionChannel].stack ?? (implicitStack && (stack === 'zero' || stack === 'stack') ? true : undefined);
     if (stackValue === undefined || stackValue === null) return {};
     const stackEncoding: Record<string, any> = {
         [positionChannel]: {
@@ -168,13 +172,13 @@ export function getSingleView(props: SingleViewProps) {
         for (const [key, value] of Object.entries(encoding)) {
             if (key === 'text') {
                 textLayerEncoding.text = value;
-            } else if (SHARED_ENCODING_KEYS.has(key)) {
+            } else if (SHARED_ENCODING_KEYS.has(key) && (key !== 'color' || markType !== 'rect')) {
                 sharedEncoding[key] = value;
             } else {
                 mainLayerEncoding[key] = value;
             }
         }
-        Object.assign(textLayerEncoding, withTextStackEncoding(sharedEncoding, stack));
+        Object.assign(textLayerEncoding, withTextStackEncoding(sharedEncoding, stack, markType));
 
         // Build text mark with dx/dy offsets for non-rect marks
         const textMark: any = { type: 'text' };
@@ -229,11 +233,12 @@ export function resolveScale<T extends Object>(
     return scale;
 }
 
-export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {
-    const newEncoding = { ...view.encoding };
+function resolveEncodingScales(scale: IChannelScales, encoding: Record<string, any>, data: readonly IRow[], theme: 'dark' | 'light') {
+    const newEncoding = { ...encoding };
     function addScale(c: string, encodingName?: string) {
         encodingName = encodingName ?? c;
         if (scale[c] && newEncoding[encodingName]) {
+            newEncoding[encodingName] = { ...newEncoding[encodingName] };
             if (typeof scale[c] === 'function') {
                 const field = newEncoding[encodingName].field;
                 const values = data.map((x) => x[field]);
@@ -255,8 +260,18 @@ export function resolveScales(scale: IChannelScales, view: any, data: readonly I
     addScale('radius');
     addScale('theta');
 
+    return newEncoding;
+}
+
+export function resolveScales(scale: IChannelScales, view: any, data: readonly IRow[], theme: 'dark' | 'light') {
     return {
         ...view,
-        encoding: newEncoding,
+        encoding: resolveEncodingScales(scale, view.encoding, data, theme),
+        ...(view.layer && {
+            layer: view.layer.map((layer: any) => ({
+                ...layer,
+                encoding: resolveEncodingScales(scale, layer.encoding, data, theme),
+            })),
+        }),
     };
 }

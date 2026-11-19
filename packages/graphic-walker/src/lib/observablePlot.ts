@@ -23,6 +23,10 @@ function vegaLiteToPlot(spec: any): any {
 
     // If the spec uses layers (e.g., main mark + text overlay), flatten to the
     // primary layer for Observable Plot which doesn't support Vega-Lite layers.
+    if (spec.facet && spec.spec?.layer) {
+        const { facet, spec: facetedView, ...topLevel } = spec;
+        spec = { ...topLevel, ...facetedView, encoding: { ...facetedView.encoding, ...facet } };
+    }
     if (spec.layer && !spec.mark) {
         const primaryLayer = spec.layer[0];
         spec = {

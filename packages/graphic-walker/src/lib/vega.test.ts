@@ -35,3 +35,45 @@ test('arc labels follow explicit radius or sit outside the default arc', () => {
     expect(spec.layer[1]).toMatchObject({ mark: { type: 'text', radius: 90 }, encoding: { theta: { field: 'value', stack: true } } });
     expect(toVegaSpec({ ...arc, radius: value })[0].layer[1].mark).toMatchObject({ type: 'text', radiusOffset: 10 });
 });
+
+test('compiles every repeated layered view with its own selection', () => {
+    const { compile } = require('vega-lite');
+    const { parse } = require('vega');
+    const second = { ...value, fid: 'second' };
+    const specs = toVegaSpec({ ...chart, geomType: 'bar', columns: [category], rows: [value, second] });
+    expect(specs).toHaveLength(2);
+    for (const spec of specs) {
+        expect(() => parse(compile(spec).spec)).not.toThrow();
+    }
+});
+
+test('keeps facet channels outside the layered view', () => {
+    const { compile } = require('vega-lite');
+    const { parse } = require('vega');
+    const [spec] = toVegaSpec({ ...chart, geomType: 'bar', columns: [group, category], rows: [value] });
+    expect(spec.facet.column.field).toBe('group');
+    expect(compile(spec).spec.marks?.some((mark: { type: string }) => mark.type === 'group')).toBe(true);
+    expect(() => parse(compile(spec).spec)).not.toThrow();
+});
+
+test('keeps unstacked point labels at the original position and preserves mark scales', () => {
+    const [spec] = toVegaSpec({
+        ...chart,
+        geomType: 'point',
+        columns: [category],
+        rows: [value],
+        size: value,
+        opacity: value,
+        scales: { size: { range: [100, 200] }, opacity: { range: [0.4, 0.9] } },
+    });
+    expect(spec.layer[1].encoding.y).toBeUndefined();
+    expect(spec.layer[0].encoding.size.scale.range).toEqual([100, 200]);
+    expect(spec.layer[0].encoding.opacity.scale.range).toEqual([0.4, 0.9]);
+});
+
+test('keeps the heatmap color off the white label layer', () => {
+    const [spec] = toVegaSpec({ ...chart, geomType: 'rect', columns: [category], rows: [group] });
+    expect(spec.encoding.color).toBeUndefined();
+    expect(spec.layer[0].encoding.color.field).toBe('group');
+    expect(spec.layer[1].mark.color).toBe('white');
+});

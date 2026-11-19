@@ -166,7 +166,7 @@ export function toVegaSpec({
                 spec.resolve.legend = { ...spec.resolve.legend, [v]: value };
             }
         }
-        return [spec];
+        return [spec.layer ? makeLayeredSpec(spec) : spec];
     } else {
         if (layoutMode === 'auto') {
         } else if (rowFacetField === NULL_FIELD && colFacetField === NULL_FIELD) {
@@ -218,6 +218,20 @@ export function toVegaSpec({
                 result[index] = ans;
             }
         }
-        return result;
+        return result.map((chart) => chart.layer ? makeLayeredSpec(chart) : chart);
     }
+}
+
+function makeLayeredSpec(spec: any) {
+    const { params, layer, encoding, ...topLevel } = spec;
+    const { row, column, ...sharedEncoding } = encoding;
+    // A layered selection must belong to one unit, including inside a facet.
+    const layers = params ? [{ ...layer[0], params }, ...layer.slice(1)] : layer;
+    if (!row && !column) return { ...topLevel, encoding, layer: layers };
+    const { width, height, autosize, ...facetSpec } = topLevel;
+    return {
+        ...facetSpec,
+        facet: { ...(row && { row }), ...(column && { column }) },
+        spec: { width, height, autosize, encoding: sharedEncoding, layer: layers },
+    };
 }
