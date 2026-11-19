@@ -54,7 +54,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo(
                     if (meaInRows.length !== 0) {
                         return meaInRows.map((rowMea, rmIndex) => {
                             return (
-                                <tr className="divide-x divide-border" key={`${rIndex}-${rowMea.fid}-${rowMea.aggName}`}>
+                                <tr className="divide-x divide-border" key={`${rIndex}-${rowMea.fid}-${rowMea.aggName}-${rowMea.windowAgg}`}>
                                     {rowHeaders[rIndex * meaInRows.length + rmIndex]}
                                     {row.flatMap((cell, cIndex) => {
                                         const record = cell ?? {};
@@ -62,7 +62,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo(
                                             return meaInColumns.map((colMea, cmIndex) => (
                                                 <td
                                                     className="whitespace-nowrap p-2 text-xs"
-                                                    key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${colMea.fid}-${colMea.aggName}`}
+                                                    key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${rowMea.windowAgg}-${cmIndex}-${colMea.fid}-${colMea.aggName}-${colMea.windowAgg}`}
                                                 >
                                                     {getCellData(record, rowMea, defaultAggregated, numberFormatter)} ,{' '}
                                                     {getCellData(record, colMea, defaultAggregated, numberFormatter)}
@@ -70,7 +70,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo(
                                             ));
                                         }
                                         return (
-                                            <td className="whitespace-nowrap p-2 text-xs" key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}`}>
+                                            <td className="whitespace-nowrap p-2 text-xs" key={`${rIndex}-${cIndex}-${rowMea.fid}-${rowMea.aggName}-${rowMea.windowAgg}`}>
                                                 {getCellData(record, rowMea, defaultAggregated, numberFormatter)}
                                             </td>
                                         );
@@ -86,7 +86,7 @@ const MetricTable: React.FC<MetricTableProps> = React.memo(
                                 const record = cell ?? {};
                                 if (meaInRows.length === 0 && meaInColumns.length !== 0) {
                                     return meaInColumns.map((colMea, cmIndex) => (
-                                        <td className="whitespace-nowrap p-2 text-xs" key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}`}>
+                                        <td className="whitespace-nowrap p-2 text-xs" key={`${rIndex}-${cIndex}-${cmIndex}-${colMea.fid}-${colMea.aggName}-${colMea.windowAgg}`}>
                                             {getCellData(record, colMea, defaultAggregated, numberFormatter)}
                                         </td>
                                     ));

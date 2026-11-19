@@ -189,7 +189,8 @@ export async function queryPivotTable(
     const fields = uniqueFields(input.fields);
     const filters = input.filters ? [...input.filters] : [];
     const viewDimensions = uniqueFields([...dimsInRow, ...dimsInColumn]);
-    const viewMeasures = uniqueFields([...measInRow, ...measInColumn]);
+    const shelfMeasures = [...measInRow, ...measInColumn];
+    const viewMeasures = uniqueFields(shelfMeasures);
     if (input.defaultAggregated) {
         const measureWithoutAggregation = viewMeasures.find((field) => !field.aggName);
         if (measureWithoutAggregation) {
@@ -222,7 +223,7 @@ export async function queryPivotTable(
         collapsedPaths.map(createPivotPathKey),
         showTableSummary,
         getPivotSort(input.rows, input.columns, input.defaultAggregated),
-        input.defaultAggregated ? viewMeasures : undefined
+        input.defaultAggregated ? shelfMeasures : undefined
     );
 
     return {
