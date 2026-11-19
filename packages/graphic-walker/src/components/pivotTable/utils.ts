@@ -71,7 +71,7 @@ function comparePivotValues(left: PivotTableValue, right: PivotTableValue): numb
     return typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right));
 }
 
-export function comparePivotDimension(left: PivotTableValue, right: PivotTableValue, field: IViewField): number {
+function comparePivotDimension(left: PivotTableValue, right: PivotTableValue, field: IViewField): number {
     if (field.sortType === 'manual' && field.sortList?.length) {
         const index = (value: PivotTableValue) => {
             const position = field.sortList!.findIndex((entry) => pivotTableValuesEqual(entry, value));

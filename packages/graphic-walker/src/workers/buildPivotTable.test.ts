@@ -76,6 +76,6 @@ test('keeps manual and alphabetical header orders, and computes running totals i
     const { lt, tt, metric } = buildPivotTable([month], [channel], data, [], [], false, undefined, [sales]);
     expect(lt.children.map((node) => node.value)).toEqual(['Mar', 'Jan', 'Feb']);
     expect(tt.children.map((node) => node.value)).toEqual(['Retail', 'Online']);
-    expect(metric.map((row) => row.map((cell) => cell?.sales_sum__window_running_total))).toEqual([[3, 2], [13, 8], [undefined, 17]]);
+    expect(metric.map((row) => row.map((cell) => cell?.sales_sum__window_running_total))).toEqual([[13, 17], [10, 15], [undefined, 9]]);
     expect(data[0]).toEqual({ month: 'Jan', channel: 'Online', sales_sum: 6 });
 });

@@ -1,5 +1,5 @@
 import { INestNode } from '../components/pivotTable/interface';
-import { buildMetricTableFromNestTree, buildNestTree, comparePivotDimension, createPivotPathKey, pivotTableValuesEqual } from '../components/pivotTable/utils';
+import { buildMetricTableFromNestTree, buildNestTree, createPivotPathKey, pivotTableValuesEqual } from '../components/pivotTable/utils';
 import { IViewField, IRow, IWindowAgg } from '../interfaces';
 
 import { getMeaAggKey } from '../utils';
@@ -172,7 +172,10 @@ function applyWindowAggregations(
             if (av === bv) return 0;
             if (av === null || av === undefined) return 1;
             if (bv === null || bv === undefined) return -1;
-            return comparePivotDimension(av, bv, orderField);
+            // Match Vega-Lite and 0.4.84: the window follows the field values.
+            // Header sort settings only change the display order.
+            if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+            return String(av).localeCompare(String(bv));
         });
 
         windowMeasures.forEach((measure) => {
